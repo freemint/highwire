@@ -26,24 +26,48 @@
 # define BASPAG BASEPAGE
 #endif
 
-#ifndef EINVFN
-# define EINVFN -32
-#endif
-
-#include "hw-types.h"
+#include "defs.h"
 #include "ovl_sys.h"
 
 
 typedef struct {
 	BASPAG   * basepage;
 	OVL_METH * methods;
+	char     * file;
 	short      pid;
 	void     (*handler)(void*);
 }      OVL_SLOT;
-static OVL_SLOT ovl_slot[8] = {
-	{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},
-	{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL}
-};
+static OVL_SLOT ovl_slot[16];
+static short    num_slot = -1;
+
+
+/*============================================================================*/
+size_t
+module_info (MODULINF * p_info)
+{
+	if (num_slot <= 0) {
+		if (p_info) *p_info = NULL;
+		return 0;
+	
+	} else if (p_info) {
+		MODULINF info = malloc (sizeof (struct s_module_info) * num_slot);
+		if ((*p_info = info) != NULL) {
+			OVL_SLOT * slot = ovl_slot;
+			size_t     num  = num_slot;
+			short      i;
+			for (i = 0; i < numberof(ovl_slot); i++) {
+				if (slot->methods) {
+					info->File = slot->file;
+					info->Meth = slot->methods;
+					if (!--num) break;
+					info++;
+				}
+				slot++;
+			}
+		}
+	}
+	return num_slot;
+}
 
 
 /*----------------------------------------------------------------------------*/
@@ -62,8 +86,13 @@ printf("clear %p\n", slot->methods);
 		Mfree (slot->basepage);
 		slot->basepage = NULL;
 	}
+	if (slot->file) {
+		free (slot->file);
+		slot->file = NULL;
+	}
 	slot->methods  = NULL;
 	slot->pid = 0;
+	num_slot--;
 }
 
 
@@ -75,7 +104,7 @@ static void sig_chld (long sig)
 	long  l = Pwaitpid (-1, 0, NULL);
 	(void)sig;
 	printf ("SIGCHLD: %i,%04lX \n", (short)(l >>16), l & 0xFFFF);
-	if (l > 0) {
+	if (l > 0 && num_slot > 0) {
 		OVL_SLOT * slot = ovl_slot;
 		short      pid  = l >>16;
 		short      i;
@@ -96,10 +125,18 @@ static void sig_chld (long sig)
 OVL_METH *
 load_ovl (const char * ovl_name, void (*handler)(void*))
 {
-	BASPAG   * ovl_basepage = (BASPAG *)Pexec(3,ovl_name,NULL,NULL);
+	char       file_path[HW_PATH_MAX];
+	BASPAG   * ovl_basepage;
 	OVL_METH * ovl_methods  = NULL;
 	short      pid          = 0;
 	
+	if (num_slot < 0) {
+		memset (ovl_slot, 0, sizeof(ovl_slot));
+		num_slot = 0;
+	}
+	
+	strcat (strcpy (file_path, "modules\\"), ovl_name);
+	ovl_basepage = (BASPAG *)Pexec(3,file_path,NULL,NULL);
 	if ((long)ovl_basepage <= 0L) {
 		puts ("Pexec() failed");
 		return NULL;
@@ -147,10 +184,10 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 		
 		} else {
 			if (ovl_methods->flags == OF_CHLDPRC) {
-				pid = Pexec (104, NULL, ovl_basepage, NULL);
+				pid = Pexec (104, ovl_name, ovl_basepage, NULL);
 				if (pid > 0) {
 					Psignal (20/*SIGCHLD*/, (long)sig_chld);
-				} else if (pid == -32) { /* EINVFN */
+				} else if (pid == EINVFN) {
 					pid = 0;
 				} else {
 					ovl_methods = NULL;
@@ -165,17 +202,20 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 	}
 	
 	if (!ovl_methods) {
-		free (ovl_basepage);
+		Mfree (ovl_basepage);
 	
 	} else {
+		char     * file = strrchr (ovl_name, '\\');
 		OVL_SLOT * slot = ovl_slot;
 		short      i;
 		for (i = 0; i < numberof(ovl_slot); i++) {
 			if (!slot->methods) {
 				slot->basepage = ovl_basepage;
 				slot->methods  = ovl_methods;
+				slot->file     = strdup (file ? file +1 : ovl_name);
 				slot->pid      = pid;
 				slot->handler  = handler;
+				num_slot++;
 				break;
 			}
 			slot++;
@@ -191,42 +231,50 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 void
 kill_ovl (void * this_N_all)
 {
-	long       mask = Psigblock (1uL << 20/*SIGCHLD*/);
-	OVL_SLOT * slot;
-	short      i;
-	
-	slot = ovl_slot;
-	for (i = 0; i < numberof(ovl_slot); i++) {
-		if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
-			if (slot->pid > 0) {
-				long r = Pkill (slot->pid,  19/*SIGCONT*/);
-				printf("kill(%i,SIGCONT) = %li\n", slot->pid, r);
-				
-				if ((r = Pwaitpid (slot->pid, 1, NULL)) != 0) {
-					slot->pid = 0;
+	if (num_slot > 0) {
+		long       mask;
+		OVL_SLOT * slot;
+		short      i, n = (this_N_all ? 1 : num_slot);
+		
+		slot = ovl_slot;
+		for (i = 0; i < numberof(ovl_slot); i++) {
+			if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
+				if (slot->pid > 0) {
+					long r = Pkill (slot->pid,  19/*SIGCONT*/);
+					printf("kill(%i,SIGCONT) = %li\n", slot->pid, r);
+					
+					r = Pwaitpid (slot->pid, 1, NULL);
+					printf("waitpid(%i) = %i,%04lX \n",
+						    slot->pid, (short)(r >>16), r & 0xFFFF);
+					if (r != 0) {
+						slot->pid = 0;
+					}
 				}
-				printf("waitpid(%i) = %i,%04lX \n",
-					    (short)(r >>16), (short)(r >>16), r & 0xFFFF);
+				if (!--n) break;
 			}
+			slot++;
 		}
-		slot++;
-	}
-	slot = ovl_slot;
-	for (i = 0; i < numberof(ovl_slot); i++) {
-		if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
-			if (slot->pid > 0) {
-				long r = Pkill (slot->pid,  1/*SIGHUP*/);
-				printf("kill(%i,SIGHUP) = %li\n", slot->pid, r);
-				
-				r = Pwaitpid (slot->pid, 0, NULL);
-				printf("waitpid() = %i,%04lX \n", (short)(r >>16), r & 0xFFFF);
-			
+		if (num_slot <= 0) {
+			return;
+		}
+		mask = Psigblock (1uL << 20/*SIGCHLD*/);
+		slot = ovl_slot;
+		for (i = 0; i < numberof(ovl_slot); i++) {
+			if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
+				if (slot->pid > 0) {
+					long r = Pkill (slot->pid,  1/*SIGHUP*/);
+					printf("kill(%i,SIGHUP) = %li\n", slot->pid, r);
+					
+					r = Pwaitpid (slot->pid, 0, NULL);
+					printf("waitpid() = %i,%04lX \n", (short)(r >>16), r & 0xFFFF);
+				}
+				clear_slot (slot);
+				if (!num_slot) break;
 			}
-			clear_slot (slot);
+			slot++;
 		}
-		slot++;
+		Psigsetmask (mask);
 	}
-	Psigsetmask (mask);
 }
 
 
@@ -252,7 +300,7 @@ display_ovl_infos (OVL_METH * ovl_methods)
 
 int load_sampleovl(void)
 {
-	OVL_METH * ovl_methods = load_ovl ("modules\\sample.ovl", (void(*)(void*))0);
+	OVL_METH * ovl_methods = load_ovl ("sample.ovl", (void(*)(void*))0);
 	if (!ovl_methods) {
 		printf("No OVL MAGIC found\r\n");
 	

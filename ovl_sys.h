@@ -11,7 +11,7 @@
 #define __OVL_API__H__
 
 
-#define OVL_REVISION 0x20030120ul
+#define OVL_REVISION 0x20030124ul
 
 
 /* unique header identification */
@@ -63,6 +63,13 @@ struct ovl_info_t
 
 OVL_METH * load_ovl (const char * ovl_name, void (*handler)(void*));
 void       kill_ovl (void * this_N_all);
+
+typedef struct s_module_info {
+	const char * File;
+	OVL_METH   * Meth;
+} * MODULINF;
+
+size_t module_info (MODULINF*);
 
 
 /* ----------------------------------------------------------------- *
