@@ -1420,16 +1420,60 @@ hwWind_button (WORD mx, WORD my)
 		wind = NULL;
 	
 	} else if (tb_n >= 0) {
-		short dmy;
-		wind_update (BEG_MCTRL);
+		short     event = wind_update (BEG_MCTRL);
+		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
+		short     hist  = wind->HistMenu;
 		chng_toolbar (wind, 0, 0, tb_n);
-		evnt_button (1, 0x03, 0x00, &mx, &my, &dmy, &dmy);
+		if (tb_n <= TBAR_RGHT) {
+			m_in.emi_flags |= MU_TIMER;
+			m_in.emi_tlow  =  500;
+			m_in.emi_thigh =  0;
+		}
+		m_in.emi_m1.g_x = wind->Work.g_x + wind->TbarElem[tb_n].Offset;
+		m_in.emi_m1.g_y = wind->Work.g_y;
+		m_in.emi_m1.g_w = m_in.emi_m1.g_h = wind->TbarElem[tb_n].Width;
+		do {
+			EVMULT_OUT out;
+			WORD       msg[8];
+			event = evnt_multi_fast (&m_in, msg, &out);
+			if (event & MU_TIMER) {
+				char * array[HISTORY_LAST];
+				short  i, n = 0;
+				if (tb_n) {
+					for (i = hist +1; i < wind->HistUsed;
+					     array[n++] = wind->History[i++]->Text +1);
+				} else {
+					for (i = hist -1; i >= 0;
+					     array[n++] = wind->History[i--]->Text +1);
+				}
+				array[n] = NULL;
+				n = HW_form_popup (array, m_in.emi_m1.g_x,
+				                   m_in.emi_m1.g_y + m_in.emi_m1.g_h -1, FALSE);
+				if (n < 0) {
+					tb_n = -1;
+				} else {
+					hist += (tb_n ? +1 + n : -1 - n);
+					tb_n =  TBAR_REDO;
+				}
+				m_in.emi_m1leave = MO_LEAVE;
+				break;
+			}
+			if (event & MU_M1) {
+				if (m_in.emi_m1leave) {
+					chng_toolbar (wind, 0, 0, -1);
+					m_in.emi_m1leave = MO_ENTER;
+				} else { /* entered */
+					chng_toolbar (wind, 0, 0, tb_n);
+					m_in.emi_m1leave = MO_LEAVE;
+				}
+			}
+		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
-		switch (tb_n) {
-			case TBAR_LEFT: hwWind_undo    (wind, FALSE);          break;
-			case TBAR_RGHT: hwWind_undo    (wind, TRUE);           break;
-			case TBAR_HOME: hwWind_history (wind, 0);              break;
-			case TBAR_REDO: hwWind_history (wind, wind->HistMenu); break;
+		if (m_in.emi_m1leave) switch (tb_n) {
+			case TBAR_LEFT: hwWind_undo    (wind, FALSE); break;
+			case TBAR_RGHT: hwWind_undo    (wind, TRUE);  break;
+			case TBAR_HOME: hist = 0;
+			case TBAR_REDO: hwWind_history (wind, hist);  break;
 			default:        chng_toolbar (wind, 0, 0, -1);
 		}
 		wind = NULL;
