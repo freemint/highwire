@@ -871,7 +871,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				}
 				skip = FALSE;
 			}
-			if (next(&p) == ',') p++;
+			if (next(&p) == '/') continue;
+			else if (*p  == ',') p++;
 			else                 break;
 		}
 		
