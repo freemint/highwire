@@ -26,6 +26,11 @@
   support at least the first format (even CAB
   does).
 
+- Support added for web access via a proxy server.
+  This can be controlled by using the keyword
+     HTTP_PROXY = <proxy-ip> <port>
+  in the highwire.cfg file.
+
 - Bugs #0078, #0128, #0147, #0173, #0175 resolved.
 
 __________________________________________________
