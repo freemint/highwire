@@ -2633,9 +2633,8 @@ parse_html (void * arg, long invalidated)
 	WCHAR      * watermark = parser->Watermark;
 	ENCODER_W    encoder   = encoder_word (frame->Encoding,
 	                                       current->word->font->Base->Mapping);
-	BOOL space_found = TRUE;  /* skip leading spaces */
-	BOOL in_pre      = FALSE;
-	BOOL linetoolong = FALSE;  /* "line too long" error printed? */
+	UWORD flags       = PF_SPACE; /* skip leading spaces */
+	BOOL  linetoolong = FALSE;    /* "line too long" error printed? */
 	
 	if (invalidated || !symbol) {
 		delete_parser (parser);
@@ -2659,11 +2658,10 @@ parse_html (void * arg, long invalidated)
 			};
 			HTMLTAG  tag;
 			TEXTATTR attrib = current->word->attr;
-			BOOL     flags  = (in_pre      ? PF_PRE   : PF_NONE)
-			                | (space_found ? PF_SPACE : PF_NONE);
 			if (*(++symbol) != '/') {
-				flags |= PF_START;
+				flags |=  PF_START;
 			} else {
+				flags &= ~PF_START;
 				symbol++;
 			}
 			
@@ -2674,8 +2672,6 @@ parse_html (void * arg, long invalidated)
 			if (tag && render[tag]) {
 				flags = (render[tag])(parser, &symbol, flags);
 			}
-			in_pre      = (flags & PF_PRE   ? TRUE : FALSE);
-			space_found = (flags & PF_SPACE ? TRUE : FALSE);
 			if (flags & PF_ENCDNG) {
 				encoder = encoder_word (frame->Encoding,
 				                        current->word->font->Base->Mapping);
@@ -2705,11 +2701,11 @@ parse_html (void * arg, long invalidated)
 				}
 				current->text = scan_namedchar (&symbol, current->text, TRUE,
 				                                current->word->font->Base->Mapping);
-				space_found = FALSE;
+				flags &= ~PF_SPACE;
 				break;
 			
 			case ' ':
-				if (in_pre) {
+				if (flags & PF_PRE) {
 					if (current->text >= watermark) {
 						goto line_too_long;
 					}
@@ -2720,7 +2716,7 @@ parse_html (void * arg, long invalidated)
 				goto white_space;
 			
 			case 9:  /* HT HORIZONTAL TABULATION */
-				if (in_pre) {
+				if (flags & PF_PRE) {
 					if (current->text >= watermark -8) {
 						goto line_too_long;
 					}
@@ -2739,7 +2735,7 @@ parse_html (void * arg, long invalidated)
 			case 10: /* LF LINE FEED */
 			case 11: /* VT VERTICAL TABULATION */
 			case 12: /* FF FORM FEED */
-				if (in_pre) {
+				if (flags & PF_PRE) {
 					/* BUG: empty paragrahps were ignored otherwise */
 					*(current->text++) = font_Nobrk (current->word->font);
 					add_paragraph(current, 0);
@@ -2748,13 +2744,13 @@ parse_html (void * arg, long invalidated)
 				}
 				/* else fall through */
 				
-			white_space: /* if (!in_pre) */
-				if (!space_found) {
+			white_space: /* if (!(flags & PF_PRE)) */
+				if (!(flags & PF_SPACE)) {
 					if (current->text > current->buffer) {
 						new_word (current, TRUE);
 					}
 					*(current->text++) = font_Space (current->word->font);
-					space_found = TRUE;
+					flags |= PF_SPACE;
 				}
 				while (isspace (*(++symbol)));
 				break;
@@ -2762,7 +2758,7 @@ parse_html (void * arg, long invalidated)
 			default:
 				if (current->text < watermark) {
 					current->text = (*encoder)(&symbol, current->text);
-					space_found = FALSE;
+					flags &= ~PF_SPACE;
 					break;
 				}
 			
@@ -2772,7 +2768,7 @@ parse_html (void * arg, long invalidated)
 					          frame->Location->File);
 					linetoolong = TRUE;
 				}
-				space_found = FALSE;
+				flags &= ~PF_SPACE;
 				new_word (current, TRUE);
 		}
 	} /* end while (*symbol != '\0') */
