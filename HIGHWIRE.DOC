@@ -1,4 +1,4 @@
-Last updated 5/11/03
+Last updated: December 7, 2003
 
 =====================================
 
@@ -73,8 +73,8 @@ New items since it went open source:
   ù Tables (98%)
   ù HTML 4 compliant (90%)
   ù Colour support (mapped to current system palette)
-  ù Graphics (20%) - Now loads HTML files with Gifs - colours are perfect in
-    256/mono modes - other modes need adjusting
+  ù Graphics (95%) - Now loads HTML files with Gifs and Jpgs - colours are 
+    perfect in mono/256/32k/64k modes - other modes(24/32 bit) need adjusting
   ù Gifs can now be dragged to a Highwire window where it will be displayed
   ù Implementation of memory caching of images avoids multiple 
     loading of the same image. The pseudo URI "about:cache" now 
@@ -129,6 +129,23 @@ New items since it went open source:
    been added.
  ù Form support has been improved with the support of Selection List.
  ù Calculation of table width and cells have been improved.
+ ù New keyword FONT_MINSIZE to define a minimum font height in points, eg. for
+   (font size = 1) (see example.cfg\highwire.cfg for explanation).
+ ù New menu entry under "Options" to have frames always resizable and 
+   scrollbars if necessary even if the HTML defines anything else there. The
+   default is off, but can be set with the keyword FORCE_FRAMECTRL = 1 in the
+   config file.
+ ù The cfg file now supports three new keywords concerning the cache:  1) 
+   CACHEDIR which lets the user choose where Highwire will define a directory 
+   for the storage of visited pages/images, 2) CACHEMEM = (kbytes) to limit 
+   the amount of memory cached images (default is now 100k) which should help 
+   to prevent Highwire from running out of memory due to always storing every 
+   image ever loaded and 3) CACHEDSK which sets limits for filling up the 
+   cache in order to prevent blowing up hard drives. (eg. CACHEDSK = 8192 
+   1000 means to use only 8192 of disk space, but not more than 1000 files).
+ ù More funtionality for the redo buttion: Holding down the ALT key clears 
+   now the whole cache. Additional holding down the SHIFT key will avoid 
+   forcing a page reload then.
 
 It is currently missing:
 
@@ -136,9 +153,8 @@ It is currently missing:
   ù online module
   ù HTML forms
   ù Java/JavaScript support
-  ù use of caches
   ù use of internet clients
-  ù Support for JPEG and PNG
+  ù Support for PNG
   ù External viewer support
   ù lots more...
  

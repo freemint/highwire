@@ -8,7 +8,7 @@
 <META NAME="date" CONTENT="2002-08-14">
 </head>
 
-<B>Last updated 5/11/03</B>
+<B>Last updated: December 7, 2003</B>
 
 </FONT>
 <body>
@@ -101,7 +101,7 @@ I tried. :) HighWire is still very much in development.</p>
   <li>Tables (98%)</li>
   <LI>HTML 4 compliant 90%</LI>
   <li>Colour support (mapped to current system palette)</li>
-  <LI>Graphics 90% - Now loads HTML files with Gifs - colors are perfect in 256/mono modes - other modes need adjusting.</LI>
+  <LI>Graphics 95% - Now loads HTML files with Gifs and Jpgs - colors are perfect in mono/256/32k/64k modes - other modes need (24/32bit) adjusting.</LI>
   <LI>Gifs can now be dragged to a Highwire window where it will be displayed.</LI>
   <LI>Implementation of memory caching of images avoids multiple loading of same image. The pseudo URI "about:cache" now shows detailed information about cached images.</LI>        
   <LI>GEM Version with drop-down menues</LI>
@@ -138,6 +138,15 @@ I tried. :) HighWire is still very much in development.</p>
   <LI>Initial implementation of the Ovl's for different TCP/IP stack support has been added.</LI>
   <LI>Form support has been improved with the support of Selection List.</LI>
   <LI>Calulation of table width and cells has been improved.</LI>
+  <LI>New keyword FONT_MINSIZE to define a minimum font height in points, eg. for (font size = 1) (see example.cfg\highwire.cfg for explanation).</LI>
+  <LI>Nw menu entry under "Option" to have frames always resizable and scrollbars if necessary, even if the HTML defines anything else there. The default
+      is off, but can be set with the keyword FORCE_FRAMECTRL = 1.</LI>
+  <LI>The cfg file now supports three new keywords concerning the cache: 1) CACHEDIR which lets the user choose where Highwire will define a directory for the storage of visited pages/images,
+      2) CACHEMEM=(kbytes) to limit the amount of memory cached images (default is now 100k) which should help to prevent Highwire from running out of
+      memory due to always storing every image ever loaded and 3) CACHEDSK which sets limits for filling up the cache in order to prevent blowing up hard drives. (eg. CACHEDSK =
+      8192 1000 means to use only 8192 of disk space, but not more than 1000 files).</LI>   
+  <LI>More functionality for the redo button: Holding down the ALT key clears now the whole cache. Additional holding down the SHIFT key will avoid forcing
+      a page reload then.
   </ul>
 
 <p>It is currently missing:</p>
@@ -147,9 +156,8 @@ I tried. :) HighWire is still very much in development.</p>
   <li>Online module</li>
   <li>HTML forms</li>
   <LI>Java/Javascript support</LI>
-  <LI>Use of caches</LI>
   <LI>Use of internet clients</LI>
-  <LI>Support for JPG and PNG</li>
+  <LI>Support for PNG</li>
   <li>External viewer support</LI>
   <li>Lots more...</li>
 </ul>
