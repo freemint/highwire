@@ -207,7 +207,7 @@
 		/*          FONT_WEIGHT       */
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
 		/*          LINE_HEIGHT       */
-		/*          LIST_STYLE_TYPE   */
+		__CSS_ITEM (LIST_STYLE_TYPE,  0),
 		/*          MIN_HEIGHT        */
 		/*          MIN_WIDTH         */
 		__CSS_ITEM (MARGIN,           0),
