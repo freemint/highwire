@@ -70,8 +70,8 @@ new_containr (CONTAINR parent)
 		cont->ColSize = -1024;
 		cont->RowSize = -1024;
 		cont->Name    = strdup ("_top");
-		cont->BorderSize  = 5;
-		cont->BorderColor = G_LWHITE;
+		cont->BorderSize  = BORDER_SIZE;
+		cont->BorderColor = BORDER_COLOR;
 	} else {
 		cont->Base    = parent->Base;
 		cont->Parent  = parent;
@@ -283,9 +283,10 @@ containr_clear (CONTAINR cont)
 		
 		if (!depth) {
 			cont->Mode        = CNT_EMPTY;
-			cont->BorderSize  = (cont->Parent ? cont->Parent->BorderSize : 5);
+			cont->BorderSize  = (cont->Parent
+			                     ? cont->Parent->BorderSize  : BORDER_SIZE);
 			cont->BorderColor = (cont->Parent
-			                     ? cont->Parent->BorderColor : G_LWHITE);
+			                     ? cont->Parent->BorderColor : BORDER_COLOR);
 			break;
 		
 		} else {

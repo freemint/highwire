@@ -261,4 +261,10 @@ void containr_scroll (CONTAINR, const GRECT *, long dx, long dy);
 BOOL containr_notify (CONTAINR, HW_EVENT, const void * gen_ptr);
 
 
+/* default values for frame borders */
+
+#define BORDER_SIZE    5
+#define BORDER_COLOR   G_LWHITE
+
+
 #endif /*__CONTAINR_H__*/
