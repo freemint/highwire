@@ -17,6 +17,7 @@
 #  define d_fname dta_name
 
 # else /* LATTICE */
+#  include <dos.h>
 #  define DTA     struct FILEINFO
 #  define d_fname name
 # endif
@@ -30,7 +31,7 @@
 #include "cache.h"
 
 
-#define MAGIC_NUM 0x20040821l /* needs to get updated in case the format of *
+#define MAGIC_NUM 0x20040824l /* needs to get updated in case the format of *
                                * the cache.idx file changes                 */
 
 static const char base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -323,7 +324,7 @@ cache_throw (long size)
 
 /*============================================================================*/
 CACHED
-cache_insert (LOCATION loc, long ident,
+cache_insert (LOCATION loc, long ident, long lc_ident,
               CACHEOBJ * object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem;
@@ -340,6 +341,23 @@ cache_insert (LOCATION loc, long ident,
 	}
 	citem->Ident = ident;
 	*object      = NULL;
+	if (lc_ident) {
+		CACHEITEM nitem = citem->NodeNext;
+		while (nitem) {
+			if (nitem->Cached[0]) {
+				if (nitem->Ident) {
+					printf ("cache_insert(%s): ident already set.\n", loc->FullName);
+				}
+				nitem->Ident    = lc_ident;
+				__cache_changed = TRUE;
+				break;
+			}
+			nitem = nitem->NodeNext;
+		}
+		if (!nitem) {
+			printf ("cache_insert(%s): local not found.\n", loc->FullName);
+		}
+	}
 	
 	return citem->Object;
 }
@@ -366,13 +384,21 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 	CACHEITEM * p_found = NULL;
 	CACHEITEM   citem;
 
+	if (opt_found) {
+		*opt_found = 0;
+	}
+
 	while ((citem = *p_cache) != NULL) {
 		if (location_equal (loc, citem->Location)) {
-			if (ident == citem->Ident) {
+			if (ident ? ident == citem->Ident : citem->Cached[0] != '\0') {
 				p_found = p_cache;
 				break;
-			} else if (opt_found && citem->Ident) {
-				p_found = p_cache;
+			} else if (opt_found /*&& citem->Ident*/) {
+				if (citem->Cached[0] == '\0') {
+					p_found = p_cache;
+				 } else {
+				 	*opt_found = citem->Ident;
+				 }
 			}
 		}
 		p_cache = &citem->NodeNext;
@@ -389,10 +415,6 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 			*opt_found = citem->Ident;
 		}
 		return (ident ? citem->Object : (CACHED)cache_location (citem));
-	}
-
-	if (opt_found) {
-		*opt_found = 0;
 	}
 	return NULL;
 }
@@ -548,7 +570,7 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 	while (citem) {
 		if (!item_isMem (citem) && citem->Cached[0]) {
 			if (location_wrIdx (file, citem->Location)) {
-				fprintf (file, "$%08lX$%08lX$%08lX$/%s\n",
+				fprintf (file, "$%08lX$%08lX$%08lX$%08lX$/%s\n", citem->Ident,
 				         citem->Size, citem->Date, citem->Expires, citem->Cached);
 				if (single) break;
 			}
@@ -700,6 +722,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 					}
 				} else {
 					char * ptr  = buf;
+					long  ident = read_hex (&ptr);
 					long   size = read_hex (&ptr);
 					long   date = read_hex (&ptr);
 					long   expr = read_hex (&ptr);
@@ -727,6 +750,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 							break;
 						} else {
 							strcpy (item->Cached, ptr +1);
+							item->Ident   = ident;
 							item->Date    = date;
 							item->Expires = expr;
 							item->Reffs--;
@@ -929,6 +953,9 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 					res_d         = CR_LOCAL;
 				} else {
 					res_d         = CR_BUSY;
+				}
+				if (!info->Ident) {
+					info->Ident  = citem->Ident;
 				}
 				if (!ident || !info->Source) {
 					info->Source = citem->Location;

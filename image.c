@@ -159,10 +159,10 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		}
 		if (w > 0 && h > 0 && hash != img_hash (w, h, bgnd)) {
 			cached = NULL;  /* absolute size doesn't match */
+		} else {
+			hash = bgnd;
 		}
-		hash = bgnd;
 	}
-	
 	if (cached) {
 		cIMGDATA data = cached;
 		if (!h) {
@@ -189,6 +189,10 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		if (cached) {
 			img->u.Data = cache_bound (cached, &img->source);
 		}
+	
+	} else if (hash) {
+		if (!w) w = img->set_w = (hash >>12) & 0x0FFF;
+		if (!h) h = img->set_h = (hash     ) & 0x0FFF;
 	}
 	
 	if (blocked) {
@@ -389,6 +393,7 @@ image_job (void * arg, long invalidated)
 	short  old_w = img->disp_w;
 	short  old_h = img->disp_h;
 	int  calc_xy = 0;
+	BOOL   fresh = FALSE;
 	
 	long   hash   = 0;
 	CACHED cached = NULL;
@@ -417,7 +422,8 @@ image_job (void * arg, long invalidated)
 #if defined(__LOADER_H__)
 		if (!cached) {
 			if (res & CR_LOCAL) {
-				loc = info.Local;
+				loc   = info.Local;
+				fresh = (info.Ident == 0);
 			
 			} else if (res & CR_BUSY) {
 				return TRUE;
@@ -458,6 +464,7 @@ image_job (void * arg, long invalidated)
 			free (info);
 		}
 		if (data) {
+			long ident = (fresh ? img_hash (data->img_w, data->img_h, 0) : 0);
 			if (data->fd_stand) {
 				pIMGDATA trns = malloc (sizeof (struct s_img_data)
 				                        + data->mem_size);
@@ -476,7 +483,7 @@ image_job (void * arg, long invalidated)
 			}
 			set_word (img);
 			hash = img_hash (img->disp_w, img->disp_h, img->backgnd);
-			img->u.Data = cache_insert (img->source, hash,
+			img->u.Data = cache_insert (img->source, hash, ident,
 			                            (CACHEOBJ*)&data, data->mem_size, free);
 		} else {
 			clip = NULL;

@@ -5,7 +5,7 @@
 typedef void       * CACHEOBJ;
 typedef const void * CACHED;
 
-CACHED   cache_insert  (LOCATION, long ident,
+CACHED   cache_insert  (LOCATION, long ident, long lc_ident,
                         CACHEOBJ *, size_t size, void (*dtor)(void*));
 CACHED   cache_lookup  (LOCATION, long ident, long * opt_found);
 CACHED   cache_bound   (CACHED, LOCATION * exchange);
