@@ -273,6 +273,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	WORD hanging, hang_nxt;
 	
 	This->Rect.X += par->Indent;
+	This->Rect.H =  dombox_TopDist (This);
 	
 	if (par->Hanging < 0) {
 		hanging  = 0;
@@ -283,22 +284,22 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	}
 	
 	if (par->paragraph_code == PAR_IMG) {
-		par->Box.Rect.X += blocker->L.width;
+		This->Rect.X += blocker->L.width;
 		align = ALN_LEFT;
 	} else {
-		align = par->Box.TextAlign;
+		align = This->TextAlign;
 		if (blocker->L.bottom) {
-			l_height   = blocker->L.bottom - par->Box.Rect.Y;
+			l_height   = blocker->L.bottom - This->Rect.Y;
 			int_width -= blocker->L.width;
 			blocked   |= (BRK_LEFT & ~BRK_LN);
 		}
 		if (blocker->R.bottom) {
-			r_height   = blocker->R.bottom - par->Box.Rect.Y;
+			r_height   = blocker->R.bottom - This->Rect.Y;
 			int_width -= blocker->R.width;
 			blocked   |= (BRK_RIGHT & ~BRK_LN);
 		}
 	}
-	par->Box.Rect.H = dombox_TopDist (&par->Box);
+	
 	do {
 		short count = 1;
 		short img_h = 0;
@@ -389,7 +390,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		}
 
 		offset -= word->space_width;
-		offset += hanging + dombox_LftDist (&par->Box);
+		offset += hanging + dombox_LftDist (This);
 
 		if (blocked)
 			offset += blocker->L.width;
@@ -399,7 +400,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			if (word->image) {
 				/* Origin already set in new_image() */
 				word->image->offset.X = offset;
-				word->image->offset.Y = par->Box.Rect.H;
+				word->image->offset.Y = This->Rect.H;
 				if (word->vertical_align != ALN_TOP) {
 					word->image->offset.Y += line->Ascend - word->word_height;
 				} else {
@@ -409,8 +410,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			}
 			if (word->link && !word->link->isHref) {
 				/* Origin already set in new_named_location() */
-				word->link->u.anchor->offset.X = -par->Box.Rect.X;
-				word->link->u.anchor->offset.Y =  par->Box.Rect.H;
+				word->link->u.anchor->offset.X = -This->Rect.X;
+				word->link->u.anchor->offset.Y =  This->Rect.H;
 			}
 			word->h_offset = offset;
 
@@ -426,19 +427,19 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		}
 		line->Word->h_offset += line->Word->space_width;
 		
-		par->Box.Rect.H += line->Ascend;
-		line->OffsetY   =  par->Box.Rect.H;
-		par->Box.Rect.H += line->Descend;
+		This->Rect.H  += line->Ascend;
+		line->OffsetY =  This->Rect.H;
+		This->Rect.H  += line->Descend;
 		
 		if (blocked) {
 			if (blocked & (BRK_LEFT & ~BRK_LN)) {
 				if (ln_brk & (BRK_LEFT & ~BRK_LN)) {
-					if (par->Box.Rect.H < l_height) {
-						line->Descend += l_height - par->Box.Rect.H;
-						par->Box.Rect.H = l_height;
+					if (This->Rect.H < l_height) {
+						line->Descend += l_height - This->Rect.H;
+						This->Rect.H  =  l_height;
 					}
 				}
-				if (par->Box.Rect.H >= l_height) {
+				if (This->Rect.H >= l_height) {
 					blocked   &= ~(BRK_LEFT & ~BRK_LN);
 					int_width += blocker->L.width;
 					blocker->L.bottom = blocker->L.width = l_height = 0;
@@ -446,12 +447,12 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			}
 			if (blocked & (BRK_RIGHT & ~BRK_LN)) {
 				if (ln_brk & (BRK_RIGHT & ~BRK_LN)) {
-					if (par->Box.Rect.H < r_height) {
-						line->Descend += r_height - par->Box.Rect.H;
-						par->Box.Rect.H = r_height;
+					if (This->Rect.H < r_height) {
+						line->Descend += r_height - This->Rect.H;
+						This->Rect.H  =  r_height;
 					}
 				}
-				if (par->Box.Rect.H >= r_height) {
+				if (This->Rect.H >= r_height) {
 					blocked   &= ~(BRK_RIGHT & ~BRK_LN);
 					int_width += blocker->R.width;
 					blocker->R.bottom = blocker->R.width = r_height = 0;
@@ -473,11 +474,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	}
 
 	if (par->paragraph_code == PAR_IMG) {
-		par->Box.Rect.W = par->item->word_width;
+		This->Rect.W = par->item->word_width;
 	} else {
-		par->Box.Rect.W = width;
+		This->Rect.W = width;
 	}
-	par->Box.Rect.H += dombox_BotDist (&par->Box);
+	This->Rect.H += dombox_BotDist (This);
 }
 
 
