@@ -193,8 +193,8 @@ load_sampleovl();
 			quit = process_messages (msg, out.emo_mouse, out.emo_kmeta);
 		}
 		if (event & MU_BUTTON) {
-			button_clicked (out.emo_mbutton, out.emo_mclicks, out.emo_kmeta,
-			                out.emo_mouse.p_x, out.emo_mouse.p_y);
+			window_evButton (out.emo_mbutton, out.emo_mouse,
+			                 out.emo_kmeta,out.emo_mclicks);
 		}
 		if (event & MU_KEYBD) {
 			key_pressed (out.emo_kreturn, out.emo_kmeta);
@@ -258,7 +258,7 @@ static const char spl_vers[] = _HIGHWIRE_VERSION_" "_HIGHWIRE_BETATAG_;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
-close_job (void * arg, long invalidated)
+close_splash (void * arg, long invalidated)
 {
 	(void)invalidated;
 	if (arg == splash) {
@@ -266,6 +266,20 @@ close_job (void * arg, long invalidated)
 		splash = NULL;
 	}
 	return FALSE;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_evButton (WINDOW This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
+{
+	(void)bmask;
+	(void)mouse;
+	(void)kstate;
+	(void)clicks;
+	if (splash) {
+		sched_remove (close_splash, splash);
+		close_splash (This, 0l);
+	}
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -312,9 +326,8 @@ open_splash (void)
 	curr.g_w =  w;
 	curr.g_h =  h;
 	splash = window_ctor (malloc (sizeof (WINDOWBASE)), 0, &curr, TRUE);
+	splash->evButton = vTab_evButton;
 	splash->drawWork = vTab_draw;
 	window_redraw (splash, NULL);
-	sched_insert (close_job, splash, 0l, 20);
+	sched_insert (close_splash, splash, 0l, 20);
 }
-
-

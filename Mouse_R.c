@@ -2,8 +2,13 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> /* debug */
 
 #include <gemx.h>
+
+#ifdef __PUREC__
+# define CONTAINR struct s_containr *
+#endif
 
 #include "global.h"
 #include "Containr.h"
@@ -18,25 +23,21 @@
  * handles mouse interaction with a frame
 */
 void
-button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
+button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 {
 	void * hash  = NULL;
-	void * txt_i = NULL, * txt_o;
+	void * txt_o;
 	GRECT  watch;
 	WORD   decx = 0, decy = 0;
 	
 	EVMULT_IN multi_in = { 0, };
 	
-	CONTAINR cont;
-	UWORD    elem = PE_NONE;
-	FRAME   frame = NULL;
-	HwWIND   wind = hwWind_button (mx, my);
-	if (wind) {
-		txt_i = wind->Input;
-		cont  = wind->Pane;
-		elem  = containr_Element (&cont, mx, my, &watch, NULL, &hash);
-		frame = hwWind_setActive (wind, cont, NULL);
-	}
+	HwWIND  wind = hwWind_byContainr (cont);
+	void * txt_i = wind->Input;
+	UWORD  elem  = containr_Element (&cont, mouse.p_x, mouse.p_y,
+	                                 &watch, NULL, &hash);
+	FRAME  frame = hwWind_setActive (wind, cont, NULL);
+	
 #if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 	if (frame) {
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
@@ -50,9 +51,9 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 #if (_HIGHWIRE_RPOP_ == 1)
 
 		if (elem > PE_IMAGE && elem < PE_INPUT)
-			rpoplink_open (mx, my, cont, hash);	
+			rpoplink_open (mouse.p_x, mouse.p_y, cont, hash);	
 		else
-			rpopup_open (mx, my);
+			rpopup_open (mouse.p_x, mouse.p_y);
 #endif
 	
 	} else switch (PE_Type (elem)) {
@@ -61,7 +62,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			BOOL drag = FALSE;
 			long step = 0;
 		
-			WORD y = my - frame->clip.g_y;
+			WORD y = mouse.p_y - frame->clip.g_y;
 			
 			if (y >= frame->v_bar.pos + frame->v_bar.size) {
 				
@@ -93,7 +94,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			
 			} else if (button & LEFT_BUTTON) {                       /* realtime */
 				drag = TRUE;
-				decy = my - frame->clip.g_y - frame->v_bar.pos;
+				decy = mouse.p_y - frame->clip.g_y - frame->v_bar.pos;
 		
 			} else {                                                   /* slider */
 				short s_x  = frame->clip.g_x + frame->clip.g_w;
@@ -129,7 +130,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			BOOL drag = FALSE;
 			long step = 0;
 		
-			WORD x = mx - frame->clip.g_x;
+			WORD x = mouse.p_x - frame->clip.g_x;
 			
 			if (x >= frame->h_bar.pos + frame->h_bar.size) {
 				
@@ -161,7 +162,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			
 			} else if (button & LEFT_BUTTON) {                       /* realtime */
 				drag = TRUE;
-				decx = mx - frame->clip.g_x - frame->h_bar.pos;
+				decx = mouse.p_x - frame->clip.g_x - frame->h_bar.pos;
 		
 			} else {                                                   /* slider */
 				short s_x  = 0;
@@ -198,8 +199,8 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			char ** popup = NULL;
 			GRECT   radio;
 			PXY     pxy;
-			pxy.p_x = mx - watch.g_x;
-			pxy.p_y = my - watch.g_y;
+			pxy.p_x = mouse.p_x - watch.g_x;
+			pxy.p_y = mouse.p_y - watch.g_y;
 			switch (input_handle (hash, pxy, &radio, &popup)) {
 				case 2: radio.g_x += watch.g_x;
 				        radio.g_y += watch.g_y;
@@ -246,7 +247,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				long dx, dy;
 				if (containr_Anchor (cont, addr, &dx, &dy)) {
 					hwWind_scroll (wind, cont, dx, dy);
-					check_mouse_position (mx, my);
+					check_mouse_position (mouse.p_x, mouse.p_y);
 				}
 			} else {
 				if (state & K_ALT) {

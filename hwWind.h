@@ -63,7 +63,6 @@ HwWIND  hwWind_byContainr (CONTAINR);
 
 #define hwWind_redraw( HwWIND, GRECT)       window_redraw (&HwWIND->Base, GRECT)
 HwWIND  hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
-HwWIND  hwWind_button (WORD mx, WORD my);
 HwWIND  hwWind_keybrd (WORD key, UWORD state);
 
 FRAME hwWind_setActive   (HwWIND, CONTAINR, INPUT);

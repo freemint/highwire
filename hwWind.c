@@ -21,7 +21,8 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
-static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD state);
+static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
+static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
 static void vTab_drawWork  (HwWIND, const GRECT *);
 static void vTab_drawIcon  (HwWIND, const GRECT *);
 static void vTab_raised    (HwWIND, BOOL topNbot);
@@ -200,6 +201,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	
 	window_ctor (This, wind_kind, NULL, FALSE);
 	This->Base.evMessage = vTab_evMessage;
+	This->Base.evButton  = vTab_evButton;
 	This->Base.drawWork  = vTab_drawWork;
 	This->Base.drawIcon  = vTab_drawIcon;
 	This->Base.raised    = vTab_raised;
@@ -1409,7 +1411,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
-vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD state)
+vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 {
 	BOOL found = TRUE;
 	BOOL check = FALSE;
@@ -1433,7 +1435,7 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD state)
 			break;
 		case WM_ARROWED:
 			if (msg[4] == WA_LFLINE) {
-				hwWind_undo (This, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
+				hwWind_undo (This, ((kstate & (K_RSHIFT|K_LSHIFT)) != 0));
 			}
 			break;
 		case 22360: /* shaded */
@@ -1449,7 +1451,7 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD state)
 			This->shaded = FALSE;
 			break;
 		case WM_CLOSED:
-			hwWind_close (This, state);
+			hwWind_close (This, kstate);
 			check = (hwWind_Top != NULL);
 			break;
 		
@@ -1532,44 +1534,44 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 }
 
 
-/*============================================================================*/
-HwWIND
-hwWind_button (WORD mx, WORD my)
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 {
-	HwWIND wind = hwWind_byCoord (mx, my);
-	WORD   ib_x = 0, ib_y = 0, tb_n = -1;
-	if (wind) {
-		if (wind->TbarH && my < wind->Work.g_y + wind->TbarH) {
-			short x = mx - wind->Work.g_x;
-			tb_n = numberof(wind->TbarElem) -1;
-			do if (x >= wind->TbarElem[tb_n].Offset) {
-				if (x > wind->TbarElem[tb_n].Offset + wind->TbarElem[tb_n].Width) {
-					tb_n = -1;
-				} else if (tb_n == TBAR_EDIT ?  wind->TbarMask & TBAR_STOP_MASK
-				                             : !(wind->TbarMask & (1 << tb_n))) {
-					wind = NULL;
-				}
-				break;
-			} while (tb_n--);
-		
-		} else if (wind->IbarH &&
-			       ((ib_y = wind->Work.g_y + wind->Work.g_h - wind->IbarH) > my ||
-			        (ib_x = wind->Work.g_x + wind->Work.g_w - wind->IbarH) > mx)) {
-			ib_y = ib_x = 0;
-		}
+	WORD mx = mouse.p_x, my = mouse.p_y;
+	WORD ib_x = 0, ib_y = 0, tb_n = -1;
+	
+	if (This->TbarH && my < This->Work.g_y + This->TbarH) {
+		short x = mx - This->Work.g_x;
+		tb_n = numberof(This->TbarElem) -1;
+		do if (x >= This->TbarElem[tb_n].Offset) {
+			if (x > This->TbarElem[tb_n].Offset + This->TbarElem[tb_n].Width) {
+				tb_n = -1;
+			} else if (tb_n == TBAR_EDIT ?  This->TbarMask & TBAR_STOP_MASK
+			                             : !(This->TbarMask & (1 << tb_n))) {
+				This = NULL;
+			}
+			break;
+		} while (tb_n--);
+	
+	} else if (This->IbarH &&
+		       ((ib_y = This->Work.g_y + This->Work.g_h - This->IbarH) > my ||
+		        (ib_x = This->Work.g_x + This->Work.g_w - This->IbarH) > mx)) {
+		ib_y = ib_x = 0;
 	}
-	if (!wind) {
+	
+	if (!This) {
 		short dmy;
 		wind_update (BEG_MCTRL);
 		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
 		wind_update (END_MCTRL);
 	
 	} else if (tb_n == TBAR_EDIT) {
-		TBAREDIT * edit = TbarEdit (wind);
-		WORD x = wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset;
+		TBAREDIT * edit = TbarEdit (This);
+		WORD x = This->Work.g_x + This->TbarElem[TBAR_EDIT].Offset;
 		WORD c = edit->Cursor;
-		if (wind->Input) {
-			WORDITEM word = input_activate (wind->Input, -1);
+		if (This->Input) {
+			WORDITEM word = input_activate (This->Input, -1);
 			if (word) {
 				GRECT clip;
 				long  lx, ly;
@@ -1581,40 +1583,40 @@ hwWind_button (WORD mx, WORD my)
 				              + word->line->OffsetY - word->word_height;
 				clip.g_w = word->word_width;
 				clip.g_h = word->word_height + word->word_tail_drop;
-				hwWind_redraw (wind, &clip);
+				hwWind_redraw (This, &clip);
 			}
-			wind->Input = NULL;
+			This->Input = NULL;
 		}
 		edit->Cursor = (mx - x) /8 + edit->Shift;
 		if (edit->Cursor > edit->Length) {
 			edit->Cursor = edit->Length;
 		}
-		hwWind_raise (wind, TRUE);
-		if (!chng_toolbar (wind, 0, 0, TBAR_EDIT) && c != edit->Cursor) {
+		hwWind_raise (This, TRUE);
+		if (!chng_toolbar (This, 0, 0, TBAR_EDIT) && c != edit->Cursor) {
 			GRECT clip;
 			clip.g_x = x;
-			clip.g_w = wind->TbarElem[TBAR_EDIT].Width;
-			clip.g_y = wind->Work.g_y;
-			clip.g_h = wind->TbarH;
-			draw_toolbar (wind, &clip, FALSE);
+			clip.g_w = This->TbarElem[TBAR_EDIT].Width;
+			clip.g_y = This->Work.g_y;
+			clip.g_h = This->TbarH;
+			draw_toolbar (This, &clip, FALSE);
 		}
-		wind = NULL;
+		This = NULL;
 	
 	} else if (tb_n >= 0) {
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
 		EVMULT_OUT out;
-		short     hist  = wind->HistMenu;
+		short     hist  = This->HistMenu;
 		short     shift;
-		chng_toolbar (wind, 0, 0, tb_n);
+		chng_toolbar (This, 0, 0, tb_n);
 		if (tb_n <= TBAR_RGHT) {
 			m_in.emi_flags |= MU_TIMER;
 			m_in.emi_tlow  =  500;
 			m_in.emi_thigh =  0;
 		}
-		m_in.emi_m1.g_x = wind->Work.g_x + wind->TbarElem[tb_n].Offset;
-		m_in.emi_m1.g_y = wind->Work.g_y;
-		m_in.emi_m1.g_w = m_in.emi_m1.g_h = wind->TbarElem[tb_n].Width;
+		m_in.emi_m1.g_x = This->Work.g_x + This->TbarElem[tb_n].Offset;
+		m_in.emi_m1.g_y = This->Work.g_y;
+		m_in.emi_m1.g_w = m_in.emi_m1.g_h = This->TbarElem[tb_n].Width;
 		do {
 			WORD       msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
@@ -1623,11 +1625,11 @@ hwWind_button (WORD mx, WORD my)
 				char * array[HISTORY_LAST];
 				short  i, n = 0;
 				if (tb_n) {
-					for (i = hist +1; i < wind->HistUsed;
-					     array[n++] = wind->History[i++]->Text +1);
+					for (i = hist +1; i < This->HistUsed;
+					     array[n++] = This->History[i++]->Text +1);
 				} else {
 					for (i = hist -1; i >= 0;
-					     array[n++] = wind->History[i--]->Text +1);
+					     array[n++] = This->History[i--]->Text +1);
 				}
 				array[n] = NULL;
 				n = HW_form_popup (array, m_in.emi_m1.g_x,
@@ -1644,10 +1646,10 @@ hwWind_button (WORD mx, WORD my)
 			}
 			if (event & MU_M1) {
 				if (m_in.emi_m1leave) {
-					chng_toolbar (wind, 0, 0, -1);
+					chng_toolbar (This, 0, 0, -1);
 					m_in.emi_m1leave = MO_ENTER;
 				} else { /* entered */
-					chng_toolbar (wind, 0, 0, tb_n);
+					chng_toolbar (This, 0, 0, tb_n);
 					m_in.emi_m1leave = MO_LEAVE;
 				}
 			}
@@ -1658,15 +1660,15 @@ hwWind_button (WORD mx, WORD my)
 			if (shift) tb_n = -1;
 		}
 		if (m_in.emi_m1leave) switch (tb_n) {
-			case TBAR_LEFT: hwWind_undo     (wind, FALSE);        break;
-			case TBAR_RGHT: hwWind_undo     (wind, TRUE);         break;
-			case TBAR_HOME: hwWind_history  (wind, 0,    FALSE);  break;
-			case TBAR_REDO: hwWind_history  (wind, hist, !shift); break;
-			case TBAR_STOP: containr_escape (wind->Pane);         break;
+			case TBAR_LEFT: hwWind_undo     (This, FALSE);        break;
+			case TBAR_RGHT: hwWind_undo     (This, TRUE);         break;
+			case TBAR_HOME: hwWind_history  (This, 0,    FALSE);  break;
+			case TBAR_REDO: hwWind_history  (This, hist, !shift); break;
+			case TBAR_STOP: containr_escape (This->Pane);         break;
 			case TBAR_OPEN: menu_open       (TRUE);
-			default:        chng_toolbar (wind, 0, 0, -1);
+			default:        chng_toolbar (This, 0, 0, -1);
 		}
-		wind = NULL;
+		This = NULL;
 	
 	} else if (ib_y) {
 		short     event = wind_update (BEG_MCTRL);
@@ -1677,26 +1679,26 @@ hwWind_button (WORD mx, WORD my)
 		vs_clip_pxy (vdi_handle, c);
 		c[0].p_x            = ib_x +1;
 		c[0].p_y            = ib_y +1;
-		c[1].p_x = c[1].p_y = wind->IbarH;
+		c[1].p_x = c[1].p_y = This->IbarH;
 		vsf_interior (vdi_handle, FIS_SOLID);
 		vswr_mode (vdi_handle, MD_XOR);
 		v_hide_c  (vdi_handle);
-		wind_get_grect (wind->Base.Handle, WF_FIRSTXYWH, (GRECT*)w);
+		wind_get_grect (This->Base.Handle, WF_FIRSTXYWH, (GRECT*)w);
 		while (w[1].p_x > 0 && w[1].p_y > 0) {
 			if (rc_intersect ((GRECT*)c, (GRECT*)w)) {
 				w[1].p_x += w[0].p_x -1;
 				w[1].p_y += w[0].p_y -1;
 				v_bar (vdi_handle, (short*)w);
 			}
-			wind_get_grect (wind->Base.Handle, WF_NEXTXYWH, (GRECT*)w);
+			wind_get_grect (This->Base.Handle, WF_NEXTXYWH, (GRECT*)w);
 		}
-		c[0] = *(PXY*)&wind->Curr;
-		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + wind->Curr.g_w -1;
-		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + wind->Curr.g_h -1;
+		c[0] = *(PXY*)&This->Curr;
+		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + This->Curr.g_w -1;
+		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + This->Curr.g_h -1;
 		c[4].p_x = c[0].p_x;
 		c[4].p_y = c[0].p_y +1;
-		w[0] = *(PXY*)&wind->Work;
-		w[1].p_x = w[2].p_x = (w[3].p_x = w[0].p_x) + wind->Work.g_w -1;
+		w[0] = *(PXY*)&This->Work;
+		w[1].p_x = w[2].p_x = (w[3].p_x = w[0].p_x) + This->Work.g_w -1;
 		w[1].p_y = w[0].p_y;
 		w[3].p_y = w[2].p_y = ib_y;
 		w[4].p_x = w[0].p_x;
@@ -1742,15 +1744,17 @@ hwWind_button (WORD mx, WORD my)
 		wind_update (END_MCTRL);
 		c[1].p_x = c[2].p_x - c[0].p_x +1;
 		c[1].p_y = c[2].p_y - c[0].p_y +1;
-		hwWind_resize (wind, (GRECT*)c);
-		wind = NULL;
+		hwWind_resize (This, (GRECT*)c);
+		This = NULL;
 	
-	} else if (wind->TbarActv == TBAR_EDIT) {
-		TBAREDIT * edit = TbarEdit (wind);
+	} else if (This->TbarActv == TBAR_EDIT) {
+		TBAREDIT * edit = TbarEdit (This);
 		edit->Shift = 0;
-		chng_toolbar (wind, 0, 0, -1);
+		chng_toolbar (This, 0, 0, -1);
 	}
-	return wind;
+	if (This) {
+		button_clicked (This->Pane, bmask, clicks, kstate, mouse);
+	}
 }
 
 

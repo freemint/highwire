@@ -6,6 +6,7 @@
 #define WINDOW_t WINDOW
 #include "Window.h"
 static BOOL vTab_evMessage (WINDOW, WORD msg[], PXY, UWORD);
+static void vTab_evButton  (WINDOW, WORD bmask, PXY, UWORD, WORD clicks);
 static void vTab_draw      (WINDOW, const GRECT *);
 static void vTab_raised    (WINDOW, BOOL topNbot);
 
@@ -33,6 +34,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->Next = This->Prev = NULL;
 		
 		This->evMessage = vTab_evMessage;
+		This->evButton  = vTab_evButton;
 		This->drawWork  = vTab_draw;
 		This->drawIcon  = vTab_draw;
 		This->raised    = vTab_raised;
@@ -95,6 +97,31 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 		default: return (*wind->evMessage)(wind, msg, mouse, kstate);
 	}
 	return TRUE;
+}
+
+
+/*============================================================================*/
+static void
+vTab_evButton (WINDOW This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
+{
+	window_raise (This, TRUE, NULL);
+	(void)bmask;
+	(void)mouse;
+	(void)kstate;
+	(void)clicks;
+}
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+void
+window_evButton (WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
+{
+	WINDOW wind = window_Top;
+	WORD   hdl  = wind_find (mouse.p_x, mouse.p_y);
+	while (wind && wind->Handle != hdl) {
+		wind = wind->Next;
+	}
+	if (wind && (wind == window_Top || !window_Top->isModal)) {
+		(*wind->evButton)(wind, bmask, mouse, kstate, clicks);
+	}
 }
 
 
