@@ -38,7 +38,7 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 	list->Counter     = counter;
 	list->Spacer      = current->word;
 	
-	if ((int)bullet >= 0) {
+	if (bullet > LT_NONE) {
 		*(current->text++) = font_Nobrk (current->word->font);
 		new_word (current, TRUE);
 		list->Spacer->word_width = list->Hanging;
@@ -305,20 +305,20 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	
 	switch (bullet)
 	{
-		case disc:
+		case LT_DISC:
 			current->text = unicode_to_wchar (0x2022,   /* BULLET */
 			                                  current->text, mapping);
 			break;
-		case square:
+		case LT_SQUARE:
 			current->text = unicode_to_wchar (0x25AA,   /* BLACK SMALL SQUARE */
 			                                  current->text, mapping);
 			break;
-		case circle:
+		case LT_CIRCLE:
 			current->text = unicode_to_wchar (0x25E6,  /* WHITE BULLET */
 			                                  current->text, mapping);
 			break;
 		
-		case Number:
+		case LT_DECIMAL:
 			list->Counter = counter +1;
 			if (counter < 0) {
 				current->text = unicode_to_wchar (0x2212,  /* MINUS SIGN */
@@ -328,7 +328,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			long2decimal (&text, counter);
 			break;
 		
-		case alpha:
+		case LT_L_ALPHA:
 			if (counter != 0) {
 				list->Counter = counter +1;
 				if (counter < 0) {
@@ -341,7 +341,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			}
 			/* else use @ as small alphabet zero */
 		
-		case Alpha:
+		case LT_U_ALPHA:
 			list->Counter = counter +1;
 			if (counter < 0) {
 				current->text = unicode_to_wchar (0x2212,  /* MINUS SIGN */
@@ -351,7 +351,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			long2alpha (&text, counter, TRUE);
 			break;
 		
-		case roman:
+		case LT_L_ROMAN:
 			list->Counter = counter +1;
 			if (counter > 0 && counter < 3000) {
 				short2roman (&text, counter, FALSE);
@@ -360,7 +360,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			}
 			break;
 		
-		case Roman:
+		case LT_U_ROMAN:
 			list->Counter = counter +1;
 			if (counter > 0 && counter < 20000) {
 				short2roman (&text, counter, TRUE);

@@ -1838,11 +1838,11 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		BULLET bullet;
 		switch (get_value_char (parser, KEY_TYPE)) {
-			case 'a': bullet = alpha; break;
-			case 'A': bullet = Alpha; break;
-			case 'i': bullet = roman; break;
-			case 'I': bullet = Roman; break;
-			default:  bullet = Number;
+			case 'a': bullet = LT_L_ALPHA; break;
+			case 'A': bullet = LT_U_ALPHA; break;
+			case 'i': bullet = LT_L_ROMAN; break;
+			case 'I': bullet = LT_U_ROMAN; break;
+			default:  bullet = LT_DECIMAL;
 		}
 		list_start (current, bullet, get_value_unum (parser, KEY_START, 1));
 	
@@ -1864,11 +1864,11 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		BULLET bullet = (current->lst_stack
-		                 ? (current->lst_stack->BulletStyle +1) %3 : disc);
+		                 ? current->lst_stack->BulletStyle %3 +1 : LT_DISC);
 		switch (toupper (get_value_char (parser, KEY_TYPE))) {
-			case 'S': bullet = square; break;
-			case 'C': bullet = circle; break;
-			case 'D': bullet = disc;   break;
+			case 'S': bullet = LT_SQUARE; break;
+			case 'C': bullet = LT_CIRCLE; break;
+			case 'D': bullet = LT_DISC;   break;
 		}
 		list_start (current, bullet, 0);
 	
@@ -1892,7 +1892,7 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		list_start (current, disc, 0);
+		list_start (current, LT_DISC, 0);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -1927,14 +1927,14 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 		                                 current->lst_stack->Counter);
 		BULLET bullet;
 		switch (get_value_char (parser, KEY_TYPE)) {
-			case 'a':           bullet = alpha;  break;
-			case 'A':           bullet = Alpha;  break;
-			case 'i':           bullet = roman;  break;
-			case 'I':           bullet = Roman;  break;
-			case '1':           bullet = Number; break;
-			case 'd': case 'D': bullet = disc;   break;
-			case 'c': case 'C': bullet = circle; break;
-			case 's': case 'S': bullet = square; break;
+			case 'a': bullet = LT_L_ALPHA; break;
+			case 'A': bullet = LT_U_ALPHA; break;
+			case 'i': bullet = LT_L_ROMAN; break;
+			case 'I': bullet = LT_U_ROMAN; break;
+			case '1': bullet = LT_DECIMAL; break;
+			case 'D': bullet = LT_DISC;   break;
+			case 'S': bullet = LT_SQUARE; break;
+			case 'C': bullet = LT_CIRCLE; break;
 			default:            bullet = current->lst_stack->BulletStyle;
 		}
 		list_marker (current, bullet, counter);
@@ -1954,7 +1954,7 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		list_start (current, -1,0);
+		list_start (current, LT_NONE, 0);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);

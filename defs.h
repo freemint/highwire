@@ -3,7 +3,7 @@
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     1
 #define _HIGHWIRE_REVISION_  5
-#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_BETATAG_   "beta"
 #define _HIGHWIRE_VERSION_   "0.1.5"
 
 #include "hw-types.h"   /* get base definitions */
@@ -63,8 +63,23 @@ typedef enum {
 	METH_GET = 0, METH_POST
 } FORM_METHOD;
 
+typedef enum {  /* HTML:          CSS:          */
+	LT_NONE = 0, /* ''                    'none' */
+	LT_DISC,     /* 'disc'                'disc' */
+	LT_SQUARE,   /* 'square'            'square' */
+	LT_CIRCLE,   /* 'circle'            'circle' */
+	LT_DECIMAL,  /* 'Number'           'decimal' */
+	LT_L_ALPHA,  /* 'alpha'        'lower-alpha' */
+	LT_U_ALPHA,  /* 'Alpha'        'upper-alpha' */
+	LT_L_ROMAN,  /* 'roman'        'lower-roman' */
+	LT_U_ROMAN,  /* 'Roman'        'upper-roman' */
+/* not yet implemented:
+	LT_L_LATIN,  / * ''           'lower-latin' * /
+	LT_U_LATIN,  / * ''           'upper-latin' * /
+	LT_DEZI_LZ   / * ''  'decimal-leading-zero' * /
+*/
+} BULLET;
 
-typedef enum {disc,square,circle,Number,alpha,Alpha,roman,Roman} BULLET;
 
 /* http://www.indigo.ie/egt/standards/iso639/iso639-2-en.html
  * http://selfhtml.teamone.de/diverses/sprachenkuerzel.html
