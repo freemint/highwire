@@ -493,28 +493,48 @@ menu_fontsize (char plus_minus)
 
 /*============================================================================*/
 void
-menu_logging (int mode)
+menu_cookies (int mode)
 {
-	if (mode < 0)  mode = !logging_is_on;
-	else if (mode) mode = TRUE;
-	else           mode = FALSE;
-	logging_is_on = mode;
+	if (mode < 0)  cfg_AllowCookies = !cfg_AllowCookies;
+	else if (mode) cfg_AllowCookies = TRUE;
+	else           cfg_AllowCookies = FALSE;
+	if (mode < 0) {
+		save_config ("COOKIES", (cfg_AllowCookies ? "1" : "0"));
+	}
 #ifdef GEM_MENU
-	menu_icheck (menutree, M_LOGGING, logging_is_on);
+	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
 #endif
 }
 
 
 /*============================================================================*/
 void
-menu_alt_text (int mode)
+menu_images (int mode)
 {
-	if (mode < 0)  mode = !alternative_text_is_on;
-	else if (mode) mode = TRUE;
-	else           mode = FALSE;
-	alternative_text_is_on = mode;
+	if (mode < 0)  cfg_ViewImages = !cfg_ViewImages;
+	else if (mode) cfg_ViewImages = TRUE;
+	else           cfg_ViewImages = FALSE;
+	if (mode < 0) {
+		save_config ("VIEW_IMAGES", (cfg_ViewImages ? "1" : "0"));
+	}
 #ifdef GEM_MENU
-	menu_icheck (menutree, M_ALT_TEXT, alternative_text_is_on);
+	menu_icheck (menutree, M_IMAGES, cfg_ViewImages);
+#endif
+}
+
+
+/*============================================================================*/
+void
+menu_use_css (int mode)
+{
+	if (mode < 0)  cfg_UseCSS = !cfg_UseCSS;
+	else if (mode) cfg_UseCSS = TRUE;
+	else           cfg_UseCSS = FALSE;
+	if (mode < 0) {
+		save_config ("USE_CSS", (cfg_UseCSS ? "1" : "0"));
+	}
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);
 #endif
 }
 
@@ -535,16 +555,14 @@ menu_frm_ctrl (int mode)
 
 /*============================================================================*/
 void
-menu_cookies (int mode)
+menu_logging (int mode)
 {
-	if (mode < 0)  cfg_AllowCookies = !cfg_AllowCookies;
-	else if (mode) cfg_AllowCookies = TRUE;
-	else           cfg_AllowCookies = FALSE;
-	if (mode < 0) {
-		save_config ("COOKIES", (cfg_AllowCookies ? "1" : "0"));
-	}
+	if (mode < 0)  mode = !logging_is_on;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	logging_is_on = mode;
 #ifdef GEM_MENU
-	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
+	menu_icheck (menutree, M_LOGGING, logging_is_on);
 #endif
 }
 
@@ -664,10 +682,11 @@ handle_menu (WORD title, WORD item, UWORD state)
 #endif
 		case M_FONT_INC:  menu_fontsize ('+'); break;
 		case M_FONT_DEC:  menu_fontsize ('-'); break;
-		case M_ALT_TEXT:  menu_alt_text(-1);   break;
-		case M_LOGGING:   menu_logging (-1);   break;
-		case M_FRM_CTRL:  menu_frm_ctrl(-1);   break;
-		case M_COOKIES :  menu_cookies (-1);   break;
+		case M_COOKIES:   menu_cookies  (-1);  break;
+		case M_IMAGES:    menu_images   (-1);  break;
+		case M_USE_CSS:   menu_use_css  (-1);  break;
+		case M_FRM_CTRL:  menu_frm_ctrl (-1);  break;
+		case M_LOGGING:   menu_logging  (-1);  break;
 	}
 	if (title > 0) {
 		menu_tnormal (menutree, title, UNHIGHLIGHT);

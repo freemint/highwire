@@ -480,15 +480,15 @@ read_config(void)
 				{ "LOCAL_WEB",            cfg_localweb,  0 },
 				{ "LOGGING",              cfg_func,      (long)menu_logging    },
 				{ "NORMAL",               cfg_font,      FA(normal_font, 0, 0) },
-				{ "NO_IMAGE",             cfg_func,      (long)menu_alt_text   },
+				{ "NO_IMAGE",             cfg_BOOL, (long)&alternative_text_is_on },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
 				{ "START_PAGE",           cfg_startpage, 0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
 				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 },
-				{ "USE_CSS",              cfg_BOOL,      (long)&cfg_UseCSS     },
-				{ "VIEW_IMAGES",          cfg_BOOL,      (long)&cfg_ViewImages }
+				{ "USE_CSS",              cfg_func,      (long)menu_use_css    },
+				{ "VIEW_IMAGES",          cfg_func,      (long)menu_images     }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;
