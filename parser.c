@@ -784,29 +784,20 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			}
 			
 			if (*p == ':') { /*........................ pseudo format */
-				key = TAG_Unknown;
-				while (isalpha (*(++p)) || *p == ':' || *p == '-'); /* ignore */
+				if (key == TAG_A
+				    && strnicmp (p +1, "link", 4) == 0 && !isalpha (*(p +5))) {
+					p += 5; /* ignore */
+				} else {
+					while (isalpha (*(++p)) || *p == ':' || *p == '-');
+					skip = TRUE; /* ignore */
+				}
 			}
 			
-			if (skip) { /* was a conditional rule, ignore */
-				key  = TAG_Unknown;
-				cid  = '\0';
-				skip = FALSE;
+			if (*p == '[') { /*..................... conditional rule */
+				while (*(++p) && *p != ']');
+				if (*p) p++;
+				skip = TRUE; /* ignore */
 			}
-			
-	#if 0
-			if (isalpha (next(&p))) { /* check for conditional */
-				skip = TRUE;
-				continue;
-			} else if (*p == '.' || *p == '#') {
-				skip = TRUE;
-				continue;
-			} else if (*p == '>' || *p == '+' || *p == '*') {
-				p++;
-				skip = TRUE;
-				continue;
-			}
-	#endif
 			
 			if (key > TAG_Unknown || cid) { /* store */
 				size_t len = end - beg;
@@ -836,13 +827,32 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			
 			/*............. look one ahead for selector concatenation */
 			if (isalpha (next(&p)) || *p == '.' || *p == '#') {
-				style->Css.Value = "";
+				if (style) style->Css.Value = "";
 				continue;
 			} else if (*p == '>' || *p == '+' || *p == '*') {
-				style->Css.Value = p++;
+				if (style) style->Css.Value = p;
+				p++;
 				continue;
 			}
 			
+			if (skip) {
+				if (style) {
+					while (style->Link) {
+						STYLE link = style->Link;
+						style->Link = link->Link;
+						free (link);
+					}
+					free (style);
+				}
+				if (*p_style == style) {
+					*p_style = NULL;
+					style    = NULL;
+				} else {
+					b_lnk->Next = NULL;
+					style       = b_lnk;
+				}
+				skip = FALSE;
+			}
 			if (next(&p) == ',') p++;
 			else                 break;
 		}
