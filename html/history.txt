@@ -1,5 +1,117 @@
 Ok here are the new supports and changes
 
+March 7, 2003
+
+  Baldrick's patches
+
+  containr.c:
+    - line 74 init Border Colour
+    - line 81 get Border Colour from parent
+    - line 255 set frame border colour from container
+    - line 294 set Border Colour from parent or LWHITE
+    - lines 668-710 reworked Border detection and watch areas 
+    
+  containr.h:
+    - line 77 added bad html key Border_Colour to s_containr
+      struct
+    
+  defs.h:
+    - line 500 added bad html key border_color to frame struct
+    
+  frame.c:
+    - init frame->border_colour to G_LWHITE
+    
+  redraws.c:
+    - lines 47,68,89,109 set fill colour to border_colour
+    
+  render.c:
+    - lines 266-272 get BORDERCOLOR value if not ignore_colours
+    
+  token.h:
+    - line 121 added key item BORDERCOLOR
+    
+March 6, 2003
+
+  Baldrick's patches
+  
+  - a few more cleanups on this file to cut long lines down
+  
+  containr.c:
+    - lines 72-73,78-79 added inits for Borders and Border_Size
+       in new_containr()
+    - line 112 added CONTAINR *last
+    - line 113 added abs_val tracks if we have had a hard frame
+      size value
+    - lines 151-155 test if we have an abs_val, if we do add the
+       Border_Size to the hard frame size value
+    - line 158 add BRD_RIGHT to the containr borders
+    - lines 160-164 test if we have an abs_val, if we do add the
+       Border_Size to the hard frame size value
+    - line 167 add BRD_BOTTOM to the containr borders
+    - line 169 set last to ptr
+    - lines 175-180 remove BRD_RIGHT and BRD_BOTTOM from last
+       frame
+    - lines 251-252 set frame borders and border_size from the 
+       containr values
+           
+  containr.h:
+    - lines 75-76 added Borders and Border_Size to s_containr
+      struct
+      
+  defs.h:
+    - lines 66-70 added defines for Frame Borders
+    - lines 498-499 added borders and border_size to frame struct
+  
+  frame.c:
+    - lines 36-37 init values for borders and border_size
+    - lines 124-139 added switch for real frame borders adjusting
+       frame clip values
+         
+  redraws.c:
+    - lines 37-120 large switch statement to draw the actual 
+       borders of our frameset if they exist
+    - lines 181-183,193,301-303,313 all rem'd out, may not be
+       needed anymore
+  
+  render.c:
+    - lines 256-264 Now parse BORDER attribute of Frameset's
+  
+  AltF4's patches
+
+  example.cfg/highwire.cfg:
+    - line 60:  added comment due to extended INFOBAR values.
+
+  hwWind.c:
+    - line 40 + 208:  new draw_infobar() to draw an application widget
+      infobar.
+    - line 53 (hwWind_setup):  new setup for INFOBAR=4.
+    - line 91 + 96 (new_hwWind):  improved detection of not valid
+      widget colours.
+    - line 124..159:  overworked due to new INFOBAR mode.
+    - line 217 (hwWind_setHSInfo) + 294 (hwWind_setInfo)
+      + 358 (hwWind_full) + 382 (hwWind_iconify) + 408 (hwWind_raise):
+      moved check for window widgets over to calling functions.
+    - line 309 (hwWind_raise):  added adjustment for infobar height.
+    - line 509 + 605 (hwWind_redraw):  added redraw of the infobar.
+    - line 761:  new hwWind_mouse() and hwWind_button() to handle
+      infobar related area.
+
+  hwWind.h:
+    - line 17:  struct hw_window, new attributes TbarH and IbarH for
+      toolbar and infobar height inside of a window.
+    - line 51:  new hwWind_mouse() and hwWind_button().
+    - line 62:  added comment.
+
+  image.c:
+    - line 112 + 127 + 835:  new raster_16r() to decode 16 bit
+      HighColor in wrong byte order of native PC graphic cards.
+
+  Mouse_R.c:
+    - line 28..32 (button_clicked):  removed stuff that is handled now
+      by hwWind_button().
+    - line 290..322 (check_mouse_position):  removed stuff that is
+      handled now by hwWind_mouse().
+
 March 5, 2003
 
   Baldrick's patches
@@ -5172,7 +5284,7 @@ May 9, 2002
       - IF NOT LIBWWW section added
         - Added a conversion of "http://" or "ftp://" to "C:\WWW\".  This is my 
           personal web collection. HighWire should read the path from config file.
-          ( We may need to modify this when writing online sections - baldrick May 2002)
+          ( We may need to modify this when writing online sections - baldrick)
       - line 69 path modification added
       - line 87 modification of path testing
       - logprintf call added at bottom of routine
@@ -7317,27 +7429,29 @@ January 25, 2002
    Baldrick's patches
    
    TABLE.C
-     - current_table->temp_val used to replace temp_cols in calculate_table_height
-        and calculate_subtable_height()
-     - almost all routines in TABLE.C drop current_paragraph variable in favour
-        of using the pointer in the table_item
-     - word_item *current_word replace with frame->current_word in calculate_table_height
-         and calculate_subtable_height()
-     - current_child replaced with table->current_child in calculate_subtable_height()
-         and calculate_table_height()
-     - table_w in calc subtable_height() and calc table_height() replaced
-       with current_table->actual_width
+     - current_table->temp_val used to replace temp_cols in 
+        calculate_table_height() and calculate_subtable_height()
+     - almost all routines in TABLE.C drop current_paragraph variable
+        in favour of using the pointer in the table_item
+     - word_item *current_word replace with frame->current_word in 
+        calculate_table_height() and calculate_subtable_height()
+     - current_child replaced with table->current_child in
+       calculate_subtable_height() and calculate_table_height()
+     - table_w in calc subtable_height() and calc table_height()
+       replaced with current_table->actual_width
      - modifications to increase current_height in one column tables
      
      
    DEFS.H
-     - added current_paragraph * to table_item struct, this lets us track
-        paragraphs inside seperate tables
+     - added current_paragraph * to table_item struct, this lets
+        us track paragraphs inside seperate tables
      - removed container value from frame_item struct
    
    REDRAWS.C
-     - removed table_paragraph * from draw_table() replaced with table->current_paragarph
-     - a test routine, draw_subtable() this isn't permanent, I'm using it for some testing
+     - removed table_paragraph * from draw_table() replaced with 
+       table->current_paragarph
+     - a test routine, draw_subtable() this isn't permanent, I'm
+       using it for some testing
 
 January 24, 2002
 
@@ -7938,7 +8052,8 @@ Dec 26, 2001
     
     parse_frameset() now static char *
     
-    list_marker() routine variable new_word changed to n_word - modifications to handle this
+    list_marker() routine variable new_word changed to n_word
+      - modifications to handle this
     
     NETLAYER.C
     
@@ -8414,14 +8529,12 @@ Dec 05, 2001
 Dec 04, 2001
 
     modification to set_pre_font() to enable one routine to set and turn off
-    
     set_font_bold() routine created.  Modifies current word styles Bold on and off
-    
     set_font_italic() routine created.  Modifies current word styles Italic on and off
-    
-    set_font_strike() routine created.  Modifies current word styles Strike on and off
-    
-    set_font_underlined() routine created.  Modifies current word styles Underlined on and off
+    set_font_strike() routine created.  Modifies current word styles
+     Strike on and off
+    set_font_underlined() routine created.  Modifies current word styles Underlined
+     on and off
     
     That's all of the simple text manipulations for reuse elsewhere.
     
