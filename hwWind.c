@@ -177,6 +177,12 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 
 	if (This != hwWind_Top)
 		return;
+	else {
+		short top, dmy;
+		wind_get (0, WF_TOP, &top, &dmy, &dmy, &dmy);
+		if (top != This->Handle)
+			return;
+	}
 	
 	p[0].p_y = p[2].p_y = This->Work.g_y + This->Work.g_h + 1;
 	p[1].p_y = p[3].p_y = This->Work.g_y + This->Work.g_h + 16;
