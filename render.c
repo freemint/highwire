@@ -929,7 +929,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
 		{
-			char out2[30], * amp = strchr (output, '&');
+			char out2[30], * p = output, * amp = strchr (p, '&');
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
@@ -949,6 +949,16 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					amp++;
 				}
 				amp = strchr (amp, '&');
+			}
+			
+			while (*p > ' ') { /* remove controll characters from the url */
+				p++;
+			}
+			if (*p) {
+				char * dst = p;
+				do if ((*dst = *(++p)) > ' ') {
+					dst++;
+				} while (*p);
 			}
 			
 			if (!word->link) {
