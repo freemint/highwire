@@ -350,17 +350,19 @@ struct s_dombox {
 	DOMBOX * ChildBeg, * ChildEnd;
 	LRECT    Rect;
 	LONG     MaxWidth;
-	LONG     MinWidth; /* smallest width where the content fits in    */
-	LONG     SetWidth; /* set Value, must not be smaller than Minimum */
+	LONG     MinWidth; /* smallest width where the content fits in          */
+	LONG     SetWidth; /* set Value, must not be smaller than Minimum       */
+	char   * IdName;   /* from id="<ID>" attribute, refferenced by ".ID"    */
+	char   * ClName;   /* from class="<CL>" attribute, refferenced by "#CL" */
 	BOXCLASS BoxClass;
 	WORD     HtmlCode;
-	WORD     Backgnd;  /* -1 for transparency, or colour value        */
+	WORD     Backgnd;  /* -1 for transparency, or colour value              */
 	TBLR     Margin;
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 	H_ALIGN  Floating;
 	H_ALIGN  TextAlign;
-	WORD     TextIndent; /* paragraph hanginging, <0: left, >0: right */
+	WORD     TextIndent; /* paragraph hanginging, <0: left, >0: right       */
 };
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
@@ -376,6 +378,8 @@ DOMBOX * dombox_dtor (DOMBOX *);
 #define  dombox_Paragrph(this)     ((*((this)->_vtab->Paragrph))(this))
 DOMBOX * dombox_byCoord (DOMBOX *, LRECT *, long * px, long * py);
 void     dombox_draw    (DOMBOX *, long x, long y, const GRECT * clip, void *);
+char *   dombox_setId   (DOMBOX *, const char *, BOOL force);
+char *   dombox_setClass(DOMBOX *, const char *, BOOL force);
 void     dombox_reorder (DOMBOX *, DOMBOX * behind);
 void     dombox_adopt   (DOMBOX *, DOMBOX * stepchild);
 void     dombox_format  (DOMBOX *, long width);

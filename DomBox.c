@@ -86,6 +86,14 @@ dombox_dtor (DOMBOX * This)
 		
 		This->Parent = NULL;
 	}
+	if (This->IdName) {
+		free (This->IdName);
+		This->IdName = NULL;
+	}
+	if (This->ClName) {
+		free (This->ClName);
+		This->ClName = NULL;
+	}
 	This->BoxClass = -1;
 	
 	return This;
@@ -357,6 +365,33 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 		
 		box = box->Sibling;
 	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static char *
+_set_text (char ** pstr, const char * text, BOOL force)
+{
+	char * str = (text && *text && (!*pstr || force) ? strdup (text) : NULL);
+	if (str) {
+		if (*pstr) free (*pstr);
+		*pstr = str;
+	}
+	return str;
+}
+
+/*============================================================================*/
+char *
+dombox_setId (DOMBOX *This, const char * text, BOOL force)
+{
+	return _set_text (&This->IdName, text, force);
+}
+
+/*============================================================================*/
+char *
+dombox_setClass (DOMBOX *This, const char * text, BOOL force)
+{
+	return _set_text (&This->ClName, text, force);
 }
 
 
