@@ -67,10 +67,11 @@ struct s_select {
 };
 struct s_slctitem {
 	SLCTITEM Next;
+	char   * Value;
 	WORD     Width;
 	WORD     Length;
 	WCHAR    Text[80];
-	char     Strng[80];
+	char     Strng[82];
 };
 
 
@@ -343,6 +344,8 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 	WORD     dsc  = word->word_tail_drop;
 	INPUT    input;
 	
+	(void)size;
+	
 	if (!current->form /*&&
 		 (current->form = new_form (frame, NULL, NULL, NULL)) == NULL*/) {
 		input = NULL;
@@ -386,14 +389,23 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 	}
 	if (tlen && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
 		WORD  pts[8];
-		if (tlen >= sizeof(item->Strng)) {
-			tlen = sizeof(item->Strng) -1;
+		item->Value    = (value ? value : item->Strng +1);
+		if ((text[0] == '-' && (!text[1] || (text[1] == '-' && (!text[2] ||
+		    (text[2] == '-' && (!text[3] || (text[3] == '-'))))))) ||
+		    (tlen > 3 && strncmp (text + tlen -3, "---", 3) == 0)) {
+			item->Strng[0] = '-';
+		} else if (disabled) {
+			item->Strng[0] = '!';
+		} else {
+			item->Strng[0] = ' ';
 		}
-		memcpy (item->Strng, text, tlen);
-		item->Strng[tlen] = '\0';
-		item->Length = tlen;
+		if (tlen >= sizeof(item->Strng) -1) {
+			tlen = sizeof(item->Strng) -2;
+		}
+		memcpy (item->Strng +1, text, tlen);
+		item->Strng[tlen +1] = '\0';
 		current->text = current->buffer;
-		scan_string_to_16bit (item->Strng, enoding, &current->text,
+		scan_string_to_16bit (item->Strng +1, enoding, &current->text,
 		                      current->word->font->Base->Mapping);
 		tlen = current->text - current->buffer;
 		if (tlen >= numberof(item->Text)) {
@@ -405,12 +417,10 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 		item->Length = tlen;
 		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
 		item->Width = pts[2] - pts[0];
-		if (disabled) {
-			/* mark it somehow... */
-		} else if (!input->Value || selected) {
+		if (!sel->ItemList || selected) {
 			input->Word->item   = item->Text;
 			input->Word->length = item->Length;
-			input->Value        = item->Strng;
+			input->Value        = (item->Strng[0] == ' ' ? value : NULL);
 		}
 		item->Next    = sel->ItemList;
 		sel->ItemList = item;
@@ -636,10 +646,58 @@ input_handle (INPUT input, GRECT * radio)
 			rtn = 1;
 			break;
 		
-		case IT_SELECT:
-			puts("IT_SELECT");
-			rtn = 0;
-			break;
+		case IT_SELECT: {
+			SELECT sel = input->u.Select;
+			if (sel && sel->NumItems > 0) {
+				FRAME    frame  = input->Form->Frame;
+				WORDITEM word   = input->Word;
+				OFFSET * offset = &input->Paragraph->Offset;
+				long     x      = word->h_offset + input->Paragraph->Indent;
+				long     y      = word->line->OffsetY;
+				SLCTITEM item = sel->ItemList;
+				short    n    = sel->NumItems;
+			#ifdef __GNUC__
+				char   * tab[n +1];
+			#else
+				char  ** tab = malloc ((n +1) * sizeof(char*));
+			#endif
+				tab[0] = tab[n] = NULL;
+				while (n-- && item) {
+					tab[n] = item->Strng;
+					item   = item->Next;
+				}
+				do {
+					x += offset->X;
+					y += offset->Y;
+				} while ((offset = offset->Origin) != NULL);
+				n = HW_form_popup (tab,
+				                   x - frame->h_bar.scroll + frame->clip.g_x,
+				                   y - frame->v_bar.scroll + frame->clip.g_y
+				                     + word->word_tail_drop -1,
+				                   FALSE);
+			#ifndef __GNUC__
+				free (tab);
+			#endif
+				if (n >= 0) {
+					item = sel->ItemList;
+					while (++n < sel->NumItems && item->Next) {
+						item = item->Next;
+					}
+					input->Word->item   = item->Text;
+					input->Word->length = item->Length;
+					input->Value        = item->Value;
+					radio->g_x = x;
+					radio->g_y = y - word->word_height;
+					radio->g_w = word->word_width;
+					radio->g_h = word->word_height + word->word_tail_drop;
+					rtn = 1;
+				} else {
+					rtn = 0;
+				}
+			} else {
+				rtn = 0;
+			}
+		}	break;
 			
 		case IT_BUTTN:
 			if (!input->checked) {
@@ -689,9 +747,11 @@ input_activate (INPUT input)
 				p += len;
 				*(p++) = '=';
 				if (elem->Value) {
-					len = strlen (elem->Value);
-					memcpy (p, elem->Value, len);
-					p += len;
+					char * v = elem->Value;
+					while (*v) {
+						*(p++) = (*v > ' ' ? *v : '+');
+						v++;
+					}
 				}
 				*(p++) = '&';
 			} while ((elem = elem->Next) != NULL);
