@@ -839,6 +839,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 			p[3].p_x = p[2].p_x + 15 -1;
 			icon.fd_addr = btn->Data;
 			if (This->TbarMask & (1 << i)) {
+				short c_lu, c_rd;
 				PXY l[4];
 				if (!ignore_colours) {
 					vrt_cpyfm (vdi_handle,
@@ -850,15 +851,33 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 				}
 	if (i != TBAR_STOP) {
-				l[2].p_x = l[1].p_x = p[3].p_x +2;
-				l[0].p_y = l[1].p_y = p[3].p_y +2;
-				l[0].p_x =            p[2].p_x -1;
-				l[2].p_y =            p[2].p_y -1;
-				vsl_color (vdi_handle, G_LBLACK);
+				l[0].p_x = p[2].p_x -1;
+				l[2].p_y = p[2].p_y -1;
+				if (i == This->TbarActv) {
+					l[0].p_y = l[2].p_y;
+					l[1].p_x = p[3].p_x +1;
+					l[1].p_y = p[3].p_y +1;
+					vsf_color (vdi_handle, G_WHITE);
+					vswr_mode (vdi_handle, MD_XOR);
+					v_bar     (vdi_handle, (short*)l);
+					vswr_mode (vdi_handle, MD_TRANS);
+					l[1].p_x++;
+					l[1].p_y++;
+					c_rd = G_LWHITE;
+					c_lu = G_BLACK;
+				} else {
+					l[1].p_x = p[3].p_x +2;
+					l[1].p_y = p[3].p_y +2;
+					c_rd = G_LBLACK;
+					c_lu = G_WHITE;
+				}
+				l[2].p_x = l[1].p_x;
+				l[0].p_y = l[1].p_y;
+				vsl_color (vdi_handle, c_rd);
 				v_pline (vdi_handle, 3, (short*)l);
 				l[1].p_y = --l[2].p_y;  --l[2].p_x;
 				l[1].p_x = --l[0].p_x;  --l[0].p_y;
-				vsl_color (vdi_handle, G_WHITE);
+				vsl_color (vdi_handle, c_lu);
 				v_pline (vdi_handle, 3, (short*)l);
 				l[1].p_x = --l[0].p_x;
 				l[1].p_y = --l[2].p_y;
@@ -866,17 +885,6 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 				l[3].p_y = l[0].p_y += 1;
 				vsl_color (vdi_handle, G_BLACK);
 				v_pline (vdi_handle, 4, (short*)l);
-				if (i == This->TbarActv) {
-					l[1].p_x++;
-					l[1].p_y++;
-					l[2].p_x++;
-					l[2].p_y = l[0].p_y +1;
-					vsf_interior (vdi_handle, FIS_SOLID);
-					vsf_color    (vdi_handle, G_WHITE);
-					vswr_mode    (vdi_handle, MD_XOR);
-					v_bar        (vdi_handle, (short*)(l +1));
-					vswr_mode    (vdi_handle, MD_TRANS);
-				}
 	}
 			} else {
 				vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
