@@ -3061,7 +3061,7 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	box->Padding.Lft = 3; /* minimum width */
 	
 	if (par->item->word_height > size) {
-		box->Margin.Top = box->Margin.Bot = par->item->word_height - size;
+		box->Margin.Top = box->Margin.Bot = (par->item->word_height - size +1) /2;
 	} else {
 		box->Margin.Top = box->Margin.Bot = par->item->word_tail_drop;
 	}
