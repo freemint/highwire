@@ -358,14 +358,13 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		return sock;
 	
 	} else {
-		const char * head = (keep_alive ? "GET " : "HEAD ");
-		size_t       len;
-		if ((len = inet_send (sock, head, strlen (head))) > 0 &&
-		    (len = inet_send (sock, loc->FullName, strlen (loc->FullName))) > 0) {
-			const char rest[] = " HTTP/1.1\r\n";
-			len = inet_send (sock, rest, sizeof(rest) -1);
-		}
-		if (len > 0) {
+		const char rest[] = " HTTP/1.1\r\n";
+		char * p   = strchr (strcpy (buffer, (keep_alive ?"GET ":"HEAD ")), '\0');
+		size_t len = min (strlen (loc->FullName),
+		                  sizeof(buffer) - sizeof(rest) - (p - buffer));
+		strncpy (p, loc->FullName, len);
+		strcpy  (p += len, rest);
+		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1)) > 0) {
 			const char * stack = inet_info();
 			len = sprintf (buffer,
 			       "HOST: %s\r\n"
@@ -376,7 +375,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			       _HIGHWIRE_REVISION_, (stack ? stack : ""));
 			len = inet_send (sock, buffer, len);
 		}
-		if (len < 0) {
+		if ((long)len < 0) {
 			if (len < -1) {
 				sprintf (buffer, "Error: %s\n", strerror((int)-len));
 			} else {
