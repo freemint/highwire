@@ -28,7 +28,7 @@
 #include "cache.h"
 
 
-#define MAGIC_NUM 0x20040809l /* needs to get updated in case the format of *
+#define MAGIC_NUM 0x20040810l /* needs to get updated in case the format of *
                                * the cache.idx file changes                 */
 
 static const char base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -699,12 +699,12 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 						free_location (&loc);
 						break;
 					} else if (!loc) { /* outdated or invalid */
-						strcpy (ptr +1, __cache_file);
+						strcpy (__cache_file, ptr +1);
 						unlink (__cache_path);
 						update = TRUE;
 					} else if (expr && expr <= locl) { /* Expired */
 						free_location (&loc);
-						strcpy (ptr +1, __cache_file);
+						strcpy (__cache_file, ptr +1);
 						unlink (__cache_path);
 						update = TRUE;
 					} else {
