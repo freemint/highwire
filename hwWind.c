@@ -1382,9 +1382,13 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 			goto case_HW_ActivityEnd;
 		
-		case HW_ActivityBeg:
 		case_HW_ActivityBeg:
-			if (!wind->isBusy++) {
+			gen_ptr = NULL;
+		case HW_ActivityBeg: {
+			BOOL was_busy = (wind->isBusy > 0);
+			wind->isBusy += (gen_ptr && *(const long *)gen_ptr > 0
+			                 ? *(const long *)gen_ptr : 1);
+			if (!was_busy) {
 				if (wind->isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
@@ -1392,10 +1396,18 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				}
 				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
-			break;
+		}	break;
 		
-		case HW_ActivityEnd:
 		case_HW_ActivityEnd:
+			gen_ptr = NULL;
+		case HW_ActivityEnd:
+			if (gen_ptr && *(const long *)gen_ptr > 0) {
+				if (wind->isBusy < *(const long *)gen_ptr) {
+					wind->isBusy -= *(const long *)gen_ptr;
+				} else {
+					wind->isBusy = 0;
+				}
+			}
 			if (!wind->isBusy || !--wind->isBusy) {
 				if (wind->Stat[0]) {
 					old_busy = wind->isBusy;
