@@ -438,7 +438,7 @@ static void
 vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 {
 	DOMBOX * box    = This->ChildBeg;
-	long     height = dombox_TopDist (This);
+	long     height = This->Rect.H = dombox_TopDist (This);
 	
 	if (blocker->L.bottom) blocker->L.bottom -= This->Rect.Y;
 	if (blocker->R.bottom) blocker->R.bottom -= This->Rect.Y;
@@ -513,13 +513,29 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 					blocker->R.bottom = blocker->R.width = 0;
 				}
 		}
+		if (This->Rect.H < box->Rect.Y + box->Rect.H) {
+			This->Rect.H = box->Rect.Y + box->Rect.H;
+		}
 		
 		box = box->Sibling;
 	}
+	if (This->Rect.H < height) {
+		This->Rect.H = height;
+	}
+	This->Rect.H += dombox_BotDist (This);
+	
+	if (This->BoxClass == BC_GROUP) {
+		if (This->Rect.H <= blocker->L.bottom) {
+			This->Rect.H = blocker->L.bottom;
+			blocker->L.bottom = blocker->L.width = 0;
+		}
+		if (This->Rect.H <= blocker->R.bottom) {
+			This->Rect.H = blocker->R.bottom;
+			blocker->R.bottom = blocker->R.width = 0;
+		}
+	}
 	if (blocker->L.bottom) blocker->L.bottom += This->Rect.Y;
 	if (blocker->R.bottom) blocker->R.bottom += This->Rect.Y;
-
-	This->Rect.H = height + dombox_BotDist (This);
 }
 
 /*============================================================================*/
