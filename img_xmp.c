@@ -3,7 +3,8 @@
 #include <ctype.h>
 
 static BOOL decXmp_start (const char * file, IMGINFO info);
-static BOOL decXmp_read  (IMGINFO, char * buffer);
+static BOOL decXmp_r_bit (IMGINFO, char * buffer);
+static BOOL decXmp_r_pix (IMGINFO, char * buffer);
 static void decXmp_quit  (IMGINFO);
 
 static DECODER _decoder_xmp = {
@@ -14,22 +15,50 @@ static DECODER _decoder_xmp = {
 #define DECODER_CHAIN &_decoder_xmp
 
 
+#define TYPE_XBM   ((((((long)'X' <<8) | 'B') <<8) | 'M') <<8)
+#define TYPE_XPM   ((((((long)'X' <<8) | 'P') <<8) | 'M') <<8)
 typedef struct s_xmap {
-	WORD   W, H;
-	char   Buffer[1024];
+	ULONG   Type;
+	ULONG * PixChrs;
+	WORD    NumChrs;
+	WORD    Colors;
+	WORD    W, H;
+	char    Buffer[1024];
 } * XMAP;
 
-static char * xmap_read (FILE *, XMAP);
+/*----------------------------------------------------------------------------*/
+static char *
+xmap_read (FILE * file, XMAP xmap, BOOL all)
+{
+	char * beg;
+	while ((beg = fgets (xmap->Buffer,(int)sizeof(xmap->Buffer),file)) != NULL) {
+		while (isspace (*beg)) beg++;
+		if (*beg) {
+			char * end;
+			if (!all && (beg[0] == '/' && beg[1] == '*')
+			         && (end = strstr (beg +2, "*/")) != NULL) {
+				beg = end +2;
+				while (isspace (*(++beg)));
+				if (!*beg) continue;
+			}
+			end = strchr (beg, '\0');
+			while (isspace (end[-1])) end--;
+			*end = '\0';
+			break;
+		}
+	}
+	return beg;
+}
 
 
 /*----------------------------------------------------------------------------*/
 static BOOL
 decXmp_start (const char * name, IMGINFO info)
 {
+	WORD   depth = 1;
 	XMAP   xmap;
 	char * p;
-	BOOL   match = FALSE;
-	FILE * file  = fopen (name, "rb");
+	FILE * file = fopen (name, "rb");
 	if (!file) {
 		return TRUE; /* avoid further tries of decoding */
 	
@@ -39,25 +68,79 @@ decXmp_start (const char * name, IMGINFO info)
 		return FALSE;
 	}
 	
-	xmap->W = 0;
-	xmap->H = 0;
+	xmap->Type    = 0ul;
+	xmap->PixChrs = NULL;
+	xmap->Colors  = 2;
+	xmap->W       = 0;
+	xmap->H       = 0;
 	
-	while ((p = xmap_read (file, xmap)) != NULL) {
+	while ((p = xmap_read (file, xmap, !xmap->Type)) != NULL) {
 		if (strncmp (p, "#define ", 8) == 0 
 		    && (p = strrchr (p +8, '_')) != NULL) {
 			p++;
 			if (sscanf (p, "width  %hi", &xmap->W) == 1 && xmap->W > 0) continue;
 			if (sscanf (p, "height %hi", &xmap->H) == 1 && xmap->H > 0) continue;
 		
+		} else if (p[0] == '/' && p[1] == '*') {
+			if (strcmp (p +2, " XPM */") == 0) {
+				xmap->Type = TYPE_XPM;
+			}
+			continue;
+		
 		} else if (strncmp (p, "static char ", 12) == 0) {
-			char * q = strrchr (p +12, '_');
-			if (q && strcmp (q +1, "bits[] = {") == 0) {
-				match = TRUE;
+			if (!xmap->Type) {
+				char * q = strrchr (p +12, '_');
+				if (q && strcmp (q +1, "bits[] = {") == 0) {
+					xmap->Type = TYPE_XBM;
+				}
+			} else { /* XPM */
+				char * q = p +12;
+				if (*q != '*' || (q = strchr (++q, '[')) == NULL
+				              || strcmp (++q, "] = {") != 0) {
+					xmap->Type = 0ul;
+				}
 			}
 		}
 		break;
 	}
-	if (!match) {
+	if (xmap->Type == TYPE_XPM) {
+		ULONG * pix = NULL, * map = NULL;
+		if ((p = xmap_read (file, xmap, FALSE)) != NULL) {
+			int i = sscanf (p, "\" %hi %hi %hi %hi \",",
+			                &xmap->W, &xmap->H, &xmap->Colors, &xmap->NumChrs);
+			if (i == 4 && xmap->W > 0 && xmap->H > 0
+			    && xmap->Colors >= 2 && xmap->Colors <= 255
+			    && xmap->NumChrs >= 1 && xmap->NumChrs <= 3) {
+				pix = calloc (sizeof(ULONG), 256 *2);
+				map = pix +256;
+			}
+			if (pix) {
+				char form[] = "\"%0s c #%lx\",";
+				form[2] += xmap->NumChrs;
+				for (i = 0; i < xmap->Colors; i++) {
+					if ((p = xmap_read (file, xmap, FALSE)) == NULL ||
+					    sscanf (p, form, (char*)&pix[i], &map[i]) != 2) {
+						free (pix);
+						pix = NULL;
+						break;
+					}
+				}
+			}
+		}
+		
+		if (pix) {
+			depth         = 8;
+			xmap->PixChrs = pix;
+			info->Palette = (char*)map;
+			info->PalRpos = 1;
+			info->PalGpos = 2;
+			info->PalBpos = 3;
+			info->PalStep = 4;
+		} else {
+			xmap->Type = 0ul;
+		}
+	}
+	if (!xmap->Type) {
 		free (xmap);
 		fclose (file);
 		return FALSE;
@@ -65,14 +148,14 @@ decXmp_start (const char * name, IMGINFO info)
 	
 	info->_priv_data = xmap;
 	info->_priv_file = file;
-	info->read       = decXmp_read;
+	info->read       = (xmap->Type == TYPE_XBM ? decXmp_r_bit : decXmp_r_pix);
 	info->quit       = decXmp_quit;
 	
 	info->ImgWidth   = xmap->W;
 	info->ImgHeight  = xmap->H;
 	info->NumComps   = 1;
-	info->BitDepth   = 1;
-	info->NumColors  = 2;
+	info->BitDepth   = depth;
+	info->NumColors  = xmap->Colors;
 	info->Transp     = -1;
 	info->Interlace  = 0;
 	
@@ -83,7 +166,7 @@ decXmp_start (const char * name, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decXmp_read (IMGINFO info, char * buffer)
+decXmp_r_bit (IMGINFO info, char * buffer)
 {
 	XMAP xmap = info->_priv_data;
 	if (xmap->H-- >= 0) {
@@ -95,7 +178,7 @@ decXmp_read (IMGINFO info, char * buffer)
 			int n;
 			if (!mask) {
 				int v1, v2;
-				if ((!*p && (p = xmap_read (info->_priv_file, xmap)) == NULL)
+				if ((!*p && (p = xmap_read (info->_priv_file, xmap, FALSE)) == NULL)
 				    || sscanf (p, "0x%x,%n", &v1, &n) != 1) {
 					xmap->H = -1;
 					break;
@@ -103,7 +186,8 @@ decXmp_read (IMGINFO info, char * buffer)
 				p += n;
 				while (isspace (*p)) p++;
 				if (x >= 8) {
-					if ((!*p && (p = xmap_read (info->_priv_file, xmap)) == NULL)
+					if ((!*p &&
+					     (p = xmap_read (info->_priv_file, xmap, FALSE)) == NULL)
 					    || sscanf (p, "0x%x,%n", &v2, &n) != 1) {
 						xmap->H = -1;
 						break;
@@ -126,11 +210,44 @@ decXmp_read (IMGINFO info, char * buffer)
 }
 
 /*----------------------------------------------------------------------------*/
+static BOOL
+decXmp_r_pix (IMGINFO info, char * buffer)
+{
+	XMAP xmap = info->_priv_data;
+	if (xmap->H-- >= 0) {
+		WORD   x = xmap->W;
+		char * p = xmap_read (info->_priv_file, xmap, FALSE);
+		if (!p || *p != '"') {
+			xmap->H = -1;
+			x       = 0;
+		}
+		while (x--) {
+			WORD   num = xmap->NumChrs;
+			ULONG  pix = 0uL;
+			char * chr = (char*)&pix;
+			while (num-- && (*(chr++) = *(++p)) != '\0');
+			num = xmap->Colors;
+			while (num-- && pix != xmap->PixChrs[num]);
+			if (num < 0) {
+				xmap->H = -1;
+				break;
+			}
+			*(buffer++) = num;
+		}
+		if (!*p || *(++p) != '"') {
+			xmap->H = -1;
+		}
+	}
+	return (xmap->H >= 0);
+}
+
+/*----------------------------------------------------------------------------*/
 static void
 decXmp_quit (IMGINFO info)
 {
 	XMAP xmap = info->_priv_data;
 	if (xmap) {
+		if (xmap->PixChrs) free (xmap->PixChrs);
 		free (xmap);
 		fclose (info->_priv_file);
 		info->_priv_file = NULL;
@@ -138,26 +255,4 @@ decXmp_quit (IMGINFO info)
 	}
 }
 
-
-/******************************************************************************/
-
-
-/*----------------------------------------------------------------------------*/
-static char *
-xmap_read (FILE * file, XMAP xmap)
-{
-	char * beg;
-	while ((beg = fgets (xmap->Buffer,(int)sizeof(xmap->Buffer),file)) != NULL) {
-		while (isspace (*beg)) beg++;
-		if (*beg) {
-			char * end = strchr (beg, '\0');
-			while (isspace (end[-1])) end--;
-			*end = '\0';
-			break;
-		}
-	}
-	return beg;
-}
-
-
-#endif /* IMG_XMP */
+#endif /*IMG_XMP*/
