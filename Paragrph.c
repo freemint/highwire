@@ -755,8 +755,8 @@ content_calc (CONTENT * content, long set_width)
 		paragraph->Box.Rect.Y = height;
 
 		if (paragraph->Box.MinWidth > blk_width) {
-			height = (blocker.L.bottom >= blocker.R.bottom
-			          ? blocker.L.bottom : blocker.R.bottom);
+			if (height < blocker.L.bottom) height = blocker.L.bottom;
+			if (height < blocker.R.bottom) height = blocker.R.bottom;
 			paragraph->Box.Rect.Y = height;
 			blocker.L.bottom = blocker.L.width =
 			blocker.R.bottom = blocker.R.width = 0;
