@@ -33,7 +33,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	if (wind) {
 		cont  = wind->Pane;
 		elem  = containr_Element (&cont, mx, my, &watch, NULL, &hash);
-		frame = hwWind_setActive (wind, cont);
+		frame = hwWind_setActive (wind, cont, NULL);
 	}
 #if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 	if (frame) {
@@ -200,6 +200,9 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
 				        } else {
 				           WORD dmy;
+				           if (input_isEdit (hash)) {
+				              hwWind_setActive (wind, cont, hash);
+				           }
 				           hwWind_redraw (wind, &watch);
 				           evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
 				        }

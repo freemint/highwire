@@ -70,12 +70,12 @@ key_pressed (WORD key, UWORD state)
 	{
 	case 0x0F00:  /* Tab: change active frame */
 		if ((active = frame_next (active)) != NULL) {
-			hwWind_setActive (hwWind_Top, active->Container);
+			hwWind_setActive (hwWind_Top, active->Container, NULL);
 		#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 			update_menu (active->Encoding, (active->MimeType == MIME_TXT_PLAIN));
 		#endif
 		} else {
-			hwWind_setActive (hwWind_Top, NULL);
+			hwWind_setActive (hwWind_Top, NULL, NULL);
 		}
 		key = 0;  /* this key has character HT */
 		break;
