@@ -754,7 +754,6 @@ input_activate (INPUT input, WORD slct)
 	}
 	
 	if (input->SubType == 'S' && form->Action) {
-		LOADER ldr;
 		FRAME  frame = form->Frame;
 		INPUT  elem  = form->InputList;
 		size_t size  = 0, len;
@@ -799,13 +798,13 @@ input_activate (INPUT input, WORD slct)
 			len = size;
 		}
 		data[len] = '\0';
-		ldr = start_page_load (frame->Container, url, frame->Location, TRUE);
 		if (form->Method != METH_POST) {
+			start_page_load (frame->Container, url, frame->Location, TRUE, NULL);
 			free (url);
-		} else if (ldr) {
-			ldr->PostBuf = data;
 		} else {
-			free (data);
+			LOADER ldr = start_page_load (frame->Container, url, frame->Location,
+			                              TRUE, data);
+			if (!ldr) free (data);
 		}
 	}
 	

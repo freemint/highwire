@@ -138,7 +138,7 @@ page_load(void)
 			size_t len = slash - fsel_path +1;
 			memcpy (file, fsel_path, len);
 			strcpy (file + len, fsel_file);
-			start_cont_load (hwWind_Top->Pane, file, NULL, TRUE);
+			start_cont_load (hwWind_Top->Pane, file, NULL, TRUE, TRUE);
 		} else {
 			butt = FALSE;
 		}
@@ -177,7 +177,7 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 	}
 	
 	if (wind) {
-		start_page_load (wind->Pane, cmd, NULL, TRUE);
+		start_page_load (wind->Pane, cmd, NULL, TRUE, NULL);
 	} else {
 		new_hwWind ("", cmd, NULL);
 	}
@@ -381,7 +381,7 @@ menu_open (BOOL fsel)
 		n = form_do (form, URL_EDIT);
 		form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 		if (n == URL_OK && ptext[0]) {
-			start_page_load (hwWind_Top->Pane, ptext, NULL, TRUE);
+			start_page_load (hwWind_Top->Pane, ptext, NULL, TRUE, NULL);
 		} else if (n == URL_FILE) {
 			fsel = TRUE;
 		}
@@ -404,7 +404,7 @@ menu_reload (ENCODING encoding)
 		FRAME frame = hwWind_ActiveFrame (NULL);
 		if (frame) {
 			LOADER ldr = start_cont_load (frame->Container,
-			                              NULL, frame->Location, TRUE);
+			                              NULL, frame->Location, TRUE, TRUE);
 			if (ldr) {
 				ldr->Encoding = (encoding | 0x80u);
 				ldr->MarginW  = frame->Page.Margin.Lft;

@@ -41,13 +41,13 @@ typedef struct s_loader {
 } * LOADER;
 
 
-LOADER new_loader    (LOCATION, CONTAINR target);
+LOADER new_loader    (LOCATION, CONTAINR target, BOOL lookup);
 void   delete_loader (LOADER *);
 
 LOADER start_page_load (CONTAINR target, const char * url, LOCATION base,
-                        BOOL user_action);
+                        BOOL user_action, char * post_buff);
 LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base,
-                        BOOL user_action);
+                        BOOL user_action, BOOL use_cache);
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
                         int (*successor)(void*, long), void * objc);
 

@@ -800,7 +800,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					if (get_value (parser, KEY_SRC, frame_file,sizeof(frame_file))) {
 						LOADER ldr = start_page_load (container,
 						                              url_correct (frame_file),
-						                              base, FALSE);
+						                              base, FALSE, NULL);
 						if (ldr) {
 							short lft = get_value_unum (parser, KEY_MARGINWIDTH,  -1);
 							short top = get_value_unum (parser, KEY_MARGINHEIGHT, -1);
@@ -925,8 +925,8 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 							if (*end == '\'') *end = '\0';
 						}
 						if (*url) {
-							start_page_load (parser->Target,
-							                 url, parser->Frame->BaseHref, FALSE);
+							start_page_load (parser->Target, url,
+							                 parser->Frame->BaseHref, FALSE, NULL);
 						}
 					}
 				}

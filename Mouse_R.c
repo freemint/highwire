@@ -243,7 +243,8 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 					cont = new_hwWind (addr, NULL, NULL)->Pane;
 				}
 				if (cont) {
-					LOADER ldr = start_page_load (cont, addr, frame->BaseHref, TRUE);
+					LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
+					                              TRUE, NULL);
 					if (ldr) {
 						ldr->Encoding = link->encoding;
 					}
