@@ -33,6 +33,7 @@ struct s_form {
 	WORD        TextCursrX;
 	WORD        TextCursrY;
 	WORD        TextShiftX;
+	WORD        TextShiftY;
 	INPUT       InputList, Last;
 	FORM_METHOD Method;
 };
@@ -67,6 +68,9 @@ struct s_input {
 	UWORD    TextMax;
 	UWORD    TextLen;
 	UWORD    VisibleX;
+	UWORD    VisibleY;
+	short    CursorH;
+	UWORD    TextRows;
 	WCHAR ** TextArray;
 	char     Name[1];
 };
@@ -123,6 +127,7 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	form->TextCursrX = 0;
 	form->TextCursrY = 0;
 	form->TextShiftX = 0;
+	form->TextShiftY = 0;
 	form->InputList = NULL;
 	form->Last      = NULL;
 	
@@ -164,6 +169,8 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->TextMax   = 0;
 	input->TextLen   = 0;
 	input->VisibleX  = 0;
+	input->VisibleY  = 0;
+	input->TextRows  = 0;
 	input->TextArray = NULL;
 	
 	if (type <= IT_GROUP) {
@@ -304,7 +311,7 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 	} else {
 		input->Value = value;
 	}
-	input->TextLen = input->TextArray[1] - input->TextArray[0];
+	input->TextLen = input->TextArray[input->TextRows] - input->TextArray[0] -1;
 	
 	return input;
 }
@@ -763,6 +770,7 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 			form->TextActive = input;
 			form->TextCursrY = 0;
 			form->TextShiftX = 0;
+			form->TextShiftY = 0;
 			if (mxy.p_x > 0 && input->TextLen > 0) {
 				form->TextCursrX = mxy.p_x / (input->Word->font->SpaceWidth -1);
 				if (form->TextCursrX > input->VisibleX) {
@@ -830,8 +838,8 @@ form_activate (FORM form)
 					size += (c == ' ' || isalnum (c) ? 1 : 3);
 				}
 			} else {
-				WCHAR * beg = elem->Word->item;
-				WCHAR * end = beg + elem->TextLen;
+				WCHAR * beg = elem->TextArray[0];
+				WCHAR * end = elem->TextArray[elem->TextRows] -1;
 				while (beg < end) {
 					char c = *(beg++);
 					size += (c == ' ' || isalnum (c) ? 1 : 3);
@@ -888,8 +896,8 @@ form_activate (FORM form)
 					}
 				}
 			} else {
-				WCHAR * beg = elem->Word->item;
-				WCHAR * end = beg + elem->TextLen;
+				WCHAR * beg = elem->TextArray[0];
+				WCHAR * end = elem->TextArray[elem->TextRows] -1;
 				while (beg < end) {
 					char c = *(beg++);
 					if (c == ' ') {
@@ -969,6 +977,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
 	WCHAR ** text = input->TextArray;
+	WCHAR  * last = text[input->TextRows];
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
 	
@@ -989,10 +998,11 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	} else if (asc) switch (asc) {
 			
 		case 27: /* escape */
-			if (!input->readonly && text[0] < text[1] -1 && edit_zero (input)) {
+			if (!input->readonly && text[0] < last -1 && edit_zero (input)) {
 				form->TextCursrX = 0;
 				form->TextCursrY = 0;
 				form->TextShiftX = 0;
+				form->TextShiftY = 0;
 			} else {
 				word = NULL;
 			}
@@ -1150,8 +1160,8 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, size_t size)
 	size =  (size +3) & ~3uL;  /* aligned to (WCHAR*) boundary */
 	size += sizeof(WCHAR*) *2;
 	if ((buff = malloc (size)) != NULL) {
-		word->item          = buff;
-		input->TextArray    = (WCHAR**)((char*)buff + size) -2;
+		word->item       = buff;
+		input->TextArray = (WCHAR**)((char*)buff + size) -1;
 	
 	} else { /* memory exhausted */
 		input->TextMax  = 1;
@@ -1160,6 +1170,8 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, size_t size)
 	edit_zero (input);
 	
 	input->VisibleX = cols;
+	input->VisibleY = 1;
+	input->CursorH  = p[7] + p[1] -1;
 	
 	return buff;
 }
@@ -1170,6 +1182,8 @@ edit_zero (INPUT input)
 {
 	BOOL ok;
 	if (input->TextArray) {
+		input->TextArray    += (WORD)input->TextRows -1;
+		input->TextRows      = 1;
 		input->TextArray[0]  = input->Word->item;
 		input->TextArray[1]  = input->Word->item +1;
 		input->Word->item[0] = '\0';
@@ -1189,8 +1203,8 @@ edit_zero (INPUT input)
 static void
 edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 {
-	WCHAR ** line = input->TextArray; /* first line */
-	WCHAR *  ptr  = *line;
+	WCHAR ** line = input->TextArray +1;
+	WCHAR *  ptr  = input->TextArray[0];
 	while (beg < end) {
 		if (*beg < ' ') {
 			beg++;
@@ -1202,8 +1216,9 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 			*(ptr++) = *(beg++);
 		}
 	}
-	*(ptr)    = '\0';
-	*(++line) = ptr; /* behind the last line */
+	*(ptr++) = '\0';
+	*(line)  = ptr; /* behind the last line */
+	input->TextMax = (WCHAR*)&input->TextArray[0] - input->TextArray[0];
 	
 	if (input->Value) { /* password */
 		char * val = input->Value;
@@ -1224,7 +1239,9 @@ edit_char (INPUT input, WORD chr, WORD col)
 	const char  * ptr = &((char*)&chr)[1];
 	BOOL ok;
 	
-	if (input->TextLen < input->TextMax) {
+	if ((WCHAR*)&input->TextArray[0] > input->TextArray[input->TextRows]) {
+		WCHAR ** text = input->TextArray;
+		WORD  n;
 		WCHAR uni[5];
 		(*encoder)(&ptr, uni);
 		
@@ -1239,14 +1256,14 @@ edit_char (INPUT input, WORD chr, WORD col)
 			input->Word->item[input->TextLen +1] = '\0';
 		
 		} else {
-			WCHAR * end = input->Word->item + input->TextLen;
-			WCHAR * dst = input->Word->item + col;
+			WCHAR * end = text[input->TextRows];
+			WCHAR * dst = text[0] + col;
 			do {
 				*(end +1) = *(end);
 			} while (--end >= dst);
 			*dst = *uni;
 		}
-		input->TextArray[1]++;
+		for (n = 0; n < input->TextRows; text[++n]++);
 		ok = TRUE;
 	
 	} else { /* buffer full */
@@ -1259,11 +1276,13 @@ edit_char (INPUT input, WORD chr, WORD col)
 static BOOL
 edit_delc (INPUT input, WORD col)
 {
-	WCHAR * w_beg = input->TextArray[0];
-	WCHAR * w_end = input->TextArray[1];
+	WCHAR ** text = input->TextArray;
+	WCHAR * w_beg = text[0];
+	WCHAR * w_end = text[input->TextRows];
 	BOOL ok;
 	
 	if (col < w_end - w_beg) {
+		WORD n;
 		
 		if (input->Value) { /*password */
 			char * ptr = input->Value + col;
@@ -1278,7 +1297,7 @@ edit_delc (INPUT input, WORD col)
 				*(ptr) = *(ptr +1);
 			} while (*(ptr++));
 		}
-		input->TextArray[1]--;
+		for (n = 0; n < input->TextRows; text[++n]--);
 		ok = TRUE;
 	
 	} else {
