@@ -21,27 +21,31 @@ this time the list of changes should hold something of interest for everybody!
 <P>&nbsp;&nbsp;Clearly the most exciting change is that HighWire finally is
 capable of viewing JPG/PNG graphics, and that the program now is able to
 download and display images via remote connections! In order to achieve this you
-must however specify a directory HighWire can use for its temporary files. In
+must however specify a directory HighWire can use for its temporary files.  In
 your <TT>highwire.cfg</TT> file you need to enter a line with this syntax:
 <PRE
 >	CACHEDIR = <I>&lt;full path to cache directory&gt;</I>
 </PRE>
-<P>&nbsp;&nbsp;In addition to this, HighWire is also able to store image bitmaps in RAM to
-speed up the handling of graphics. Eg. swapping between pages stored in the
+<p>In addition to this, HighWire is also able to store image bitmaps in RAM to
+speed up the handling of graphics.  Eg. swapping between pages stored in the
 cache can benefit enormously from this! You can determine the amount of RAM
 that can be used to store images:
 <PRE
 >	CACHEMEM = <I>&lt;size in kilo bytes&gt;</I>
 </PRE>
-<P>&nbsp;&nbsp;If this setting is not present, HighWire will use 100kb. It is
-important to point out, that if you visit graphic intensive pages HighWire may
-have to spend time flushing the cache memory over and over again if the cache
-memory limit is set too low.
+<p>If this setting is not present, HighWire will use 100kb.  It is important to
+point out, that if you visit graphic intensive pages HighWire may have to spend
+time flushing the cache memory over and over again if the cache memory limit is
+set too low.
+
+<P>&nbsp;&nbsp;<EM>Please note that not all subformats of JPG and PNG are
+implemented yet.  Thus, some types of images may be displayed weired (eg.
+interlaced, transparent, some monochome).</EM>
 
 <P>&nbsp;&nbsp;Other interesting changes includes improved dithering and added
 support for 32k screen modes as well as better support for TrueColour and
-GrayScale. There has also been an optimisation of the cache scheme that lead to
-reduced flickering upon image rendering. Finally, a correction in the
+GrayScale.  There has also been an optimisation of the cache scheme that lead to
+reduced flickering upon image rendering.  Finally, a correction in the
 calculation of cache size for disk cached objects was made, and a bug
 causing the program to enter an infinite loop (when writing to the cache failed
 for some reason) was fixed.
@@ -54,34 +58,34 @@ for some reason) was fixed.
 releases, it is now enough to just enter eg. <TT>"www.atari.org"</TT> instead of
 <TT>"http://www.atari.org"</TT>.
 In other words, when no protocol prefix is specified in the URL edit field,
-HighWire will assume <TT>"http://"</TT>. While looking into the user interface
+HighWire will assume <TT>"http://"</TT>.  While looking into the user interface
 issues it is also worth pointing out that there is a new keyboard shortcut
 added:
 <BR>&nbsp;<BR>
-<TT>&nbsp;&nbsp;&nbsp;CTRL+N </TT>&rArr; Opens a new (empty) browser window
+<TT>&nbsp;&nbsp;&nbsp;CTRL+N <B>=&gt;</B> </TT>Opens a new (empty) browser window
 
 <P>&nbsp;&nbsp;The previous version did not use correct clipping when drawing
 infobar/edit field, something that could cause droppings on screen when the
  window was shaded or
-iconified. This is all fixed now, as is a bug that would lead to unexpected
-results when a table cell had both rowspan and colspan specified. Something that
-is all new to 0.1.5 is the progress bar (only visible if you have an infobar)
-which will give you an indication on how busy HighWire currently is with
-loading and rendering.
+iconified.  This is all fixed now, as is a bug that would lead to unexpected
+results when a table cell had both rowspan and colspan specified.  Something
+that is all new to 0.1.5 is the progress bar (only visible if you have an
+infobar) which will give you an indication on how busy HighWire currently is
+with loading and rendering.
 
 
 <P>&nbsp;&nbsp;If a server is not responding, HighWire can now detect this and
 instead of hanging you will get a message telling you that HTTP header request
-timed out. Another problem that could lead to infinite loops was when HighWire
+timed out.  Another problem that could lead to infinite loops was when HighWire
 hit very long lines in HTML texts, obviously a bug we're happy to see deleted.
 If a connection fails HighWire will now correctly close the socket, thus
-preventing messages about <TT>"too many open files"</TT>. A problem with very
+preventing messages about <TT>"too many open files"</TT>.  A problem with very
 long URLs overflowing an internal buffer (potentially crashing HighWire) is
 another thing that has been cleared up in the new release.
 
 <P>&nbsp;&nbsp;HighWire should now also be better at detecting situations when
-it is about to run out of available memory. This may prevent HighWire from
-crashing under such circumstances. Another change has been made in the Unicode
+it is about to run out of available memory.  This may prevent HighWire from
+crashing under such circumstances.  Another change has been made in the Unicode
 support, to enable HighWire to cope better with invalid characters.
 
 <P>&nbsp;&nbsp;Finally, a frames related problem with
