@@ -193,8 +193,14 @@ new_location (const char * src, LOCATION base)
 	loc->Host  = loc_host;
 	loc->__reffs++;
 	
-	logprintf(LOG_BLACK, "new_location('%s', '%s') returns '%s'\n",
-	          src, (base ? base->FullName : ""), loc->FullName);
+	if (logging_is_on) {
+		char b_buf[1024], l_buf[1024];
+		if (base) location_FullName (base, b_buf, sizeof(b_buf));
+		else      b_buf[0] = '\0';
+		location_FullName (loc, l_buf, sizeof(l_buf));
+		logprintf (LOG_BLACK, "new_location('%s', '%s') returns '%s'\n",
+		           src, b_buf, l_buf);
+	}
 	
 	return loc;
 }
