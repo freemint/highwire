@@ -13,12 +13,12 @@
 #elif defined (LATTICE)
 # include <dos.h>
 # include <mintbind.h>
-# include <basepage.h>
+# include <mint/basepage.h>
 # define BASPAG BASEPAGE
 
 #elif defined (__GNUC__)
 # include <mintbind.h>
-# include <basepage.h>
+# include <mint/basepage.h>
 # define BASPAG BASEPAGE
 #endif
 
@@ -134,7 +134,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 	strcat (strcpy (file_path, "modules\\"), ovl_name);
 	ovl_basepage = (BASPAG *)Pexec(3,file_path,NULL,NULL);
 	if ((long)ovl_basepage <= 0L) {
-		puts ("Pexec() failed");
+		printf ("Pexec('%s') failed: %li\n", file_path, (long)ovl_basepage);
 		return NULL;
 	
 	} else {
