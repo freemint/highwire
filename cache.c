@@ -41,11 +41,12 @@ struct s_cache_item {
 };
 static CACHEITEM __cache_beg = NULL;
 static CACHEITEM __cache_end = NULL;
-static size_t    __cache_num = 0;
-static size_t    __cache_dsk = 0;
-static size_t    __cache_mem = 0;
-static size_t    __cache_max = 0;
 #define            CACHE_MAX ((size_t)100 *1024)
+static size_t    __cache_mem_use = 0;/* __cache_mem = 0;*/
+static size_t    __cache_mem_max = 0;
+static size_t    __cache_mem_num = 0;
+static size_t    __cache_dsk_use = 0;/* __cache_dsk = 0;*/
+static size_t    __cache_dsk_num = 0;
 static LOCATION  __cache_dir = NULL;
 
 struct s_cache_node {
@@ -86,12 +87,12 @@ static void exit_stats (void)
 {
 	long res   = __stats (&__tree_base);
 	int  level = 1;
-	size_t n = __cache_num;
+	size_t num = __cache_mem_num + __cache_dsk_num, n = num;
 	while (n > 16) {
 		level++;
 		n >>= 4;
 	}
-	printf ("quality(%lu): %li\n", __cache_num, res - (__cache_num * level));
+	printf ("quality(%lu): %li\n", num, res - (num * level));
 }
 #define EXIT_STATS
 #endif
@@ -189,18 +190,20 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		citem->Date     = 0;
 		citem->Expires  = 0;
 		citem->dtor     = dtor;
-		if (!in_mem) {
-			citem->inMem = FALSE;
-		} else {
+		if (in_mem) {
 			citem->inMem = TRUE;
-			__cache_mem += size;
+			__cache_mem_num++;
+			__cache_mem_use += size;
+		} else {
+			citem->inMem = FALSE;
+			__cache_dsk_num++;
+			__cache_dsk_use += size;
 		}
 		if (__cache_beg) __cache_beg->PrevItem = citem;
 		else             __cache_end           = citem;
 		citem->PrevItem = NULL;
 		citem->NextItem = __cache_beg;
 		__cache_beg     = citem;
-		__cache_num++;
 		
 		citem->Cached[0] = '\0';
 	}
@@ -242,23 +245,12 @@ destroy_item (CACHEITEM citem)
 	else                 __cache_beg               = citem->NextItem;
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
 	else                 __cache_end               = citem->PrevItem;
-/*>>>>>>>>>> DEBUG */
-	if (!__cache_num) {
-		printf ("destroy_item(%s): counter underflow!\n",
-		        citem->Location->FullName);
-	}
-/*<<<<<<<<<< DEBUG */
-	__cache_num--;
 	if (citem->inMem) {
-/*>>>>>>>>>> DEBUG */
-		if ((long)__cache_mem < (long)citem->Size) {
-			printf ("destroy_item(%s): size underflow %lu/%li!\n",
-			        citem->Location->FullName, citem->Size, (long)__cache_mem);
-		}
-/*<<<<<<<<<< DEBUG */
-		__cache_mem -= citem->Size;
+		__cache_mem_num--;
+		__cache_mem_use -= citem->Size;
 	} else {
-		__cache_dsk -= citem->Size;
+		__cache_dsk_num--;
+		__cache_dsk_use -= citem->Size;
 	}
 	free_location (&citem->Location);
 	free (citem);
@@ -316,11 +308,11 @@ cache_insert (LOCATION loc, long ident,
 {
 	CACHEITEM citem;
 	
-	if (!__cache_max) {
+	if (!__cache_mem_max) {
 		cache_setup (NULL, 0);
 	}
-	if (__cache_mem + size > __cache_max) {
-		cache_throw (__cache_mem + size - __cache_max);
+	if (__cache_mem_use + size > __cache_mem_max) {
+		cache_throw (__cache_mem_use + size - __cache_mem_max);
 	}
 	
 	if ((citem = create_item (loc, *object, size, dtor)) == NULL) {
@@ -447,8 +439,8 @@ cache_release (CACHED * p_object, BOOL erase)
 			citem = citem->NextItem;
 		}
 	}
-	if (__cache_mem > __cache_max) {
-		cache_throw (__cache_mem - __cache_max);
+	if (__cache_mem_use > __cache_mem_max) {
+		cache_throw (__cache_mem_use - __cache_mem_max);
 	}
 	return object;
 }
@@ -486,12 +478,11 @@ cache_clear (CACHED this_n_all)
 size_t
 cache_info (size_t * size, CACHEINF * p_info)
 {
+	size_t num = __cache_mem_num + __cache_dsk_num;
 	if (p_info) {
-		CACHEINF info = (__cache_num
-		                 ? malloc (sizeof (struct s_cache_info) * __cache_num)
-		                 : NULL);
+		CACHEINF info = (num ? malloc (sizeof(struct s_cache_info) * num) : NULL);
 		if ((*p_info = info) != NULL) {
-			size_t    num   = __cache_num;
+			size_t    n     = num;
 			CACHEITEM citem = __cache_beg;
 			do {
 				info->Source  = citem->Location;
@@ -505,13 +496,13 @@ cache_info (size_t * size, CACHEINF * p_info)
 				info->Size    = citem->Size;
 				citem = citem->NextItem;
 				info++;
-			} while (--num);
+			} while (--n);
 		}
 	}
 	if (size) {
-		*size = __cache_mem /*+ __cache_dsk*/;
+		*size = __cache_mem_use /*+ __cache_dsk_use*/;
 	}
-	return __cache_num;
+	return num;
 }
 
 
@@ -519,16 +510,16 @@ cache_info (size_t * size, CACHEINF * p_info)
 void
 cache_setup (const char * dir, size_t mem_max)
 {
-	if (!__cache_max && !mem_max) {
+	if (!__cache_mem_max && !mem_max) {
 		mem_max = CACHE_MAX;
 	}
 	if (mem_max) {
-		if ((long)(__cache_max = (long)Malloc (-1) /2) < 0) {
-			__cache_max = 0;
-		} else if (__cache_max > mem_max) {
-			__cache_max = mem_max;
+		if ((long)(__cache_mem_max = (long)Malloc (-1) /2) < 0) {
+			__cache_mem_max = 0;
+		} else if (__cache_mem_max > mem_max) {
+			__cache_mem_max = mem_max;
 		}
-/*		printf ("cache mem %lu\n", __cache_max);*/
+/*		printf ("cache mem %lu\n", __cache_mem_max);*/
 	}
 	
 	if (dir && *dir) {
@@ -655,7 +646,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Date    = date;
 				citem->Expires = expires;
 				citem->Reffs--;
-				__cache_dsk += size;
+				__cache_dsk_use += size;
 			} else {
 				free_location (&loc);
 			}
