@@ -79,8 +79,9 @@ _alloc (DIR_ENT dir, const char * file)
 
 /*============================================================================*/
 LOCATION
-new_location (const char * src, LOCATION base)
+new_location (const char * p_src, LOCATION base)
 {
+	const char * src = p_src;
 	LOCATION loc;
 	short    loc_proto = PROT_FILE;
 	HOST_ENT loc_host  = NULL;
@@ -199,7 +200,7 @@ new_location (const char * src, LOCATION base)
 		else      b_buf[0] = '\0';
 		location_FullName (loc, l_buf, sizeof(l_buf));
 		logprintf (LOG_BLACK, "new_location('%s', '%s') returns '%s'\n",
-		           src, b_buf, l_buf);
+		           p_src, b_buf, l_buf);
 	}
 	
 	return loc;
@@ -245,7 +246,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		case PROT_HTTP:   src = "http://";  break;
 		case PROT_HTTPS:  src = "https://"; break;
 		case PROT_FTP:    src = "ftp://";   break;
-		default:          src = (dir->isTos ? NULL : "file://");
+		default:          src = (!dir || dir->isTos ? NULL : "file://");
 	}
 	if (src) {
 		size_t len = strlen (src);
@@ -268,7 +269,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		max_len -= len;
 	}
 	
-	if (max_len) {
+	if (max_len && dir) {
 		size_t len = (dir->Length < max_len ? dir->Length : max_len);
 		strncpy (dst, dir->Name, len);
 		dst     += len;
@@ -413,7 +414,7 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 {
 	static struct s_dir_entry _base = { NULL, FALSE, 1, "/" };
 	
-	DIR_ENT dir = (base ? base : &_base);
+	DIR_ENT dir = &_base;
 	
 	char buf[1024 +2] = "", * b = buf;
 	
@@ -431,8 +432,8 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 		if      (memchr (name, '\\', n_len)) n_delim = '\\';
 		else if (memchr (name, '/',  n_len)) n_delim = '/';
 	}
-	if (!n_delim && !dir) {
-		return NULL;
+	if (!n_delim && !base) {
+		return dir; /*this should never occure, indicates an internal bug! */
 	}
 	
 	if (base) {
