@@ -222,7 +222,7 @@ parse_dir (void * arg, long invalidated)
 		*/
 		ent = list;
 		do {
-			char * lnk;
+			char * lnk, *p = buf;
 			if (ent->dir) {
 				size_t len = strlen (ent->name);
 				lnk = memcpy (buf + sizeof(buf) -4 - len, ent->name, len);
@@ -240,11 +240,15 @@ parse_dir (void * arg, long invalidated)
 				render_text (current, "");
 				sprintf (buf, "%s%lu", ent->name, ent->size);
 			}
+			while (*p >= ' ') {
+				if (*p == ' ') *p = '';
+				p++;
+			}
 			w = ent->word = render_link (current, buf, lnk, color);
 			max_name = max (max_name, w->word_width);
 			w = w->next_word->next_word;
 			max_size = max (max_size, w->word_width);
-			sprintf (buf, "%u-%02u-%02u %02u:%02u:%02u\r",
+			sprintf (buf, " %u-%02u-%02u%02u:%02u:%02u\r",
 			         ent->date.x.year +1980, ent->date.x.mon, ent->date.x.day,
 			         ent->date.x.hour, ent->date.x.min, ent->date.x.sec <<1);
 			render_text (current, buf);
