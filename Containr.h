@@ -36,6 +36,8 @@ typedef enum {
 	HW_PageFinished, /* A part of or the pane itself is finished after loading *
 	                  * and parsing.  'gen_ptr' points to the screen extents   *
 	                  * or is NULL if no content exists.                       */
+	HW_PageUpdated,  /* A page changed it's content.  'gen_ptr' points to the  *
+	                  * changed screen area or may be NULL                     */
 	HW_ImgBegLoad,   /* An image starts to be loaded.  'gen_ptr' points to a   *
 	                  * char* of the image location.                           */
 	HW_ImgEndLoad,   /* An image ended loading.  On success 'gen_ptr' points   *
@@ -69,9 +71,9 @@ struct s_containr {
 	short ColSize, RowSize; /* extent of the container, both values are either *
 	                         * positive absolute values or negative fractions  *
 	                         * of -1024                                        */
-	void      * HighLight;
-	BOOL        Border; /* as given from the <.. BORDER=".." tag   */
-	BOOL 		Resize; /* as given from the <.. RESIZE tag        */
+	void * HighLight;
+	BOOL   Border; /* as given from the <.. BORDER=".." tag   */
+	BOOL   Resize; /* as given from the <.. RESIZE tag        */
 	WORD Borders;       /* what borders does container have */ 
 	WORD Border_Size; 	/* BAD HTML frame border attribute */ 
 	WORD Border_Colour; /* BAD HTML frame border colour */
