@@ -384,13 +384,11 @@ check_mouse_position (WORD mx, WORD my)
 		focus_rect   = clip;
 	}
 
-	if ( (cont->Resize == TRUE) && 
-		((elem == PE_BORDER_RT)||(elem == PE_BORDER_LF)||
-		(elem == PE_BORDER_UP)||(elem == PE_BORDER_DN)))
-				graf_mouse(hwWind_Mshape = THICK_CROSS, NULL);
-	else if (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,  NULL);
-	else if (PE_isActive (elem))  graf_mouse (hwWind_Mshape = POINT_HAND, NULL);
-	else if (hwWind_Mshape)       graf_mouse (hwWind_Mshape = ARROW,      NULL);
+	if ((cont->Resize == TRUE) && (PE_Type (elem) == PE_BORDER))
+	                              graf_mouse (hwWind_Mshape = THICK_CROSS, NULL);
+	else if (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,   NULL);
+	else if (PE_isActive (elem))  graf_mouse (hwWind_Mshape = POINT_HAND,  NULL);
+	else if (hwWind_Mshape)       graf_mouse (hwWind_Mshape = ARROW,       NULL);
 
 #ifdef WATCH
 	WATCH = watch;
