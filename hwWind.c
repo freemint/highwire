@@ -21,9 +21,10 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
-static void vTab_raised   (HwWIND, BOOL topNbot);
-static void vTab_drawWork (HwWIND, const GRECT *);
-static void vTab_drawIcon (HwWIND, const GRECT *);
+static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD state);
+static void vTab_drawWork  (HwWIND, const GRECT *);
+static void vTab_drawIcon  (HwWIND, const GRECT *);
+static void vTab_raised    (HwWIND, BOOL topNbot);
 
 
 #define HISTORY_LAST 20
@@ -198,9 +199,10 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	}
 	
 	window_ctor (This, wind_kind, NULL);
-	This->Base.drawWork = vTab_drawWork;
-	This->Base.drawIcon = vTab_drawIcon;
-	This->Base.raised = vTab_raised;
+	This->Base.evMessage = vTab_evMessage;
+	This->Base.drawWork  = vTab_drawWork;
+	This->Base.drawIcon  = vTab_drawIcon;
+	This->Base.raised    = vTab_raised;
 	
 	This->isFull  = FALSE;
 	This->shaded  = FALSE;
@@ -901,9 +903,9 @@ hwWind_Next (HwWIND This)
 	} else {
 		next = This->Base.Next;
 	}
-	
-	/* later we need a filter here to not catch wrong window types */
-	
+	while (next && next->drawWork != vTab_drawWork) {
+		next = next->Next;
+	}
 	return (HwWIND)next;
 }
 
@@ -912,11 +914,8 @@ HwWIND
 hwWind_byHandle (WORD hdl)
 {
 	HwWIND wind = hwWind_Top;
-	while (wind) {
-		if (wind->Base.Handle == hdl) {
-			break;
-		}
-		wind = (HwWIND)wind->Base.Next;
+	while (wind && wind->Base.Handle != hdl) {
+		wind = hwWind_Next (wind);
 	}
 	return wind;
 }
@@ -926,11 +925,8 @@ HwWIND
 hwWind_byValue (long val)
 {
 	HwWIND wind = hwWind_Top;
-	while (wind) {
-		if (wind == (HwWIND)val) {
-			break;
-		}
-		wind = (HwWIND)wind->Base.Next;
+	while (wind && wind != (HwWIND)val) {
+		wind = hwWind_Next (wind);
 	}
 	return wind;
 }
@@ -940,11 +936,8 @@ HwWIND
 hwWind_byContainr (CONTAINR cont)
 {
 	HwWIND wind = (cont ? hwWind_Top : NULL);
-	while (wind) {
-		if (wind->Pane == cont->Base) {
-			break;
-		}
-		wind = (HwWIND)wind->Base.Next;
+	while (wind && wind->Pane == cont->Base) {
+		wind = hwWind_Next (wind);
 	}
 	return wind;
 }
@@ -1414,59 +1407,49 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 }
 
 
-/*============================================================================*/
-BOOL
-hwWind_message (WORD msg[], PXY mouse, UWORD state)
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD state)
 {
-	HwWIND wind  = hwWind_byHandle (msg[3]);
-	BOOL   found = (wind != NULL);
-	BOOL   check = FALSE;
-	if (wind) switch (msg[0]) {
-		case WM_REDRAW:    hwWind_redraw  (wind, (GRECT*)(msg + 4)); break;
-		case WM_MOVED:     hwWind_move    (wind,  *(PXY*)(msg + 4)); break;
-		case WM_SIZED:     hwWind_resize  (wind, (GRECT*)(msg + 4)); break;
-		case WM_FULLED:    hwWind_full    (wind);                    break;
+	BOOL found = TRUE;
+	BOOL check = FALSE;
+	switch (msg[0]) {
+		case WM_MOVED:     hwWind_move    (This,  *(PXY*)(msg + 4)); break;
+		case WM_SIZED:     hwWind_resize  (This, (GRECT*)(msg + 4)); break;
+		case WM_FULLED:    hwWind_full    (This);                    break;
 		case WM_ICONIFY:
-			hwWind_iconify (wind, (GRECT*)(msg + 4));
-			if (wind->TbarActv == TBAR_EDIT) {
-				TBAREDIT * edit = TbarEdit (wind);
+			hwWind_iconify (This, (GRECT*)(msg + 4));
+			if (This->TbarActv == TBAR_EDIT) {
+				TBAREDIT * edit = TbarEdit (This);
 				edit->Cursor = 0;
 				edit->Shift  = 0;
-				chng_toolbar (wind, 0, 0, -1);
+				chng_toolbar (This, 0, 0, -1);
 			}
 			check = TRUE;
 			break;
 		case WM_UNICONIFY:
-			hwWind_iconify (wind, NULL);
-			check = TRUE;
-			break;
-		case WM_TOPPED:
-			hwWind_raise (wind, TRUE);
-			check = TRUE;
-			break;
-		case WM_BOTTOMED:
-			hwWind_raise (wind, FALSE);
+			hwWind_iconify (This, NULL);
 			check = TRUE;
 			break;
 		case WM_ARROWED:
 			if (msg[4] == WA_LFLINE) {
-				hwWind_undo (wind, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
+				hwWind_undo (This, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
 			}
 			break;
 		case 22360: /* shaded */
-			wind->shaded = TRUE;
-			if (wind->TbarActv == TBAR_EDIT) {
-				TBAREDIT * edit = TbarEdit (wind);
+			This->shaded = TRUE;
+			if (This->TbarActv == TBAR_EDIT) {
+				TBAREDIT * edit = TbarEdit (This);
 				edit->Cursor = 0;
 				edit->Shift  = 0;
-				chng_toolbar (wind, 0, 0, -1);
+				chng_toolbar (This, 0, 0, -1);
 			}
 			break;
 		case 22361: /* unshaded */
-			wind->shaded = FALSE;
+			This->shaded = FALSE;
 			break;
 		case WM_CLOSED:
-			hwWind_close (wind, state);
+			hwWind_close (This, state);
 			check = (hwWind_Top != NULL);
 			break;
 		
@@ -1486,6 +1469,11 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 	GRECT  clip;
 	WORD   whdl = wind_find (mx, my);
 	HwWIND wind = hwWind_byHandle (whdl);
+	
+	/* check wether the found window is of the correct type */
+	if (wind && wind->Base.drawWork != vTab_drawWork) {
+		return (NULL);
+	}
 	
 	if (wind && !wind->Base.isIcon) {
 		clip = wind->Work;

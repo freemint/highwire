@@ -62,7 +62,6 @@ HwWIND  hwWind_byHandle (WORD);
 HwWIND  hwWind_byContainr (CONTAINR);
 
 #define hwWind_redraw( HwWIND, GRECT)       window_redraw (&HwWIND->Base, GRECT)
-BOOL    hwWind_message(WORD msg[], PXY mouse, UWORD state);
 HwWIND  hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
 HwWIND  hwWind_button (WORD mx, WORD my);
 HwWIND  hwWind_keybrd (WORD key, UWORD state);

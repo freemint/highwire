@@ -998,7 +998,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 BOOL
 process_messages (WORD msg[], PXY mouse, UWORD state)
 {
-	if (hwWind_message (msg, mouse, state)) {
+	if (window_evMessage (msg, mouse, state)) {
 		if (!hwWind_Top) return TRUE;
 	
 	} else switch (msg[0]) {
