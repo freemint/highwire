@@ -169,7 +169,8 @@ PARAGRPH content_paragraph (CONTENT *, long x, long y, long area[4]);
 IMAGE new_image    (FRAME, TEXTBUFF, const char * src, LOCATION,
                     short w, short h, short vspace, short hspace);
 void  delete_image (IMAGE*);
-void image_calculate (IMAGE, short par_width);
+void         image_calculate (IMAGE, short par_width);
+const char * image_dispinfo  (void);
 
 /* in W_Struct.c */
 
