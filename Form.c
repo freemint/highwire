@@ -386,8 +386,8 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 
 /*============================================================================*/
 INPUT
-selct_option (TEXTBUFF current, const char * text, UWORD tlen,
-              BOOL disabled, ENCODING enoding, char * value, BOOL selected)
+selct_option (TEXTBUFF current, const char * text,
+              BOOL disabled, ENCODING encoding, char * value, BOOL selected)
 {
 	INPUT    input = (current->form ? ((FORM)current->form)->Last : NULL);
 	SELECT   sel;
@@ -399,14 +399,8 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 		return NULL;
 	}
 	
-	while (tlen && isspace (text[0])) {
-		text++;
-		tlen--;
-	}
-	while (tlen && isspace (text[tlen -1])) {
-		tlen--;
-	}
-	if (tlen && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
+	if (*text && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
+		size_t tlen = strlen (text);
 		WORD  pts[8];
 		item->Value    = (value ? value : item->Strng +1);
 		if ((text[0] == '-' && (!text[1] || (text[1] == '-' && (!text[2] ||
@@ -423,8 +417,10 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 		}
 		memcpy (item->Strng +1, text, tlen);
 		item->Strng[tlen +1] = '\0';
+		
+		encoding = ENCODING_ATARIST;
 		current->text = current->buffer;
-		scan_string_to_16bit (item->Strng +1, enoding, &current->text,
+		scan_string_to_16bit (text, encoding, &current->text,
 		                      current->word->font->Base->Mapping);
 		tlen = current->text - current->buffer;
 		if (tlen >= numberof(item->Text)) {
@@ -436,6 +432,7 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 		item->Length = tlen;
 		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
 		item->Width = pts[2] - pts[0];
+		
 		if (!sel->ItemList || selected) {
 			input->Word->item   = item->Text;
 			input->Word->length = item->Length;

@@ -22,8 +22,9 @@ INPUT form_text  (TEXTBUFF, const char * name, char * value, UWORD maxlen,
                   ENCODING, UWORD cols);
 
 INPUT form_selct   (TEXTBUFF, const char * name, UWORD size, BOOL disabled);
-INPUT selct_option (TEXTBUFF, const char * text, UWORD tlen, BOOL disabled,
+INPUT selct_option (TEXTBUFF, const char * text, BOOL disabled,
                     ENCODING, char * value, BOOL selected);
 void  selct_finish (TEXTBUFF);
+
 
 #endif /* __FORM_H__ */
