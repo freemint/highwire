@@ -303,14 +303,17 @@ struct s_dombox {
 	DOMBOX * ChildBeg, * ChildEnd;
 	LRECT    Rect;
 	LONG     MaxWidth;
-	LONG     MinWidth; /* smallest width where the content fits in          */
-	LONG     SetWidth; /* set Value, must not be smaller than Minimum       */
+	LONG     MinWidth;  /* smallest width where the content fits in          */
+	LONG     SetWidth;  /* set Value, must not be smaller than Minimum       */
 	LONG     SetHeight;
-	char   * IdName;   /* from id="<ID>" attribute, refferenced by ".ID"    */
-	char   * ClName;   /* from class="<CL>" attribute, refferenced by "#CL" */
+	PXY      SetPos;    /* from CSS, left and right attribute                */
+	UWORD    SetPosMsk; /* bit mask: absolute=0x100, left= 0x001, top=0x002  */
+	UWORD    SetPosCld; /* mask as above, or'ed together from all childrens  */
+	char   * IdName;    /* from id="<ID>" attribute, refferenced by ".ID"    */
+	char   * ClName;    /* from class="<CL>" attribute, refferenced by "#CL" */
 	BOXCLASS BoxClass;
 	WORD     HtmlCode;
-	WORD     Backgnd;  /* -1 for transparency, or colour value              */
+	WORD     Backgnd;   /* -1 for transparency, else colour value            */
 	TBLR     Margin;
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
