@@ -27,11 +27,11 @@
 #define t_BorderW    Paragraph->Box.BorderWidth
 #define t_BorderC    Paragraph->Box.BorderColor
 
-#define c_OffsetX Content.Box.Rect.X
-#define c_OffsetY Content.Box.Rect.Y
-#define c_Width   Content.Box.Rect.W
-#define c_Height  Content.Box.Rect.H
-#define c_Backgnd Content.Box.Backgnd
+#define c_OffsetX Box.Rect.X
+#define c_OffsetY Box.Rect.Y
+#define c_Width   Box.Rect.W
+#define c_Height  Box.Rect.H
+#define c_Backgnd Box.Backgnd
 
 #ifdef DEBUG
 	#define _DEBUG
@@ -60,7 +60,7 @@ delete_table (TABLE * _table)
 			TAB_CELL cell     = row->Cells;
 			while (cell) {
 				TAB_CELL next_cell = cell->RightCell;
-				Delete (&cell->Content.Box);
+				Delete (&cell->Box);
 				cell = next_cell;
 			}
 			free (row);
@@ -225,9 +225,13 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 	if (left_side) {
 		left_side->RightCell = cell;
 	}
-	content_setup (&cell->Content, NULL, parent, BC_STRUCT, padding, -1);
-	cell->Content.Box.BorderWidth = (parent->BorderWidth ? 1 : 0);
-	cell->Content.Box.BorderColor = -2; /* 3D inset */
+	dombox_ctor (&cell->Box, parent, BC_STRUCT);
+	if (padding) {
+		cell->Box.Padding.Top = cell->Box.Padding.Bot =
+		cell->Box.Padding.Lft = cell->Box.Padding.Rgt = padding;
+	}
+	cell->Box.BorderWidth = (parent->BorderWidth ? 1 : 0);
+	cell->Box.BorderColor = -2; /* 3D inset */
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;
@@ -317,13 +321,13 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 
 	cell->_debug = stack->_debug++;
 	
-	parser->Current.parentbox = &cell->Content.Box;
-	cell->Content.Item = new_paragraph (&parser->Current);
+	parser->Current.parentbox = &cell->Box;
+	new_paragraph (&parser->Current);
 	
-	cell->Content.Box.TextAlign = cell->Content.Item->Box.TextAlign = h_align;
-	cell->AlignV             = v_align;
-	cell->c_Height           = (height <= 1024 ? height : 1024);
-	cell->c_Width            = (width  <= 1024 ? width  : 0);
+	cell->Box.TextAlign = parser->Current.paragraph->Box.TextAlign = h_align;
+	cell->AlignV        = v_align;
+	cell->c_Height      = (height <= 1024 ? height : 1024);
+	cell->c_Width       = (width  <= 1024 ? width  : 0);
 	
 	if (color < 0) {
 		color = row->Color;
@@ -528,14 +532,14 @@ table_finish (PARSER parser)
 
 		adjust_rowspans (cell, i--);
 		do {
-			if (cell->Content.Item) {
+			if (cell->Box.ChildBeg) {
 				if (cell->c_Width < 0 && table->t_SetWidth > 0) {
 					short width = table->t_SetWidth - table->t_MinWidth;
 					cell->c_Width = (-cell->c_Width * width +512) /1024;
 					if (cell->c_Width <= 0) cell->c_Width = 1;
 				}
 				if (cell->ColSpan == 1) {
-					long width = dombox_MinWidth (&cell->Content.Box);
+					long width = dombox_MinWidth (&cell->Box);
 					if (width <= padding) {
 						cell->c_Width = 0;
 					}
@@ -546,7 +550,7 @@ table_finish (PARSER parser)
 						*minimum = *fixed = width;
 					} else {
 						if (*minimum < width) *minimum = width;
-						width = dombox_MaxWidth (&cell->Content.Box);
+						width = dombox_MaxWidth (&cell->Box);
 						if (*maximum < width) *maximum = width;
 						if (cell->c_Width < 0) {
 							if (table->NumCols > 1) {
@@ -582,8 +586,8 @@ table_finish (PARSER parser)
 	do {
 		TAB_CELL cell = column;
 		do {
-			if (cell->Content.Item && cell->ColSpan > 1) {
-				long width = dombox_MinWidth (&cell->Content.Box);
+			if (cell->Box.ChildBeg && cell->ColSpan > 1) {
+				long width = dombox_MinWidth (&cell->Box);
 				spread_width (minimum, cell->ColSpan, table->Spacing, width);
 				if (cell->c_Width > 0) {
 					short empty = 0;
@@ -612,7 +616,7 @@ table_finish (PARSER parser)
 					}
 				} else {
 					spread_width (maximum, cell->ColSpan, table->Spacing,
-					              dombox_MaxWidth (&cell->Content.Box));
+					              dombox_MaxWidth (&cell->Box));
 					if (cell->c_Width < 0 && cell->ColSpan < table->NumCols) {
 						short empty = 0;
 						percent = table->Percent + (fixed - table->ColWidth);
@@ -683,7 +687,7 @@ table_finish (PARSER parser)
 	do {
 		TAB_CELL cell = row->Cells;
 		do {
-			if (cell->Content.Item && cell->RowSpan > 1) {
+			if (cell->Box.ChildBeg && cell->RowSpan > 1) {
 				short span   = cell->RowSpan -1;
 				short height = cell->c_Height - row->MinHeight;
 				TAB_ROW r    = row->NextRow;
@@ -940,10 +944,10 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		row->Height = row->MinHeight;
 		while (cell) {
 			long width = *(col_width++);
-			if (cell->Content.Item) {
+			if (cell->Box.ChildBeg) {
 				short span = cell->ColSpan -1;
 				while (span--) width += col_width[span] + table->Spacing;
-				dombox_format (&cell->Content.Box, width);
+				dombox_format (&cell->Box, width);
 				if (cell->RowSpan == 1 && row->Height < cell->c_Height) {
 					row->Height = cell->c_Height;
 				}
@@ -963,7 +967,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	do {
 		TAB_CELL cell = row->Cells;
 		while (cell) {
-			if (cell->Content.Item && cell->RowSpan > 1) {
+			if (cell->Box.ChildBeg && cell->RowSpan > 1) {
 				short span   = cell->RowSpan -1;
 				short height = cell->c_Height - row->Height;
 				TAB_ROW r    = row->NextRow;
@@ -1025,7 +1029,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 				} while (--i);
 			}
 			if (height != cell->c_Height) {
-				dombox_stretch (&cell->Content.Box, height, cell->AlignV);
+				dombox_stretch (&cell->Box, height, cell->AlignV);
 			}
 			cell->c_OffsetX = x;
 			cell->c_OffsetY = y;
@@ -1106,7 +1110,7 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 			cell = NULL;
 		}
 	}
-	return (cell ? &cell->Content.Box : NULL);
+	return (cell ? &cell->Box : NULL);
 }
 
 
@@ -1126,8 +1130,8 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 		long clip_top = (long)clip->g_y - row_y;
 
 		while (cell) {
-			if (cell->Content.Item && (cell->c_Height > clip_top)) {
-				dombox_draw (&cell->Content.Box, x + cell->c_OffsetX,
+			if (cell->Box.ChildBeg && (cell->c_Height > clip_top)) {
+				dombox_draw (&cell->Box, x + cell->c_OffsetX,
 				             y + cell->c_OffsetY, clip, highlight);
 			}
 			cell = cell->RightCell;
