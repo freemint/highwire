@@ -422,13 +422,13 @@ void
 menu_info (void)
 {
 	FRAME    frame = hwWind_ActiveFrame (NULL);
-	CONTAINR cont  = frame->Container;
-	LOCATION loc   = frame->Location;
-	const char * file_ptr = (*loc->File ? loc->File : ".");
+	CONTAINR cont  = (frame ? frame->Container : hwWind_Top->Pane);
+	LOCATION loc   = (frame ? frame->Location  : NULL);
+	const char * file_ptr = (!loc ? "(empty)" : *loc->File ? loc->File : ".");
 	int          file_ln  = (int)strlen (file_ptr);
 	const char * file_pp  = "";
-	UWORD        dir_ln;
-	const char * dir_ptr  = location_Path (loc, &dir_ln);
+	const char * dir_ptr  = (loc ? location_Path (loc, NULL) : fsel_path);
+	int          dir_ln   = (int)strlen (dir_ptr);
 	const char * dir_pp   = "";
 	char       * enc_ptr;
 	int          enc_ln;
@@ -446,7 +446,7 @@ menu_info (void)
 		dir_ln = 39;
 		dir_pp = "¯";
 	}
-	switch (frame->Encoding) {
+	switch (frame ? frame->Encoding : ENCODING_WINDOWS1252) {
 		case ENCODING_WINDOWS1252: enc_ptr =   "Windows-1252"; break;
 		case ENCODING_ISO8859_2:   enc_ptr =      "ISO8859-2"; break;
 		case ENCODING_ISO8859_15:  enc_ptr =     "ISO8859-15"; break;
@@ -454,7 +454,7 @@ menu_info (void)
 		case ENCODING_UTF16:       enc_ptr =  "Unicode-UTF16"; break;
 		case ENCODING_MACINTOSH:   enc_ptr = "MacintoshRoman"; break;
 		case ENCODING_ATARIST:     enc_ptr =      "AtariFont"; break;
-		default:                   enc_ptr =      "<infalid>";
+		default:                   enc_ptr =      "<invalid>";
 	}
 	if (frm_ln > 37 - (enc_ln = (int)strlen (enc_ptr))) {
 		frm_ln = 37 - enc_ln;
