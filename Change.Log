@@ -1,4 +1,4 @@
-(non-public of Jul. 25, 2004)
+(non-public of Aug. 02, 2004)
 
 - Cookie support implemented.  Non-session cookies
   are stored to disk to allow persistent user
@@ -25,6 +25,9 @@
 
 - Checking for proper font settings added to avoid
   bad formatted text input fields.
+
+- Workaround for the Lattice compiler bitfield
+  bug.
 
 - Bugs #0160, #0163 resolved.
 

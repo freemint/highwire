@@ -25,10 +25,15 @@
 #include "fontbase.h"
 
 
+#ifdef LATTICE   /* get rid of compiler bitfield bug */
+# define BF16(t,n)   UWORD n
+#else
+# define BF16(t,n)   t     n :16
+#endif
 typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
-	HTMLKEY      Key :16;
-	unsigned     Len :16;
-	const char * Value;
+	BF16(HTMLKEY,  Key);
+	BF16(unsigned, Len);
+	const char   * Value;
 } KEYVALUE;
 
 typedef struct s_style * STYLE;
