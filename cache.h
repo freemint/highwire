@@ -1,3 +1,7 @@
+#ifndef __CACHE_H__
+#define __CACHE_H__
+
+
 typedef void       * CACHEOBJ;
 typedef const void * CACHED;
 
@@ -23,5 +27,19 @@ size_t cache_info (size_t * size, CACHEINF *);
 
 
 BOOL     cache_setup  (const char * dir);
-LOCATION cache_assign (LOCATION, void *, size_t,
-                       const char * type, long date, long expires);
+
+typedef enum {
+	CQ_NONE  = 0,
+	CQ_BUSY  = 0x01, CQ_LOCAL = 0x02,
+	CQ_FOUND = 0x10, CQ_MATCH = 0x20
+} CQRESULT;
+#define CQresultDsk(r)   (r & 0x0F)
+#define CQresultMem(r)   (r & 0xF0)
+
+CQRESULT cache_exclusive (LOCATION);
+void     cache_abort     (LOCATION);
+LOCATION cache_assign    (LOCATION, void *, size_t,
+                          const char * type, long date, long expires);
+
+
+#endif /*__CACHE_H__*/

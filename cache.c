@@ -101,6 +101,20 @@ tree_node (ULONG hash)
 	return node;
 }
 
+/*----------------------------------------------------------------------------*/
+static CACHEITEM
+tree_item (LOCATION loc)
+{
+	ULONG     hash  = location_Hash (loc);
+	CACHENODE node  = tree_node (hash);
+	UWORD     idx   = (hash >> node->Level4x) & 0xF;
+	CACHEITEM citem = node->Array[idx].Item;
+	while (citem && (citem->Ident || !location_equal (loc, citem->Location))) {
+		citem = citem->NodeNext;
+	}
+	return citem;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static CACHEITEM
@@ -365,7 +379,7 @@ cache_info (size_t * size, CACHEINF * p_info)
 				info->Source  = citem->Location;
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
-				info->File    = local->File;
+				info->File    = (local ? local->File : NULL);
 				info->Object  = citem->Object;
 				citem = citem->NextItem;
 				info++;
@@ -403,6 +417,40 @@ cache_setup (const char * dir)
 }
 
 
+/*============================================================================*/
+CQRESULT
+cache_exclusive (LOCATION loc)
+{
+	CACHEITEM citem = tree_item (loc);
+	CQRESULT  res;
+	
+	if (citem) {
+		res = (!citem->Object ? CQ_BUSY : CQ_LOCAL);
+	/*	printf ("cache_exclusive(%s): %s\n",
+		        loc->FullName, (res == CQ_BUSY ? "busy" : "found"));*/
+	} else {
+		create_item (loc, NULL, 0uL, (void(*)(void*))0);
+		res = CQ_NONE;
+	/*	printf ("cache_exclusive(%s) set\n", loc->FullName);*/
+	}
+	return res;
+}
+
+/*============================================================================*/
+void
+cache_abort (LOCATION loc)
+{
+	CACHEITEM citem = tree_item (loc);
+	
+	if (!citem) {
+		printf ("cache_abort(%s): not found!\n", loc->FullName);
+	
+	} else {
+	/*	printf ("cache_abort(%s)\n", loc->FullName);*/
+		destroy_item (citem);
+	}
+}
+
 /*----------------------------------------------------------------------------*/
 static void
 file_dtor (void * arg)
@@ -419,32 +467,47 @@ LOCATION
 cache_assign (LOCATION src, void * data, size_t size,
               const char * type, long date, long expires)
 {
-	static long num = 0;
-	LOCATION    loc = NULL;
-	if (__cache_dir) {
-		const char * dot;
-		char buf[1024];
-		int  fh;
-		if (!type || !*type) {
-			type = "";
-			dot  = "";
-		} else {
-			dot  = ".";
+	static long _file_id = 0;
+	
+	LOCATION  loc   = NULL;
+	CACHEITEM citem = tree_item (src);
+	
+	if (!citem) {
+	/*	printf ("cache_assign(%s): not found!\n", src->FullName);*/
+	
+	} else if (citem->Object) {
+	/*	printf ("cache_assign(%s): already in use!\n", src->FullName);*/
+	
+	} else {
+		if (__cache_dir) {
+			const char * dot;
+			char buf[1024];
+			int  fh;
+			if (!type || !*type) {
+				type = "";
+				dot  = "";
+			} else {
+				dot  = ".";
+			}
+			sprintf (buf, "%08lX%s%s", _file_id, dot, type);
+			loc = new_location (buf, __cache_dir);
+			location_FullName (loc, buf, sizeof(buf));
+			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
+				write (fh, data, size);
+				close (fh);
+				_file_id++;
+				citem->Object  = location_share (loc);
+				citem->dtor    = file_dtor;
+				citem->Size    = size;
+				citem->Date    = date;
+				citem->Expires = expires;
+				citem->Reffs--;
+			} else {
+				free_location (&loc);
+			}
 		}
-		sprintf (buf, "%08lX%s%s", num, dot, type);
-		loc = new_location (buf, __cache_dir);
-		location_FullName (loc, buf, sizeof(buf));
-		if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
-			CACHEITEM citem;
-			write (fh, data, size);
-			close (fh);
-			num++;
-			citem = create_item (src, location_share (loc), size, file_dtor);
-			citem->Date    = date;
-			citem->Expires = expires;
-			citem->Reffs--;
-		} else {
-			free_location (&loc);
+		if (!loc) { /* either no cache dir set or file coudn't be written */
+			destroy_item (citem);
 		}
 	}
 	return loc;
