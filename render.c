@@ -2522,8 +2522,16 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
-		if (floating == ALN_NO_FLT && get_v_align (parser, -1) == ALN_MIDDLE) {
-			floating = ALN_CENTER; /* patch for invalid key value */
+		if (floating == ALN_NO_FLT) {
+			if (get_v_align (parser, -1) == ALN_MIDDLE) {
+				floating = ALN_CENTER; /* patch for invalid key value */
+			} else if (parser->Current.parentbox->BoxClass == BC_STRUCT) {
+				/* workaround, needs to be replaced soon */
+				CONTENT * cont = (CONTENT*)parser->Current.parentbox;
+				if (cont->Alignment == ALN_CENTER || cont->Alignment == ALN_RIGHT) {
+					floating = cont->Alignment;
+				}
+			}
 		}
 		table_start (parser,
 		             get_value_color (parser, KEY_BGCOLOR), floating,
