@@ -308,6 +308,10 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 					cell->DummyFor = prev->DummyFor;
 					cell->RowSpan  = 1 + prev->RowSpan;
 					cell->ColSpan  = prev->ColSpan;
+				} else if (prev->RowSpan == 0) {
+					cell->DummyFor = prev;
+					cell->RowSpan  = 2 - prev->RowSpan;
+					cell->ColSpan  = prev->ColSpan;
 				}
 			} while ((prev = prev->RightCell) != NULL);
 			row->Cells = stack->PrevRow->Cells->BelowCell;
@@ -361,9 +365,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		parser->Current.backgnd = stack->SavedCurr.backgnd;
 	}
 	
-	if (rowspan > 1) {
-		cell->RowSpan = rowspan;
-	}
+	cell->RowSpan = rowspan;
 
 	if (colspan == 0) {
 		colspan = table->NumCols;
@@ -418,6 +420,13 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 static void
 adjust_rowspans (TAB_CELL column, int num_rows)
 {
+/*	if (column->RowSpan == 0) {
+printf("Rowspan = %d\r\n",column->RowSpan);
+		column->RowSpan = num_rows + 1;
+printf("Rowspan = %d\r\n",column->RowSpan);
+	
+	}	
+*/
 	do if (column->RowSpan > num_rows) {
 		TAB_CELL cell = column;
 		short    span = 2 - num_rows;
@@ -694,6 +703,11 @@ table_finish (PARSER parser)
 	i   = table->NumRows;
 	do {
 		TAB_CELL cell = row->Cells;
+
+		/* finally fix cells with a rowspan of 0 */
+		if (cell->RowSpan == 0)
+			cell->RowSpan = i; 
+
 		adjust_rowspans (cell, i--);
 		do {
 			if (cell->c_SetWidth < 0 && table->NumCols <= 1) {
@@ -748,6 +762,7 @@ table_finish (PARSER parser)
 					r->MinHeight += height;
 				}
 			}
+
 		} while ((cell = cell->RightCell) != NULL);
 	} while ((row = row->NextRow) != NULL);
 
