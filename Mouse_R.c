@@ -201,6 +201,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 		}	break;
 		
 		case PE_TLINK: case PE_ILINK: {
+			WORD dmy;
 			struct url_link * link = hash;
 			const char      * addr = link->address;
 			if (*addr == '#') {
@@ -226,6 +227,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 					}
 				}
 			}
+			evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
 		} break;
 		
 		case PE_BORDER: {
