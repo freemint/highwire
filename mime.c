@@ -155,22 +155,19 @@ mime_byString (const char * str, const char ** tail)
 	};
 	
 	struct mime * mime = mime_types;
-	size_t        len  = strspn (str, "abcdefghijklmnopqrstuvwxyz/-");
-	do {
-		size_t n = strlen (mime->str);
-		if (len >= n && strnicmp (str, mime->str, n) == 0) {
-			str += n;
-			len -= n;
+	size_t        len  = 0;
+	while (isalpha(str[len])) len++;
+	if (len) do {
+		if (strnicmp (str, mime->str, len) == 0 && !mime->str[len]) {
+			str += len;
 			type = mime->type;
-			if (len > 1 && *str == '/') {
+			if (*str == '/' && isalpha(*(++str))) {
 				struct mime_sub * sub = mime->sub;
-				str++;
-				len--;
-				do {
-					n = strlen (sub->str);
-					if (len >= n && strnicmp (str, sub->str, n) == 0) {
-						str += n;
-						len -= n;
+				len = 0;
+				while (isalpha(str[++len]) || str[len] == '-');
+				if (len) do {
+					if (strnicmp (str, sub->str, len) == 0 && !sub->str[len]) {
+						str += len;
 						type = sub->type;
 						break;
 					}
