@@ -537,10 +537,12 @@ menu_frm_ctrl (int mode)
 void
 menu_cookies (int mode)
 {
-	if (mode < 0)  mode = !cookies_allowed;
-	else if (mode) mode = TRUE;
-	else           mode = FALSE;
-	cookies_allowed = mode;
+	if (mode < 0)  cookies_allowed = !cookies_allowed;
+	else if (mode) cookies_allowed = TRUE;
+	else           cookies_allowed = FALSE;
+	if (mode < 0) {
+		save_config ("COOKIES", (cookies_allowed ? "1" : "0"));
+	}
 #ifdef GEM_MENU
 	menu_icheck (menutree, M_COOKIES, cookies_allowed);
 #endif
