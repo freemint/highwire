@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "token.h" /* must be included before gem/gemx.h */
 #include <gem.h>
@@ -99,7 +100,6 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				}
 				line++;
 			}
-			current->word->line_brk = BRK_LN;
 			if (info->Used) {
 				sprintf (buf, "[%li]", info->Used);
 				render_text (current, buf);
@@ -111,6 +111,21 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				font_byType (-1, 0x0000, font_step2size (NULL, 3), current->word);
 				unused = TRUE;
 			}
+			if (info->Date) {
+				struct tm * tm = localtime ((time_t*)&info->Date);
+				sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
+				         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+				         tm->tm_hour, tm->tm_min, tm->tm_sec);
+				render_text (current, buf);
+				if (info->Expires) {
+					tm = localtime ((time_t*)&info->Expires);
+					sprintf (buf, "expires:%04i-%02i-%02i %02i:%02i:%02i",
+					         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+					         tm->tm_hour, tm->tm_min, tm->tm_sec);
+					render_text (current, buf);
+				}
+			}
+			current->prev_wrd->line_brk = BRK_LN;
 			info++;
 		}
 		if (mem) {
