@@ -48,8 +48,10 @@ char fsel_path[HW_PATH_MAX];
 char help_file[HW_PATH_MAX];
 
 
-static BOOL loader_job (void * arg, long invalidated);
-static BOOL header_job (void * arg, long invalidated);
+static BOOL loader_job  (void * arg, long invalidated);
+static BOOL header_job  (void * arg, long invalidated);
+static BOOL receive_job (void * arg, long invalidated);
+static BOOL generic_job (void * arg, long invalidated);
 
 static short  start_application (const char * appl, LOCATION loc);
 static char * load_file (const LOCATION, size_t * expected, size_t * loaded);
@@ -159,6 +161,8 @@ new_loader (LOCATION loc, CONTAINR target)
 	loader->DataFill = 0;
 	loader->Data     = NULL;
 	loader->notified = FALSE;
+	/* */
+	loader->SuccJob = NULL;
 	/* */
 	loader->rdChunked = FALSE;
 	loader->rdSocket  = -1;
@@ -278,6 +282,11 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base)
 		
 #ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
+		if (loader->ExtAppl) {
+			loader->SuccJob = generic_job;
+			containr_notify (loader->Target, HW_PageFinished, NULL);
+			loader->notified = FALSE;
+		}
 		sched_insert (header_job, loader, (long)target);
 #endif /* USE_INET */
 	
@@ -288,7 +297,7 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base)
 		sprintf (buf, txt, loc->Proto);
 		loader->Data     = strdup (buf);
 		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parser_job, loader, (long)loader->Target);
+		sched_insert (parse_html, new_parser (loader), (long)target);
 	
 	} else if (loader->ExtAppl) {
 		start_application (loader->ExtAppl, loc);
@@ -303,7 +312,8 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base)
 
 /*============================================================================*/
 LOADER
-start_objc_load (CONTAINR target, const char * url, LOCATION base)
+start_objc_load (CONTAINR target, const char * url, LOCATION base,
+                 BOOL (*successor)(void*, long))
 {
 	LOCATION loc  = new_location (url, base);
 	LOADER loader = new_loader (loc, target);
@@ -311,16 +321,29 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base)
 	free_location (&loc);
 	loc = (loader->Cached ? loader->Cached : loader->Location);
 	
-	if (!loader->ExtAppl) {
-		printf ("start_objc_load(%s) no appl found.\n", loc->FullName);
+	if (successor) {
+		loader->SuccJob = successor;
 	
-	} else if (loc->Proto != PROT_FILE) {
-		printf ("start_objc_load(%s) not a file.\n", loc->FullName);
+	} else if (loader->ExtAppl) {
+		loader->SuccJob = generic_job;
 	
 	} else {
-		start_application (NULL, loc);
+		printf ("start_objc_load(%s) dropped.\n", loc->FullName);
+		delete_loader (&loader);
+		return NULL;
 	}
-	delete_loader (&loader);
+	
+	if (PROTO_isLocal (loc->Proto)) {
+		sched_insert (loader->SuccJob, loader, (long)target);
+	
+	} else if (loc->Proto == PROT_HTTP) {
+		sched_insert (header_job, loader, (long)target);
+	
+	} else {
+		printf ("start_objc_load() invalid protocol %i.\n", loc->Proto);
+		(*loader->SuccJob)(loader, (long)target);
+		loader = NULL;
+	}
 	
 	return loader;
 }
@@ -335,8 +358,7 @@ chunked_job (void * arg, long invalidated)
 	BOOL     s_recv = (loader->rdDest == NULL);
 	
 	if (invalidated) {
-		delete_loader (&loader);
-		return FALSE;
+		return receive_job (arg, invalidated);
 	}
 	
 	loader->rdDest = NULL;
@@ -442,8 +464,6 @@ chunked_job (void * arg, long invalidated)
 		}
 	}
 	if (s_recv) {
-		static BOOL receive_job (void *, long);
-
 		sched_insert (receive_job, loader, (long)loader->Target);
 	}
 	
@@ -459,7 +479,11 @@ receive_job (void * arg, long invalidated)
 	LOADER loader = arg;
 	
 	if (invalidated) {
-		delete_loader (&loader);
+		if (loader->SuccJob) {
+			(*loader->SuccJob)(arg, invalidated);
+		} else {
+			delete_loader (&loader);
+		}
 		return FALSE;
 	}
 	
@@ -509,7 +533,8 @@ receive_job (void * arg, long invalidated)
 			cache_bound (loader->Location, NULL);
 		}
 	}
-	sched_insert (parser_job, loader, (long)loader->Target);
+	sched_insert ((loader->SuccJob ? loader->SuccJob : parser_job),
+	              loader, (long)loader->Target);
 	
 	return FALSE;
 }	
@@ -529,7 +554,11 @@ header_job (void * arg, long invalidated)
 	UWORD        retry = 0;
 	
 	if (invalidated) {
-		delete_loader (&loader);
+		if (loader->SuccJob) {
+			(*loader->SuccJob)(arg, invalidated);
+		} else {
+			delete_loader (&loader);
+		}
 		return FALSE;
 	}
 	
@@ -580,7 +609,7 @@ header_job (void * arg, long invalidated)
 			loader->Encoding = hdr.Encoding;
 		}
 	}
-	if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
+	if (reply == 200 /*&& MIME_Major(loader->MimeType) == MIME_TEXT*/) {
 		char buf[300];
 		sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
@@ -673,6 +702,31 @@ loader_job (void * arg, long invalidated)
 	/* registers a parser job with the scheduler */
 	sched_insert (parser_job, loader, (long)loader->Target);
 
+	return FALSE;
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+generic_job (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	
+	if (!invalidated) {
+		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
+		
+		if (!loader->ExtAppl) {
+			printf("generic_job(): no appl found!\n");
+		
+		} else if (PROTO_isRemote (loc->Proto)) {
+			printf("generic_job(): not in cache!\n");
+		
+		} else {
+			start_application (loader->ExtAppl, loc);
+		}
+	}
+	delete_loader (&loader);
+	
 	return FALSE;
 }
 
