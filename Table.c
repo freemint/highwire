@@ -15,6 +15,7 @@
 #include "global.h"
 #include "Loader.h"
 #include "parser.h"
+#include "fontbase.h"
 #include "Table.h"
 
 #define t_Width      Paragraph->Width
@@ -88,7 +89,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
-	current->font_step = new_step (3, parser->Frame->text_color);
+	current->font      = fontstack_setup (&current->fnt_stack,
+	                                      parser->Frame->text_color);
 
 	table->Paragraph = par;
 	table->Rows      = NULL;
@@ -228,7 +230,8 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	
 	if (stack->WorkCell) {
 		paragrph_finish (&parser->Current);
-		parser->Current.font_step = new_step (3, parser->Frame->text_color);
+		parser->Current.font = fontstack_setup (&parser->Current.fnt_stack,
+	                                           parser->Frame->text_color);
 	}
 	
 	if (!stack->WorkRow) {
@@ -395,6 +398,7 @@ free_stack (TEXTBUFF current)
 {
 	TBLSTACK stack = current->tbl_stack;
 	
+	fontstack_clear (&current->fnt_stack);
 	*current = stack->SavedCurr;
 
 	add_paragraph (current, 0);

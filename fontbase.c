@@ -207,7 +207,7 @@ font_switch (FONT actual, FONT previous)
 
 /*============================================================================*/
 WORD
-font_step2size (struct font_step * fontstep, WORD step)
+font_step2size (WORD step)
 {
 	static WORD size[8] = { 0, 0, 0, 0, };
 	
@@ -241,10 +241,98 @@ font_step2size (struct font_step * fontstep, WORD step)
 		step   = 7;
 		while (size[step] > s && --step);
 		
-	} else if (step > 7) {
-		step = 7;
+		return step;
 	}
-	if (fontstep) fontstep->step = step;
 
-	return size[step];
+	return size[step >= 7 ? 7 : step];
+}
+
+
+/*============================================================================*/
+FNTSTACK
+fontstack_setup (FNTSBASE * base, WORD color)
+{
+	base->Prev = base->Next = NULL;
+	base->Color     = (color >= 0 ? color : G_BLACK);
+	base->Type      = normal_font;
+	base->Size      = font_size;
+	base->Step      = 3;
+	base->setBold   = FALSE;
+	base->setItalic = FALSE;
+	base->setUndrln = FALSE;
+	base->setStrike = FALSE;
+	
+	return base;
+}
+
+/*============================================================================*/
+FNTSTACK
+fontstack_clear (FNTSBASE * base)
+{
+	FNTSTACK fstk = base->Next;
+	while (fstk) {
+		FNTSTACK next = fstk->Next;
+		free (fstk);
+		fstk = next;
+	}
+	base->Prev = base->Next = NULL;
+	
+	return NULL;
+}
+
+/*============================================================================*/
+FNTSTACK
+fontstack_push (TEXTBUFF current, WORD step)
+{
+	FNTSTACK fstk = current->font;
+	if (fstk->Next) {
+		fstk = fstk->Next;
+	} else if ((fstk = malloc (sizeof(FNTSBASE))) != NULL) {
+		fstk->Next          = NULL;
+		fstk->Prev          = current->font;
+		current->font->Next = fstk;
+	}
+	fstk->Color     = current->font->Color;
+	fstk->Type      = current->font->Type;
+	if (step < 0) {
+		fstk->Size   = current->font->Size;
+		fstk->Step   = current->font->Step;
+	} else {
+		fstk->Size   = font_step2size (step);
+		fstk->Step   = step;
+		word_set_point (current, fstk->Size);
+	}
+	fstk->setBold   = FALSE;
+	fstk->setItalic = FALSE;
+	fstk->setUndrln = FALSE;
+	fstk->setStrike = FALSE;
+	
+	return (current->font = fstk);
+}
+
+/*============================================================================*/
+FNTSTACK
+fontstack_pop (TEXTBUFF current)
+{
+	FNTSTACK fstk = current->font;
+	if (fstk->setBold)   word_set_bold      (current, fstk->setBold   = FALSE);
+	if (fstk->setItalic) word_set_italic    (current, fstk->setItalic = FALSE);
+	if (fstk->setStrike) word_set_strike    (current, fstk->setStrike = FALSE);
+	if (fstk->setUndrln) word_set_underline (current, fstk->setUndrln = FALSE);
+	if (fstk->Prev) {
+		current->font = fstk = fstk->Prev;
+		word_set_font  (current, fstk->Type);
+		word_set_point (current, fstk->Size);
+		if (!current->word->link) word_set_color (current, fstk->Color);
+	}
+	return fstk;
+}
+
+/*============================================================================*/
+void
+fontstack_setSize (TEXTBUFF current, WORD size)
+{
+	FNTSTACK fstk = current->font;
+	fstk->Size = size;
+	fstk->Step = font_step2size (-size);
 }

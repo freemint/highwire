@@ -150,7 +150,7 @@ parse_dir (void * arg, long invalidated)
 		Dclosedir (dh);
 	}
 	
-	font_byType (header_font, FNT_BOLD, font_step2size (NULL, 6), current->word);
+	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
 	render_text (current, "Index of ");
 	if (!sort || !strchr ("NDS", sort)) {
 		sort = 'N';
@@ -170,7 +170,7 @@ parse_dir (void * arg, long invalidated)
 	sprintf (buf, "%s\n", dir);
 	render_text (current, buf);
 	
-	font_byType (normal_font, -1, font_step2size (NULL, 3), current->word);
+	font_byType (normal_font, -1, font_step2size (3), current->word);
 	strcat (strcpy (buf, loc->FullName), "# ");
 	if (sort == 'N') {
 		wrd_name = render_text (current, "Name");
@@ -195,7 +195,7 @@ parse_dir (void * arg, long invalidated)
 	current->word->word_height = 2;
 	render_hrule (current, ALN_CENTER, -1024, 2);
 
-	font_byType (-1, -1, font_step2size (NULL, 3), current->word);
+	font_byType (-1, -1, font_step2size (3), current->word);
 	if (list) {
 		WORDITEM         w;
 		struct dir_ent * ent, * to_do;

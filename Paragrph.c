@@ -184,15 +184,7 @@ void paragrph_finish (TEXTBUFF current)
 	}
 	current->word      = current->prev_wrd = NULL;
 	current->paragraph = current->prev_par = NULL;
-	
-	if (current->font_step) {
-		struct font_step * step = current->font_step, * prev;
-		do {
-			prev = step->previous_font_step;
-			free (step);
-		} while ((step = prev) != NULL);
-		current->font_step = NULL;
-	}
+	current->font      = fontstack_clear (&current->fnt_stack);
 }
 
 

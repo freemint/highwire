@@ -20,8 +20,8 @@
 #include "Loader.h"
 #include "parser.h"
 #include "Containr.h"
-
 #include "Location.h"
+#include "fontbase.h"
 
 
 #define TEXT_LENGTH 500 /* 500 is enough for 124 UTF-8 characters,
@@ -46,18 +46,20 @@ new_parser (LOADER loader)
 {
 	PARSER parser = malloc (sizeof (struct s_parser) +
 	                        sizeof (WCHAR) * TEXT_LENGTH);
+	TEXTBUFF current = &parser->Current;
 	parser->Loader   = loader;
 	parser->Target   = loader->Target;
 	ValueNum(parser) = 0;
 	
-	memset (&parser->Current, 0, sizeof (parser->Current));
-	parser->Current.text =
-	parser->Current.buffer = parser->TextBuffer;
-	parser->Watermark      = parser->TextBuffer + TEXT_LENGTH -1;
+	memset (current, 0, sizeof (parser->Current));
+	current->font     = fontstack_setup (&current->fnt_stack, -1);
+	current->text     = current->buffer = parser->TextBuffer;
+	parser->Watermark = parser->TextBuffer + TEXT_LENGTH -1;
 	
-	parser->Frame  = new_frame (loader->Location, &parser->Current,
+	parser->Frame  = new_frame (loader->Location, current,
 	                            loader->Encoding, loader->MimeType,
 	                            loader->MarginW, loader->MarginH);
+	
 	if (loader->ScrollV > 0) {
 		parser->Frame->v_bar.on     = TRUE;
 		parser->Frame->v_bar.scroll = loader->ScrollV;
@@ -96,10 +98,10 @@ delete_parser (PARSER parser)
 			parser->Loader->notified = FALSE;
 		}
 	} else {
+		fontstack_clear (&parser->Current.fnt_stack);
 		delete_frame (&frame);
 		containr_calculate (cont, NULL);
 	}
-	
 	delete_loader (&parser->Loader);
 	free (parser);
 }

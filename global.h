@@ -134,9 +134,6 @@ void list_marker (TEXTBUFF, BULLET, short counter);
 
 /* in O_Struct.c */
 
-struct font_step * new_step     (WORD size, WORD color);
-struct font_step * add_step     (struct font_step *);
-struct font_step * destroy_step (struct font_step *);
 ANCHOR new_named_location (const char * address, OFFSET *);
 void   destroy_named_location_structure (ANCHOR);
 struct url_link * new_url_link (WORDITEM start,

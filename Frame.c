@@ -35,7 +35,7 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->v_bar.on     = FALSE;
 	frame->h_bar.on     = FALSE;
 	frame->scroll       = SCROLL_AUTO;
-	frame->text_color   = G_BLACK;
+	frame->text_color   = current->font->Color;
 	frame->link_color   = link_colour;
 	frame->base_target  = NULL;
 	frame->clip.g_x = 0;
@@ -47,8 +47,6 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	
 	current->anchor    = &frame->first_named_location;
 	current->quot_lang = frame->Language;
-	current->font_size = font_step2size (NULL, 3);
-	current->font_step = new_step (3, frame->text_color);
 	
 	content_setup (&frame->Page, current, page_margin, background_colour);
 	

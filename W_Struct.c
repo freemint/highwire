@@ -118,8 +118,8 @@ new_word (TEXTBUFF current, BOOL do_link)
 	
 	if (!copy_from) {
 		if ((word = _alloc (NULL)) == NULL) return NULL;
-		word->attr.packed    = TEXTATTR (current->font_size,
-			                              current->font_step->color);
+		word->attr.packed    = TEXTATTR (current->font->Size,
+			                              current->font->Color);
 		word->font           = NULL;
 		font_byType (-1, -1, -1, word);
 		word->vertical_align = ALN_BOTTOM;

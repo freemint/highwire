@@ -349,16 +349,18 @@ typedef struct s_image {
 	short  hspace;
 } * IMAGE;
 
-struct font_step {
-	WORD color;
-	WORD step;  /* HTML font size 0..7 */
-	WORD size;  /* in pt */
-	WORD type;
+typedef struct s_fontstack * FNTSTACK;
+typedef struct s_fontstack   FNTSBASE;
+struct s_fontstack {
+	FNTSTACK Prev, Next;
+	WORD Color;
+	WORD Type;  /* normal, header, header */
+	WORD Size;  /* real size in point */
+	WORD Step;  /* HTML font size 0..7 */
 	BOOL setBold;
 	BOOL setItalic;
 	BOOL setUndrln;
 	BOOL setStrike;
-	struct font_step *previous_font_step;
 };
 
 struct font_style {
@@ -521,14 +523,14 @@ typedef struct parse_sub {
 	void             * form;
 	LANGUAGE           quot_lang; /* language used for quotation marks */
 	short              backgnd;
+	FNTSBASE           fnt_stack;
+	FNTSTACK           font;
 	struct font_style  styles;
+	UWORD              nowrap;
 	PARAGRPH           paragraph;
 	PARAGRPH           prev_par;
 	WORDITEM           word;      /* the item actually to process */
 	WORDITEM           prev_wrd;  /* <br> tags affect this        */
-	UWORD              nowrap;
-	WORD               font_size;
-	struct font_step * font_step;
 	ANCHOR           * anchor;
 	WCHAR            * text;  /* points behind the last stored character */
 	WCHAR            * buffer;

@@ -47,12 +47,26 @@ BOOL font_switch (FONT actual, FONT previous);
 			 * with the fontbase->Effects attribute is necessary.
 			*/
 
-WORD font_step2size (struct font_step * fontstep, WORD step);
+WORD font_step2size (WORD step);
 			/* step >= 0: maps the font step of [0..7] to a font size in points
 			 *            relative to the global font_size variable.
-			 * step < 0:  interpretes it as a font size and stores the best
-			 *            matching into the fontstep structure.
+			 * step < 0:  interpretes step as a font size and returns the best
+			 *            matching font step of [0..7].
 			*/
+
+FNTSTACK fontstack_setup (FNTSBASE *, WORD color);
+FNTSTACK fontstack_clear (FNTSBASE *);
+FNTSTACK fontstack_push     (TEXTBUFF, WORD step);
+FNTSTACK fontstack_pop      (TEXTBUFF);
+void     fontstack_setSize  (TEXTBUFF, WORD size);
+#define                  _fstk_val(tb,f,s,v) {word_set_##f(tb,(tb)->font->s=v);}
+#define                  _fstk_set(tb,f,s)  _fstk_val(tb,f,set##s,TRUE)
+#define  fontstack_setType(  textbuff, t)   _fstk_val(textbuff,font,Type,t)
+#define  fontstack_setColor( textbuff, c)   _fstk_val(textbuff,color,Color,c)
+#define  fontstack_setBold(  textbuff)      _fstk_set(textbuff,bold,Bold)
+#define  fontstack_setItalic(textbuff)      _fstk_set(textbuff,italic,Italic)
+#define  fontstack_setUndrln(textbuff)      _fstk_set(textbuff,underline,Undrln)
+#define  fontstack_setStrike(textbuff)      _fstk_set(textbuff,strike,Strike)
 
 
 #endif /*__FONTBASE_H__*/

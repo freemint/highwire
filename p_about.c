@@ -36,9 +36,9 @@ about_modules (TEXTBUFF current, ENCODING enc)
 			render_text (current, buf);
 			current->word->line_brk = BRK_LN;
 			sprintf (buf, "kill=0x%08lX", (long)mod->Meth);
-			font_byType (-1, FNT_BOLD, font_step2size (NULL, 2), current->word);
+			font_byType (-1, FNT_BOLD, font_step2size (2), current->word);
 			form_buttn (current, buf, "&times;", enc, 'S');
-			font_byType (-1, 0x0000, font_step2size (NULL, 3), current->word);
+			font_byType (-1, 0x0000, font_step2size (3), current->word);
 	#else
 			sprintf (buf, "%s\r", mod->File);
 			render_text (current, buf);
@@ -107,10 +107,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				render_text (current, buf);
 			} else {
 				sprintf (buf, "clear=0x%08lX", (long)info->Object);
-				font_byType (-1, FNT_BOLD, font_step2size (NULL, 1), current->word);
+				font_byType (-1, FNT_BOLD, font_step2size (1), current->word);
 				form_buttn (current, buf, "&times;", enc, 'S');
 				current->prev_wrd->word_height -= 2;
-				font_byType (-1, 0x0000, font_step2size (NULL, 3), current->word);
+				font_byType (-1, 0x0000, font_step2size (3), current->word);
 				unused = TRUE;
 			}
 			if (info->Date) {
@@ -166,7 +166,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	                      _HIGHWIRE_VERSION_ " " _HIGHWIRE_BETATAG_ "\n");
 	tab    = max (tab, (*w)->word_width);
 	
-	font_byType (-1, -1, font_step2size (NULL, 2), current->word);
+	font_byType (-1, -1, font_step2size (2), current->word);
 	
 	#ifdef LIBGIF
 	{
@@ -220,7 +220,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
 		(*w)->word_width = tab;
 	} while (--w >= list);
 	
-	font_byType (-1, -1, font_step2size (NULL, 3), current->word);
+	font_byType (-1, -1, font_step2size (3), current->word);
 	#ifndef USE_OVL
 	if (i_net) {
 		sprintf (buf, "(%s support enabled)", i_net);
@@ -267,7 +267,7 @@ parse_about (void * arg, long invalidated)
 	}
 	
 	current->paragraph->alignment = ALN_CENTER;
-	font_byType (header_font, FNT_BOLD, font_step2size (NULL, 6), current->word);
+	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
 	
 	if (strncmp ("modules", title, 7) == 0) {
 		if (strncmp (title +7, "?kill=", 6) == 0) {
@@ -307,7 +307,7 @@ parse_about (void * arg, long invalidated)
 	render_hrule (current, ALN_CENTER, -1024, 2);
 	
 	current->paragraph->alignment = ALN_LEFT;
-	font_byType (normal_font, 0x0000, font_step2size (NULL, 3), current->word);
+	font_byType (normal_font, 0x0000, font_step2size (3), current->word);
 	
 	if (mode <= 1) {
 		current->form = new_form (frame, NULL, strdup ("about:cache"), "GET");

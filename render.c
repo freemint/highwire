@@ -35,21 +35,6 @@
 #define PF_SCRIPT 0x0020 /* <noscrip> inside a script area */
 
 
-static void
-step_push (TEXTBUFF current, WORD step)
-{
-	current->font_step = add_step       (current->font_step);
-	current->font_size = font_step2size (current->font_step, step);
-}
-
-static void
-step_pop (TEXTBUFF current)
-{
-	current->font_step = destroy_step   (current->font_step);
-	current->font_size = font_step2size (NULL, current->font_step->step);
-}
-
-
 static WORD
 list_indent (WORD type)
 {
@@ -438,7 +423,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					if (!force_frame_controls) {
 						char out[100];
 						
-						if (get_value (parser, KEY_NORESIZE, NULL,0)) {
+						if (get_value_exists (parser, KEY_NORESIZE)) {
 							container->Resize = FALSE;
 						}
 						
@@ -662,17 +647,14 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		{
 			WORD color;
 	
-			if ((color = get_value_color (parser, KEY_TEXT)) >= 0)
-			{
-				frame->text_color = parser->Current.font_step->color = color;
-				TA_Color(parser->Current.word->attr)                 = color;
+			if ((color = get_value_color (parser, KEY_TEXT)) >= 0) {
+				fontstack_setColor (&parser->Current, color);
+				frame->text_color = color;
 			}
-			if ((color = get_value_color (parser, KEY_BGCOLOR)) >= 0)
-			{
+			if ((color = get_value_color (parser, KEY_BGCOLOR)) >= 0) {
 				frame->Page.Backgnd = parser->Current.backgnd = color;
 			}
-			if ((color = get_value_color (parser, KEY_LINK)) >= 0)
-			{
+			if ((color = get_value_color (parser, KEY_LINK)) >= 0) {
 				frame->link_color = color;
 			}
 		}
@@ -777,45 +759,40 @@ render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		TEXTBUFF          current = &parser->Current;
-		struct font_step * f_step = current->font_step;
+		TEXTBUFF current = &parser->Current;
+		FNTSTACK fstk    = &current->fnt_stack;
 		char output[10];
 		
-		while (f_step->previous_font_step) {
-			f_step = f_step->previous_font_step;
-		}
-		
-		if (get_value (parser, KEY_SIZE, output, sizeof(output)))
-		{
+		if (get_value (parser, KEY_SIZE, output, sizeof(output))) {
 			if (*output == '+') {
 				if (isdigit(output[1])) {
-					f_step->step += output[1]  - '0';
+					fstk->Step += output[1]  - '0';
 				}
 			} else {
 				if (*output == '-') {
 					if (isdigit(output[1])) {
-						f_step->step -= output[1]  - '0';
+						fstk->Step -= output[1]  - '0';
 					}
 				} else if (isdigit(output[0])) {
-					f_step->step = output[0]  - '0';
+					fstk->Step = output[0]  - '0';
 				}
-				if (f_step->step < 1) f_step->step = 1;
+				if (fstk->Step < 1) fstk->Step = 1;
 			}
-			if (f_step->step > 7) f_step->step = 7;
+			if (fstk->Step > 7) fstk->Step = 7;
 			
-			if (f_step == current->font_step) {
-				current->font_size = font_step2size (NULL, f_step->step);
-				word_set_point (current, current->font_size);
+			fstk->Size = font_step2size (fstk->Step);
+			if (fstk == current->font) {
+				word_set_point (current, fstk->Size);
 			}
 		}
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
-
 			if (color >= 0) {
-				f_step->color = color;
-				parser->Frame->text_color = current->font_step->color = color;
-				word_set_color (current, color);
+				fstk->Color = color;
+				if (fstk == current->font) {
+					word_set_color (current, parser->Frame->text_color = color);
+				}
 			}
 		}
 	}
@@ -832,11 +809,10 @@ render_BIG_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		step_push (current, current->font_step->step +1);
+		fontstack_push (current, current->font->Step +1);
 	} else {
-		step_pop (current);
+		fontstack_pop (current);
 	}
-	word_set_point (current, current->font_size);
 	return flags;
 }
 
@@ -852,7 +828,7 @@ render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
 	
-	word_set_font (current, (flags & PF_START ? pre_font : normal_font));
+	word_set_font (current, (flags & PF_START ? pre_font : current->font->Type));
 	TAsetCondns   (current->word->attr, (flags & PF_START));
 	
 	return flags;
@@ -887,11 +863,12 @@ render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
 	if (flags & PF_START) {
 		char output[10];
-		WORD step = parser->Current.font_step->step;
+		WORD step = current->font->Step;
 
 		if (get_value (parser, KEY_SIZE, output, sizeof(output))) {
 		
@@ -910,23 +887,19 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 				if (step < 1) step = 1;
 			}
 		}
-		step_push (&parser->Current, step);
+		fontstack_push (current, step);
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
-				parser->Current.font_step->color = color;
-				word_set_color (&parser->Current, color);
+				fontstack_setColor (current, color);
 			}
 		}
 	
 	} else {
-		step_pop (&parser->Current);
-		word_set_color (&parser->Current, (parser->Current.word->link
-		                                  ? parser->Frame->link_color
-		                                  : parser->Current.font_step->color));
+		fontstack_pop (current);
 	}
-	word_set_point (&parser->Current, parser->Current.font_size);
+	
 	return flags;
 }
 
@@ -940,9 +913,9 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		struct font_step * fstp = NULL;
 		char output[100];
-		short step = current->font_step->step;
+		FNTSTACK fstp = NULL;
+		short    step = current->font->Step;
 		
 		if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
 			if (isdigit (output[0])) {
@@ -984,7 +957,7 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 					case '%':
 						size = (size +50) /100;
 					case 0x454D: /* EM */
-						size *= current->font_size;
+						size *= current->font->Size;
 					case_PT:
 					case 0x5054: /* PT, point */
 						size = (size + 128) >> 8;
@@ -993,18 +966,16 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 						size = 0;
 				}
 				if (size > 0) {
-					current->font_step = fstp = add_step (current->font_step);
-					current->font_size = size;
-					font_step2size (current->font_step, -size);
+					fstp = fontstack_push (current, -1);
+					fontstack_setSize (current, size);
+					current->font->Size = size;
 				}
 			
 			} else if (stricmp (output, "smaller") == 0) {
-				step = (current->font_step->step > 1
-				        ? current->font_step->step -1 : 0);
+				step = (current->font->Step > 1 ? current->font->Step -1 : 0);
 			
 			} else if (stricmp (output, "larger") == 0) {
-				step = (current->font_step->step < 6
-				        ? current->font_step->step +1 : 7);
+				step = (current->font->Step < 6 ? current->font->Step +1 : 7);
 			
 			} else {
 				static const char * arr[] = {
@@ -1015,8 +986,7 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		if (!fstp) {
-			step_push (&parser->Current, step);
-			fstp = current->font_step;
+			fstp = fontstack_push (&parser->Current, step);
 		}
 
 		if (get_value (parser, CSS_FONT_FAMILY, output, sizeof(output))) {
@@ -1051,8 +1021,7 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 			} while (*beg);
 			/* n/i: cursive, fantasy */
 			if (fnt != TAgetFont (current->word->attr)) {
-				fstp->type = 0x1000 | TAgetFont (current->word->attr);
-				word_set_font (current, fnt);
+				fontstack_setType (current, fnt);
 			}
 		}
 		
@@ -1060,7 +1029,7 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 		    && (stricmp (output, "italic") == 0 ||
 		        stricmp (output, "oblique") == 0)) {
 			/* n/i: normal */
-			word_set_italic (current, fstp->setItalic = TRUE);
+			fontstack_setItalic (current);
 		}
 		
 		if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
@@ -1073,36 +1042,27 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 				        stricmp (output, "bolder") == 0);
 			}
 			/* n/i: lighter, medium, 100..400 */
-			if (bold) word_set_bold (current, fstp->setBold = TRUE);
+			if (bold) fontstack_setBold (current);
 		}
 		
 		if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
 			if (stricmp (output, "line-through") == 0) {
-				word_set_underline (current, fstp->setUndrln = TRUE);
+				fontstack_setUndrln (current);
 			} else if (stricmp (output, "underline") == 0) {
-				word_set_strike (current, fstp->setStrike = TRUE);
+				fontstack_setStrike (current);
 			}
 		}
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
-				word_set_color (current, fstp->color = color);
+				fontstack_setColor (current, color);
 			}
 		}
 	
 	} else {
-		struct font_step * fstp = current->font_step;
-		if (fstp->type)      word_set_font      (current, fstp->type & 0xF);
-		if (fstp->setBold)   word_set_bold      (current, FALSE);
-		if (fstp->setItalic) word_set_italic    (current, FALSE);
-		if (fstp->setUndrln) word_set_underline (current, FALSE);
-		if (fstp->setStrike) word_set_strike    (current, FALSE);
-		step_pop (current);
-		fstp = current->font_step;
-		word_set_color (current, (current->word->link
-		                          ? parser->Frame->link_color: fstp->color));
+		fontstack_pop (current);
 	}
-	word_set_point (current, current->font_size);
+	
 	return flags;
 }
 
@@ -1148,11 +1108,11 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		step_push (current, current->font_step->step -1);
+		fontstack_push (current, current->font->Step -1);
 	} else {
-		step_pop (current);
+		fontstack_pop (current);
 	}
-	word_set_point (current, current->font_size);
+	
 	return flags;
 }
 
@@ -1183,13 +1143,12 @@ render_SUB_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		step_push (current, current->font_step->step -1);
+		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_BELOW;
 	} else {
-		step_pop (current);
+		fontstack_pop (current);
 		current->word->vertical_align = ALN_BOTTOM;
 	}
-	word_set_point (current, current->font_size);
 	
 	return flags;
 }
@@ -1204,13 +1163,12 @@ render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		step_push (current, current->font_step->step -1);
+		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_ABOVE;
 	} else {
-		step_pop (current);
+		fontstack_pop (current);
 		current->word->vertical_align = ALN_BOTTOM;
 	}
-	word_set_point (current, current->font_size);
 	
 	return flags;
 }
@@ -1221,9 +1179,10 @@ render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TT_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	TEXTBUFF current = &parser->Current;
+	UNUSED  (text);
 	
-	word_set_font (&parser->Current, (flags & PF_START ? pre_font : normal_font));
+	word_set_font (current, (flags & PF_START ? pre_font : current->font->Type));
 	return flags;
 }
 
@@ -1307,7 +1266,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 		}	
 	
 	} else if (word->link) {
-		word_set_color     (current, current->font_step->color);
+		word_set_color     (current, current->font->Color);
 		word_set_underline (current, FALSE);
 		word->link = NULL;
 	}
@@ -1600,7 +1559,7 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 			if      (stricmp (output, "right") == 0) clear = BRK_RIGHT;
 			else if (stricmp (output, "left")  == 0) clear = BRK_LEFT;
 			else if (stricmp (output, "all")   == 0) clear = BRK_ALL;
-		} else if (get_value (parser, KEY_CLEAR, NULL,0)) {
+		} else if (get_value_exists (parser, KEY_CLEAR)) {
 			clear = BRK_ALL; /* old style */
 		}
 		
@@ -1678,21 +1637,19 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 
 		par->alignment = get_h_align (parser, get_align (parser));
 		
-		step_push (current, 7 - (get_value_char (parser, KEY_H_HEIGHT) - '0'));
+		fontstack_push (current, 7 -(get_value_char (parser, KEY_H_HEIGHT) -'0'));
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_BGCOLOR);
 			if (color >= 0 && color != current->backgnd) {
 				current->paragraph->Backgnd = color;
 			}
-			
-			color = get_value_color (parser, KEY_COLOR);
-			if (color < 0)	color = current->font_step->color;
-			if (color < 0)	color = parser->Frame->text_color;
-			current->font_step->color = (color);
+			if ((color = get_value_color (parser, KEY_COLOR)) >= 0) {
+				fontstack_setColor (current, color);
+			}
 		}
-		word_set_font (current, header_font);
-		word_set_bold (current, TRUE);
+		fontstack_setType (current, header_font);
+		fontstack_setBold (current);
 	
 		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
 			insert_anchor (current, name, NULL);
@@ -1703,12 +1660,8 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 
 		par->alignment = get_align (parser);
 
-		step_pop (current);
-		word_set_font (current, normal_font);
-		word_set_bold (current, FALSE);
+		fontstack_pop (current);
 	}
-	word_set_point (current, current->font_size);
-	word_set_color (current, current->font_step->color);
 	
 	return (flags|PF_SPACE);
 }
@@ -1748,7 +1701,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 			hr_wrd->word_tail_drop = 100;
 		}
 		hr_wrd->word_height = (hr_wrd->word_height + hr_wrd->word_tail_drop) /2;
-		if (get_value (parser, KEY_NOSHADE, NULL,0)) {
+		if (get_value_exists (parser, KEY_NOSHADE)) {
 			hr_wrd->word_tail_drop = -hr_wrd->word_tail_drop;
 		}
 		if ((hr_wrd->space_width = get_value_size (parser, KEY_WIDTH)) == 0) {
@@ -1815,7 +1768,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		par->alignment = get_align (parser);
 
 		if (!ignore_colours) {
-			word_set_color (current, current->font_step->color);
+			word_set_color (current, current->font->Color);
 		}
 	}
 
@@ -1943,7 +1896,7 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		flags |= PF_PRE;
 	} else {
-		word_set_font (current, normal_font);
+		word_set_font (current, current->font->Type);
 		TAsetCondns (current->word->attr, FALSE);
 		flags &= ~PF_PRE;
 	}
@@ -1987,7 +1940,7 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 		flags |= PF_PRE;
 	} else {
 		add_paragraph (current, 2);
-		word_set_font (current, normal_font);
+		word_set_font (current, current->font->Type);
 		TAsetCondns (current->word->attr, FALSE);
 		flags &= ~PF_PRE;
 	}
@@ -2213,7 +2166,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
 		WORD    border   = get_value_unum (parser, KEY_BORDER, -1);
 		if (border < 0) {
-			border = (get_value (parser, KEY_BORDER, NULL,0) ? 1 : 0);
+			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
 		if (floating == ALN_NO_FLT && get_v_align (parser, -1) == ALN_MIDDLE) {
 			floating = ALN_CENTER; /* patch for invalid key value */
@@ -2285,7 +2238,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
-		current->nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
+		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -2312,8 +2265,8 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
-		current->nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
-		word_set_bold (current, TRUE);
+		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
+		fontstack_setBold (current);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -2379,7 +2332,7 @@ render_SELECT_tag (PARSER parser, const char ** text, UWORD flags)
 		char  name[100];
 		get_value (parser, KEY_NAME, name, sizeof(name));
 		if (form_selct (current, name, get_value_unum (parser, KEY_SIZE, 0),
-		                get_value (parser, KEY_DISABLED, NULL,0))) {
+		                get_value_exists (parser, KEY_DISABLED))) {
 			flags |= (PF_FONT|PF_SPACE);
 		}
 	} else if (current->form) {
@@ -2397,9 +2350,9 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if (flags & PF_START) {
 		ENCODING encoding = parser->Frame->Encoding;
-		BOOL     disabled = get_value     (parser, KEY_DISABLED, NULL,0);
-		BOOL     selected = get_value     (parser, KEY_SELECTED, NULL,0);
-		char   * value    = get_value_str (parser, KEY_VALUE);
+		BOOL     disabled = get_value_exists (parser, KEY_DISABLED);
+		BOOL     selected = get_value_exists (parser, KEY_SELECTED);
+		char   * value    = get_value_str    (parser, KEY_VALUE);
 		char     out[90];
 		*text = enc_to_sys (out, sizeof(out), *text, encoding, TAG_OPTION, FALSE);
 		selct_option (&parser->Current, out, disabled, encoding, value, selected);
@@ -2719,8 +2672,6 @@ parse_image (void * arg, long invalidated)
 			
 		return FALSE;
 	}
-	
-	current->font_step = new_step (3, frame->text_color);
 	
 	font_byType (normal_font, 0x0000, -1, current->word);
 	
