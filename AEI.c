@@ -718,15 +718,26 @@ rpopup_open (WORD mx, WORD my)
 	short x, y, w, h, which_obj;
 	GRECT desk;
 	
-	if (!wind->HistUsed) {
-		objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0, OS_DISABLED, 0);
-		objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0, OS_DISABLED, 0);
+	if (!frame) {   /* empty window, nearly no action possible */
+		short i;
+		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
+			if (rpopup[i].ob_flags & OF_SELECTABLE && i != RPOP_INFO) {
+				objc_change (rpopup, i, 0, 0,0,0,0, OS_DISABLED, 0);
+			}
+		}
 	} else {
-		UWORD u = wind->HistUsed -1;
-		objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0,
-		             (wind->HistMenu > 0 ? OS_NORMAL : OS_DISABLED), 0);
-		objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0,
-		             (wind->HistMenu < u ? OS_NORMAL : OS_DISABLED), 0);
+		short i;
+		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
+			if (rpopup[i].ob_flags & OF_SELECTABLE) {
+				objc_change (rpopup, i, 0, 0,0,0,0, OS_NORMAL, 0);
+			}
+		}
+		if (wind->HistMenu <= 0) {
+			objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0, OS_DISABLED, 0);
+		}
+		if (wind->HistMenu >= wind->HistUsed -1) {
+			objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0, OS_DISABLED, 0);
+		}
 	}
 	
 	form_center (rpopup, &x, &y, &w, &h);
