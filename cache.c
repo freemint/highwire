@@ -13,10 +13,12 @@
 
 # if defined (__GNUC__)
 #  include <unistd.h>
-#  define DTA    _DTA
-# define d_fname dta_name
-# else
-#  define DTA    struct FILEINFO
+#  define DTA     _DTA
+#  define d_fname dta_name
+
+# else /* LATTICE */
+#  define DTA     struct FILEINFO
+#  define d_fname name
 # endif
 #endif
 #ifndef O_RAW    /* Lattice uses this for open() to write binary files */
