@@ -69,7 +69,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 				short b  = scroll_bar_width - 2;
 				l[1].p_x = (l[0].p_x = bgnd[1].p_x +2) + b;
 				l[1].p_y = (l[0].p_y = bgnd[1].p_y +2) + b;
-				vsf_color (vdi_handle, frame->Page.Backgnd);
+				vsf_color (vdi_handle, frame->Page.Box.Backgnd);
 				v_bar (vdi_handle, (short*)l);
 			}
 		}
@@ -605,21 +605,21 @@ draw_contents (CONTENT * content,
 	PARAGRPH paragraph = content->Item;
 	long     clip_y    = (long)clip->g_y - y_abs;
 
-	if (content->Backgnd >= 0) {
-		long x = x_abs + content->Width  -1;
-		long y = y_abs + content->Height -1;
+	if (content->Box.Backgnd >= 0) {
+		long x = x_abs + content->Box.Rect.W -1;
+		long y = y_abs + content->Box.Rect.H -1;
 		PXY  p[2];
 		p[0].p_x = ((long)clip->g_x >= x_abs ? clip->g_x : x_abs);
 		p[0].p_y = ((long)clip->g_y >= y_abs ? clip->g_y : y_abs);
 		p[1].p_x = (x <= 0x7FFFL ? x : 0x7FFF);
 		p[1].p_y = (y <= 0x7FFFL ? y : 0x7FFF);
 		if (p[0].p_x <= p[1].p_x && p[0].p_y <= p[1].p_y) {
-			vsf_color (vdi_handle, content->Backgnd);
+			vsf_color (vdi_handle, content->Box.Backgnd);
 			v_bar     (vdi_handle, (short*)p);
 		}
 	}
 	
-	while (paragraph && paragraph->Offset.Y + paragraph->Height <= clip_y) {
+	while (paragraph && paragraph->Offset.Y + paragraph->Box.Rect.H <= clip_y) {
 		paragraph = paragraph->next_paragraph;
 	}
 	clip_y = clip->g_y + clip->g_h -1;
@@ -630,10 +630,10 @@ draw_contents (CONTENT * content,
 
 		if (y > clip_y) break;
 		
-		if (paragraph->Backgnd >= 0) {
+		if (paragraph->Box.Backgnd >= 0) {
 			PXY p[2];
-			p[1].p_x = (p[0].p_x = x) + paragraph->Width  -1;
-			p[1].p_y = (p[0].p_y = y) + paragraph->Height -1;
+			p[1].p_x = (p[0].p_x = x) + paragraph->Box.Rect.W -1;
+			p[1].p_y = (p[0].p_y = y) + paragraph->Box.Rect.H -1;
 			if (paragraph->eop_space > 0) {
 			/*	if (paragraph->next_paragraph &&
 				    paragraph->next_paragraph->Backgnd >= 0) */{
@@ -642,7 +642,7 @@ draw_contents (CONTENT * content,
 					p[1].p_y += paragraph->eop_space /2;
 			*/	}
 			}
-			vsf_color (vdi_handle, paragraph->Backgnd);
+			vsf_color (vdi_handle, paragraph->Box.Backgnd);
 			v_bar     (vdi_handle, (short*)p);
 		}
 

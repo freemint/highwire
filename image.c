@@ -461,21 +461,21 @@ image_job (void * arg, long invalidated)
 		}
 	}
 	
-	if ((img->set_w >= 0 && par->min_width < img->word->word_width)
+	if ((img->set_w >= 0 && par->Box.MinWidth < img->word->word_width)
 	    || img->disp_w != old_w || img->disp_h != old_h) {
 		long par_x = par->Offset.X;
 		long par_y = par->Offset.Y;
-		long par_w = par->Width;
-		long par_h = par->Height;
-		if (par->min_width < img->disp_w) {
-			 par->min_width = img->disp_w;
-			 par->max_width = 0;
+		long par_w = par->Box.Rect.W;
+		long par_h = par->Box.Rect.H;
+		if (par->Box.MinWidth < img->disp_w) {
+			 par->Box.MinWidth = img->disp_w;
+			 par->Box.MaxWidth = 0;
 		}
 		content_minimum (&frame->Page);
 		
 		if (containr_calculate (frame->Container, NULL)) {
 			calc_xy = 0;
-		} else if (par_w == par->Width && par_h == par->Height) {
+		} else if (par_w == par->Box.Rect.W && par_h == par->Box.Rect.H) {
 			calc_xy = 1;
 			rec.g_w = par_w;
 			rec.g_h = par_h;

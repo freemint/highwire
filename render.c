@@ -311,7 +311,7 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
 		if (color >= 0 && color != current->backgnd) {
-			current->paragraph->Backgnd = color;
+			current->paragraph->Box.Backgnd = color;
 		}
 	}
 	
@@ -1009,7 +1009,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 				frame->text_color = color;
 			}
 			if ((color = get_value_color (parser, KEY_BGCOLOR)) >= 0) {
-				frame->Page.Backgnd = parser->Current.backgnd = color;
+				frame->Page.Box.Backgnd = parser->Current.backgnd = color;
 			}
 			if ((color = get_value_color (parser, KEY_LINK)) >= 0) {
 				frame->link_color = color;
@@ -1017,17 +1017,17 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if ((margin = get_value_unum (parser, CSS_MARGIN, -1)) >= 0) {
-			frame->Page.MarginTop = frame->Page.MarginBot =
-			frame->Page.MarginLft = frame->Page.MarginRgt = margin;
+			frame->Page.Box.Margin.Top = frame->Page.Box.Margin.Bot =
+			frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin;
 			
 		} else {
 			if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
-				frame->Page.MarginTop = frame->Page.MarginBot = margin;
+				frame->Page.Box.Margin.Top = frame->Page.Box.Margin.Bot = margin;
 			}
 			if ((margin = get_value_unum (parser, KEY_MARGINWIDTH, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
-				frame->Page.MarginLft = frame->Page.MarginRgt = margin;
+				frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin;
 			}
 		}
 	}
@@ -1887,8 +1887,8 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 			/*________________________HW_proprietary___
 			if (!ignore_colours) {
 				WORD color = get_value_color (parser, KEY_BGCOLOR);
-				if (color >= 0 && color != current->backgnd) {
-					current->paragraph->Backgnd = color;
+				if (color >= 0 && color != current->Backgnd) {
+					current->paragraph->Box.Backgnd = color;
 				}
 				if ((color = get_value_color (parser, KEY_COLOR)) >= 0) {
 					fontstack_setColor (current, color);
@@ -1993,12 +1993,12 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_BGCOLOR);
 			if (color >= 0 && color != current->backgnd) {
-				hr_par->Backgnd = color;
+				hr_par->Box.Backgnd = color;
 			}
 			color = get_value_color (parser, KEY_COLOR);
 			TA_Color(hr_wrd->attr) = (color                  >= 0 ? color    :
 			                          hr_wrd->word_tail_drop <= 1 ? G_LBLACK :
-			                          hr_par->Backgnd        >= 0 ? hr_par->Backgnd :
+			                          hr_par->Box.Backgnd    >= 0 ? hr_par->Box.Backgnd :
 			                                                        current->backgnd);
 		} else if (hr_wrd->word_tail_drop <= 1) {
 			TA_Color(hr_wrd->attr) = G_BLACK;
@@ -2421,7 +2421,7 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 		PARAGRPH paragraph = add_paragraph (current, 0);
 		paragraph->alignment = ALN_LEFT;
 		paragraph->Indent    = current->lst_stack->Indent;
-		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
+		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
 		if (current->lst_stack->FontStk !=  current->font) {
 			fontstack_pop (current);
 		}
@@ -2446,7 +2446,7 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 		paragraph->alignment = ALN_LEFT;
 		paragraph->Indent    = current->lst_stack->Indent
 		                     + current->lst_stack->Hanging;
-		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
+		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
 		if (current->lst_stack->FontStk !=  current->font) {
 			fontstack_pop (current);
 		}

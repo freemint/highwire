@@ -2,9 +2,9 @@
  */
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     1
-#define _HIGHWIRE_REVISION_  6
-#define _HIGHWIRE_BETATAG_   "beta"
-#define _HIGHWIRE_VERSION_   "0.1.6"
+#define _HIGHWIRE_REVISION_  7
+#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_VERSION_   "0.1.7"
 
 #include "hw-types.h"   /* get base definitions */
 
@@ -308,6 +308,37 @@ struct xattr {
 	long reserved4;
 };
 
+
+/***** Generic Structure, used in all Block Elements *****/
+
+typedef struct {
+	long X, Y;
+	long W, H;
+} LRECT;
+
+typedef struct {
+	WORD Top, Bot;
+	WORD Lft, Rgt;
+} TBLR;
+
+typedef struct s_dombox DOMBOX;
+struct s_dombox {
+	DOMBOX * Parent, * Sibling;
+	DOMBOX * ChildBeg, * ChildEnd;
+	LRECT    Rect;
+	LONG     MaxWidth;
+	LONG     MinWidth; /* smallest width where the content fits in    */
+	LONG     SetWidth; /* calculated value resulting from given Width */
+	WORD     HtmlType;
+	WORD     Backgnd;  /* -1 or colour value                          */
+	TBLR     Margin;
+	TBLR     Padding;
+	WORD     BorderWidth, BorderColor;
+};
+DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent);
+DOMBOX * dombox_dtor (DOMBOX *);
+
+
 /* ************ Parsing Constructs ************************ */
 
 typedef struct long_offset {
@@ -462,34 +493,36 @@ struct word_item {
 };
 
 struct paragraph_item {
+	DOMBOX   Box;
 	WORDITEM item;
 	TABLE    Table;
 	WORDLINE Line;    /* list of word lines */
 	WORD     Indent;  /* horizontal offset to the left side */
 	WORD     Rindent; /* indent of the right side */
 	WORD     Hanging; /* <0: left, >0: right hanging */
-	short    Backgnd; /* colour or -1 */
+/*	short    Backgnd; / * colour or -1 */
 	OFFSET   Offset;
-	long     Width;
-	long     Height;
+/*	long     Width;*/
+/*	long     Height;*/
 	PARAGRAPH_CODE paragraph_code;
 	H_ALIGN alignment;
 	H_ALIGN floating;
 	WORD eop_space;
-	long min_width;
-	long max_width;
+/*	long min_width;*/
+/*	long max_width;*/
 	PARAGRPH next_paragraph;
 };
 
 typedef struct {
+	DOMBOX   Box;
 	PARAGRPH Item;
-	long     Minimum; /* smallest width where the content fits in    */
-	long     Width;   /* set Value, must not be smaller than Minimum */
-	long     Height;  /* calculated value resulting from given Width */
-	short    Backgnd; /* -1 or colour value                          */
+/*	long     Minimum; / * smallest width where the content fits in    */
+/*	long     Width;   / * set Value, must not be smaller than Minimum */
+/*	long     Height;  / * calculated value resulting from given Width */
+/*	short    Backgnd; / * -1 or colour value                          */
 	H_ALIGN  Alignment;
-	short    MarginTop, MarginBot; /* top and bottom margins */
-	short    MarginLft, MarginRgt; /* left and right margins */
+/*	short    MarginTop, MarginBot; / * top and bottom margins */
+/*	short    MarginLft, MarginRgt; / * left and right margins */
 } CONTENT;
 
 struct frame_item {
@@ -529,6 +562,7 @@ typedef struct parse_sub {
 	FNTSTACK           font;
 	struct font_style  styles;
 	UWORD              nowrap;
+	DOMBOX           * parentbox;
 	PARAGRPH           paragraph;
 	PARAGRPH           prev_par;
 	WORDITEM           word;      /* the item actually to process */

@@ -562,14 +562,14 @@ history_update (CONTAINR cont, HISTORY hist)
 					return;
 				} else {
 					if (frame->v_bar.on && frame->v_bar.scroll > 0) {
-						long height = frame->Page.Height - frame->clip.g_h;
+						long height = frame->Page.Box.Rect.H - frame->clip.g_h;
 						item->ScrollV = (frame->v_bar.scroll * 1024 + height /2)
 						              / height;
 					} else {
 						item->ScrollV = 0;
 					}
 					if (frame->h_bar.on && frame->h_bar.scroll > 0) {
-						long width = frame->Page.Width - frame->clip.g_w;
+						long width = frame->Page.Box.Rect.W - frame->clip.g_w;
 						item->ScrollH = (frame->h_bar.scroll * 1024 + width /2)
 						              / width;
 					} else {
@@ -803,8 +803,8 @@ containr_Anchor (CONTAINR cont, const char * anchor, long * dx, long * dy)
 			y += offs->Y;
 			offs = offs->Origin;
 		}
-		if (y && frame->Page.MarginTop > 0) {
-			y -= frame->Page.MarginTop;
+		if (y && frame->Page.Box.Margin.Top > 0) {
+			 y -= frame->Page.Box.Margin.Top;
 		}
 		if ((*dx = x - frame->h_bar.scroll) != 0) rtn = TRUE;
 		if ((*dy = y - frame->v_bar.scroll) != 0) rtn = TRUE;
@@ -1151,7 +1151,7 @@ containr_shift (CONTAINR cont, long * dx, long * dy)
 		if (!frame->h_bar.on) {
 			*dx = 0;
 		} else {
-			long s = frame->Page.Width - frame->clip.g_w;
+			long s = frame->Page.Box.Rect.W - frame->clip.g_w;
 			long x = frame->h_bar.scroll + *dx;
 			if (x > s) x = s;
 			if (x < 0) x = 0;
@@ -1164,7 +1164,7 @@ containr_shift (CONTAINR cont, long * dx, long * dy)
 		if (!frame->v_bar.on) {
 			*dy = 0;
 		} else {
-			long s = frame->Page.Height - frame->clip.g_h;
+			long s = frame->Page.Box.Rect.H - frame->clip.g_h;
 			long y = frame->v_bar.scroll + *dy;
 			if (y > s) y = s;
 			if (y < 0) y = 0;
