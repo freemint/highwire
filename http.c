@@ -184,8 +184,9 @@ content_length (const char * beg, long len, HTTP_HDR * hdr)
 	BOOL       found;
 	
 	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
-		long size = atol (beg + sizeof(token)-1);
-		if (size > 0) {
+		char  * p;
+		long size = strtol (beg += sizeof(token)-1, &p, 10);
+		if (size > 0 || (p > beg && *(--p) == '0')) {
 			hdr->Size = size;
 		}
 		found = TRUE;
