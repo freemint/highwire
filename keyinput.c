@@ -89,14 +89,16 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_alt_text (-1);
 		break;
 	case 0x47:  /* home */
-		if (!(state & (K_RSHIFT|K_LSHIFT))) {
+		if (active && !(state & (K_RSHIFT|K_LSHIFT))) {
 			sx = -active->Page.Rect.W;
 			sy = -active->Page.Rect.H;
 			break;
 		} /* else fall through */
 	case 0x4F:  /* end */
-		sx = -active->Page.Rect.W;
-		sy = +active->Page.Rect.H;
+		if (active) {
+			sx = -active->Page.Rect.W;
+			sy = +active->Page.Rect.H;
+		}
 		break;
 	case 0x48:  /* /|\ */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
@@ -104,7 +106,9 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 			break;
 		} /* else fall through */
 	case 0x49:  /* page up */
-		sy = -(active->clip.g_h - scroll_step);
+		if (active) {
+			sy = -(active->clip.g_h - scroll_step);
+		}
 		break;
 	case 0x50:  /* \|/ */
 		ascii = 0;  /* this key has character '2' */
@@ -113,15 +117,21 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 			break;
 		} /* else fall through */
 	case 0x51:  /* page down */
-		sy = +(active->clip.g_h - scroll_step);
+		if (active) {
+			sy = +(active->clip.g_h - scroll_step);
+		}
 		break;
 	case 0x4B:  /* <- */
-		sx = -(state & (K_RSHIFT|K_LSHIFT)
-		       ? active->clip.g_w - scroll_step : scroll_step);
+		if (active) {
+			sx = -(state & (K_RSHIFT|K_LSHIFT)
+			       ? active->clip.g_w - scroll_step : scroll_step);
+		}
 		break;
 	case 0x4D:  /* -> */
-		sx = +(state & (K_RSHIFT|K_LSHIFT)
-		       ? active->clip.g_w - scroll_step : scroll_step);
+		if (active) {
+			sx = +(state & (K_RSHIFT|K_LSHIFT)
+			       ? active->clip.g_w - scroll_step : scroll_step);
+		}
 		break;
 	case 0x61:  /* Undo */
 		hwWind_undo (hwWind_Top, (state & (K_RSHIFT|K_LSHIFT)));
@@ -132,7 +142,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		                 help_file, NULL, TRUE, TRUE);
 		break;
 	}
-	if (active && (sx || sy)) {
+	if (sx || sy) {
 		hwWind_scroll (hwWind_Top, active->Container, sx, sy);
 	}
 
