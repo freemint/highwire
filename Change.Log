@@ -32,6 +32,11 @@
 - Slight speed improvement for interlaced PNGs
   (avoid needless memory copying).
 
+- Thje cache.idx file header structure got changed
+  to allow version checking for possibly changed
+  cache structure.  In this case the cache will be
+  emptied in this case to avoid messed up data.
+
 - Bugs #0160, #0163 resolved.
 
 __________________________________________________

@@ -13,6 +13,10 @@
 
 # if defined (__GNUC__)
 #  include <unistd.h>
+#  define DTA    _DTA
+# define d_fname dta_name
+# else
+#  define DTA    struct FILEINFO
 # endif
 #endif
 #ifndef O_RAW    /* Lattice uses this for open() to write binary files */
@@ -24,12 +28,14 @@
 #include "cache.h"
 
 
+#define MAGIC_NUM 0x20040809l /* needs to get updated in case the format of *
+                               * the cache.idx file changes                 */
+
+static const char base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+
 typedef struct s_cache_item * CACHEITEM;
 typedef struct s_cache_node * CACHENODE;
-
-static BOOL cache_flush  (CACHEITEM, LOCATION);
-static BOOL cache_remove (long num, long use);
-
 
 struct s_cache_item {
 	CACHENODE Node;
@@ -80,6 +86,10 @@ static struct s_cache_node __tree_base = {
 	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
 		{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL} }
 };
+
+
+static BOOL cache_flush  (CACHEITEM, LOCATION);
+static BOOL cache_remove (long num, long use);
 
 
 /*----------------------------------------------------------------------------*/
@@ -527,7 +537,7 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 	if (!__cache_dsk_num) {
 		__cache_fid = 1;
 	}
-	fprintf (file, "%08lX\n", __cache_fid);
+	fprintf (file, "%08lX:%08lX\n", MAGIC_NUM, __cache_fid);
 	if (single) {
 		fseek (file, 0, SEEK_END);
 	} else {
@@ -579,6 +589,24 @@ read_hex (char ** ptr)
 	return n;
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+clear_dir (void)
+{
+	DTA * dta = Fgetdta();
+	strcpy (__cache_file, "*.*");
+	if (Fsfirst (__cache_path, 0x0000) == E_OK) do {
+		char * name = strupr (dta->d_fname);
+		if ((strchr (base32, name[0]) && strchr (base32, name[1]) &&
+		     strchr (base32, name[2]) && strchr (base32, name[3]) &&
+		     (!name[4] || (name[4] == '.')))
+		    || strcmp (name, "CACHE.IDX") == 0) {
+			strcpy  (__cache_file, name);
+			Fdelete (__cache_path);
+		}
+	} while (Fsnext() == E_OK);
+}
+
 /*============================================================================*/
 void
 cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
@@ -618,7 +646,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 		LOCATION loc  = NULL;
 		FILE   * file = NULL;
 		size_t   plen = strlen (dir);
-		if ((__cache_path = malloc (plen +12)) != NULL) {
+		if ((__cache_path = malloc (plen +14)) != NULL) {
 			memcpy (__cache_path, dir, plen);
 			if (__cache_path[plen-1] != '/' && __cache_path[plen-1] != '\\') {
 				__cache_path[plen++] = (strchr (__cache_path, '/') ? '/' : '\\');
@@ -628,17 +656,20 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 			loc = new_location (__cache_path, NULL);
 		}
 		if (loc) {
-			char hdr[16];
-			if ((file = fopen (__cache_path, "rb")) != NULL
-			    && fgets (hdr, (int)sizeof(hdr) -1, file)) {
-				char * p;
-				long num = strtol (hdr, &p, 16);
-				if ((num > 0) && (p == hdr +8) && ((*p == '\n') || (*p == '\r'))) {
-					__cache_fid = num;
+			char hdr[20];
+			file = fopen (__cache_path, "rb");
+			if (file && fgets (hdr, (int)sizeof(hdr) -1, file)) {
+				int  pos   = 0;
+				long magic = 0;
+				if ((sscanf (hdr, "%8lX:%8lX%n", &magic, &__cache_fid, &pos) == 2)
+				    && (magic == MAGIC_NUM) && (__cache_fid > 0) && (pos == 17)
+				    && (hdr[17] == '\n' || hdr[17] == '\r')) {
 					__cache_dir = loc;
 				} else {
+					__cache_fid = 0l;
 					fclose (file);
 					file = NULL;
+					clear_dir();
 				}
 			} else if (cache_flush (NULL, loc)) {
 				__cache_dir = loc;
@@ -803,7 +834,6 @@ cache_assign (LOCATION src, void * data, size_t size,
 			char * p = citem->Cached;
 			short  n = 15; /* 5bit * (4 -1) = one million possible files, */
 			do {           /* should be enough                            */
-				static const char * base32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 				*(p++) = base32[(__cache_fid >>n) & 0x1F];
 			} while ((n -= 5) >= 0);
 			if (type && *type) {
