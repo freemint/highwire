@@ -26,6 +26,7 @@ static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
+static WORD  tbar_set = +21;
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
 #else
@@ -136,12 +137,13 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 			wind_set (This->Handle, WF_HSLIDE,   0, 0,0,0);
 			wind_set (This->Handle, WF_HSLSIZE, -1, 0,0,0);
 		}
-		This->TbarH = 0;
 		This->IbarH = 0;
 	} else {
-		This->TbarH = 0;
 		This->IbarH = widget_h - widget_b -1;
 	}
+	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
+	This->TbarMask = 0xFF;
+	This->TbarActv = -1;
 	set_size (This, &curr_area);
 
 	if (bevent) {
@@ -459,7 +461,8 @@ hwWind_move (HwWIND This, PXY pos)
 		wind_set_grect (This->Handle, WF_CURRXYWH, &This->Curr);
 		wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
 		This->isFull = FALSE;
-		containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y);
+		containr_relocate (This->Pane,
+		                   This->Work.g_x, This->Work.g_y + This->TbarH);
 	}
 }
 
@@ -576,6 +579,31 @@ hwWind_raise (HwWIND This, BOOL topNbot)
 		menu_history (new_top->History, new_top->HistUsed, new_top->HistMenu);
 	}
 #endif
+}
+
+/*============================================================================*/
+void
+hwWind_close (HwWIND This, UWORD state)
+{
+	if (!(state & K_ALT)) {
+		delete_hwWind (This);
+	
+	} else if (tbar_set) {
+		GRECT work = This->Work;
+		if (This->TbarH) {
+			if (tbar_set > 0) tbar_set = -tbar_set;
+			This->TbarH = 0;
+		} else {
+			if (tbar_set < 0) tbar_set = -tbar_set;
+			This->TbarH = tbar_set;
+		}
+		work.g_y += This->TbarH;
+		work.g_h -= This->TbarH + This->IbarH;
+		containr_calculate (This->Pane, &work);
+		work.g_y -= This->TbarH;
+		work.g_h += This->TbarH;
+		hwWind_redraw (This, &work);
+	}
 }
 
 /*============================================================================*/
@@ -723,6 +751,119 @@ hwWind_byValue (long val)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+draw_toolbar (HwWIND This, const GRECT * p_clip)
+{
+	typedef struct {
+		WORD Offset;
+		WORD Fgnd, Bgnd;
+		WORD Data[15], Fill[15];
+	}  TOOLBTN;
+	static TOOLBTN buttons[] = {
+		{	2, G_BLACK, G_GREEN,
+			{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
+				0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
+			{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
+				0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
+		{	22, G_BLACK, G_GREEN,
+			{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
+				0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
+			{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
+				0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
+		{	42, G_BLACK, G_WHITE,
+			{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
+				0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
+			{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
+				0x2108, 0x2D68, 0x2D68, 0x2148, 0x3F68, 0x3F68, 0x0000 } },
+		{	72, G_BLACK, G_YELLOW,
+			{	0x03E0, 0x0C10, 0x1F08, 0x2084, 0x0044, 0x10C6, 0x2882, 0x4444,
+				0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
+			{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
+				0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
+		{	92, G_WHITE, G_RED,
+			{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
+				0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
+			{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
+				0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
+	};
+	GRECT area, clip;
+	
+	if (p_clip->g_y >= This->Work.g_y + This->TbarH) return;
+	
+	area = This->Work;
+	area.g_h = This->TbarH;
+	clip = area;
+	
+	if (rc_intersect (p_clip, &clip)) {
+		MFDB scrn = { NULL, }, icon = { NULL, 15,15,1, 1, 1, 0,0,0 };
+		WORD off[] = { G_LBLACK, 0 };
+		PXY  p[4] = { {0,0}, {14,14}, };
+		TOOLBTN * btn = buttons;
+		int i;
+		clip.g_w += clip.g_x -1;
+		clip.g_h += clip.g_y -1;
+		vsf_color (vdi_handle, G_LWHITE);
+		p[3].p_x = (p[2].p_x = area.g_x) + area.g_w -1;
+		p[3].p_y =  p[2].p_y = area.g_y  + area.g_h -1;
+		vsl_color (vdi_handle, G_BLACK);
+		vs_clip_pxy (vdi_handle, (PXY*)&clip);
+		v_hide_c (vdi_handle);
+		v_bar   (vdi_handle, (short*)&clip);
+		v_pline (vdi_handle, 2, (short*)(p +2));
+		
+		p[3].p_y = (p[2].p_y = area.g_y +3) +15 -1;
+		for (i = 0; i < numberof(buttons); i++, btn++) {
+			p[2].p_x = area.g_x + btn->Offset;
+			p[3].p_x = p[2].p_x + 15 -1;
+			icon.fd_addr = btn->Data;
+			if (This->TbarMask & (1 << i)) {
+				PXY l[4];
+				if (!ignore_colours) {
+					vrt_cpyfm (vdi_handle,
+					           MD_TRANS, (short*)p, &icon, &scrn, &btn->Fgnd);
+					icon.fd_addr = btn->Fill;
+					vrt_cpyfm (vdi_handle,
+					           MD_TRANS, (short*)p, &icon, &scrn, &btn->Bgnd);
+				} else {
+					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+				}
+	if (i != 4) {
+				l[2].p_x = l[1].p_x = p[3].p_x +2;
+				l[0].p_y = l[1].p_y = p[3].p_y +2;
+				l[0].p_x =            p[2].p_x -1;
+				l[2].p_y =            p[2].p_y -1;
+				vsl_color (vdi_handle, G_LBLACK);
+				v_pline (vdi_handle, 3, (short*)l);
+				l[1].p_y = --l[2].p_y;  --l[2].p_x;
+				l[1].p_x = --l[0].p_x;  --l[0].p_y;
+				vsl_color (vdi_handle, G_WHITE);
+				v_pline (vdi_handle, 3, (short*)l);
+				l[1].p_x = --l[0].p_x;
+				l[1].p_y = --l[2].p_y;
+				l[3].p_x = l[2].p_x += 2;
+				l[3].p_y = l[0].p_y += 1;
+				vsl_color (vdi_handle, G_BLACK);
+				v_pline (vdi_handle, 4, (short*)l);
+				if (i == This->TbarActv) {
+					l[2].p_y = l[0].p_y +1;
+					vsf_interior (vdi_handle, FIS_SOLID);
+					vsf_color    (vdi_handle, G_WHITE);
+					vswr_mode    (vdi_handle, MD_XOR);
+					v_bar        (vdi_handle, (short*)(l +1));
+					vswr_mode    (vdi_handle, MD_TRANS);
+				}
+	}
+			} else {
+				vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+			}
+		}
+		v_show_c (vdi_handle, 1);
+		vs_clip_off (vdi_handle);
+	}
+}
+
+
 /*============================================================================*/
 void
 hwWind_redraw (HwWIND This, const GRECT * clip)
@@ -745,6 +886,9 @@ hwWind_redraw (HwWIND This, const GRECT * clip)
 		}
 		while (rect.g_w > 0 && rect.g_h > 0) {
 			if (rc_intersect (&work, &rect)) {
+				if (This->TbarH) {
+					draw_toolbar (This, &rect);
+				}
 				if (info) {
 					draw_infobar (This, &rect, info);
 				}
