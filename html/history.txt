@@ -1,34 +1,231 @@
 Ok here are the new supports and changes
 
+July 29, 2003
+
+  AltF4's patches
+
+  Location.h:  line 21 + 38 + 46:
+  Location.c:  line 55 (_alloc) + 251 (_loc_Hash):
+    - new function to calculate a hash value from a location's content.
+
+  cache.c:
+    - line 15 + 17 + 34 + 40..57 (create_item) + 64 (destroy_item)
+      + 94..121 (cache_lookup):  implemented a search tree for faster
+      access to queried cache objects.
+
+  Makefile:
+    - extended rules for targets clean and distclean.
+
+July 26, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 348..362 (image_job):  avoid useless queries.
+
+  Paragrph.c:
+    - line 828 (content_calc):  use correct width value to not overlap
+      objects placed side by side (happend with percent width tables).
+
+  cache.h:    line 4 + 6 + 14:
+  cache.c:    line 19 + 38 (create_item) + 56 + 60 (cache_insert)
+              + 70 (cache_lookup) + 78 + 81 + 95 (cache_lookup) + 204
+              + 207 (cache_info):
+  p_about.c:  line 79..82 (about_cache):
+    - renamed parameters 'hash' to 'ident', matches better their
+      meaning.
+
+  cache.c:
+    - line 15..26 + 45..46 (create_item) + 52 (destroy_item) + 72 + 76
+      + 79 + 82 + 85 + 87..97 (cache_lookup) + 111 + 122 (cache_bound)
+      + 134..138 + 146..150 + 155 (cache_release) + 167..170
+      + 174..183 (cache_clear) + 199..202 + 213 (cache_info):  changed
+      cache storage structure from single linked list to double linked.
+
+July 23, 2003
+
+  AltF4's patches
+
+  Loader.h:
+    - line 26:  new element SuccJob.
+    - line 42:  additional parameter successor for start_objc_load().
+
+  Loader.c:
+    - line 52 + 679 + 280 (start_cont_load)
+      + 317..323 (start_objc_load):  new function generic_job() to
+      handle data types which aren't handled by parser functions.
+    - line 162 (new_loader) + 306 + 314 + 338..339 (start_objc_load)
+      + 461 + 512 (receive_job) + 531 (header_job):  new function
+      pointer element SuccJob to be used instead of parser functions,
+      if set.  will also be called for loader invalidation.
+    - line 291 (start_cont_load):  changed to correct parser type.
+    - line 583 (header_job):  start loading for all data types.
+
+  render.c:
+    - line 611 (render_BGSOUND_tag):  comment corrected.
+    - line 626 (render_BGSOUND_tag):  adapted to extended parameter
+      list.
+    - line 1263:  new function render_EMBED_tag().
+
+  hwWind.c:
+    - line 1275 (wnd_hdlr):  avoid adding of history entries for eg.
+      background sound.
+
+July 22, 2003
+
+  AltF4's patches
+
+  hwWind.h:  line 25:
+  hwWind.c:  line 79..80 + 85 + 90 + 799 (hwWind_history)
+             + 1264 (wnd_hdlr) + 1421+ 1513 (hwWind_button):
+    - toolbar button 'open file' added.
+
+July 21, 2003
+
+  AltF4's patches
+
+  Loader.h:    line 40..41:
+  Loader.c:    line 51 + 228..700:
+  Form.c:      line 770 (input_activate):
+  render.c:    line 445..450 (render_FRAMESET_tag)
+               + 569..570 (render_META_tag) +625 (render_BGSOUND_tag):
+  keyinput.c:  line 140 (key_pressed):
+  Mouse_R.c:   line 205..224 (button_clicked):
+  AEI.c:       line 141 (page_load) + 180 (vastart) + 384 (menu_open)
+               + 401..408 (menu_reload):
+  hwWind.c:    line 244 (new_hwWind) + 833..836 (hwWind_history)
+               + 1769 (hwWind_keybrd):
+    - big code reorganize, new_loader_job() is spiltted off now into
+      start_page_load(), start_cont_load() and start_objc_load().
+
+  hwWind.c:
+    - line 1241 + 1314 + 1329 (wnd_hdlr):  corrected toolbar button
+      state settings.
+
+July 19, 2003
+
+  AltF4's patches
+
+  global.h:  line 61 + 113..114:
+  AEI.c:     line 29 + 35 + 71..97:
+  Loader.c:  line 797..849:
+    - moved identify_AES() and can_extended_mxalloc() to a more logical
+      location.
+
+  Redraws.c:
+    - line 12:  added a patched vsf_udpat() to avoid a bug in the gemlib
+      <= 0.42.2.
+
+  Containr.c:
+    - line 1240..1242 (containr_redraw):  changed background fill
+      pattern for empty containrs.
+
+  hwWind.c:
+    - line 203..204 + 242..249 (new_hwWind):  draw content immediately
+      after been opened to avoid empty windows on long loading pages;
+      replaces seperate draws of infobar and toolbar.
+    - line 937 + 971 (draw_toolbar):  removed unused code.
+
+July 18, 2003
+
+  AltF4's patches
+
+  AEI.c:
+    - line 25 + 706..708 (rpopup_open) use the correct URL for
+      'view source'.
+
+  Containr.h:
+    - line 29:  two more notification event types added.
+    - line 137:  new function containr_escape().
+
+  Containr.c:
+    - line 339:  new function containr_escape() to stop all jobs
+      related to a containr hirachy.
+    - line 481..492 + 512..513 + 519 + 530 (history_update):  corrected
+      consistency checks, was much too picky about empty frames.
+
+  Loader.h:
+    - line 37:  additional argument target for new_loader().
+
+  Loader.c:
+    - line 138 + 143 (new_loader) + 608..610 (new_loader_job):
+      additional argument target.
+    - line 183 (new_loader) + 196 (delete_loader):  always send generic
+      notification on creating/destroing loaders.
+
+  image.c:
+    - line 204 (new_image) + 229 (delete_image) + 302 + 333
+      + 348 (image_calculate) + 436..437 (image_job):  always send
+      generic notification on starting/stopping image jobs.
+
+  hwWind.c:
+    - line 804..820 (hwWind_history):  handle toolbar update for empty
+      pages/framesets.
+    - line 1211..1311 (wnd_hdlr):  overworked to handle page loading
+      stopped.
+    - line 1490 (hwWind_button) + 1611 (hwWind_keybrd):  activated stop
+      button in the toolbar to allow to stop loading of pages, same
+      function is implemented for the escape key now.
+
+  highwire.prj, purewire.prj:
+    - dependencies updated.
+
+July 13, 2003
+
+  AltF4's patches
+
+  Location.c:
+    - line 256..259 (location_FullName) + 344..345 (location_equal):
+      made functions more stable against invalid pointers.
+    - line 273 + 284 + 297 + 308 (location_FullName): faster string
+      copying.
+
+  cache.c:
+    - line 280 (cache_assign):  corrected file open mode.
+
+  Loader.c:
+    - line 72 (parser_job) + 184..186 (new_loader)
+      + 450..455 + 460 + 464..466 (loader_job):  corrected setting of
+      default MIME types.
+    - line 404..406 (receive_job):  set cached file in loader.
+    - line 457..459 (parser_job):  added cache lookup for header
+      redirect.
+    - line 461..462 (loader_job):  removed wrong notification at header
+      redirect (fixes bug #0092).
+
+  mime.h:  line 22..23:
+  mime.c:  line 24 + 29..30 + 44 + 105..106 + 112 (mime_byString):
+    - added/corrected some types.
+
 July 10, 2003
-    
+
   AltF4's patches
 
   Containr.h:
     - line 154:  new function history_update().
     - line 162:  new structure elements ScrollV, ScrollH.
-    
+
   Containr.c:
     - line 33 + 348 (create_r) + 501 + 510 (process_r):  new structure
       elements ScrollV and ScrollH for HISTITEM and HISTENTR.
     - line 463:  new function history_update() to store scroll bar pos.
-    
+
   Loader.h:  line 16:
   Loader.c:  line 144 (new_loader):
     - new structure elements ScrollV, ScrollH.
-    
+
   parser.c:
     - line 61 (new_parser):  store scroll bare values from loader into
       frame.
-    
+
   hwWind.c:
     - line 798..799 (hwWind_history) + 1208..1209 (wnd_hdlr):  store
       scroll bare values in history entry.
     - line 815 (hwWind_history):  set scroll bare values in loaders
       from history entry.
-    
+
 July 07, 2003
-    
+
   AltF4's patches
 
   Loader.h:  line 14:
@@ -36,7 +233,7 @@ July 07, 2003
              + 208 (delete_loader) + 612..613 + 625 (new_loader_job):
     - new structure element ExtAppl to store the name of an external
       application for handling of the file.
-    
+
   defs.h:     line 478:
   Frame.c:    line 28 (new_frame) + 80 (delete_frame):
   render.c:   line 509 (render_BASE_tag) + 610 (render_BGSOUND_tag)
@@ -44,9 +241,9 @@ July 07, 2003
   Mouse_R.c:  line 212 (button_clicked):
     - in struct frame, new element BaseHref to store attribute from
       <base href=...> tag (base URL for relative links in a document).
-    
+
 July 05, 2003
-    
+
   AltF4's patches
 
   image.c:
@@ -56,34 +253,34 @@ July 05, 2003
     - line 283 + 308 (image_calculate):  avoid zero hash values for
       cache request.
     - line 336 + 345 (image_job):  avoid useless cache requests.
-    
+
   Location.h:
     - line 18:  typo fixed.
-    
+
   Location.c:
     - line 261 + 290..293 (location_FullName):  removed wrong slashes
       in 'about:' and 'mailto:' URLs.
-    
+
   schedule.c:
     - line 66..80 (sched_remove) + 93..108 (sched_clear):  corrected
       invalid pointer handling that was messing up the job queue.
-    
+
 June 29, 2003
-    
+
   AltF4's patches
 
   mime.h:
     - line 22:  new entry for 'audio/x-wav'.
     - line 37:  new function mime_byString().
-    
+
   mime.c:
     - line 32:  changed entry for 'audio/x-wav'.
     - line 88:  new function mime_byString() to interprete strings with
       MIME types.
-    
+
   http.h:
     - line 7:  new structure elements SrvrDate, Modified, Expires.
-    
+
   http.c:
     - line 7 + 18:  new function http_date() to interprete date strings
       as defined in RFC 2616.
@@ -93,40 +290,40 @@ June 29, 2003
       header fields Date, Last-Modified, Expires.
     - line 330 + 346 (http_header):  set line delimiter '\0' for more
       saveness.
-    
+
   cache.h:
     - line 15:  new structure elements Date, Expires.
     - line 24:  extended argument list for cache_assign().
-    
+
   cache.c:
     - line 21 + 193 (cache_info) + 245 + 269 (cache_assign):
       handling of file modification and expire times.
     - line 30..33 + 37..38 + 46 (cache_insert) + 263..264
       + 268 (cache_assign):  new function create_item().
-    
+
   Loader.h:  line 21:
   Loader.c:  line 145 (new_loader) + 396 (receive_job)
              + 459 (loader_job):
     - new structure elements Date and Expires to be filled from http
       header.
-    
+
   p_about.c:
     - line 3 + 102 + 113 (about_cache):  display file date and expire
       date of remote files (if available).
-    
+
   Containr.c:
     - line 96 (delete_containr) 290 + 309 (containr_clear):  made sure
       that all jobs belonging to a containr to be invalidated get
       cleared in every case.
-    
+
 June 25, 2003
-    
+
   AltF4's patches
 
   cache.h:
      - line 14:  added URL location to info struct.
      - line 19:  new functions to handle caching to disk files.
-    
+
   cache.c:
     - line 1:  changed include.
     - line 20:  added location to hold the cache directory.
@@ -135,72 +332,72 @@ June 25, 2003
     - line 181 + 185 (cache_info):  set additional part of the info
       structure regarding to file cache.
      - line 198:  new functions to handle caching to disk files.
-    
+
   config.c:
     - line 10 + 74 + 135:  new keyword 'CACHEDIR' to select a directory
       to store cached files.
-    
+
   Loader.h:
     - line 16:  added slot for cached file hit to LOADER structure.
-    
+
   Loader.c:
     - line 144 + 162 (new_loader) + 388 + 401..403 + 415 + 426
       + 484 (loader_job) + 556 + 626 (new_loader_job):  check for files
       from remote if they are already held in the disk cache.
     - line 194 (delete_loader):  release cached files, if used.
     - line 375 (receive_job):  assign received files to cache.
-    
+
   p_about.c:
     - line 63..99 (about_cache):  reworked to consider disk cached
       items.
-    
+
   purewire.prj, highwire.prj:
     - corrected dependencies.
-    
+
 Jun. 24, 2003
-    
+
   AltF4's patches
 
   config.c:
     - line 12..114:  config parser reworked for faster startup.
-    
+
   mime.h, mime.c:
     - new files for handling of Mime Types.
-    
+
   Loader.h:
     - line 7..35:  moved Mime Type declaration over to mime.h.
-    
+
   Loader.c:
     - line 104 (parser_job):  enabled skipping of multiple leading
       comment lines while detecting document type.
     - line 134..158:  moved Mime Type definition over to mime.c.
     - line 162 + 167 + 183..195 (new_loader):  replaced resolving of
       Mime Type by mime_byExtension().
-    
+
   http.c:   line 11:
   Frame.c:  line 12:
     - replaced includes.
-    
+
   Makefile, purewire.prj, highwire.prj:
     - changed due to new mime.h/.c.
-    
+
 Jun. 12, 2003
-    
+
   AltF4's patches
 
   defs.h:
     - line 5..7:  bumped version to 0.1.4 alpha.
-    
+
   scanner.c:
     - line 268:  added an often misused entity.
-    
+
   render.c
     - line 147:  new function insert_anchor().
     - line 1070..1086 (render_A_tag):  replaced code by a call to
       insert_anchor().
     - line 1418 + 1444 (render_H_tag) + 1532 + 1550 (render_A_tag):
       implemented ID keyword as anchor.
-    
+
   Widget.c:
     - line 22:  removed useless include.
 
@@ -212,14 +409,14 @@ May 26, 2003
   Table.c:  line 66 + 77 (table_start):
     - new attribute/argument to mark if a table was produced by a DIV
       tag.
-    
+
   render.c:
     - line 1648 + 1651 + 1654 + 1657 + 1660 (render_DIV_tag) + 1939
       + 1941..1943 (render_TABLE_tag) + 1953 + 1956 + 1958 + 1964
       (render_TR_tag) + 1975 + 1978 + 1981 + 1987 (render_TD_tag)
       + 1998 + 2001 + 2005 +2010..2011 (render_TH_tag):  handle invalid
       placed DIV tags inside of tables correctly.
-    
+
   hwWind.c:
     - line 161 + 171 (new_hwWind):  corrected infobar background colour
       to light gray for MagiC.

@@ -1,4 +1,4 @@
-(non-released of Jul. 22, 2003)
+(non-released of Jul. 29, 2003)
 
 - Implemented disk caching of text/html files from
   remote (only per session yet).  To enable this
@@ -25,6 +25,12 @@
 
 - Implemented <base href=...> tag (base URL for
   relative links in a document).
+
+- Sound files from remote sites are now loaded
+  also and can be played by external players.
+
+- Fixed a problem with tables which were over-
+  lapping other objects.
 
 - Reworked config parser for faster program start
   on slow machines.
