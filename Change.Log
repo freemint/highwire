@@ -1,4 +1,4 @@
-(non-public of Apr. 09, 2003)
+(non-public of April 22, 2003)
 
 - The new implemented navigation bar allows easy
   entering of URLs as well as going for/backward
@@ -23,7 +23,8 @@
 
 - Fixed wrong image colours under TrueColor, added
   support for 16bit HighColor with reverted byte
-  order.
+  order.  Improved vertical position and line
+  height calculation when align=top/bottom is set.
 
 - Initial implementation of OVLs for different
   network support (MiNTnet and STiK2).
@@ -32,7 +33,9 @@
   from VA_START.
 
 - Improved parsing of urls to encode HTML entities
-  and remove control characters from links.
+  and remove control characters from links.  Also
+  invalid urls of the form //<server_name>/ with a
+  missing http: are supported now.
 
 - Fixed a bug in the style=".." parsing function
   which could cause crashes before.
