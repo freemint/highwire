@@ -1,4 +1,4 @@
-(non-public of May 18, 2003)
+(non-public of May 22, 2003)
 
 - implemented handling of shift + left/right
   cursor keys (page-wise horizontal scrolling).
@@ -9,12 +9,25 @@
 - corrected wrong setting of hanging indentions in
   and after lists.
 
+- corrected handling of table cells with both 
+  colspan and rowspan set.
+
+- re-implemented <div> tag rendering to tables
+  with one single cell, matches their meaning much
+  more now than the previous implementation.
+
 - added resetting of font characteristics after
   tables and title tags, this was messing up the
   rendere while calculating text word widths (only
-  rarely seen on very simple pages).
+  rarely seen on some very simple pages).
 
-- Bugs #0103, #0106, #0108 resolved.
+- set texts of buttons and input fields always to
+  black.
+
+- removed several code redundancies.
+
+- Bugs #0041, #0098, #0103, #0104, #0105, #0106,
+  #0108, #0110 resolved.
 
 __________________________________________________
 Changes in V. 0.1.2 release  of May 12, 2003:
@@ -71,7 +84,7 @@ Changes in V. 0.1.2 release  of May 12, 2003:
 - Overworked charset encoding to speedo encoding
   for better performance.
 
-- Bugs #0063, #0064, #0090, 0094 resolved.
+- Bugs #0063, #0064, #0090, #0094 resolved.
 
 __________________________________________________
 Changes in V. 0.1.1 release  of January 15, 2003:
