@@ -143,6 +143,7 @@
 		__KEY_ITEM (METHOD),       /* FORM */
 		__KEY_ITEM (NAME),         /* A,FRAME */
 		__KEY_ITEM (NOWRAP),       /* TD,TH */
+		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
 		__KEY_ITEM (ROWS),         /* FRAMESET */
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */

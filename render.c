@@ -286,6 +286,12 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					container->Name   = get_value_str (parser, KEY_NAME);
 					container->Border = container->Parent->Border;
 
+					if (get_value (parser, KEY_NORESIZE, NULL,0)) {
+						container->Resize = FALSE;
+					} else {
+						container->Resize = TRUE;
+					}
+
 					if (get_value (parser, KEY_SCROLLING, output, sizeof(output))) {
 						if (stricmp (output, "yes") == 0) {
 							container->Scroll = SCROLL_ALWAYS;
