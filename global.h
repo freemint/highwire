@@ -159,8 +159,6 @@ WORDITEM paragrph_word    (PARAGRPH, long x, long y, long area[4]);
 GRECT    paragraph_extend (WORDITEM);
 void     content_setup    (CONTENT *, TEXTBUFF, DOMBOX * parent, BOXCLASS,
                            short margins, short backgnd);
-void     content_stretch  (CONTENT *, long height, V_ALIGN);
-
 
 /* in image.c */
 
