@@ -9,6 +9,9 @@
 #include "fontbase.h"
 
 
+static WORDITEM paragraph_filter (PARAGRPH);
+
+
 struct blocking_area {
 	struct {
 		long width;
@@ -37,6 +40,75 @@ vTab_delete (DOMBOX * This)
 		delete_table (&par->Table);
 	}
 	DomBox_vTab.delete (This);
+}
+
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MinWidth (DOMBOX * This)
+{
+	PARAGRPH paragraph = (PARAGRPH)This;
+	
+	if (paragraph->paragraph_code == PAR_HR) {
+		This->MinWidth = 2;
+	
+	} else {
+		WORDITEM  word = paragraph_filter (paragraph);
+		BOOL      lbrk = TRUE;
+		long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
+		long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
+		This->MinWidth = 0;
+		while (word) {
+			if (lbrk || !word->wrap) {
+				if (word->image && word->image->set_w < 0) {
+					wrd_width += 1 + word->image->hspace *2;
+				} else {
+					wrd_width += word->word_width - (lbrk ? word->space_width :0);
+				}
+				lbrk = word->line_brk;
+				word = word->next_word;
+				if (!lbrk) {
+					continue;
+				}
+			} /* else wrap || ln_brk */
+			
+			if (This->MinWidth < wrd_width) {
+				 This->MinWidth = wrd_width;
+			}
+			wrd_width = hanging;
+			lbrk = TRUE;
+		}
+		if (This->MinWidth < wrd_width) {
+			 This->MinWidth = wrd_width;
+		}
+	}
+	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This)
+	                + paragraph->Indent + paragraph->Rindent;
+	return This->MinWidth;
+}
+
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MaxWidth (DOMBOX * This)
+{
+	PARAGRPH paragraph = (PARAGRPH)This;
+	
+	struct word_item * word = paragraph->item;
+	long width = 0;
+	This->MaxWidth = 0;
+	while (word) {
+		BOOL ln_brk = word->line_brk;
+		width += word->word_width;
+		word = word->next_word;
+		if (ln_brk || !word) {
+			if (This->MaxWidth < width) {
+				 This->MaxWidth = width;
+			}
+			width = paragraph->Indent;
+		}
+	}
+	This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This)
+	                + paragraph->Indent + paragraph->Rindent;
+	return This->MaxWidth;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -90,9 +162,11 @@ new_paragraph (TEXTBUFF current)
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
-		paragraph_vTab        = DomBox_vTab;
-		paragraph_vTab.delete = vTab_delete;
-		paragraph_vTab.draw   = vTab_draw;
+		paragraph_vTab          = DomBox_vTab;
+		paragraph_vTab.delete   = vTab_delete;
+		paragraph_vTab.MinWidth = vTab_MinWidth;
+		paragraph_vTab.MaxWidth = vTab_MaxWidth;
+		paragraph_vTab.draw     = vTab_draw;
 	}
 	paragraph->Box._vtab = &paragraph_vTab;
 
@@ -157,9 +231,11 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->alignment = copy_from->alignment;
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
-			paragraph_vTab        = DomBox_vTab;
-			paragraph_vTab.delete = vTab_delete;
-			paragraph_vTab.draw   = vTab_draw;
+			paragraph_vTab          = DomBox_vTab;
+			paragraph_vTab.delete   = vTab_delete;
+			paragraph_vTab.MinWidth = vTab_MinWidth;
+			paragraph_vTab.MaxWidth = vTab_MaxWidth;
+			paragraph_vTab.draw     = vTab_draw;
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
 	}
@@ -656,109 +732,6 @@ paragraph_filter (PARAGRPH par)
 		word = word->next_word;
 	}
 	return par->item;
-}
-
-/*==============================================================================
- * content_minimum()
- *
- * Returns the smallest width that is needed for a list of paragraphs.
- */
-long
-content_minimum (CONTENT * content)
-{
-	PARAGRPH paragraph = content->Item;
-	long     min_width = 0;
-	
-	while (paragraph) {
-		long par_width;
-		
-		if (paragraph->paragraph_code == PAR_HR ||
-		    paragraph->paragraph_code == PAR_TABLE) {
-			
-			par_width = paragraph->Box.MinWidth
-		             + paragraph->Indent + paragraph->Rindent;
-		
-		} else {
-			WORDITEM  word = paragraph_filter (paragraph);
-			BOOL      lbrk = TRUE;
-			long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
-			long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
-			par_width = 0;
-			while (word) {
-				if (lbrk || !word->wrap) {
-					if (word->image && word->image->set_w < 0) {
-						wrd_width += 1 + word->image->hspace *2;
-					} else {
-						wrd_width += word->word_width - (lbrk ? word->space_width :0);
-					}
-					lbrk = word->line_brk;
-					word = word->next_word;
-					if (!lbrk) {
-						continue;
-					}
-				} /* else wrap || ln_brk */
-				
-				if (par_width < wrd_width) {
-					 par_width = wrd_width;
-				}
-				wrd_width = hanging;
-				lbrk = TRUE;
-			}
-			if (par_width < wrd_width) {
-				 par_width = wrd_width;
-			}
-			paragraph->Box.MinWidth = par_width;
-			par_width += paragraph->Indent + paragraph->Rindent;
-		}
-		if (min_width < par_width) {
-			 min_width = par_width;
-		}
-		paragraph = paragraph->next_paragraph;
-	}
-	
-	min_width += dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
-	
-	return (content->Box.MinWidth = min_width);
-}
-
-
-/*==============================================================================
- * content_maximum()
- *
- * Returns the largest width that occures in a list of paragraphs.
- */
-long
-content_maximum (CONTENT * content)
-{
-	PARAGRPH paragraph = content->Item;
-	long     max_width = 0;
-	
-	while (paragraph) {
-		if (!paragraph->Box.MaxWidth) {
-			struct word_item * word = paragraph->item;
-			long width = paragraph->Indent + paragraph->Rindent
-			           + dombox_LftDist (&paragraph->Box)
-			           + dombox_RgtDist (&paragraph->Box);
-			while (word) {
-				BOOL ln_brk = word->line_brk;
-				width += word->word_width;
-				word = word->next_word;
-				if (ln_brk || !word) {
-					if (paragraph->Box.MaxWidth < width) {
-						 paragraph->Box.MaxWidth = width;
-					}
-					width = paragraph->Indent;
-				}
-			}
-		}
-		if (max_width < paragraph->Box.MaxWidth) {
-			 max_width = paragraph->Box.MaxWidth;
-		}
-		paragraph = paragraph->next_paragraph;
-	}
-	max_width += dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
-	
-	return (content->Box.MaxWidth = max_width);
 }
 
 
