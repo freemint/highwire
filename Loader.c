@@ -80,24 +80,12 @@ static int receive_job (void * arg, long invalidated);
 static int generic_job (void * arg, long invalidated);
 
 
-/*******************************************************************************
- * the following function should be placed either in parse.c or render.c but
- * at the moment I have no clue where to do it best - AltF4 Feb. 4, 2002
- */
-
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * job function for parsing a file and attach it to the passed frame
- */
-static int
-parser_job (void * arg, long invalidated)
+/*----------------------------------------------------------------------------*/
+static BOOL
+start_parser (LOADER loader)
 {
-	LOADER loader = arg;
-	PARSER parser;
-	
-	if (invalidated) {
-		delete_loader (&loader);
-		return JOB_DONE;
-	}
+	SCHED_FUNC func = parse_plain;
+	PARSER     parser;
 	
 	if (!loader->MimeType) {
 		loader->MimeType = MIME_TEXT;
@@ -107,18 +95,18 @@ parser_job (void * arg, long invalidated)
 	switch (loader->MimeType)
 	{
 		case MIME_IMAGE:
-			parse_image (parser, 0);
+			func = parse_image;
 			break;
 		
 		case MIME_TXT_HTML:
 			if (loader->Data) {
-				parse_html (parser, 0);
+				func = parse_html;
 			
 			} else if (PROTO_isLocal(loader->Location->Proto)) {
-				parse_dir (parser, 0);
+				func = parse_dir;
 			
 			} else { /* PROT_ABOUT -- also catch internal errors */
-				parse_about (parser, 0);
+				func = parse_about;
 			}
 			break;
 		
@@ -128,8 +116,8 @@ parser_job (void * arg, long invalidated)
 		#ifdef MOD_TROFF
 			if (p[0] == '.' &&
 			    (p[1] == '"' || (p[1] == '\\' && p[2] == '"') || isalpha(p[1]))) {
-				extern BOOL parse_troff (void *, long);
-				parse_troff (parser, 0);
+				extern int parse_troff (void *, long);
+				func = parse_troff;
 				break;
 			}
 		#endif
@@ -140,15 +128,14 @@ parser_job (void * arg, long invalidated)
 			}
 			if (strnicmp (p, "<html>",          6) == 0 ||
 			    strnicmp (p, "<!DOCTYPE HTML", 14) == 0) {
-				parse_html (parser, 0);
+				func = parse_html;
 				break;
 			}
 		}
-		default: /* pretend it's text */
-			parse_plain (parser, 0);
+		default: /* pretend it's plain text */ ;
 	}
 	
-	return JOB_DONE;
+	return sched_insert (func, parser, (long)parser->Target, PRIO_FINISH);
 }
 
 /******************************************************************************/
@@ -573,7 +560,7 @@ receive_job (void * arg, long invalidated)
 	if (loader->SuccJob) {
 		sched_insert (loader->SuccJob, loader,(long)loader->Target, PRIO_SUCCESS);
 	} else {
-		sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
+		start_parser (loader);
 	}
 	return JOB_DONE;
 }	
@@ -761,7 +748,7 @@ header_job (void * arg, long invalidated)
 	if (loader->SuccJob) {
 		(*loader->SuccJob)(loader, (long)loader->Target);
 	} else {
-		sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
+		start_parser (loader);
 	}
 
 	return JOB_DONE;
@@ -794,7 +781,7 @@ loader_job (void * arg, long invalidated)
 		loader->MimeType = MIME_TXT_HTML;
 	}
 	/* registers a parser job with the scheduler */
-	sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
+	start_parser (loader);
 
 	return JOB_DONE;
 }
