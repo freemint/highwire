@@ -53,7 +53,6 @@ WORD page_margin = 5;
 
 BOOL alternative_text_is_on = FALSE;
 BOOL force_frame_controls   = FALSE;
-BOOL cookies_allowed        = FALSE;
 
 
 /* Globals */

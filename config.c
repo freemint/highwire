@@ -20,9 +20,9 @@
 #include "scanner.h"
 
 
-WORD         cfg_UptoDate  = -1;
-const char * cfg_StartPage = "html\\highwire.htm";
-
+WORD         cfg_UptoDate     = -1;
+const char * cfg_StartPage    = "html\\highwire.htm";
+BOOL         cfg_AllowCookies = FALSE;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " (" __DATE__ ")";

@@ -442,7 +442,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			strcpy (buffer + len, "\r\n");
 			len = inet_send (sock, buffer, len +2);
 		}
-		if ((long)len > 0 && cookies_allowed) {
+		if ((long)len > 0 && cfg_AllowCookies) {
 			COOKIESET cset;
 			WORD      num = cookie_Jar (loc, &cset);
 			if (num) {
@@ -573,7 +573,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 				 && !last_modified  (ln_beg, n, hdr)
 				 && !expires        (ln_beg, n, hdr)
 				) {
-			   long r = (cookies_allowed ? set_cookie (ln_beg, n, hdr) : 0);
+			   long r = (cfg_AllowCookies ? set_cookie (ln_beg, n, hdr) : 0);
 			   if (r && r < n) {
 					long tdiff = (hdr->SrvrDate > 0
 					              ? hdr->LoclDate - hdr->SrvrDate : 0);

@@ -38,7 +38,6 @@ extern WORD slider_col;
 
 extern BOOL alternative_text_is_on;
 extern BOOL force_frame_controls;
-extern BOOL cookies_allowed;
 
 extern char	*va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
 
@@ -128,6 +127,8 @@ void draw_border    (const GRECT *, short lu, short rd, short width);
 
 extern WORD         cfg_UptoDate;
 extern const char * cfg_StartPage;
+extern BOOL         cfg_AllowCookies;
+
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
 
