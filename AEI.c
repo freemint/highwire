@@ -26,8 +26,85 @@
 #include "cache.h"
 #include "Logging.h"
 #ifdef GEM_MENU
-# include "highwire.h"
+#	include "highwire.h"
+	extern OBJECT * menutree;
 #endif
+
+
+/*==============================================================================
+ * Checks if appl_getinfo() exists, and, if possible, calls it.
+ * WINX has appl_getinfo() since 2.2, appl_find("?AGI    ") since 2.3c beta.
+ */
+#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
+WORD appl_xgetinfo(WORD type, WORD *out1, WORD *out2, WORD *out3, WORD *out4)
+{
+	static BOOL has_agi = -1;
+	short u;
+
+	if (has_agi < 0)
+		has_agi = gl_ap_version >= 0x400 || appl_find("?AGI    ") == 0
+		          || wind_get(0, WF_WINX, &u, &u, &u, &u) == WF_WINX;
+		          /* || MagiC_version >= 0x0200? */
+
+	if (has_agi)
+		return appl_getinfo(type, out1, out2, out3, out4);
+	else
+		return FALSE;
+}
+#endif
+
+
+/*==============================================================================
+ * This identifies what AES you are running under.
+*/
+WORD
+identify_AES(void)
+{
+	long	search_id;
+	long	*search_p = (long *)Setexc(0x5A0/4, (void (*)())-1);
+	WORD	retv = AES_single;
+
+	if (search_p != NULL) {
+		while ((search_id = *search_p) != 0) {
+			if (search_id == 0x4D674D63L/*MgMc*/ || search_id == MagX_cookie)
+				retv = AES_MagiC;
+			if (search_id == 0x6E414553L/*nAES*/)
+				retv = AES_nAES;
+			if (search_id == 0x476E7661L/*Gnva*/)
+				retv = AES_Geneva;
+
+			search_p += 2;
+		}
+	}
+
+	return retv;
+}	/* Ends:	WORD identify_AES(void) */
+
+
+/*==============================================================================
+ * Looks for MiNT or MagiC Cookies.  If found TRUE returned,
+ * which indicates we can call extended Mxalloc() with GLOBAL flag.
+*/
+BOOL
+can_extended_mxalloc(void)
+{
+	long	search_id;
+	long	*search_p = (long *)Setexc(0x5A0/4, (void (*)())-1);
+	BOOL	retv = FALSE;
+
+	if (search_p != NULL) {
+		while ((search_id = *search_p) != 0) {
+			if (search_id == 0x4D674D63L || search_id == MagX_cookie
+			   || search_id == 0x4D694E54L) {
+				retv = TRUE;
+				break;
+			}
+			search_p += 2;
+		}
+	}
+
+	return retv;
+}
 
 
 /*==============================================================================
@@ -68,33 +145,6 @@ page_load(void)
 	}
 	return butt;
 }
-
-
-#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
-/* Checks if appl_getinfo() exists, and, if possible, calls it.
- * WINX has appl_getinfo() since 2.2, appl_find("?AGI    ") since 2.3c beta.
- */
-WORD appl_xgetinfo(WORD type, WORD *out1, WORD *out2, WORD *out3, WORD *out4)
-{
-	static BOOL has_agi = -1;
-	short u;
-
-	if (has_agi < 0)
-		has_agi = gl_ap_version >= 0x400 || appl_find("?AGI    ") == 0
-		          || wind_get(0, WF_WINX, &u, &u, &u, &u) == WF_WINX;
-		          /* || MagiC_version >= 0x0200? */
-
-	if (has_agi)
-		return appl_getinfo(type, out1, out2, out3, out4);
-	else
-		return FALSE;
-}
-#endif
-
-
-#ifdef GEM_MENU
-extern/*static*/ OBJECT * menutree;
-#endif
 
 
 /*------------------------------------------------------------------------------

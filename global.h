@@ -59,6 +59,8 @@ void check_mouse_position (WORD mx, WORD my);
 
 /* in AEI.c */
 
+WORD identify_AES(void);
+BOOL can_extended_mxalloc(void);
 BOOL page_load   (void);
 void rpopup_open (WORD, WORD);
 void update_menu (ENCODING, BOOL raw_text);
@@ -110,8 +112,6 @@ void key_pressed (WORD key, UWORD state);
 /* in Loader.c */
 
 void init_paths(void);
-WORD identify_AES(void);
-BOOL can_extended_mxalloc(void);
 void launch_viewer(const char *name);
 
 /* in render.c */
