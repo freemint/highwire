@@ -95,8 +95,6 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
-	par->Box.Floating   = floating;
-	par->Box.BoxClass   = BC_TABLE;
 	if (!*(long*)&table_vTab) {
 		table_vTab      = DomBox_vTab;
 		table_vTab.MinWidth = vTab_MinWidth;
@@ -104,6 +102,10 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 		table_vTab.draw = vTab_draw;
 	}
 	par->Box._vtab = &table_vTab;
+	par->Box.Floating    = floating;
+	par->Box.BoxClass    = BC_TABLE;
+	par->Box.Padding.Top = par->Box.Padding.Bot =
+	par->Box.Padding.Lft = par->Box.Padding.Rgt = spacing;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
@@ -127,8 +129,6 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->Padding   = padding + (border ? 1 : 0);
 	table->t_SetWidth = width;
 	table->SetHeight = height;
-	
-	table->t_MinWidth = table->t_MaxWidth = table->t_BorderW *2 + table->Spacing;
 }
 
 
@@ -468,9 +468,9 @@ table_finish (PARSER parser)
 		return;
 	}
 	
-	table->t_MinWidth =
-	table->t_MaxWidth = table->t_BorderW *2
-	                  + table->Spacing * (table->NumCols +1);
+	table->t_MinWidth = table->t_MaxWidth
+	                  = dombox_LftDist (&table->Paragraph->Box)
+	                  + dombox_RgtDist (&table->Paragraph->Box);
 	
 	padding = table->Padding *2;
 	table->Minimum = malloc (sizeof (*table->Minimum) * table->NumCols);
@@ -651,9 +651,11 @@ table_finish (PARSER parser)
 		}
 		fixed++;
 		percent++;
-		table->t_MinWidth += *(minimum++);
-		table->t_MaxWidth += *(maximum++);
+		table->t_MinWidth += *(minimum++) + table->Spacing;
+		table->t_MaxWidth += *(maximum++) + table->Spacing;
 	} while ((column = column->RightCell) != NULL);
+	table->t_MinWidth -= table->Spacing;
+	table->t_MaxWidth -= table->Spacing;
 
 	if (table->FixCols == table->NumCols) {
 		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
@@ -708,8 +710,7 @@ long
 table_calc (TABLE table, long max_width)
 {
 	TAB_ROW row;
-	long    set_width;
-	long    y = table->t_BorderW + table->Spacing;
+	long    set_width, y;
 
 	if (!table->NumCols) {
 		#ifdef _DEBUG
@@ -917,8 +918,10 @@ table_calc (TABLE table, long max_width)
 	}
 
 	table->t_Width = set_width;
-
-
+	
+	/* - - - - - - - - - - - - -  - - - - - - - - - - - - - - - - - -
+	 * now calculate cells hights that spread exactly over one row
+	 */
 	row = table->Rows;
 	do {
 		long   * col_width = table->ColWidth;
@@ -939,9 +942,12 @@ table_calc (TABLE table, long max_width)
 			cell = cell->RightCell;
 		}
 	} while ((row = row->NextRow) != NULL);
-
-
-	table->t_Height = table->t_BorderW *2 + table->Spacing;
+	
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	* now all cells are calculated that spread more than one row.  we also 
+	* get now the needed table hight.
+	*/
+	table->t_Height = dombox_TopDist (&table->Paragraph->Box);
 	row = table->Rows;
 	do {
 		TAB_CELL cell = row->Cells;
@@ -969,8 +975,12 @@ table_calc (TABLE table, long max_width)
 		}
 		table->t_Height += row->Height + table->Spacing;
 	} while ((row = row->NextRow) != NULL);
-
-
+	table->t_Height += dombox_BotDist (&table->Paragraph->Box) - table->Spacing;
+	
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 * in case of a given table hight we need to spread the calculated row
+	 * hights.
+	 */
 	if (table->SetHeight > table->t_Height) {
 		short height = table->SetHeight - table->t_Height;
 		short num    = table->NumRows;
@@ -982,9 +992,13 @@ table_calc (TABLE table, long max_width)
 		} while ((row = row->NextRow) != NULL);
 		table->t_Height = table->SetHeight;
 	}
-
-
+	
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 * Last Step:  calculate the cells's offsets and adjust their contents
+	 *             for the case of valign=middle/bottom.
+	*/
 	row = table->Rows;
+	y   = dombox_TopDist (&table->Paragraph->Box);
 	do {
 		long   * col_width = table->ColWidth;
 		TAB_CELL cell      = row->Cells;
