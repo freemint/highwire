@@ -105,7 +105,7 @@ raster_chunk4:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; Converts 'num'=[1..16] pixel bytes into 4 word chunks of the the I8
+;; Converts 'num'=[1..16] pixel bytes into 8 word chunks of the the I8
 ;; interleaved words formats.
 
 	.TEXT
@@ -172,7 +172,7 @@ raster_chunk8:
 	addq.w	#1, d1
 	dbra		num, .loop
 .store:
-	movem.l	d4-d5, (dst)
+	movem.l	d4-d7, (dst)
 	movem.l	(a7)+, D3-D7
 	rts
 
