@@ -141,49 +141,60 @@ render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 		char * title     = window_title;
 		char * watermark = window_title + aes_max_window_title_length;
 		BOOL   ready     = FALSE;
+		BOOL   space     = TRUE;
 		const char * symbol = *text;
 		
-		do {
-			switch (*symbol)
-			{
-				case '\0':
-					ready = TRUE;
-					break;
-				case '\t':
-				case '\r':
-				case '\n':
-					/* BUG: Replace contiguous white space by exact one space! */
+		do switch (*symbol) {
+		
+			case '\0':
+				ready = TRUE;
+				break;
+			
+			case '\t':
+			case '\r':
+			case '\n':
+			case ' ':
+				if (!space && title < watermark) {
+					const char * sym = " ";
+					title = (*encoder)(&sym, title);
+					space = TRUE;
+				}
+				symbol++;
+				break;
+			
+			case '&':
+				if (title < watermark) {
+					title = scan_namedchar (&symbol, title, FALSE,0);
+					space = FALSE;
+				} else {
 					symbol++;
-					break;
-				case '&':
-					if (title < watermark)
-						title = scan_namedchar (&symbol, title, FALSE,0);
-					else
-						symbol++;
-					break;
-				case '<':
-					if (symbol[1] == '/')
-					{
-						const char * sym = symbol + 2;
-						if (parse_tag (parser, &sym) == TAG_TITLE)
-						{
-							symbol = sym;
-							ready  = TRUE;
-							break;
-						}
+				}
+				break;
+			
+			case '<':
+				if (symbol[1] == '/') {
+					const char * sym = symbol + 2;
+					if (parse_tag (parser, &sym) == TAG_TITLE) {
+						symbol = sym;
+						ready  = TRUE;
+						break;
 					}
-				default:
-					if (title < watermark)
-						title = (*encoder)(&symbol, title);
-					else
-						symbol++;
-					break;
-			}
+				}
+			default:
+				if (title < watermark) {
+					title = (*encoder)(&symbol, title);
+					space = FALSE;
+				} else {
+					symbol++;
+				}
 		} while (!ready);
 		
-		*title = window_title[aes_max_window_title_length] = '\0';
-		
-		if (window_title[0]) {
+		if (space) {
+			title--;
+		}
+		if (title > window_title) {
+			if (title < watermark) *title     = '\0';
+			else                   *watermark = '\0';
 			containr_notify (parser->Target, HW_SetTitle, window_title);
 		}
 		*text = symbol;
@@ -1272,52 +1283,47 @@ static UWORD
 render_H_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
+	PARAGRPH par     = current->paragraph;
 	UNUSED  (text);
 	
-	if (flags & PF_START)
-	{
-		FRAME frame     = parser->Frame;
-		short cur_color = current->font_step->colour;
-		
-		if (!parser->Current.lst_stack)
-		{
-			add_paragraph (current, 1);
+	if (flags & PF_START) {
+		H_ALIGN align = get_align (parser);
+		char    buf[8];
 
-			switch (toupper (get_value_char (parser, KEY_ALIGN)))
-			{
-				case 'R':
-					current->paragraph->alignment = ALN_RIGHT;
-					break;
-				case 'C':
-					current->paragraph->alignment = ALN_CENTER;
-					break;
-				case 'J':
-				case 'L':
-					current->paragraph->alignment = ALN_LEFT;
-			}
+		/* Prevent a heading paragraph just behind a <LI> tag.
+		 */
+		if (!current->lst_stack ||
+		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
+			par = add_paragraph (current, 1);
 		}
+
+		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
+			if      (stricmp (buf, "right")   == 0) align = ALN_RIGHT;
+			else if (stricmp (buf, "center")  == 0) align = ALN_CENTER;
+			else if (stricmp (buf, "justify") == 0) align = ALN_JUSTIFY;
+		}
+		par->alignment = align;
 		
 		step_push (current, 7 - (get_value_char (parser, KEY_H_HEIGHT) - '0'));
 
 		if (!ignore_colours) {
-			short color = get_value_color (parser, KEY_BGCOLOR);
+			WORD color = get_value_color (parser, KEY_BGCOLOR);
 			if (color >= 0 && color != current->backgnd) {
-				current->paragraph->Backgnd   = color;
+				current->paragraph->Backgnd = color;
 			}
+			
 			color = get_value_color (parser, KEY_COLOR);
-
-			if (color == -1)	color = cur_color;
-				
-			current->font_step->colour = (color < 0 ? frame->text_colour : color);
+			if (color < 0)	color = current->font_step->colour;
+			if (color < 0)	color = parser->Frame->text_colour;
+			current->font_step->colour = (color);
 		}
 		word_set_font (current, header_font);
 		word_set_bold (current, TRUE);
-	}
-	else
-	{
-		add_paragraph (current, 0);
+	
+	} else {
+		par = add_paragraph (current, 0);
 
-		current->paragraph->alignment = get_align (parser);
+		par->alignment = get_align (parser);
 
 		step_pop (current);
 		word_set_font (current, normal_font);
@@ -1326,7 +1332,7 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 	word_set_point (current, current->font_size);
 	word_set_color (current, current->font_step->colour);
 	
-	return flags;
+	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
@@ -1404,12 +1410,11 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = current->paragraph;
-	char     buf[8];
 	UNUSED  (text);
 	
-	if (flags & PF_START)
-	{
+	if (flags & PF_START) {
 		H_ALIGN align = get_align (parser);
+		char    buf[8];
 
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
@@ -1432,9 +1437,8 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_color (current, color);
 			}
 		}
-	}
-	else
-	{
+	
+	} else {
 		par = add_paragraph (current, 1);
 
 		par->alignment = get_align (parser);
