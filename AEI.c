@@ -785,8 +785,11 @@ rpopup_open (WORD mx, WORD my)
 BOOL
 process_messages (WORD msg[], PXY mouse, UWORD state)
 {
-	switch (msg[0])
-	{
+	if (hwWind_message (msg, mouse, state)) {
+		if (!hwWind_Top) return TRUE;
+	
+	} else switch (msg[0]) {
+	
 		case AV_PROTOKOLL:
 		case VA_PROTOSTATUS:
 			Receive_AV(msg);
@@ -889,48 +892,6 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		
 		case AP_TERM:
 			return (TRUE);
-		
-		default: {
-			HwWIND wind  = hwWind_byHandle (msg[3]);
-			BOOL   check = FALSE;
-			if (wind) switch (msg[0]) {
-				case WM_REDRAW:    hwWind_redraw  (wind, (GRECT*)(msg + 4)); break;
-				case WM_MOVED:     hwWind_move    (wind,  *(PXY*)(msg + 4)); break;
-				case WM_SIZED:     hwWind_resize  (wind, (GRECT*)(msg + 4)); break;
-				case WM_FULLED:    hwWind_full    (wind);                    break;
-				case WM_ICONIFY:
-					hwWind_iconify (wind, (GRECT*)(msg + 4));
-					check = TRUE;
-					break;
-				case WM_UNICONIFY:
-					hwWind_iconify (wind, NULL);
-					check = TRUE;
-					break;
-				case WM_TOPPED:
-					hwWind_raise (wind, TRUE);
-					check = TRUE;
-					break;
-				case WM_BOTTOMED:
-					hwWind_raise (wind, FALSE);
-					check = TRUE;
-					break;
-				case WM_ARROWED:
-					switch(msg[4])
-					{
-						case WA_LFLINE:
-							hwWind_undo (wind, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
-							break;
-					}
-					break;
-				case WM_CLOSED:
-					hwWind_close (wind, state);
-					check = TRUE;
-					if (!hwWind_Top) return TRUE;
-			}
-			if (check) {
-				check_mouse_position (mouse.p_x, mouse.p_y);
-			}
-		}
 	}
 	return (FALSE);
 }
