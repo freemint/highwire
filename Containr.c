@@ -637,7 +637,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 			type = PE_BORDER_LF;
 		} else if (x == cont->Area.g_x + cont->Area.g_w -1) {
 			*watch = cont->Area;
-			watch->g_x += watch->g_w;
+			watch->g_x = x;
 			watch->g_w = 1;
 			type = PE_BORDER_RT;
 		} else if (y == cont->Area.g_y) {
@@ -646,7 +646,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 			type = PE_BORDER_UP;
 		} else if (y == cont->Area.g_y + cont->Area.g_h -1) {
 			*watch = cont->Area;
-			watch->g_y += watch->g_y;
+			watch->g_y = y;
 			watch->g_h = 1;
 			type = PE_BORDER_DN;
 		}
