@@ -60,7 +60,7 @@ static BOOL
 about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 {
 	BOOL unused = FALSE;
-	char buf[100];
+	char buf[1000];
 	
 	if (info) {
 		struct s_line {
@@ -70,33 +70,47 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 		size_t count  = num;
 		while (count--) {
 			WORDITEM w = current->word;
-			int ic = (int)(info->Hash >>24) & 0x00FF; /* bgnd colour */
-			int iw = (int)(info->Hash >>12) & 0x0FFF; /* width       */
-			int ih = (int) info->Hash       & 0x0FFF; /* height      */
-			sprintf (buf, "%s (%i*%i,%02X)", info->File, iw, ih, ic);
-			render_text (current, buf);
-			line->word = current->prev_wrd;
-			line->len  = w->word_width;
+			char source[500] ="";
+			location_FullName (info->Source, source +2, sizeof(source)-2);
+			render_text (current, source);
+			render_text (current, "")->line_brk = BRK_LN;
+			w = current->word;
+			if (info->Hash) {
+				int ic = (int)(info->Hash >>24) & 0x00FF; /* bgnd colour */
+				int iw = (int)(info->Hash >>12) & 0x0FFF; /* width       */
+				int ih = (int) info->Hash       & 0x0FFF; /* height      */
+				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
+				render_text (current, buf);
+			} else {
+				sprintf (buf, "Disk:%s", info->File);
+				render_text (current, buf);
+			}
 			sprintf (buf, " %li", info->Size);
 			render_text (current, buf);
+			if (mem) {
+				line->len = w->word_width;
+				do {
+					line->word = w;
+					w          = w->next_word;
+					line->len += w->word_width;
+				} while (w != current->prev_wrd);
+				if (max_ln < line->len) {
+					max_ln = line->len;
+				}
+				line++;
+			}
 			current->word->line_brk = BRK_LN;
 			if (info->Used) {
-				sprintf (buf, "(%li)", info->Used);
+				sprintf (buf, "[%li]", info->Used);
 				render_text (current, buf);
 			} else {
 				sprintf (buf, "clear=0x%08lX", (long)info->Object);
-				font_byType (-1, FNT_BOLD, font_step2size (NULL, 2), current->word);
+				font_byType (-1, FNT_BOLD, font_step2size (NULL, 1), current->word);
 				form_buttn (current, buf, "&times;", enc, 'S');
+				current->prev_wrd->word_height -= 2;
 				font_byType (-1, 0x0000, font_step2size (NULL, 3), current->word);
 				unused = TRUE;
 			}
-			while ((w = w->next_word) != current->word) {
-				line->len += w->word_width;
-			}
-			if (max_ln < line->len) {
-				max_ln = line->len;
-			}
-			line++;
 			info++;
 		}
 		if (mem) {
