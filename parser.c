@@ -491,20 +491,19 @@ parse_css (PARSER parser, const char * p)
 		BOOL  ok    = FALSE;
 		
 		while (*p) {
-			WORD key = -1;
+			WORD key = TAG_Unknown;
 			char cid = '\0';
 			
 			skip_spc (p);
 			
 			if (*p == '*') {
 				error_if (*(++p) != '.');
-				key = TAG_Unknown; /* ok, matches to all html tags */
+				key = TAG_LastDefined; /* ok, matches to all html tags */
 			
 			} else if (isalpha (*p)) {
 			/*	const char * tag = p;*/
 				if ((key = scan_tag (&p)) == TAG_Unknown) {
 			/*		printf ("skip unknown tag '%.*s'\n", (int)(p - tag), tag);*/
-					key = CSS_Unknown;
 				}
 			}
 			
@@ -517,26 +516,22 @@ parse_css (PARSER parser, const char * p)
 				if (beg == end) cid = '\0';
 			
 			} else {
-				error_if (key < 0);
 				beg = end = NULL;
 			}
 			
-			if (key >= 0 || cid) {
-				if (key < CSS_Unknown) {
-					size_t len = end - beg;
-					STYLE  tmp = malloc (sizeof (struct s_style) + len);
-					if (len) memcpy (tmp->Ident, beg, len);
-					tmp->Ident[len] = '\0';
-					tmp->Css.Key = (key < 0 ? TAG_Unknown : key);
-					tmp->ClassId = cid;
-					tmp->Next    = NULL;
-					if (style) style->Next = tmp;
-					else       *p_style    = tmp;
-					style = tmp;
-				}
-				ok = TRUE;
+			if (key > TAG_Unknown || cid) {
+				size_t len = end - beg;
+				STYLE  tmp = malloc (sizeof (struct s_style) + len);
+				if (len) memcpy (tmp->Ident, beg, len);
+				tmp->Ident[len] = '\0';
+				tmp->Css.Key = (key == TAG_LastDefined ? TAG_Unknown : key);
+				tmp->ClassId = cid;
+				tmp->Next    = NULL;
+				if (style) style->Next = tmp;
+				else       *p_style    = tmp;
+				style = tmp;
 			}
-		
+			
 			skip_spc (p);
 			if (*p == ',') p++;
 			else           break;
@@ -557,6 +552,7 @@ parse_css (PARSER parser, const char * p)
 				end = p;
 			}
 			if (*p) while (isspace (*(++p)));
+			ok = TRUE;
 		}
 		
 		if (style) {
