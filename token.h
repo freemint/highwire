@@ -117,7 +117,8 @@
 		__KEY_ITEM (ALIGN),        /* DIV,H#,HR,P,IMG,TABLE,TD,TH,TR */
 		__KEY_ITEM (ALT),          /* IMG */
 		__KEY_ITEM (BGCOLOR),      /* BODY,TABLE,TD,TH,TR */
-		__KEY_ITEM (BORDER),       /* TABLE */
+		__KEY_ITEM (BORDER),       /* TABLE, FRAMESET */
+		__KEY_ITEM (BORDERCOLOR),  /* FRAMESET */
 		__KEY_ITEM (CELLPADDING),  /* TABLE */
 		__KEY_ITEM (CELLSPACING),  /* TABLE */
 		__KEY_ITEM (CHARSET),      /* A */
