@@ -84,7 +84,9 @@ main (int argc, char **argv)
 	    && (memcmp (&gdostype, "fVDI", 4) != 0)) {
 		hwUi_fatal (NULL, _ERROR_SPEEDO_);
 	}
-	
+
+	init_icons();
+		
 	open_splash();
 	
 	/* Allocate all GLOBAL memory merged to one block.  The reason for using one
