@@ -64,14 +64,14 @@ main (int argc, char **argv)
 	long gdostype;
 	char def_address[] = "html\\highwire.htm";
 
+	if (appl_init() < 0) {
+		exit (EXIT_FAILURE);
+	}
+
 	if (V_Opnvwk (&vdi_dev) <= 0) {
 		exit (EXIT_FAILURE);
 	}
 	atexit (highwire_ex);
-
-	if (appl_init() < 0) {
-		exit (EXIT_FAILURE);
-	}
 
 	/* HighWire needs a Speedo fonts GDOS, that is SpeedoGDOS or NVDI ò 3.
 	 */
@@ -220,8 +220,6 @@ set_mouse_watch (WORD leaveNenter, const GRECT * watch)
 		multi_in.emi_m1      = *watch;
 	}
 }
-
-const GRECT * mouse_watch = &multi_in.emi_m1;
 
 
 /*----------------------------------------------------------------------------*/
