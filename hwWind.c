@@ -123,7 +123,8 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
 	}
 	if (info_bgnd & 0x0080) {
-		wind_set (This->Handle, WF_COLOR, W_HBAR, info_bgnd, info_bgnd, -1);
+		wind_set (This->Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
+		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
