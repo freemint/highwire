@@ -1850,6 +1850,14 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 						size_t len = sizeof(edit->Text) - edit->Length -1;
 						len = fread (buf, 1, min (len, sizeof (buf)), file);
 						fclose (file);
+						while (len > 0 && isspace (buf[len-1])) {
+							len --;
+						}
+						if (len > 0 && isspace (buf[0])) {
+							char * ptr = buf;
+							while (len-- && isspace (*(++ptr)));
+							memmove (buf, ptr, len);
+						}
 						if (len > 0) {
 							char * ptr = edit->Text + edit->Cursor;
 							char * src = edit->Text + edit->Length;
