@@ -11,7 +11,7 @@ struct ext_2_mime {
 	const char   * Appl;
 };
 static const struct ext_2_mime mime_list[] = {
-/*	{ "au",   MIME_AUDIO,      "GEMJing"  },
+/*
 	{ "avr",  MIME_AUDIO,      "GEMJing"  },
 	{ "dvs",  MIME_AUDIO,      "GEMJing"  },
 	{ "hsn",  MIME_AUDIO,      "GEMJing"  },
@@ -19,15 +19,16 @@ static const struct ext_2_mime mime_list[] = {
 	{ "img",  MIME_IMG_X_XIMG, ""         },
 	{ "mpg",  MIME_VID_MPEG,   "ANIPLAY"  },
 	{ "pdf",  MIME_APP_PDF,    "MyPdf"    },
-	{ "png",  MIME_IMG_PNG,    ""         },
-	{ "snd",  MIME_AUDIO,      "GEMJing"  },
 */
+	{ "au",    MIME_AUD_BASIC,  "GEMJing"  },
 	{ "gif",   MIME_IMG_GIF,    NULL       },
 	{ "htm",   MIME_TXT_HTML,   NULL       },
 	{ "html",  MIME_TXT_HTML,   NULL       },
 	{ "jpeg",  MIME_IMG_JPEG,   ""         },
 	{ "jpg",   MIME_IMG_JPEG,   ""         },
+	{ "png",   MIME_IMG_PNG,    ""         },
 	{ "shtml", MIME_TXT_HTML,   NULL       },
+	{ "snd",   MIME_AUD_BASIC,  "GEMJing"  },
 	{ "txt",   MIME_TXT_PLAIN,  NULL       },
 	{ "wav",   MIME_AUD_X_WAV,  "GEMJing"  }
 };
@@ -41,7 +42,9 @@ static const struct mime_2_ext ext_list[] = {
 	{ MIME_TXT_PLAIN, "txt" },
 	{ MIME_IMG_JPEG,  "jpg" },
 	{ MIME_IMG_GIF,   "gif" },
-	{ MIME_AUDIO,     "wav" }
+	{ MIME_IMG_PNG,   "png" },
+	{ MIME_AUD_BASIC, "au"  },
+	{ MIME_AUD_X_WAV, "wav" }
 };
 
 
