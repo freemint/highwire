@@ -1,4 +1,4 @@
-(non-public of Dec. 12, 2003)
+Changes in V. 0.1.6 release  of December 27, 2003:
 
 - The cache got a big rework and cached files will
   used now over subsequent sessions, not anymore
@@ -29,8 +29,8 @@
 - Meta tag 'http-equiv=expires' implemented.
 
 - Fixed a bug that occured when an image couldn't
-  be received and led to endless reloads of that
-  image.
+  be received and was resulting in endless reloads
+  of that image.
 
 - Bugs #0100, #0132, #0134, #0136, #0138, #0141
   resolved.
