@@ -340,15 +340,12 @@ table_cell (PARSER parser, BOOL is_head)
 		  cell->Content.Height = 1024;
 	}
 	
-	if ((cell->Content.Backgnd = get_value_color (parser, KEY_BGCOLOR)) >= 0) {
-		parser->Current.backgnd = cell->Content.Backgnd;
-	} else if (row->Color >= 0) {
-		cell->Content.Backgnd = parser->Current.backgnd = row->Color;
-	} else if (table->Color >= 0) {
-		cell->Content.Backgnd =	parser->Current.backgnd = table->Color;
-	} else {
-		cell->Content.Backgnd = parser->Current.backgnd = stack->Backgnd;
+	if ((cell->Content.Backgnd = get_value_color (parser, KEY_BGCOLOR)) < 0) {
+		if      (row->Color   >= 0) cell->Content.Backgnd = row->Color;
+		else if (table->Color >= 0) cell->Content.Backgnd = table->Color;
+		else                        cell->Content.Backgnd = stack->Backgnd;
 	}
+	parser->Current.backgnd = cell->Content.Backgnd;
 	
 	if ((span = get_value_unum (parser, KEY_ROWSPAN, 0)) > 1) {
 		cell->RowSpan = span;
@@ -436,17 +433,14 @@ spread_width (long * list, short span, short spacing, long width)
 
 /*----------------------------------------------------------------------------*/
 static void
-free_stack (PARSER parser)
+free_stack (TEXTBUFF current)
 {
-	TEXTBUFF current = &parser->Current;
-	TBLSTACK stack   = current->tbl_stack;
+	TBLSTACK stack = current->tbl_stack;
 	
 	*current = stack->SavedCurr;
 
 	add_paragraph (current, 0);
 	
-	current->backgnd = (current->tbl_stack ? current->tbl_stack->Backgnd
-	                                       : parser->Frame->Page.Backgnd);
 	free (stack);
 }
 
@@ -476,13 +470,13 @@ table_finish (PARSER parser)
 		#ifdef _DEBUG
 			printf ("table_finish(): no rows!\n");
 		#endif
-		free_stack (parser);
+		free_stack (&parser->Current);
 		return;
 	} else if (!table->NumCols) {
 		#ifdef _DEBUG
 			printf ("table_finish(): no columns!\n");
 		#endif
-		free_stack (parser);
+		free_stack (&parser->Current);
 		return;
 	}
 	
@@ -704,7 +698,7 @@ table_finish (PARSER parser)
 		} while ((cell = cell->RightCell) != NULL);
 	} while ((row = row->NextRow) != NULL);
 
-	free_stack (parser);
+	free_stack (&parser->Current);
 }
 
 
