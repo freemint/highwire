@@ -110,7 +110,6 @@ void     frame_finish    (FRAME, PARSER, TEXTBUFF);
 void     frame_calculate (FRAME, const GRECT *);
 BOOL     frame_slider    (struct slider *, long max_scroll);
 OFFSET * frame_anchor    (FRAME, const char * name);
-PARAGRPH frame_paragraph (FRAME, long x, long y, long area[4]);
 
 /* in keyinput.c */
 
