@@ -301,6 +301,12 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 		sched_insert (parse_image, new_parser (loader),(long)target, PRIO_INTERN);
 		
 #ifdef USE_INET
+# ifdef MOD_MBOX
+	} else if (loc->Proto == PROT_POP) {
+		int parse_mbox (void*, long);
+		sched_insert (parse_mbox, new_parser (loader), (long)target, PRIO_INTERN);
+	
+# endif
 	} else if (loc->Proto == PROT_HTTP) {
 		if (loader->ExtAppl) {
 			loader->SuccJob = generic_job;

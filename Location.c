@@ -125,7 +125,8 @@ new_location (const char * p_src, LOCATION base)
 		loc_proto = base->Proto;
 		loc_port  = base->Port;
 		loc_host  = base->Host;
-		if (src[1] == '/' && PROTO_isRemote(loc_proto)) {
+		if (src[1] == '/'
+		    && (PROTO_isRemote(loc_proto) || loc_proto == PROT_POP)) {
 			src      += 2;
 			read_host = TRUE;
 		}
@@ -151,6 +152,10 @@ new_location (const char * p_src, LOCATION base)
 				loc_proto = PROT_ABOUT;
 			} else if (strcmp (buf, "mailto") == 0) {
 				loc_proto = PROT_MAILTO;
+			} else if (strcmp (buf, "pop")    == 0) {
+				read_host = TRUE;
+				loc_proto = PROT_POP;
+				loc_port  = 110;
 			} else if (strcmp (buf, "http")   == 0) {
 				loc_proto = PROT_HTTP;
 				loc_port  = 80;
@@ -291,8 +296,9 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 	dir = loc->Dir;
 	
 	switch (loc->Proto) {
-		case PROT_ABOUT:  src = "about:"; break;
+		case PROT_ABOUT:  src = "about:";   break;
 		case PROT_MAILTO: src = "mailto:";  break;
+		case PROT_POP:    src = "pop://";   break;
 		case PROT_HTTP:   src = "http://";  break;
 		case PROT_HTTPS:  src = "https://"; break;
 		case PROT_FTP:    src = "ftp://";   break;
