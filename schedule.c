@@ -64,20 +64,22 @@ sched_remove (SCHED_FUNC func, void * value)
 	ULONG num   = 0;
 	
 	while (sched) {
+		SCHED next = sched->Next;
 		if (sched->Value == value && (!func || sched->func == func)) {
 			if (prev) {
-				if ((prev->Next = sched->Next) == NULL)
+				if ((prev->Next = next) == NULL)
 					__end = prev;
-			} else if ((__beg = sched->Next) == NULL) {
+			} else if ((__beg = next) == NULL) {
 				__end = NULL;
 				if (on_off) (*on_off) (-1);
 			}
 			free (sched);
 			__cnt--;
 			num++;
+		} else {
+			prev = sched;
 		}
-		prev  = sched;
-		sched = sched->Next;
+		sched = next;
 	}
 	return num;
 }
@@ -91,21 +93,23 @@ sched_clear (long hash)
 	ULONG num   = 0;
 	
 	while (sched) {
+		SCHED next = sched->Next;
 		if (sched->Hash == hash) {
 			(*sched->func)(sched->Value, hash);
 			if (prev) {
-				if ((prev->Next = sched->Next) == NULL)
+				if ((prev->Next = next) == NULL)
 					__end = prev;
-			} else if ((__beg = sched->Next) == NULL) {
+			} else if ((__beg = next) == NULL) {
 				__end = NULL;
 				if (on_off) (*on_off) (-1);
 			}
 			free (sched);
 			__cnt--;
 			num++;
+		} else {
+			prev  = sched;
 		}
-		prev  = sched;
-		sched = sched->Next;
+		sched = next;
 	}
 	return num;
 }
