@@ -225,7 +225,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	}
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
 	This->TbarMask = 0;
-	This->TbarActv = -1;
+	This->TbarActv = (This->TbarH && !url && !loc ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons); i++) {
 		This->TbarElem[i].Offset = hw_buttons[i].Offset;
 		This->TbarElem[i].Width  = 21;
