@@ -29,6 +29,10 @@ struct s_form {
 	FORM        Next;
 	char      * Target;
 	char      * Action;
+	INPUT       TextActive;
+	WORD        TextCursrX;
+	WORD        TextCursrY;
+	WORD        TextShiftX;
 	INPUT       InputList, Last;
 	FORM_METHOD Method;
 };
@@ -59,6 +63,8 @@ struct s_input {
 	BOOL     checked;
 	BOOL     disabled;
 	UWORD    TextMax;
+	UWORD    TextLen;
+	UWORD    VisibleX;
 	char     Name[1];
 };
 
@@ -104,6 +110,10 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	form->Action = action;
 	form->Method = (method && stricmp (method, "post") == 0
 	                ? METH_POST : METH_GET);
+	form->TextActive = NULL;
+	form->TextCursrX = 0;
+	form->TextCursrY = 0;
+	form->TextShiftX = 0;
 	form->InputList = NULL;
 	form->Last      = NULL;
 	
@@ -141,6 +151,8 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->SubType   = '\0';
 	input->disabled  = FALSE;
 	input->TextMax   = 0;
+	input->TextLen   = 0;
+	input->VisibleX  = 0;
 	
 	if (type <= IT_GROUP) {
 		input->Word    = NULL;
@@ -269,8 +281,9 @@ form_text (TEXTBUFF current, const char * name, char * value,
 	INPUT    input = _alloc (IT_TEXT, current, name);
 	WORD     p[8];
 	
-	input->Value   = value;
-	input->TextMax = maxlen;
+	input->Value    = value;
+	input->TextMax  = input->TextLen = maxlen;
+	input->VisibleX = cols;
 	
 	font_byType (pre_font, -1, -1, word);
 	scan_string_to_16bit (value, encoding, &current->text,
@@ -281,6 +294,7 @@ form_text (TEXTBUFF current, const char * name, char * value,
 		WCHAR nobrk = font_Nobrk (word->font);
 		do {
 			*(current->text++) = nobrk;
+			input->TextLen--;
 		} while (current->text < wmark);
 	}
 	vqt_f_extent16n (vdi_handle, word->item, cols, p);
@@ -606,7 +620,28 @@ input_draw (INPUT input, WORD x, WORD y)
 		p[1].p_y = ++p[0].p_y;
 		v_pline (vdi_handle, 3, (short*)p);
 	}
-	if (input->Type >= IT_BUTTN) {
+	if (input->Type >= IT_TEXT) {
+		FORM form = input->Form;
+		WORD len  = min (input->TextLen, input->VisibleX);
+		PXY  pos;
+		pos.p_x = x +3;
+		pos.p_y = y;
+		if (input != form->TextActive) {
+			v_ftext16n (vdi_handle, pos, word->item, len);
+		} else {
+			v_ftext16n (vdi_handle, pos, word->item + form->TextShiftX, len);
+			vqt_f_extent16n (vdi_handle, word->item + form->TextShiftX,
+			                 form->TextCursrX - form->TextShiftX, (short*)p);
+			p[0].p_x = x +2 + p[1].p_x - p[0].p_x;
+			p[1].p_x = p[0].p_x +1;
+			p[0].p_y = y - word->word_height    +2;
+			p[1].p_y = y + word->word_tail_drop -2;
+			vsf_color (vdi_handle, G_WHITE);
+			vswr_mode (vdi_handle, MD_XOR);
+			v_bar     (vdi_handle, (short*)p);
+			vswr_mode (vdi_handle, MD_TRANS);
+		}
+	} else if (input->Type >= IT_BUTTN) {
 		v_ftext16 (vdi_handle,
 		           x + (input->Type == IT_BUTTN ? 4 : 3), y, word->item);
 	}
@@ -694,6 +729,14 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 				group->Value = input->Name;
 				input->checked = TRUE;
 			}
+			break;
+		
+		case IT_TEXT:
+			input->Form->TextActive = input;
+			input->Form->TextCursrX = 0;
+			input->Form->TextCursrY = 0;
+			input->Form->TextShiftX = 0;
+			rtn = 1;
 			break;
 		
 		case IT_CHECK:
@@ -814,4 +857,143 @@ input_activate (INPUT input, WORD slct)
 	input->checked = FALSE;
 	
 	return TRUE;
+}
+
+
+/*============================================================================*/
+WORDITEM
+input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
+{
+	FORM     form = input->Form;
+	WORDITEM word = input->Word;
+	WORD     asc  = key & 0xFF;
+	WORD     scrl = 0;
+	
+/*printf ("%04X %04X\n", key, state);*/
+	if (asc >= ' ' && asc != 127 &&
+	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
+		if (input->TextLen < input->TextMax) {
+			{
+				ENCODER_W encoder = encoder_word (ENCODING_ATARIST,
+				                                  word->font->Base->Mapping);
+				WCHAR   tmp[5];
+				const char  * ptr = &((char*)&asc)[1];
+				WCHAR * end = input->Word->item + input->TextLen;
+				WCHAR * dst = input->Word->item + form->TextCursrX;
+				do {
+					*(end +1) = *(end);
+				} while (--end >= dst);
+				(*encoder)(&ptr, tmp);
+				*dst = *tmp;
+			}
+			if (input->Value) {
+				char * end = input->Value + input->TextLen +1;
+				char * dst = input->Value + form->TextCursrX;
+				do {
+					*(end +1) = *(end);
+				} while (--end >= dst);
+				*dst = asc;
+			}
+			input->TextLen++;
+			scrl = +1;
+		} else {
+			word = NULL;
+		}
+		
+	} else if (asc) switch (asc) {
+			
+		case 27: /* escape */
+			if (input->TextLen) {
+				input->Form->TextCursrX = 0;
+				input->Form->TextCursrY = 0;
+				input->TextLen          = 0;
+				input->Value[0]         = '\0';
+			} else {
+				word = NULL;
+			}
+			break;
+		
+		case 55: /* shift+home */
+			if ((scrl = input->TextLen - form->TextCursrX) == 0) {
+				word = NULL;
+			}
+			break;
+		
+		case 8: /* backspace */
+			if (!form->TextCursrX) {
+				word = NULL;
+				break;
+			} else {
+				form->TextCursrX--;
+			}
+		case 127: /* delete */
+			if (form->TextCursrX < input->TextLen) {
+				WORD    num = input->TextLen    - form->TextCursrX;
+				WCHAR * w   = input->Word->item + form->TextCursrX;
+				char  * c   = input->Value      + form->TextCursrX;
+				while (--num) {
+					*(w) = *(w +1); w++;
+					*(c) = *(c +1); c++;
+				}
+				*(c) = '\0';
+				input->TextLen--;
+				break;
+			}
+		default:
+			word = NULL;
+	
+	} else switch (key >>8) {
+			
+		case 0x4B: /* left */
+			if (form->TextCursrX) {
+				scrl = -1;
+			} else {
+				word = NULL;
+			}
+			break;
+		
+		case 0x4D: /*right */
+			if (form->TextCursrX < input->TextLen) {
+				scrl = +1;
+			} else {
+				word = NULL;
+			}
+			break;
+		
+		case 0x47: /* home */
+			if (form->TextCursrX) {
+				scrl = -form->TextCursrX;
+			} else {
+				word = NULL;
+			}
+			break;
+		
+		case 0x4F: /* end */
+			if ((scrl = input->TextLen - form->TextCursrX) == 0) {
+				word = NULL;
+			}
+			break;
+		
+		default:
+			word = NULL;
+	}
+	if (word) {
+		if (scrl > 0) {
+			form->TextCursrX += scrl;
+			if (form->TextShiftX < form->TextCursrX - input->VisibleX) {
+				form->TextShiftX = form->TextCursrX - input->VisibleX;
+			}
+		} else if (scrl) {
+			form->TextCursrX += scrl;
+			if (form->TextShiftX > form->TextCursrX) {
+				form->TextShiftX = form->TextCursrX;
+			}
+		}
+/*printf ("%i %i %i\n", form->TextShiftX, form->TextCursrX, input->VisibleX);*/
+		rect->g_x = 2;
+		rect->g_y = 2 - word->word_height;
+		rect->g_w = word->word_width                         -4;
+		rect->g_h = word->word_height + word->word_tail_drop -4;
+	}
+	return word;
 }
