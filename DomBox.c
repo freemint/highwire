@@ -193,6 +193,119 @@ vTab_MaxWidth (DOMBOX * This)
 	return This->MaxWidth;
 }
 
+
+/*==============================================================================
+ * Returns the box that contains the coordinate px/py which must be relative to
+ * the start box's origin.  The rectangle r is set to the extent of this box,
+ * relative to px/py (resulting in negative X/Y).  The rectangle excludes all
+ * possible overlapping areas of other boxes.  Then px/py will be set to the
+ * origin of the box, also relative to the coordinate.
+*/
+DOMBOX * 
+dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
+{
+	DOMBOX * cld = box->ChildBeg;
+	long     x     = *px;
+	long     y     = *py;
+	long     c_lft = -x;
+	long     c_rgt = -x + box->Rect.W -1;
+	long     c_top = -y;
+	long     c_bot = -y + box->Rect.H -1;
+
+	r->X = -x;
+	r->Y = -y;
+	
+	while (cld) {
+		if (y < cld->Rect.Y) {
+			c_bot = r->Y + cld->Rect.Y;
+			
+		} else if (x < dombox_LftDist (box)) {
+			c_rgt = r->X + dombox_LftDist (box);
+			
+		} else if (x >= box->Rect.W - dombox_RgtDist (box)) {
+			c_lft = r->X + box->Rect.W - dombox_RgtDist (box);
+		
+		} else if (y >= box->Rect.H - dombox_BotDist (box)) {
+			c_top = r->Y + box->Rect.H - dombox_BotDist (box);
+		
+		} else {   /* search through children boxes */
+			LONG top = 0, bot;
+			while (y >= (bot = cld->Rect.Y + cld->Rect.H)) {
+				if (top < bot) {
+					top = bot;
+				}
+				if ((cld = cld->Sibling) == NULL) { /* below the lowest box */
+					break;
+				}
+			}
+			c_top = (bot = top) + r->Y;
+			while (cld) {
+				if (y < cld->Rect.Y) { /* between two boxes */
+					c_top = r->Y + bot;
+					c_bot = r->Y + cld->Rect.Y;
+					cld = NULL;
+					break;
+				}
+				if (x < cld->Rect.X) {
+					if (y < cld->Rect.Y + cld->Rect.H) {
+						long rgt = r->X + cld->Rect.X;
+						if (rgt < c_rgt) {
+							c_rgt = rgt;
+						}
+					}
+				} else if (x >= cld->Rect.X + cld->Rect.W) {
+					if (y < cld->Rect.Y + cld->Rect.H) {
+						long lft = r->X + cld->Rect.X + cld->Rect.W -1;
+						if (lft > c_lft) {
+							c_lft = lft;
+						}
+					}
+				} else {
+					if (y < (bot = cld->Rect.Y + cld->Rect.H)) {
+						break;
+					} else if (c_top < bot + r->Y) {
+						c_top = bot + r->Y;
+					}
+				}
+				cld = cld->Sibling;
+			}
+			if (cld) {
+				r->X += cld->Rect.X;
+				r->Y += cld->Rect.Y;
+				box  =  cld;
+				cld  =  box->ChildBeg;
+				x    -= box->Rect.X;
+				y    -= box->Rect.Y;
+				continue;
+			}
+		}
+		break;   /* finished */
+	}
+	*px = r->X;
+	*py = r->Y;
+	if (c_rgt < r->X + box->Rect.W -1) {
+		r->W = c_rgt - r->X;
+	} else {
+		r->W = box->Rect.W;
+	}
+	if (c_lft > r->X) {
+		r->W -= (c_lft - r->X);
+		r->X =  c_lft;
+	}
+	if (c_bot < r->Y + box->Rect.H -1) {
+		r->H = c_bot - r->Y;
+	} else {
+		r->H = box->Rect.H;
+	}
+	if (c_top > r->Y) {
+		r->H -= (c_top - r->Y);
+		r->Y =  c_top;
+	}
+	
+	return box;
+}
+
+
 /*----------------------------------------------------------------------------*/
 static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)

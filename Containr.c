@@ -823,6 +823,36 @@ containr_Anchor (CONTAINR cont, const char * anchor, long * dx, long * dy)
 }
 
 /*============================================================================*/
+#if 00
+static void debug_draw (DOMBOX * box, LRECT * r)
+{
+	static DOMBOX * _box = NULL;
+	static PXY      p[5];
+	
+	if (box == _box) {
+		return;
+	}
+	vsl_color (vdi_handle, G_BLACK);
+	vswr_mode (vdi_handle, MD_XOR);
+	v_hide_c  (vdi_handle);
+	if (_box) {
+		v_pline (vdi_handle, 5, (short*)p);
+		_box = NULL;
+	}
+	if (box) {
+		p[1].p_x = p[2].p_x = (p[0].p_x = p[3].p_x = r->X) + r->W -1;
+		p[2].p_y = p[3].p_y = (p[0].p_y = p[1].p_y = r->Y) + r->H -1;
+		p[4]     = p[0];
+		v_pline (vdi_handle, 5, (short*)p);
+		_box = box;
+	}
+	v_show_c  (vdi_handle, 1);
+	vswr_mode (vdi_handle, MD_TRANS);
+}
+#else
+#	define debug_draw(b,r)
+#endif
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 UWORD
 containr_Element (CONTAINR *_cont, short x, short y,
                   GRECT * watch, GRECT * clip, void ** hash)
@@ -834,6 +864,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	
 	if (hash) *hash = NULL;
 	
+	debug_draw (NULL, NULL);
 	if (!cont) {
 		if (*_cont) {
 			cont = (*_cont)->Base;
@@ -909,17 +940,41 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		type = PE_HBAR;
 	
 	} else {
-		long     area[4];
-		PARAGRPH par = frame_paragraph (frame, x, y, area);
+		LRECT    rect;
+		long     px  = (long)x - frame->clip.g_x + frame->h_bar.scroll;
+		long     py  = (long)y - frame->clip.g_y + frame->v_bar.scroll;
+		DOMBOX * box = dombox_byCoord (&frame->Page.Box, &rect, &px, &py);
+		PARAGRPH par = (box->BoxClass >= BC_GROUP ? (PARAGRPH)box : NULL);
+		rect.X += x - frame->clip.g_x;
+		rect.Y += y - frame->clip.g_y;
+		
 		if (!par) {
 			type = PE_FRAME;
 		
 		} else {
 			WORDITEM word;
+			long     area[4];
+			area[0] = px + x - frame->clip.g_x;
+			area[1] = py + y - frame->clip.g_y;
+			area[2] = rect.W;
+			area[3] = rect.H;
+			word    = paragrph_word (par, -px, -py, area);
+			if (area[0] > rect.X) {
+				rect.W -= area[0] - rect.X;
+				rect.X =  area[0];
+			}
+			if ((area[2] += area[0]) < rect.X + rect.W) {
+				rect.W = area[2] - rect.X;
+			}
+			if (area[1] > rect.Y) {
+				rect.H -= area[1] - rect.Y;
+				rect.Y =  area[1];
+			}
+			if ((area[3] += area[1]) < rect.Y + rect.H) {
+				rect.H = area[3] - rect.Y;
+			}
 			
-			x -= (long)frame->clip.g_x + area[0];
-			y -= (long)frame->clip.g_y + area[1];
-			if ((word = paragrph_word (par, x, y, area)) == NULL) {
+			if (!word) {
 				type = PE_PARAGRPH;
 			
 			} else if (word->input) {
@@ -944,8 +999,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				}
 				if (clip) {
 					*clip = paragraph_extend (word);
-					clip->g_x += area[0] + frame->clip.g_x;
-					clip->g_y += area[1] + frame->clip.g_y;
+					clip->g_x += rect.X + frame->clip.g_x;
+					clip->g_y += rect.Y + frame->clip.g_y;
 					rc_intersect (&frame->clip, clip);
 				}
 			}
@@ -955,31 +1010,38 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		
 		*(PXY*)watch = *(PXY*)&frame->clip; /*copy x/y at once */
 		
-		if (area[0] < 0) {
-			area[2] += area[0];
+		if (rect.X < 0) {
+			rect.W += rect.X;
 		} else {
-			watch->g_x += area[0];
+			watch->g_x += rect.X;
 		}
-		if (watch->g_x + area[2] > frame->clip.g_x + frame->clip.g_w) {
+		if (watch->g_x + rect.W > frame->clip.g_x + frame->clip.g_w) {
 			watch->g_w = frame->clip.g_x + frame->clip.g_w - watch->g_x;
 		} else {
-			watch->g_w = area[2];
+			watch->g_w = rect.W;
 		}
 		
-		if (area[1] < 0) {
-			area[3] += area[1];
+		if (rect.Y < 0) {
+			rect.H += rect.Y;
 		} else {
-			watch->g_y += area[1];
+			watch->g_y += rect.Y;
 		}
-		if (watch->g_y + area[3] > frame->clip.g_y + frame->clip.g_h) {
+		if (watch->g_y + rect.H > frame->clip.g_y + frame->clip.g_h) {
 			watch->g_h = frame->clip.g_y + frame->clip.g_h - watch->g_y;
 		} else {
-			watch->g_h = area[3];
+			watch->g_h = rect.H;
 		}
 		
 		if (clip &&type != PE_TLINK) {
 			*clip = *watch;
 		}
+		
+/*printf ("%i,%i/%i,%i\n", watch->g_x, watch->g_y, watch->g_w, watch->g_h);*/
+		rect.X = watch->g_x;
+		rect.Y = watch->g_y;
+		rect.W = watch->g_w;
+		rect.H = watch->g_h;
+		debug_draw (box, &rect);
 	}
 	
 	return type;
