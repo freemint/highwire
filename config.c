@@ -20,6 +20,13 @@
 #include "scanner.h"
 
 
+static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
+                                " (" __DATE__ ")";
+static WORD up2date = 0; /* this variable is only necessary because this *
+                          * rotten Pure C understands only 1..2% of real *
+                          * ANSII C                                      */
+
+
 /*----------------------------------------------------------------------------*/
 static FILE *
 open_cfg (const char * mode)
@@ -127,8 +134,7 @@ save_config (const char * key, const char * arg)
 	
 	if (ok && (file = open_cfg ("w")) != NULL) {
 		struct cfg_line * line = list;
-		fputs ("HighWire = " _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
-		                 " (" __DATE__ ")\n", file);
+		fprintf (file, "HighWire = %s\n", cfg_magic);
 		while (line) {
 			if (line == match) {
 				char * p = strchr (line->Text +1, '#');
@@ -171,6 +177,17 @@ save_config (const char * key, const char * arg)
  *
  * callback functions for config file parsing
 */
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_up2date (char * param, long arg)
+{
+	(void)arg;
+	if (!up2date) {
+		up2date = (strcmp (param, cfg_magic) == 0 ? +1 : -1);
+	}
+}
+
 
 /*----------------------------------------------------------------------------*/
 #define FA(f,b,i)   (((long)f <<16) | (b ? 0x10 : 0x00) | (i ? 0x01 : 0x00))
@@ -381,9 +398,10 @@ BOOL
 read_config(void)
 {
 	char l[HW_PATH_MAX], * p, * d;
-	FILE * fp = open_cfg ("r");
+	FILE   * fp = open_cfg ("r");
 	
 	if (!fp) {
+		save_config (NULL, NULL);
 		return FALSE;
 	}
 
@@ -432,6 +450,7 @@ read_config(void)
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
 				{ "FORCE_FRAMECTRL",      cfg_func,      (long)menu_frm_ctrl   },
 				{ "HEADER",               cfg_font,      FA(header_font, 0, 0) },
+				{ "HIGHWIRE",             cfg_up2date,   0 },
 				{ "HTTP_PROXY",           cfg_http_proxy,0 },
 				{ "INFOBAR",              cfg_infobar,   0 },
 				{ "ITALIC_HEADER",        cfg_font,      FA(header_font, 0, 1) },
@@ -462,9 +481,16 @@ read_config(void)
 					break;
 				}
 			} while (beg <= end);
+			if (!up2date) {
+				up2date = FALSE;
+			}
 		}
 	}
 	fclose (fp);
+	
+	if (up2date <= 0) {
+		save_config (NULL, NULL);
+	}
 	
 	return TRUE;
 }
