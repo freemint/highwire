@@ -11,64 +11,43 @@
 
 <BODY>
 
-<B>(see <a href="../Change.Log">changes in 0.1.1</a>)</B>
-<P>&nbsp;<HR>
-
-<H4>A Message from the HighWire Development Team</H4>
+<H2>A Message from the HighWire Development Team</H2>
 <HR>
-<P><B><I>Welcome to HighWire 0.1.0!</I></B></P>
+<P><B><I> Welcome to the latest release of HighWire, 0.1.2!</I></B></P>
+<P>&nbsp;&nbsp;It's been a while since the
+last official release of HighWire back in January, but development hasn't
+stopped. If you are ever looking for the latest information on the
+development status of the project, please stop by the HighWire web site.
+You can also post a comment in our
+<a href="http://www.atariforums.com/index.php?f=20" target="_blank">forum</A>
+for discussions on HighWire, Good or Bad!
+<P>&nbsp;&nbsp;The team would like to take a moment to thank everyone who voted for
+HighWire in the MyAtari awards, the support  is appreciated. We would
+also like to congratulate the other award winners.
+<P>&nbsp;&nbsp;Let's get right to the question. What has been improved in the 0.1.2
+release of HighWire you ask? Well, the first visible update to HighWire
+is the addition of the navigation bar with the traditional browser
+buttons Forward, Back, Home, Reload, Stop and the URL edit field.  A nice
+feature of the Forward and Back buttons is when holding them a bit
+longer, a popup appears for selecting not only the last or next page, but
+also every URL that is stored in history. The navigation bar can also be
+hidden or shown by holding down the ALT key while clicking the window's
+close button.
+<P>&nbsp;&nbsp;Online support is still "Unofficial", but initial implementation of the
+Ovl's for different TCP/IP stack support  has been added, see the directory
+'modules and read the <a href="../modules/README.TXT">README.TXT file</a>.
+Form support has also been improved with the support of Selection List. Other
+improvements in the handling of frame sets, frames can now be resized.
+Calculation of the width of tables and cells has also been improved. Not
+to mention the many other bug fixes, updates made to HighWire.  For the
+full list of changes in this release,  you can read them in the
+<a href="../Change.Log">Change.Log</a> file included in the archive.
+<P>&nbsp;&nbsp;Our team "Captain" Baldrick did an outstanding job writing this next part
+in the last release, I thought it should also be included in this version
+of the developer letter. (I also added some oyster cookies for Baldrick
+and Gokmase to munch on while reading.)
+
 <blockquote>
-The time has come, the Walrus said,<br>
-To speak of many things:<br>
-Of shoes - and ships - and sealing wax <br>
-Of cabbages - and kings <br>
-And why the sea is boiling hot <br>
-And whether pigs have wings.<br>
-&nbsp;<br>
-&nbsp;<br>
-<i>from 'The Walrus and the Carpenter'<br>
-a poem by Lewis Carol<br>
-from Through the Looking Glass, <br>
-sequel of Alice in Wonderland. </i><br>
-</blockquote>
-<P>&nbsp;&nbsp;As I write this, the Christmas season is in full swing and a
-bit of levity is in the air.  So I started with a quote from one of my 
-favourite poems.  While in the poem the Walrus and Carpenter are attempting
-to distract the poor oysters as they devour them (No not Oyster Cookies Rob),
-we are using it to announce version 0.1.0 of HighWire and to reflect on some
-of the <i>'shoes and ships and sealing wax'</i> that have occured in it's
-development over the last year.</P>
-<P>&nbsp;&nbsp;On Christmas Eve a year ago, version 0.0.1 of the HighWire
-project was announced in the newsgroups.  At that point many did question
-whether this 'pig had wings'. It's tag support was somewhat limited, only
-simple tables worked properly and sometimes it was easier to see what was
-wrong with the program than what was right.  However, there were a few
-things that were right about it, Open Source, Free and it gave us a new 
-glimmer of hope.</P>
-<P>&nbsp;&nbsp;As the year progressed, we have seen numerous improvements
-all around the project.  Image support in the form of Gif's was added. 
-Image alignments were implemented. Table support was completely rewritten
-and aside from a few small glitches is working quite nicely.  Text can be 
-floated around Images and Tables.  Unicode support with 9 user selectable
-encodings was included. Frame scrolling, Wheel mouse support and of course
-who could ignore TTF support.  This is only a small part of the progress,
-considering everything that has been accomplished, It has been a good year.</p>
-<P>&nbsp;&nbsp;Now in this version, we officially announce the 'unofficial'
-online support.  It's not finished, so it's 'unofficial' still.  However 
-numerous of the recent changes have increased it's useability.  So if you 
-are feeling like a bit of an adventure, go online and see where you can go.
-Among the changes that were added to improve online use were the per window history
-function, which tracks the history of each individual window, and the partial
-FORM support.  The &lt;input&gt; buttons are fully funtional now, eg. in the
-'about:cache' listing they are used to remove cached items.  For online use
-all of the implemented elements are fully working for method 'GET'.  But text
-fields can't be edited yet, so only empty or default values are sent.  A few of
-the other changes, were the completion of Unicode support and work that makes it
-easier to use the HighWire engine in other programs (see the new Dr Who Quiz 
-program by M. Jaap).  With all of this, we topped it off with another major
-round of optimizations and bug fixes.  Hopefully you will find this to be a 
-satisfying update.
-</p>
 <P>&nbsp;&nbsp;If you are interested in helping with the HighWire project, don't
 hesitate to get in touch with any member of the development team and let them
 know. There are lots of areas where more people would make the job easier. If
@@ -93,27 +72,13 @@ This technology is open source, so hopefully with your support it can be the
 core to many projects on our platform. Not the least of which will be in the
 future a fully modern web browser. To reach that goal we will need time and the
 help of community.</P>
-<P><B>What's new in <I>HighWire 0.1.0</I>?</B></P>
-<UL>
-  <LI>'Unofficial' online use.  It's not finished and mainly for testing.  But
-    the adventurous can give it a try.<BR>
-  </LI>
-  <LI>Source code has been modified to make it's use in other projects easier.<BR>
-  </LI>
-  <LI>Complete Unicode support<BR>
-  </LI>
-  <LI>A real history function per window, also available from menu bar
-  (better than in NetScape 4.x)<BR>
-  </LI>
-  <LI>Partial functionality of FORMs<BR>
-  </LI>
-   <LI>A large number of rewrites removing an equally large number of bugs.<BR>
-  </LI>
-</UL>
-<P><A HREF="../Change.Log">Read the full Change.Log</A></P>
+</blockquote>
+
+<P>– <I>Thank you,</I></P>
+<P>– <I>HighWire Development Team</I></P>
+
 <P><B>Some useful links.</B></P>
-<P>While HighWire won't directly use these at this point. Here are some useful
-links for the HighWire project.</P>
+<P>Here are some useful links for the HighWire project.</P>
 <P><A HREF="http://highwire.atari-users.net/">http://highwire.atari-users.net/</A>
 – HighWire Project Homepage.</P>
 <P><A HREF="http://www.atari-users.net/mailman/listinfo/highwire-users_atari-users.net">HighWire
@@ -121,28 +86,6 @@ Users mailing list</A> – A list for users to ask questions and report bugs.</P>
 <P><A HREF="http://www.atari-users.net/mailman/listinfo/highwire-atari-users.net">HighWire
 Developer Mailing list</A> – A list for people interested in actively working
 on the project.</P>
-<P>&nbsp;</P>
-<P>With all of that in mind, we hope you see the glass as half full and not half
-empty. Look at what it can do. If you find applications for it's use all the
-better. Also before you are too harsh in your judgments or compare it to other
-browsers too harshly. Consider that maybe it is only fair to compare HighWire to
-other Open Source HTML parsers on the Atari platform. HighWire's code is not
-locked up on someone's machine. You didn't have to pay anything to experiment
-with it. And instead of telling you that something can't be done, we are
-actively encouraging you to help prove it can be done.</P>
-
-<P>To paraphrase Lewis Carol...</P>
-<blockquote>
-The time has come, the Dev. Team said,<br>
-To speak of many things:<br>
-Of forms - and tables - and online use <br>
-Of Unicode - and strings <br>
-And instead of worrying about what is not<br>
-Lets help this pig have wings. ;)<br>
-</blockquote>
-<P>&nbsp;</P>
-<P>– <I>Thank you,</I></P>
-<P>– <I>HighWire Development Team</I></P>
 
 </BODY>
 
