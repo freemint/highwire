@@ -1,11 +1,22 @@
-(non-public of April 19, 2004)
+(non-public of May 05, 2004)
+
+- Popup added for right mouse click to links to
+  allow storing of downloaded file to a local
+  directory ('Save As').
+
+- <TEXTAREA> tag implemented.  The length of the
+  typed in text is restricted only by the ram  --
+  BUT typing in very long texts in formulars which
+  use the GET method and are sent to Micro$oft
+  servers are sometimes resulting in _very_ weird
+  effects at server side...  :-).
 
 - Keyboard input implemented for form tags of the
-  type <input type=text ..> (still no <textarea>
-  support yet).  Jumping to other text fields of a
-  formular canbe done by the TAB key, inclusive
-  automatical page scrolling to the reached field.
-  Leaving the edit mode can be done with CTRL+TAB.
+  type <INPUT type=text ..>.  Jumping to other
+  text fields of a formular can be done by the
+  TAB key, inclusive automatical page scrolling to
+  the reached field.  Leaving the edit mode can
+  be done with CTRL+TAB.
 
 - Table column width calculation changed, was
   causing crashes sometimes.
