@@ -1,3 +1,26 @@
+(unreleased of Feb. 23, 2003)
+
+- Fixed wrong image colours under TrueColor.
+
+- Initial implementation of OVLs for different
+  network support (MiNTnet and STiK2).
+
+- Changed the behaviour of the window's info bar
+  to have it more logical and informative.
+
+- Improved parsing of urls to encode HTML entities
+  and remove control characters from links.
+
+- Fixed a bug in the style=".." parsing function
+  which could cause crashes before.
+
+- Improved handling of framesets.
+
+- Mended some more memory leaks.
+
+- Bugs #0063, #0090 resolved.
+
+__________________________________________________
 Changes in V. 0.1.1 release  of January 15, 2003:
 
 - Overworked recognization of link areas, still
@@ -32,7 +55,6 @@ Changes in V. 0.1.1 release  of January 15, 2003:
 - Reworked code to avoid flickering mouse pionter
   when moved over window's title or info bar or
   being exactly over a frame's border.
-
 
 - Bugs #0020, #0022, #0080, #0086, #0087 resolved.
 
