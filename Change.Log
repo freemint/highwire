@@ -1,4 +1,4 @@
-(non-public of Mar. 15, 2004)
+(non-public of Mar. 17, 2004)
 
 - Large rework of most of the internal structures
   to reach better compatibility to the 'Document
@@ -30,6 +30,8 @@
 
 - Fixed a bug that was sometimes causing wrong
   text word widths.
+
+- Support added for interlaced PNG images.
 
 - Improved handling of cells with percentage width
   inside tables without any width set.
