@@ -627,6 +627,40 @@ content_destroy (CONTENT * content)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static WORDITEM
+paragraph_filter (PARAGRPH par)
+{
+	WORDITEM word = par->item, prev = NULL;
+	BOOL     remv = FALSE;
+	
+	while (word) {
+		if (word->length == 1) {
+			if (word->space_width) {
+				remv = (!word->next_word || word->next_word->space_width);
+			}
+		} else if (!word->length) {
+			remv = (word->image == NULL);
+		}
+		if (remv) {
+			if (prev) {
+				prev->line_brk |= word->line_brk;
+				prev->next_word = word->next_word;
+			} else if (word->next_word) {
+				par->item = word->next_word;
+			} else {
+				break; /* don't delete a single word_item */
+			}
+			word = destroy_word_list (word, word);
+			remv = FALSE;
+			continue;
+		}
+		prev = word;
+		word = word->next_word;
+	}
+	return par->item;
+}
+
 /*==============================================================================
  * content_minimum()
  *
@@ -649,92 +683,31 @@ content_minimum (CONTENT * content)
 		
 		} else {
 			long wrd_width = par_width = 0;
-			
-			BOOL       space = FALSE;
-			WORDITEM   prev  = NULL;
-			WORDITEM * p_wrd = &paragraph->item, word;
-			while ((word = *p_wrd) != NULL) {
-				
-				if (!word->length && !word->image) { /* empty word, presave
-				                                      * line break and remove */
-					if (prev && word->line_brk) {
-						prev->line_brk |= word->line_brk;
-						space = FALSE;
-						p_wrd = &prev->next_word;
-					}
-					*p_wrd = destroy_word_list (*p_wrd, word);
-					continue;
-				}
-				
-				if (!word->wrap) {
+			WORDITEM  word = paragraph_filter (paragraph);
+			while (word) {
+				if (!word->wrap || !wrd_width) {
 					if (word->image && word->image->set_w < 0) {
 						wrd_width += 1 + word->image->hspace *2;
 					} else {
 						wrd_width += word->word_width;
 					}
-					if (word->line_brk) {
-						if (par_width < wrd_width) {
-							 par_width = wrd_width;
-						}
-						wrd_width = 0;
+					if (!word->line_brk) {
+						word = word->next_word;
+						continue;
 					}
-					space = FALSE;
-					prev  = word;
-					p_wrd = &word->next_word;
-					continue;
-				}
-				
-				if (space) { /* two spaces in a row, remove the leading */
-					space = FALSE;
-					prev->next_word = destroy_word_list (prev->next_word,
-					                                     prev->next_word);
-				}
+				} /* else wrap || ln_brk */
 				
 				if (par_width < wrd_width) {
 					 par_width = wrd_width;
 				}
-				
-				if (word->length > 1) {
-					wrd_width = word->word_width - word->space_width;
-					prev  = word;
-					p_wrd = &word->next_word;
-					continue;
-				
-				} else {
-					wrd_width = 0;
-				}
-				
-				if (!prev) { /* leading space, remove */
-					*p_wrd = destroy_word_list (word, word);
-					continue;
-				}
-				
-				if (word->line_brk) { /* space with line break,
-				                       * presave and remove   */
-					prev->line_brk |= word->line_brk;
-					*p_wrd = destroy_word_list (word, word);
-					continue;
-				}
-				
-				/* normal space */
-				
-				space = TRUE;
-				p_wrd = &word->next_word;
+				wrd_width = 0;
+				word = word->next_word;
 			}
-			
 			if (par_width < wrd_width) {
 				 par_width = wrd_width;
 			}
 			paragraph->min_width = par_width;
 			par_width += paragraph->Indent + paragraph->Rindent;
-			
-			if (space) {
-				word = prev;
-				while (word->next_word) {
-					word = word->next_word;
-				}
-				prev->next_word = destroy_word_list (prev->next_word, word);
-			}
 		}
 		if (min_width < par_width) {
 			 min_width = par_width;
