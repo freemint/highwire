@@ -817,6 +817,12 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 					cache_expires (parser->Loader->Location, date);
 				}
 			}
+		} else if (stricmp (output, "pragma") == 0) {
+			if (parser->Loader->Date &&
+			    get_value (parser, KEY_CONTENT, output, sizeof(output)) &&
+			    stricmp (output, "no-cache") == 0) {
+			    	cache_expires (parser->Loader->Location, -1);
+			}
 		}
 	}
 	return flags;
