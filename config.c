@@ -193,9 +193,9 @@ cfg_restrict (char * param, long arg)
 	}
 	if (flags) {
 		if (isalnum(*param)) {
-			location_DBhost (param, 0, flags);
+			location_DBhost (param, 0, &flags);
 		} else if (*param == '.') {
-			location_DBdomain (param, 0, flags);
+			location_DBdomain (param, 0, &flags);
 		}
 	}
 }

@@ -446,7 +446,7 @@ static struct s_dir_entry dir_base    = { NULL, 0ul, FALSE, 1, "/" };
 
 /*============================================================================*/
 const char *
-location_DBdomain (const char * name, UWORD max_len, ULONG flags)
+location_DBdomain (const char * name, UWORD max_len, ULONG * p_flags)
 {
 	DOMAIN_ENT * ptr = &domain_base, ent;
 	char  buf[258], c;
@@ -471,6 +471,7 @@ location_DBdomain (const char * name, UWORD max_len, ULONG flags)
 		}
 	}
 	if (len < 2) {
+		*p_flags = 0ul;
 		return NULL;
 	}
 	buf[len] = '\0';
@@ -487,7 +488,7 @@ location_DBdomain (const char * name, UWORD max_len, ULONG flags)
 			ent = *(ptr = &ent->Next);
 		}
 	}
-	if (!ent && (long)flags > 0l
+	if (!ent && (long)*p_flags > 0l
 	         && (ent = malloc (sizeof(struct s_domain_entry) + len)) != NULL) {
 		ent->Flags  = 0uL;
 		ent->Length = len;
@@ -496,6 +497,7 @@ location_DBdomain (const char * name, UWORD max_len, ULONG flags)
 		*ptr      = ent;
 	}
 	if (ent) {
+		ULONG flags = *p_flags;
 		if (flags & 0x80000000uL) ent->Flags &= ~flags;
 		else                      ent->Flags |=  flags;
 		
@@ -518,9 +520,11 @@ location_DBdomain (const char * name, UWORD max_len, ULONG flags)
 				host = host->Next;
 			}
 		}
-		name = ent->Name;
+		*p_flags = ent->Flags;
+		name     = ent->Name;
 	} else {
-		name = NULL;
+		*p_flags = 0ul;
+		name     = NULL;
 	}
 	return name;
 }
@@ -627,15 +631,18 @@ host_entry (const char ** name, UWORD max_len)
 
 /*============================================================================*/
 const char *
-location_DBhost (const char * name, UWORD len, ULONG flags)
+location_DBhost (const char * name, UWORD len, ULONG * p_flags)
 {
 	HOST_ENT ent = host_entry (&name, len);
 	if (ent) {
+		ULONG flags = *p_flags;
 		if (flags & 0x80000000uL) ent->Flags &= ~flags;
 		else                      ent->Flags |=  flags;
-		name = ent->Name;
+		*p_flags = ent->Flags;
+		name     = ent->Name;
 	} else {
-		name = NULL;
+		*p_flags = 0ul;
+		name     = NULL;
 	}
 	return name;
 }
