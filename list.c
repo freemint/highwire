@@ -56,7 +56,7 @@ list_finish (TEXTBUFF current)
 	if (!current->lst_stack) {
 		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
 			current->prev_wrd->next_word = NULL;
-			destroy_word_structure (par->item);
+			destroy_word_list (par->item, NULL);
 			par->item         = current->word;
 			current->prev_wrd = NULL;
 		} else {

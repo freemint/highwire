@@ -25,7 +25,7 @@ destroy_paragraph_structure (PARAGRPH current_paragraph)
 	while (current_paragraph != 0)
 	{
 		if (current_paragraph->item != 0)
-			destroy_word_structure (current_paragraph->item);
+			destroy_word_list (current_paragraph->item, NULL);
 #if 0
 		if (current_paragraph->table != 0)
 			destroy_table_structure (current_paragraph->table);
@@ -595,7 +595,7 @@ content_destroy (CONTENT * content)
 			line = n_ln;
 		}
 		if (par->item) {
-			destroy_word_structure (par->item);
+			destroy_word_list (par->item, NULL);
 		}
 		if (par->Table) {
 			delete_table (&par->Table);
@@ -606,16 +606,6 @@ content_destroy (CONTENT * content)
 	content->Item = NULL;
 }
 
-
-/*----------------------------------------------------------------------------*/
-static WORDITEM
-punch (WORDITEM * trash, WORDITEM beg, WORDITEM end)
-{
-	WORDITEM  next = end->next_word;
-	end->next_word = *trash;
-	*trash         = beg;
-	return next;
-}
 
 /*==============================================================================
  * content_minimum()
@@ -628,12 +618,6 @@ content_minimum (CONTENT * content)
 	PARAGRPH paragraph = content->Item;
 	long     min_width = 0;
 	
-	WORDITEM trash = NULL;
-#if 0
-	int n_empty = 0;
-	int n_space = 0;
-	#define _DEBUG
-#endif
 	while (paragraph) {
 		long par_width;
 		
@@ -658,10 +642,7 @@ content_minimum (CONTENT * content)
 						space = FALSE;
 						p_wrd = &prev->next_word;
 					}
-					*p_wrd = punch (&trash, *p_wrd, word);
-				#ifdef _DEBUG
-					n_empty++;
-				#endif
+					*p_wrd = destroy_word_list (*p_wrd, word);
 					continue;
 				}
 				
@@ -685,11 +666,8 @@ content_minimum (CONTENT * content)
 				
 				if (space) { /* two spaces in a row, remove the leading */
 					space = FALSE;
-					prev->next_word = punch (&trash,
-					                         prev->next_word, prev->next_word);
-				#ifdef _DEBUG
-					n_space++;
-				#endif
+					prev->next_word = destroy_word_list (prev->next_word,
+					                                     prev->next_word);
 				}
 				
 				if (par_width < wrd_width) {
@@ -707,20 +685,14 @@ content_minimum (CONTENT * content)
 				}
 				
 				if (!prev) { /* leading space, remove */
-					*p_wrd = punch (&trash, word, word);
-				#ifdef _DEBUG
-					n_space++;
-				#endif
+					*p_wrd = destroy_word_list (word, word);
 					continue;
 				}
 				
 				if (word->line_brk) { /* space with line break,
 				                       * presave and remove   */
 					prev->line_brk |= word->line_brk;
-					*p_wrd = punch (&trash, word, word);
-				#ifdef _DEBUG
-					n_space++;
-				#endif
+					*p_wrd = destroy_word_list (word, word);
 					continue;
 				}
 				
@@ -740,11 +712,8 @@ content_minimum (CONTENT * content)
 				word = prev;
 				while (word->next_word) {
 					word = word->next_word;
-				#ifdef _DEBUG
-					n_space++;
-				#endif
 				}
-				prev->next_word = punch (&trash, prev->next_word, word);
+				prev->next_word = destroy_word_list (prev->next_word, word);
 			}
 		}
 		if (min_width < par_width) {
@@ -752,29 +721,7 @@ content_minimum (CONTENT * content)
 		}
 		paragraph = paragraph->next_paragraph;
 	}
-#ifdef _DEBUG
-	if (n_empty || n_space || trash) {
-		static int n_trash = 0;
-		struct word_item * w = trash;
-		int sum = 0;
-		while (w) {
-			sum++;
-			w = w->next_word;
-		}
-		n_trash += sum;
-		printf ("\n");
-		if (n_empty) printf ("empty   = %i \n", n_empty);
-		if (n_space) printf ("space   = %i \n", n_space);
-		printf ("trash   = %i / %i \n", sum, n_trash);
-	}
-#endif
-
-#if 0
-	if (trash) {
-		destroy_word_structure (trash);
-	}
-#endif
-
+	
 	min_width += content->MarginLft + content->MarginRgt;
 	
 	return (content->Minimum = min_width);

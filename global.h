@@ -166,9 +166,9 @@ void image_calculate (IMAGE, short par_width);
 
 /* in W_Struct.c */
 
-void               destroy_word_structure (struct word_item *);
-struct word_item * new_word   (TEXTBUFF, BOOL do_link);
-void               word_store (TEXTBUFF);
+WORDITEM destroy_word_list (WORDITEM start, WORDITEM last_OR_null);
+WORDITEM new_word   (TEXTBUFF, BOOL do_link);
+void     word_store (TEXTBUFF);
 void word_set_bold      (TEXTBUFF, BOOL onNoff);
 void word_set_italic    (TEXTBUFF, BOOL onNoff);
 void word_set_strike    (TEXTBUFF, BOOL onNoff);
