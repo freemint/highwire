@@ -511,6 +511,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Date    = date;
 				citem->Expires = expires;
 				citem->Reffs--;
+				__cache_mem += size;
 			} else {
 				free_location (&loc);
 			}
