@@ -62,14 +62,20 @@ dombox_dtor (DOMBOX * This)
 		puts ("dombox_dtor(): has still children!");
 	}
 	if (This->Parent) {
-		DOMBOX ** ptr = &This->Parent->ChildBeg;
-		while (*ptr) {
-			if (*ptr == This) {
-				*ptr = This->Sibling;
+		DOMBOX * box = This->Parent->ChildBeg;
+		if (This == box) {
+			if ((This->Parent->ChildBeg = This->Sibling) == NULL) {
+				This->Parent->ChildEnd = NULL;
+			}
+		} else do {
+			if (box->Sibling == This) {
+				if ((box->Sibling = This->Sibling) == NULL) {
+					This->Parent->ChildEnd = box;
+				}
 				break;
 			}
-			ptr = &(*ptr)->Sibling;
-		}
+		} while ((box = box->Sibling) != NULL);
+		
 		This->Parent = NULL;
 	}
 	This->BoxClass = -1;
