@@ -64,7 +64,7 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
-	stack --fix=128k $@
+	stack --fix=8k $@
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
