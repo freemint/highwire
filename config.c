@@ -58,6 +58,9 @@ read_config(char *fn)
 		if (strncmp ("FONT_SIZE", buf, b) == 0) {
 			if (n >= 8 && n <= 24) font_size = n;
 		
+		} else if (strncmp ("FONT_MINSIZE", buf, b) == 0) {
+			if (n >= 1 && n <= 24) font_minsize = n;
+		
 		} else if (strncmp ("NORMAL", buf, b) == 0) {
 			if (n >= 1 && n <= 0xFFFF) fonts[normal_font][0][0] = n;
 		
@@ -103,6 +106,9 @@ read_config(char *fn)
 		
 		} else if (strncmp ("NO_IMAGE", buf, b) == 0) {
 			if (n) menu_alt_text();
+		
+		} else if (strncmp ("FORCE_FRAMECTRL", buf, b) == 0) {
+			if (n) menu_frm_ctrl();
 		
 		} else if (strncmp ("INFOBAR", buf, b) == 0) {
 			hwWind_setup (HWWS_INFOBAR, n);
