@@ -503,7 +503,9 @@ receive_job (void * arg, long invalidated)
 	LOADER loader = arg;
 	
 	if (invalidated) {
-		cache_abort (loader->Location);
+		if (!loader->PostBuf) {
+			cache_abort (loader->Location);
+		}
 		if (loader->SuccJob) {
 			(*loader->SuccJob)(arg, invalidated);
 		} else {
@@ -657,7 +659,9 @@ header_job (void * arg, long invalidated)
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = cache_lookup (redir, 0, NULL);
 		inet_close  (sock);
-		cache_abort (loc);
+		if (!loader->PostBuf) {
+			cache_abort (loc);
+		}
 		
 		if (!loader->MimeType) {
 			loader->MimeType = mime_byExtension (redir->File, NULL, NULL);
@@ -759,8 +763,9 @@ header_job (void * arg, long invalidated)
 	/* else either a very short file or an error case occured
 	*/
 	inet_close  (sock);
-	cache_abort (loc);
-	
+	if (!loader->PostBuf) {
+		cache_abort (loc);
+	}
 	if (!loader->Data) {
 		loader->MimeType = MIME_TEXT;
 		loader->Data     = strdup (hdr.Head);

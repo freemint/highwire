@@ -941,13 +941,13 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 				} else {
 					date = http_date (output);
 				}
-				if (date > 0) {
+				if (date > 0 && !parser->Loader->PostBuf) {
 					date += parser->Loader->Tdiff;
 					cache_expires (parser->Loader->Location, date);
 				}
 			}
 		} else if (stricmp (output, "pragma") == 0) {
-			if (parser->Loader->Date &&
+			if (parser->Loader->Date && !parser->Loader->PostBuf &&
 			    get_value (parser, KEY_CONTENT, output, sizeof(output)) &&
 			    stricmp (output, "no-cache") == 0) {
 			    	cache_expires (parser->Loader->Location, -1);
