@@ -406,7 +406,7 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	current->paragraph->Box.TextAlign  = box->TextAlign;
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
-	css_text_styles (parser, NULL);
+	css_text_styles (parser, current->font);
 	
 	box_anchor (parser, box, TRUE);
 	
