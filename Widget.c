@@ -6,6 +6,8 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdarg.h>
 
 #ifdef __PUREC__
 #include <tos.h>
@@ -242,4 +244,141 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 	wind_update (END_MCTRL);
 	
 	return ret;
+}
+
+
+/*******************************************************************************
+ *
+ * User Interface functions.  Here they are realized by form_alerts but could
+ * also be done by shell IO.
+*/
+
+/*----------------------------------------------------------------------------*/
+static WORD
+hwUi_box (WORD icon, const char * bttn,
+          const char * hint, const char * text, va_list valist)
+{
+	/* form_alert
+	 * [n]                              =   3
+	 * + 5 lines   40 character (= 200) = 203
+	 * + '[||||]'                       = 209
+	 * + 3 buttons   20 + '[||] (= 64)  = 273
+	*/
+	char buf[1000], * p = buf;
+	
+	{	/* icon + head line */
+		const char head[] = "["_HIGHWIRE_FULLNAME_": ";
+		*(p++) = '[';
+		*(p++) = icon + '0';
+		*(p++) = ']';
+		memcpy (p, head, sizeof(head) -1);
+		p += sizeof(head) -1;
+		
+		if (hint && *hint) {
+			p = strchr (strcpy (p, hint), '\0');
+			if (p - buf > 40 +4) {
+				p = buf +39 +4;
+				*(p++) = '¯';
+			}
+		}
+		*(p++) = '|';
+	}
+	
+	{	/* critical part, check for array boundary overwritten */
+		size_t fill = p - buf, left = sizeof(buf) - fill;
+		buf[sizeof(buf)-1] = '\0';
+		if (left <= vsprintf (p, text, valist) || buf[sizeof(buf)-1] != '\0') {
+			buf[1] = '3'; /*Stop icon */
+			strcpy (buf + fill -1, "][ | -- Stack destroyed! -- ][EXIT]");
+			form_alert (1, buf);
+			abort();
+		}
+	}
+	
+	{	/* format the text */
+		short  cnt = 4;
+		char * beg = p;
+		char * spc = NULL;
+		BOOL  done = FALSE;
+		do switch (*p) {
+			case '\0': done = TRUE; break;
+			case '[':  *(p++) = '{'; break;
+			case '|':  *(p++) = '/'; break;
+			case ']':  *(p++) = '}'; break;
+			case '\n':
+				if (!(done = (--cnt == 0))) {
+					*(p++) = '|';
+					spc    = NULL;
+					beg    = p;
+				}
+				break;
+			default: if (p - beg >= 40) {
+				if (spc) {
+					*spc = '|';
+					beg  = spc +1;
+					spc = NULL;
+				} else {
+					size_t len = sizeof(buf) - (p - buf);
+					memmove (p +1, p, len -2);
+					*(p++) = '|';
+					beg    = p;
+					spc    = NULL;
+				}
+			} else if (isspace (*p)) {
+				spc = p++;
+			} else {
+				p++;
+			}
+		} while (!done);
+		*(p++) = ']';
+	}
+	strcat (buf, bttn);
+	
+	return form_alert (1, buf);
+}
+
+/*============================================================================*/
+void
+hwUi_fatal (const char * hint, const char * text, ...)
+{
+	va_list valist;
+	va_start (valist, text);
+	hwUi_box (3, "[Exit]", hint, text, valist);
+	exit (EXIT_FAILURE);
+}
+
+/*============================================================================*/
+void
+hwUi_error (const char * hint, const char * text, ...)
+{
+	va_list valist;
+	va_start (valist, text);
+	if (hwUi_box (1, "[Exit|Continue]", hint, text, valist) == 1) {
+		exit (EXIT_FAILURE);
+	}
+	va_end (valist);
+}
+
+/*============================================================================*/
+void
+hwUi_warn (const char * hint, const char * text, ...)
+{
+	va_list valist;
+	va_start (valist, text);
+	if (hwUi_box (1, "[Continue|Exit]", hint, text, valist) == 2) {
+		exit (EXIT_SUCCESS);
+	}
+	va_end (valist);
+}
+
+/*============================================================================*/
+void
+hwUi_info (const char * hint, const char * text, ...)
+{
+	va_list valist;
+	va_start (valist, text);
+	if (hwUi_box (0, "[Continue|Exit]", hint, text, valist) == 2) {
+		exit (EXIT_SUCCESS);
+	}
+	va_end (valist);
 }

@@ -91,6 +91,18 @@ WORD HW_form_do    (OBJECT *, WORD next);
 #endif
 WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
 
+#ifndef VARIADIC            /* Gnu C provides a (non-portable) method to have */
+# ifndef __GNUC__           /* the compiler check the arguments of a variadic */
+#  define VARIADIC(v,a)     /* function against its format string if this is  */
+# else                      /* compatible with printf or scanf.               */
+#  define VARIADIC(v,a) __attribute__ ((format (printf, v, a)))
+# endif
+#endif
+void hwUi_fatal (const char * hint, const char * text, ...) VARIADIC(2,3);
+void hwUi_error (const char * hint, const char * text, ...) VARIADIC(2,3);
+void hwUi_warn  (const char * hint, const char * text, ...) VARIADIC(2,3);
+void hwUi_info  (const char * hint, const char * text, ...) VARIADIC(2,3);
+
 /* in Redraws.c */
 
 void frame_draw     (FRAME, const GRECT *, void * highlight);
