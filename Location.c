@@ -398,7 +398,7 @@ location_open (LOCATION loc, const char ** host_name)
 		
 #ifdef USE_INET
 		if (host->Ip) {
-			sock = (int)inet_connect (host->Ip, loc->Port);
+			sock = (int)inet_connect (host->Ip, loc->Port, 3/*sec*/);
 		}
 #endif /* USE_INET */
 	}

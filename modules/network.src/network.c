@@ -43,7 +43,7 @@ struct ovl_info_t ovl_data = {
 /*============================================================================*/
 long __CDECL ovl_init(void)
 {
-	return (0);
+	return 0x20031208l;
 }
 
 

@@ -24,11 +24,12 @@
 
 
 #if defined(_USE_OVL_) /*******************************************************/
+# include <stdio.h>
 # include "ovl_sys.h"
 
 static OVL_METH  * inet_ovl  = NULL;
 static short __CDECL demand_host_addr (const char * host, long * addr);
-static long  __CDECL demand_connect   (long addr, long port);
+static long  __CDECL demand_connect   (long addr, long port, long tout_sec);
 INET_FTAB inet_ftab = {
 	demand_host_addr,
 	demand_connect,
@@ -60,8 +61,9 @@ static BOOL ovl_load(void)
 		return FALSE; /* no OVL found */
 	
 	} else if (inet_ovl->ftabtype != FTAB_NETWORK ||
-	           (*inet_ovl->ovl_init)() < 0 ||
+	           (*inet_ovl->ovl_init)() < INET_VERSION ||
 	           (ovl_ftab = (*inet_ovl->ovl_getftab)()) == NULL) {
+		puts ("inet::ovl_load(): wrong network.ovl!");
 		inet_ovl = NULL;
 		kill_ovl (inet_ovl);
 		return FALSE;    /* wrong OVL */
@@ -80,10 +82,10 @@ static short __CDECL demand_host_addr (const char * host, long * addr)
 }
 
 /*----------------------------------------------------------------------------*/
-static long  __CDECL demand_connect (long addr, long port)
+static long  __CDECL demand_connect (long addr, long port, long tout_sec)
 {
-	return (ovl_load() ? (*inet_ftab.connect)(addr, port)
-	                   : inet_connect (addr, port));
+	return (ovl_load() ? (*inet_ftab.connect)(addr, port, tout_sec)
+	                   : inet_connect        (addr, port, tout_sec));
 }
 
 /* endif defined(_USE_OVL_) */
@@ -178,7 +180,7 @@ static void sig_alrm (long sig)
 
 /*============================================================================*/
 long __CDECL
-inet_connect (long addr, long port)
+inet_connect (long addr, long port, long tout_sec)
 {
 	long fh = -1;
 
@@ -193,7 +195,7 @@ inet_connect (long addr, long port)
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
 			timeout = FALSE;
-			Talarm (3);
+			Talarm (tout_sec);
 		}
 		if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
 			close (fh);
@@ -212,7 +214,7 @@ inet_connect (long addr, long port)
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
 			timeout = FALSE;
-			Talarm (3);
+			Talarm (tout_sec);
 		}
 		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
 			fh = -(fh == -1001L ? ETIMEDOUT : 1);
@@ -224,7 +226,7 @@ inet_connect (long addr, long port)
 	}
 
 #else
-	(void)addr; (void)port;
+	(void)addr; (void)port; (void)tout_sec;
 #endif
 
 	return fh;
