@@ -28,6 +28,15 @@ HTMLKEY scan_key (const char ** pptr, BOOL lookup);
 				 * successful the symbol KEY_Unknown is returned.
 				*/
 short   scan_css (const char ** pptr, size_t len);
+				/* Same as scan_key() but for css variable KEY name expressions.
+				 * 'len' is the maximum number of characters to evaluate.
+				*/
+
+BOOL scan_numeric (const char ** pptr, long * num, UWORD * unit);
+				/* Scanns a floating point number and it unit.  The result will be
+				 * stored in 'num' as a fixpoint number with the fractional part
+				 * in the lower 8 bit.
+				*/
 
 void * scan_namedchar (const char ** pptr, void * dst,
                        BOOL wordNchar, WORD mapping);

@@ -131,34 +131,14 @@ font_face (char * buf, short dflt)
 
 /*----------------------------------------------------------------------------*/
 static short
-numerical (char * buf, char ** tail, short em, short ex)
+numerical (const char * buf, char ** tail, short em, short ex)
 {
-	UWORD  mean;
-	char * ptr;
-	long   size = strtol (buf, &ptr, 10);
-	if (ptr <= buf) {
-		if (tail) *tail = buf;
-		return -1;
-	}
-	if (*ptr == '.' && isdigit(*(++ptr))) {
-		size = size * 10 + (*ptr - '0');
-		if (!isdigit(*(++ptr))) {
-			size = ((size <<8) +5) /10;
-		} else {
-			size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
-			while (isdigit(*(++ptr)));
-		}
-	} else {
-		size <<= 8;
-	}
-	if ((mean = *ptr) != '\0') {
-		if (mean == '%') {
-			ptr++;
-		} else if (isalpha (mean) && isalpha (*(++ptr))) {
-			mean = (toupper(mean) <<8) | toupper(*(ptr++));
-		}
-	}
-	switch (mean) {
+	UWORD  unit;
+	long   size;
+	if (!scan_numeric (&buf, &size, &unit)) {
+		size = -1;
+	
+	} else switch (unit) {
 		case 0x4558: /* EX */
 			size *= ex;
 			goto case_PT; /* approximated */
@@ -187,8 +167,11 @@ numerical (char * buf, char ** tail, short em, short ex)
 		default:
 			size = 0;
 	}
-	if (tail) *tail = ptr;
-	
+	if (tail) {
+		union { const char * c; char * v; } ptr;
+		ptr.c = buf;
+		*tail = ptr.v;
+	}
 	return (short)size;
 }
 

@@ -245,6 +245,81 @@ scan_css (const char ** pptr, size_t length)
 }
 
 
+/*============================================================================*/
+BOOL
+scan_numeric (const char ** pptr, long * num, UWORD * unit)
+{
+	BOOL   ok = TRUE;
+	char * ptr;
+	BOOL   neg;
+	long   size;
+	
+	while (isspace (**pptr)) (*pptr)++;
+	neg  = (**pptr == '-');
+	size = strtol (*pptr, &ptr, 10);
+	
+	if (ptr <= *pptr) {
+		*num = 0;
+		return FALSE;
+	
+	} else if (size < -32768l || size > +32767l) {
+		*num = size;
+		ok   = FALSE;
+	
+	} else if (size < 0l) {
+		size = -size;
+	}
+	if (*ptr == '.' && isdigit(*(++ptr))) {
+		size = size * 10 + (*ptr - '0');
+		if (!isdigit(*(++ptr))) {
+			size = ((size <<8) +5) /10;
+		} else {
+			size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
+			while (isdigit(*(++ptr)));
+		}
+	} else {
+		size <<= 8;
+	}
+	if (ok) {
+		*num = (neg ? -size : +size);
+	}
+	
+	switch (toupper(*ptr)) {
+		#define _(u,l) (((UWORD)(u)<<8)|(l))
+		case 'E':
+			if      (toupper(ptr[1]) == 'M') { *unit = _('E','M'); ptr += 2; }
+			else if (toupper(ptr[1]) == 'X') { *unit = _('E','X'); ptr += 2; }
+			else                               *unit = 0;
+			break;
+		case 'P':
+			if      (toupper(ptr[1]) == 'C') { *unit = _('P','C'); ptr += 2; }
+			else if (toupper(ptr[1]) == 'T') { *unit = _('P','T'); ptr += 2; }
+			else if (toupper(ptr[1]) == 'X') { *unit = _('P','X'); ptr += 2; }
+			else                               *unit = 0;
+			break;
+		case 'M':
+			if      (toupper(ptr[1]) == 'M') { *unit = _('M','M'); ptr += 2; }
+			else                               *unit = 0;
+			break;
+		case 'C':
+			if      (toupper(ptr[1]) == 'M') { *unit = _('C','M'); ptr += 2; }
+			else                               *unit = 0;
+			break;
+		case 'I':
+			if      (toupper(ptr[1]) == 'N') { *unit = _('I','N'); ptr += 2; }
+			else                               *unit = 0;
+			break;
+		case '%':                           { *unit = _('%',0);   ptr += 1; }
+			break;
+		default:                              *unit = 0;
+		#undef _
+	}
+	*pptr = ptr;
+	
+	return ok;
+}
+
+
 /*==============================================================================
  * Scanner for named character expressions of the forms
  *    &  |  &<expr>;  |  &#<dec_num>;  |  &#x<hex_num>;
