@@ -96,6 +96,13 @@ void    menu_frm_ctrl (int);
 void    menu_logging  (int);
 WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
+/* in formwind.c */
+
+#ifdef _GEMLIB_H_
+BOOL formwind_do (OBJECT *, WORD start, const char * title,
+                  BOOL(*handler)(OBJECT*,WORD));
+#endif
+
 /* in Widget.c */
 
 #ifdef _GEMLIB_H_
