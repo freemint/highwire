@@ -623,7 +623,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
 			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref,
-			                 (BOOL(*)(void*,long))NULL);
+			                 (BOOL(*)(void*,long))NULL, NULL);
 		}
 	}
 	return flags;
@@ -1279,7 +1279,7 @@ render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 		                 : mime_byExtension (src, NULL));
 			if (MIME_Major(mime) == MIME_AUDIO) {
 				start_objc_load (parser->Target, src, parser->Frame->BaseHref,
-				                 (BOOL(*)(void*,long))NULL);
+				                 (BOOL(*)(void*,long))NULL, NULL);
 			}
 		}
 	}

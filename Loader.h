@@ -25,6 +25,7 @@ typedef struct s_loader {
 	BOOL     notified; /* if a start notification was sent     */
 	/* */
 	BOOL   (*SuccJob)(void*, long);
+	void   * FreeArg;
 	/* */
 	BOOL   rdChunked;  /* whether the data can't be received in one block */
 	short  rdSocket;   /* handle for remote connection */
@@ -42,7 +43,7 @@ void   delete_loader (LOADER *);
 LOADER start_page_load (CONTAINR target, const char * url, LOCATION base);
 LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base);
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
-                        BOOL (*successor)(void*, long));
+                        BOOL (*successor)(void*, long), void * objc);
 
 
 #endif /* __LOADER_H__ */
