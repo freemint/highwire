@@ -38,6 +38,7 @@ VDI_Workstation vdi_dev;
 OBJECT *about;
 OBJECT *rpopup;
 OBJECT *menutree;
+OBJECT *rpoplink;
 #endif
 
 static EVMULT_IN multi_in = {
@@ -141,6 +142,7 @@ main (int argc, char **argv)
 	rsrc_gaddr(R_TREE, MENUTREE, &menutree);
 	rsrc_gaddr(R_TREE, ABOUT, &about);
 	rsrc_gaddr(R_TREE, RPOPUP, &rpopup);
+	rsrc_gaddr(R_TREE, RLINKPOP, &rpoplink);
 
 	menu_bar(menutree, MENU_INSTALL);
 #endif
