@@ -169,14 +169,15 @@ new_loader (LOCATION loc, CONTAINR target)
 {
 	const char * appl = NULL;
 	LOADER loader = malloc (sizeof (struct s_loader));
-	loader->Location = location_share (loc);
-	loader->Target   = target;
-	loader->Encoding = ENCODING_WINDOWS1252;
-	loader->MimeType = MIME_Unknown;
-	loader->MarginW  = -1;
-	loader->MarginH  = -1;
-	loader->ScrollV  = 0;
-	loader->ScrollH  = 0;
+	loader->Location   = location_share (loc);
+	loader->Target     = target;
+	loader->Encoding   = ENCODING_WINDOWS1252;
+	loader->MimeType   = MIME_Unknown;
+	loader->FileExt[0] = '\0';
+	loader->MarginW    = -1;
+	loader->MarginH    = -1;
+	loader->ScrollV    = 0;
+	loader->ScrollH    = 0;
 	/* */
 	loader->Cached   = NULL;
 	loader->Date     = 0;
@@ -197,7 +198,7 @@ new_loader (LOCATION loc, CONTAINR target)
 	loader->rdList    = loader->rdCurr = NULL;
 	
 	if (loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) {
-		loader->MimeType = mime_byExtension (loc->File, &appl);
+		loader->MimeType = mime_byExtension (loc->File, &appl, loader->FileExt);
 	}
 	
 	if (loc->Proto == PROT_HTTP) {
@@ -207,7 +208,8 @@ new_loader (LOCATION loc, CONTAINR target)
 			u.c            = cache_bound (cached, &loader->Location);
 			loader->Cached = u.l;
 			if (!loader->MimeType) {
-				loader->MimeType = mime_byExtension (loader->Cached->File, &appl);
+				loader->MimeType = mime_byExtension (loader->Cached->File,
+				                                     &appl, NULL);
 			}
 		}
 	}
@@ -555,6 +557,7 @@ receive_job (void * arg, long invalidated)
 		loader->rdSocket   = -1;
 	}
 	if (loader->Data) {
+		const char * ext = mime_toExtension (loader->MimeType);
 		char * p = loader->Data + loader->DataFill;
 		*(p++) = '\0';
 		*(p++) = '\0';
@@ -562,7 +565,7 @@ receive_job (void * arg, long invalidated)
 		
 		loader->Cached = cache_assign (loader->Location, loader->Data,
 		                               loader->DataSize,
-	 	                               mime_toExtension (loader->MimeType),
+		                               (ext && *ext ? ext : loader->FileExt),
 		                               loader->Date, loader->Expires);
 		if (loader->Cached) {
 			cache_bound (loader->Location, NULL);
@@ -613,7 +616,8 @@ header_job (void * arg, long invalidated)
 				u.c            = cache_bound (cached, &loader->Location);
 				loader->Cached = u.l;
 				if (!loader->MimeType) {
-					loader->MimeType = mime_byExtension (loader->Cached->File, NULL);
+					loader->MimeType = mime_byExtension (loader->Cached->File,
+					                                     NULL, NULL);
 				}
 			/*	printf ("header_job(%s): cache hit\n", loc->FullName);*/
 				if (loader->SuccJob) {
@@ -653,7 +657,7 @@ header_job (void * arg, long invalidated)
 		cache_abort (loc);
 		
 		if (!loader->MimeType) {
-			loader->MimeType = mime_byExtension (redir->File, NULL);
+			loader->MimeType = mime_byExtension (redir->File, NULL, NULL);
 		}
 		if (cached) {
 			union { CACHED c; LOCATION l; } u;
