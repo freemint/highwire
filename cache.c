@@ -56,6 +56,7 @@ static size_t    __cache_dsk_use = 0;
 static size_t    __cache_dsk_max = 0;
 static size_t    __cache_dsk_num = 0;
 static size_t    __cache_dsk_lim = 0;
+static WORD      __cache_changed = FALSE;
 static LOCATION  __cache_dir  = NULL;
 static char    * __cache_path = NULL;
 static char    * __cache_file = NULL;
@@ -240,6 +241,7 @@ destroy_item (CACHEITEM citem)
 		if (citem->Cached[0]) {
 			strcpy (__cache_file, citem->Cached);
 			unlink (__cache_path);
+			__cache_changed = TRUE;
 		}
 		free_location ((LOCATION*)&citem->Object);
 		__cache_dsk_num--;
@@ -264,7 +266,7 @@ item_reorder (CACHEITEM citem)
 	citem->NextItem       = __cache_beg;
 	__cache_beg           = citem;
 	
-	return TRUE;
+	return (__cache_changed = TRUE);
 }
 
 
@@ -367,9 +369,7 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 			citem->NodeNext       = node->Array[idx].Item;
 			node->Array[idx].Item = citem;
 		}
-		if (item_reorder (citem)) {
-			cache_flush (NULL, __cache_dir);
-		}
+		item_reorder (citem);
 		if (opt_found) {
 			*opt_found = citem->Ident;
 		}
@@ -509,7 +509,7 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 	FILE * file;
 	BOOL   single;
 	
-	if (citem) {
+	if (citem && !__cache_changed) {
 		file   = fopen (loc->FullName, "rb+");
 		single = TRUE;
 	} else {
@@ -553,17 +553,15 @@ static void
 exit_flush (void)
 {
 	CACHEITEM citem = __cache_beg;
-	BOOL      flush = FALSE;
 	time_t    locl  = time (NULL);
 	while (citem && citem->Object) {
 		CACHEITEM next = citem->NextItem;
 		if (!item_isMem(citem) && citem->Expires && citem->Expires < locl) {
 			destroy_item (citem);
-			flush = TRUE;
 		}
 		citem = next;
 	}
-	if (flush) {
+	if (__cache_changed == TRUE) {
 		cache_flush (NULL, __cache_dir);
 	}
 }
@@ -582,6 +580,8 @@ read_hex (char ** ptr)
 void
 cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 {
+	BOOL update = FALSE;
+	
 	if (!dir && !mem_max && !dsk_max && !dsk_lim) {
 		puts ("Setting cache defaults:");
 		if (!__cache_mem_max) {
@@ -645,7 +645,6 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 		}
 		if (file) {
 			time_t locl = time (NULL);
-			long   ndel = 0;
 			while (!feof (file)) {
 				char buf[1024];
 				loc = location_rdIdx (file);
@@ -668,12 +667,12 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 					} else if (!loc) { /* outdated or invalid */
 						strcpy (ptr +1, __cache_file);
 						unlink (__cache_path);
-						ndel++;
+						update = TRUE;
 					} else if (expr && expr <= locl) { /* Expired */
 						free_location (&loc);
 						strcpy (ptr +1, __cache_file);
 						unlink (__cache_path);
-						ndel++;
+						update = TRUE;
 					} else {
 						CACHEITEM item = create_item (loc, NULL, size,
 						                              (void(*)(void*))0);
@@ -691,20 +690,22 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 				}
 			}
 			fclose (file);
-			if (ndel) {
-				cache_flush (NULL, __cache_dir);
+			if (!__cache_changed || __cache_dsk_num > 0) {
+				__cache_changed = -1;
 			}
 			atexit (exit_flush);
 		}
 	}
 	
-	if (__cache_dir && __cache_dsk_max) {
-		if ((__cache_dsk_num > __cache_dsk_lim ||
-		     __cache_dsk_use > __cache_dsk_max) 
-		    && cache_remove (__cache_dsk_num - __cache_dsk_lim,
-			                  __cache_dsk_use - __cache_dsk_max)) {
-			cache_flush (NULL, __cache_dir);
-		}
+	if (__cache_dir && __cache_dsk_max
+	    && (__cache_dsk_num > __cache_dsk_lim ||
+	        __cache_dsk_use > __cache_dsk_max)) {
+		update = cache_remove (__cache_dsk_num - __cache_dsk_lim,
+		                       __cache_dsk_use - __cache_dsk_max);
+	}
+	
+	if (update) {
+		cache_flush (NULL, __cache_dir);
 	}
 }
 
@@ -808,9 +809,6 @@ cache_assign (LOCATION src, void * data, size_t size,
 			    __cache_dsk_use + size > __cache_dsk_max) {
 				cache_remove (__cache_dsk_num +1 - __cache_dsk_lim,
 				              __cache_dsk_use + size - __cache_dsk_max);
-				n = TRUE;
-			} else {
-				n = FALSE;
 			}
 			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
@@ -824,7 +822,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Expires = expires;
 				citem->Reffs--;
 				__cache_dsk_use += size;
-				cache_flush ((n ? NULL : citem), __cache_dir);
+				cache_flush (citem, __cache_dir);
 			} else {
 				free_location (&loc);
 			}
@@ -846,7 +844,7 @@ cache_expires (LOCATION loc, long date)
 		printf ("cache_expires(%s): not found!\n", loc->FullName);
 	} else if (date > 0 || !citem->Expires) {
 		citem->Expires = date;
-		cache_flush (NULL, __cache_dir);
+		__cache_changed = TRUE;
 	}
 }
 
@@ -904,8 +902,8 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 		}
 		citem = citem->NodeNext;
 	}
-	if (found && !res_m && item_reorder (found)) {
-		cache_flush (NULL, __cache_dir);
+	if (found) {
+		item_reorder (found);
 	}
 	return (res_d | res_m);
 }
