@@ -782,6 +782,92 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+form_activate (FORM form)
+{
+	FRAME  frame = form->Frame;
+	INPUT  elem  = form->InputList;
+	size_t size  = 0, len;
+	char * data, * url;
+	
+	if (elem) {
+		do if (elem->checked && *elem->Name) {
+			size += 2 + strlen (elem->Name);
+			if (elem->Value) {
+				char * v = elem->Value, c;
+				while ((c = *(v++)) != '\0') {
+					size += (c == ' ' || isalnum (c) ? 1 : 3);
+				}
+			}
+			      + (elem->Value ? strlen (elem->Value) : 0);
+		} while ((elem = elem->Next) != NULL);
+	}
+	
+	if (form->Method == METH_POST) {
+		len  = 0;
+		url  = form->Action;
+		data = malloc (size +1);
+		if (size) size--;
+	} else {
+		len  = strlen (form->Action);
+		url  = strcpy (malloc (len + size +1), form->Action);
+		data = url;
+		data[len] = (strchr (url, '?') ? '&' : '?');
+	}
+	if (size) {
+		char * p = data + (len > 0 ? len +1 : 0);
+		size += len;
+		elem = form->InputList;
+		do if (elem->checked && *elem->Name) {
+			char * q;
+			len = strlen (elem->Name);
+			*p = '\0';
+			if ((q = strstr (data, elem->Name)) != NULL) {
+				char * f = (q == data || q[-1] == '?' || q[-1] == '&'
+				            ? q + len : NULL);
+				do if (f && (!*f || *f == '&' || *f == '=')) {
+					if (*f == '=') while (*(++f) && *f != '&');
+					if (*f == '&') f++;
+					while ((*(q++) = *(f++)) != '\0');
+					size -= f - q;
+					p    -= f - q;
+					break;
+				} else if ((q = strstr (q +1, elem->Name)) != NULL) {
+					f = (q[-1] == '&' ? q + len : NULL);
+				} while (q);
+			}
+			memcpy (p, elem->Name, len);
+			p += len;
+			*(p++) = '=';
+			if (elem->Value) {
+				char * v = elem->Value, c;
+				while ((c = *(v++)) != '\0') {
+					if (c == ' ') {
+						*(p++) = '+';
+					} else if (isalnum (c)) {
+						*(p++) = c;
+					} else {
+						p += sprintf (p, "%%%02X", (int)c);
+					}
+				}
+			}
+			*(p++) = '&';
+		} while ((elem = elem->Next) != NULL);
+		len = size;
+	}
+	data[len] = '\0';
+	if (form->Method != METH_POST) {
+		start_page_load (frame->Container, url, frame->Location, TRUE, NULL);
+		free (url);
+	} else {
+		LOADER ldr = start_page_load (frame->Container, url, frame->Location,
+		                              TRUE, data);
+		if (!ldr) free (data);
+	}
+}
+
+
 /*============================================================================*/
 BOOL
 input_activate (INPUT input, WORD slct)
@@ -807,85 +893,7 @@ input_activate (INPUT input, WORD slct)
 	}
 	
 	if (input->SubType == 'S' && form->Action) {
-		FRAME  frame = form->Frame;
-		INPUT  elem  = form->InputList;
-		size_t size  = 0, len;
-		char * data, * url;
-		
-		if (elem) {
-			do if (elem->checked && *elem->Name) {
-				size += 2 + strlen (elem->Name);
-				if (elem->Value) {
-					char * v = elem->Value, c;
-					while ((c = *(v++)) != '\0') {
-						size += (c == ' ' || isalnum (c) ? 1 : 3);
-					}
-				}
-				      + (elem->Value ? strlen (elem->Value) : 0);
-			} while ((elem = elem->Next) != NULL);
-		}
-		
-		if (form->Method == METH_POST) {
-			len  = 0;
-			url  = form->Action;
-			data = malloc (size +1);
-			if (size) size--;
-		} else {
-			len  = strlen (form->Action);
-			url  = strcpy (malloc (len + size +1), form->Action);
-			data = url;
-			data[len] = (strchr (url, '?') ? '&' : '?');
-		}
-		if (size) {
-			char * p = data + (len > 0 ? len +1 : 0);
-			size += len;
-			elem = form->InputList;
-			do if (elem->checked && *elem->Name) {
-				char * q;
-				len = strlen (elem->Name);
-				*p = '\0';
-				if ((q = strstr (data, elem->Name)) != NULL) {
-					char * f = (q == data || q[-1] == '?' || q[-1] == '&'
-					            ? q + len : NULL);
-					do if (f && (!*f || *f == '&' || *f == '=')) {
-						if (*f == '=') while (*(++f) && *f != '&');
-						if (*f == '&') f++;
-						while ((*(q++) = *(f++)) != '\0');
-						size -= f - q;
-						p    -= f - q;
-						break;
-					} else if ((q = strstr (q +1, elem->Name)) != NULL) {
-						f = (q[-1] == '&' ? q + len : NULL);
-					} while (q);
-				}
-				memcpy (p, elem->Name, len);
-				p += len;
-				*(p++) = '=';
-				if (elem->Value) {
-					char * v = elem->Value, c;
-					while ((c = *(v++)) != '\0') {
-						if (c == ' ') {
-							*(p++) = '+';
-						} else if (isalnum (c)) {
-							*(p++) = c;
-						} else {
-							p += sprintf (p, "%%%02X", (int)c);
-						}
-					}
-				}
-				*(p++) = '&';
-			} while ((elem = elem->Next) != NULL);
-			len = size;
-		}
-		data[len] = '\0';
-		if (form->Method != METH_POST) {
-			start_page_load (frame->Container, url, frame->Location, TRUE, NULL);
-			free (url);
-		} else {
-			LOADER ldr = start_page_load (frame->Container, url, frame->Location,
-			                              TRUE, data);
-			if (!ldr) free (data);
-		}
+		form_activate (form);
 	}
 	
 	input->checked = FALSE;
@@ -902,6 +910,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 	WORDITEM word = input->Word;
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
+	
+	if (input != form->TextActive) {
+		return NULL;   /* shouldn't happen but who knows... */
+	}
 	
 /*printf ("%04X %04X\n", key, state);*/
 	if (asc >= ' ' && asc != 127 &&
@@ -954,6 +966,15 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 		
 		case 55: /* shift+home */
 			if ((scrl = input->TextLen - form->TextCursrX) == 0) {
+				word = NULL;
+			}
+			break;
+		
+		case 13:
+			if (input->TextLen) {
+				form_activate (form);
+				form->TextActive = NULL;
+			} else {
 				word = NULL;
 			}
 			break;
