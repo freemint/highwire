@@ -458,8 +458,6 @@ loader_job (void * arg, long invalidated)
 			free_location (&loader->Location);
 			loader->Location = loc;
 			inet_close (sock);
-			containr_notify (loader->Target, HW_PageFinished, NULL);
-			loader->notified = FALSE;
 			
 			return TRUE; /* re-schedule with the new location */
 			
