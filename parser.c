@@ -41,6 +41,7 @@ typedef struct s_parser_priv {
 	}        OwnMem;
 	struct s_style {
 		STYLE    Next;
+		STYLE    Link;
 		KEYVALUE Css;
 		char     ClassId; /* '.'Class '#'Id */
 		char     Ident[1];
@@ -143,6 +144,11 @@ delete_parser (PARSER parser)
 	if (ParserPriv(parser)->Styles) {
 		STYLE style = ParserPriv(parser)->Styles, next;
 		do {
+			while (style->Link) {
+				STYLE link = style->Link;
+				style->Link = link->Link;
+				free (link);
+			}
 			next = style->Next;
 			free (style);
 		} while ((style = next) != NULL);
@@ -407,6 +413,65 @@ css_values (PARSER parser, const char * line, size_t len)
 	return entry;
 }
 
+/*----------------------------------------------------------------------------*/
+static KEYVALUE *
+css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
+{
+	PARSPRIV   prsdata = ParserPriv(parser);
+	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
+	STYLE      style   = prsdata->Styles;
+	while (style) {
+		BOOL match;
+		if ((style->Css.Key && style->Css.Key != tag) ||
+		    (class_id != style->ClassId)              ||
+		    (keyval && (strncmp (style->Ident, keyval->Value, keyval->Len)
+	                         || style->Ident[keyval->Len]))) {
+			match = FALSE;
+		} else {
+			STYLE    link = style->Link;
+			DOMBOX * box  = parser->Current.parentbox;
+			while (link && box) {
+				if (*link->Css.Value == '>') {
+					/* exact: <parent><tag> */
+				} else if (*link->Css.Value == '*') {
+					/* exact: <parent><*><tag> */
+					if ((box = box->Parent) == NULL) break;
+				} else if (*link->Css.Value == '+') {
+					/* exact: </sibling><tag> */
+					if ((box = box->ChildBeg) == NULL) break;
+					while (box->Sibling && box->Sibling->Sibling) box = box->Sibling;
+				}
+				if (link->ClassId == '.') {
+					if (!box->ClName || strcmp (box->ClName, link->Ident)) {
+						box = (!*link->Css.Value ? box->Parent : NULL);
+						continue;
+					}
+				} else if (link->ClassId == '#') {
+					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
+						box = (!*link->Css.Value ? box->Parent : NULL);
+						continue;
+					}
+				}
+				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
+					box = (!*link->Css.Value ? box->Parent : NULL);
+					continue;
+				
+				} else {
+					link = link->Link;
+					box  = box->Parent;
+				}
+			}
+			match = (link == NULL);
+		}
+		if (match) {
+			parser->hasStyle = TRUE;
+			entry = css_values (parser, style->Css.Value, style->Css.Len);
+		}
+		style = style->Next;
+	}
+	return entry;
+}
+
 /*==============================================================================
  * Parses a html TAG expression of the forms
  *    <TAG>  |  <TAG KEY ...>  |  <TAG KEY=VALUE ...>
@@ -461,13 +526,7 @@ parse_tag (PARSER parser, const char ** pptr)
 		lookup = FALSE;
 	
 	} else if (lookup && prsdata->Styles) {
-		STYLE style = prsdata->Styles;
-		do {
-			if (!style->ClassId && (!style->Css.Key || style->Css.Key == tag)) {
-				parser->hasStyle = TRUE;
-				entry = css_values (parser, style->Css.Value, style->Css.Len);
-			}
-		} while ((style = style->Next) != NULL);
+		entry = css_filter (parser, tag, '\0', NULL);
 	}
 
 	/*** if the tag is known or not, in every case we have to go through
@@ -521,26 +580,10 @@ parse_tag (PARSER parser, const char ** pptr)
 				entry++;
 				prsdata->KeyNum++;
 				if (val && len && prsdata->Styles) {
-					STYLE style = prsdata->Styles;
 					if (key == KEY_CLASS) {
-						do if (style->ClassId == '.'
-							    && (!style->Css.Key || style->Css.Key == tag)
-							    && strncmp (style->Ident, val, len) == 0
-							    && style->Ident[len] == '\0') {
-							parser->hasStyle = TRUE;
-							entry = css_values (parser,
-							                    style->Css.Value, style->Css.Len);
-						} while ((style = style->Next) != NULL);
+						entry = css_filter (parser, tag, '.', entry -1);
 					} else if (key == KEY_ID) {
-						do if (style->ClassId == '#'
-							    && (!style->Css.Key || style->Css.Key == tag)
-							    && strncmp (style->Ident, val, len) == 0
-							    && style->Ident[len] == '\0') {
-							parser->hasStyle = TRUE;
-							entry = css_values (parser,
-							                    style->Css.Value, style->Css.Len);
-							break;
-						} while ((style = style->Next) != NULL);
+						entry = css_filter (parser, tag, '#', entry -1);
 					}
 				}
 			}
@@ -682,6 +725,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 	do {
 		const char * beg = NULL, * end = NULL;
 		STYLE style = NULL;
+		STYLE b_lnk = NULL;
 		BOOL  skip  = FALSE;
 		
 		while (*p) {
@@ -750,6 +794,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				skip = FALSE;
 			}
 			
+	#if 0
 			if (isalpha (next(&p))) { /* check for conditional */
 				skip = TRUE;
 				continue;
@@ -761,18 +806,41 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				skip = TRUE;
 				continue;
 			}
+	#endif
 			
 			if (key > TAG_Unknown || cid) { /* store */
 				size_t len = end - beg;
 				STYLE  tmp = malloc (sizeof (struct s_style) + len);
 				if (len) memcpy (tmp->Ident, beg, len);
 				tmp->Ident[len] = '\0';
-				tmp->Css.Key = (key == TAG_LastDefined ? TAG_Unknown : key);
-				tmp->ClassId = cid;
+				tmp->ClassId    = cid;
+				tmp->Css.Key    = (key == TAG_LastDefined ? TAG_Unknown : key);
+				tmp->Css.Value  = NULL;
 				tmp->Next    = NULL;
-				if (style) style->Next = tmp;
-				else       *p_style    = tmp;
+				if (!*p_style) {
+					tmp->Link   = NULL;
+					*p_style    = tmp;
+				} else if (!style->Css.Value) {
+					b_lnk       = style;
+					tmp->Link   = NULL;
+					style->Next = tmp;
+				} else if (!b_lnk) {
+					tmp->Link   = style;
+					*p_style    = tmp;
+				} else {
+					tmp->Link   = b_lnk->Next;
+					b_lnk->Next = tmp;
+				}
 				style = tmp;
+			}
+			
+			/*............. look one ahead for selector concatenation */
+			if (isalpha (next(&p)) || *p == '.' || *p == '#') {
+				style->Css.Value = "";
+				continue;
+			} else if (*p == '>' || *p == '+' || *p == '*') {
+				style->Css.Value = p++;
+				continue;
 			}
 			
 			if (next(&p) == ',') p++;
@@ -812,14 +880,21 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		
 		if (style) {
 			style = *p_style;
-			if (end > beg) {
+			
+			if (end > beg) {   /* setup all styles to the rule string */
 				unsigned len = (unsigned)(end - beg);
 				do {
 					style->Css.Len   = len;
 					style->Css.Value = beg;
 					p_style = &style->Next;
 				} while ((style = *p_style) != NULL);
-			} else do {
+			
+			} else do {   /* no rule string, delete styles */
+				while (style->Link) {
+					STYLE link = style->Link;
+					style->Link = link->Link;
+					free (link);
+				}
 				*p_style = style->Next;
 				free (style);
 			} while ((style = *p_style) != NULL);
