@@ -135,12 +135,12 @@ struct s_ldr_chunk {
 
 /*============================================================================*/
 LOADER
-new_loader (LOCATION loc)
+new_loader (LOCATION loc, CONTAINR target)
 {
 	const char * appl = NULL;
 	LOADER loader = malloc (sizeof (struct s_loader));
 	loader->Location = location_share (loc);
-	loader->Target   = NULL;
+	loader->Target   = target;
 	loader->Encoding = ENCODING_WINDOWS1252;
 	loader->MimeType = MIME_Unknown;
 	loader->MarginW  = -1;
@@ -181,6 +181,8 @@ new_loader (LOCATION loc)
 	
 	loader->ExtAppl = (appl ? strdup (appl) : NULL);
 	
+	containr_notify (loader->Target, HW_ActivityBeg, NULL);
+	
 	return loader;
 }
 
@@ -194,6 +196,8 @@ delete_loader (LOADER * p_loader)
 		if (loader->notified) {
 			containr_notify (loader->Target, HW_PageFinished, NULL);
 		}
+		containr_notify (loader->Target, HW_ActivityEnd, NULL);
+
 #ifdef USE_INET
 		if (loader->rdSocket >= 0) {
 			inet_close (loader->rdSocket);
@@ -605,10 +609,8 @@ LOADER
 new_loader_job (const char *address, LOCATION base, CONTAINR target)
 {
 	LOCATION loc    = new_location (address, base);
-	LOADER   loader = new_loader (loc);
+	LOADER   loader = new_loader (loc, target);
 	
-	loader->Target  = target;
-
 	free_location (&loc);
 	loc = (loader->Cached ? loader->Cached : loader->Location);
 	
