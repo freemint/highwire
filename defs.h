@@ -334,11 +334,12 @@ typedef struct blocking_area * BLOCKER;
 typedef struct s_dombox        DOMBOX;
 struct s_dombox {
 	struct s_dombox_vtab {
-		void (*delete)(DOMBOX *);
-		LONG (*MinWidth) (DOMBOX *);
-		LONG (*MaxWidth) (DOMBOX *);
-		void (*draw)(DOMBOX *, long x, long y, const GRECT * clip, void *);
-		void (*format)(DOMBOX *, long width, BLOCKER);
+		void     (*delete)(DOMBOX *);
+		LONG     (*MinWidth) (DOMBOX *);
+		LONG     (*MaxWidth) (DOMBOX *);
+		DOMBOX * (*ChildAt)(DOMBOX *, LRECT *, long x, long y, long clip[4]);
+		void     (*draw)   (DOMBOX *, long x, long y, const GRECT * clip, void *);
+		void     (*format) (DOMBOX *, long width, BLOCKER);
 	}      * _vtab;
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;

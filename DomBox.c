@@ -7,15 +7,17 @@
 #include "global.h"
 
 
-static void vTab_delete (DOMBOX *);
-static LONG vTab_MinWidth (DOMBOX *);
-static LONG vTab_MaxWidth (DOMBOX *);
-static void vTab_draw   (DOMBOX *, long x, long y, const GRECT * clip, void *);
-static void vTab_format (DOMBOX *, long width, BLOCKER);
+static void     vTab_delete   (DOMBOX *);
+static LONG     vTab_MinWidth (DOMBOX *);
+static LONG     vTab_MaxWidth (DOMBOX *);
+static DOMBOX * vTab_ChildAt  (DOMBOX *, LRECT *, long x, long y, long clip[4]);
+static void     vTab_draw     (DOMBOX *, long x, long y, const GRECT *, void *);
+static void     vTab_format   (DOMBOX *, long width, BLOCKER);
 struct s_dombox_vtab DomBox_vTab = {
 	vTab_delete,
 	vTab_MinWidth,
 	vTab_MaxWidth,
+	vTab_ChildAt,
 	vTab_draw,
 	vTab_format
 };
@@ -194,6 +196,63 @@ vTab_MaxWidth (DOMBOX * This)
 }
 
 
+/*----------------------------------------------------------------------------*/
+#define   c_lft clip[0]
+#define   c_rgt clip[2]
+#define   c_top clip[1]
+#define   c_bot clip[3]
+static DOMBOX *
+vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
+{
+	DOMBOX * cld = This->ChildBeg;
+	LONG     top = 0, bot;
+	
+	while (y >= (bot = cld->Rect.Y + cld->Rect.H)) {
+		if (top < bot) {
+			top = bot;
+		}
+		if ((cld = cld->Sibling) == NULL) { /* below the lowest box */
+			break;
+		}
+	}
+	c_top = (bot = top) + r->Y;
+	while (cld) {
+		if (y < cld->Rect.Y) { /* between two boxes */
+			if (c_top < bot + r->Y) {
+				c_top = r->Y + bot;
+			}
+			if (c_bot > r->Y + cld->Rect.Y) {
+				c_bot = r->Y + cld->Rect.Y;
+			}
+			cld = NULL;
+			break;
+		}
+		if (x < cld->Rect.X) {
+			if (y < cld->Rect.Y + cld->Rect.H) {
+				long rgt = r->X + cld->Rect.X;
+				if (rgt < c_rgt) {
+					c_rgt = rgt;
+				}
+			}
+		} else if (x >= cld->Rect.X + cld->Rect.W) {
+			if (y < cld->Rect.Y + cld->Rect.H) {
+				long lft = r->X + cld->Rect.X + cld->Rect.W -1;
+				if (lft > c_lft) {
+					c_lft = lft;
+				}
+			}
+		} else {
+			if (y < (bot = cld->Rect.Y + cld->Rect.H)) {
+				break;
+			} else if (c_top < bot + r->Y) {
+				c_top = bot + r->Y;
+			}
+		}
+		cld = cld->Sibling;
+	}
+	return cld;
+}
+
 /*==============================================================================
  * Returns the box that contains the coordinate px/py which must be relative to
  * the start box's origin.  The rectangle r is set to the extent of this box,
@@ -205,16 +264,13 @@ DOMBOX *
 dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 {
 	DOMBOX * cld = box->ChildBeg;
-	long     x     = *px;
-	long     y     = *py;
-	long     c_lft = -x;
-	long     c_rgt = -x + box->Rect.W -1;
-	long     c_top = -y;
-	long     c_bot = -y + box->Rect.H -1;
-
-	r->X = -x;
-	r->Y = -y;
+	long     x   = *px;
+	long     y   = *py;
+	long     clip[4];
 	
+	c_rgt = (c_lft = r->X = -x) + box->Rect.W -1;
+	c_bot = (c_top = r->Y = -y) + box->Rect.H -1;
+
 	while (cld) {
 		if (y < cld->Rect.Y) {
 			c_bot = r->Y + cld->Rect.Y;
@@ -223,61 +279,19 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 			c_rgt = r->X + dombox_LftDist (box);
 			
 		} else if (x >= box->Rect.W - dombox_RgtDist (box)) {
-			c_lft = r->X + box->Rect.W - dombox_RgtDist (box);
+			c_lft = r->X + box->Rect.W - dombox_RgtDist (box) -1;
 		
 		} else if (y >= box->Rect.H - dombox_BotDist (box)) {
-			c_top = r->Y + box->Rect.H - dombox_BotDist (box);
+			c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1;
 		
-		} else {   /* search through children boxes */
-			LONG top = 0, bot;
-			while (y >= (bot = cld->Rect.Y + cld->Rect.H)) {
-				if (top < bot) {
-					top = bot;
-				}
-				if ((cld = cld->Sibling) == NULL) { /* below the lowest box */
-					break;
-				}
-			}
-			c_top = (bot = top) + r->Y;
-			while (cld) {
-				if (y < cld->Rect.Y) { /* between two boxes */
-					c_top = r->Y + bot;
-					c_bot = r->Y + cld->Rect.Y;
-					cld = NULL;
-					break;
-				}
-				if (x < cld->Rect.X) {
-					if (y < cld->Rect.Y + cld->Rect.H) {
-						long rgt = r->X + cld->Rect.X;
-						if (rgt < c_rgt) {
-							c_rgt = rgt;
-						}
-					}
-				} else if (x >= cld->Rect.X + cld->Rect.W) {
-					if (y < cld->Rect.Y + cld->Rect.H) {
-						long lft = r->X + cld->Rect.X + cld->Rect.W -1;
-						if (lft > c_lft) {
-							c_lft = lft;
-						}
-					}
-				} else {
-					if (y < (bot = cld->Rect.Y + cld->Rect.H)) {
-						break;
-					} else if (c_top < bot + r->Y) {
-						c_top = bot + r->Y;
-					}
-				}
-				cld = cld->Sibling;
-			}
-			if (cld) {
-				r->X += cld->Rect.X;
-				r->Y += cld->Rect.Y;
-				box  =  cld;
-				cld  =  box->ChildBeg;
-				x    -= box->Rect.X;
-				y    -= box->Rect.Y;
-				continue;
-			}
+		} else if ((cld = box->_vtab->ChildAt (box, r, x, y, clip)) != NULL) {
+			r->X += cld->Rect.X;
+			r->Y += cld->Rect.Y;
+			box  =  cld;
+			cld  =  box->ChildBeg;
+			x    -= box->Rect.X;
+			y    -= box->Rect.Y;
+			continue;
 		}
 		break;   /* finished */
 	}
