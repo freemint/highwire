@@ -276,6 +276,29 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 	return cld;
 }
 
+
+/*============================================================================*/
+DOMBOX *
+dombox_Offset (DOMBOX * This, long * x, long * y)
+{
+	DOMBOX * box = This;
+	if (!box) {
+		*x = 0;
+		*y = 0;
+	
+	} else {
+		*x = box->Rect.X;
+		*y = box->Rect.Y;
+		while (box->Parent) {
+			box = box->Parent;
+			*x += box->Rect.X;
+			*y += box->Rect.Y;
+		}
+	}
+	return box;
+}
+
+
 /*==============================================================================
  * Returns the box that contains the coordinate px/py which must be relative to
  * the start box's origin.  The rectangle r is set to the extent of this box,

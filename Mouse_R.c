@@ -351,17 +351,12 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	} else if (txt_o) {   /* deactivate previous active text input field */
 		WORDITEM word = input_activate (txt_o, -1);
 		if (word) {
-			DOMBOX * box = &word->line->Paragraph->Box;
-			long     x   = box->Rect.X + word->h_offset;
-			long     y   = box->Rect.Y + word->line->OffsetY - word->word_height;
-			while (box->Parent) {
-				box = box->Parent;
-				x  += box->Rect.X;
-				y  += box->Rect.Y;
-			}
-			frame = (FRAME)box;
-			watch.g_x = x + frame->clip.g_x - frame->h_bar.scroll;
-			watch.g_y = y + frame->clip.g_y - frame->v_bar.scroll;
+			long  x, y;
+			frame     = (FRAME)dombox_Offset (&word->line->Paragraph->Box, &x, &y);
+			watch.g_x = x + frame->clip.g_x - frame->h_bar.scroll
+			              + word->h_offset;
+			watch.g_y = y + frame->clip.g_y - frame->v_bar.scroll
+			              + word->line->OffsetY - word->word_height;
 			watch.g_w = word->word_width;
 			watch.g_h = word->word_height + word->word_tail_drop;
 			hwWind_redraw (wind, &watch);

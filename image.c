@@ -485,19 +485,16 @@ image_job (void * arg, long invalidated)
 	*/
 		if (containr_calculate (frame->Container, NULL)
 		    && par_w == par->Box.Rect.W) {
-			DOMBOX * box = img->offset.Origin;
-			long x = frame->clip.g_x - frame->h_bar.scroll;
-			long y = frame->clip.g_y - frame->v_bar.scroll;
-			do {
-				x += box->Rect.X;
-				y += box->Rect.Y;
-			} while ((box = box->Parent) != NULL);
-			rec.g_y = y;
+			long x, y;
+			dombox_Offset (img->offset.Origin, &x, &y);
+			x += frame->clip.g_x - frame->h_bar.scroll;
+			y += frame->clip.g_y - frame->v_bar.scroll;
 			if (off_y == img->offset.Y) {
-				rec.g_y += off_y;
+				y    += off_y;
 			} else {
 				off_y = 0;
 			}
+			rec.g_y = y;
 			if (par_h == par->Box.Rect.H) {
 				rec.g_x = x;
 				rec.g_w = par_w;

@@ -373,6 +373,7 @@ DOMBOX * dombox_dtor (DOMBOX *);
 #define  dombox_BotDist(this)      (dombox_Dist(this,Bot) + (this)->BorderWidth)
 #define  dombox_LftDist(this)      (dombox_Dist(this,Lft) + (this)->BorderWidth)
 #define  dombox_RgtDist(this)      (dombox_Dist(this,Rgt) + (this)->BorderWidth)
+DOMBOX * dombox_Offset  (DOMBOX *, long * x, long * y);
 #define  dombox_MinWidth(this)     ((*((this)->_vtab->MinWidth))(this))
 #define  dombox_MaxWidth(this)     ((*((this)->_vtab->MaxWidth))(this))
 #define  dombox_Paragrph(this)     ((*((this)->_vtab->Paragrph))(this))

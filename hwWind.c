@@ -1629,17 +1629,10 @@ hwWind_button (WORD mx, WORD my)
 		if (wind->Input) {
 			WORDITEM word = input_activate (wind->Input, -1);
 			if (word) {
-				GRECT    clip;
-				FRAME    frame;
-				DOMBOX * box = &word->line->Paragraph->Box;
-				long     lx  = box->Rect.X;
-				long     ly  = box->Rect.Y;
-				while (box->Parent) {
-					box = box->Parent;
-					lx += box->Rect.X;
-					ly += box->Rect.Y;
-				}
-				frame = (FRAME)box;
+				GRECT clip;
+				long  lx, ly;
+				FRAME frame = (FRAME)dombox_Offset (&word->line->Paragraph->Box,
+				                                    &lx, &ly);
 				clip.g_x = lx + frame->clip.g_x - frame->h_bar.scroll
 				              + word->h_offset;
 				clip.g_y = ly + frame->clip.g_y - frame->v_bar.scroll
@@ -1857,16 +1850,13 @@ hwWind_keybrd (WORD key, UWORD state)
 		INPUT    next;
 		WORDITEM word = input_keybrd (wind->Input, key, state, &clip, &next);
 		if (word) {
-			DOMBOX * box = &word->line->Paragraph->Box;
-			FRAME  frame = containr_Frame ((CONTAINR)wind->Active);
-			long   x     = (long)clip.g_x + word->h_offset
-			             + frame->clip.g_x - frame->h_bar.scroll;
-			long   y     = (long)clip.g_y + word->line->OffsetY
-			             + frame->clip.g_y - frame->v_bar.scroll;
-			do {
-				x += box->Rect.X;
-				y += box->Rect.Y;
-			} while ((box = box->Parent) != NULL);
+			FRAME frame = containr_Frame ((CONTAINR)wind->Active);
+			long  x, y;
+			dombox_Offset (&word->line->Paragraph->Box, &x, &y);
+			x += (long)clip.g_x + word->h_offset
+			     + frame->clip.g_x - frame->h_bar.scroll;
+			y += (long)clip.g_y + word->line->OffsetY
+			     + frame->clip.g_y - frame->v_bar.scroll;
 			
 			if (next != wind->Input) {
 				if (next) {

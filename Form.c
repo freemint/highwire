@@ -771,22 +771,11 @@ coord_diff (INPUT check, INPUT input,  GRECT * rect)
 	rect->g_w = c_w->word_width;
 	rect->g_h = c_w->word_height + c_w->word_tail_drop;
 	if (check->Paragraph != input->Paragraph) {
-		DOMBOX * box = &check->Paragraph->Box;
-		long     x   = box->Rect.X;
-		long     y   = box->Rect.Y;
-		while ((box = box->Parent) != NULL) {
-			x += box->Rect.X;
-			y += box->Rect.Y;
-		}
-		box = &input->Paragraph->Box;
-		x  -= box->Rect.X;
-		y  -= box->Rect.Y;
-		while ((box = box->Parent) != NULL) {
-			x -= box->Rect.X;
-			y -= box->Rect.Y;
-		}
-		rect->g_x += x;
-		rect->g_y += y;
+		long c_x, c_y, i_x, i_y;
+		dombox_Offset (&check->Paragraph->Box, &c_x, &c_y);
+		dombox_Offset (&input->Paragraph->Box, &i_x, &i_y);
+		rect->g_x += c_x - i_x;
+		rect->g_y += c_y - i_y;
 	}
 }
 
@@ -862,16 +851,12 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 		case IT_SELECT: {
 			SELECT sel = input->u.Select;
 			if (sel && sel->NumItems > 0) {
-				WORDITEM word   = input->Word;
-				DOMBOX * box = &input->Paragraph->Box;
-				long     x   = word->h_offset;
-				long     y   = word->line->OffsetY;
-				do {
-					x += box->Rect.X;
-					y += box->Rect.Y;
-				} while ((box = box->Parent) != NULL);
-				((long*)radio)[0] = x;
-				((long*)radio)[1] = y + word->word_tail_drop -1;
+				WORDITEM word = input->Word;
+				long   * x    = &((long*)radio)[0];
+				long   * y    = &((long*)radio)[1];
+				dombox_Offset (&input->Paragraph->Box, x, y);
+				*x += word->h_offset;
+				*y += word->line->OffsetY + word->word_tail_drop -1;
 				*popup = sel->Array;
 				rtn = 1;
 			}
