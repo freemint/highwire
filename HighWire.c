@@ -59,7 +59,6 @@ main (int argc, char **argv)
 {
 	WORD info, u;
 	BOOL quit = FALSE;
-	WORD AES_type;
 	long gdostype;
 	char def_address[] = "html\\highwire.htm";
 
@@ -89,9 +88,6 @@ main (int argc, char **argv)
 	 * GLOBAL is needed for inter process communication under memory protection.
 	 * 'Sysconf()' is from Frank Naumann in article
 	 * <199904241138.a34259@l2.maus.de> in Maus.Computer.Atari.Programmieren.
-     *
-     * here is the old routine in case the new one is problematic
-	 *	if (can_extended_mxalloc()) gslongname = (char *)Mxalloc(128 + HW_PATH_MAX, ALLOCMODE);
 	 */
 	if (Sysconf(-1) != -EINVFN) {
 		short mode = 0x0003  /* prefer TT ram    */
@@ -119,18 +115,14 @@ main (int argc, char **argv)
 
 	/* identify the AES and issue appropriate initialization calls
 	 */
-
-	AES_type = identify_AES();
-
+	if (sys_type() & (SYS_MAGIC|SYS_NAES|SYS_XAAES)) {
 	/* If you know a documented length greater than 79 characters, add it. */
-	if (AES_type == AES_nAES)
-		aes_max_window_title_length = 127;
-
-	/* BUG: This should fix single TOS but Geneva will probably still fail. */
-	if (AES_type != AES_single)
+		if (sys_NAES()) {
+			aes_max_window_title_length = 127;
+		}
 		/* our name in the application menu */
-		menu_register(gl_apid, "  HighWire HTML");
-
+		menu_register(gl_apid, "  HighWire " _HIGHWIRE_VERSION_);
+	}
 	(void)Pdomain(1);  /* we know about long file names */
 
 #ifdef GEM_MENU
@@ -153,9 +145,10 @@ main (int argc, char **argv)
 	/* grab the screen colors for later use */
 	save_colors();
 
-	if (AES_type == AES_single)
+	if (sys_type() & SYS_TOS) {
 		init_logging();
-
+	}
+	
 	/* init paths and load config */
 	init_paths();
 

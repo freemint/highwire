@@ -160,25 +160,6 @@ typedef struct s_input        * INPUT;
 #endif
 
 
-#ifndef MagX_cookie
-#define 	MagX_cookie		0x4D616758L
-#endif
-
-#ifndef AES_single
-#define	AES_single	0
-#define	AES_MagiC	1
-#define	AES_Geneva	2
-#define	AES_MTOS	3
-#define	AES_nAES	4
-#endif
-
-#ifndef ck_entry 
-typedef struct {
-    long cktag;
-    long ckvalue;
-} ck_entry;
-#endif
-
 /* ********** Consts ************** */
 
 #define SPACE_BICS  561

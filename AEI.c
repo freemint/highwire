@@ -55,55 +55,40 @@ WORD appl_xgetinfo(WORD type, WORD *out1, WORD *out2, WORD *out3, WORD *out4)
 
 
 /*==============================================================================
- * This identifies what AES you are running under.
+ * Detects the system type, AES + kernel.
+ * This function shouldn't be called directly, use the sys_type() instead!
 */
-WORD
-identify_AES(void)
+UWORD _systype_v;
+UWORD
+_systype (void)
 {
-	long	search_id;
-	long	*search_p = (long *)Setexc(0x5A0/4, (void (*)())-1);
-	WORD	retv = AES_single;
-
-	if (search_p != NULL) {
-		while ((search_id = *search_p) != 0) {
-			if (search_id == 0x4D674D63L/*MgMc*/ || search_id == MagX_cookie)
-				retv = AES_MagiC;
-			if (search_id == 0x6E414553L/*nAES*/)
-				retv = AES_nAES;
-			if (search_id == 0x476E7661L/*Gnva*/)
-				retv = AES_Geneva;
-
-			search_p += 2;
+	long * ptr = (long *)Setexc(0x5A0/4, (void (*)())-1);
+	
+	_systype_v = SYS_TOS;
+	
+	if (!ptr) {
+		return _systype_v;   /* stone old TOS without any cookie support */
+	}
+	while (*ptr) {
+		if (*ptr == 0x4D674D63L/*MgMc*/ || *ptr == 0x4D616758L/*MagX*/) {
+			_systype_v = (_systype_v & ~0xF) | SYS_MAGIC;
+		} else if (*ptr == 0x4D694E54L/*MiNT*/) {
+			_systype_v = (_systype_v & ~0xF) | SYS_MINT;
+		
+		} else if (*ptr == 0x476E7661L/*Gnva*/) {
+			_systype_v |= SYS_GENEVA;
+		} else if (*ptr == 0x6E414553L/*nAES*/) {
+			_systype_v |= SYS_NAES;
+		}
+		ptr += 2;
+	}
+	if (_systype_v & SYS_MINT) { /* check for XaAES */
+		WORD out = 0, u;
+		if (wind_get (0, (((WORD)'X') <<8)|'A', &out, &u,&u,&u) && out) {
+			_systype_v |= SYS_XAAES;
 		}
 	}
-
-	return retv;
-}	/* Ends:	WORD identify_AES(void) */
-
-
-/*==============================================================================
- * Looks for MiNT or MagiC Cookies.  If found TRUE returned,
- * which indicates we can call extended Mxalloc() with GLOBAL flag.
-*/
-BOOL
-can_extended_mxalloc(void)
-{
-	long	search_id;
-	long	*search_p = (long *)Setexc(0x5A0/4, (void (*)())-1);
-	BOOL	retv = FALSE;
-
-	if (search_p != NULL) {
-		while ((search_id = *search_p) != 0) {
-			if (search_id == 0x4D674D63L || search_id == MagX_cookie
-			   || search_id == 0x4D694E54L) {
-				retv = TRUE;
-				break;
-			}
-			search_p += 2;
-		}
-	}
-
-	return retv;
+	return _systype_v;
 }
 
 

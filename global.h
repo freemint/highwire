@@ -66,8 +66,20 @@ void check_mouse_position (WORD mx, WORD my);
 
 /* in AEI.c */
 
-WORD identify_AES(void);
-BOOL can_extended_mxalloc(void);
+#define SYS_TOS    0x0001
+#define SYS_MAGIC  0x0002
+#define SYS_MINT   0x0004
+#define SYS_GENEVA 0x0010
+#define SYS_NAES   0x0020
+#define SYS_XAAES  0x0040
+extern UWORD _systype_v;
+extern UWORD _systype(void);
+/* detect the system type, AES + kernel */
+#define sys_type()    (_systype_v ? _systype_v : _systype())
+#define sys_MAGIC()   ((sys_type() & SYS_MAGIC) != 0)
+#define sys_NAES()    ((sys_type() & SYS_NAES)  != 0)
+#define sys_XAAES()   ((sys_type() & SYS_XAAES) != 0)
+
 BOOL page_load   (void);
 void rpopup_open (WORD, WORD);
 void rpoplink_open (WORD, WORD, CONTAINR, void *);
