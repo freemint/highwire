@@ -454,7 +454,7 @@ scan_namedchar (const char ** pptr, void * dst, BOOL wordNchar, WORD mapping)
 
 /*==============================================================================
  * Scanner for color expressions of the forms
- *    <name>  |  #<RGB hex value>
+ *    <name>  |  #<RGB hex value> | rgb(<r>,<g>,<b>)
  * If successful the value will be returned as a 24-bit RRGGBB long, else -1
  * will be returned.
  *
@@ -543,15 +543,7 @@ static const struct COLORNAME color[] = {
 	{"whitesmoke",      0xF5F5F5L},
 	{"yellow",          0xFFFF00L}, {"yellowgreen",   0x9ACD32L}
 };
-
-/* takes a string and find the matching VDI color index
- * baldrick - august 20, 2001
- * mj - october 01, 2001: function now uses big color array
- *
- * AltF4 December 19, 2001: completely redesigned, uses binary tree search now
- *                          instead of a linear search.
- */
-
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 long
 scan_color (const char * text, size_t len)
 {
@@ -573,6 +565,25 @@ scan_color (const char * text, size_t len)
 			if (col > 0xFFFFFFL) {
 				col = -1;
 			}
+		
+		} else if (len > 4 && strnicmp (text, "rgb(", 4) == 0) {
+			char * rgb = (char*)&col;
+			short  i   = 3;
+			col  =  0;
+			text += 4;
+			do {
+				char * p;
+				long   c = strtol (text, &p, 10);
+				while (isspace(*p)) p++;
+				if (*(text = p) == '%') {
+					c = (255 * c + 50) /100;
+					while (isspace(*(++text)));
+				}
+				++rgb;
+				if (c > 0) *rgb = (c < 255 ? (char)c : 255);
+				if (*text != ',') break;
+				text++;
+			} while (--i);
 		
 		} else if (len < sizeof(name)) {
 			int beg = 0;

@@ -50,7 +50,7 @@ void * scan_namedchar (const char ** pptr, void * dst,
 
 long scan_color (const char * text, size_t len);
 				/* Scanner for color expressions of the forms
-				 *    <name>  |  #<RGB hex value>
+				 *    <name>  |  #<RGB hex value> | rgb(<r>,<g>,<b>)
 				 * 'len' ist the expression's length in 'text'.
 				 * If successful the value will be returned as a 24-bit RRGGBB long,
 				 * else -1 will be returned.
