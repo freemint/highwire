@@ -14,14 +14,16 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 		MIME_TXT_CSS,     /* text/css   "*.css"                     */
 
 	MIME_IMAGE = 0x2000,
-		MIME_IMG_JPEG,    /* image/jpeg   "*.jpg,*.jpeg" */
-		MIME_IMG_GIF,     /* image/gif    "*.gif"        */
-		MIME_IMG_PNG,     /* image/png    "*.png"        */
-		MIME_IMG_X_XIMG,  /* image/x-ximg "*.img"        */
+		MIME_IMG_JPEG,    /* image/jpeg      "*.jpg,*.jpeg" */
+		MIME_IMG_GIF,     /* image/gif       "*.gif"        */
+		MIME_IMG_PNG,     /* image/png       "*.png"        */
+		MIME_IMG_X_XBM,   /* image/x-xbitmap "*.xbm"        */
+		MIME_IMG_X_XPM,   /* image/x-xpixmap "*.xbm"        */
+		MIME_IMG_X_XIMG,  /* image/x-ximg    "*.img"        */
 
 	MIME_AUDIO = 0x3000,
-		MIME_AUD_BASIC,   /* audio/basic  "*.au,"*.snd" */
-		MIME_AUD_X_WAV,   /* audio/x-wav  "*.wav"       */
+		MIME_AUD_BASIC,   /* audio/basic  "*.au,*.snd" */
+		MIME_AUD_X_WAV,   /* audio/x-wav  "*.wav"      */
 
 	MIME_VIDEO = 0x4000,
 		MIME_VID_MPEG,    /* video/mpeg   "*.mpg" */

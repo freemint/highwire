@@ -32,7 +32,9 @@ static const struct ext_2_mime mime_list[] = {
 	{ "shtml", MIME_TXT_HTML,   NULL       },
 	{ "snd",   MIME_AUD_BASIC,  "GEMJing"  },
 	{ "txt",   MIME_TXT_PLAIN,  NULL       },
-	{ "wav",   MIME_AUD_X_WAV,  "GEMJing"  }
+	{ "wav",   MIME_AUD_X_WAV,  "GEMJing"  },
+	{ "xbm",   MIME_IMG_X_XBM,  ""         },
+	{ "xpm",   MIME_IMG_X_XPM,  ""         }
 };
 
 struct mime_2_ext {
