@@ -2039,10 +2039,10 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 		if ((end = strchr (beg, '<')) == NULL) {
 			end = strchr (beg, '\0');
 		}
-		selct_option (current, beg, end - beg, parser->Frame->Encoding,
-		              get_value     (parser, KEY_DISABLED, NULL,0),
-		              get_value_str (parser, KEY_VALUE),
-		              get_value     (parser, KEY_SELECTED, NULL,0));
+		selct_option (current, beg, end - beg,
+		              get_value (parser, KEY_DISABLED, NULL,0),
+		              parser->Frame->Encoding, get_value_str (parser, KEY_VALUE),
+		              get_value (parser, KEY_SELECTED, NULL,0));
 		*text = end;
 	}
 	return (flags|PF_SPACE);

@@ -117,7 +117,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 		input->checked = (type == IT_HIDDN);
 	} else {
 		input->Word    = current->word;
-		input->checked = (type >= IT_TEXT);
+		input->checked = (type >= IT_SELECT/*IT_TEXT*/);
 		current->word->input = input;
 	}
 	
@@ -365,7 +365,7 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 /*============================================================================*/
 INPUT
 selct_option (TEXTBUFF current, const char * text, UWORD tlen,
-              ENCODING enoding, BOOL disabled, char * value, BOOL selected)
+              BOOL disabled, ENCODING enoding, char * value, BOOL selected)
 {
 	INPUT    input = (current->form ? ((FORM)current->form)->Last : NULL);
 	SELECT   sel;
@@ -461,7 +461,7 @@ input_draw (INPUT input, WORD x, WORD y)
 		vsl_color (vdi_handle, G_LBLACK);
 		c_lu = G_BLACK;
 		c_rd = G_LWHITE;
-	} else if (input->checked) {
+	} else if (input->checked && input->Type != IT_SELECT) {
 		vsf_color (vdi_handle, G_LBLACK);
 		vsl_color (vdi_handle, G_BLACK);
 		c_lu = G_BLACK;
@@ -584,6 +584,7 @@ input_handle (INPUT input, GRECT * radio)
 		rtn = 0;
 	
 	} else switch (input->Type) {
+		
 		case IT_RADIO:
 			if (input->checked) {
 				rtn = 0;
@@ -629,10 +630,17 @@ input_handle (INPUT input, GRECT * radio)
 				input->checked = TRUE;
 			}
 			break;
+		
 		case IT_CHECK:
 			input->checked = !input->checked;
 			rtn = 1;
 			break;
+		
+		case IT_SELECT:
+			puts("IT_SELECT");
+			rtn = 0;
+			break;
+			
 		case IT_BUTTN:
 			if (!input->checked) {
 				input->checked = TRUE;
