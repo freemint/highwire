@@ -682,7 +682,11 @@ header_job (void * arg, long invalidated)
 	/* start loading
 	*/
 	if (hdr.MimeType) {
-		loader->MimeType = hdr.MimeType;
+		if (MIME_Major (hdr.MimeType) && MIME_Minor (hdr.MimeType)
+		    && (MIME_Major (loader->MimeType) != MIME_Major (hdr.MimeType)
+			     || !MIME_Minor (loader->MimeType))) {
+			loader->MimeType = hdr.MimeType;
+		}
 		if (hdr.Encoding) {
 			loader->Encoding = hdr.Encoding;
 		}
