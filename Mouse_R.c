@@ -384,7 +384,7 @@ check_mouse_position (WORD mx, WORD my)
 		focus_rect   = clip;
 	}
 
-	if ((cont->Resize == TRUE) && (PE_Type (elem) == PE_BORDER))
+	if ((PE_Type (elem) == PE_BORDER) && (cont->Resize == TRUE))
 	                              graf_mouse (hwWind_Mshape = THICK_CROSS, NULL);
 	else if (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,   NULL);
 	else if (PE_isActive (elem))  graf_mouse (hwWind_Mshape = POINT_HAND,  NULL);
