@@ -1,5 +1,94 @@
 Ok here are the new supports and changes
 
+February 7, 2003
+
+  Baldrick's patches
+
+  inet.c:
+    - lines 56 - 59 reworked code to use ovl_getftab()
+       ovl_init() left as some OVL's might need to malloc
+       etc.
+       
+  ovl_sys.h:
+    - lines 31-33 added long ftabtype and info to ovl_methods_t
+      struct
+    - line 55 modified OVL_DECL define to pass ftabtype
+    
+  paragraph.c:
+    - lines 771-773 out commented as per mailing list
+
+  modules\sample.c
+    - line 38 added ftabtype to OVL_DECL
+
+  modules\network.c
+    - lines 42 and 44 added FTAB_NETWORK to OVL_DECL
+    - reworked ovl_init() it's functionality is in ovl_getftab now
+    
+
+February 6, 2003
+
+  Baldrick's patches
+
+  ovl_sys.h:
+    - modified OVL_REVISION
+    - modified OVL_MAGIC to a numeric value 
+    
+February 3, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 97 (new_hwWind) + 578 + 591 + 621 (wnd_hdlr):  additional
+      argument for hwWind_setInfo().
+    - line 170..178 (hwWind_setInfo):  additional argument statNinfo to
+      control the buffer for the infobar text.
+    - line 377 (hist_append):  history entry is take now from Stat[].
+
+  hwWind.h:
+    - line 21:  in struct hw_window, additional buffer for alternate  
+      infobar text.
+    - line 33:  additional argument for hwWind_setInfo().
+
+  Loader.c:
+    - line 425 + 432 + 456 (loader_job):  update infobar after
+      connecting finished.
+
+  Mouse_R.c:
+    - line 345 + 347 + 364 (check_mouse_position):  additional argument
+      for hwWind_setInfo() to mark it a temporary text.
+
+  Paragrph.c:
+    - line 591 (content_destroy):  also free par->Line list.
+    - line 762 (content_minimum):  delete unlinked word items.
+
+  Table.c:
+    - line 56 (delete_table):  also free the table struct itself.
+
+January 30, 2003
+
+  AltF4's patches
+
+  render.c:
+    - line 921 (render_A_tag):  added encoding for '&..;' entities
+      inside of URLs.
+
+January 29, 2003
+
+  Baldrick's patches
+  
+  ovl_sys.c:
+    - trimmed some junk off the header
+    
+  ovl_sys.h:
+    - line 34: added new routine ovl_getftab()
+    - lines 85-89 added ovl_getftab() define and info
+    
+  modules\sample.c
+    - added ovl_getftab() routine
+
+  modules\network.c
+    - added ovl_getftab() routine
+    
 January 28, 2003
 
   AltF4's patches
