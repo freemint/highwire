@@ -200,7 +200,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->disp_h = (h > 0 ? h : 16);
 	set_word (img);
 		
-	if (!img->u.Data) {
+	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 		sched_insert (image_job, img, 0);
 	}
 	
