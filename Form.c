@@ -92,6 +92,7 @@ static WCHAR * edit_init (INPUT, TEXTBUFF, UWORD cols, size_t size);
 static BOOL    edit_zero (INPUT);
 static void    edit_feed (INPUT, ENCODING, const char * beg, const char * end);
 static BOOL    edit_char (INPUT, WORD chr, WORD col);
+static BOOL    edit_delc (INPUT, WORD col);
 
 
 /*============================================================================*/
@@ -1032,29 +1033,26 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 8: /* backspace */
-			if (input->readonly || !form->TextCursrX) {
+			if (input->readonly) {
 				word = NULL;
-				break;
-			} else if (--form->TextCursrX < form->TextShiftX) {
-				WORD n = form->TextCursrX - (WORD)input->VisibleX;
-				form->TextShiftX = max (0, n);
+			} else if (form->TextCursrX && edit_delc (input, form->TextCursrX-1)) {
+				input->TextLen--;
+				scrl = -1;
+			} else {
+				word = NULL;
 			}
+			break;
+		
 		case 127: /* delete */
-			if (!input->readonly && form->TextCursrX < input->TextLen) {
-				WORD    num = input->TextLen    - form->TextCursrX;
-				WCHAR * w   = input->Word->item + form->TextCursrX;
-				char  * c   = input->Value      + form->TextCursrX;
-				while (--num) {
-					*(w) = *(w +1); w++;
-					*(c) = *(c +1); c++;
-				}
-				*(c) = '\0';
-				if (--input->TextLen < form->TextShiftX + input->VisibleX) {
-					WORD n = input->TextLen - (WORD)input->VisibleX;
-					form->TextShiftX = max (0, n);
-				}
-				break;
+			if (input->readonly) {
+				word = NULL;
+			} else if (edit_delc (input, form->TextCursrX)) {
+				input->TextLen--;
+			} else {
+				word = NULL;
 			}
+			break;
+		
 		default:
 			word = NULL;
 	
@@ -1099,10 +1097,13 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			if (form->TextShiftX < form->TextCursrX - (WORD)input->VisibleX) {
 				form->TextShiftX = form->TextCursrX - (WORD)input->VisibleX;
 			}
-		} else if (scrl) {
+		} else {
 			form->TextCursrX += scrl;
 			if (form->TextShiftX > form->TextCursrX) {
 				form->TextShiftX = form->TextCursrX;
+			} else if (input->TextLen < form->TextShiftX + input->VisibleX) {
+				WORD n = input->TextLen - (WORD)input->VisibleX;
+				form->TextShiftX = max (0, n);
 			}
 		}
 /*printf ("%i %i %i\n", form->TextShiftX, form->TextCursrX, input->VisibleX);*/
@@ -1249,6 +1250,38 @@ edit_char (INPUT input, WORD chr, WORD col)
 		ok = TRUE;
 	
 	} else { /* buffer full */
+		ok = FALSE;
+	}
+	return ok;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+edit_delc (INPUT input, WORD col)
+{
+	WCHAR * w_beg = input->TextArray[0];
+	WCHAR * w_end = input->TextArray[1];
+	BOOL ok;
+	
+	if (col < w_end - w_beg) {
+		
+		if (input->Value) { /*password */
+			char * ptr = input->Value + col;
+			do {
+				*(ptr) = *(ptr +1);
+			} while (*(ptr++));
+			*(--w_end) = '\0';
+		
+		} else {
+			WCHAR * ptr = w_beg + col;
+			do {
+				*(ptr) = *(ptr +1);
+			} while (*(ptr++));
+		}
+		input->TextArray[1]--;
+		ok = TRUE;
+	
+	} else {
 		ok = FALSE;
 	}
 	return ok;
