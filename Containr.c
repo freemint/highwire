@@ -1231,15 +1231,18 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 					frame_draw (cont->u.Frame, &area, highlight);
 					
 				} else {
+					static WORD pattern[] = {
+						0xB6B6,0x6B6B,0xDDDD,0xB6B6,0x6B6B,0xB6B6,0xDDDD,0x6B6B,
+						0xB6B6,0x6B6B,0xDDDD,0xB6B6,0x6B6B,0xB6B6,0xDDDD,0x6B6B };
 					GRECT r = cont->Area;
 					
 					r.g_w += r.g_x - brd_w;
 					r.g_h += r.g_y - brd_h;
 					
 					vsf_perimeter (vdi_handle, PERIMETER_ON);
-					vsf_interior  (vdi_handle, FIS_PATTERN);
-					vsf_style     (vdi_handle, 16);
-					vsf_color     (vdi_handle, (cont->Parent ? G_LWHITE : G_RED));
+					vsf_interior  (vdi_handle, FIS_USER);
+					vsf_udpat     (vdi_handle, pattern, 1);
+					vsf_color     (vdi_handle, G_LWHITE);
 					vswr_mode     (vdi_handle, MD_REPLACE);
 					
 					v_bar (vdi_handle, (short*)&r);
