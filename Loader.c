@@ -366,7 +366,7 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 	} else {
 		printf ("start_objc_load() invalid protocol %i.\n", loc->Proto);
 		loader->Error = -EPROTONOSUPPORT;
-		(*loader->SuccJob)(loader, (long)target);
+		(*loader->SuccJob)(loader, 0);
 		loader = NULL;
 	}
 	
@@ -756,7 +756,7 @@ header_job (void * arg, long invalidated)
 		loader->Data     = strdup (hdr.Head);
 	}
 	if (loader->SuccJob) {
-		(*loader->SuccJob)(loader, (long)loader->Target);
+		(*loader->SuccJob)(loader, 0);
 	} else {
 		start_parser (loader);
 	}
@@ -804,7 +804,7 @@ generic_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
 	
-	if (!invalidated) {
+	if (!invalidated && !loader->Error) {
 		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
 		
 		if (!loader->ExtAppl) {
