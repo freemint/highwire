@@ -339,27 +339,31 @@ image_job (void * arg, long invalidated)
 	IMAGE    img = arg;
 	PARAGRPH par = img->paragraph;
 	LOCATION loc = img->source;
-	FRAME frame = img->frame;
-	GRECT rec   = frame->Container->Area, * clip = &rec;
-	short old_w = img->disp_w;
-	short old_h = img->disp_h;
-	int calc_xy = 0;
+	FRAME  frame = img->frame;
+	GRECT  rec   = frame->Container->Area, * clip = &rec;
+	short  old_w = img->disp_w;
+	short  old_h = img->disp_h;
+	int  calc_xy = 0;
 	
-	long   hash   = (img->set_w && img->set_h
-	                 ? img_hash (img->disp_w, img->disp_h, img->backgnd) : 0);
-	CACHED cached = (hash ? cache_lookup (loc, hash, &hash) : NULL);
+	long   hash   = 0;
+	CACHED cached = NULL;
 	
 	if (invalidated) {
 		containr_notify (frame->Container, HW_ActivityEnd, NULL);
 		return FALSE;
 	}
 	
-	if (cached) {
-		if ((char)(hash >>24) == 0xFF) {
-			img->backgnd = -1;
-		}
-		if (hash != img_hash (img->disp_w, img->disp_h, img->backgnd)) {
-			cached = NULL;
+	/* search for ready to use bitmaps ***
+	*/
+	if (img->set_w && img->set_h) {
+		hash = img_hash (img->disp_w, img->disp_h, img->backgnd);
+		if ((cached = cache_lookup (loc, hash, &hash)) != NULL) {
+			if ((char)(hash >>24) == 0xFF) {
+				img->backgnd = -1;
+			}
+			if (hash != img_hash (img->disp_w, img->disp_h, img->backgnd)) {
+				cached = NULL;
+			}
 		}
 	}	
 	if (cached) {
