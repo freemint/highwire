@@ -29,6 +29,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <errno.h>
+#ifndef EPROTONOSUPPORT
+#define EPROTONOSUPPORT 305
+#endif
+
 #include <gem.h>
 
 #include "global.h"
@@ -172,6 +177,7 @@ new_loader (LOCATION loc, CONTAINR target)
 	loader->DataFill = 0;
 	loader->Data     = NULL;
 	loader->notified = FALSE;
+	loader->Error    = E_OK;
 	/* */
 	loader->SuccJob = NULL;
 	loader->FreeArg = NULL;
@@ -309,6 +315,7 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 		                   "<h1>Protocol #%i not supported!</h1></body></html>";
 		char buf [sizeof(txt) +10];
 		sprintf (buf, txt, loc->Proto);
+		loader->Error    = -EPROTONOSUPPORT;
 		loader->Data     = strdup (buf);
 		loader->MimeType = MIME_TXT_HTML;
 		sched_insert (parse_html, new_parser (loader), (long)target, PRIO_INTERN);
@@ -358,6 +365,7 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 	
 	} else {
 		printf ("start_objc_load() invalid protocol %i.\n", loc->Proto);
+		loader->Error = -EPROTONOSUPPORT;
 		(*loader->SuccJob)(loader, (long)target);
 		loader = NULL;
 	}
@@ -734,6 +742,8 @@ header_job (void * arg, long invalidated)
 			return JOB_DONE;
 		}
 	
+	} else { /* something went wrong */
+		loader->Error = reply;
 	}
 	
 	/* else either a very short file or an error case occured
@@ -776,6 +786,7 @@ loader_job (void * arg, long invalidated)
 	
 	loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
 	if (!loader->Data) {
+		loader->Error    = -ENOENT;
 		loader->Data     = strdup ("<html><head><title>Error</title></head>"
 		                           "<body><h1>Page not found!</h1></body></html>");
 		loader->MimeType = MIME_TXT_HTML;

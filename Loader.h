@@ -24,6 +24,7 @@ typedef struct s_loader {
 	size_t   DataFill; /* real number of loaded/received bytes */
 	char   * Data;
 	BOOL     notified; /* if a start notification was sent     */
+	short    Error;    /* (-)errno or 0 if successfull         */
 	/* */
 	int    (*SuccJob)(void*, long);
 	void   * FreeArg;
