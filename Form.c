@@ -25,7 +25,7 @@ struct s_form {
 	FORM        Next;
 	char      * Target;
 	char      * Action;
-	INPUT       InputList;
+	INPUT       InputList, Last;
 	FORM_METHOD Method;
 };
 
@@ -40,7 +40,10 @@ typedef enum {
 
 struct s_input {
 	INPUT    Next;
-	INPUT    Group; /* for radio buttons this points to the group node */
+	union {
+		void * Void;
+		INPUT  Group; /* for radio buttons this points to the group node */
+	}        u;
 	WORDITEM Word;
 	PARAGRPH Paragraph;
 	FORM     Form;
@@ -69,6 +72,7 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	form->Method = (method && stricmp (method, "post") == 0
 	                ? METH_POST : METH_GET);
 	form->InputList = NULL;
+	form->Last      = NULL;
 	
 	return form;
 }
@@ -82,7 +86,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	size_t n_len = (name && *name ? strlen (name) : 0);
 	INPUT  input = malloc (sizeof (struct s_input) + n_len);
 	input->Next      = NULL;
-	input->Group     = NULL;
+	input->u.Void    = NULL;
 	input->Paragraph = current->paragraph;
 	input->Form      = form;
 	input->Value     = NULL;
@@ -106,13 +110,12 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->Name[n_len] = '\0';
 	
 	if (type != IT_RADIO) {
-		if (!form->InputList) {
-			form->InputList = input;
+		if (form->Last) {
+			form->Last->Next = input;
 		} else {
-			INPUT * ptr = &form->InputList;
-			while (*(ptr = &(*ptr)->Next) != NULL);
-			*ptr = input;
+			form->InputList  = input;
 		}
+		form->Last          = input;
 	}
 	return input;
 }
@@ -172,9 +175,9 @@ form_radio (TEXTBUFF current,
 		group->checked = TRUE;
 		input->checked = TRUE;
 	}
-	input->Group = group;
-	input->Next  = group->Group;
-	group->Group = input;
+	input->u.Group = group;
+	input->Next    = group->u.Group;
+	group->u.Group = input;
 	
 	if (asc < 1) asc =  1;
 	else         asc |= 1;
@@ -260,12 +263,8 @@ new_input (PARSER parser)
 		char * value;
 		UWORD  mlen = get_value_unum (parser, KEY_MAXLENGTH, 0);
 		UWORD  cols = get_value_unum (parser, KEY_SIZE, 0);
-		if (cols == 0) {
-			if (!mlen) mlen = 20;
-			cols = mlen;
-		} else if (!mlen) {
-			mlen = cols;
-		}
+		if (!cols) cols = 20;
+		if (!mlen) mlen = cols;
 		get_value (parser, KEY_VALUE, value = malloc (mlen +1), mlen +1);
 		input = form_text (current, name, value, mlen, frame->Encoding, cols);
 		
@@ -445,10 +444,10 @@ input_handle (INPUT input, GRECT * radio)
 			if (input->checked) {
 				rtn = 0;
 			} else {
-				INPUT group = input->Group;
+				INPUT group = input->u.Group;
 				rtn = 1;				
 				if (group->checked) {
-					INPUT check = group->Group;
+					INPUT check = group->u.Group;
 					do if (check->checked) {
 						WORDITEM c_w = check->Word, i_w = input->Word;
 						radio->g_x = c_w->h_offset
