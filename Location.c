@@ -30,18 +30,19 @@ char * local_web = NULL;
 
 typedef struct s_host_entry {
 	struct s_host_entry * Next;
-	unsigned long         IdxTag;
-	unsigned long         Ip;
+	ULONG                 IdxTag;
+	ULONG                 Ip;
+	ULONG                 Flags;
 	UWORD                 Length;
 	char                  Name[1];
 } * HOST_ENT;
-static void * host_entry (const char ** name);
+static void * host_entry (const char ** name, UWORD max_len);
 #define       host_addr(h)   (h ? h->Ip : 0uL)
 
 
 typedef struct s_dir_entry {
 	struct s_dir_entry * Next;
-	unsigned long        IdxTag;
+	ULONG                IdxTag;
 	BOOL                 isTos;
 	UWORD                Length;
 	char                 Name[2];
@@ -60,7 +61,7 @@ _alloc (DIR_ENT dir, const char * file)
 	loc->__reffs  = 0;
 	loc->Proto    = PROT_FILE;
 	loc->Port     = 0;
-	loc->resolved = TRUE;
+	loc->Flags    = 0uL;
 	loc->Host     = NULL;
 	loc->Dir      = dir;
 	memcpy (ptr, dir->Name, dir->Length);
@@ -179,7 +180,7 @@ new_location (const char * p_src, LOCATION base)
 	
 	if (read_host) {
 		const char * s = src;
-		loc_host = host_entry (&s);
+		loc_host = host_entry (&s, 0);
 		if (loc_host) {
 			if (*s == ':') {
 				char * end;
@@ -217,7 +218,10 @@ new_location (const char * p_src, LOCATION base)
 	loc->Proto = (!PROTO_isLocal(loc_proto)
 	              ? loc_proto : loc->File[0] ? PROT_FILE : PROT_DIR);
 	loc->Port  = loc_port;
-	loc->Host  = loc_host;
+	if (loc_host) {
+		loc->Host  = loc_host;
+		loc->Flags = loc_host->Flags;
+	}
 	loc->__reffs++;
 	
 	if (logging_is_on) {
@@ -429,8 +433,97 @@ location_open (LOCATION loc, const char ** host_name)
  * Database Stuff
  *
  */
-static        HOST_ENT    host_base = NULL;
-static struct s_dir_entry dir_base  = { NULL, 0ul, FALSE, 1, "/" };
+typedef struct s_domain_entry {
+	struct s_domain_entry * Next;
+	ULONG                   Flags;
+	UWORD                   Length;
+	char                    Name[1];
+} * DOMAIN_ENT;
+static        DOMAIN_ENT  domain_base = NULL;
+static        HOST_ENT    host_base   = NULL;
+static struct s_dir_entry dir_base    = { NULL, 0ul, FALSE, 1, "/" };
+
+
+/*============================================================================*/
+const char *
+location_DBdomain (const char * name, UWORD max_len, ULONG flags)
+{
+	DOMAIN_ENT * ptr = &domain_base, ent;
+	char  buf[258], c;
+	UWORD len = 0;
+	
+	while (*name == '.' && max_len != 1) {
+		name++;
+		if (max_len) max_len--;
+	}
+	if (!max_len || max_len >= sizeof(buf)) {
+		max_len = sizeof(buf) -1;
+	}
+	while ((c = *name) != '\0' && len < max_len) {
+		if (isalpha(c)) {
+			buf[len++] = tolower(c);
+			name++;
+		} else if (isdigit(c) || c == '.' || c == '-') {
+			buf[len++] = c;
+			name++;
+		} else {
+			break;
+		}
+	}
+	if (len < 2) {
+		return NULL;
+	}
+	buf[len] = '\0';
+	
+	while ((ent = *ptr) != NULL && ent->Length < len) {
+		ptr = &ent->Next;
+	}
+	while (ent) {
+		if (ent->Length > len) {
+			ent = NULL;
+		} else if (memcmp (name, ent->Name, len) == 0) {
+			break;
+		} else {
+			ent = *(ptr = &ent->Next);
+		}
+	}
+	if (!ent && (long)flags > 0l
+	         && (ent = malloc (sizeof(struct s_domain_entry) + len)) != NULL) {
+		ent->Flags  = 0uL;
+		ent->Length = len;
+		memcpy (ent->Name, buf, len +1);
+		ent->Next = *ptr;
+		*ptr      = ent;
+	}
+	if (ent) {
+		if (flags & 0x80000000uL) ent->Flags &= ~flags;
+		else                      ent->Flags |=  flags;
+		
+		if (host_base) { /* update domain flags to matching host entries */
+			HOST_ENT host = host_base;
+			while (host->Length < len && (host = host->Next) != NULL);
+			while (host && host->Length == len) {
+				if (memcmp (host->Name, ent->Name, len) == 0) {
+					host->Flags = ent->Flags;
+					while ((host = host->Next) != NULL && host->Length == len);
+					break;
+				}
+				host = host->Next;
+			}
+			while (host) { /* host->Length > len */
+				const char * p = host->Name + (host->Length - len -1);
+				if (*p == '.' && memcmp (++p, ent->Name, len) == 0) {
+					host->Flags = ent->Flags;
+				}
+				host = host->Next;
+			}
+		}
+		name = ent->Name;
+	} else {
+		name = NULL;
+	}
+	return name;
+}
 
 
 /*----------------------------------------------------------------------------*/
@@ -454,10 +547,29 @@ host_store (const char * name, size_t len)
 	if (!ent && (ent = malloc (sizeof(struct s_host_entry) + len)) != NULL) {
 		ent->IdxTag = 0uL;
 		ent->Ip     = 0uL;
+		ent->Flags  = 0uL;
 		ent->Length = len;
 		memcpy (ent->Name, name, len +1);
 		ent->Next = *ptr;
 		*ptr      = ent;
+		
+		if (domain_base) { /* set host flags from domain entries */
+			DOMAIN_ENT domain = domain_base;
+			while (domain->Length < len) {
+				const char * p = ent->Name + (len - domain->Length -1);
+				if (*p == '.' && memcmp (++p, domain->Name, domain->Length) == 0) {
+					ent->Flags |= domain->Flags;
+				}
+				if ((domain = domain->Next) == NULL) break;
+			}
+			while (domain && domain->Length == len) {
+				if (memcmp (ent->Name, domain->Name, domain->Length) == 0) {
+					ent->Flags |= domain->Flags;
+					break;
+				}
+				domain = domain->Next;
+			}
+		}
 	}
 	return ent;
 }
@@ -475,14 +587,17 @@ host_search (unsigned long tag)
 
 /*----------------------------------------------------------------------------*/
 static void *
-host_entry (const char ** name)
+host_entry (const char ** name, UWORD max_len)
 {
 	HOST_ENT     ent;
 	const char * n = *name;
-	char buf[258], c;
-	short len = 0;
+	char  buf[258], c;
+	UWORD len = 0;
 	
-	while ((c = *n) != '\0' && len < sizeof(buf) -1) {
+	if (!max_len || max_len >= sizeof(buf)) {
+		max_len = sizeof(buf) -1;
+	}
+	while ((c = *n) != '\0' && len < max_len) {
 		if (isalpha(c)) {
 			buf[len++] = tolower(c);
 			n++;
@@ -508,6 +623,21 @@ host_entry (const char ** name)
 #endif /* USE_INET */
 	
 	return ent;
+}
+
+/*============================================================================*/
+const char *
+location_DBhost (const char * name, UWORD len, ULONG flags)
+{
+	HOST_ENT ent = host_entry (&name, len);
+	if (ent) {
+		if (flags & 0x80000000uL) ent->Flags &= ~flags;
+		else                      ent->Flags |=  flags;
+		name = ent->Name;
+	} else {
+		name = NULL;
+	}
+	return name;
 }
 
 
@@ -925,10 +1055,10 @@ location_rdIdx (FILE * file)
 			printf ("location_rdIdx(): format error %i/%i.", proto, port);
 			return NULL;
 		} else if ((loc = _alloc (dir, ptr)) != NULL) {
-			loc->Proto    = proto;
-			loc->Port     = port;
-			loc->resolved = FALSE;
-			loc->Host     = host;
+			loc->Proto = proto;
+			loc->Port  = port;
+			loc->Host  = host;
+			loc->Flags = host->Flags;
 		}
 	}
 	return loc;

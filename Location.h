@@ -24,7 +24,7 @@ struct s_location {
 	unsigned __reffs;
 	LC_PROTO Proto;
 	short    Port;
-	BOOL     resolved;
+	ULONG    Flags;
 	void   * Host, * Dir;
 	const char * File;
 	const char * Path;
@@ -44,9 +44,13 @@ const char * location_Path     (LOCATION, UWORD * opt_len);
 const char * location_Host     (LOCATION, UWORD * opt_len);
 BOOL         location_equal    (LOCATION, LOCATION);
 
-BOOL location_resolve (LOCATION);
-int  location_open    (LOCATION, const char ** host_name);
+int  location_open (LOCATION, const char ** host_name);
 
+/*--- database ---*/
+const char * location_DBdomain (const char *, UWORD len, ULONG flags);
+const char * location_DBhost   (const char *, UWORD len, ULONG flags);
+
+/*--- save and load for cache ---*/
 #if defined(_STDIO_H) || defined(__STDIO)
 BOOL     location_wrIdx (FILE *, LOCATION);
 LOCATION location_rdIdx (FILE *);
