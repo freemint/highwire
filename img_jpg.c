@@ -84,6 +84,10 @@ decJpg_start (const char * name, IMGINFO info)
 	jpeg_create_decompress (jpeg);
 	jpeg_stdio_src         (jpeg, file);
 	jpeg_read_header       (jpeg, TRUE);
+	
+	jpeg->dct_method = JDCT_IFAST;
+	jpeg->do_fancy_upsampling = FALSE;
+	
 	header = 1;
 	jpeg_start_decompress  (jpeg);
 	header = 2;
@@ -96,10 +100,9 @@ decJpg_start (const char * name, IMGINFO info)
 			info->NumComps = 1;
 			break;
 		default: ;
-	}
-	if (info->NumComps != jpeg->out_color_components) {
-		puts ("decJpg_start(): unsupported color model.");
-		longjmp (escape, TRUE);
+			jpeg->out_color_space = JCS_RGB;
+			info->NumComps = jpeg->out_color_components = 3;
+			break;
 	}
 	info->_priv_data = jpeg;
 /*	info->_priv_more = NULL; */
