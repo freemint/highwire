@@ -825,7 +825,7 @@ content_calc (CONTENT * content, long set_width)
 			
 		} else if (paragraph->paragraph_code == PAR_TABLE) {
 			paragraph->Offset.X += blocker.L.width;
-			table_calc (paragraph->Table, par_width);
+			table_calc (paragraph->Table, blk_width);
 		
 		} else {   /* normal text or image */
 			if (paragraph->paragraph_code == PAR_IMG) {
