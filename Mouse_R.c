@@ -340,7 +340,6 @@ check_mouse_position (WORD mx, WORD my)
 	}
 #endif
 	
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 	if (wind) {
 		if (PE_isLink (elem)) {
 			hwWind_setInfo (wind, ((struct url_link*)hash)->address, FALSE);
@@ -348,7 +347,6 @@ check_mouse_position (WORD mx, WORD my)
 			hwWind_setInfo (wind, NULL, FALSE);
 		}
 	}
-#endif
 	if (elem != PE_TLINK) {
 		hash = NULL;
 	}
@@ -362,9 +360,7 @@ check_mouse_position (WORD mx, WORD my)
 	} else if (hwWind_Focus) {
 		BOOL draw;
 		if (hwWind_Focus != wind) {
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 			hwWind_setInfo (hwWind_Focus, NULL, FALSE);
-#endif
 			containr_highlight (hwWind_Focus->Pane, NULL);
 			draw = TRUE;
 		} else if (containr_highlight (hwWind_Focus->Pane, hash) != hash) {
