@@ -29,10 +29,10 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 		list->Indent = par->Indent - par->Hanging;
 	}
 	
-	par->Box.BoxClass = BC_MIXED;
-	par->Box.HtmlCode = TAG_LI;
-	par->alignment    = ALN_LEFT;
-	par->Hanging     -= list->Hanging;
+	par->Box.BoxClass  = BC_MIXED;
+	par->Box.HtmlCode  = TAG_LI;
+	par->Box.TextAlign = ALN_LEFT;
+	par->Hanging      -= list->Hanging;
 
 	list->next_stack_item = current->lst_stack;
 	current->lst_stack    = list;

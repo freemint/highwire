@@ -268,7 +268,7 @@ parse_about (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	current->paragraph->alignment = ALN_CENTER;
+	current->paragraph->Box.TextAlign = ALN_CENTER;
 	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
 	
 	if (strncmp ("modules", title, 7) == 0) {
@@ -308,7 +308,7 @@ parse_about (void * arg, long invalidated)
 	render_text  (current, title);
 	render_hrule (current, ALN_CENTER, -1024, 2);
 	
-	current->paragraph->alignment = ALN_LEFT;
+	current->paragraph->Box.TextAlign = ALN_LEFT;
 	font_byType (normal_font, 0x0000, font_step2size (3), current->word);
 	
 	if (mode <= 1) {

@@ -141,11 +141,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			if (word->word_width < 2) {
 				word->word_width = 2;
 			}
-			if (par->alignment <= ALN_JUSTIFY) {
+			if (par->Box.TextAlign <= ALN_JUSTIFY) {
 				word->h_offset   = 0;
 			} else {
 				word->h_offset   = blk_width - word->word_width;
-				if (par->alignment == ALN_CENTER) {
+				if (par->Box.TextAlign == ALN_CENTER) {
 					word->h_offset /= 2;
 				}
 			}
@@ -186,7 +186,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Rindent = 0;
 	paragraph->Hanging = 0;
 	paragraph->paragraph_code = PAR_NONE;
-	paragraph->alignment      = ALN_LEFT;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -256,7 +255,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Line    = NULL;
 		paragraph->Indent  = indent;
 		paragraph->Rindent = copy_from->Rindent;
-		paragraph->alignment = copy_from->alignment;
+		
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
 			paragraph_vTab          = DomBox_vTab;
@@ -267,6 +266,8 @@ add_paragraph (TEXTBUFF current, short vspace)
 			paragraph_vTab.draw     = vTab_draw;
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
+		
+		paragraph->Box.TextAlign = copy_from->Box.TextAlign;
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->Hanging        = 0;
@@ -338,7 +339,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 	if (par->paragraph_code == PAR_IMG) {
 		align = ALN_LEFT;
 	} else {
-		align = par->alignment;
+		align = par->Box.TextAlign;
 		if (blocker->L.bottom) {
 			l_height   = blocker->L.bottom - par->Box.Rect.Y;
 			int_width -= blocker->L.width;

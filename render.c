@@ -66,7 +66,7 @@ get_align (PARSER parser)
 	FRAME frame = parser->Frame;
 	
 	if (frame->Page.Box.TextAlign == ALN_CENTER &&
-	    parser->Current.paragraph->alignment == ALN_CENTER) {
+	    parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
 		return (ALN_CENTER);
 	}
 	if (parser->Current.tbl_stack && parser->Current.tbl_stack->WorkCell) {
@@ -316,7 +316,7 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 	}
 	
 	if ((val = get_h_align (parser, -1)) >= 0) {
-		current->paragraph->alignment = val;
+		current->paragraph->Box.TextAlign = val;
 	}
 	
 	if (get_value (parser, CSS_TEXT_INDENT, output, sizeof(output))) {
@@ -1911,7 +1911,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 			css_block_styles (parser, current->font);
 		
 		} else {
-			par->alignment = get_h_align (parser, get_align (parser));
+			par->Box.TextAlign = get_h_align (parser, get_align (parser));
 			
 			/*________________________HW_proprietary___
 			if (!ignore_colours) {
@@ -1928,7 +1928,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 	} else {
 		par = add_paragraph (current, 0);
 
-		par->alignment = get_align (parser);
+		par->Box.TextAlign = get_align (parser);
 
 		fontstack_pop (current);
 	}
@@ -2018,7 +2018,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		add_paragraph (current, 0);
 	
 		hr_par->paragraph_code = PAR_HR;
-		hr_par->alignment      = get_h_align (parser, ALN_CENTER);
+		hr_par->Box.TextAlign  = get_h_align (parser, ALN_CENTER);
 		
 		if ((hr_wrd->word_tail_drop = get_value_unum (parser, KEY_SIZE, 0)) == 0 &&
 		    (hr_wrd->word_tail_drop = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
@@ -2078,7 +2078,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		
 		css_block_styles (parser, NULL);
 		
-		par->alignment = get_h_align (parser, get_align (parser));
+		par->Box.TextAlign = get_h_align (parser, get_align (parser));
 		
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
@@ -2094,7 +2094,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	} else {
 		par = add_paragraph (current, 2);
 
-		par->alignment = get_align (parser);
+		par->Box.TextAlign = get_align (parser);
 
 		if (!ignore_colours) {
 			word_set_color (current, current->font->Color);
@@ -2120,11 +2120,11 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 	add_paragraph (&parser->Current, 0);
 
 	if (flags & PF_START) {
-		frame->Page.Box.TextAlign            = ALN_CENTER;
-		parser->Current.paragraph->alignment = ALN_CENTER;
+		frame->Page.Box.TextAlign                = ALN_CENTER;
+		parser->Current.paragraph->Box.TextAlign = ALN_CENTER;
 	} else {
-		frame->Page.Box.TextAlign            = ALN_LEFT;
-		parser->Current.paragraph->alignment = get_align (parser);
+		frame->Page.Box.TextAlign                = ALN_LEFT;
+		parser->Current.paragraph->Box.TextAlign = get_align (parser);
 	}
 	
 	return (flags|PF_SPACE);
@@ -2155,7 +2155,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 		char output[100];
 		#endif
 
-		current->paragraph->alignment = ALN_LEFT;
+		current->paragraph->Box.TextAlign = ALN_LEFT;
 		current->paragraph->Indent += list_indent (2);
 		current->paragraph->Rindent += list_indent (2);
 
@@ -2226,7 +2226,7 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		add_paragraph (current, 2)->Box.HtmlCode = TAG_PRE;
-		current->paragraph->alignment = ALN_LEFT;
+		current->paragraph->Box.TextAlign = ALN_LEFT;
 		word_set_font (current, pre_font);
 		if (get_value_unum (parser, KEY_WIDTH, 80) > 80) {
 			TAsetCondns (current->word->attr, TRUE);
@@ -2271,7 +2271,7 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		add_paragraph (current, 2)->Box.HtmlCode = TAG_LISTING;
-		current->paragraph->alignment = ALN_LEFT;
+		current->paragraph->Box.TextAlign = ALN_LEFT;
 		word_set_font (current, pre_font);
 		TAsetCondns (current->word->attr, TRUE);
 		flags |= PF_PRE;
@@ -2464,7 +2464,7 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START && current->lst_stack){
 		PARAGRPH paragraph = add_paragraph (current, 0);
-		paragraph->alignment = ALN_LEFT;
+		paragraph->Box.TextAlign = ALN_LEFT;
 		paragraph->Indent    = current->lst_stack->Indent;
 		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
 		if (current->lst_stack->FontStk !=  current->font) {
@@ -2488,7 +2488,7 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START && current->lst_stack){
 		PARAGRPH paragraph = add_paragraph (current, 0);
-		paragraph->alignment = ALN_LEFT;
+		paragraph->Box.TextAlign = ALN_LEFT;
 		paragraph->Indent    = current->lst_stack->Indent
 		                     + current->lst_stack->Hanging;
 		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
@@ -2531,10 +2531,10 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				    parser->Current.parentbox->TextAlign == ALN_CENTER) {
 					floating = parser->Current.parentbox->TextAlign;
 				}
-			} else if (parser->Current.paragraph->alignment == ALN_RIGHT ||
-			           parser->Current.paragraph->alignment == ALN_CENTER) {
+			} else if (parser->Current.paragraph->Box.TextAlign == ALN_RIGHT ||
+			           parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
 				/* workaround for <center> tag */
-				floating = parser->Current.paragraph->alignment;
+				floating = parser->Current.paragraph->Box.TextAlign;
 			}
 		}
 		table_start (parser,
@@ -3075,7 +3075,7 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short h)
 	add_paragraph (current, 0);
 	
 	par->paragraph_code  = PAR_HR;
-	par->alignment       = align;
+	par->Box.TextAlign   = align;
 	word->word_tail_drop = h;
 	word->word_height    = (word->word_height + word->word_tail_drop) /2;
 	word->space_width    = w;

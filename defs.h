@@ -542,7 +542,6 @@ struct paragraph_item {
 	WORD     Rindent; /* indent of the right side */
 	WORD     Hanging; /* <0: left, >0: right hanging */
 	PARAGRAPH_CODE paragraph_code;
-	H_ALIGN alignment;
 	PARAGRPH next_paragraph;
 };
 
