@@ -309,7 +309,13 @@ check_mouse_position (WORD mx, WORD my)
 			     my < watch.g_y || my >= watch.g_y + watch.g_h)) {
 			wind_get_grect (whdl, WF_NEXTXYWH, &watch);
 		}
-		if (wind && !wind->isIcon) {
+		if (watch.g_w <= 0 || watch.g_h <= 0) {
+			watch.g_x = mx;
+			watch.g_y = my;
+			watch.g_w = watch.g_h = 1;
+			wind = NULL;
+		
+		} else if (wind && !wind->isIcon) {
 			GRECT rect;
 			cont = wind->Pane;
 			elem = containr_Element (&cont, mx, my, &rect, &clip, &hash);
@@ -376,9 +382,9 @@ check_mouse_position (WORD mx, WORD my)
 		hwWind_Focus = wind;
 		focus_rect   = clip;
 	}
-	if      (elem == PE_EDITABLE) graf_mouse (TEXT_CRSR,  NULL);
-	else if (PE_isActive (elem))  graf_mouse (POINT_HAND, NULL);
-	else                          graf_mouse (ARROW,      NULL);
+	if      (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,  NULL);
+	else if (PE_isActive (elem))  graf_mouse (hwWind_Mshape = POINT_HAND, NULL);
+	else if (hwWind_Mshape)       graf_mouse (hwWind_Mshape = ARROW,      NULL);
 	
 #ifdef WATCH
 	WATCH = watch;
