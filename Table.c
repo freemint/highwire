@@ -791,6 +791,11 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		 set_width = table->t_MinWidth;
 	}
 
+	/* dan */
+	if (set_width < table->t_SetMinWid) {
+		set_width = table->t_SetMinWid;
+	}
+	
 	if (set_width == table->t_Width) {
 	/*	return table->t_Height; */
 	}
