@@ -496,21 +496,40 @@ dombox_adopt (DOMBOX * This, DOMBOX * stepchild)
 
 /*----------------------------------------------------------------------------*/
 static void
-vTab_format (DOMBOX * This, long width, BLOCKER blocker)
+vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 {
 	DOMBOX * box    = This->ChildBeg;
 	long     height = This->Rect.H = dombox_TopDist (This);
 	
+	struct blocking_area t_blocker = *p_blocker;
+	BLOCKER              blocker   = &t_blocker;
 	if (blocker->L.bottom) blocker->L.bottom -= This->Rect.Y;
 	if (blocker->R.bottom) blocker->R.bottom -= This->Rect.Y;
 	
 	if (This->BoxClass >= BC_GROUP && This->SetWidth) {
+		long gap = width;
 		if (This->SetWidth > 0) {
 			width = This->SetWidth;
 		} else if (This->SetWidth > -1024) {
 			width = (-This->SetWidth * width +512) /1024;
 			if (width < This->MinWidth) {
 				width = This->MinWidth;
+			}
+		}
+		if ((gap -= width) > 0) {
+			switch (This->Floating) {
+				case ALN_NO_FLT:
+				case FLT_LEFT:
+					if (blocker->R.bottom && (blocker->R.width -= gap) <= 0) {
+						blocker->R.bottom = blocker->R.width = 0;
+					}
+					break;
+				case FLT_RIGHT:
+					if (blocker->L.bottom && (blocker->L.width -= gap) <= 0) {
+						blocker->L.bottom = blocker->L.width = 0;
+					}
+					break;
+				default: ;
 			}
 		}
 	}
@@ -576,7 +595,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		This->Rect.H = height;
 	}
 	This->Rect.H += dombox_BotDist (This);
-	if (This->BoxClass == BC_GROUP) {
+/*	if (This->BoxClass == BC_GROUP) {
 		if (This->Rect.H <= blocker->L.bottom) {
 			This->Rect.H = blocker->L.bottom;
 			blocker->L.bottom = blocker->L.width = 0;
@@ -588,6 +607,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	}
 	if (blocker->L.bottom) blocker->L.bottom += This->Rect.Y;
 	if (blocker->R.bottom) blocker->R.bottom += This->Rect.Y;
+*/
 }
 
 /*============================================================================*/
