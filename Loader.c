@@ -859,8 +859,9 @@ saveas_job (void * arg, long invalidated)
 	char fsel_file[HW_PATH_MAX] = "";
 	WORD r, butt;  /* file selector exit button */
 	int    fh1, fh2;
-	long fsize, bsize, rsize, csize = 0;
+	long fsize, bsize, rsize, csize = 0, nsize, ssize;
 	char *buffer;
+	char *p;
 				
 	if (!invalidated && !loader->Error) {
 		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -878,12 +879,19 @@ saveas_job (void * arg, long invalidated)
 				printf("saveas_job(): file empty skipping\r\n");
 				goto saveas_bottom;
 			}
- 			
- 			/* It would be best to use the real filename here
- 			 * I couldn't determine how to pull it out of the cache
- 			 * It should be an easy task
- 			 */
-			strcpy (fsel_file,remote->File);
+
+			/* remote->file is the remote filename, with the possibility
+			 * of extra characters
+			 * ssize is the start size of the remote file
+			 * nsize is the size of everything after a ?
+			 */
+	
+			p = strrchr (remote->File, '?');
+
+			nsize = strlen(p);
+			ssize = strlen(remote->File);
+			
+			strncpy (fsel_file, remote->File, (ssize - nsize));
 
 			/* get our new filename */
 			
