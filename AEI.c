@@ -802,7 +802,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 					switch(msg[4])
 					{
 						case WA_LFLINE:
-							hwWind_undo (wind, FALSE);
+							hwWind_undo (wind, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
 							break;
 					}
 					break;
