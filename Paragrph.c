@@ -165,18 +165,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 }
 
 
-/*============================================================================*/
-void
-destroy_paragraph_structure (PARAGRPH paragraph)
-{
-	while (paragraph != 0) {
-		PARAGRPH next = paragraph->next_paragraph;
-		Delete (&paragraph->Box);
-		paragraph = next;
-	}
-}
-
-
 /*==============================================================================
  */
 PARAGRPH
@@ -771,24 +759,4 @@ paragraph_filter (PARAGRPH par)
 		word = word->next_word;
 	}
 	return par->item;
-}
-
-
-/*==============================================================================
- */
-void
-content_stretch (CONTENT * content, long height, V_ALIGN valign)
-{
-	long offset = height - content->Box.Rect.H;
-	
-	content->Box.Rect.H = height;
-	
-	if (valign && offset) {
-		PARAGRPH par = content->Item;
-		if (valign == ALN_MIDDLE) offset /= 2;
-		while (par) {
-			par->Box.Rect.Y += offset;
-			par = par->next_paragraph;
-		}
-	}
 }
