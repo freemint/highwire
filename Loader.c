@@ -1126,7 +1126,6 @@ void
 init_paths(void)
 {
 	char temp_location[HW_PATH_MAX];
-	char config_file[HW_PATH_MAX];
 
 	temp_location[0] = Dgetdrv();
 	temp_location[0] += (temp_location[0] < 26 ? 'A' : -26 + '1');
@@ -1136,10 +1135,6 @@ init_paths(void)
 	if (temp_location[strlen(temp_location) - 1] != '\\') {
 		strcat(temp_location,"\\");
 	}
-	strcpy(config_file, temp_location);  /* save the start path */
-	strcat(config_file, _HIGHWIRE_CFG_);
-	read_config(config_file);
-
 	strcpy(fsel_path, temp_location);  /* used by the first file selector call */
 	strcat(fsel_path, "html\\*.HTM*");  /* uppercase is for the TOS file selector */
 

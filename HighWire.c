@@ -141,11 +141,11 @@ main (int argc, char **argv)
 	menu_bar(menutree, MENU_INSTALL);
 #endif
 
-	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8))
+	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8)) {
 /*	if (appl_xgetinfo(AES_MESSAGE, &info, &u, &u, &u) && (info & 8))*/
 		/* we know about AP_TERM message */
 		shel_write(SWM_NEWMSG, 1, 0, NULL, NULL);
-
+	}
 	/* grab the screen colors for later use */
 	save_colors();
 
@@ -155,6 +155,7 @@ main (int argc, char **argv)
 	
 	/* init paths and load config */
 	init_paths();
+	read_config();
 
 	vst_load_fonts (vdi_handle, 0);
 
