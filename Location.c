@@ -902,8 +902,8 @@ location_rdIdx (FILE * file)
 			printf ("location_rdIdx(): format error %i/%i.", proto, port);
 			return NULL;
 		} else if ((loc = _alloc (dir, ptr)) != NULL) {
-			loc->Proto    = PROT_HTTP;
-			loc->Port     = 80;
+			loc->Proto    = proto;
+			loc->Port     = port;
 			loc->resolved = FALSE;
 			loc->Host     = host;
 		}
