@@ -24,6 +24,7 @@
 #include "Form.h"
 #include "fontbase.h"
 #include "http.h"
+#include "cache.h"
 
 
 /* parser function flags */
@@ -38,6 +39,7 @@
 static jmp_buf resume_jbuf; /* used for parser interuption */
 
 
+/*----------------------------------------------------------------------------*/
 static WORD
 list_indent (WORD type)
 {
@@ -813,45 +815,58 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		char out[100];
 		const char * line = *text;
 		
-			if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
-			     mime_byString (out, NULL) == MIME_TXT_CSS) &&
-			    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
-			     strstr (out, "all") || strstr (out, "screen"))) {
-			while (isspace (*line)) line++;
+		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
+		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
+		     strstr (out, "all") || strstr (out, "screen"))) {
 			
-			if (*line == '<') {        /* skip leading '<!--' */
-				if (*(++line) == '!') {
-					while (*(++line) == '-');
-				} else {
-					line--;
+			if (!parser->ResumeSub) { /* initial call */
+				while (isspace (*line)) line++;
+				
+				if (*line == '<') {        /* skip leading '<!--' */
+					if (*(++line) == '!') {
+						while (*(++line) == '-');
+					} else {
+						line--;
+					}
 				}
-			}
-			if (*line != '<') {
+				if (*line != '<') {
+					line = parse_css (parser, line, NULL);
+				}
+			
+			} else {
+				line = (parser->ResumeErr ? NULL : parser->ResumeSub);
 				line = parse_css (parser, line, NULL);
 			}
+			
+			if (!line) {
+				parser_resume (parser, render_STYLE_tag, *text, NULL);
+				longjmp (resume_jbuf, 1);
+			}
+			
 			if (*line == '-') {        /* skip trailing '-->' */
 				while (*(++line) == '-');
 				if (*line == '>') {
 					while (isspace (*(++line)));
 				}
 			}
-		}
-		/* should be positioned just before the next tag now */
-		do {
-			while (*line && *(line++) != '<');
-			if (isalpha (*line)) {
-				line--; /* faulty HTML, the </style> tag is missing */
-				break;
-			} else {
-				BOOL slash = (*line == '/');
-				if (slash) line++;
-				if (parse_tag (parser, &line) == TAG_STYLE && slash) {
+			/* should be positioned just before the next tag now */
+			do {
+				while (*line && *(line++) != '<');
+				if (isalpha (*line)) {
+					line--; /* faulty HTML, the </style> tag is missing */
 					break;
+				} else {
+					BOOL slash = (*line == '/');
+					if (slash) line++;
+					if (parse_tag (parser, &line) == TAG_STYLE && slash) {
+						break;
+					}
 				}
-			}
-		} while (*line);
-		
-		*text = line;
+			} while (*line);
+			
+			*text = line;
+		}
 	}
 	return flags;
 }
@@ -864,25 +879,57 @@ static UWORD
 render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	char out[HW_PATH_MAX];
-	UNUSED (text);
-	
-	if ((flags & PF_START) && get_value (parser, KEY_REL, out, sizeof(out))) {
+
+	if ((flags & PF_START) && get_value(parser,KEY_REL,out,sizeof(out))) {
 		if (stricmp (out, "StyleSheet") == 0) {
 			if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 			     mime_byString (out, NULL) == MIME_TXT_CSS)
 		       && (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 			        strstr (out, "all") || strstr (out, "screen"))
 			    && get_value (parser, KEY_HREF, out, sizeof(out))) {
-				LOCATION loc = new_location (out, parser->Frame->BaseHref);
-				if (PROTO_isLocal (loc->Proto)) {
+				
+				LOCATION     loc  = NULL;
+				const char * line = NULL;
+				char       * file = NULL;
+				BOOL         call = FALSE;
+				BOOL         rsum = FALSE;
+				BOOL         jump = FALSE;
+				
+				if (!parser->ResumeSub) { /* initial call */
 					size_t size = 0;
-					char * file = load_file (loc, &size, &size);
-					if (file) {
-						if (size > 0) parse_css (parser, NULL, file);
-						else          free (file);
+					loc = new_location (out, parser->Frame->BaseHref);
+					if (PROTO_isLocal (loc->Proto)) {
+						file = load_file (loc, &size, &size);
+					} else {
+						struct s_cache_info info;
+						CRESULT res = cache_query (loc, 0, &info);
+						if (res & CR_LOCAL) {
+							file = load_file (info.Local, &size, &size);
+						} else {
+							rsum = !(res & CR_BUSY);
+							jump = TRUE;
+						}
 					}
+					if (file) {
+						free_location (&loc);
+						if (size <= 0) {
+							free (file);
+						} else {
+							call = TRUE;;
+						}
+					}
+				
+				} else {
+					line = (parser->ResumeErr ? NULL : parser->ResumeSub);
+					call = TRUE;
 				}
-				free_location (&loc);
+				
+				if ((call && !parse_css (parser, line, file)) || rsum) {
+					parser_resume (parser, render_LINK_tag, *text, loc);
+					jump = TRUE;
+				}
+				if (loc)  free_location (&loc);
+				if (jump) longjmp (resume_jbuf, 1);
 			}
 		}
 	}
