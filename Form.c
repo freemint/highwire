@@ -87,6 +87,8 @@ struct s_slctitem {
 
 static void finish_selct (INPUT);
 
+static BOOL edit_char (INPUT input, WORD chr, WORD col);
+
 
 /*============================================================================*/
 void *
@@ -991,36 +993,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 /*printf ("%04X %04X\n", key, state);*/
 	if (asc >= ' ' && asc != 127 &&
 	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
-		if (!input->readonly && input->TextLen < input->TextMax) {
-			WCHAR tmp[5];
-			{
-				WCHAR * end = input->Word->item + input->TextLen;
-				WCHAR * dst = input->Word->item + form->TextCursrX;
-				do {
-					*(end +1) = *(end);
-				} while (--end >= dst);
-			}
-			if (input->HideChar) {
-				input->Word->item[form->TextCursrX] = input->HideChar;
-			} else {
-				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
-				const char  * ptr = &((char*)&asc)[1];
-				(*encoder)(&ptr, tmp);
-				input->Word->item[form->TextCursrX] = *tmp;
-			}
-			if (input->Value) {
-				char * end = input->Value + input->TextLen +1;
-				char * dst = input->Value + form->TextCursrX;
-				do {
-					*(end +1) = *(end);
-				} while (--end >= dst);
-				if (input->HideChar) {
-					ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
-					const char  * ptr = &((char*)&asc)[1];
-					(*encoder)(&ptr, tmp);
-				}
-				*dst = (char)*tmp;
-			}
+		if (!input->readonly && edit_char (input, asc, form->TextCursrX)) {
 			input->TextLen++;
 			scrl = +1;
 		} else {
@@ -1158,4 +1131,47 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		rect->g_h = word->word_height + word->word_tail_drop -4;
 	}
 	return word;
+}
+
+
+/*******************************************************************************
+ *
+ * Edit field functions
+*/
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+edit_char (INPUT input, WORD chr, WORD col)
+{
+	ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
+	const char  * ptr = &((char*)&chr)[1];
+	BOOL ok;
+	
+	if (input->TextLen < input->TextMax) {
+		WCHAR uni[5];
+		(*encoder)(&ptr, uni);
+		
+		if (input->Value) { /*password */
+			char * end = input->Value + input->TextLen +1;
+			char * dst = input->Value + col;
+			do {
+				*(end +1) = *(end);
+			} while (--end >= dst);
+			*dst                   = *uni;
+			input->Word->item[col] = '*';
+		
+		} else {
+			WCHAR * end = input->Word->item + input->TextLen;
+			WCHAR * dst = input->Word->item + col;
+			do {
+				*(end +1) = *(end);
+			} while (--end >= dst);
+			*dst = *uni;
+		}
+		ok = TRUE;
+	
+	} else { /* buffer full */
+		ok = FALSE;
+	}
+	return ok;
 }
