@@ -610,10 +610,10 @@ vTab_sized (HwWIND This)
 	GRECT work;
 	
 	if (This->Base.isScrn) {
-		if (This->Base.isFull) {
+		if (This->Base.isFull) { /* set to mode */
 			This->IbarH = 0;
 		
-		} else {
+		} else {                 /* back to normal mode */
 			char * info = (This->Info[0] ? This->Info : This->Stat);
 			if (wind_kind & INFO) {
 				wind_set_str (This->Base.Handle, WF_INFO, info);
@@ -624,6 +624,9 @@ vTab_sized (HwWIND This)
 				This->IbarH = widget_h - widget_b -1;
 			}
 			wind_set_str (This->Base.Handle, WF_NAME, This->Name);
+			if (bevent) {
+				wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
+			}
 		}
 		
 	} else if (!This->Base.isFull) {
