@@ -52,7 +52,11 @@ static BOOL ovl_load(void)
 	if ((inet_ovl = load_ovl ("network.ovl", ovl_invalid)) == NULL) {
 		return FALSE; /* no OVL found */
 	}
-	if ((inet_ftab = (void*)(*inet_ovl->ovl_init)()) == NULL) {
+	
+	if ((void*)(*inet_ovl->ovl_init)() < 0)
+		return FALSE; /* problem with ovl_init */
+	
+	if ((inet_ftab = (void*)(*inet_ovl->ovl_getftab)()) == NULL) {
 		inet_ovl = NULL;
 		return FALSE;    /* wrong OVL */
 	}
