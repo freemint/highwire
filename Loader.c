@@ -240,41 +240,36 @@ chunked_job (void * arg, long invalidated)
 	loader->rdLeft = 0;
 	
 	while (1) {
-		char * data = NULL;
+		char * data = loader->rdTemp;
 		size_t size = 0;
 		
 		if (!loader->rdChunked) {
 			if (loader->rdSocket >= 0) {
 				size = 8192;
 			}
-			if (loader->rdTlen) {
-				data = loader->rdTemp;
-				if (size < loader->rdTlen) {
-					 size = loader->rdTlen;
-				}
+			if (size < loader->rdTlen) {
+				 size = loader->rdTlen;
 			}
 			
 		} else {
-			char * ln_brk = (loader->rdTlen > 2
-			                 ? memchr (loader->rdTemp +2, '\n', loader->rdTlen -2)
-			                 : NULL);
-			if (!ln_brk) {
-				long n = inet_recv (loader->rdSocket,
-				                    loader->rdTemp + loader->rdTlen,
-				                    sizeof (loader->rdTemp) - loader->rdTlen);
+			long n = loader->rdTlen -2;
+			data   = (n > 0 ? memchr (data +2, '\n', n) : NULL);
+			if (!data) {
+				n = inet_recv (loader->rdSocket, loader->rdTemp + loader->rdTlen,
+				               sizeof (loader->rdTemp) - loader->rdTlen);
 				if (n > 0) {
 					loader->rdTlen += n;
 					if (loader->rdTlen > 2) {
-						ln_brk = memchr (loader->rdTemp +2, '\n', loader->rdTlen -2);
+						data = memchr (loader->rdTemp +2, '\n', loader->rdTlen -2);
 					}
 				}
 			}
-			if (ln_brk) {
-				char * tail = loader->rdTemp;
-				*ln_brk = '\0';
-				size = strtoul (loader->rdTemp, &tail, 16);
-				if (size > 0 && ++ln_brk < loader->rdTemp + loader->rdTlen) {
-					data = ln_brk;
+			if (data) {
+				*(data++) = '\0';
+				if ((long)(size = strtoul (loader->rdTemp, NULL, 16)) <= 0) {
+					loader->rdTlen = 0; /* end of chunks */
+				} else {
+					loader->rdTlen -= data - loader->rdTemp;
 				}
 			
 			} else if (loader->rdTlen == sizeof(loader->rdTemp)) {
@@ -301,8 +296,7 @@ chunked_job (void * arg, long invalidated)
 			chunk->next = NULL;
 			chunk->size = size;
 			
-			if (data) {
-				loader->rdTlen -= data - loader->rdTemp;
+			if (loader->rdTlen) {
 				if (size > loader->rdTlen) {
 					 size = loader->rdTlen;
 				}
