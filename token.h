@@ -1,7 +1,6 @@
 /* @(#)highwire/token.h
  */
 
-
 #if defined (__TAG_ITEM)
 # undef __TOKEN_TAG
 # define __BEG_TAGS
@@ -11,6 +10,7 @@
 # define __BEG_TAGS   typedef enum { TAG_Unknown = 0,
 # define __TAG_ITEM(t)   TAG_##t
 # define __END_TAGS   , TAG_LastDefined } HTMLTAG;
+# define HTMLTAG HTMLTAG
 #endif
 
 #ifndef __TOKEN_TAG
@@ -118,6 +118,7 @@
 # define __BEG_KEYS   typedef enum { KEY_Unknown = 0,
 # define __KEY_ITEM(k)   KEY_##k
 # define __END_KEYS   , KEY_LastDefined } HTMLKEY;
+# define HTMLKEY HTMLKEY
 #endif
 
 #ifndef __TOKEN_KEY
@@ -160,9 +161,9 @@
 		__KEY_ITEM (METHOD),       /* FORM */
 		__KEY_ITEM (MIN_WIDTH),    /* CSS all except table elements and inline */
 		__KEY_ITEM (NAME),         /* A,FRAME */
-		__KEY_ITEM (NOWRAP),       /* TD,TH */
 		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
+		__KEY_ITEM (NOWRAP),       /* TD,TH */
 		__KEY_ITEM (READONLY),     /* INPUT */
 		__KEY_ITEM (REL),          /* LINK */
 		__KEY_ITEM (ROWS),         /* FRAMESET */
@@ -206,6 +207,7 @@
 # define __BEG_CSSS   typedef enum { CSS_Unknown = KEY_LastDefined,
 # define __CSS_ITEM(k,e)   CSS_##k
 # define __END_CSSS   , CSS_LastDefined } HTMLCSS;
+# define HTMLCSS HTMLCSS
 #endif
 
 #ifndef __TOKEN_CSS
@@ -232,8 +234,6 @@
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
 		/*          LINE_HEIGHT       */
 		__CSS_ITEM (LIST_STYLE_TYPE,  0),
-		/*          MIN_HEIGHT        */
-		/*          MIN_WIDTH         */
 		__CSS_ITEM (MARGIN,           0),
 		__CSS_ITEM (MARGIN_BOTTOM,    0),
 		__CSS_ITEM (MARGIN_LEFT,      0),
@@ -241,6 +241,7 @@
 		__CSS_ITEM (MARGIN_TOP,       0),
 		/*          MAX_HEIGHT        */
 		/*          MAX_WIDTH         */
+		/*          MIN_HEIGHT        */
 		__CSS_ITEM (MIN_WIDTH,        KEY_MIN_WIDTH),
 		__CSS_ITEM (PADDING,          0),
 		__CSS_ITEM (PADDING_BOTTOM,   0),
