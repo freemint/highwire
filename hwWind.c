@@ -1043,6 +1043,24 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 	return chng;
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+updt_toolbar (HwWIND This, const char * text)
+{
+	TBAREDIT * edit = TbarEdit (This);
+	size_t     len  = strlen (text);
+	
+	if (len >= sizeof(edit->Text)) {
+		len = sizeof(edit->Text);
+	}
+	strncpy (edit->Text, text, len)[len] = '\0';
+	edit->Length = len;
+	edit->Cursor = 0;
+	edit->Shift  = 0;
+	This->TbarActv = TBAR_EDIT;
+	chng_toolbar (This, 0, 0, -1);
+}
+
 /*============================================================================*/
 void
 hwWind_redraw (HwWIND This, const GRECT * clip)
@@ -1162,6 +1180,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
+				}
+				if (!cont->Parent && wind->TbarH) {
+					updt_toolbar (wind, gen_ptr);
 				}
 				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
@@ -1475,7 +1496,14 @@ hwWind_keybrd (WORD key, UWORD state)
 		WORD       asc  = key & 0xFF;
 		GRECT      clip = { 0,0,0,16 };
 		
-		if (asc > ' ' && asc < 127) {
+		if (state & K_CTRL) {
+			
+			/* ... */
+			
+			chng_toolbar (wind, 0, 0, -1);
+			return wind;
+			
+		} else if (asc > ' ' && asc < 127) {
 			if (edit->Length < sizeof(edit->Text) -1) {
 				short  crs = edit->Cursor - edit->Shift;
 				char * end = edit->Text + ++edit->Length;
