@@ -86,6 +86,7 @@ new_location (const char * p_src, LOCATION base)
 	short    loc_proto = PROT_FILE;
 	HOST_ENT loc_host  = NULL;
 	short    loc_port  = 0;
+	BOOL     read_host = FALSE;
 	DIR_ENT  dir;
 	
 	if (!__base) {
@@ -121,7 +122,11 @@ new_location (const char * p_src, LOCATION base)
 		loc_proto = base->Proto;
 		loc_port  = base->Port;
 		loc_host  = base->Host;
-		base      = NULL;
+		if (src[1] == '/' && PROTO_isRemote(loc_proto)) {
+			src      += 2;
+			read_host = TRUE;
+		}
+		base = NULL;
 	
 	} else { /* file, about, mailto, http, https, ftp */
 		const char * s = src;
@@ -157,25 +162,30 @@ new_location (const char * p_src, LOCATION base)
 			}
 			src = (*(++s) == '/' && *(++s) == '/' ? ++s : s);
 			if (PROTO_isLocal(loc_proto) || PROTO_isRemote(loc_proto)) {
-				loc_host = host_entry (&s);
-				if (loc_host) {
-					if (*s == ':') {
-						char * end;
-						loc_port = strtoul (s +1, &end, 10);
-						s        = end;
-					}
-					if (!loc_port) {
-						loc_proto = PROT_FTP;
-						loc_port  = 21; /* ftp */
-					}
-					if (local_web && !host_addr (loc_host)) {
-						s = src;
-					}
-				}
-				src  = s;
+				read_host = TRUE;
 			}
 			base = NULL;
 		}
+	}
+	
+	if (read_host) {
+		const char * s = src;
+		loc_host = host_entry (&s);
+		if (loc_host) {
+			if (*s == ':') {
+				char * end;
+				loc_port = strtoul (s +1, &end, 10);
+				s        = end;
+			}
+			if (!loc_port) {
+				loc_proto = PROT_FTP;
+				loc_port  = 21; /* ftp */
+			}
+			if (local_web && !host_addr (loc_host)) {
+				s = src;
+			}
+		}
+		src  = s;
 	}
 	
 	if (local_web && PROTO_isRemote(loc_proto) && !host_addr (loc_host)) {
@@ -619,6 +629,9 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 			dir->Next = *p_dir;
 			*p_dir    = dir;
 		}
+	
+	} else if (base) {
+		dir = base;
 	}
 	
 	return dir;
