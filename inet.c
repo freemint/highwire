@@ -174,6 +174,17 @@ inet_host_addr (const char * name, long * addr)
 }
 
 
+/*----------------------------------------------------------------------------*/
+#if defined(USE_MINT) || defined(USE_STIK)
+static BOOL timeout = FALSE;
+
+static void sig_alrm (long sig)
+{
+	(void)sig;
+	timeout = TRUE;
+}
+#endif
+
 /*============================================================================*/
 long __CDECL
 inet_connect (long addr, long port)
@@ -187,17 +198,37 @@ inet_connect (long addr, long port)
 	s_in.sin_addr   = *(struct in_addr *)&addr;
 	if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
 		fh = -errno;
-	} else if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-		fh = -errno;
-		close (fh);
+	} else {
+		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
+		if (alrm >= 0) {
+			timeout = FALSE;
+			Talarm (2);
+		}
+		if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
+			close (fh);
+			fh = -(timeout && errno == EINTR ? ETIMEDOUT : errno);
+		}
+		if (alrm >= 0) {
+			Talarm (0);
+			Psignal (14/*SIGALRM*/, alrm);
+		}
 	}
 
 #elif defined(USE_STIK)
 	if (!init_stick()) {
 		puts ("No STiK");
 	} else {
+		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
+		if (alrm >= 0) {
+			timeout = FALSE;
+			Talarm (2);
+		}
 		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
-			fh = -1;
+			fh = -(fh == -1001L ? ETIMEDOUT : 1);
+		}
+		if (alrm >= 0) {
+			Talarm (0);
+			Psignal (14/*SIGALRM*/, alrm);
 		}
 	}
 
