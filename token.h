@@ -207,7 +207,7 @@
 		__CSS_ITEM (BACKGROUND,       KEY_BGCOLOR), /* not correct but the only *
 		                                             * supported attribute yet  */
 		__CSS_ITEM (BACKGROUND_COLOR, KEY_BGCOLOR),
-		/*          BORDER_COLOR      */
+		__CSS_ITEM (BORDER_COLOR,     0),
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
 		/*          BORDER_STYLE      */
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
