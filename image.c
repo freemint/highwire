@@ -274,7 +274,8 @@ image_calculate (IMAGE img, short par_width)
 {
 	if (img->set_w < 0) {
 		short width = ((long)par_width * -img->set_w +512) /1024 - img->hspace *2;
-		if (img->disp_w != (width > 0 ? width :1)) {
+		if (width <= 0) width = 1;
+		if (img->disp_w != width || !img->u.Data) {
 			cIMGDATA data = img->u.Data;
 			if (!data) {
 				long hash = 0;
@@ -303,7 +304,7 @@ image_calculate (IMAGE img, short par_width)
 			}
 		}
 	
-	} else if (!img->u.Data && (!img->set_w || !img->set_h)) {
+	} else if (!img->u.Data && (!img->set_w || img->set_h <= 0)) {
 		long     hash = 0;
 		cIMGDATA data = cache_lookup (img->source, -1, &hash);
 		if (data) {
