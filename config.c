@@ -20,6 +20,9 @@
 #include "scanner.h"
 
 
+const char * start_page = "html\\highwire.htm";
+
+
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " (" __DATE__ ")";
 static WORD up2date = 0; /* this variable is only necessary because this *
@@ -185,6 +188,17 @@ cfg_up2date (char * param, long arg)
 	(void)arg;
 	if (!up2date) {
 		up2date = (strcmp (param, cfg_magic) == 0 ? +1 : -1);
+	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_startpage (char * param, long arg)
+{
+	(void)arg;
+	if (up2date > 0) {
+		start_page = strdup (param);
 	}
 }
 
@@ -462,6 +476,7 @@ read_config(void)
 				{ "NO_IMAGE",             cfg_func,      (long)menu_alt_text   },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
+				{ "START_PAGE",           cfg_startpage, 0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
 				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 }
