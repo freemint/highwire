@@ -106,9 +106,10 @@ font_face (char * buf, short dflt)
 	char * beg = buf, * nxt = NULL;
 	short  fnt = dflt;
 	do {
-		if (*beg == '\'') {
+		char dlm = *beg;
+		if (dlm == '\'' || dlm == '"') {
 			while (isspace(*(++beg)));
-			if ((nxt = strchr (beg, '\'')) != NULL) {
+			if ((nxt = strchr (beg, dlm)) != NULL) {
 				char * end = nxt++;
 				while (isspace(*(--end)));
 				end[1] = '\0';
@@ -191,6 +192,135 @@ numerical (char * buf, short em, short ex)
 			size = 0;
 	}
 	return (short)size;
+}
+
+/*----------------------------------------------------------------------------*/
+static FNTSTACK
+css_text_styles (PARSER parser, FNTSTACK fstk)
+{
+	TEXTBUFF current = &parser->Current;
+	short    step    = -1;
+	char output[100];
+	
+	if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
+	
+		if (isdigit (output[0])) {
+			short size = numerical (output, current->font->Size,
+			                        current->word->font->SpaceWidth);
+			if (size > 0) {
+				if (!fstk) {
+					fstk = fontstack_push (current, -1);
+				}
+				fontstack_setSize (current, size);
+			}
+		
+		} else {   /* !isdigit() */
+			
+			if (stricmp (output, "smaller") == 0) {
+				step = (current->font->Step > 1 ? current->font->Step -1 : 0);
+			
+			} else if (stricmp (output, "larger") == 0) {
+				step = (current->font->Step < 6 ? current->font->Step +1 : 7);
+			
+			} else {
+				static const char * arr[] = {
+					"xx-small", "x-small", "small", "medium",
+					"large", "x-large", "xx-large" };
+				step = (int)numberof(arr);
+				while (step-- && stricmp (output, arr[step]));
+			}
+			if (step >= 0 && fstk) {
+				word_set_point (current,
+				                fstk->Size = font_step2size (fstk->Step = step));
+			}
+		}
+	}
+	if (!fstk) {
+		fstk = fontstack_push (current, step);
+	}
+	
+	if (get_value (parser, KEY_FACE, output, sizeof(output))) {
+		short fnt = font_face (output, TAgetFont (current->word->attr));
+		/* n/i: cursive, fantasy */
+		if (fnt != TAgetFont (current->word->attr)) {
+			fontstack_setType (current, fnt);
+		}
+	}
+	
+	if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))
+	    && (stricmp (output, "italic") == 0 ||
+	        stricmp (output, "oblique") == 0)) {
+		/* n/i: normal */
+		fontstack_setItalic (current);
+	}
+	
+	if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
+		BOOL bold;
+		if (isdigit (output[0])) {
+			long n = (int)strtoul (output, NULL, 10);
+			bold = (n >= 700);
+		} else {
+			bold = (stricmp (output, "bold") == 0 ||
+			        stricmp (output, "bolder") == 0);
+		}
+		/* n/i: lighter, medium, 100..300 */
+		if (bold) fontstack_setBold (current);
+	}
+	
+	if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
+		if (stricmp (output, "line-through") == 0) {
+			fontstack_setStrike (current);
+		} else if (stricmp (output, "underline") == 0) {
+			fontstack_setUndrln (current);
+		}
+		/* n/i: overline */
+	}
+	
+	if (get_value (parser, CSS_WHITE_SPACE, output, sizeof(output))) {
+		if (stricmp (output, "nowrap") == 0) {
+			fontstack_setNoWrap (current);
+		}
+		/* n/i: normal, pre */
+	}
+	
+	if (!ignore_colours) {
+		WORD color = get_value_color (parser, KEY_COLOR);
+		if (color >= 0) {
+			fontstack_setColor (current, color);
+		}
+	}
+	
+	return fstk;
+}
+
+/*----------------------------------------------------------------------------*/
+static FNTSTACK
+css_block_styles (PARSER parser, FNTSTACK fstk)
+{
+	TEXTBUFF current = &parser->Current;
+	WORD     val;
+	char     output[20];
+	
+	if (fstk) css_text_styles (parser, fstk);
+	
+	if (!ignore_colours) {
+		WORD color = get_value_color (parser, KEY_BGCOLOR);
+		if (color >= 0 && color != current->backgnd) {
+			current->paragraph->Backgnd = color;
+		}
+	}
+	
+	if ((val = get_h_align (parser, -1)) >= 0) {
+		current->paragraph->alignment = val;
+	}
+	
+	if (get_value (parser, CSS_TEXT_INDENT, output, sizeof(output))) {
+		short indent = numerical (output, current->font->Size,
+		                          current->word->font->SpaceWidth);
+		current->paragraph->Hanging = indent;
+	}
+	
+	return fstk;
 }
 
 
@@ -905,6 +1035,9 @@ render_BIG_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step +1);
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_text_styles (parser, current->font);
+		}
 	} else {
 		fontstack_pop (current);
 	}
@@ -984,19 +1117,24 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		fontstack_push (current, step);
 		
-		if (get_value (parser, KEY_FACE, output, sizeof(output))) {
-			short fnt = font_face (output, TAgetFont (current->word->attr));
-			if (fnt != TAgetFont (current->word->attr)) {
-				fontstack_setType (current, fnt);
-			}
-		}
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_text_styles (parser, current->font);
 		
-		/*________________________HW_proprietary___*/
-		if (!ignore_colours) {
-			WORD color = get_value_color (parser, KEY_COLOR);
-			if (color >= 0) {
-				fontstack_setColor (current, color);
+		} else {
+			if (get_value (parser, KEY_FACE, output, sizeof(output))) {
+				short fnt = font_face (output, TAgetFont (current->word->attr));
+				if (fnt != TAgetFont (current->word->attr)) {
+					fontstack_setType (current, fnt);
+				}
 			}
+			
+			/*________________________HW_proprietary___
+			if (!ignore_colours) {
+				WORD color = get_value_color (parser, KEY_COLOR);
+				if (color >= 0) {
+					fontstack_setColor (current, color);
+				}
+			}*/
 		}
 	
 	} else {
@@ -1012,94 +1150,13 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		char output[100];
-		FNTSTACK fstp = NULL;
-		short    step = current->font->Step;
-		
-		if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
-			if (isdigit (output[0])) {
-			short size = numerical (output, current->font->Size,
-			                        current->word->font->SpaceWidth);
-				if (size > 0) {
-					fstp = fontstack_push (current, -1);
-					fontstack_setSize (current, size);
-					current->font->Size = size;
-				}
-			
-			} else if (stricmp (output, "smaller") == 0) {
-				step = (current->font->Step > 1 ? current->font->Step -1 : 0);
-			
-			} else if (stricmp (output, "larger") == 0) {
-				step = (current->font->Step < 6 ? current->font->Step +1 : 7);
-			
-			} else {
-				static const char * arr[] = {
-					"xx-small", "x-small", "small", "medium",
-					"large", "x-large", "xx-large" };
-				step = (int)numberof(arr);
-				while (step-- && stricmp (output, arr[step]));
-			}
-		}
-		if (!fstp) {
-			fstp = fontstack_push (&parser->Current, step);
-		}
-
-	if (get_value (parser, KEY_FACE, output, sizeof(output))) {
-		short fnt = font_face (output, TAgetFont (current->word->attr));
-			/* n/i: cursive, fantasy */
-			if (fnt != TAgetFont (current->word->attr)) {
-				fontstack_setType (current, fnt);
-			}
-		}
-		
-		if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))
-		    && (stricmp (output, "italic") == 0 ||
-		        stricmp (output, "oblique") == 0)) {
-			/* n/i: normal */
-			fontstack_setItalic (current);
-		}
-		
-		if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
-			BOOL bold;
-			if (isdigit (output[0])) {
-				long n = (int)strtoul (output, NULL, 10);
-				bold = (n >= 700);
-			} else {
-				bold = (stricmp (output, "bold") == 0 ||
-				        stricmp (output, "bolder") == 0);
-			}
-			/* n/i: lighter, medium, 100..400 */
-			if (bold) fontstack_setBold (current);
-		}
-		
-		if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
-			if (stricmp (output, "line-through") == 0) {
-				fontstack_setStrike (current);
-			} else if (stricmp (output, "underline") == 0) {
-				fontstack_setUndrln (current);
-			}
-		}
-		
-		if (get_value (parser, CSS_WHITE_SPACE, output, sizeof(output))) {
-			if (stricmp (output, "nowrap") == 0) {
-				fontstack_setNoWrap (current);
-			}
-			/* n/i: normal, pre */
-		}
-		
-		if (!ignore_colours) {
-			WORD color = get_value_color (parser, KEY_COLOR);
-			if (color >= 0) {
-				fontstack_setColor (current, color);
-			}
-		}
+		css_text_styles (parser, NULL);
 	
 	} else {
-		fontstack_pop (current);
+		fontstack_pop (&parser->Current);
 	}
 	
 	return flags;
@@ -1148,6 +1205,9 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_text_styles (parser, current->font);
+		}
 	} else {
 		fontstack_pop (current);
 	}
@@ -1184,6 +1244,9 @@ render_SUB_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_BELOW;
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_text_styles (parser, current->font);
+		}
 	} else {
 		fontstack_pop (current);
 		current->word->vertical_align = ALN_BOTTOM;
@@ -1204,6 +1267,9 @@ render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_ABOVE;
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_text_styles (parser, current->font);
+		}
 	} else {
 		fontstack_pop (current);
 		current->word->vertical_align = ALN_BOTTOM;
@@ -1673,23 +1739,28 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
 			par = add_paragraph (current, 2);
 		}
-
-		par->alignment = get_h_align (parser, get_align (parser));
 		
 		fontstack_push (current, 7 -(get_value_char (parser, KEY_H_HEIGHT) -'0'));
-
-		if (!ignore_colours) {
-			WORD color = get_value_color (parser, KEY_BGCOLOR);
-			if (color >= 0 && color != current->backgnd) {
-				current->paragraph->Backgnd = color;
-			}
-			if ((color = get_value_color (parser, KEY_COLOR)) >= 0) {
-				fontstack_setColor (current, color);
-			}
-		}
 		fontstack_setType (current, header_font);
 		fontstack_setBold (current);
-	
+
+		if (get_value_exists (parser, KEY_STYLE)) {
+			css_block_styles (parser, current->font);
+		
+		} else {
+			par->alignment = get_h_align (parser, get_align (parser));
+			
+			/*________________________HW_proprietary___
+			if (!ignore_colours) {
+				WORD color = get_value_color (parser, KEY_BGCOLOR);
+				if (color >= 0 && color != current->backgnd) {
+					current->paragraph->Backgnd = color;
+				}
+				if ((color = get_value_color (parser, KEY_COLOR)) >= 0) {
+					fontstack_setColor (current, color);
+				}
+			}*/
+		}
 		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
 			insert_anchor (current, name, NULL);
 		}
@@ -1787,9 +1858,11 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
 			par = add_paragraph (current, 2);
 		}
-
+		
+		css_block_styles (parser, NULL);
+		
 		par->alignment = get_h_align (parser, get_align (parser));
-
+		
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {

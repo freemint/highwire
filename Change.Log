@@ -1,7 +1,13 @@
-(non-public of Oct.27, 2003)
+(non-public of Oct.31, 2003)
 
-- Tag <span> implemented (general CSS inline
-  element).
+- Tag <SPAN> implemented (general CSS inline
+  element) (#0138).
+
+- Extended set of recognized CSS attributes,
+  implemented basic CSS support for BIG, SMALL,
+  FONT, SUB, SUP, H1..6 and P tags.
+
+- Bugs #0138 resolved.
 
 __________________________________________________
 Changes in V. 0.1.5 release  of October 24, 2003:
