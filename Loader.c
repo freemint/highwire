@@ -159,7 +159,7 @@ struct s_ldr_chunk {
 
 /*============================================================================*/
 LOADER
-new_loader (LOCATION loc, CONTAINR target)
+new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 {
 	const char * appl = NULL;
 	LOADER loader = malloc (sizeof (struct s_loader));
@@ -198,7 +198,7 @@ new_loader (LOCATION loc, CONTAINR target)
 		loader->MimeType = mime_byExtension (loc->File, &appl, loader->FileExt);
 	}
 	
-	if (loc->Proto == PROT_HTTP) {
+	if (loc->Proto == PROT_HTTP && lookup) {
 		CACHED cached = cache_lookup (loc, 0, NULL);
 		if (cached) {
 			union { CACHED c; LOCATION l; } u;
@@ -263,7 +263,8 @@ delete_loader (LOADER * p_loader)
 
 /*============================================================================*/
 LOADER
-start_page_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
+start_page_load (CONTAINR target, const char * url, LOCATION base,
+                 BOOL u_act, char * post_buff)
 {
 	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
 	LOADER   loader = NULL;
@@ -272,7 +273,8 @@ start_page_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 		start_application (NULL, loc);
 	
 	} else {
-		loader = start_cont_load (target, NULL, loc, u_act);
+		loader = start_cont_load (target, NULL, loc, u_act, (post_buff == NULL));
+		loader->PostBuf = post_buff;
 	}
 	free_location (&loc);
 	
@@ -281,10 +283,11 @@ start_page_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 
 /*============================================================================*/
 LOADER
-start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
+start_cont_load (CONTAINR target, const char * url, LOCATION base,
+                 BOOL u_act, BOOL use_cache)
 {
 	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
-	LOADER   loader = new_loader (loc, target);
+	LOADER   loader = new_loader (loc, target, use_cache);
 	
 	free_location (&loc);
 	loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -351,7 +354,7 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
                  int (*successor)(void*, long), void * objc)
 {
 	LOCATION loc  = new_location (url, base);
-	LOADER loader = new_loader (loc, target);
+	LOADER loader = new_loader (loc, target, TRUE);
 	
 	free_location (&loc);
 	loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -565,18 +568,23 @@ receive_job (void * arg, long invalidated)
 		loader->rdSocket   = -1;
 	}
 	if (loader->Data) {
-		const char * ext = mime_toExtension (loader->MimeType);
 		char * p = loader->Data + loader->DataFill;
 		*(p++) = '\0';
 		*(p++) = '\0';
 		*(p)   = '\0';
 		
-		loader->Cached = cache_assign (loader->Location, loader->Data,
-		                               loader->DataSize,
-		                               (ext && *ext ? ext : loader->FileExt),
-		                               loader->Date, loader->Expires);
-		if (loader->Cached) {
-			cache_bound (loader->Location, NULL);
+		if (!loader->PostBuf || MIME_Major (loader->MimeType) != MIME_TEXT) {
+			const char * ext = mime_toExtension (loader->MimeType);
+			if (loader->PostBuf) {
+				loader->Expires = -1; /* mark to get deleted at program end */
+			}
+			loader->Cached = cache_assign (loader->Location, loader->Data,
+			                               loader->DataSize,
+			                               (ext && *ext ? ext : loader->FileExt),
+			                               loader->Date, loader->Expires);
+			if (loader->Cached) {
+				cache_bound (loader->Location, NULL);
+			}
 		}
 	}
 	if (loader->SuccJob) {
@@ -611,7 +619,7 @@ header_job (void * arg, long invalidated)
 		return JOB_DONE;
 	}
 	
-	switch (CResultDsk (cache_exclusive (loc))) {
+	if (!loader->PostBuf) switch (CResultDsk (cache_exclusive (loc))) {
 		
 		case CR_BUSY:
 		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
