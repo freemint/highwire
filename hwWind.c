@@ -936,7 +936,7 @@ HwWIND
 hwWind_byContainr (CONTAINR cont)
 {
 	HwWIND wind = (cont ? hwWind_Top : NULL);
-	while (wind && wind->Pane == cont->Base) {
+	while (wind && wind->Pane != cont->Base) {
 		wind = hwWind_Next (wind);
 	}
 	return wind;
