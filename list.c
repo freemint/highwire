@@ -265,9 +265,9 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	WORD     spc_wd = (current->word->font->SpaceWidth +1) /2;
 	
 	PARAGRPH par = add_paragraph (current, 0);
+	par->Box.HtmlCode   = TAG_LI;
 	par->Box.Margin.Lft = 0;
 	par->Box.TextIndent = -list->Hanging;
-	par->paragraph_code = PAR_LI;
 	list->ListItem = par;
 	*(current->text++) = font_Nobrk (current->word->font);
 	new_word (current, TRUE);

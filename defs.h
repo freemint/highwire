@@ -36,10 +36,6 @@
 /* ******* Type Definitions ********* */
 
 typedef enum {
-	PAR_NONE = 0, PAR_LI, PAR_IMG
-} PARAGRAPH_CODE;
-
-typedef enum {
 	ALN_LEFT = 0, ALN_JUSTIFY = 1, ALN_CENTER = 2, ALN_RIGHT = 3,
 	#define ALN_NO_FLT ALN_JUSTIFY /* justify is impossible for floating */
 	FLT_LEFT = 0x100, FLT_RIGHT = 0x103
@@ -510,7 +506,6 @@ struct paragraph_item {
 	DOMBOX   Box;
 	WORDITEM item;
 	WORDLINE Line;    /* list of word lines */
-	PARAGRAPH_CODE paragraph_code;
 	PARAGRPH next_paragraph;
 };
 

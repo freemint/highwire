@@ -2121,10 +2121,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		if (floating != ALN_NO_FLT) {
 			H_ALIGN  align = current->paragraph->Box.TextAlign;
 			PARAGRPH par   = add_paragraph (current, 0);
-			par->Box.TextAlign  = align;
-			par->paragraph_code = PAR_IMG;
-			par->Box.BoxClass   = BC_SINGLE;
-			par->Box.HtmlCode   = TAG_IMG;
+			par->Box.BoxClass  = BC_SINGLE;
+			par->Box.HtmlCode  = TAG_IMG;
+			par->Box.TextAlign = align;
 			if (floating == ALN_CENTER) {
 				par->Box.Floating = floating;
 			} else {

@@ -5,6 +5,7 @@
 #endif
 
 #include "global.h"
+#include "token.h"
 #include "Table.h"
 #include "fontbase.h"
 
@@ -129,7 +130,6 @@ new_paragraph (TEXTBUFF current)
 	
 	paragraph->item = new_word (current, FALSE);
 	paragraph->Line = NULL;
-	paragraph->paragraph_code = PAR_NONE;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -142,7 +142,8 @@ new_paragraph (TEXTBUFF current)
 		paragraph_vTab.format   = vTab_format;
 	}
 	paragraph->Box._vtab = &paragraph_vTab;
-
+	
+	paragraph->Box.HtmlCode  = TAG_P;
 	paragraph->Box.TextAlign = current->parentbox->TextAlign;
 	
 	paragraph->next_paragraph = NULL;
@@ -216,7 +217,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		
 		paragraph->Box.TextAlign = current->parentbox->TextAlign;
 	}
-	paragraph->paragraph_code = PAR_NONE;
+	paragraph->Box.HtmlCode   = TAG_P;
 	paragraph->Box.TextIndent = current->parentbox->TextIndent;
 	
 	if (vspace) {
@@ -301,7 +302,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		hang_nxt = 0;
 	}
 	
-	if (par->paragraph_code == PAR_IMG) {
+	if (par->Box.HtmlCode == TAG_IMG) {
 		align = ALN_LEFT;
 	} else {
 		align = This->TextAlign;
@@ -506,7 +507,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		*p_line = NULL;
 	}
 
-	if (par->paragraph_code == PAR_IMG) {
+	if (par->Box.HtmlCode == TAG_IMG) {
 		This->Rect.W = par->item->word_width;
 	} else {
 		This->Rect.W = width;
