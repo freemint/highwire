@@ -1,18 +1,18 @@
-(non-public of Oct. 01, 2003)
+(non-public of Oct. 20, 2003)
 
 - Enabled loading and displaying of image files
   over remote connections.
   NOTE:  This will only work when the CACHEDIR is
   defined properly in HighWire's cfg file!!!
 
-- New config keyword added to control how many
+- New config keyword added to control how much
   memory shall be used for caching of image
   bitmaps in memory (not those on disk):
     CACHEMEM = <kilo bytes>
   When not defined 100k will be assumed.
   (see example.cfg\highwire.cfg for details).
 
-- Added lot of functionality for dithering and
+- Added more functionality for dithering and
   displaying of images, especially for GrayScale
   and TrueColor.
 
@@ -48,10 +48,14 @@
   failed.
 
 - Fixed the infinite loop caused by too long lines
-  in HTML textes.
+  in HTML texts.
 
 - Corrected the handling of URLs for <frame> when
   a previous <base href=..> was found.
+
+- Improved handling of incorrect absolute sizes of
+  frames and framesets to avoid overlappings or
+  empty gaps (#0135).
 
 - Corrected clipping of infobar drawing for shaded
   or iconified windows (#0118).
@@ -63,10 +67,13 @@
 - Implemented recoding of faulty encoded character
   entities from code page 1252 (&#128; .. &#159;).
 
+- Fixed buffer overflow crashes due to very long
+  URLs.
+
 - Added several checks to avoid crashes due to
   memory exhausted.
 
-- Bugs #0093, #0118, #0119, #0126 resolved.
+- Bugs #0093, #0118, #0119, #0126, #0135 resolved.
 
 __________________________________________________
 Changes in V. 0.1.4 release  of August 10, 2003:
@@ -319,7 +326,7 @@ Changes in V.09 alpha  of October 30, 2002:
 - Overworked text floating around images and
   tables.
 
-- Slightly improved Nearest Colour algorithm for
+- Slightlly improved Nearest Colour algorithm for
   screen resolutions <=256 colours
 
 - Closed some memory leaks.
