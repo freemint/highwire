@@ -201,7 +201,8 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	set_word (img);
 		
 	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
-		sched_insert (image_job, img, 0);
+		sched_insert (image_job, img, (long)img->frame->Container);
+		containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 	}
 	
 	return img;
@@ -226,7 +227,9 @@ delete_image (IMAGE * _img)
 				img->u.Mfdb = NULL;
 			}
 		} else {
-			sched_remove (image_job, img);
+			if (sched_remove (image_job, img)) {
+				containr_notify (img->frame->Container, HW_ActivityEnd, NULL);
+			}
 		}
 		free_location (&img->source);
 		free (img);
@@ -299,7 +302,8 @@ image_calculate (IMAGE img, short par_width)
 					free (img->u.Mfdb);
 					img->u.Mfdb = NULL;
 				}
-				sched_insert (image_job, img, 0);
+				sched_insert (image_job, img, (long)img->frame->Container);
+				containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 			}
 		}
 	
@@ -330,7 +334,7 @@ image_calculate (IMAGE img, short par_width)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-image_job (void * arg, long ignore)
+image_job (void * arg, long invalidated)
 {
 	IMAGE    img = arg;
 	PARAGRPH par = img->paragraph;
@@ -345,7 +349,10 @@ image_job (void * arg, long ignore)
 	                 ? img_hash (img->disp_w, img->disp_h, img->backgnd) : 0);
 	CACHED cached = (hash ? cache_lookup (loc, hash, &hash) : NULL);
 	
-	(void)ignore; /* not used here */
+	if (invalidated) {
+		containr_notify (frame->Container, HW_ActivityEnd, NULL);
+		return FALSE;
+	}
 	
 	if (cached) {
 		if ((char)(hash >>24) == 0xFF) {
@@ -434,7 +441,13 @@ image_job (void * arg, long ignore)
 		}
 		rec.g_y = y;
 	}
-	containr_notify (frame->Container, HW_ImgEndLoad, clip);
+	
+	if (!cached) {
+		containr_notify (frame->Container, HW_ImgEndLoad, clip);
+	} else if (img->u.Data) {
+		containr_notify (frame->Container, HW_PageUpdated, clip);
+	}
+	containr_notify (frame->Container, HW_ActivityEnd, NULL);
 	
 	return FALSE;
 }
