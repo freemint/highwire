@@ -1,3 +1,15 @@
+(non-public of Aug. 12, 2003)
+
+- Fixed the cache screwing up bug which occured
+  when storing of files failed for some reason
+  (eg. no cache dir defined in config).  This was
+  leading to an infinite loop.
+
+- Fixed the 'too many open files' bug, resulting
+  from forgotten socket close after connection
+  failed.
+
+__________________________________________________
 Changes in V. 0.1.4 release  of August 10, 2003:
 
 - Implemented disk caching of text/html files from
