@@ -647,10 +647,8 @@ paragraph_filter (PARAGRPH par)
 			if (prev) {
 				prev->line_brk |= word->line_brk;
 				prev->next_word = word->next_word;
-			} else if (word->next_word) {
-				par->item = word->next_word;
 			} else {
-				break; /* don't delete a single word_item */
+				par->item = word->next_word;
 			}
 			word = destroy_word_list (word, word);
 			remv = FALSE;
