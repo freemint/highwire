@@ -231,9 +231,10 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 	}
 	par->Height = 0;
 	do {
-		short     count     = 1;
-		short     offset, justify;
-		BOOL      ln_brk;
+		short count = 1;
+		short img_h = 0;
+		short offset, justify;
+		BOOL  ln_brk;
 		
 		WORDITEM w_beg = NULL;
 		short    w_len = 0;
@@ -241,7 +242,12 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 
 		while (word) {
 			if (word->image) {
+				word->line = NULL;
 				image_calculate (word->image, int_width);
+				if (word->vertical_align == ALN_TOP) {
+					img_h = word->word_height + word->word_tail_drop;
+					word->word_tail_drop = 0;
+				}
 				break;
 			}
 			if (word->link || !word->space_width || word->length > 0) {
@@ -267,7 +273,12 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 
 		while ((word = word->next_word) != NULL && !ln_brk) {
 			if (word->image) {
+				word->line = NULL;
 				image_calculate (word->image, int_width);
+				if (word->vertical_align == ALN_TOP) {
+					img_h = max (img_h, word->word_height + word->word_tail_drop);
+					word->word_tail_drop = 0;
+				}
 			}
 			if (word->wrap) {
 				w_beg = word;
@@ -293,6 +304,9 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 		next        = word;
 		word        = line->Word;
 		line->Count = count;
+		if (line->Descend < (img_h -= line->Ascend)) {
+			line->Descend = img_h;
+		}
 	
 		if (align == ALN_JUSTIFY) {
 			justify = (!ln_brk && next ? offset : 0);
@@ -312,18 +326,23 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			offset += blocker->L.width;
 		
 		while(1) {
+			word->line = line;
 			if (word->image) {
 				/* Origin already set in new_image() */
 				word->image->offset.X = offset;
-				word->image->offset.Y = par->Height
-				                      + line->Ascend - word->word_height;
+				word->image->offset.Y = par->Height;
+				if (word->vertical_align != ALN_TOP) {
+					word->image->offset.Y += line->Ascend - word->word_height;
+				} else {
+					word->word_height    = line->Ascend;
+					word->word_tail_drop = img_h;
+				}
 			}
 			if (word->link && !word->link->isHref) {
 				/* Origin already set in new_named_location() */
 				word->link->u.anchor->offset.X = -par->Offset.X;
 				word->link->u.anchor->offset.Y = par->Height;
 			}
-			word->line     = line;
 			word->h_offset = offset;
 
 			if (!--count) break;

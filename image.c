@@ -78,20 +78,20 @@ static void
 set_word (IMAGE img)
 {
 	struct word_item * word = img->word;
+	short h = img->disp_h + img->vspace;
 	
 	switch (word->vertical_align) {
 		case ALN_TOP:
-			word->word_height    = img->alt_h + img->vspace;
-			word->word_tail_drop = img->disp_h - img->alt_h + img->vspace;
+			word->word_height = (word->line
+			                     ? word->line->Ascend : img->alt_h + img->vspace);
 			break;
 		case ALN_MIDDLE:
-			word->word_height    = (img->disp_h /2) + img->vspace;
-			word->word_tail_drop = img->disp_h - word->word_height + img->vspace;
+			word->word_height = (h + img->vspace) /2;
 			break;
 		default:
-			word->word_height    = img->disp_h + img->vspace;
-			word->word_tail_drop = 0 + img->vspace;
+			word->word_height = h;
 	}
+	word->word_tail_drop = max (0, h - word->word_height + img->vspace);
 	word->word_width = img->disp_w + (img->hspace * 2);
 }
 
@@ -321,6 +321,9 @@ image_calculate (IMAGE img, short par_width)
 			}
 			set_word (img);
 		}
+	
+	} else if (img->word->vertical_align == ALN_TOP) {
+		set_word (img);
 	}
 }
 
