@@ -38,7 +38,7 @@ struct s_img_info {
 	/* */
 	void   (*raster)(IMGINFO, void * dst);
 	char   * RowBuf;
-	WORD   * DthBuf;
+	void   * DthBuf;
 	UWORD    DthWidth; /* calculated width of the image */
 	UWORD    PixMask;
 	size_t   PgSize;
@@ -502,8 +502,9 @@ setup (IMAGE img, IMGINFO info)
 	}
 	if (info->BitDepth > 1) {
 		if (planes <= 2) {
-			info->DthBuf = malloc ((img->disp_w +1) *2);
-			memset (info->DthBuf, 0, (img->disp_w *2));
+			size_t size = (img->disp_w +1) *2;
+			info->DthBuf = malloc   (size);
+			memset (info->DthBuf, 0, size);
 		}
 		if (info->Palette) {
 			(*cnvpal_color)(info, transpar);
@@ -721,7 +722,8 @@ dither_D1 (IMGINFO info, void * _dst)
 }
 
 /*------------------------------------------------------------------------------
- * 2 planes interleaved words format, uses a simple intensity dither.
+ * 2 planes interleaved words format, uses a simple intensity dither.  the pixel
+ * index array must contain intensity values of [0..4080].
  */
 static void
 raster_D2 (IMGINFO info, void * _dst)
@@ -732,38 +734,18 @@ raster_D2 (IMGINFO info, void * _dst)
 	ULONG * map   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	short * buf   = info->DthBuf;
-	short   ins   = *buf;
+	short   ins   = 0;
 	UWORD   pixel = 0x8000;
 	UWORD   chunk = 0;
-	*buf = 0;
 	do {
-		char * rgb = (char*)&map[(short)info->RowBuf[x >>16] & mask];
-		short  err;
-		ins += (short)rgb[0] *5 + (short)rgb[1] *9 + (short)rgb[2] *2;
+		ins += *buf + map[(short)info->RowBuf[x >>16] & mask];
 		
 		if (ins < 2040) {
 			chunk |= pixel;
-			if ((err = ins) < 0) {
-	/*			err =0;//>>= 1;*/
-			}
 		} else {
-			if ((err = ins - 4080) > 0) {
-	/*			err =0;//>>= 1;*/
-			}
+			ins -= 4080;
 		}
-		ins = buf[1];
-		
-	/*	if ((err >>= 2) != 0) {*/
-	/*		buf[1] =  err;*/     /* 2/8 to next RGB of next line */
-		if ((err >>= 1) != 0) {
-			buf[1] =  0;     /* 2/8 to next RGB of next line */
-	/*		err    += err >>1;*/
-			buf[0] += err;     /* 3/8 to this RGB of next line */
-			ins    += err;     /* 3/8 to next RGB of this line */
-		} else {
-			buf[1] = 0;
-		}
-		buf++;
+		*(buf++) = (ins >>= 2);
 		
 		if (!--width || !(pixel >>= 1)) {
 			*(dst++) = chunk;
@@ -840,6 +822,38 @@ dither_D2 (IMGINFO info, void * _dst)
 }
 
 /*------------------------------------------------------------------------------
+* Converts 'num'=[1..16] pixel bytes into 'depth'=[1..8] word chunks.
+* Used for the I4 and I8 interleaved words formats.
+*/
+static void
+raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
+{
+	UWORD   mask  = 0x8000;
+	UWORD * chunk = dst;
+	CHAR    pixel = *src;
+	short   i     = depth;
+	do {
+		*(chunk++) = (pixel & 1 ? mask : 0);
+		pixel >>= 1;
+	} while (--i);
+	
+	while (--num) {
+		mask >>= 1;
+		chunk = dst;
+		pixel = *(++src);
+		i     = depth;
+		do {
+			if (pixel & 1) *chunk |=  mask;
+			else           *chunk &= ~mask;
+			chunk++;
+			pixel >>= 1;
+		} while (--i);
+	}
+}
+#define raster_chunk4(s,d,n)   raster_chunks (s, d, n, 4)
+#define raster_chunk8(s,d,n)   raster_chunks (s, d, n, 8)
+
+/*------------------------------------------------------------------------------
  * 4 planes interleaved words format
  */
 static void
@@ -848,27 +862,23 @@ raster_I4 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	ULONG * map   = info->Pixel;
-	UWORD   mask  = info->PixMask;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		short   color = map[(short)info->RowBuf[x >>16] & mask];
-		UWORD * chunk = dst;
-		short   i     = 4;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		UWORD idx = info->RowBuf[x >>16];
+		*(tmp++)  = info->Pixel[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
+		if (!--width || !--n) {
+			raster_chunk4 (buf, dst, tmp - buf);
 			dst += 4;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
 		
-	} while (--width);
+	} while (width);
 }
 /*------------------------------------*/
 static void
@@ -877,26 +887,23 @@ gscale_I4 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		UWORD   idx   = info->RowBuf[x >>16] >>3;
-		short   color = *(CHAR*)&graymap[idx];
-		UWORD * chunk = dst;
-		short   i     = 4;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		UWORD idx = info->RowBuf[x >>16] >>3;
+		*(tmp++)  = *(CHAR*)&graymap[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
-			dst += 8;
+		if (!--width || !--n) {
+			raster_chunk4 (buf, dst, tmp - buf);
+			dst += 4;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
-		 
-	} while (--width);
+		
+	} while (width);
 }
 /*------------------------------------*/
 static void
@@ -905,29 +912,26 @@ dither_I4 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
-		UWORD   idx   = ((((UWORD)rgb[0] *6) /256)  *6
-		              +  (((UWORD)rgb[1] *6) /256)) *6
-		              +  (((UWORD)rgb[2] *6) /256);
-		short   color = *(CHAR*)&cube216[idx];
-		UWORD * chunk = dst;
-		short   i     = 4;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
+		           +  (((UWORD)rgb[1] *6) /256)) *6
+		           +  (((UWORD)rgb[2] *6) /256);
+		*(tmp++)   = *(CHAR*)&cube216[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
-			dst += 8;
+		if (!--width || !--n) {
+			raster_chunk4 (buf, dst, tmp - buf);
+			dst += 4;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
 		 
-	} while (--width);
+	} while (width);
 }
 
 /*------------------------------------------------------------------------------
@@ -936,7 +940,7 @@ dither_I4 (IMGINFO info, void * _dst)
 static void
 raster_I8 (IMGINFO info, void * _dst)
 {
-#if defined(__GNUC__)
+#if 0 && defined(__GNUC__)
 	size_t  x     = (info->IncXfx +1) /2;
 	__asm__ volatile ("
 		subq.w	#1, %4
@@ -1003,7 +1007,7 @@ raster_I8 (IMGINFO info, void * _dst)
 		: "d3","d4","d5","d6","d7"
 	);
 	
-#elif defined(__PUREC__)
+#elif 0 && defined(__PUREC__)
 	extern void pc_raster_I8 (void *, void *, void *, short, size_t, UWORD);
 	pc_raster_I8 (_dst, info->RowBuf, info->Pixel,
 	              info->DthWidth, info->IncXfx, info->PixMask);
@@ -1012,27 +1016,23 @@ raster_I8 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	ULONG * map   = info->Pixel;
-	UWORD   mask  = info->PixMask;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		short   color = map[(short)info->RowBuf[x >>16] & mask];
-		UWORD * chunk = dst;
-		short   i     = 8;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		UWORD idx = info->RowBuf[x >>16];
+		*(tmp++)  = info->Pixel[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
+		if (!--width || !--n) {
+			raster_chunk8 (buf, dst, tmp - buf);
 			dst += 8;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
-		 
-	} while (--width);
+		
+	} while (width);
 #endif
 }
 /*------------------------------------*/
@@ -1042,26 +1042,23 @@ gscale_I8 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		UWORD   idx   = info->RowBuf[x >>16] >>3;
-		short   color = *(CHAR*)&graymap[idx];
-		UWORD * chunk = dst;
-		short   i     = 8;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		UWORD idx = info->RowBuf[x >>16] >>3;
+		*(tmp++)  = *(CHAR*)&graymap[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
+		if (!--width || !--n) {
+			raster_chunk8 (buf, dst, tmp - buf);
 			dst += 8;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
-		 
-	} while (--width);
+		
+	} while (width);
 }
 /*------------------------------------*/
 static void
@@ -1070,29 +1067,26 @@ dither_I8 (IMGINFO info, void * _dst)
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
-	UWORD   pixel = 0x8000;
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
 	do {
-		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
-		UWORD   idx   = ((((UWORD)rgb[0] *6) /256)  *6
-		              +  (((UWORD)rgb[1] *6) /256)) *6
-		              +  (((UWORD)rgb[2] *6) /256);
-		short   color = *(CHAR*)&cube216[idx];
-		UWORD * chunk = dst;
-		short   i     = 8;
-		do {
-			if (color & 1) *chunk |=  pixel;
-			else           *chunk &= ~pixel;
-			chunk++;
-			color >>= 1;
-		} while (--i);
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
+		           +  (((UWORD)rgb[1] *6) /256)) *6
+		           +  (((UWORD)rgb[2] *6) /256);
+		*(tmp++)   = *(CHAR*)&cube216[idx];
 		
-		if (!(pixel >>= 1)) {
-			pixel = 0x8000;
+		if (!--width || !--n) {
+			raster_chunk8 (buf, dst, tmp - buf);
 			dst += 8;
+			n    = 16;
+			tmp  = buf;
 		}
 		x += info->IncXfx;
 		 
-	} while (--width);
+	} while (width);
 }
 
 /*------------------------------------------------------------------------------
