@@ -368,6 +368,13 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 				long2decimal (&text, counter);
 			}
 			break;
+		
+		case LT_NONE:
+			*(current->text++) = font_Nobrk (current->word->font);
+			if (!list->BulletStyle) {
+				spc_wd = 0;
+				width  = current->prev_wrd->word_width *2;
+			}
 	}
 	
 	if (text > buffer) {
