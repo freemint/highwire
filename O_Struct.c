@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "global.h"
+#include "fontbase.h" /* font_step2size() */
 
 
 /*============================================================================*/
@@ -32,12 +33,18 @@ destroy_named_location_structure (ANCHOR current_location)
 
 /*============================================================================*/
 struct font_step *
-new_step (WORD size, WORD color)
+new_step (WORD step, WORD color)
 {
 	struct font_step * temp = malloc (sizeof (struct font_step));
 	if (temp) {
-		temp->step               = size;
 		temp->color              = color;
+		temp->step               = step;
+		temp->size               = font_step2size (NULL, step);
+		temp->type               = normal_font;
+		temp->setBold            = FALSE;
+		temp->setItalic          = FALSE;
+		temp->setUndrln          = FALSE;
+		temp->setStrike          = FALSE;
 		temp->previous_font_step = NULL;
 	}
 	return (temp);
