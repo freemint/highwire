@@ -46,6 +46,55 @@ create_jar (const char * hst_ptr, size_t hst_len,
 	return jar;
 }
 
+/*----------------------------------------------------------------------------*/
+static COOKIE
+create_cookie (size_t nam_len, size_t val_len, size_t pth_len)
+{
+	COOKIE cookie = malloc (sizeof (struct s_cookie) + nam_len);
+	if (cookie) {
+		if (!pth_len) {
+			cookie->PathStr = NULL;
+		
+		} else if ((cookie->PathStr = malloc (pth_len +1)) == NULL) {
+			free (cookie);
+			cookie = NULL; /* meory exhausted */
+		}
+	}
+	if (cookie) {
+		if ((cookie->ValueStr = malloc (val_len +1)) != NULL) {
+			cookie->NameLen  = nam_len;
+			cookie->ValueMax = val_len;
+			cookie->ValueLen = val_len;
+			cookie->PathLen  = pth_len;
+			cookie->Expires  = 0;
+		} else {
+			if (cookie->PathStr) {
+				free (cookie->PathStr);
+			}
+			free (cookie);
+			cookie = NULL; /* meory exhausted */
+		}
+	}
+	return cookie;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+destroy_cookie (COOKIE * list, short list_len)
+{
+	COOKIE cookie = *list;
+	if (cookie) {
+		if (cookie->ValueStr) free (cookie->ValueStr);
+		if (cookie->PathStr)  free (cookie->PathStr);
+		free (cookie);
+	}
+	while (--list_len > 0) {
+		COOKIE  * temp = list++;
+		*temp = *list;
+	}
+	*list = NULL;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static long
@@ -271,85 +320,63 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 			        (strncmp (cookie->PathStr, pth_ptr, pth_len) == 0
 			         && cookie->PathStr[pth_len] == '\0'))) {
 				if (ck_remv) {
-					while (--n) {
-						ck_ptr[0] = ck_ptr[1];
-						ck_ptr++;
-					}
-					*ck_ptr = NULL;
+					destroy_cookie (ck_ptr, n);
+					cookie = NULL;
 				}
 				break;
 			}
-			if (!--n) {       /* not found */
-				if (ck_remv) {
-					cookie = NULL;  /* nothing to do */
-				} else {
-					*ck_ptr = NULL; /* make space at the end */
+			if (!--n) {        /* not found */
+				if (!ck_remv) { /* make space at table end */
+					destroy_cookie (ck_ptr, 0);
+					cookie = NULL;
 				}
 				break;
 			}
 			ck_ptr++;
 		}
-		if (!n && cookie) {
-			if (cookie->ValueStr) free (cookie->ValueStr);
-			if (cookie->PathStr)  free (cookie->PathStr);
-			free (cookie);
-			cookie = NULL;
-		}
-		
 		if (!ck_remv) {
-			char * value;
-			if (cookie && cookie->ValueMax >= val_len) {
-				value = cookie->ValueStr;
-			} else {
-				value = malloc (val_len +1);
-				cookie->ValueMax = val_len;
-			}
-			if (value) {
-				if (!cookie) {
-					size_t ck_size = sizeof (struct s_cookie) + nam_len;
-					char * path;
-					if (!pth_ptr) {
-						path = NULL;
-					} else if ((path = malloc (pth_len +1)) != NULL) {
-						memcpy (path, pth_ptr, pth_len);
-						path[pth_len] = '\0';
-					} else {
-						ck_size = 0; /* meory exhausted */
-					}
-					if (ck_size && (cookie = malloc (ck_size)) != NULL) {
-						memcpy (cookie->NameStr, nam_ptr, nam_len);
-						cookie->NameStr[nam_len] = '\0';
-						cookie->NameLen          = nam_len;
-						cookie->ValueStr         = value;
-						cookie->ValueMax         = val_len;
-						cookie->PathStr          = path;
-						cookie->PathLen          = pth_len;
-						cookie->Expires          = 0;
-					} else {
-						free (value);         /* meory exhausted */
-						if (path) free (path);
+			if (!cookie) {
+				cookie = create_cookie (nam_len, val_len, pth_len);
+				if (cookie) {
+					memcpy (cookie->NameStr, nam_ptr, nam_len);
+					cookie->NameStr[nam_len] = '\0';
+					if (pth_len) {
+						memcpy (cookie->PathStr, pth_ptr, pth_len);
+						cookie->PathStr[pth_len] = '\0';
 					}
 				}
-				if (cookie) {
-					if (jar->Cookie[0] != cookie) {
-						COOKIE swap = cookie;
-						ck_ptr      = jar->Cookie;
-						do {
-							COOKIE save = *ck_ptr;
-							*(ck_ptr++) = swap;
-							swap        = save;
-						} while (swap && swap != cookie);
-					}
-					if (cookie->ValueStr != value) {
+			} else {
+				if (expires) {
+					cookie->Expires = 0;
+				}
+				if (cookie->ValueMax < val_len) {
+					char * value = malloc (val_len +1);
+					if (value) {
 						free (cookie->ValueStr);
 						cookie->ValueStr = value;
+						cookie->ValueMax = val_len;
+						cookie->ValueLen = val_len;
+					} else {
+						cookie = NULL; /* meory exhausted */
 					}
-					memcpy (cookie->ValueStr, val_ptr, val_len);
-					cookie->ValueStr[val_len] = '\0';
-					cookie->ValueLen          = val_len;
-					if (!cookie->Expires) {
-						cookie->Expires        = expires;
-					}
+				} else {
+					cookie->ValueLen = val_len;
+				}
+			}
+			if (cookie) {
+				memcpy (cookie->ValueStr, val_ptr, val_len);
+				cookie->ValueStr[val_len] = '\0';
+				if (!cookie->Expires) {
+					cookie->Expires = expires;
+				}
+				if (jar->Cookie[0] != cookie) { /* move cookie to table begin */
+					COOKIE swap = cookie;
+					ck_ptr      = jar->Cookie;
+					do {
+						COOKIE save = *ck_ptr;
+						*(ck_ptr++) = swap;
+						swap        = save;
+					} while (swap && swap != cookie);
 				}
 			}
 		}
