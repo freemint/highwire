@@ -1019,7 +1019,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	do {
 		long   * col_width = table->ColWidth;
 		TAB_CELL cell      = row->Cells;
-		long     x         = table->t_BorderW + table->Spacing;
+		long     x         = dombox_LftDist (This);
 		do {
 			long height = row->Height;
 			if (cell->RowSpan > 1) {

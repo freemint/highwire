@@ -283,7 +283,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	PARAGRPH   par       = (PARAGRPH)This;
 	WORDLINE * p_line    = &par->Line, line = NULL;
 	WORDITEM   word      = par->item,  next;
-	long       int_width = width -= par->Indent + par->Rindent;
+	long       int_width = width -= par->Indent + par->Rindent
+	                             + dombox_LftDist (This) + dombox_RgtDist (This);
 	short      blocked   = 0x00;
 	long       l_height  = 0;
 	long       r_height  = 0;
@@ -512,6 +513,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	} else {
 		This->Rect.W = width;
 	}
+	This->Rect.W += dombox_LftDist (This) + dombox_RgtDist (This);
 	This->Rect.H += dombox_BotDist (This);
 }
 
