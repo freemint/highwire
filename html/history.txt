@@ -1,5 +1,288 @@
 Ok here are the new supports and changes
 
+November 06, 2003
+
+  AltF4's patches
+
+  mime.c:
+    - line 105 (mime_byString):  added string for MIME type text/css.
+
+  parser.h:
+    - line 42 + 45 (parse_css):  additional parameter takeover.
+
+  parser.c:
+    - line 35 (struct s_parser_priv) + 63 + 116 (new_parser) + 479
+      + 483 (parse_css):  additional parameter takeover to define if
+      the parser has to store the text by itself.
+
+  Loader.h:  line 50:
+  Loader.c:  line 52 + 893..900:
+    - made load_file() global accessible.
+
+  token.h:
+    - line 61:  new keyword TAG_LINK.
+    - line 154 + 159:  new keywords KEY_MEDIA and KEY_REL.
+
+  render.c:
+    - line 812..819 + 824..830 (render_STYLE_tag):  added check for
+      correct type and media attributes of style area.
+    - line 822 (render_STYLE_tag):  additional parameter for
+      parse_css().
+    - line 847 (render_LINK_tag):  link tag implemented, working only
+      for local files yet.
+
+November 05, 2003
+
+  AltF4's patches
+
+  mime.h:    line 38 (mime_byExtension):
+  mime.c:    line 55 + 70 + 72 (mime_byExtension):
+  render.c:  line 1547 (render_EMBED_tag):
+    - additional parameter to store the file extension for caching.
+
+  Loader.h:
+    - line 14 (struct s_loader):  additional field for storing the file
+      extension, used for caching.
+
+  Loader.c:
+    - line 176 + 200 (new_loader):  additional field for storing the
+      file extension, used for caching.
+    - line 210 (new_loader) + 616 + 656 (header_job):  additional
+      parameter for mime_byExtension().
+    - line 557 + 565 (receive_job):  if the file extension to be used
+      for storing in cache can't be determined by the MIME type it will
+      be taken from the URL now.
+
+November 04, 2003
+
+  AltF4's patches
+
+  token.h:
+    - line 212:  new keyword CSS_FLOAT.
+
+  render.c:
+    - line 2038..2042 (render_DIV_tag):  added partial CSS support.
+
+  parser.c:
+    - line 474..476 + 482 + 491 + 497..512 + 522 + 535..536 + 540 + 543
+      + 555 + 560 + 573..575 + 576 (parse_css):  improved recognition
+      of syntax expressions.
+
+  mime.h:  line 13 (enum MIMETYPE):
+  mime.c:  line 23 (struct ext_2_mime) + 40 (struct mime_2_ext):
+    - added MIME type text/css.
+
+  Loader.c:
+    - line 685 (header_job):  ignore the server's idea of mime type if
+      already found out ourself.
+
+November 03, 2003
+
+  AltF4's patches
+
+  parser.h:  line 41:
+  parser.c:  line 421:
+    - new function parse_css() implemented, parses a whole <style> area
+      and stores recognized styles.
+
+  parser.c:
+    - line 32..35 + 52 (new_parser) + 106 (delete_parser):  attributes
+      added to structure to store style sets.
+    - line 116..123 (find_key):  search order reverted.
+    - line 333 + 345 (parse_tag):  avoid uninitialized pointer.
+    - line 367 + 411 (parse_tag):  lookup for style sets for this tag,
+      any potential classes and one potential id.
+
+  defs.h:
+    - line 547 (struct list_stack_item):  attribute FontStk added.
+
+  list.c:
+    - line 15 (list_start) + 54 (list_finish):  push/pop fontstack on
+      list start/finish.
+
+  parser.c:
+    - line 811 + 814 (render_STYLE_tag):  parsing of script areas
+      implemented.
+    - line 2277 (render_DL_tag) + 2298 (render_DT_tag)
+      + 2316 (render_DD_tag):  CSS support added for definition lists.
+
+November 02, 2003
+
+  AltF4's patches
+
+  parser.c:
+    - line 262 (css_values) + 361..404 (parse_tag):  extracted parsing
+      of CSS attributes to an own function.
+
+  parser.h:  line 19 + 21..23:
+  parser.c:  line 27..31 + 38..40 + 48 + 52 + 56..57 (new_parser)
+             + 114..115 (find_key) 267 + 289 + 291 (css_values) + 331
+             + 337..342 + 391 + 400..402 + 412..415 (parse_tag):
+  render.c:  line 1038 (render_BIG_tag) + 1120 (render_FONT_tag)
+             + 1208 (render_SMALL_tag) + 1247 (render_SUB_tag)
+             + 1270 (render_SUP_tag) + 1746 (render_H_tag):
+    - parser structure changed.
+
+November 01, 2003
+
+  AltF4's patches
+
+  token.h:
+    - line 46 + 110 + 175:  keyword TAG_H replaced by TAG_H1 .. TAG_H6.
+    - line 127:  new keyword KEY_CLASS.
+
+  scanner.h:  line 18..21 (comment):
+  scanner.c:  line 28..31 + 59 + 61..63 (scan_tag):
+  parser.c:   line 310..321 (parse_tag):
+  render.c:   line 1727 + 1731 + 1743 (render_H_tag)
+              + 1777 (render_H1_tag .. render_H6_tag):
+    - changed tokenizer method for <H1..6> tags, else CSS wouldn't work
+      for these.
+
+October 31, 2003
+
+  AltF4's patches
+
+  token.h:
+    - line 222:  new CSS keyword 'text-indent'.
+
+  render.c:
+    - line 109 + 111 (font_face):  extended quotation detection.
+    - line 194 (css_text_styles) + 1015..1102 (render_SPAN_tag):
+      handling of general CSS text attributes extracted to an own
+      function.
+    - line 195 (css_block_styles):  new function for handling of
+      general CSS block element attributes.
+    - line 907 (render_BIG_tag) + 987..999 (render_FONT_tag)
+      + 1150 (render_SMALL_tag) + 1186 (render_SUB_tag)
+      + 1270 (render_SUP_tag) + 1677 + 1681..1692 (render_H_tag)
+      + 1790 (render_P_tag):  implemented basic CSS support.
+
+October 30, 2003
+
+  AltF4's patches
+
+  defs.h:      line 363 (struct s_fontstack):
+  fontbase.h:  line 69 (fontstack_setNoWrap):
+  fontbase.c:  line 308 (fontstack_push) + 321 (fontstack_pop):
+    - attributes setCondns and setNoWrap added.
+
+  fontbase.c:
+    - line 337 (fontstack_setSize):  forgotten font size setting added.
+
+  token.h:
+    - line 134 + 206:  new HTML keyword 'face'.
+    - line 222:  new CSS keyword 'white-space'.
+
+  render.c:
+    - line 102 (numerical) + 922..967 (render_SPAN_tag):  size unit
+      calculation extracted to new function numerical().
+    - line 101 (font_face) + 870 + 891 (render_FONT_tag)
+      + 992..1021 (render_SPAN_tag):  new function font_face().
+    - line 1050 + 1052 (render_SPAN_tag):  decorations line-through and
+      underline were toggled.
+    - line 1054 (render_SPAN_tag):  attribute 'white-space' added.
+
+October 29, 2003
+
+  AltF4's patches
+
+  render.c:
+    - line 441 (render_FRAMESET_tag) + 1603 (render_BR_tag)
+      + 1751 (render_HR_tag) + 2216 (render_TABLE_tag)
+      + 2288 (render_TD_tag) + 2315 (render_TH_tag)
+      + 2382 (render_SELECT_tag):  replaced get_value() calls by
+      get_value_exists() where the value isn't used.
+
+  defs.h:
+    - line 352..362 (struct font_step) + 523..524
+      + 529..531 (struct frame_item):  font_size and font_step got
+      replaced by fnt_stack and font.
+
+  fontbase.h:
+    - line 50..54:  removed parameter from font_step2size().
+    - line 55:  new functions to handle struct s_fontstack.
+
+  fontbase.c:
+    - line 210 + 244..249 (font_step2size):  removed parameter
+      fontstep.
+    - line 251:  new functions fontstack_setup(), fontstack_clear(),
+      fontstack_push(), fontstack_pop(), fontstack_setSize.
+
+  p_about.c:  line 39 + 41 (about_modules) + 110 + 113 (about_cache)
+              + 169 + 223 (about_highwire) + 270 + 310 (parse_about):
+  p_dir.c:    line 153 + 173 + 198 (parse_dir):
+    - font_step2size() has only one parameter now.
+
+  global.h:    line 137..139:
+  O_Struct.c:  line 5 + 34..80:
+  Paragrph.c:  line 187..195 (paragrph_finish):
+  Table.c:     line 17 + 91 (table_start) + 231 (table_cell)
+               + 397 (free_stack):
+  render.c:    line 38 (step_push) + 45 (step_pop)
+               + 667..668 (render_BODY_tag) + 780..786 + 792 + 797 + 800
+               + 802 + 804 + 806 + 816..818 (render_BASEFONT_tag) + 835
+               + 837 + 839 (render_BIG_tag) + 855 (render_CODE_tag)
+               + 894 + 913 + 918..919 + 924..927 + 929 (render_FONT_tag)
+               + 943..945 + 987 + 996..998 + 1002..1003 + 1006..1007
+               + 1054..1055 + 1063 + 1076 + 1081 + 1083 + 1089
+               + 1094..1103 + 1105 (render_SPAN_tag) + 1151 + 1153
+               + 1155 (render_SMALL_tag) + 1186 + 1189
+               + 1192 (render_SUB_tag) + 1207 + 1210
+               + 1213 (render_SUP_tag) + 1224 + 1226 (render_TT_tag)
+               + 1310 (render_A_tag) + 1681 + 1688..1692 + 1694..1695
+               + 1706..1711 (render_H_tag) + 1818 (render_P_tag)
+               + 1946 (render_PRE_tag) + 1990 (render_LISTING_tag)
+               + 2316 (render_TH_tag) + 2400..2402 (render_OPTION_tag)
+               + 2722..2723 (parse_image):
+    - functions new_step(), add_step(), destroy_step() got replaced by
+      fontstack..() functions in fontbase.c.
+
+  W_Struct.c:
+    - line 121..122 (new_word):  set the text size and color from
+      struct s_fontstack.
+
+  Frame.c:
+    - line 38 (new_frame):  set the text color from struct s_fontstack.
+    - line 50 (new_frame):  removed setting of font_size and font_step.
+
+  parser.c:
+    - line 24 + 54 (new_parser) + 98 (delete_parser):  added calls
+      fontstack_setup() and fontstack_clear().
+
+October 27, 2003
+
+  AltF4's patches
+
+  scanner.h:  line 53:
+  scanner.h:  line 457 + 575 (scan_color):
+    - added CSS syntax 'rgb(<r>,<g>,<b>)' recognition.
+
+  defs.h:      line 353..354:
+  O_Struct.c:  line 4 + 35 + 39..40 (new_step):
+    - struct font_step extended.
+
+  fontbase.h:  line 51:
+  fontbase.c:  line 240..242 (font_step2size):
+    - extended to find the matching font_step for a font size.
+
+  token.h:
+    - line 206..208:  keywords FONT_FAMILY, FONT_STRETCH, FONT_STYLE,
+      FONT_WEIGHT added.
+
+  render.c:
+    - line 938:  render_SPAN_tag() implemented.
+    - line 2006 (render_DT_tag) + 2022 (render_DD_tag):  attribute for
+      background colour added.
+
+October 26, 2003
+
+  AltF4's patches
+
+  token.h:   line 71:
+  render.c:  line 933:
+    - new tag SPAN added.
+
 October 24, 2003   [V. 0.1.5 release]
 
   AltF4's patches
