@@ -17,6 +17,8 @@
 #include "Logging.h"
 #include "hwWind.h"
 
+
+/*----------------------------------------------------------------------------*/
 static FRAME
 frame_next (FRAME frame)
 {
@@ -57,10 +59,12 @@ frame_next (FRAME frame)
 	return frame;
 }
 
+/*============================================================================*/
 void
 key_pressed (WORD key, UWORD state)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
+	long  sx = 0, sy = 0;
 	
 	if (!hwWind_keybrd (key, state)) {
 		return;
@@ -69,7 +73,7 @@ key_pressed (WORD key, UWORD state)
 	switch (key & 0xFF00)  /* scan code */
 	{
 	case 0x0F00:  /* Tab: change active frame */
-		if ((active = frame_next (active)) != NULL) {
+		if (active && (active = frame_next (active)) != NULL) {
 			hwWind_setActive (hwWind_Top, active->Container, NULL);
 		#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 			update_menu (active->Encoding, (active->MimeType == MIME_TXT_PLAIN));
@@ -90,47 +94,38 @@ key_pressed (WORD key, UWORD state)
 		break;
 	case 0x4700:  /* home */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
-			hwWind_scroll (hwWind_Top, active->Container,
-			               -active->Page.Rect.W, -active->Page.Rect.H);
+			sx = -active->Page.Rect.W;
+			sy = +active->Page.Rect.H;
 			break;
-		}
-		/* else fall through */
+		} /* else fall through */
 	case 0x4F00:  /* end */
-		hwWind_scroll (hwWind_Top, active->Container,
-		               -active->Page.Rect.W, +active->Page.Rect.H);
+		sx = -active->Page.Rect.W;
+		sy = +active->Page.Rect.H;
 		break;
 	case 0x4800:  /* /|\ */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
-			hwWind_scroll (hwWind_Top, active->Container,
-			               0, -scroll_step);
+			sy = -scroll_step;
 			break;
-		}
-		/* else fall through */
+		} /* else fall through */
 	case 0x4900:  /* page up */
-		hwWind_scroll (hwWind_Top, active->Container,
-		               0, -(active->clip.g_h - scroll_step));
+		sy = -(active->clip.g_h - scroll_step);
 		break;
 	case 0x5000:  /* \|/ */
 		key = 0;  /* this key has character '2' */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
-			hwWind_scroll (hwWind_Top, active->Container,
-			               0, +scroll_step);
+			sy = +scroll_step;
 			break;
-		}
-		/* else fall through */
+		} /* else fall through */
 	case 0x5100:  /* page down */
-		hwWind_scroll (hwWind_Top, active->Container,
-		               0, +(active->clip.g_h - scroll_step));
+		sy = +(active->clip.g_h - scroll_step);
 		break;
 	case 0x4B00:  /* <- */
-		hwWind_scroll (hwWind_Top, active->Container,
-		               -(state & (K_RSHIFT|K_LSHIFT)
-		                 ? active->clip.g_w - scroll_step : scroll_step), 0);
+		sx = -(state & (K_RSHIFT|K_LSHIFT)
+		       ? active->clip.g_w - scroll_step : scroll_step);
 		break;
 	case 0x4D00:  /* -> */
-		hwWind_scroll (hwWind_Top, active->Container,
-		               +(state & (K_RSHIFT|K_LSHIFT)
-		                 ? active->clip.g_w - scroll_step : scroll_step), 0);
+		sx = +(state & (K_RSHIFT|K_LSHIFT)
+		       ? active->clip.g_w - scroll_step : scroll_step);
 		break;
 	case 0x6100:  /* Undo */
 		hwWind_undo (hwWind_Top, (state & (K_RSHIFT|K_LSHIFT)));
@@ -140,6 +135,9 @@ key_pressed (WORD key, UWORD state)
 		start_cont_load ((active ? containr_Base (active) : hwWind_Top->Pane),
 		                 help_file, NULL, TRUE, TRUE);
 		break;
+	}
+	if (active && (sx || sy)) {
+		hwWind_scroll (hwWind_Top, active->Container, sx, sy);
 	}
 
 	switch (toupper(key & 0xFF))  /* character */
