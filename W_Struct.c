@@ -26,7 +26,7 @@ typedef struct {
 static WORDITEM
 _alloc (WORDITEM prev)
 {
-	CHUNK * chunk;
+	CHUNK * chunk = NULL;
 	UWORD   num;
 	
 	if (prev && (num = prev->_priv +1) < numberof (chunk->word)) {

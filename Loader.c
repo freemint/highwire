@@ -5,23 +5,26 @@
  * for file handling.
 */
 #if defined (__PUREC__)
-#include <tos.h>
-#include <ext.h>
+# include <tos.h>
+# include <ext.h>
+# define fxattr(f,n,a)  Fxattr (f, n, a)
 
 #elif defined (LATTICE)
-#include <dos.h>
-#include <mintbind.h>
-#define DTA      struct FILEINFO
-#define d_length size
+# include <dos.h>
+# include <mintbind.h>
+# define DTA      struct FILEINFO
+# define d_length size
 /* I'm certain this is in a .H somewhere, just couldn't find it - Baldrick*/
-#define O_RDONLY 0x00
+# define O_RDONLY 0x00
+# define fxattr(f,n,a)  Fxattr (f, (char*)n, a)
 
 #elif defined (__GNUC__)
-#include <mintbind.h>
+# include <mintbind.h>
 # define DTA      _DTA
 # define d_length dta_size
 # include <fcntl.h>
 # include <unistd.h>
+# define fxattr(f,n,a)  Fxattr (f, n, a)
 #endif
 
 #include <stdlib.h>
@@ -903,7 +906,7 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	long         size = 0;
 	char       * file = NULL;
 	struct xattr file_info;
-	long         xret = Fxattr(0, filename, &file_info);
+	long         xret = fxattr(0, filename, &file_info);
 	
 	if (xret == E_OK) {  /* Fxattr() exists */
 		size = file_info.st_size;

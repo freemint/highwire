@@ -1322,7 +1322,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				if (!cont->Parent && wind->TbarH) {
 					updt_toolbar (wind, gen_ptr);
 				}
-				chng_toolbar  (wind, 0, ~TBAR_STOP_MASK, -1);
+				chng_toolbar  (wind, 0, (UWORD)~TBAR_STOP_MASK, -1);
 			}
 			if (!cont->Parent) {
 				hwWind_setName (wind, gen_ptr);
@@ -1729,7 +1729,7 @@ hwWind_button (WORD mx, WORD my)
 		m_in.emi_m1.g_y = my;
 		m_in.emi_m1.g_w = m_in.emi_m1.g_h = 1;
 		vsl_type  (vdi_handle, USERLINE);
-		vsl_udsty (vdi_handle, 0xAAAA);
+		vsl_udsty (vdi_handle, (short)0xAAAA);
 		do {
 			EVMULT_OUT out;
 			WORD       msg[8];

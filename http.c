@@ -377,7 +377,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		}
 		if ((long)len < 0) {
 			if (len < -1) {
-				sprintf (buffer, "Error: %s\n", strerror((int)-len));
+				sprintf (buffer, "Error: %s\n", strerror(-(int)len));
 			} else {
 				strcpy (buffer, "Connection error!\n");
 			}
