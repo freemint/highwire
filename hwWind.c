@@ -453,7 +453,7 @@ static void
 hwWind_setHSInfo (HwWIND This, const char * info)
 {
 	short dmy;
-	PXY   p[2];
+	PXY   p[2], clip[2];
 
 	if (This != hwWind_Top || This->isIcon) {
 		return;
@@ -463,11 +463,23 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 		if (top != This->Handle)
 			return;
 	}
+	wind_get_grect (This->Handle, WF_FIRSTXYWH, (GRECT*)clip);
+	if (clip[1].p_y <= 0 || clip[1].p_y <= 0) {
+		return; /* probably shaded */
+	}
 	
 	p[0].p_y = This->Work.g_y + This->Work.g_h                       +1;
 	p[1].p_y = This->Curr.g_y + This->Curr.g_h            - widget_b -1;
 	p[0].p_x = This->Curr.g_x                  + widget_w - widget_b +1;
 	p[1].p_x = This->Curr.g_x + This->Curr.g_w - widget_w + widget_b -2;
+	clip[0].p_x = max (p[0].p_x, desk_area.g_x);
+	clip[0].p_y = max (p[0].p_y, desk_area.g_y);
+	clip[1].p_x = min (p[1].p_x, desk_area.g_x + desk_area.g_w -1);
+	clip[1].p_y = min (p[1].p_y, desk_area.g_y + desk_area.g_h -1);
+	if (clip[0].p_x > clip[1].p_x || clip[0].p_y > clip[1].p_y) {
+		return;
+	}
+	vs_clip_pxy (vdi_handle, clip);
 	
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
@@ -484,8 +496,6 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	vst_map_mode  (vdi_handle, 1);
 	vst_effects   (vdi_handle, TXT_NORMAL);
 	vst_alignment (vdi_handle, TA_LEFT, TA_DESCENT, &dmy, &dmy);
-
-	vs_clip_pxy (vdi_handle, p);
 
 	v_hide_c     (vdi_handle);
 	v_bar        (vdi_handle, (short*)p);
