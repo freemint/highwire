@@ -409,6 +409,8 @@ dombox_adopt (DOMBOX * This, DOMBOX * stepchild)
 	if (stepchild == parent->ChildBeg) {
 		if ((parent->ChildBeg = stepchild->Sibling) == NULL) {
 			parent->ChildEnd = NULL;
+		} else {
+			stepchild->Sibling = NULL;
 		}
 	} else {
 		DOMBOX * before = parent->ChildBeg;
@@ -420,6 +422,8 @@ dombox_adopt (DOMBOX * This, DOMBOX * stepchild)
 		}
 		if ((before->Sibling = stepchild->Sibling) == NULL) {
 			parent->ChildEnd = before;
+		} else {
+			stepchild->Sibling = NULL;
 		}
 	}
 	if (This->ChildEnd) This->ChildEnd->Sibling = stepchild;
