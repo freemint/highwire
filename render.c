@@ -2296,26 +2296,20 @@ parse_html (void * arg, long invalidated)
 		switch (*symbol)
 		{
 			case '&':
-				if (current->text < watermark) {
-					current->text = scan_namedchar (&symbol, current->text, TRUE,
-					                             current->word->font->Base->Mapping);
-				} else if (linetoolong == FALSE) {
-					errprintf("parse_html(): Line too long in '%s'!\n",
-					          frame->Location->File);
-					linetoolong = TRUE;
+				if (current->text >= watermark) {
+					goto line_too_long;
 				}
+				current->text = scan_namedchar (&symbol, current->text, TRUE,
+				                                current->word->font->Base->Mapping);
 				space_found = FALSE;
 				break;
 			
 			case ' ':
 				if (in_pre) {
-					if (current->text < watermark) {
-						*(current->text++) = font_Nobrk (current->word->font);
-					} else if (linetoolong == FALSE) {
-						errprintf("parse_html(): Line too long in '%s'!\n",
-						          frame->Location->File);
-						linetoolong = TRUE;
+					if (current->text >= watermark) {
+						goto line_too_long;
 					}
+					*(current->text++) = font_Nobrk (current->word->font);
 					symbol++;
 					break;
 				}
@@ -2323,15 +2317,12 @@ parse_html (void * arg, long invalidated)
 			
 			case 9:  /* HT HORIZONTAL TABULATION */
 				if (in_pre) {
-					if (current->text < watermark -8) {
-						do {
-							*(current->text++) = font_Nobrk (current->word->font);
-						} while (((current->text - current->buffer) & 7) != 0);
-					} else if (linetoolong == FALSE) {
-						errprintf("parse_html(): Line too long in '%s'!\n",
-						          frame->Location->File);
-						linetoolong = TRUE;
+					if (current->text >= watermark -8) {
+						goto line_too_long;
 					}
+					do {
+						*(current->text++) = font_Nobrk (current->word->font);
+					} while (((current->text - current->buffer) & 7) != 0);
 					symbol++;
 					break;
 				}
@@ -2367,13 +2358,18 @@ parse_html (void * arg, long invalidated)
 			default:
 				if (current->text < watermark) {
 					current->text = (*encoder)(&symbol, current->text);
-				} else if (linetoolong == FALSE) {
+					space_found = FALSE;
+					break;
+				}
+			
+			line_too_long:
+				if (linetoolong == FALSE) {
 					errprintf("parse_html(): Line too long in '%s'!\n",
 					          frame->Location->File);
 					linetoolong = TRUE;
-					symbol++;
 				}
 				space_found = FALSE;
+				new_word (current, TRUE);
 		}
 	} /* end while (*symbol != '\0') */
 	
