@@ -1,4 +1,4 @@
-(non-public of Aug. 02, 2004)
+(non-public of Aug. 07, 2004)
 
 - Cookie support implemented.  Non-session cookies
   are stored to disk to allow persistent user
@@ -28,6 +28,9 @@
 
 - Workaround for the Lattice compiler bitfield
   bug.
+
+- Slight speed improvement for interlaced PNGs
+  (avoid needless memory copying).
 
 - Bugs #0160, #0163 resolved.
 
