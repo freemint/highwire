@@ -49,6 +49,8 @@ typedef struct s_dir_entry {
 } * DIR_ENT;
 static void * dir_entry (const char ** name, DIR_ENT, BOOL local);
 
+static long path_check (DIR_ENT);
+
 
 /*----------------------------------------------------------------------------*/
 static LOCATION
@@ -230,6 +232,10 @@ new_location (const char * p_src, LOCATION base)
 		loc->Flags = loc_host->Flags;
 	}
 	loc->__reffs++;
+	
+	if (PROTO_isRemote (loc->Proto)) {
+		loc->Flags |= path_check (dir);
+	}
 	
 	if (logging_is_on) {
 		char b_buf[1024], l_buf[1024];
@@ -650,6 +656,48 @@ location_DBhost (const char * name, UWORD len, ULONG * p_flags)
 	} else {
 		*p_flags = 0ul;
 		name     = NULL;
+	}
+	return name;
+}
+
+
+/*----------------------------------------------------------------------------*/
+typedef struct s_path_entry {
+	struct s_path_entry * Next;
+	ULONG                 Flags;
+	UWORD                 Length;
+	char                  Name[1];
+} * PATH_ENT;
+static PATH_ENT path_base = NULL;
+/* - - - - - - - - - - - - - - - - - - - - - - - */
+static long
+path_check (DIR_ENT dir)
+{
+	PATH_ENT ent = (dir->Length >= 4 ? path_base : NULL);
+	long   flags = 0;
+	while (ent) {
+		if (dir->Length >= ent->Length && strstr (dir->Name, ent->Name)) {
+			flags |= ent->Flags;
+		}
+		ent = ent->Next;
+	}
+	return flags;
+}
+
+/*============================================================================*/
+const char *
+location_DBpath (const char * name, UWORD _len, ULONG * p_flags)
+{
+	size_t   len = (_len ? _len : name ? strlen (name) : 0);
+	PATH_ENT ent = (len >= 4 ? malloc (sizeof(struct s_path_entry) +len) : NULL);
+	if (!len) {
+		name = NULL;
+	} else {
+		ent->Next   = path_base;
+		path_base   = ent;
+		ent->Flags  = *p_flags;
+		ent->Length = len;
+		name        = memcpy (ent->Name, name, len +1);
 	}
 	return name;
 }

@@ -193,11 +193,9 @@ cfg_restrict (char * param, long arg)
 		while (isspace(*(++param)));
 	}
 	if (flags) {
-		if (isalnum(*param)) {
-			location_DBhost (param, 0, &flags);
-		} else if (*param == '.') {
-			location_DBdomain (param, 0, &flags);
-		}
+		if (isalnum(*param))    location_DBhost   (param, 0, &flags);
+		else if (*param == '.') location_DBdomain (param, 0, &flags);
+		else if (*param == '/') location_DBpath   (param, 0, &flags);
 	}
 }
 
