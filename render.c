@@ -2932,7 +2932,7 @@ parse_html (void * arg, long invalidated)
 			if (current->text > current->buffer) {
 				new_word (current, TRUE);
 			}
-			tag = parse_tag (parser, &symbol);
+			tag = parse_tag ((flags & PF_START ? parser : NULL), &symbol);
 			if (tag && render[tag]) {
 				flags = (render[tag])(parser, &symbol, flags);
 			}
