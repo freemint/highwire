@@ -655,7 +655,12 @@ header_job (void * arg, long invalidated)
 		reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
 		                     &sock, loader->PostBuf,
 		                     (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc));
-	} while (reply == -ECONNRESET && retry++ < conn_retry);
+		if (reply == -ECONNRESET) {
+			retry++;
+		} else if (reply != 100) {
+			break;
+		}
+	} while (retry <= conn_retry);
 	
 	/* Check for HTTP header redirect
 	*/
