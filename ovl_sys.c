@@ -40,10 +40,31 @@ typedef struct {
 	short      pid;
 	void     (*handler)(void*);
 }      OVL_SLOT;
-static OVL_SLOT slot[8] = {
+static OVL_SLOT ovl_slot[8] = {
 	{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},
 	{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL},{NULL,NULL,0,NULL}
 };
+
+
+/*----------------------------------------------------------------------------*/
+static void
+clear_slot (OVL_SLOT * slot)
+{
+printf("clear %p\n", slot->methods);
+	if (slot->handler) {
+		(*slot->handler)(slot->methods);
+		slot->handler = NULL;
+	}
+	if (slot->basepage) {
+		if (slot->basepage->p_env) {
+			Mfree (slot->basepage->p_env);
+		}
+		Mfree (slot->basepage);
+		slot->basepage = NULL;
+	}
+	slot->methods  = NULL;
+	slot->pid = 0;
+}
 
 
 /*------------------------------------------------------------------------------
@@ -51,24 +72,21 @@ static OVL_SLOT slot[8] = {
 */
 static void sig_chld (long sig)
 {
-	long  l   = Pwaitpid (-1, 0, NULL);
-	short pid = l >>16;
-	short i;
-	printf ("SIGCHLD: %i,%04lX \n", pid, l & 0xFFFF);
-	for (i = 0; i < numberof(slot); i++) {
-		if (slot[i].pid == pid) {
-			if (slot[i].handler) {
-				(*slot[i].handler)(slot[i].methods);
-				slot[i].handler = NULL;
+	long  l = Pwaitpid (-1, 0, NULL);
+	(void)sig;
+	printf ("SIGCHLD: %i,%04lX \n", (short)(l >>16), l & 0xFFFF);
+	if (l > 0) {
+		OVL_SLOT * slot = ovl_slot;
+		short      pid  = l >>16;
+		short      i;
+		for (i = 0; i < numberof(ovl_slot); i++) {
+			if (slot->pid == pid) {
+				clear_slot (slot);
+				break;
 			}
-			free (slot[i].basepage);
-			slot[i].basepage = NULL;
-			slot[i].methods  = NULL;
-			slot[i].pid = 0;
-			break;
+			slot++;
 		}
 	}
-	(void)sig;
 }
 
 
@@ -88,10 +106,11 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 	
 	} else {
 		union { char c[4]; long l; } magic = { { OVL_MAGIC } };
-		OVL_METH * p   = (OVL_METH*)ovl_basepage->p_dbase;
-		OVL_METH * end = p + ovl_basepage->p_dlen - sizeof(OVL_METH);
-		do if (p->magic.l == magic.l) {
-			long r = p->revision & 0x88888888uL;
+		long * l   = (long*)ovl_basepage->p_dbase;
+		long * end = l + (ovl_basepage->p_dlen - sizeof(OVL_METH)) / sizeof(long);
+		do if (*l == magic.l) {
+			OVL_METH * p = (OVL_METH*)l;
+			long       r = p->revision & 0x88888888uL;
 			if (p->revision & ((r >>1) | (r >>2))) {        /* check for BCD */
 				printf ("OVL: infalid revision %08lX\n", p->revision);
 			} else if (p->revision < OVL_REVISION) {        /* compare date */
@@ -103,7 +122,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 				ovl_methods = p;
 			}
 			break;
-		} while (++p < end);
+		} while (++l < end);
 	}
 printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 	
@@ -149,15 +168,17 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 		free (ovl_basepage);
 	
 	} else {
-		short i;
-		for (i = 0; i < numberof(slot); i++) {
-			if (!slot[i].methods) {
-				slot[i].basepage = ovl_basepage;
-				slot[i].methods  = ovl_methods;
-				slot[i].pid      = pid;
-				slot[i].handler  = handler;
+		OVL_SLOT * slot = ovl_slot;
+		short      i;
+		for (i = 0; i < numberof(ovl_slot); i++) {
+			if (!slot->methods) {
+				slot->basepage = ovl_basepage;
+				slot->methods  = ovl_methods;
+				slot->pid      = pid;
+				slot->handler  = handler;
 				break;
 			}
+			slot++;
 		}
 	}
 	
@@ -170,42 +191,40 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 void
 kill_ovl (void * this_N_all)
 {
-	long  mask = Psigblock (1uL << 20/*SIGCHLD*/);
-	short i;
+	long       mask = Psigblock (1uL << 20/*SIGCHLD*/);
+	OVL_SLOT * slot;
+	short      i;
 	
-	for (i = 0; i < numberof(slot); i++) {
-		if (slot[i].methods && (!this_N_all || this_N_all == slot[i].methods)) {
-			if (slot[i].pid > 0) {
-				long r = Pkill (slot[i].pid,  19/*SIGCONT*/);
-				printf("kill(%i,SIGCONT) = %li\n", slot[i].pid, r);
+	slot = ovl_slot;
+	for (i = 0; i < numberof(ovl_slot); i++) {
+		if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
+			if (slot->pid > 0) {
+				long r = Pkill (slot->pid,  19/*SIGCONT*/);
+				printf("kill(%i,SIGCONT) = %li\n", slot->pid, r);
 				
-				if ((r = Pwaitpid (slot[i].pid, 1, NULL)) != 0) {
-					slot[i].pid = 0;
+				if ((r = Pwaitpid (slot->pid, 1, NULL)) != 0) {
+					slot->pid = 0;
 				}
 				printf("waitpid(%i) = %i,%04lX \n",
 					    (short)(r >>16), (short)(r >>16), r & 0xFFFF);
 			}
 		}
+		slot++;
 	}
-	for (i = 0; i < numberof(slot); i++) {
-		if (slot[i].methods && (!this_N_all || this_N_all == slot[i].methods)) {
-			if (slot[i].pid > 0) {
-				long r = Pkill (slot[i].pid,  1/*SIGHUP*/);
-				printf("kill(%i,SIGHUP) = %li\n", slot[i].pid, r);
+	slot = ovl_slot;
+	for (i = 0; i < numberof(ovl_slot); i++) {
+		if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
+			if (slot->pid > 0) {
+				long r = Pkill (slot->pid,  1/*SIGHUP*/);
+				printf("kill(%i,SIGHUP) = %li\n", slot->pid, r);
 				
-				r = Pwaitpid (slot[i].pid, 0, NULL);
+				r = Pwaitpid (slot->pid, 0, NULL);
 				printf("waitpid() = %i,%04lX \n", (short)(r >>16), r & 0xFFFF);
 			
 			}
-			if (slot[i].handler) {
-				(*slot[i].handler)(slot[i].methods);
-				slot[i].handler = NULL;
-			}
-			free (slot[i].basepage);
-			slot[i].basepage = NULL;
-			slot[i].methods  = NULL;
-			slot[i].pid = 0;
+			clear_slot (slot);
 		}
+		slot++;
 	}
 	Psigsetmask (mask);
 }
