@@ -265,7 +265,7 @@ static const struct NAMEDCHAR named_char[] = {
 	/* A */ {"AElig",  198},{"Aacute",  193},{"Acirc",  194},{"Agrave", 192},
 	        {"Alpha",  913},{"Aring",   197},{"Atilde", 195},{"Auml",   196},
 	/* B */ {"Beta",   914},
-	/* C */ {"Ccaron", 268},{"Ccedil",  199},{"Chi",    935},
+	/* C */ {"COPY",   169},{"Ccaron", 268},{"Ccedil",  199},{"Chi",    935},
 	/* D */ {"Dagger",8225},{"Delta",   916},
 	/* E */ {"ETH",    208},{"Eacute",  201},{"Ecirc",  202},{"Egrave", 200},
 	        {"Epsilon",917},{"Eta",     919},{"Euml",   203},
