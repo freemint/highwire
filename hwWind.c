@@ -314,8 +314,7 @@ hwWind_setName (HwWIND This, const char * name)
 static void
 draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 {
-	GRECT area, clip;
-	PXY   p[2];
+	GRECT area, clip, rect;
 	short x_btn, dmy, fnt, pnt;
 	
 	if (This->isIcon) return;
@@ -332,7 +331,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 		if (clip.g_y >= p_clip->g_y + p_clip->g_h) {
 			return;
 		}
-		*(GRECT*)p = *p_clip;
+		rect = *p_clip;
 	
 	} else {
 		clip.g_w -= This->IbarH +1;
@@ -340,7 +339,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			return;
 		}
 		wind_update (BEG_UPDATE);
-		wind_get_grect (This->Handle, WF_FIRSTXYWH, (GRECT*)p);
+		wind_get_grect (This->Handle, WF_FIRSTXYWH, &rect);
 	}
 	
 	vsf_interior (vdi_handle, FIS_SOLID);
@@ -359,10 +358,11 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	vst_effects   (vdi_handle, TXT_NORMAL);
 	
 	v_hide_c (vdi_handle);
-	while (p[1].p_x > 0 && p[1].p_y > 0) {
-		if (rc_intersect (&clip, (GRECT*)p)) {
-			p[1].p_x += p[0].p_x -1;
-			p[1].p_y += p[0].p_y -1;
+	while (rect.g_w > 0 && rect.g_h > 0) {
+		if (rc_intersect (&clip, &rect)) {
+			PXY p[2];
+			p[1].p_x = (p[0].p_x = rect.g_x) + rect.g_w -1;
+			p[1].p_y = (p[0].p_y = rect.g_y) + rect.g_h -1;
 			v_bar (vdi_handle, (short*)p);
 			
 			if (This->isBusy) {
@@ -380,7 +380,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 				} else {
 					style = (ignore_colours ? 4 : 8);
 				}
-				if (rc_intersect (&clip, (GRECT*)r)) {
+				if (rc_intersect (&rect, (GRECT*)r)) {
 					r[1].p_x += r[0].p_x -1;
 					r[1].p_y += r[0].p_y -1;
 					vsf_perimeter(vdi_handle, PERIMETER_ON);
@@ -435,7 +435,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 				break;
 			}
 		}
-		wind_get_grect (This->Handle, WF_NEXTXYWH, (GRECT*)p);
+		wind_get_grect (This->Handle, WF_NEXTXYWH, &rect);
 	}
 	v_show_c (vdi_handle, 1);
 	
