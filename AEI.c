@@ -805,8 +805,6 @@ rpopup_open (WORD mx, WORD my)
 void
 rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 {
-	extern FILE * open_scrap (BOOL rdNwr);
-	extern int saveas_job (void * arg, long invalidated);
 	extern OBJECT *rpoplink;
 	CONTAINR cont = NULL;
 	CONTAINR target;
@@ -866,8 +864,8 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 				const char * p = strchr (addr, '#');
 				FRAME  t_frame = containr_Frame (target);
 				if (p && t_frame) {
-					const char * file = t_frame->Location->File;
-					if (strncmp (file, addr, (p - addr)) == 0 && !file[p - addr]) {
+					const char * fname = t_frame->Location->File;
+					if (strncmp (fname, addr, (p - addr)) == 0 && !fname[p - addr]) {
 						addr = p;
 						cont = target;   /* content matches */
 					}
