@@ -7,6 +7,38 @@
 #include "scanner.h"
 
 
+/*------------------------------------------------------------------------------
+ * Perform a binary tree search of 'uni' in 'tab'.  The Format of 'tab' is
+ * either {Unicode, 0..2 replacement characters, 0} or {Unicode, 0xFFFF, pointer
+ * to a 0-delimited WCHAR string of replacement characters}.
+*/
+struct s_uni_trans {
+	WCHAR Uni;
+	WCHAR Trans;
+	LONG  Extra;
+};
+static const WCHAR *
+_bin_search (WCHAR uni, const struct s_uni_trans * tab, WORD end)
+{
+	WORD          beg = 0;
+	const WCHAR * arr = &tab[end].Trans;
+	do {
+		WORD i = (end + beg) /2;
+		if (uni > tab[i].Uni) {
+			beg = i +1;
+		} else if (uni < tab[i].Uni) {
+			end = i -1;
+		} else {
+			arr = &tab[i].Trans;
+			break;
+		}
+	} while (beg <= end);
+	
+	return (*arr == 0xFFFF ? *(const WCHAR **)(arr +1) : arr);
+}
+#define bin_search(uni, tab) _bin_search (uni, tab, numberof(tab) -1)
+
+
 /*==============================================================================
  *
  * Encoders for Unicode Encoded Fonts (TrueType/Type-1).
@@ -230,6 +262,8 @@ atari_to_utf16 (const char ** src, WCHAR * dst)
 */
 #include "en_bics.h"
 
+#define uni_2_bics(uni) bin_search (uni, Unicode_to_BICS)
+
 /*----------------------------------------------------------------------------*/
 static WCHAR *
 windows1252_to_bics (const char ** src, WCHAR * dst)
@@ -295,15 +329,7 @@ unicode_to_bics (WCHAR uni, WCHAR * dst)
 		dst = windows1252_to_bics (&src, dst);
 	
 	} else {
-		const WCHAR * arr = Unicode_to_BICS;
-		
-		while (uni != *(arr++)) {
-			while (*(arr++));
-			if (*arr == 0xFFFDu) { /* value wasn't found in table */
-				arr++;              /* U+FFFD REPLACEMENT CHARACTER */
-				break;
-			}
-		}
+		const WCHAR * arr = uni_2_bics (uni);
 		while (*arr) {
 			*(dst++) = *(arr++);
 		}
@@ -400,21 +426,7 @@ macintosh_to_bics (const char ** src, WCHAR * dst)
 */
 #include "en_atari.h"
 
-/*----------------------------------------------------------------------------*/
-static const WCHAR *
-uni_2_atari (WCHAR uni)
-{
-	const WCHAR * arr = Unicode_to_Atari;
-	
-	while (uni != *(arr++)) {
-		while (*(arr++));
-		if (*arr == 0xFFFDu) { /* value wasn't found in table */
-			arr++;              /* U+FFFD REPLACEMENT CHARACTER */
-			break;
-		}
-	}
-	return arr;
-}
+#define uni_2_atari(uni) bin_search (uni, Unicode_to_Atari)
 
 
 /*----------------------------------------------------------------------------*/
