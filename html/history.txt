@@ -1,5 +1,27 @@
 Ok here are the new supports and changes
 
+February 20, 2003
+
+  Baldrick's patches
+  
+  aei.c:
+    - lines 801-808
+       added handling of Left Arrow to 'Back' function
+       possibly add other functions here later for shift click?
+       
+  highwire.c:
+    - line 175 changed 1 to 0 since we don't need the test atm
+      but will possibly need again later
+      
+  hwwind.c:
+    - line 6 added include for gemx.h for ftext() call
+    - lines 44 & 46 changed HSLIDE to LFARROW
+    - removed line 101 set HSLSIZE
+    - lines 170-200 new routines hwWind_setHSInfo()
+       displays text in unused H scroller area
+      **** Needs some more work *****
+    - line 232 added call to hwWind_setHSInfo() for testing
+    
 February 19, 2003
 
   Baldrick's patches
