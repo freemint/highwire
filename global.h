@@ -20,6 +20,7 @@ extern WORD aes_max_window_title_length;
 /* To be in-program settings */
 extern WORD fonts[3][2][2];
 extern WORD font_size;
+extern WORD font_minsize;
 extern WORD link_colour;
 extern WORD highlighted_link_colour;
 extern WORD text_colour;
@@ -30,6 +31,7 @@ extern WORD slider_bkg;
 extern WORD slider_col;
 
 extern BOOL alternative_text_is_on;
+extern BOOL force_frame_controls;
 
 extern char	*va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
 
@@ -68,6 +70,7 @@ void    menu_reload   (ENCODING);
 void    menu_fontsize (char plus_minus);
 void    menu_logging  (void);
 void    menu_alt_text (void);
+void    menu_frm_ctrl (void);
 WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
 /* in Widget.c */
