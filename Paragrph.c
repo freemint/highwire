@@ -127,7 +127,6 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Line    = NULL;
 		paragraph->Indent  = indent;
 		paragraph->Rindent = copy_from->Rindent;
-		paragraph->Hanging = 0;
 		paragraph->Backgnd = -1;
 		paragraph->Height  = 0;
 		paragraph->Offset.Origin = copy_from->Offset.Origin;
@@ -140,6 +139,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->floating       = ALN_NO_FLT;
+	paragraph->Hanging        = 0;
 	
 	if (current->prev_par && vspace) {
 		vspace *= current->word->word_height;
