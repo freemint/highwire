@@ -39,9 +39,9 @@ new_hwWind (const char * name, const char * info, const char * url)
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|SIZER;
+	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
 #else
-	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
+	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
 #endif	
 	short  i;
 	
@@ -97,6 +97,8 @@ new_hwWind (const char * name, const char * info, const char * url)
 	This->Info[0] = '\0';
 	hwWind_setInfo (This, info, TRUE);
 #endif
+
+	wind_set(This->Handle,WF_HSLSIZE,1000,0,0,0);
 	
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
