@@ -33,6 +33,10 @@ typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 typedef struct s_style * STYLE;
 
 typedef struct s_parser_priv {
+	struct s_own_mem {
+		struct s_own_mem * Next;
+		char             * Mem;
+	}        OwnMem;
 	struct s_style {
 		STYLE    Next;
 		KEYVALUE Css;
@@ -114,6 +118,20 @@ delete_parser (PARSER parser)
 	}
 	delete_loader (&parser->Loader);
 	
+	if (ParserPriv(parser)->OwnMem.Mem) {
+		struct s_own_mem * own = &ParserPriv(parser)->OwnMem;
+		do {
+			struct s_own_mem * next = own->Next;
+			free (own->Mem);
+			if (next) {
+				own->Next = next->Next;
+				own->Mem  = next->Mem;
+				free (next);
+			} else {
+				break;
+			}
+		} while (own->Mem);
+	}
 	if (ParserPriv(parser)->Styles) {
 		STYLE style = ParserPriv(parser)->Styles, next;
 		do {
@@ -476,11 +494,25 @@ static char next (const char ** pp) {
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - -*/
 const char *
-parse_css (PARSER parser, const char * p)
+parse_css (PARSER parser, const char * p, char * takeover)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
 	STYLE  * p_style = &prsdata->Styles;
 	BOOL     err     = FALSE;
+	
+	if (takeover) {
+		if (prsdata->OwnMem.Mem) {
+			struct s_own_mem * own = malloc (sizeof(struct s_own_mem));
+			if (!own) {
+				free (takeover);
+				return NULL;
+			}
+			own->Mem  = prsdata->OwnMem.Mem;
+			own->Next = prsdata->OwnMem.Next;
+			prsdata->OwnMem.Next = own;
+		}
+		p = prsdata->OwnMem.Mem = takeover;
+	}
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
 		p_style = &(*p_style)->Next;

@@ -819,7 +819,7 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		if (*line != '<') {
-			line = parse_css (parser, line);
+			line = parse_css (parser, line, NULL);
 		}
 		if (*line == '-') {        /* skip trailing '-->' */
 			while (*(++line) == '-');

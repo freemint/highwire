@@ -39,10 +39,13 @@ HTMLTAG parse_tag (PARSER, const char ** pptr);
 				 * The PARSER argument may be NULL if no KEY storage is needed.
 				*/
 
-const char * parse_css (PARSER, const char * ptr);
+const char * parse_css (PARSER, const char * ptr, char * takeover);
 				/* Parses a whole <style> area from 'ptr' and stores recognized
 				 * style set internallly in the parser structure.  Following
 				 * get_value..() calls will be served from these sets automatically.
+				 * If 'takeover is not NULL it will be used instead of 'ptr' and
+				 * stored internal by the parser to be deleted when the parser get
+				 * invalidated.
 				 * The result value is a pointer to the first not read character
 				 * from 'ptr'.
 				*/
