@@ -62,7 +62,6 @@ main (int argc, char **argv)
 	WORD info, u;
 	BOOL quit = FALSE;
 	long gdostype;
-	char def_address[] = "html\\highwire.htm";
 
 	if (appl_init() < 0) {
 		exit (EXIT_FAILURE);
@@ -172,7 +171,7 @@ main (int argc, char **argv)
 			}
 		} while (++i < argc);
 	}
-	if (!u && !new_hwWind ("", def_address, NULL)) {
+	if (!u && !new_hwWind ("", start_page, NULL)) {
 		hwUi_fatal (NULL, "Can't open main window.");
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
