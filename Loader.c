@@ -163,6 +163,7 @@ new_loader (LOCATION loc, CONTAINR target)
 	loader->notified = FALSE;
 	/* */
 	loader->SuccJob = NULL;
+	loader->FreeArg = NULL;
 	/* */
 	loader->rdChunked = FALSE;
 	loader->rdSocket  = -1;
@@ -313,7 +314,7 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base)
 /*============================================================================*/
 LOADER
 start_objc_load (CONTAINR target, const char * url, LOCATION base,
-                 BOOL (*successor)(void*, long))
+                 BOOL (*successor)(void*, long), void * objc)
 {
 	LOCATION loc  = new_location (url, base);
 	LOADER loader = new_loader (loc, target);
@@ -332,6 +333,7 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 		delete_loader (&loader);
 		return NULL;
 	}
+	loader->FreeArg = objc;
 	
 	if (PROTO_isLocal (loc->Proto)) {
 		sched_insert (loader->SuccJob, loader, (long)target);
@@ -702,7 +704,12 @@ header_job (void * arg, long invalidated)
 	
 	loader->MimeType = MIME_TEXT;
 	loader->Data     = strdup (hdr.Head);
-	sched_insert (parser_job, loader, (long)loader->Target);
+	
+	if (loader->SuccJob) {
+		(*loader->SuccJob)(loader, (long)loader->Target);
+	} else {
+		sched_insert (parser_job, loader, (long)loader->Target);
+	}
 
 	return FALSE;
 }
