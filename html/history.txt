@@ -1,5 +1,116 @@
 Ok here are the new supports and changes
 
+February 26, 2003
+
+  Baldrick's patches
+  
+  defs.h: (experimental change)
+    - line 22 Added _HIGHWIRE_REALINFO_ controls whether the window
+      has a REAL GEM info gadget
+    - line 29 same as above set to FALSE to suppress the REAL GEM
+      info gadget
+      
+  HWwind.c:
+    - line 29-30 added temp_area1 and temp_area2 GRECTs
+	- lines 48-52 added experimental use for suppresing REAL GEM
+	  info gadget
+    - lines 67-70 new method for inc_xy calculation
+    - line 125-127 changed INFOLINE to REALINFO and
+      else the HSLSIZE to smallest possible
+    - lines 222-220 reworked PXY settings
+    - lines 293 and 295 Wrapper to suppress use of REAL GEM info
+      gadget
+      
+February 24, 2003
+
+  AltF4's patches
+
+  HighWire.c: 
+    - line 93 (main): corrected comparsion of error code to negative
+      values
+
+  http.c:
+    - line 252 (http_header):  evaluate timeout return values.
+
+  hw-types.h:
+    - line 101 + 104:  corrected error code defines to positive values.
+    - line 106:  added more error code defines EINTR and ETIMEDOUT.
+
+  inet.c:
+    - line 176:  new signal handler for timeouts.
+    - line 190..192 + 198..200 (inet_connect):  set timer to detect not
+      responding servers.
+      
+  Loader.c:
+    - line 677 (load_file) corrected comparsion of error code to
+      negative values
+
+  Mouse_R.c:
+    - line 387 (check_mouse_position):  toggled order of comparsions,
+      because 'cont' is NULL if 'elem' is PE_NONE.
+
+  ovl_sys.c:
+    - line 185 (load_ovl): corrected comparsion of error code to
+      negative values
+
+  p_dir.c:
+    - line 92 (parse_dir): corrected comparsion of error code to 
+      negative values  
+  
+  modules/example.src/sample.c:
+    - line 101 (main): corrected comparsion of error code to 
+      negative values  
+
+  modules/network.src/network.c:
+    - line 90 (main): corrected comparsion of error code to negative
+      values.
+
+  modules/example.src/sample.prj:
+    - line 5: decreased stack size to 1k.
+    
+  modules/network.src/purec.prj:
+    - line 3: decreased stack size to 1k.
+
+February 23, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 22:  new variables to store colours for the hslider area.
+    - line 70 (new_hwWind):  get the hslider area colours from the AES.
+    - line 98..100 + 106:  corrected setting of the info text.
+    - line 105:  set the hslider background colour, probably only
+      necessary for N.AES.
+    - line 178 (hwWind_setHSInfo):  additional check for window is
+      iconified.
+    - line 187..190 + 206:  modified area calculations to use the real
+      widget extents as storec in inc_xy.
+    - line 195 + 199:  set colours from stored values.
+    - line 196..207: added vst_font(), vst_point()/vst_height(),
+      vst_alignment(), v_hide_c(), v_show_c();  rearranged order to
+      reduce mouse flickering.
+    - line 221..238 (hwWind_setInfo):  added checks to reduce multiple
+      clearing of empty info bar.
+    - line 301 (hwWind_full) + 324 (hwWind_iconify)
+      + 349 (hwWind_raise):  added calls of hwWind_setHSInfo().
+
+  Mouse_R.c:
+    - line 387 (check_mouse_position):  if() condition simplified.
+
+  Paragrph.c:
+    - line 176 (paragrph_finish):  when the last paragraph was removed
+      due to being empty the eop_space of the previous one is set to
+      zero now (related to bug #0090).
+
+  render.c:
+    - line 932 + 951 (render_A_tag):  added a filter to remove controll
+      characters from the url.
+
+  scanner.c:
+    - line 184 (scan_css):  removed duplicate variable asignment.
+    - line line 187 + 197:  fixed calculation of remaining argument
+      length;  this could case a crash before.
+
 February 21, 2003
 
   Baldrick's patches
