@@ -90,6 +90,7 @@ static void finish_selct (INPUT);
 
 static WCHAR * edit_init (INPUT, TEXTBUFF, UWORD cols, size_t size);
 static BOOL    edit_zero (INPUT);
+static void    edit_feed (INPUT, ENCODING, const char * beg, const char * end);
 static BOOL    edit_char (INPUT, WORD chr, WORD col);
 
 
@@ -283,32 +284,26 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 
 /*============================================================================*/
 INPUT
-form_text (TEXTBUFF current, const char * name, char * value,
-          UWORD maxlen, ENCODING encoding, UWORD cols, BOOL readonly)
+form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
+          ENCODING encoding, UWORD cols, BOOL readonly, BOOL is_pwd)
 {
-	WORDITEM word  = current->word;
-	WCHAR  * wmark = current->buffer + maxlen;
-	INPUT    input = _alloc (IT_TEXT, current, name);
-	WORD     i;
+	INPUT input = _alloc (IT_TEXT, current, name);
 	
 	input->TextMax  = maxlen;
 	input->readonly = readonly;
-	edit_init (input, current, cols, maxlen);
-	
-	scan_string_to_16bit (value, encoding, &current->text, MAP_UNICODE);
-	if (wmark > current->text) {
-		input->TextLen = current->text - current->buffer;
-		wmark          = current->text;
+	if (edit_init (input, current, cols, maxlen)) {
+		if (is_pwd) { /* == "PASSWORD" */
+			input->Value    = value;
+			input->HideChar = '*';
+		}
+		edit_feed (input, encoding, value, strchr (value, '\0'));
+		if (!input->Value && value) {
+			free (value);
+		}
 	} else {
-		input->TextLen = input->TextMax;
+		input->Value = value;
 	}
-	*wmark        = '\0';
-	current->text = current->buffer;
-	input->Value  = value;
-	for (i = 0; i <= input->TextLen; i++) {
-		*(value++) = word->item[i] = current->text[i];
-	}
-	input->TextArray[1] += input->TextLen;
+	input->TextLen = input->TextArray[1] - input->TextArray[0];
 	
 	return input;
 }
@@ -341,15 +336,8 @@ new_input (PARSER parser)
 		else if (!cols)       cols = 20;
 		get_value (parser, KEY_VALUE, value = malloc (mlen +1), mlen +1);
 		input = form_text (current, name, value, mlen, frame->Encoding, cols,
-		                   get_value_exists (parser, KEY_READONLY));
-		if (toupper (*output) == 'P') { /* == "PASSWORD" */
-			const char * star = "*";
-			ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
-			(*encoder)(&star, &input->HideChar);
-		} else { /* word->item is used as buffer */
-			free (input->Value);
-			input->Value = NULL;
-		}
+		                   get_value_exists (parser, KEY_READONLY),
+		                   (toupper (*output) == 'P'));
 		
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
@@ -1194,6 +1182,37 @@ edit_zero (INPUT input)
 	input->TextLen = 0;
 	
 	return ok;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
+{
+	WCHAR ** line = input->TextArray; /* first line */
+	WCHAR *  ptr  = *line;
+	while (beg < end) {
+		if (*beg < ' ') {
+			beg++;
+		} else if (*beg == '&') {
+			WCHAR tmp[5];
+			scan_namedchar (&beg, tmp, TRUE, MAP_UNICODE);
+			*(ptr++) = *tmp;
+		} else {
+			*(ptr++) = *(beg++);
+		}
+	}
+	*(ptr)    = '\0';
+	*(++line) = ptr; /* behind the last line */
+	
+	if (input->Value) { /* password */
+		char * val = input->Value;
+		ptr = input->Word->item;
+		while ((*(val++) = *(ptr)) != '\0') {
+			*(ptr++) = '*';
+		}
+	}
+	
+	(void)encoding;
 }
 
 /*----------------------------------------------------------------------------*/

@@ -20,7 +20,7 @@ INPUT form_radio (TEXTBUFF, const char * name, const char * value, BOOL checkd);
 INPUT form_buttn (TEXTBUFF, const char * name, const char * value,
                   ENCODING, char sub_type);
 INPUT form_text  (TEXTBUFF, const char * name, char * value, UWORD maxlen,
-                  ENCODING, UWORD cols, BOOL readonly);
+                  ENCODING, UWORD cols, BOOL readonly, BOOL is_pwd);
 
 INPUT form_selct   (TEXTBUFF, const char * name, UWORD size, BOOL disabled);
 INPUT selct_option (TEXTBUFF, const char * text, BOOL disabled,
