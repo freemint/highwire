@@ -482,7 +482,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	} while ((word = next) != NULL);
 	
 	if (line && (word = line->Word) != NULL) do {
-		if (word->length && !word->image) {
+		if (word->length && !word->image && word->word_tail_drop >= line->Descend) {
 			This->Rect.H++;
 			break;
 		}
