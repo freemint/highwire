@@ -1,4 +1,4 @@
-(non-public of Aug. 07, 2004)
+(non-public of Aug. 20, 2004)
 
 - Cookie support implemented.  Non-session cookies
   are stored to disk to allow persistent user
@@ -26,16 +26,19 @@
 - Checking for proper font settings added to avoid
   bad formatted text input fields.
 
-- Workaround for the Lattice compiler bitfield
-  bug.
+- Crashing bug fixed which occured with interlaced
+  24bit PNGs.
 
-- Slight speed improvement for interlaced PNGs
-  (avoid needless memory copying).
+- Support for 1/2/4bit grayscale PNGs added along
+  with speed improvement for interlaced images.
 
-- Thje cache.idx file header structure got changed
+- The cache.idx file header structure got changed
   to allow version checking for possibly changed
   cache structure.  In this case the cache will be
-  emptied in this case to avoid messed up data.
+  emptied to avoid messed up data.
+
+- Workaround for the Lattice compiler bitfield
+  bug.
 
 - Bugs #0160, #0163 resolved.
 
