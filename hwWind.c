@@ -26,6 +26,11 @@ static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
+#if (0&&   _HIGHWIRE_INFOLINE_ == 0)
+static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
+#else
+static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER |INFO|LFARROW;
+#endif
 
 WORD   hwWind_Mshape = ARROW;
 HwWIND hwWind_Top    = NULL;
@@ -37,20 +42,27 @@ static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
 
 /*============================================================================*/
+void
+hwWind_setup (HWWIND_SET set, long arg)
+{
+	switch (set) {
+		
+		case HWWS_INFOBAR:
+			if (arg & 1) wind_kind |=  INFO;
+			else         wind_kind &= ~INFO;
+			if (arg & 2) wind_kind |=  LFARROW;
+			else         wind_kind &= ~LFARROW;
+			break;
+	}
+}
+
+
+/*============================================================================*/
 HwWIND
 new_hwWind (const char * name, const char * url, LOCATION loc)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST);
-#if (_HIGHWIRE_INFOLINE_==TRUE)
-#if (_HIGHWIRE_REALINFO_==TRUE)
-	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
-#else
-	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
-#endif
-#else
-	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
-#endif	
 	short  i;
 	
 	This->Next = hwWind_Top;
@@ -96,7 +108,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		}
 	}
 	
-	This->Handle  = wind_create_grect (kind, &desk_area);
+	This->Handle  = wind_create_grect (wind_kind, &desk_area);
 	This->isFull  = FALSE;
 	This->isIcon  = FALSE;
 	This->isBusy  = 0;
@@ -113,11 +125,13 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	hwWind_setName (This, (name && *name ? name : url));
 	This->Stat[0] = ' ';
 	This->Info[0] = '\0';
-#if (_HIGHWIRE_REALINFO_==TRUE)
-	wind_set_str (This->Handle, WF_INFO, This->Info);
-#else
-	wind_set(This->Handle,WF_HSLSIZE,-1,0,0,0);
-#endif
+	if (wind_kind & INFO) {
+		wind_set_str (This->Handle, WF_INFO, This->Info);
+	}
+	if (wind_kind & HSLIDE) {
+		wind_set (This->Handle, WF_HSLIDE,   0, 0,0,0);
+		wind_set (This->Handle, WF_HSLSIZE, -1, 0,0,0);
+	}
 
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
@@ -127,9 +141,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 	hwWind_setInfo (This, "", TRUE);
-#endif
 
 	if ((url && *url) || loc) {
 		new_loader_job (url, loc, This->Pane);
@@ -202,7 +214,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	short dmy;
 	PXY   p[2];
 
-	if (This != hwWind_Top || This->isIcon) {
+	if (This != hwWind_Top || !(wind_kind & (LFARROW|HSLIDE)) || This->isIcon) {
 		return;
 	} else {
 		short top;
@@ -248,7 +260,6 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 }
 
 /*============================================================================*/
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 void
 hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 {
@@ -278,13 +289,12 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 	}
 	
 	if (info) {
-#if (_HIGHWIRE_REALINFO_==TRUE)
-		wind_set_str (This->Handle, WF_INFO, info);
-#endif
+		if (wind_kind & INFO) {
+			wind_set_str (This->Handle, WF_INFO, info);
+		}
 		hwWind_setHSInfo(This, info);
 	}
 }
-#endif
 
 
 /*----------------------------------------------------------------------------*/
@@ -685,9 +695,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				break;
 			}
 		case HW_SetInfo:
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 			hwWind_setInfo (wind, gen_ptr, TRUE);
-#endif
 			break;
 		
 		case HW_ImgBegLoad:
@@ -698,9 +706,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
 			}
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 			hwWind_setInfo (wind, gen_ptr, TRUE);
-#endif
 			break;
 		
 		case HW_PageFinished:
@@ -729,9 +735,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 #endif
 			}
 		case HW_ImgEndLoad:
-#if (_HIGHWIRE_INFOLINE_==TRUE)
 			hwWind_setInfo (wind, "", TRUE);
-#endif
 			if (wind->isBusy) {
 				wind->isBusy--;
 			}

@@ -54,4 +54,15 @@ FRAME hwWind_setActive   (HwWIND, CONTAINR);
 FRAME hwWind_ActiveFrame (HwWIND);
 
 
+typedef enum {
+	HWWS_INFOBAR = 0x6962617AuL /* 'ibar' infobar appearance, arg means:
+	                             * 0: no info output at all
+	                             * 1: only AES infobar (traditional GEM)
+	                             * 2: only output to the hslider area
+	                             * 3: both methods (default setting)   */
+} HWWIND_SET;
+
+void hwWind_setup (HWWIND_SET, long arg);
+
+
 #endif /*__HW_WIND_H__*/
