@@ -24,6 +24,11 @@ static DECODER _decoder_png = {
 #define DECODER_CHAIN &_decoder_png
 
 
+BOOL   first_pass;
+ULONG  rowbytes;	
+CHAR * png_image, * png_image_ptr;
+
+
 /*----------------------------------------------------------------------------*/
 static BOOL
 decPng_start (const char * name, IMGINFO info)
@@ -32,6 +37,8 @@ decPng_start (const char * name, IMGINFO info)
 	png_infop   info_ptr = NULL;
 	char header[8];
 	FILE * file = fopen (name, "rb");
+
+	png_image = NULL;
 	
 	if (!file) {
 	/*	puts ("decPng_start(): file not found.");*/
@@ -92,41 +99,9 @@ decPng_start (const char * name, IMGINFO info)
 	info->Interlace  = 0;
 	
 	if (info_ptr->interlace_type == PNG_INTERLACE_ADAM7) {
-		png_bytep * row_pointers = malloc (info_ptr->height * sizeof(png_bytep));
-		int         num_pass     = png_set_interlace_handling (png_ptr);
-		png_read_update_info (png_ptr, info_ptr);
-		if (row_pointers) {
-			size_t size = png_get_rowbytes (png_ptr, info_ptr);
-			int    row;
-			for (row = 0; row < info_ptr->height; row++) {
-				if ((row_pointers[row] = malloc (size)) == NULL) {
-					num_pass = row; /* store for error message */
-					while (row) free (row_pointers[--row]);
-					free (row_pointers);
-					row_pointers = NULL;
-					break;
-				}
-			}
-		}
-		if (row_pointers) {
-			while (--num_pass) {
-				int n = (int)png_ptr->num_rows;
-				int y;
-				for (y = 0; y < info_ptr->height; y += n) {
-					png_read_rows (png_ptr, NULL, &row_pointers[y], n);
-				}
-			}
-			png_set_rows (png_ptr, info_ptr, row_pointers);
-			info->read = decPng_readi;
-		
-		} else {
-			printf ("decPng_start(): low memory (%i).\n", num_pass);
-			png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-			fclose (file);
-			info->_priv_data = NULL;
-		}
+		info->read = decPng_readi;
+		first_pass = TRUE;
 	}
-	
 	return TRUE;
 }
 	
@@ -148,14 +123,39 @@ decPng_readi (IMGINFO info, char * buffer)
 {
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
-	png_bytep * row_ptr  = png_get_rows (png_ptr, info_ptr);
-	int         n        = (int)png_ptr->row_number;
+
 	if (setjmp (png_jmpbuf (png_ptr))) {
 		return FALSE;
 	}
+	
+	/* We make the first pass here and not before to avoid memory fragmentation */
+	if (first_pass == TRUE) {
+		int pass, number_passes = png_set_interlace_handling (png_ptr);
+
+		png_read_update_info (png_ptr, info_ptr);
+
+		rowbytes  = png_get_rowbytes (png_ptr, info_ptr);
+		png_image = malloc (rowbytes * info->ImgHeight);
+        
+		if ((png_image_ptr = png_image) == NULL)
+			return FALSE;
+
+		for (pass = 0; pass < number_passes - 1; pass++) {
+			int y;
+			for (y = 0; y < info->ImgHeight; y++) {
+				png_bytep row = png_image + y * rowbytes;
+				png_read_rows (png_ptr, &row, NULL, 1);
+			}
+		}
+		first_pass = FALSE;
+	}
+	
 	(void)buffer;
-	info->RowBuf = row_ptr[n];
-	png_read_rows (png_ptr, &row_ptr[n], NULL, 1);
+	info->RowBuf = png_image_ptr;
+
+	png_read_rows (png_ptr, &png_image_ptr, NULL, 1);
+	png_image_ptr += rowbytes;		
+
 	return TRUE;
 }
 
@@ -166,11 +166,8 @@ decPng_quit  (IMGINFO info)
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
 	if (png_ptr) {
-		png_bytep * row_pointers = png_get_rows (png_ptr, info_ptr);
-		if (row_pointers) {
-			int row = (int)info_ptr->height;
-			while (row) free (row_pointers[--row]);
-			free (row_pointers);
+		if (png_image) {
+			free (png_image);
 		}
 		if (!setjmp (png_jmpbuf (png_ptr))) {
 			png_read_end         (png_ptr,  info_ptr);
