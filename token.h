@@ -159,6 +159,7 @@
 		__KEY_ITEM (NOWRAP),       /* TD,TH */
 		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
+		__KEY_ITEM (READONLY),     /* INPUT */
 		__KEY_ITEM (REL),          /* LINK */
 		__KEY_ITEM (ROWS),         /* FRAMESET */
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */

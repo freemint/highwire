@@ -62,6 +62,7 @@ struct s_input {
 	char     SubType; /* [S]ubmit, [R]eset, \0 */
 	BOOL     checked;
 	BOOL     disabled;
+	BOOL     readonly;
 	WCHAR    HideChar;
 	UWORD    TextMax;
 	UWORD    TextLen;
@@ -151,6 +152,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->Type      = type;
 	input->SubType   = '\0';
 	input->disabled  = FALSE;
+	input->readonly  = TRUE;
 	input->HideChar  = 0;
 	input->TextMax   = 0;
 	input->TextLen   = 0;
@@ -275,7 +277,7 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 /*============================================================================*/
 INPUT
 form_text (TEXTBUFF current, const char * name, char * value,
-          UWORD maxlen, ENCODING encoding, UWORD cols)
+          UWORD maxlen, ENCODING encoding, UWORD cols, BOOL readonly)
 {
 	WORDITEM word  = current->word;
 	TEXTATTR attr  = word->attr;
@@ -286,6 +288,7 @@ form_text (TEXTBUFF current, const char * name, char * value,
 	input->Value    = value;
 	input->TextMax  = input->TextLen = maxlen;
 	input->VisibleX = cols;
+	input->readonly = readonly;
 	
 	font_byType (pre_font, -1, -1, word);
 	scan_string_to_16bit (value, encoding, &current->text,
@@ -340,7 +343,8 @@ new_input (PARSER parser)
 		if      (cols > mlen) cols = mlen;
 		else if (!cols)       cols = 20;
 		get_value (parser, KEY_VALUE, value = malloc (mlen +1), mlen +1);
-		input = form_text (current, name, value, mlen, frame->Encoding, cols);
+		input = form_text (current, name, value, mlen, frame->Encoding, cols,
+		                   get_value_exists (parser, KEY_READONLY));
 		if (toupper (*output) == 'P') { /* == "PASSWORD" */
 			const char * star = "*";
 			ENCODER_W encoder = encoder_word (ENCODING_ATARIST,
@@ -960,7 +964,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 /*printf ("%04X %04X\n", key, state);*/
 	if (asc >= ' ' && asc != 127 &&
 	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
-		if (input->TextLen < input->TextMax) {
+		if (!input->readonly && input->TextLen < input->TextMax) {
 			WORD  mapping = word->font->Base->Mapping;
 			WCHAR tmp[5];
 			{
@@ -1000,7 +1004,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	} else if (asc) switch (asc) {
 			
 		case 27: /* escape */
-			if (input->TextLen) {
+			if (!input->readonly && input->TextLen) {
 				input->Form->TextCursrX = 0;
 				input->Form->TextCursrY = 0;
 				input->TextLen          = 0;
@@ -1045,7 +1049,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 8: /* backspace */
-			if (!form->TextCursrX) {
+			if (input->readonly || !form->TextCursrX) {
 				word = NULL;
 				break;
 			} else if (--form->TextCursrX < form->TextShiftX) {
@@ -1053,7 +1057,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				form->TextShiftX = max (0, n);
 			}
 		case 127: /* delete */
-			if (form->TextCursrX < input->TextLen) {
+			if (!input->readonly && form->TextCursrX < input->TextLen) {
 				WORD    num = input->TextLen    - form->TextCursrX;
 				WCHAR * w   = input->Word->item + form->TextCursrX;
 				char  * c   = input->Value      + form->TextCursrX;
