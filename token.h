@@ -17,6 +17,7 @@
 #define __TOKEN_TAG
 	__BEG_TAGS
 		__TAG_ITEM (A),
+		__TAG_ITEM (AREA),  /* inside MAP */
 		__TAG_ITEM (B),
 		__TAG_ITEM (BASE),
 		__TAG_ITEM (BASEFONT),
@@ -61,6 +62,7 @@
 		__TAG_ITEM (LI),
 		__TAG_ITEM (LINK),
 		__TAG_ITEM (LISTING),
+		__TAG_ITEM (MAP),
 		__TAG_ITEM (MENU),
 		__TAG_ITEM (META),
 		__TAG_ITEM (NOBR),
@@ -137,6 +139,7 @@
 		__KEY_ITEM (COLS),         /* FRAMESET */
 		__KEY_ITEM (COLSPAN),      /* TD,TH */
 		__KEY_ITEM (CONTENT),      /* META */
+		__KEY_ITEM (COORDS),       /* AREA */
 		__KEY_ITEM (DISABLED),     /* INPUT,SELECT,OPTION */
 		__KEY_ITEM (FACE),         /* FONT, CSS:font-family */
 		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET   -- IE proprietary */
@@ -165,6 +168,7 @@
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */
 		__KEY_ITEM (SCROLLING),    /* FRAME */
 		__KEY_ITEM (SELECTED),     /* OPTION */
+		__KEY_ITEM (SHAPE),        /* AREA */
 		__KEY_ITEM (SHOUT),        /* IOD   -- IOD4 proprietary */
 		__KEY_ITEM (SIZE),         /* BASEFONT,FONT,HR */
 		__KEY_ITEM (SRC),          /* EMBED,FRAE,IMG  -- EMBED = NS proprietary */
@@ -175,6 +179,7 @@
 		__KEY_ITEM (TITLE),        /* BLOCKQUOTE */
 		__KEY_ITEM (TOPMARGIN),    /* BODY   -- IE proprietary */
 		__KEY_ITEM (TYPE),         /* LI,OL,UL */
+		__KEY_ITEM (USEMAP),       /* IMAGE */
 		__KEY_ITEM (VALIGN),       /* TD,TH,TR */
 		__KEY_ITEM (VALUE),        /* LI */
 		__KEY_ITEM (VSPACE),       /* IMG */
