@@ -37,6 +37,7 @@ HTMLTAG parse_tag (PARSER, const char ** pptr);
 				 * If successful the found known KEYs are stored with their VALUEs
 				 * internally and a TAG enum is returned.
 				 * Else the symbol TAG_Unknown is returned.
+				 * The PARSER argument may be NULL if no KEY storage is needed.
 				*/
 
 BOOL   get_value       (PARSER, HTMLKEY, char * output, const size_t max_len);
@@ -44,6 +45,10 @@ BOOL   get_value       (PARSER, HTMLKEY, char * output, const size_t max_len);
 				 * call.  If successful the VALUE will be copied to 'output' up to
 				 * 'max_len' character (including the trailing '\0') and a TRUE
 				 * will be returned.  Else a FALSE will be returned.
+				*/
+#define get_value_exists( p, key ) get_value (p, key, NULL,0)
+				/* A shorthand that returns TRUE if 'key' was found at all while the
+				 * last parse() call.
 				*/
 char * get_value_str   (PARSER, HTMLKEY);
 				/* Returns the VALUE of 'key' that was read while the last parse()

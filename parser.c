@@ -265,13 +265,20 @@ HTMLTAG
 parse_tag (PARSER parser, const char ** pptr)
 {
 	const char * line  = *pptr;
-	KEYVALUE   * entry = ValueTab(parser);
 	KEYVALUE   * style = NULL;
-	HTMLTAG tag;
-	BOOL    lookup;
-
-	ValueNum(parser) = 0;
-
+	KEYVALUE   * entry;
+	HTMLTAG      tag;
+	BOOL         lookup;
+	
+	if (parser) {
+		lookup = TRUE;
+		entry  = ValueTab(parser);
+		ValueNum(parser) = 0;
+	} else {
+		lookup = FALSE;
+		entry  = NULL;
+	}
+	
 	/* first check for comment
 	 */
 	if (*line == '!') {
@@ -292,7 +299,7 @@ parse_tag (PARSER parser, const char ** pptr)
 	if ((tag = scan_tag (&line)) == TAG_H) {
 		if (*line < '1' || *line > '6') {
 			tag = TAG_Unknown;
-		} else {
+		} else if (entry) {
 			entry->Key   = KEY_H_HEIGHT;
 			entry->Value = line++;
 			entry->Len   = 1;
@@ -300,7 +307,7 @@ parse_tag (PARSER parser, const char ** pptr)
 			ValueNum(parser) = 1;
 		}
 	}
-	lookup = (tag != TAG_Unknown);
+	lookup &= (tag != TAG_Unknown);
 
 	/*** if the tag is known or not, in every case we have to go through the list
 	 *   of variabls to avoid the parser to become confused   */
