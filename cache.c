@@ -809,8 +809,9 @@ cache_expires (LOCATION loc, long date)
 	CACHEITEM citem = tree_item (loc);
 	if (!citem) {
 		printf ("cache_expires(%s): not found!\n", loc->FullName);
-	} else {
+	} else if (date > 0 || !citem->Expires) {
 		citem->Expires = date;
+		cache_flush (NULL, __cache_dir);
 	}
 }
 
