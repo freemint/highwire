@@ -1,5 +1,191 @@
 Ok here are the new supports and changes
 
+August 18, 2003
+
+  AltF4's patches
+
+  Makefile:  line 18 + 35
+  image.c:   line 1711..1712:
+  img_jpg.c:
+  img_png.c:
+    - support for jpg and png enabled (gcc only yet).
+
+  image.c:
+    - line 59 + 511 (setup) + 1562..1612 (init_display):
+      raster_color() renamed to raster_cmap(), sounds more logical.
+
+August 17, 2003
+
+  AltF4's patches
+
+  defs.h:
+    - line 166..171:  removed GLOBAL, conflicts with define in libjpeg.
+
+  image.c:  line 1213..1340;
+  img_gif.c:
+    - moved all GIF functions into an own file.
+
+  image.c:
+    - line 48 + 52 + 646..969 + 500..501 (setup)
+      + 1106..1135 (init_display):  added functions for GrayScale and
+      TrueColor images, only a rough basic implementation yet.
+    - line 62 + 358..367 (image_job) + 1147 + 1197 (read_img):  return
+      type corrected.
+    - line 56 + 1142 (init_display):  new arrays for TrueColor and
+      GrayScale to palette conversion.
+
+August 16, 2003
+
+  AltF4's patches
+
+  cache.h:  line 41:
+  cache.c:  line 514:
+    - new function cache_query()
+
+  image.c:
+    - line 330..341 (image_job):  replaced call of cache_lookup() by
+      cache_query(), is a bit faster and will later be used for loading
+      of cached image files.
+
+August 15, 2003
+
+  AltF4's patches
+
+  HighWire.c:
+    - line 93..96 (main):  added comments for Mxalloc() mode.
+
+  cache.h:
+    - line 15..28 + 42:  struct CACHEINF modified.
+    - line 32..37 + 39:  cache result values renamed.
+
+  cache.c:
+    - line 375..383 (cache_info):  struct CACHEINF modified.
+    - line 420 + 424 + 427 + 429 + 432 (cache_exclusive):  cache result
+      values renamed.
+
+  p_about.c:
+    - line 85 + 88 + 105 (about_cache):  struct CACHEINF modified.
+
+  Loader.c:
+    - line 567 + 569 + 573 (header_job):  cache result values renamed.
+
+  image.c:
+    - line 26 (struct s_img_info) + 356 (image_job)
+      + 1288 (decGif_start):  new attribute NumComps contains the
+      number of bits per pixel in an image scan line.
+    - line 895..897 (raster_24) + 914..916 (raster_24)
+      + 932 (raster_32) + 949 (raster_32r) + 1055 (cnvpal_true):
+      corrected byte positions of rgb values, was shifted 8 bit left.
+    - line 36 + 50..51 + 521 + 544..545 + 553 + 556..559 + 578..583
+      + 610..617 + 621 + 644..651 + 656 + 699..704 + 730 + 792..793
+      + 801 + 805..808 + 835..841 + 843 + 853..858 + 860 + 870..875
+      + 877 + 887..892 + 894 + 906..911 + 913 + 925..930 + 941..946
+      + 948 + 1134:  renamed parameters and variables of the raster
+      functions to have them as common as possible.
+    - line 1088..1124 (init_display):  swapped function pointer
+      assignments, looks a bit more logical this way.
+
+August 13, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 39..64 + 66..69 + 234 (img_scale) + 453 (setup)
+      + 462..508 (img_scale) + 528 + 550..553 + 558 + 561
+      + 566 (raster_mono) + 583 + 587 + 591 (raster_stnd) + 615 + 621
+      + 626 (raster_D1) + 649 + 655 + 661 (raster_D2) + 704 + 708
+      + 712 (raster_I4) + 735 + 797..800 + 806..807 + 812
+      + 816 (raster_I8) + 840 + 846 + 848 (raster_P8) + 858 + 863
+      + 865 (raster_16) + 875 + 880 + 882 (raster_16r) + 892 + 897
+      + 899 (raster_24) + 911 + 916 + 918 (raster_24r) + 930 + 935
+      + 937 (raster_32) + 946 + 951 + 953 (raster_32r)
+      + 967 (cnvpal_mono) + 988 (cnvpal_1_2) + 1007 (cnvpal_4_8)
+      + 1027 (cnvpal_high) + 1054 (cnvpal_true):
+      merged struct RASTERINFO into IMGINFO.
+    - line 2 + 18..29 + 77 + 364 + 368..371 (image_job)
+      + 1133..1280 (read_gif):  splitted off image decoder function to
+      achieve higher modularity for easier implementation of further
+      image formats.
+
+August 12, 2003
+
+  AltF4's patches
+
+  pc_rastr.s:  line 96..97 (pc_raster_I8):
+  image.c:     line 766..767 (raster_I8) + 45..46 (struct RASTERINFO)
+               + 544 + 587 + 621 + 675 + 775 + 779 + 812 + 829 + 846:
+    - the pixel index array ist organized as four byte longs now rather
+      than two byte words.
+
+  image.c:
+    - line 18..19 + 69 + 21..23 + 996:  moved definitions to better
+      places.
+    - line 43 + 440 + 444 + 450 + 457..458 + 463 + 468 (setup)
+      + 999..1001 + 1129 + 1181 (read_gif):  new struct IMGINFO to be
+      filled out by image decoder function.
+    - line 57..60 + 442..443 (setup) + 1133 (read_gif):  changed
+      function pointer.
+    - line 57 + 953 + 967..985 (init_display):  exported palette
+      conversions to own functions.
+    - line 447 + 474..478 (setup) + 1006 + 1061..1139 (read_gif):
+      palette conversion is now performed by setup() rather than image
+      decoders.
+    - line 867..873 (raster_24) + 891..897 (raster_24r)
+      + 915..925 (raster_32) + 941..947 (raster_32r):  removed ifdefs
+      for Lattice because the palette handling is now completely
+      machine, compiler and library independend .
+
+August 11, 2003
+
+  AltF4's patches
+
+  defs.h:
+    - line 5..7:  bumped to version 0.1.5 alpha.
+
+  global.h:
+    - line 172:  new function image_dispinfo().
+
+  image.c:
+    - line 44..49 + 517 + 572 + 604 + 638 + 693 + 724 + 829 + 847 + 864
+      + 881 + 905 + 929 + 955:  removed special define for Lattice, no
+      longer necessary.
+    - line 66..67 + 464 (setup):  removed no longer used function type
+      definition.
+    - line 71..75:  new function image_dispinfo() returns a string
+      describing with the asumed screen mode / display info.
+    - line 109..138 (new_image) + 973:  moved initialization of screen
+      mode related stuff into an own function init_display().
+
+  cache.h:
+    - line 26..27:  new functions cache_exclusive() and cache_abort(),
+      changed meaning of cache_assign().  this three are managing now
+      synchronization of parallel loading jobs, kind of preemtive
+      multitasking that is.
+
+  cache.c:
+    - line 103:  new function tree_item() to find some particular empty
+      cache item in the tree.
+    - line 368 (cache_info):  set NULL pointer for empty cache items.
+    - line 405:  new functions cache_exclusive() and cache_abort().
+    - line 422..447 (cache_assign):  make use of the particular empty
+      cache item instead of creating a new one at this point.
+    - line 449 (cache_assign):  avoid screwing up the cache if storing
+      failed for some reason (eg. no cache dir defined in config).
+
+  p_about.c:
+    - line 84 + 103 (about_cache):  prepared for NULL pointer of empty
+      cache items.
+    - line 228 (about_highwire):  display the determined screen mode.
+
+  Loader.c:
+    - line 481 (receive_job) + 581 + 669 (header_job):  added calls of
+      cache_abort() to remove empty cache items of objects if their
+      load failed.
+    - line 565 (header_job):  added a cache query to avoid simultanous
+      loading of identical objects.
+    - line 644 + 669 (header_job):  close socket also when loading
+      failed, else we get a 'too many open files' error at some time.
+
 August 10, 2003   [V. 0.1.4 release]
 
   AltF4's patches
