@@ -42,11 +42,13 @@ struct s_cache_item {
 static CACHEITEM __cache_beg = NULL;
 static CACHEITEM __cache_end = NULL;
 #define            CACHE_MAX ((size_t)100 *1024)
-static size_t    __cache_mem_use = 0;/* __cache_mem = 0;*/
+static size_t    __cache_mem_use = 0;
 static size_t    __cache_mem_max = 0;
 static size_t    __cache_mem_num = 0;
-static size_t    __cache_dsk_use = 0;/* __cache_dsk = 0;*/
+static size_t    __cache_dsk_use = 0;
+static size_t    __cache_dsk_max = 5L*1024*1024;
 static size_t    __cache_dsk_num = 0;
+static size_t    __cache_dsk_lim = 300;
 static LOCATION  __cache_dir = NULL;
 
 struct s_cache_node {
@@ -586,6 +588,27 @@ cache_abort (LOCATION loc)
 }
 
 /*----------------------------------------------------------------------------*/
+static BOOL
+cache_remove (long num, long use)
+{
+	long      cnt   = 0;
+	CACHEITEM citem = __cache_end;
+	while (citem) {
+		CACHEITEM prev = citem->PrevItem;
+		if (!citem->inMem && !citem->Reffs && cache_location (citem)) {
+			use -= citem->Size;
+			num--;
+			(*citem->dtor)(citem->Object);
+			destroy_item (citem);
+			cnt++;
+			if (num <= 0 && use <= 0) break;
+		}
+		citem = prev;
+	}
+	return (cnt > 0);
+}
+
+/*----------------------------------------------------------------------------*/
 static void
 file_dtor (void * arg)
 {
@@ -633,6 +656,11 @@ cache_assign (LOCATION src, void * data, size_t size,
 				strcpy (p, type);
 			} else {
 				*p = '\0';
+			}
+			if (__cache_dsk_num >= __cache_dsk_lim ||
+			    __cache_dsk_use + size > __cache_dsk_max) {
+				cache_remove (__cache_dsk_num +1 - __cache_dsk_lim,
+				              __cache_dsk_use + size - __cache_dsk_max);
 			}
 			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
