@@ -839,7 +839,23 @@ input_activate (INPUT input, WORD slct)
 			size += len;
 			elem = form->InputList;
 			do if (elem->checked && *elem->Name) {
+				char * q;
 				len = strlen (elem->Name);
+				*p = '\0';
+				if ((q = strstr (data, elem->Name)) != NULL) {
+					char * f = (q == data || q[-1] == '?' || q[-1] == '&'
+					            ? q + len : NULL);
+					do if (f && (!*f || *f == '&' || *f == '=')) {
+						if (*f == '=') while (*(++f) && *f != '&');
+						if (*f == '&') f++;
+						while ((*(q++) = *(f++)) != '\0');
+						size -= f - q;
+						p    -= f - q;
+						break;
+					} else if ((q = strstr (q +1, elem->Name)) != NULL) {
+						f = (q[-1] == '&' ? q + len : NULL);
+					} while (q);
+				}
 				memcpy (p, elem->Name, len);
 				p += len;
 				*(p++) = '=';
