@@ -20,6 +20,20 @@
 #include "cookie.h"
 
 
+static LOCATION proxy = NULL;
+
+
+/*============================================================================*/
+void
+hhtp_proxy (const char * host, short port)
+{
+	char buf[300];
+	sprintf (buf, "http://%.256s:%u", host, (port ? port : 8080u));
+	proxy = new_location (buf, NULL);
+}
+
+
+/*============================================================================*/
 long
 http_date (const char * beg)
 {
@@ -380,7 +394,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		}
 		sock = *keep_alive;
 	
-	} else if ((sock = location_open (loc, &name)) < 0) {
+	} else if ((sock = proxy ? location_open (proxy, NULL)
+	                         : location_open (loc, &name)) < 0) {
 		if (sock == -ETIMEDOUT) {
 			strcpy (buffer, "Connection timeout!\n");
 		} else if (sock < -1) {
@@ -393,9 +408,19 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	} else {
 		const char rest[] = " HTTP/1.1\r\n";
 		const char * meth = (!keep_alive ? "HEAD " : post_buf ? "POST " : "GET ");
-		char * p   = strchr (strcpy (buffer, meth), '\0');
-		size_t len = min (strlen (loc->FullName),
-		                  sizeof(buffer) - sizeof(rest) - (p - buffer));
+		char       * p    = strchr (strcpy (buffer, meth), '\0');
+		size_t       len;
+		if (proxy) {
+			const char text[] = "http://";
+			UWORD      hlen;
+			name = location_Host (loc, &hlen);
+			strcpy (p, text);
+			p   += sizeof(text) -1;
+			strcpy (p, name);
+			p   += hlen;
+		}
+		len = min (strlen (loc->FullName),
+		           sizeof(buffer) - sizeof(rest) - (p - buffer));
 		strncpy (p, loc->FullName, len);
 		strcpy  (p += len, rest);
 		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1)) > 0) {

@@ -18,6 +18,8 @@ typedef struct {
 	const char * Rdir;
 } HTTP_HDR;
 
+void hhtp_proxy (const char * host, short port);
+
 short http_header (LOCATION, HTTP_HDR *, size_t blk_size,
                    short * keep_alive, long tout_msec,
                    LOCATION referer, const char * post_buf);
