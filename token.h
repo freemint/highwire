@@ -57,6 +57,7 @@
 		__TAG_ITEM (LISTING),
 		__TAG_ITEM (MENU),
 		__TAG_ITEM (META),
+		__TAG_ITEM (NOBR),
 		__TAG_ITEM (NOSCRIPT),
 		__TAG_ITEM (OL),
 		__TAG_ITEM (OPTION),
@@ -84,6 +85,7 @@
 		__TAG_ITEM (U),
 		__TAG_ITEM (UL),
 		__TAG_ITEM (VAR),
+		__TAG_ITEM (WBR),
 		__TAG_ITEM (XMP)
 	__END_TAGS
 
@@ -140,6 +142,7 @@
 		__KEY_ITEM (MAXLENGTH),    /* INPUT */
 		__KEY_ITEM (METHOD),       /* FORM */
 		__KEY_ITEM (NAME),         /* A,FRAME */
+		__KEY_ITEM (NOWRAP),       /* TD,TH */
 		__KEY_ITEM (NOSHADE),      /* HR */
 		__KEY_ITEM (ROWS),         /* FRAMESET */
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */
