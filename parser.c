@@ -30,9 +30,17 @@ typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 	const char * Value;
 } KEYVALUE;
 
+typedef struct s_style * STYLE;
+
 typedef struct s_parser_priv {
-	UWORD    KeyNum;
+	struct s_style {
+		STYLE    Next;
+		KEYVALUE Css;
+		char     ClassId; /* '.'Class '#'Id */
+		char     Ident[1];
+	}      * Styles;
 	KEYVALUE KeyValTab[25];
+	UWORD    KeyNum;
 	WCHAR    Buffer[505]; /* 500 is enough for 124 UTF-8 characters, */
 } * PARSPRIV;            /* if the encoding is unrecognized, parsed */
                          /* as single byte characters in PRE mode.  */
@@ -50,6 +58,7 @@ new_parser (LOADER loader)
 	parser->Loader   = loader;
 	parser->Target   = loader->Target;
 	parser->hasStyle = FALSE;
+	prsdata->Styles  = NULL;
 	prsdata->KeyNum  = 0;
 	
 	memset (current, 0, sizeof (parser->Current));
@@ -104,6 +113,14 @@ delete_parser (PARSER parser)
 		containr_calculate (cont, NULL);
 	}
 	delete_loader (&parser->Loader);
+	
+	if (ParserPriv(parser)->Styles) {
+		STYLE style = ParserPriv(parser)->Styles, next;
+		do {
+			next = style->Next;
+			free (style);
+		} while ((style = next) != NULL);
+	}
 	free (parser);
 }
 
@@ -113,14 +130,12 @@ static KEYVALUE *
 find_key (PARSER parser, HTMLKEY key)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
-	KEYVALUE   * ent = prsdata->KeyValTab;
 	UWORD        num = prsdata->KeyNum;
-	while (num) {
-		if (ent->Key == key) {
+	KEYVALUE   * ent = prsdata->KeyValTab + num;
+	while (num--) {
+		if ((--ent)->Key == key) {
 			return ent;
 		}
-		ent++;
-		num--;
 	}
 	return NULL;
 }
@@ -329,8 +344,8 @@ css_values (PARSER parser, const char * line, size_t len)
 HTMLTAG
 parse_tag (PARSER parser, const char ** pptr)
 {
-	const char * line  = *pptr;
-	PARSPRIV   prsdata = ParserPriv(parser);
+	const char * line = *pptr;
+	PARSPRIV     prsdata;
 	KEYVALUE   * entry;
 	HTMLTAG      tag;
 	BOOL         lookup;
@@ -342,8 +357,9 @@ parse_tag (PARSER parser, const char ** pptr)
 		entry   = prsdata->KeyValTab;
 		lookup  = TRUE;
 	} else {
-		entry  = NULL;
-		lookup = FALSE;
+		prsdata = NULL;
+		entry   = NULL;
+		lookup  = FALSE;
 	}
 	
 	/* first check for comment
@@ -365,6 +381,15 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	if ((tag = scan_tag (&line)) == TAG_Unknown) {
 		lookup = FALSE;
+	
+	} else if (lookup && prsdata->Styles) {
+		STYLE style = prsdata->Styles;
+		do {
+			if (!style->ClassId && (!style->Css.Key || style->Css.Key == tag)) {
+				parser->hasStyle = TRUE;
+				entry = css_values (parser, style->Css.Value, style->Css.Len);
+			}
+		} while ((style = style->Next) != NULL);
 	}
 
 	/*** if the tag is known or not, in every case we have to go through
@@ -393,22 +418,46 @@ parse_tag (PARSER parser, const char ** pptr)
 			val = NULL;
 		}
 		if (lookup) {
+			unsigned len = (unsigned)(line - val);
 			if (key == KEY_STYLE) {
-				if (val  &&  val < line) {
+				if (val && len) {
 					parser->hasStyle = TRUE;
-					entry = css_values (parser, val, (unsigned)(line - val));
+					entry = css_values (parser, val, len);
 				}
 			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
 				entry->Key = key;
-				if (val  &&  val < line) {
+				if (val && len) {
 					entry->Value = val;
-					entry->Len   = (unsigned)(line - val);
+					entry->Len   = len;
 				} else {
 					entry->Value = NULL;
 					entry->Len   = 0;
 				}
 				entry++;
 				prsdata->KeyNum++;
+				if (val && len && prsdata->Styles) {
+					STYLE style = prsdata->Styles;
+					if (key == KEY_CLASS) {
+						do if (style->ClassId == '.'
+							    && (!style->Css.Key || style->Css.Key == tag)
+							    && strncmp (style->Ident, val, len) == 0
+							    && style->Ident[len] == '\0') {
+							parser->hasStyle = TRUE;
+							entry = css_values (parser,
+							                    style->Css.Value, style->Css.Len);
+						} while ((style = style->Next) != NULL);
+					} else if (key == KEY_ID) {
+						do if (style->ClassId == '#'
+							    && (!style->Css.Key || style->Css.Key == tag)
+							    && strncmp (style->Ident, val, len) == 0
+							    && style->Ident[len] == '\0') {
+							parser->hasStyle = TRUE;
+							entry = css_values (parser,
+							                    style->Css.Value, style->Css.Len);
+							break;
+						} while ((style = style->Next) != NULL);
+					}
+				}
 			}
 		}
 		if (delim && delim == *line) line++;
@@ -418,4 +467,116 @@ parse_tag (PARSER parser, const char ** pptr)
 	*pptr = (*line ? ++line : line);
 	
 	return tag;
+}
+
+
+/*============================================================================*/
+#define skip_spc(p) { while (isspace (*p)) p++; }
+#define skip(p,c)   { while (*(++p) == c); }
+#define error_if(e) { if (e) { return p; } }
+/*- - - - - - - - - - - - - - - - - - - - - - - -*/
+const char *
+parse_css (PARSER parser, const char * p)
+{
+	PARSPRIV prsdata = ParserPriv(parser);
+	STYLE  * p_style = &prsdata->Styles;
+	
+	while (*p_style) { /* jump to the end of previous stored style sets */
+		p_style = &(*p_style)->Next;
+	}
+	
+	do {
+		const char * beg = NULL, * end = NULL;
+		STYLE style = NULL;
+		BOOL  ok    = FALSE;
+		
+		while (*p) {
+			WORD key = -1;
+			char cid = '\0';
+			
+			skip_spc (p);
+			
+			if (*p == '*') {
+				error_if (*(++p) != '.');
+				key = TAG_Unknown; /* ok, matches to all html tags */
+			
+			} else if (isalpha (*p)) {
+			/*	const char * tag = p;*/
+				if ((key = scan_tag (&p)) == TAG_Unknown) {
+			/*		printf ("skip unknown tag '%.*s'\n", (int)(p - tag), tag);*/
+					key = CSS_Unknown;
+				}
+			}
+			
+			if (*p == '.' || *p == '#') {
+				cid = *(p++);
+				error_if (!isalpha (*p));
+				beg = p;
+				while (isalnum (*(++p)) || *p == '-' || *p == '_');
+				end = p;
+				if (beg == end) cid = '\0';
+			
+			} else {
+				error_if (key < 0);
+				beg = end = NULL;
+			}
+			
+			if (key >= 0 || cid) {
+				if (key < CSS_Unknown) {
+					size_t len = end - beg;
+					STYLE  tmp = malloc (sizeof (struct s_style) + len);
+					if (len) memcpy (tmp->Ident, beg, len);
+					tmp->Ident[len] = '\0';
+					tmp->Css.Key = (key < 0 ? TAG_Unknown : key);
+					tmp->ClassId = cid;
+					tmp->Next    = NULL;
+					if (style) style->Next = tmp;
+					else       *p_style    = tmp;
+					style = tmp;
+				}
+				ok = TRUE;
+			}
+		
+			skip_spc (p);
+			if (*p == ',') p++;
+			else           break;
+		}
+		
+		if (*p == '{') {
+			while (isspace (*(++p)));
+			beg = p;
+			while (*p && *p != '}') {
+				if (!isspace (*p)) {
+					end = NULL;
+				} else if (!end) {
+					end = p;
+				}
+				p++;
+			}
+			if (!end) {
+				end = p;
+			}
+			if (*p) while (isspace (*(++p)));
+		}
+		
+		if (style) {
+			style = *p_style;
+			if (ok && end > beg) {
+				unsigned len = (unsigned)(end - beg);
+				do {
+					style->Css.Len   = len;
+					style->Css.Value = beg;
+					p_style = &style->Next;
+				} while ((style = *p_style) != NULL);
+			} else do {
+				*p_style = style->Next;
+				free (style);
+			} while ((style = *p_style) != NULL);
+		}
+		
+		if (!ok) break;
+	
+	} while (*p);
+	
+	return p;
 }

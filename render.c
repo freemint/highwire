@@ -802,16 +802,33 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Style Area
- *
- * skip everything until </STYLE> tag
 */
 static UWORD
 render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (parser);
-	
 	if (flags & PF_START) {
 		const char * line = *text;
+		
+		while (isspace (*line)) line++;
+		
+		if (*line == '<') {        /* skip leading '<!--' */
+			if (*(++line) == '!') {
+				while (*(++line) == '-');
+			} else {
+				line--;
+			}
+		}
+		if (*line != '<') {
+			line = parse_css (parser, line);
+		}
+		if (*line == '-') {        /* skip trailing '-->' */
+			while (*(++line) == '-');
+			if (*line == '>') {
+				while (isspace (*(++line)));
+			}
+		}
+		
+		/* should be positioned just before the next tag now */
 		do {
 			BOOL slash;
 			while (*line && *(line++) != '<');

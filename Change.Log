@@ -1,5 +1,7 @@
 (non-public of Oct.31, 2003)
 
+- Implementation of parsing of <STYLE> areas.
+
 - Tag <SPAN> implemented (general CSS inline
   element) (#0138).
 
