@@ -64,7 +64,11 @@ http_date (const char * beg)
 	
 	/* read month */
 	while (isspace (*beg)) beg++;
-	for (i = 0; i < (short)numberof(mon); i++) {
+	if (!asc && *beg >= '0' && *beg <= '3') {
+		/* exotical date2 format: 2DIGIT "-" 2DIGIT "-" 2/4DIGIT */
+		tm.tm_mon = (int)strtol (beg, &end, 10) -1;
+		beg = end;
+	} else for (i = 0; i < (short)numberof(mon); i++) {
 		if (strnicmp (beg, mon[i], 3) == 0) {
 			tm.tm_mon = i;
 			beg += 3;
