@@ -377,7 +377,7 @@ new_input (PARSER parser)
 			if (cols > mlen) cols = mlen;
 		}
 		input = form_text (current, name, get_value_str (parser, KEY_VALUE),
-		                   mlen, frame->Encoding, max (cols, 20),
+		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   get_value_exists (parser, KEY_READONLY),
 		                   (toupper (*output) == 'P'));
 		
