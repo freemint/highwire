@@ -228,7 +228,7 @@
 		__CSS_ITEM (MARGIN,           0),
 		/*          MAX_HEIGHT        */
 		/*          MAX_WIDTH         */
-		__CSS_ITEM (PADDING,          KEY_CELLPADDING),
+		__CSS_ITEM (PADDING,          0),
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (TEXT_INDENT,      0),

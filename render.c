@@ -2525,8 +2525,12 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
 		WORD    border   = get_value_unum (parser, KEY_BORDER, -1);
+		WORD    padding  = get_value_unum (parser, KEY_CELLPADDING, -1);
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
+		}
+		if (padding < 0) {
+			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
 		if (floating == ALN_NO_FLT) {
 			if (get_v_align (parser, -1) == ALN_MIDDLE) {
@@ -2541,7 +2545,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_size  (parser, KEY_HEIGHT),
 		             get_value_size  (parser, KEY_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
-		             get_value_unum  (parser, KEY_CELLPADDING, 1), border, FALSE);
+		             padding, border, FALSE);
 		parser->Current.paragraph->Box.HtmlCode = TAG_TABLE;
 	
 	} else {
