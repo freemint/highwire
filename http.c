@@ -402,7 +402,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			const char * stack = inet_info();
 			len = sprintf (buffer,
 			      "HOST: %s\r\n"
-			      "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n",
+			      "User-Agent: Mozilla 4.0 (compatible; Atari %s/%i.%i.%i %s)\r\n",
 			      name,
 			      _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
 			      _HIGHWIRE_REVISION_, (stack ? stack : ""));
@@ -550,7 +550,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 				) {
 			   long r = (cookies_allowed ? set_cookie (ln_beg, n, hdr) : 0);
 			   if (r && r < n) {
-					cookie_set (loc, ln_beg + r, n - r, hdr->SrvrDate);
+					long tdiff = (hdr->SrvrDate > 0
+					              ? hdr->LoclDate - hdr->SrvrDate : 0);
+					cookie_set (loc, ln_beg + r, n - r, hdr->SrvrDate, tdiff);
 			   }
 			}
 			*ln_brk = '\n';

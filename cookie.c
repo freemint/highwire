@@ -125,7 +125,7 @@ jar_load (void)
 			{ /* host/domain */
 			
 				char host[300] = "", domain[300] = "";
-				int n = sscanf (buff, " H:%hu:%256[^:]:%256[^:]:",
+				int n = sscanf (buff, "H:%hu:%256[^:]:%256[^:]:",
 				                &num, host, domain);
 				if (n >= 2) {
 					ULONG        flags    = 0;
@@ -301,7 +301,8 @@ parse (const char * str, long len,
 
 /*============================================================================*/
 void
-cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
+cookie_set (LOCATION loc,
+            const char * str, long len, long srvr_date, long tdiff)
 {
 #ifdef DEBUG
 	const char * _dbg_str = str;
@@ -374,8 +375,11 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 		if        (k_len == 7 && strnicmp (key_p, "EXPIRES", 7) == 0) {
 			exp_ptr = val_p;
 			exp_len = v_len;
-			if ((expires = http_date (exp_ptr)) != 0l && (expires < srvr_date)) {
-				ck_remv = TRUE;
+			if ((expires = http_date (exp_ptr)) != 0l) {
+				if (expires < srvr_date) {
+					ck_remv = TRUE;
+				}
+				expires += tdiff;
 			}
 		} else if (k_len == 6 && strnicmp (key_p, "DOMAIN",  6) == 0) {
 			dmn_ptr = val_p;
@@ -667,9 +671,16 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 			match = FALSE;
 		}
 		if (match) {
-			short i;
-			for (i = 0; i < numberof (jar->Cookie) -1 && jar->Cookie[i]; i++) {
-				COOKIE cookie = jar->Cookie[i];
+			COOKIE cookie;
+			long   t = 0;
+			short  i = 0;
+			while ((cookie = jar->Cookie[i]) != NULL) {
+				if (cookie->Expires &&
+				    cookie->Expires <= (!t ? t = time (NULL) : t)) {
+					destroy_cookie (&jar->Cookie[i], numberof (jar->Cookie) - i -1);
+					jar_changed = TRUE;
+					continue;
+				}
 				if (!cookie->PathStr
 				    || strncmp (path, cookie->PathStr, cookie->PathLen) == 0) {
 					
@@ -691,6 +702,7 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 						num++;
 					}
 				}
+				if (++i >= numberof (jar->Cookie)) break;
 			}
 		}
 		jar = jar->Next;
