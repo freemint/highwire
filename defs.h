@@ -12,10 +12,9 @@
 #define _HIGHWIRE_RSC_       "highwire.rsc"
 #define _HIGHWIRE_CFG_       "highwire.cfg"
 
-#define _HW_ALERT(text) "[3][" _HIGHWIRE_FULLNAME_ " " text " ][ Exit ]"
-#define _ERROR_SPEEDO_   _HW_ALERT("needs SpeedoGDOS |or NVDI ò 3!")
-#define _ERROR_NOMEM_    _HW_ALERT("got no GLOBAL memory!")
-#define _ERROR_NORSC_    _HW_ALERT("cannot load |" _HIGHWIRE_RSC_ "!")
+#define _ERROR_SPEEDO_   "needs SpeedoGDOS or NVDI ò 3!"
+#define _ERROR_NOMEM_    "got no GLOBAL memory!"
+#define _ERROR_NORSC_    "cannot load RSC file '"_HIGHWIRE_RSC_"'!"
 
 
 #ifdef _HW_NO_GUI

@@ -696,13 +696,11 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 	int     depth  = 0;
 
 	if (!container) {
-		errprintf ("render_frameset(): NO CONTAINER in '%s'!\n",
-		           frame->Location->File);
-		exit(EXIT_FAILURE);
+		hwUi_fatal ("render_frameset()",
+		            "No container in '%.160s'!", frame->Location->File);
 	} else if (container->Mode) {
-		errprintf ("render_frameset(): container not cleared in '%s'!\n",
-		           frame->Location->File);
-		exit(EXIT_FAILURE);
+		hwUi_fatal ("render_frameset()",
+		            "Container not cleared in '%.160s'!", frame->Location->File);
 	}
 
 	if (flags & PF_START) do {

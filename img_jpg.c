@@ -34,8 +34,7 @@ _jpeg_errjmp (j_common_ptr cinfo)
 {
 	jmp_buf * escape = cinfo->client_data;
 	if (!escape) {
-		puts ("_jpeg_error(): got lost!");
-		exit (1);
+		hwUi_fatal ("image::jpeg_error", "got lost!");
 	} else {
 	/*	puts("ouch...");*/
 		longjmp (*escape, TRUE);

@@ -54,10 +54,11 @@ struct s_img_info {
 	ULONG    Pixel[256];
 };
 
-static void invalid_cnvpal(void) { puts("invalid cnvpal"); exit(1); }
-static void invalid_raster(void) { puts("invalid raster"); exit(1); }
-static void invalid_gscale(void) { puts("invalid gscale"); exit(1); }
-static void invalid_dither(void) { puts("invalid dither"); exit(1); }
+#define IFNC(t) { hwUi_fatal ("image::"t"()", "undefined function called"); }
+static void invalid_cnvpal(void) IFNC ("cnvpal_color")
+static void invalid_raster(void) IFNC ("raster_cmap")
+static void invalid_gscale(void) IFNC ("raster_gray")
+static void invalid_dither(void) IFNC ("raster_true")
 
 static void   cnvpal_mono  (IMGINFO, ULONG);
 static void (*cnvpal_color)(IMGINFO, ULONG)  = (void*)invalid_cnvpal;
@@ -2145,6 +2146,11 @@ init_display (void)
 			raster_gray  = (pervert ? gscale_32r : gscale_32);
 			raster_true  = (pervert ? dither_32r : dither_32);
 			break;
+	} else {
+		hwUi_error ("image::init_display()",
+		            "Unrecognized screen format!\n"
+		            "depth=%i out+0=%i out+4=%04X out+14=%04X mode='%.10s'",
+		            depth, out[0], out[4], out[14], disp_info);
 	}
 	if (!raster_cmap) {                     /* standard format */
 		cnvpal_color = cnvpal_4_8;

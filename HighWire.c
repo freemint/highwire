@@ -81,8 +81,7 @@ main (int argc, char **argv)
 
 	if ((gdostype != GDOS_FSM) && (gdostype != -65536L)
 	    && (memcmp (&gdostype, "fVDI", 4) != 0)) {
-		form_alert(1, _ERROR_SPEEDO_);
-		exit(EXIT_FAILURE);
+		hwUi_fatal (NULL, _ERROR_SPEEDO_);
 	}
 
 	/* Allocate all GLOBAL memory merged to one block.  The reason for using one
@@ -102,8 +101,7 @@ main (int argc, char **argv)
 		gslongname = (char *)Malloc (32 + 16 + 2 * HW_PATH_MAX);
 	}
 	if (!gslongname) {
-		form_alert(1, _ERROR_NOMEM_);
-		exit(EXIT_FAILURE);
+		hwUi_fatal (NULL, _ERROR_NOMEM_);
 	}
 	gsi        = gslongname + 32;
 	gsanswer   = gsi + 16/*sizeof(GS_INFO)*/;
@@ -137,8 +135,7 @@ main (int argc, char **argv)
 
 #ifdef GEM_MENU
 	if (!rsrc_load(_HIGHWIRE_RSC_)) {
-		form_alert(1, _ERROR_NORSC_);
-		exit(EXIT_FAILURE);
+		hwUi_fatal (NULL, _ERROR_NORSC_);
 	}
 	rsrc_gaddr(R_TREE, MENUTREE, &menutree);
 	rsrc_gaddr(R_TREE, ABOUT, &about);
@@ -178,7 +175,7 @@ main (int argc, char **argv)
 		} while (++i < argc);
 	}
 	if (!u && !new_hwWind ("", def_address, NULL)) {
-		exit (EXIT_FAILURE);
+		hwUi_fatal (NULL, "Can't open main window.");
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 
