@@ -1,5 +1,129 @@
 Ok here are the new supports and changes
 
+May 6, 2003
+
+  AltF4's patches
+
+  Paragrph.c:  line 144..146 (add_paragraph):
+    - corrected vertical offset setting between paragraphs.
+
+  list.c:      line 19 + 63:
+  render.c:    line 1406 + 1533 + 1551 + 1603 + 1625 + 1653 + 1680
+               + 1706 + 1725 + 1731 + 2462:
+    - adapted calls to add_paragraph() to have correct offset widths.
+
+  Location.c:
+    - line 633 (dir_entry):  yet another fix for relative links.
+
+May 4, 2003
+
+  AltF4's patches
+
+  en_atari.h:  line 22..133:
+  en_bics.h:   line 85..302:
+  encoding.c:  line 9 + 232 + 298..306 (unicode_to_bics) + 403..417:
+    - overworked encoding of unicode to speedo/system font for better
+      performance.  new function _bin_search() performs a binary tree
+      search and replaces uni_2_bics() and uni_2_atari().
+    
+  Paragrph.c:
+    - line 173 (paragrph_finish):  special handling for trailing spaces
+      of the last paragraph of a content.
+    
+  highwire.prj
+    - line 4:  added stack size setting, as suggested by David.
+
+April 30, 2003
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 629: new function paragraph_filter() for correct filtering
+      empty word items of.
+    - line 651..669 + 673..679 + 681..683 + 686..691 + 696..709
+      + 711..724 + 730..737 (content_minimum):  removed filter stuff
+      that is located in paragraph_filter() now, improved calculation
+      of minimum width of contents.
+    
+  Table.c:
+    - line 546 (table_finish):  adjusted width of empty cells.
+    - line 546 + 582 + 631..645 + 655 + 659:  reset percent value when
+      a column has a fixed width set.
+    - line 775 + 796 + 799 + 807..819 + 824..827 + 833 (table_calc):
+      improved calculation of table cell widths with percent values.
+    
+  Form.c:
+    - line 405 + 409 + 435 + 439 (selct_option):  corrected empty value
+      assignments of selection lists.
+    - line 714 + 723 (input_activate):  not selection an item from the
+      popup mustn't change the value.
+    
+  render.c:
+    - line 2060 + 2063..2072 (render_OPTION_tag):  corrected empty
+      value assignments of selection lists.
+    - line 2317..2371 (parse_plain):  overworked parsing of plain
+      textes to avoid endless loops due to too long lines.
+
+April 22, 2003
+
+  AltF4's patches
+
+  W_Struct.c:
+    - line 148 (new_word):  initialize word->line pointer to NULL.
+    
+  image.c:
+    - line 84..94 (set_word) + 323 (image_calculate):  corrected
+      calculation for images with align=top set, simplified code a bit.
+    
+  Paragrph.c:
+    - line 234 + 243..244 + 269..270 + 295 + 314 + 318..319
+      + 326 (paragraph_calc):  corrected calculation for images with
+      align=top set.
+    
+  Redraws.c:
+    - line 33..120 (frame_draw) + 192..225 (draw_vbar):  removed unused
+      code.
+    - line 708..709 (draw_contents):  corrected calculation of
+      background size.
+    
+  Location.c:
+    - line 88 + 123 + 159 + 177..179 (new_location):  added support for
+      invalid URLs of the form //<server_name>/ (missing http:).
+    - line 621 (dir_entry):  yet another fix for relative URLs to avoid
+      ommitting their base dir.
+
+April 18, 2003
+
+  AltF4's patches
+
+  parser.h, parser.c:
+    - line 268..273 + 295 + 303 (parse_tag):  modified to allow also
+      calls without a parser argument.
+    
+  token.h:
+    - line 62:  new tag OPTGROUP.
+    - line 138:  new key LABEL.
+    
+  Form.h, Form.c:
+    - line 389 + 402..409 + 427:  selct_option() gets a '0' terminated
+      string now rather than an additional length.
+    - line 425 (selct_option):  set the source encoding to atari.
+    
+  render.c:
+    - line 122:  new function enc_to_sys() to encode an 8bit string to
+      an atari coded string.
+    - line 171..232 (render_TITLE_tag)
+      + 2036..2054 (render_OPTION_tag):  replaced code by a call of
+      enc_to_sys().
+    - line 1028 + 1038 (render_A_tag):  added code for better handling
+      of illegally nested anchors/links.
+    - line 2058:  new function render_OPTGROUP_tag().
+    
+  hwWind.c:
+    - line 1423..1432 (hwWind_button):  added history popups to the
+      navigation left/right buttons, will be activated after 0.5 sec of
+      pressing.
+
 April 16, 2003
 
   AltF4's patches
