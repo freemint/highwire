@@ -2296,10 +2296,10 @@ parse_plain (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	while (*symbol != '\0')
-	{
-		switch (*symbol)
-		{
+	while (*symbol != '\0') {
+	
+		switch (*symbol) {
+		
 			case 9: /* HT HORIZONTAL TABULATION */
 				if (current->text < watermark) {
 					size_t pos = (current->text - current->buffer) /2;
@@ -2307,13 +2307,28 @@ parse_plain (void * arg, long invalidated)
 					while (num--) {
 						*(current->text++) = font_Nobrk (current->word->font);
 					}
-				} else if (!linetoolong) {
+					symbol++;
+					break;
+				}
+				goto line_too_long;
+			
+			default:
+				if (current->text < watermark) {
+					if (*symbol <= 32 || *symbol == 127) {
+						*(current->text++) = font_Nobrk (current->word->font);
+						symbol++;
+					} else {
+						current->text = (*encoder)(&symbol, current->text);
+					}
+					break;
+				}
+			line_too_long:
+				if (!linetoolong) {
 					errprintf ("parse_text(): Line too long in '%s'!\n",
 					           frame->Location->File);
 					linetoolong = TRUE;
 				}
-				symbol++;
-				break;
+				goto line_break;
 			
 			case 13: /* CR CARRIAGE RETURN */
 				if (*(symbol +1) == 10)  /* HTTP, TOS, or DOS text file */
@@ -2322,6 +2337,8 @@ parse_plain (void * arg, long invalidated)
 			case 10: /* LF LINE FEED */
 			case 11: /* VT VERTICAL TABULATION */
 			case 12: /* FF FORM FEED */
+				symbol++;
+			line_break:
 				if (current->text > current->buffer) {
 					current->word->line_brk = BRK_LN;
 					new_word (current, TRUE);
@@ -2337,31 +2354,6 @@ parse_plain (void * arg, long invalidated)
 					}
 					current->prev_par->eop_space += linefeed;
 				}
-				symbol++;
-				break;
-			
-			default: {
-				if (*symbol <= 32 || *symbol == 127) {
-					if (current->text < watermark) {
-						*(current->text++) = font_Nobrk (current->word->font);
-					} else if (!linetoolong) {
-						errprintf ("parse_text(): Line too long in '%s'!\n",
-						           frame->Location->File);
-						linetoolong = TRUE;
-					}
-					symbol++;
-				
-				} else {
-					if (current->text < watermark) {
-						current->text = (*encoder)(&symbol, current->text);
-					} else if (!linetoolong) {
-						errprintf ("parse_text(): Line too long in '%s'!\n",
-						           frame->Location->File);
-						linetoolong = TRUE;
-						symbol++;
-					}
-				}
-			}
 		}
 	}
 	
