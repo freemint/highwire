@@ -16,7 +16,7 @@
 #include "schedule.h"
 #include "cache.h"
 
-#if 0
+#if 01
 #include "Loader.h" /* enables remote access of images */
 #endif
 
