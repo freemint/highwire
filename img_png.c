@@ -1,7 +1,15 @@
 #ifdef LIBPNG
 
 #include <setjmp.h>
+#if defined(__PUREC__) && !defined(STDC)
+#	define STDC
+#	define STDC_for_zlib
+#endif
 #include <png.h>
+#if defined(STDC_for_zlib)
+#	undef STDC
+#	undef STDC_for_zlib
+#endif
 
 static BOOL decPng_start (const char * file, IMGINFO info);
 static BOOL decPng_read  (IMGINFO, char * buffer);
@@ -43,7 +51,7 @@ decPng_start (const char * name, IMGINFO info)
 		return TRUE;
 	}
 	png_init_io       (png_ptr, file);
-	png_set_sig_bytes (png_ptr, sizeof(header));
+	png_set_sig_bytes (png_ptr, (int)sizeof(header));
 	png_read_info     (png_ptr, info_ptr);
 	
 	if (info_ptr->bit_depth == 16) {
