@@ -497,6 +497,13 @@ parse_tag (PARSER parser, const char ** pptr)
 		}
 		if (lookup) {
 			unsigned len = (unsigned)(line - val);
+			while (len && isspace (*val)) {
+				val++;
+				len--;
+			}
+			while (len && isspace (val[len -1])) {
+				len--;
+			}
 			if (key == KEY_STYLE) {
 				if (val && len) {
 					parser->hasStyle = TRUE;
