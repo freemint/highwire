@@ -59,6 +59,7 @@
 		__TAG_ITEM (IOD),
 		__TAG_ITEM (KBD),
 		__TAG_ITEM (LI),
+		__TAG_ITEM (LINK),
 		__TAG_ITEM (LISTING),
 		__TAG_ITEM (MENU),
 		__TAG_ITEM (META),
@@ -152,11 +153,13 @@
 		__KEY_ITEM (MARGINHEIGHT), /* BODY,FRAME   -- BODY = NS proprietary */
 		__KEY_ITEM (MARGINWIDTH),  /* BODY,FRAME   -- BODY = NS proprietary */
 		__KEY_ITEM (MAXLENGTH),    /* INPUT */
+		__KEY_ITEM (MEDIA),        /* LINK, STYLE */
 		__KEY_ITEM (METHOD),       /* FORM */
 		__KEY_ITEM (NAME),         /* A,FRAME */
 		__KEY_ITEM (NOWRAP),       /* TD,TH */
 		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
+		__KEY_ITEM (REL),          /* LINK */
 		__KEY_ITEM (ROWS),         /* FRAMESET */
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */
 		__KEY_ITEM (SCROLLING),    /* FRAME */
