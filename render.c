@@ -802,6 +802,7 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		} else if (stricmp (output, "expires") == 0) {
 			if (PROTO_isRemote (parser->Loader->Location->Proto) &&
+			    parser->Loader->Date &&
 			    get_value (parser, KEY_CONTENT, output, sizeof(output))) {
 				long date;
 				if (isdigit (*output)) { /* invalid format but often used */
