@@ -53,6 +53,7 @@ inet.c     (  inet.h)
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)
 Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h)
 fontbase.c (global.h,defs.h,hw-types.h, fontbase.h)
+ovl_sys.c (global.h,defs.h,hw-types.h, fontbase.h)
 ;
 UNGIF.LIB
 PCSTDLIB.LIB
