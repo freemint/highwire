@@ -181,9 +181,18 @@ word_store (TEXTBUFF current)
 		} else {
 			size_t size = (length +1) *2;
 			word->item = malloc (size);
-			memcpy (word->item, current->buffer, size);
-			word->item[length] = 0;
-			
+			if (base->Mapping == MAP_ATARI) {
+				WCHAR * src = current->buffer;
+				WCHAR * dst = word->item;
+				UWORD   len = length;
+				do {
+					*(dst++) = *(src++) & 0x00FF;
+				} while (--len);
+				*dst = 0;
+			} else {
+				memcpy (word->item, current->buffer, size);
+				word->item[length] = 0;
+			}
 	#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
 			vqt_f_extent16 (vdi_handle, word->item, pts);
 	#else
