@@ -158,7 +158,8 @@ PARAGRPH add_paragraph               (TEXTBUFF, short vspace);
 void     paragrph_finish  (TEXTBUFF);
 WORDITEM paragrph_word    (PARAGRPH, long x, long y, long area[4]);
 GRECT    paragraph_extend (WORDITEM);
-void     content_setup     (CONTENT *, TEXTBUFF, short margins, short backgnd);
+void     content_setup     (CONTENT *, TEXTBUFF, DOMBOX * parent,
+                            short margins, short backgnd);
 void     content_destroy   (CONTENT *);
 long     content_minimum   (CONTENT *);
 long     content_maximum   (CONTENT *);
