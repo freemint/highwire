@@ -69,7 +69,7 @@ module_info (MODULINF * p_info)
 static void
 clear_slot (OVL_SLOT * slot)
 {
-printf("clear %p\n", slot->methods);
+/*printf("clear %p\n", slot->methods);*/
 	if (slot->handler) {
 		(*slot->handler)(slot->methods);
 		slot->handler = NULL;
@@ -98,7 +98,7 @@ static void sig_chld (long sig)
 {
 	long  l = Pwaitpid (-1, 0, NULL);
 	(void)sig;
-	printf ("SIGCHLD: %i,%04lX \n", (short)(l >>16), l & 0xFFFF);
+/*	printf ("SIGCHLD: %i,%04lX \n", (short)(l >>16), l & 0xFFFF);*/
 	if (l > 0 && num_slot > 0) {
 		OVL_SLOT * slot = ovl_slot;
 		short      pid  = l >>16;
@@ -155,7 +155,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 			break;
 		} while (++ptr < end);
 	}
-printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
+/*printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);*/
 	
 	if (ovl_methods) {
 		if (ovl_methods->flags >= OF_THREAD) { /* not supported yet */
@@ -238,11 +238,11 @@ kill_ovl (void * this_N_all)
 			if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
 				if (slot->pid > 0) {
 					long r = Pkill (slot->pid,  19/*SIGCONT*/);
-					printf("kill(%i,SIGCONT) = %li\n", slot->pid, r);
+/*					printf("kill(%i,SIGCONT) = %li\n", slot->pid, r);*/
 					
 					r = Pwaitpid (slot->pid, 1, NULL);
-					printf("waitpid(%i) = %i,%04lX \n",
-						    slot->pid, (short)(r >>16), r & 0xFFFF);
+/*					printf("waitpid(%i) = %i,%04lX \n",
+						    slot->pid, (short)(r >>16), r & 0xFFFF);*/
 					if (r != 0) {
 						slot->pid = 0;
 					}
@@ -259,11 +259,11 @@ kill_ovl (void * this_N_all)
 		for (i = 0; i < numberof(ovl_slot); i++) {
 			if (slot->methods && (!this_N_all || this_N_all == slot->methods)) {
 				if (slot->pid > 0) {
-					long r = Pkill (slot->pid,  1/*SIGHUP*/);
-					printf("kill(%i,SIGHUP) = %li\n", slot->pid, r);
+(void)/*			long r =*/ Pkill (slot->pid,  1/*SIGHUP*/);
+/*					printf("kill(%i,SIGHUP) = %li\n", slot->pid, r);*/
 					
-					r = Pwaitpid (slot->pid, 0, NULL);
-					printf("waitpid() = %i,%04lX \n", (short)(r >>16), r & 0xFFFF);
+/*					r =*/ Pwaitpid (slot->pid, 0, NULL);
+/*					printf("waitpid() = %i,%04lX \n", (short)(r >>16), r & 0xFFFF);*/
 				}
 				clear_slot (slot);
 				if (!num_slot) break;
@@ -275,11 +275,11 @@ kill_ovl (void * this_N_all)
 }
 
 
-
 /* ----------------------------------------------------------------- *
  * ovl_infos - just grabbing and displaying the return from the      *
  *             ovl_version() call.                                   *
  * ----------------------------------------------------------------- */
+#if 00
 static int
 display_ovl_infos (OVL_METH * ovl_methods)
 {
@@ -315,3 +315,4 @@ int load_sampleovl(void)
 
   return (1);
 }
+#endif
