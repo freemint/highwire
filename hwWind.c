@@ -1167,7 +1167,7 @@ vTab_drawWork (HwWIND This, const GRECT * clip)
 		
 }
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*----------------------------------------------------------------------------*/
 /* This is the old icon */
 #if 0
 static UWORD oldlogo_data[] = {
@@ -1312,43 +1312,9 @@ MFDB logo_mask = { mask_data, 32,32, 2, 0, 1, 0,0,0 };
 
 MFDB logo_icon;
 
-void
-init_icons(void)
-{
-	WORD TC_trans(MFDB *src);
-
-	switch (planes)
-	{
-		case 1:
-			logo_icon = logo1_icon;
-			break;
-		case 4:
-			logo_icon = logo4_icon;
-			break;
-		case 8:
-			logo_icon = logo8_icon;
-			break;
-		default:	
-			logo_icon = logo8_icon;
-
-			/* convert it to current bit planes */
-			TC_trans((MFDB *)&logo_icon);
-			break;
-	}
-	
-	if (logo_icon.fd_stand) {
-		WORD color[2] = { G_BLACK, G_WHITE };
-		PXY  p[4];
-		vr_trnfm (vdi_handle, &logo_icon, &logo_icon);
-		p[0].p_x = p[0].p_y = p[2].p_x = p[2].p_y = 0;
-		p[1].p_x = p[3].p_x = logo_mask.fd_w -1;
-		p[1].p_y = p[3].p_y = logo_mask.fd_h -1;
-		vrt_cpyfm(vdi_handle, MD_ERASE, (short*)p, &logo_mask, &logo_icon, color);
-	}
-}
-
-WORD 
-TC_trans(MFDB *src)
+/*----------------------------------------------------------------------------*/
+static WORD 
+TC_trans (MFDB *src)
 {
 	WORD i, bit, color, mask;
 	WORD first_plane[32], *plane, *idx, *new_addr;
@@ -1463,8 +1429,41 @@ TC_trans(MFDB *src)
 	return( TRUE );
 }
 
+/*----------------------------------------------------------------------------*/
+void
+init_icons(void)
+{
+	switch (planes)
+	{
+		case 1:
+			logo_icon = logo1_icon;
+			break;
+		case 4:
+			logo_icon = logo4_icon;
+			break;
+		case 8:
+			logo_icon = logo8_icon;
+			break;
+		default:	
+			logo_icon = logo8_icon;
 
-/* - - - - - - - - - - - - - - - - - - - - - - - */
+			/* convert it to current bit planes */
+			TC_trans((MFDB *)&logo_icon);
+			break;
+	}
+	
+	if (logo_icon.fd_stand) {
+		WORD color[2] = { G_BLACK, G_WHITE };
+		PXY  p[4];
+		vr_trnfm (vdi_handle, &logo_icon, &logo_icon);
+		p[0].p_x = p[0].p_y = p[2].p_x = p[2].p_y = 0;
+		p[1].p_x = p[3].p_x = logo_mask.fd_w -1;
+		p[1].p_y = p[3].p_y = logo_mask.fd_h -1;
+		vrt_cpyfm(vdi_handle, MD_ERASE, (short*)p, &logo_mask, &logo_icon, color);
+	}
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static void
 vTab_drawIcon (HwWIND This, const GRECT * clip)
 {
