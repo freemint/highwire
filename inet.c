@@ -88,6 +88,7 @@ static long  __CDECL demand_connect (long addr, long port)
 
 /* endif defined(_USE_OVL_) */
 
+
 #elif defined(USE_MINT) /******************************************************/
 # include <netdb.h>
 # include <sys/socket.h>
@@ -105,37 +106,27 @@ static long  __CDECL demand_connect (long addr, long port)
 # undef max
 # include <transprt.h>
 
-
 static TPL * tpl = NULL;
 
-
 /*----------------------------------------------------------------------------*/
-static DRV_LIST * find_drivers(void)
-{
-	struct {
-		long cktag;
-		long ckvalue;
-	}  * jar = (void*)Setexc (0x5A0 /4, (void (*)())-1);
-	long i   = 0;
-	long tag = 'STiK';
-
-	while (jar[i].cktag) {
-		if (jar[i].cktag == tag) {
-			return (DRV_LIST*)jar[i].ckvalue;
-		}
-		++i;
-	}
-	return NULL;  /* Pointless return value... */
-}
-
-
-/*----------------------------------------------------------------------------*/
-static int init_stick (void)
+static BOOL init_stick (void)
 {
 	if (!tpl) {
-		DRV_LIST * drivers = find_drivers();
-		if (drivers && strcmp (MAGIC, drivers->magic) == 0) {
-			tpl = (TPL*)get_dftab(TRANSPORT_DRIVER);
+		struct {
+			long cktag;
+			long ckvalue;
+		}  * jar = (void*)Setexc (0x5A0 /4, (void (*)())-1);
+		long tag = 'STiK';
+	
+		while (jar->cktag) {
+			if (jar->cktag == tag) {
+				DRV_LIST * drivers = (DRV_LIST*)jar->ckvalue;
+				if (strcmp (MAGIC, drivers->magic) == 0) {
+					tpl = (TPL*)get_dftab(TRANSPORT_DRIVER);
+				}
+				break;
+			}
+			jar++;
 		}
 	}
 	return (tpl != NULL);
