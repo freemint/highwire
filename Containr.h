@@ -27,12 +27,13 @@ typedef struct s_history  * HISTORY;
 /*--- Events propagated by the library to registered handlers ---*/
 
 typedef enum {
-	HW_ActivityBeg,  /* Some unspecified background job started/stoped its    */
-	HW_ActivityEnd,  /* activity (generic event).                             */
-	
+	HW_ActivityBeg,  /* Some unspecified background job started/stopped its    */
+	HW_ActivityEnd,  /* activity (generic event).  If 'gen_ptr' isn't NULL it  *
+	                  * is to be seen as a long value describing the amount of *
+	                  * started/stopped activities.                            */
 	HW_PageCleared,  /* A part of or the pane itsels lost it contents.  Any   *
 	                  * pointer into the tree structure should be invalidated *
-	                  * immediately                                           */
+	                  * immediately.                                          */
 	HW_PageStarted,  /* A part of or the pane itsels starts loading new *
 	                  * content.  'gen_ptr' points to a char* with the  *
 	                  * location of the new contents.                   */
@@ -40,7 +41,7 @@ typedef enum {
 	                  * and parsing.  'gen_ptr' points to the screen extents   *
 	                  * or is NULL if no content exists.                       */
 	HW_PageUpdated,  /* A page changed it's content.  'gen_ptr' points to the  *
-	                  * changed screen area or may be NULL                     */
+	                  * changed screen area or may be NULL.                    */
 	HW_ImgBegLoad,   /* An image starts to be loaded.  'gen_ptr' points to a   *
 	                  * char* of the image location.                           */
 	HW_ImgEndLoad,   /* An image ended loading.  On success 'gen_ptr' points   *
