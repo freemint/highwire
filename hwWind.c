@@ -315,7 +315,7 @@ hwWind_setName (HwWIND This, const char * name)
 static void
 draw_busybar (HwWIND This, const GRECT * area, const GRECT * clip)
 {
-	WORD  width = (This->isBusy - This->loading) *2;
+	WORD  width = (This->isBusy - This->loading) +1;
 	WORD  style;
 	GRECT rect;
 	PXY   p[2];
