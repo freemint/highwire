@@ -1646,18 +1646,20 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		WORD width = get_value_size (parser, KEY_WIDTH);
-		table_start (parser, get_value_color (parser, KEY_BGCOLOR), ALN_NO_FLT,
-		             0, (width ? width : -1024/*100%*/), 0, 0, 0);
-		table_cell (parser, -1, get_h_align (parser, ALN_LEFT), ALN_TOP,
-			         0, 0, 0, 0);
-		
-	} else if (parser->Current.tbl_stack) {
+		if (!current->tbl_stack || current->tbl_stack->WorkCell) {
+			WORD width = get_value_size (parser, KEY_WIDTH);
+			table_start (parser, get_value_color (parser, KEY_BGCOLOR), ALN_NO_FLT,
+			             0, (width ? width : -1024/*100%*/), 0, 0, 0, TRUE);
+			table_cell (parser, -1, get_h_align (parser, ALN_LEFT), ALN_TOP,
+				         0, 0, 0, 0);
+		}
+	} else if (current->tbl_stack && current->tbl_stack->isSpecial) {
 		table_finish (parser);
-		font_switch (parser->Current.word->font, NULL);
+		font_switch (current->word->font, NULL);
 	}
 	return (flags|PF_SPACE);
 }
@@ -1936,11 +1938,17 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_size  (parser, KEY_HEIGHT),
 		             get_value_size  (parser, KEY_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
-		             get_value_unum  (parser, KEY_CELLPADDING, 1), border);
+		             get_value_unum  (parser, KEY_CELLPADDING, 1), border, FALSE);
 	
-	} else if (parser->Current.tbl_stack) {
-		table_finish (parser);
-		font_switch (parser->Current.word->font, NULL);
+	} else {
+		TEXTBUFF current = &parser->Current;
+		while (current->tbl_stack && current->tbl_stack->isSpecial) {
+			table_finish (parser); /* remove all not closed DIV tags */
+		}
+		if (current->tbl_stack) {
+			table_finish (parser);
+			font_switch (current->word->font, NULL);
+		}
 	}
 	return (flags|PF_SPACE);
 }
@@ -1951,17 +1959,21 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	if (parser->Current.tbl_stack) {
+	while (current->tbl_stack && current->tbl_stack->isSpecial) {
+		table_finish (parser); /* remove all not closed DIV tags */
+	}
+	if (current->tbl_stack) {
 		if (flags & PF_START) {
-			table_row (&parser->Current,
+			table_row (current,
 			           get_value_color (parser, KEY_BGCOLOR),
 			           get_h_align     (parser, ALN_LEFT), 
 			           get_v_align     (parser, ALN_MIDDLE),
 			           get_value_size  (parser, KEY_HEIGHT), TRUE);
 		} else {
-			table_row (&parser->Current, -1,0,0,0, FALSE);
+			table_row (current, -1,0,0,0, FALSE);
 		}
 	}
 	return (flags|PF_SPACE);
@@ -1973,18 +1985,22 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	if (flags & PF_START && parser->Current.tbl_stack) {
+	while (current->tbl_stack && current->tbl_stack->isSpecial) {
+		table_finish (parser); /* remove all not closed DIV tags */
+	}
+	if (flags & PF_START && current->tbl_stack) {
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
-			         get_h_align     (parser, parser->Current.tbl_stack->AlignH), 
-			         get_v_align     (parser, parser->Current.tbl_stack->AlignV),
+			         get_h_align     (parser, current->tbl_stack->AlignH),
+			         get_v_align     (parser, current->tbl_stack->AlignV),
 			         get_value_size  (parser, KEY_HEIGHT),
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
-		parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
+		current->nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -1996,19 +2012,23 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	if (flags & PF_START && parser->Current.tbl_stack) {
+	while (current->tbl_stack && current->tbl_stack->isSpecial) {
+		table_finish (parser); /* remove all not closed DIV tags */
+	}
+	if (flags & PF_START && current->tbl_stack) {
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
-			         get_h_align     (parser, ALN_CENTER), 
-			         get_v_align     (parser, parser->Current.tbl_stack->AlignV),
+			         get_h_align     (parser, ALN_CENTER),
+			         get_v_align     (parser, current->tbl_stack->AlignV),
 			         get_value_size  (parser, KEY_HEIGHT),
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
-		parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
-		word_set_bold (&parser->Current, TRUE);
+		current->nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
+		word_set_bold (current, TRUE);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
