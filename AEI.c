@@ -508,9 +508,12 @@ menu_fontsize (char plus_minus)
 
 /*============================================================================*/
 void
-menu_logging (void)
+menu_logging (int mode)
 {
-	logging_is_on = !logging_is_on;
+	if (mode < 0)  mode = !logging_is_on;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	logging_is_on = mode;
 #ifdef GEM_MENU
 	menu_icheck (menutree, M_LOGGING, logging_is_on);
 #endif
@@ -519,9 +522,12 @@ menu_logging (void)
 
 /*============================================================================*/
 void
-menu_alt_text (void)
+menu_alt_text (int mode)
 {
-	alternative_text_is_on = !alternative_text_is_on;
+	if (mode < 0)  mode = !alternative_text_is_on;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	alternative_text_is_on = mode;
 #ifdef GEM_MENU
 	menu_icheck (menutree, M_ALT_TEXT, alternative_text_is_on);
 #endif
@@ -530,9 +536,12 @@ menu_alt_text (void)
 
 /*============================================================================*/
 void
-menu_frm_ctrl (void)
+menu_frm_ctrl (int mode)
 {
-	force_frame_controls = !force_frame_controls;
+	if (mode < 0)  mode = !force_frame_controls;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	force_frame_controls = mode;
 #ifdef GEM_MENU
 	menu_icheck (menutree, M_FRM_CTRL, force_frame_controls);
 #endif
@@ -541,9 +550,12 @@ menu_frm_ctrl (void)
 
 /*============================================================================*/
 void
-menu_cookies (void)
+menu_cookies (int mode)
 {
-	cookies_allowed = !cookies_allowed;
+	if (mode < 0)  mode = !cookies_allowed;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	cookies_allowed = mode;
 #ifdef GEM_MENU
 	menu_icheck (menutree, M_COOKIES, cookies_allowed);
 #endif
@@ -665,10 +677,10 @@ handle_menu (WORD title, WORD item, UWORD state)
 #endif
 		case M_FONT_INC:  menu_fontsize ('+'); break;
 		case M_FONT_DEC:  menu_fontsize ('-'); break;
-		case M_ALT_TEXT:  menu_alt_text();     break;
-		case M_LOGGING:   menu_logging();      break;
-		case M_FRM_CTRL:  menu_frm_ctrl();     break;
-		case M_COOKIES :  menu_cookies();      break;
+		case M_ALT_TEXT:  menu_alt_text(-1);   break;
+		case M_LOGGING:   menu_logging (-1);   break;
+		case M_FRM_CTRL:  menu_frm_ctrl(-1);   break;
+		case M_COOKIES :  menu_cookies (-1);   break;
 	}
 	if (title > 0) {
 		menu_tnormal (menutree, title, UNHIGHLIGHT);

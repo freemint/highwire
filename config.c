@@ -134,10 +134,8 @@ static void
 cfg_func (char * param, long arg)
 {
 	long n = atol (param);
-	if (n) {
-		typedef void (*gen_func)(void);
-		(*(gen_func)arg)();
-	}
+	typedef void (*gen_func)(int);
+	(*(gen_func)arg)(n > 0);
 }
 
 

@@ -83,10 +83,10 @@ key_pressed (WORD key, UWORD state)
 		menu_reload (ENCODING_Unknown);
 		break;
 	case 0x4100:  /* F7: toggle logging */
-		menu_logging();
+		menu_logging (-1);
 		break;
 	case 0x4200:  /* F8: toggle pictures or alternative text */
-		menu_alt_text();
+		menu_alt_text (-1);
 		break;
 	case 0x4700:  /* home */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {

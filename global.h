@@ -78,10 +78,10 @@ void    menu_info     (void);
 #define menu_quit()   exit(EXIT_SUCCESS)
 void    menu_reload   (ENCODING);
 void    menu_fontsize (char plus_minus);
-void    menu_logging  (void);
-void    menu_alt_text (void);
-void    menu_frm_ctrl (void);
-void    menu_cookies  (void);
+void    menu_logging  (int);
+void    menu_alt_text (int);
+void    menu_frm_ctrl (int);
+void    menu_cookies  (int);
 WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
 /* in Widget.c */
