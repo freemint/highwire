@@ -471,15 +471,16 @@ parse_tag (PARSER parser, const char ** pptr)
 
 
 /*============================================================================*/
-#define skip_spc(p) { while (isspace (*p)) p++; }
-#define skip(p,c)   { while (*(++p) == c); }
-#define error_if(e) { if (e) { return p; } }
+static char next (const char ** pp) {
+	const char * p = *pp; while (isspace(*p)) p++; return *(*pp = p);
+}
 /*- - - - - - - - - - - - - - - - - - - - - - - -*/
 const char *
 parse_css (PARSER parser, const char * p)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
 	STYLE  * p_style = &prsdata->Styles;
+	BOOL     err     = FALSE;
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
 		p_style = &(*p_style)->Next;
@@ -488,28 +489,42 @@ parse_css (PARSER parser, const char * p)
 	do {
 		const char * beg = NULL, * end = NULL;
 		STYLE style = NULL;
-		BOOL  ok    = FALSE;
+		BOOL  skip  = FALSE;
 		
 		while (*p) {
 			WORD key = TAG_Unknown;
 			char cid = '\0';
 			
-			skip_spc (p);
-			
-			if (*p == '*') {
-				error_if (*(++p) != '.');
-				key = TAG_LastDefined; /* ok, matches to all html tags */
-			
-			} else if (isalpha (*p)) {
-			/*	const char * tag = p;*/
-				if ((key = scan_tag (&p)) == TAG_Unknown) {
-			/*		printf ("skip unknown tag '%.*s'\n", (int)(p - tag), tag);*/
-				}
+			if (next(&p) == '/') { /*........................ comment */
+				const char * q = p +1;
+				if ((err = (*(q++) != '*')) == TRUE) break;
+				while (((q = strchr (q, '*')) != NULL) && *(++q) != '/');
+				if ((err = (q == NULL)) == TRUE) break;
+				p = q +1;
+				continue;
 			}
 			
-			if (*p == '.' || *p == '#') {
+			if (*p == '@') { /*............................... special */
+				const char * q = p;
+				while (isalpha (*(++q)));
+				while (isspace (*(++q)));
+				q = (*q == '{' ? strchr (q +1, '}') : strchr (q, ';'));
+				if ((err = (q == NULL)) == TRUE) break;
+				p = q +1;
+				continue;
+			}
+			
+			if (*p == '*') { /*................................ joker */
+				if ((err = (*(++p) != '.')) == TRUE) break;
+				key = TAG_LastDefined; /* matches all */
+			
+			} else if (isalpha (*p)) { /*........................ tag */
+				key = scan_tag (&p);
+			}
+			
+			if (*p == '.' || *p == '#') { /*............. class or id */
 				cid = *(p++);
-				error_if (!isalpha (*p));
+				if ((err = (!isalpha (*p))) == TRUE) break;
 				beg = p;
 				while (isalnum (*(++p)) || *p == '-' || *p == '_');
 				end = p;
@@ -519,7 +534,30 @@ parse_css (PARSER parser, const char * p)
 				beg = end = NULL;
 			}
 			
-			if (key > TAG_Unknown || cid) {
+			if (*p == ':') { /*........................ pseudo format */
+				key = TAG_Unknown;
+				while (isalpha (*(++p))); /* ignore */
+			}
+			
+			if (skip) { /* was a conditional rule, ignore */
+				key  = TAG_Unknown;
+				cid  = '\0';
+				skip = FALSE;
+			}
+			
+			if (isalpha (next(&p))) { /* check for conditional */
+				skip = TRUE;
+				continue;
+			} else if (*p == '.' || *p == '#') {
+				skip = TRUE;
+				continue;
+			} else if (*p == '>' || *p == '+' || *p == '*') {
+				p++;
+				skip = TRUE;
+				continue;
+			}
+			
+			if (key > TAG_Unknown || cid) { /* store */
 				size_t len = end - beg;
 				STYLE  tmp = malloc (sizeof (struct s_style) + len);
 				if (len) memcpy (tmp->Ident, beg, len);
@@ -532,15 +570,25 @@ parse_css (PARSER parser, const char * p)
 				style = tmp;
 			}
 			
-			skip_spc (p);
-			if (*p == ',') p++;
-			else           break;
+			if (next(&p) == ',') p++;
+			else                 break;
 		}
 		
-		if (*p == '{') {
+		if (err || *p != '{') {
+			beg = end = NULL;
+			err       = TRUE;
+			
+		} else /* if (*p == '{') */ {
 			while (isspace (*(++p)));
 			beg = p;
 			while (*p && *p != '}') {
+				if (*p == '\'' || *p == '"') {
+					char q = *p;
+					while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
+					if (*p) p++;
+					end = NULL;
+					continue;
+				}
 				if (!isspace (*p)) {
 					end = NULL;
 				} else if (!end) {
@@ -552,12 +600,11 @@ parse_css (PARSER parser, const char * p)
 				end = p;
 			}
 			if (*p) while (isspace (*(++p)));
-			ok = TRUE;
 		}
 		
 		if (style) {
 			style = *p_style;
-			if (ok && end > beg) {
+			if (end > beg) {
 				unsigned len = (unsigned)(end - beg);
 				do {
 					style->Css.Len   = len;
@@ -570,9 +617,10 @@ parse_css (PARSER parser, const char * p)
 			} while ((style = *p_style) != NULL);
 		}
 		
-		if (!ok) break;
+	} while (*p && !err);
 	
-	} while (*p);
-	
+	if (*p && *p != '-' && *p != '<') {
+		printf("parse_css(): stopped at '%.10s'\n", p);
+	}
 	return p;
 }
