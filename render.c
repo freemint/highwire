@@ -2035,14 +2035,21 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	
 	if (flags & PF_START) {
+		BOOL   disabled = get_value     (parser, KEY_DISABLED, NULL,0);
+		char * value    = get_value_str (parser, KEY_VALUE);
 		const char * beg = *text, * end = beg;
 		if ((end = strchr (beg, '<')) == NULL) {
 			end = strchr (beg, '\0');
 		}
-		selct_option (current, beg, end - beg,
-		              get_value (parser, KEY_DISABLED, NULL,0),
-		              parser->Frame->Encoding, get_value_str (parser, KEY_VALUE),
-		              get_value (parser, KEY_SELECTED, NULL,0));
+		if (value && !*value) {
+			free (value);
+			value = NULL;
+		}
+		if (!value && !disabled) {
+			disabled = get_value (parser, KEY_VALUE, NULL,0);
+		}
+		selct_option (current, beg, end - beg, disabled, parser->Frame->Encoding,
+		              value, get_value (parser, KEY_SELECTED, NULL,0));
 		*text = end;
 	}
 	return (flags|PF_SPACE);
