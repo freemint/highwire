@@ -15,7 +15,6 @@ struct hw_window {
 	BOOL    shaded;
 	UWORD   isBusy;
 	UWORD   loading;
-	GRECT   Curr;
 	GRECT   Work;
 	WORD    IbarH;
 	WORD    TbarH;

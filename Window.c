@@ -50,6 +50,9 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		}
 		if (curr) {
 			window_raise (This, TRUE, curr);
+			This->Curr = *curr;
+		} else {
+			This->Curr = desk_area;
 		}
 	}
 	return This;
@@ -215,8 +218,9 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 		}
 	
 	} else if (curr && !This->Next && !This->Prev) {
-		topNbot = TRUE;
-		done    = TRUE;
+		topNbot    = TRUE;
+		done       = TRUE;
+		This->Curr = *curr;
 		wind_open_grect (This->Handle, curr);
 	}
 	

@@ -28,6 +28,8 @@ static void vTab_drawWork  (HwWIND, const GRECT *);
 static void vTab_drawIcon  (HwWIND, const GRECT *);
 static void vTab_raised    (HwWIND, BOOL topNbot);
 
+#define Curr   Base.Curr
+
 
 #define HISTORY_LAST 20
 

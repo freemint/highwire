@@ -13,6 +13,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	WINDOW Prev, Next; /* still private, keep away */
 	BOOL   isModal;
 	BOOL   isIcon;
+	GRECT  Curr;       /* outer extents of the window */
 	/***/
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
 	void (*evButton) (WINDOW_t, WORD bmask, PXY, UWORD kstate, WORD clicks);
