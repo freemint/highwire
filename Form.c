@@ -980,8 +980,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 	if (word) {
 		if (scrl > 0) {
 			form->TextCursrX += scrl;
-			if (form->TextShiftX < form->TextCursrX - input->VisibleX) {
-				form->TextShiftX = form->TextCursrX - input->VisibleX;
+			if (form->TextShiftX < form->TextCursrX - (WORD)input->VisibleX) {
+				form->TextShiftX = form->TextCursrX - (WORD)input->VisibleX;
 			}
 		} else if (scrl) {
 			form->TextCursrX += scrl;
