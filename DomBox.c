@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h> /* debug */
 
+#include "token.h" /* must be included before gem/gemx.h */
 #include <gem.h>
 
 #include "global.h"
@@ -345,6 +346,51 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 }
 
 
+/*============================================================================*/
+void
+dombox_reorder (DOMBOX * This, DOMBOX * behind)
+{
+	DOMBOX * parent = This->Parent;
+	
+	if (behind) {
+		if (parent != behind->Parent) {
+			puts ("dombox_reorder(): parents differ!");
+			return;
+		}
+		if (This == behind->Sibling) {
+			return; /* nothing to do, already at the right position */
+		}
+	}
+	
+	if (This == parent->ChildBeg) {
+		if (!behind) return; /* nothing to do, already at the begin */
+		parent->ChildBeg = This->Sibling;
+	
+	} else {
+		DOMBOX * before = parent->ChildBeg;
+		while (before->Sibling != This) {
+			if ((before = before->Sibling) == NULL) {
+				puts ("dombox_reorder(): not in chain!");
+				return;
+			}
+		}
+		if ((before->Sibling = This->Sibling) == NULL) {
+			parent->ChildEnd = before;
+		}
+	}
+	if (!behind) {
+		This->Sibling    = parent->ChildBeg;
+		parent->ChildBeg = This;
+	
+	} else {
+		if ((This->Sibling = behind->Sibling) == NULL) {
+			parent->ChildEnd = This;
+		}
+		behind->Sibling = This;
+	}
+}
+
+
 /*----------------------------------------------------------------------------*/
 static void
 vTab_format (DOMBOX * This, long width, BLOCKER blocker)
@@ -357,6 +403,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	
 	while (box) {
 		long blk_width = width - blocker->L.width - blocker->R.width;
+		long set_width;
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
 
@@ -369,25 +416,49 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			blk_width = width;
 		}
 		
-		box->_vtab->format (box, width, blocker);
+		if (!box->SetWidth || box->SetWidth <= -1024) {
+			set_width = blk_width;
+		} else if (box->SetWidth > 0) {
+			set_width = box->SetWidth;
+		} else {
+			set_width = (-box->SetWidth * blk_width +512) /1024;
+			if (set_width < box->MinWidth) {
+				set_width = box->MinWidth;
+			}
+		}
+		if (box->HtmlCode == TAG_HR) {
+			box->Rect.X += blocker->L.width;
+			box->_vtab->format (box, set_width, blocker);
+		} else {
+			box->_vtab->format (box, width, blocker);
+		}
 		
 		switch (box->Floating) {
-			case ALN_LEFT: {
-				long new_bottom = height + box->Rect.H;
-				if (blocker->L.bottom < new_bottom)
-					 blocker->L.bottom = new_bottom;
-				blocker->L.width += box->Rect.W;
-			}	break;
-			case ALN_RIGHT: {
-				long new_bottom = height + box->Rect.H;
-				if (blocker->R.bottom < new_bottom)
-					 blocker->R.bottom = new_bottom;
+			case ALN_LEFT:
+				if (box->HtmlCode == TAG_HR) {
+					goto case_ALN_NO_FLT;
+				} else {
+					long new_bottom = height + box->Rect.H;
+					if (blocker->L.bottom < new_bottom)
+						 blocker->L.bottom = new_bottom;
+					blocker->L.width += box->Rect.W;
+					break;
+				}
+			case ALN_RIGHT:
 				box->Rect.X += blk_width - box->Rect.W; 
-				blocker->R.width += box->Rect.W;
-			}	break;
+				if (box->HtmlCode == TAG_HR) {
+					goto case_ALN_NO_FLT;
+				} else {
+					long new_bottom = height + box->Rect.H;
+					if (blocker->R.bottom < new_bottom)
+						 blocker->R.bottom = new_bottom;
+					blocker->R.width += box->Rect.W;
+					break;
+				}
 			case ALN_CENTER:
 				box->Rect.X += (blk_width - box->Rect.W) /2;
 			case ALN_NO_FLT:
+			case_ALN_NO_FLT:
 				height += box->Rect.H;
 				if (blocker->L.bottom && blocker->L.bottom < height) {
 					blocker->L.bottom = blocker->L.width = 0;
@@ -402,12 +473,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 
 	height += dombox_BotDist (This);
 	
-	if (height < blocker->L.bottom) {
+/*	if (height < blocker->L.bottom) {
 		 height = blocker->L.bottom;
 	}
 	if (height < blocker->R.bottom) {
 		 height = blocker->R.bottom;
 	}
+*/
 	This->Rect.H = height;
 }
 
