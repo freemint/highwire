@@ -863,9 +863,7 @@ saveas_job (void * arg, long invalidated)
 	long fsize, bsize, rsize, csize = 0, nsize, ssize;
 	char *buffer;
 	char *p;
-	WORD   mx, my, u;
-	HwWIND   wind; 
-	GRECT    watch;
+	HwWIND wind = hwWind_byContainr (loader->Target);
 				
 	if (!invalidated && !loader->Error) {
 		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -971,10 +969,9 @@ saveas_bottom:
 	delete_loader (&loader);
 
 	/* We should close the window here	 */
-	graf_mkstate (&mx, &my, &u,&u);
-	wind = hwWind_mouse  (mx, my, &watch);
-
-	hwWind_close (wind, 0);
+	if (wind) {
+		hwWind_close (wind, 0);
+	}
 
 	return JOB_DONE;
 }
