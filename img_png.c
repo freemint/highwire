@@ -13,6 +13,7 @@
 
 static BOOL decPng_start (const char * file, IMGINFO info);
 static BOOL decPng_read  (IMGINFO, char * buffer);
+static BOOL decPng_readi (IMGINFO, char * buffer);
 static void decPng_quit  (IMGINFO);
 
 static DECODER _decoder_png = {
@@ -87,6 +88,41 @@ decPng_start (const char * name, IMGINFO info)
 	info->Transp     = -1;
 	info->Interlace  = 0;
 	
+	if (info_ptr->interlace_type == PNG_INTERLACE_ADAM7) {
+		png_bytep * row_pointers = malloc (info_ptr->height * sizeof(png_bytep));
+		int         num_pass     = png_set_interlace_handling (png_ptr);
+		png_read_update_info (png_ptr, info_ptr);
+		if (row_pointers) {
+			size_t size = info_ptr->width * png_get_rowbytes (png_ptr, info_ptr);
+			int    row;
+			for (row = 0; row < info_ptr->height; row++) {
+				if ((row_pointers[row] = malloc (size)) == NULL) {
+					num_pass = row; /* store for error message */
+					while (row) free (row_pointers[--row]);
+					free (row_pointers);
+					row_pointers = NULL;
+				}
+			}
+		}
+		if (row_pointers) {
+			while (--num_pass) {
+				int n = (int)png_ptr->num_rows;
+				int y;
+				for (y = 0; y < info_ptr->height; y += n) {
+					png_read_rows (png_ptr, NULL, &row_pointers[y], n);
+				}
+			}
+			png_set_rows (png_ptr, info_ptr, row_pointers);
+			info->read = decPng_readi;
+		
+		} else {
+			printf ("decPng_start(): low memory (%i).\n", num_pass);
+			png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+			fclose (file);
+			info->_priv_data = NULL;
+		}
+	}
+	
 	return TRUE;
 }
 	
@@ -101,6 +137,22 @@ decPng_read (IMGINFO info, char * buffer)
 	png_read_row (png_ptr, buffer, NULL);
 	return TRUE;
 }
+	
+/*----------------------------------------------------------------------------*/
+static BOOL
+decPng_readi (IMGINFO info, char * buffer)
+{
+	png_structp png_ptr  = info->_priv_data;
+	png_infop   info_ptr = info->_priv_more;
+	png_bytep * row_ptr  = png_get_rows (png_ptr, info_ptr);
+	int         n        = (int)png_ptr->row_number;
+	if (setjmp (png_jmpbuf (png_ptr))) {
+		return FALSE;
+	}
+	png_read_rows (png_ptr, &row_ptr[n], NULL, 1);
+	memcpy (buffer, row_ptr[n], info_ptr->width * info->NumComps);
+	return TRUE;
+}
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -109,6 +161,12 @@ decPng_quit  (IMGINFO info)
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
 	if (png_ptr) {
+		png_bytep * row_pointers = png_get_rows (png_ptr, info_ptr);
+		if (row_pointers) {
+			int row = (int)info_ptr->height;
+			while (row) free (row_pointers[--row]);
+			free (row_pointers);
+		}
 		if (!setjmp (png_jmpbuf (png_ptr))) {
 			png_read_end         (png_ptr,  info_ptr);
 		}
