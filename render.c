@@ -2035,11 +2035,18 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		if (!current->tbl_stack || current->tbl_stack->WorkCell) {
-			WORD width = get_value_size (parser, KEY_WIDTH);
-			table_start (parser, get_value_color (parser, KEY_BGCOLOR), ALN_NO_FLT,
-			             0, (width ? width : -1024/*100%*/), 0, 0, 0, TRUE);
-			table_cell (parser, -1, get_h_align (parser, ALN_LEFT), ALN_TOP,
-				         0, 0, 0, 0);
+			char out[10];
+			WORD    width  = get_value_size  (parser, KEY_WIDTH);
+			WORD    color  = get_value_color (parser, KEY_BGCOLOR);
+			WORD    border = get_value_unum  (parser, KEY_BORDER, 0);
+			H_ALIGN align  = get_h_align     (parser, ALN_LEFT);
+			H_ALIGN fltng  = (!get_value (parser, CSS_FLOAT, out, sizeof(out))
+			                  ? ALN_NO_FLT :
+			                  !stricmp (out, "left")  ? ALN_LEFT  :
+			                  !stricmp (out, "right") ? ALN_RIGHT : ALN_NO_FLT);
+			table_start (parser, color, fltng,
+			             0, (width ? width : -1024/*100%*/), 0, 0, border, TRUE);
+			table_cell (parser, -1, align, ALN_TOP, 0, 0, 0, 0);
 		}
 	} else if (current->tbl_stack && current->tbl_stack->isSpecial) {
 		table_finish (parser);
