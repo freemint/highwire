@@ -9,16 +9,19 @@
 
 #if defined (__PUREC__)
 # include <tos.h>
+# define pexec(m,f,a,b)   Pexec (m, (char*)f, a, b)
 
 #elif defined (LATTICE)
 # include <dos.h>
 # include <mintbind.h>
 # define BASPAG BASEPAGE
+# define pexec(m,f,a,b)   Pexec (m, f, (const char*)a, (const char*)b)
 
 #elif defined (__GNUC__)
 # include <mintbind.h>
 # include <mint/basepage.h>
 # define BASPAG BASEPAGE
+# define pexec(m,f,a,b)   Pexec (m, f, a, b)
 #endif
 
 #include "defs.h"
@@ -131,7 +134,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 	}
 	
 	strcat (strcpy (file_path, "modules\\"), ovl_name);
-	ovl_basepage = (BASPAG *)Pexec(3,file_path,NULL,NULL);
+	ovl_basepage = (BASPAG *)pexec(3,file_path,NULL,NULL);
 	if ((long)ovl_basepage <= 0L) {
 		printf ("Pexec('%s') failed: %li\n", file_path, (long)ovl_basepage);
 		return NULL;
@@ -178,7 +181,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 		
 		} else {
 			if (ovl_methods->flags == OF_CHLDPRC) {
-				pid = Pexec (104, ovl_name, ovl_basepage, NULL);
+				pid = pexec (104, ovl_name, ovl_basepage, NULL);
 				if (pid > 0) {
 					Psignal (20/*SIGCHLD*/, (long)sig_chld);
 				} else if (pid == -EINVFN) {
@@ -188,7 +191,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 				}
 			}
 			if (!pid) { /* OF_STARTUP or 104 not available */
-				if (Pexec (4, NULL, ovl_basepage, NULL) < 0) {
+				if (pexec (4, NULL, ovl_basepage, NULL) < 0) {
 					ovl_methods = NULL;
 				}
 			}
