@@ -1,4 +1,4 @@
-(non-public changes of Dec. 06, 2004)
+(non-public changes of Dec. 11, 2004)
 
 - New config keyword START_PAGE to define what
   should be displayed after program start.
@@ -8,6 +8,11 @@
 - When the option 'Cookies allowed' in the menu
   get changed this will be stored in the config
   file.
+
+- The menu bar got changed:  'Suppress Images' was
+  removed (still useable from config file) and
+  instead 'View Images' and 'Use CSS' were added.
+  Both of the latter are stored in the cfg file.
 
 - High/TrueColor (24/32bit) screen modes for Hades
   graphic card drivers added.  Now images will
