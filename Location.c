@@ -191,6 +191,13 @@ new_location (const char * p_src, LOCATION base)
 				loc_proto = PROT_FTP;
 				loc_port  = 21; /* ftp */
 			}
+		/*** ugly hack to get yahoo's buggy standard login working */
+			else if (loc_proto == PROT_HTTPS
+			         && strncmp (loc_host->Name, "login.yahoo.", 12) == 0) {
+				loc_proto = PROT_HTTP;
+				loc_port  = 80;
+			}
+		/*** end of ugly hack */
 			if (local_web && !host_addr (loc_host)) {
 				s = src;
 			}
