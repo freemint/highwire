@@ -1626,6 +1626,30 @@ hwWind_button (WORD mx, WORD my)
 		TBAREDIT * edit = TbarEdit (wind);
 		WORD x = wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset;
 		WORD c = edit->Cursor;
+		if (wind->Input) {
+			WORDITEM word = input_activate (wind->Input, -1);
+			if (word) {
+				GRECT    clip;
+				FRAME    frame;
+				DOMBOX * box = &word->line->Paragraph->Box;
+				long     lx  = box->Rect.X;
+				long     ly  = box->Rect.Y;
+				while (box->Parent) {
+					box = box->Parent;
+					lx += box->Rect.X;
+					ly += box->Rect.Y;
+				}
+				frame = (FRAME)box;
+				clip.g_x = lx + frame->clip.g_x - frame->h_bar.scroll
+				              + word->h_offset;
+				clip.g_y = ly + frame->clip.g_y - frame->v_bar.scroll
+				              + word->line->OffsetY - word->word_height;
+				clip.g_w = word->word_width;
+				clip.g_h = word->word_height + word->word_tail_drop;
+				hwWind_redraw (wind, &clip);
+			}
+			wind->Input = NULL;
+		}
 		edit->Cursor = (mx - x) /8 + edit->Shift;
 		if (edit->Cursor > edit->Length) {
 			edit->Cursor = edit->Length;
