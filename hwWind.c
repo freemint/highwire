@@ -561,7 +561,7 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 		}
 	}
 	
-	if (info) {
+	if (info && !(This->Base.isScrn && This->Base.isFull)) {
 		if (wind_kind & INFO) {
 			wind_set_str (This->Base.Handle, WF_INFO, info);
 		}
@@ -579,15 +579,14 @@ static void
 vTab_raised (HwWIND This, BOOL topNbot)
 {
 	HwWIND new_top = hwWind_Top;
+	WORD mx, my, u;
 	
-	if (topNbot) {
-		WORD mx, my, u;
-		if (wind_kind & (LFARROW|HSLIDE)) {
-			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
-		}
-		graf_mkstate (&mx, &my, &u,&u);
-		check_mouse_position (mx, my);
+	if (topNbot && !This->Base.isScrn && (wind_kind & (LFARROW|HSLIDE))) {
+		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 	}
+	graf_mkstate (&mx, &my, &u,&u);
+	check_mouse_position (mx, my);
+	
 #ifdef GEM_MENU
 	if (new_top) {
 		menu_history (new_top->History, new_top->HistUsed, new_top->HistMenu);
@@ -610,7 +609,24 @@ vTab_sized (HwWIND This)
 	TBAREDIT * edit = TbarEdit (This);
 	GRECT work;
 	
-	if (!This->Base.isFull) {
+	if (This->Base.isScrn) {
+		if (This->Base.isFull) {
+			This->IbarH = 0;
+		
+		} else {
+			char * info = (This->Info[0] ? This->Info : This->Stat);
+			if (wind_kind & INFO) {
+				wind_set_str (This->Base.Handle, WF_INFO, info);
+			}
+			if (wind_kind & (LFARROW|HSLIDE)) {
+				hwWind_setHSInfo(This, info);
+			} else {
+				This->IbarH = widget_h - widget_b -1;
+			}
+			wind_set_str (This->Base.Handle, WF_NAME, This->Name);
+		}
+		
+	} else if (!This->Base.isFull) {
 		curr_area.g_w = This->Curr.g_w;
 		curr_area.g_h = This->Curr.g_h;
 	}

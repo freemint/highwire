@@ -39,6 +39,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->isModal = modal;
 		This->isIcon  = FALSE;
 		This->isFull  = FALSE;
+		This->isScrn  = FALSE;
 		This->Next = This->Prev = NULL;
 		
 		This->evMessage = vTab_evMessage;
@@ -192,23 +193,69 @@ window_evButton (WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 static void
 vTab_evKeybrd (WINDOW This, WORD scan, WORD ascii, UWORD kstate)
 {
-	window_raise (This, TRUE, NULL);
+	(void)This;
 	(void)scan;
 	(void)ascii;
 	(void)kstate;
 	printf ("window::evKeybrd (0x%02X,0x%02X,0x%04X)\n", scan, ascii, kstate);
 }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+#include <stdio.h>
 void
 window_evKeybrd (UWORD key, UWORD kstate)
 {
-	WORD scan  = key >> 8;
-	WORD ascii = key & 0xFF;
+	WORD   scan  = key >> 8;
+	WORD   ascii = key & 0xFF;
+	WINDOW wind  = window_Top;
 	
-	switch (ascii) {
+	if (wind && !kstate && scan == 0x44) { /* F10: extreme full screen mode */
+	
+		if (wind->isScrn) {
+			WORD  hdl = wind->Handle;
+			if ((wind->Handle = wind_create_grect(wind->Widgets,&desk_area)) < 0) {
+				wind->Handle = hdl;
+				return;
+			}
+			wind_get_grect (hdl, WF_PREVXYWH, &wind->Curr);
+			wind->Curr.g_x -= desk_area.g_w;
+			wind->Curr.g_y -= desk_area.g_h;
+			wind_set_grect (wind->Handle, WF_CURRXYWH, &wind->Curr);
+			wind->isFull = FALSE;
+			(*wind->sized)(wind);
+			wind->isScrn = FALSE;
+			wind_open_grect (wind->Handle, &wind->Curr);
+			wind_close  (hdl);
+			wind_delete (hdl);
+			
+		} else if (!wind->isIcon) {
+			GRECT curr, prev;
+			WORD  hdl = wind->Handle;
+			wind_calc_grect (WC_BORDER, 0, &desk_area, &curr);
+			if ((wind->Handle = wind_create_grect (0, &curr)) < 0) {
+				wind->Handle = hdl;
+				return;
+			}
+			if (wind->isFull) {
+				wind_get_grect (hdl, WF_PREVXYWH, &prev);
+			} else {
+				prev         = wind->Curr;
+				wind->isFull = TRUE;
+			}
+			wind->Curr   = curr;
+			wind->isScrn = TRUE;
+			(*wind->sized)(wind);
+			prev.g_x += desk_area.g_w;
+			prev.g_y += desk_area.g_h;
+			wind_open_grect (wind->Handle, &prev);
+			wind_set_grect (wind->Handle, WF_CURRXYWH, &curr);
+			wind_close  (hdl);
+			wind_delete (hdl);
+		}
+		
+	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ window_raise (NULL, TRUE, NULL); break;
 		case 0x0011: /* CTRL+Q */ exit (0);
-		default:     (*window_Top->evKeybrd)(window_Top, scan, ascii, kstate);
+		default:     if (wind) (*wind->evKeybrd)(wind, scan, ascii, kstate);
 	}
 }
 

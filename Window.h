@@ -14,6 +14,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	BOOL   isModal;
 	BOOL   isIcon;
 	BOOL   isFull;
+	BOOL   isScrn;     /* special full screen mode as from F11 in Mozilla/IE */
 	GRECT  Curr;       /* outer extents of the window */
 	/***/
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
