@@ -795,28 +795,54 @@ hwWind_history (HwWIND This, UWORD menu)
 {
 	if (menu < This->HistUsed) {
 		HISTENTR entr[100];
-		UWORD    num, i;
+		UWORD    num;
 		
 		history_update (This->Pane, This->History[This->HistMenu]);
 		
 		num = containr_process (This->Pane, This->History[menu],
 		                        This->History[This->HistMenu],
 		                        entr, numberof(entr));
-		
-		This->History[menu]->Text[0] = '*';
-		if (This->HistMenu != menu) {
+		if (!num) {
+			static BOOL chng_toolbar (HwWIND, UWORD, UWORD, WORD);
+			UWORD bttn_on  = TBAR_REDO_MASK;
+			UWORD bttn_off = 0;
+			if (This->HistMenu != menu) {
 #ifdef GEM_MENU
-			if (This == hwWind_Top) {
-				menu_history (This->History, This->HistUsed, -1);
-			}
+				if (This == hwWind_Top) {
+					menu_history (This->History, This->HistUsed, menu);
+				}
 #endif
-			This->HistMenu = menu;
-		}
-		for (i = 0; i < num; i++) {
-			LOADER ldr = new_loader_job (NULL, entr[i].Location, entr[i].Target);
-			loader_setParams (ldr, entr[i].Encoding, -1, -1);
-			ldr->ScrollV = entr[i].ScrollV;
-			ldr->ScrollH = entr[i].ScrollH;
+				This->HistMenu = menu;
+				if (This->HistMenu > 0) {
+					bttn_on  |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
+				} else {
+					bttn_off |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
+				}
+				if (This->HistMenu < This->HistUsed -1) {
+					bttn_on  |= TBAR_RGHT_MASK;
+				} else {
+					bttn_off |= TBAR_RGHT_MASK;
+				}
+			}
+			chng_toolbar (This, bttn_on, bttn_off, -1);
+		
+		} else {
+			UWORD i = 0;
+			This->History[menu]->Text[0] = '*';
+			if (This->HistMenu != menu) {
+#ifdef GEM_MENU
+				if (This == hwWind_Top) {
+					menu_history (This->History, This->HistUsed, -1);
+				}
+#endif
+				This->HistMenu = menu;
+			}
+			do {
+				LOADER ldr = new_loader_job (NULL, entr[i].Location, entr[i].Target);
+				loader_setParams (ldr, entr[i].Encoding, -1, -1);
+				ldr->ScrollV = entr[i].ScrollV;
+				ldr->ScrollH = entr[i].ScrollH;
+			} while (++i < num);
 		}
 	}
 }
@@ -908,7 +934,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					} else {
 						vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 					}
-		if (i != TBAR_STOP) {
+/*		if (i != TBAR_STOP) {*/
 					l[0].p_x = p[2].p_x -1;
 					l[2].p_y = p[2].p_y -1;
 					if (i == This->TbarActv) {
@@ -942,7 +968,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					l[3].p_y = l[0].p_y += 1;
 					vsl_color (vdi_handle, G_BLACK);
 					v_pline (vdi_handle, 4, (short*)l);
-		}
+/*		}*/
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 				}
@@ -1208,28 +1234,29 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageStarted:
-			if (!wind->loading++ && wind->HistUsed) {
-				char * flag = wind->History[wind->HistMenu]->Text;
-				if (*flag == ' ') {
-					if (cont->Parent) {
-						*flag = '.';
+			if (!wind->loading++) {
+				if (wind->HistUsed) {
+					char * flag = wind->History[wind->HistMenu]->Text;
+					if (*flag == ' ') {
+						if (cont->Parent) {
+							*flag = '.';
+						}
+						if (((CONTAINR)wind->Pane)->Mode) {
+							history_update (wind->Pane, wind->History[wind->HistMenu]);
+						}
 					}
-					if (((CONTAINR)wind->Pane)->Mode) {
-						history_update (wind->Pane, wind->History[wind->HistMenu]);
-					}
-				}
-			}
-			if (!wind->isBusy++) {
-				if (wind->isIcon) {
-					hwWind_redraw (wind, NULL); /* update icon */
-				} else {
-					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
 				if (!cont->Parent && wind->TbarH) {
 					updt_toolbar (wind, gen_ptr);
 				}
-				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
+			if (!cont->Parent) {
+				hwWind_setName (wind, gen_ptr);
+			} else {
+				hwWind_setInfo (wind, gen_ptr, TRUE);
+			}
+			goto case_HW_ActivityBeg;
+		
 		case HW_SetTitle:
 			if (!cont->Parent) {
 				hwWind_setName (wind, gen_ptr);
@@ -1239,19 +1266,8 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			hwWind_setInfo (wind, gen_ptr, TRUE);
 			break;
 		
-		case HW_ImgBegLoad:
-			if (!wind->isBusy++) {
-				if (wind->isIcon) {
-					hwWind_redraw (wind, NULL); /* update icon */
-				} else {
-					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
-				}
-				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
-			}
-			hwWind_setInfo (wind, gen_ptr, TRUE);
-			break;
-		
-		case HW_PageFinished:
+		case HW_PageFinished: {
+			WORD bttn_on = TBAR_REDO_MASK;
 			if (wind->loading && !--wind->loading) {
 				char flag = (!wind->HistUsed
 				             ? ' ' : wind->History[wind->HistMenu]->Text[0]);
@@ -1267,6 +1283,16 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				}
 				wind->Info[0] = '\0';
 			}
+			if (wind->HistUsed > 1) {
+				if (wind->HistMenu > 0) {
+					bttn_on |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
+				}
+				if (wind->HistMenu < wind->HistUsed -1) {
+					bttn_on |= TBAR_RGHT_MASK;
+				}
+			}
+			chng_toolbar  (wind, bttn_on, 0, -1);
+			hwWind_redraw (wind, gen_ptr);
 			if (gen_ptr) {
 				FRAME active = hwWind_setActive (wind, cont);
 #if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
@@ -1274,44 +1300,46 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				             (active->MimeType == MIME_TXT_PLAIN));
 #endif
 			}
+		}
+		goto case_HW_ActivityEnd;
+			
+		case HW_ImgBegLoad:
+			hwWind_setInfo (wind, gen_ptr, TRUE);
+			goto case_HW_ActivityBeg;
+		
 		case HW_ImgEndLoad:
-			hwWind_setInfo (wind, "", TRUE);
-			if (wind->isBusy) {
-				wind->isBusy--;
+			if (!wind->isIcon && gen_ptr) {
+				hwWind_redraw  (wind, gen_ptr);
 			}
-			if (wind->isIcon) {
-				if (!wind->isBusy) {
-					hwWind_redraw  (wind, NULL); /* update icon */
+			goto case_HW_ActivityEnd;
+		
+		case HW_ActivityBeg:
+		case_HW_ActivityBeg:
+			if (!wind->isBusy++) {
+				if (wind->isIcon) {
+					hwWind_redraw (wind, NULL); /* update icon */
+				} else {
+					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
-			} else {
-				if (gen_ptr) {
-					hwWind_redraw  (wind, gen_ptr);
-				}
-				if (!wind->isBusy) {
+				chng_toolbar (wind, TBAR_STOP_MASK, ~TBAR_STOP_MASK, -1);
+			}
+			break;
+		
+		case HW_ActivityEnd:
+		case_HW_ActivityEnd:
+			if (!wind->isBusy || !--wind->isBusy) {
+				hwWind_setInfo (wind, "", TRUE);
+				if (wind->isIcon) {
+					hwWind_redraw (wind, NULL); /* update icon */
+				} else {
 					short mx, my, u;
-					if (wind->HistUsed > 1) {
-						WORD on  = TBAR_REDO_MASK;
-						WORD off = TBAR_STOP_MASK;
-						if (wind->HistMenu > 0) {
-							on  |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
-						} else {
-							off |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
-						}
-						if (wind->HistMenu < wind->HistUsed -1) {
-							on  |= TBAR_RGHT_MASK;
-						} else {
-							off |= TBAR_RGHT_MASK;
-						}
-						chng_toolbar (wind, on, off, -1);
-					} else {
-						chng_toolbar (wind, TBAR_REDO_MASK, ~TBAR_REDO_MASK, -1);
-					}
 					graf_mkstate (&mx, &my, &u,&u);
 					check_mouse_position (mx, my);
 				}
+				chng_toolbar (wind, TBAR_REDO_MASK, TBAR_STOP_MASK, -1);
 			}
 			break;
-			
+		
 		default:
 			errprintf ("wind_handler (%i, %p)\n", event, cont);
 	}
@@ -1484,10 +1512,11 @@ hwWind_button (WORD mx, WORD my)
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
 		if (m_in.emi_m1leave) switch (tb_n) {
-			case TBAR_LEFT: hwWind_undo    (wind, FALSE); break;
-			case TBAR_RGHT: hwWind_undo    (wind, TRUE);  break;
+			case TBAR_LEFT: hwWind_undo     (wind, FALSE); break;
+			case TBAR_RGHT: hwWind_undo     (wind, TRUE);  break;
 			case TBAR_HOME: hist = 0;
-			case TBAR_REDO: hwWind_history (wind, hist);  break;
+			case TBAR_REDO: hwWind_history  (wind, hist);  break;
+			case TBAR_STOP: containr_escape (wind->Pane);  break;
 			default:        chng_toolbar (wind, 0, 0, -1);
 		}
 		wind = NULL;
@@ -1608,7 +1637,7 @@ hwWind_keybrd (WORD key, UWORD state)
 		return wind;
 	
 	} else if (wind->TbarActv != TBAR_EDIT) {
-		if ((key & 0xFF) == 27) {
+		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)) {
 			TBAREDIT * edit = TbarEdit (wind);
 			edit->Cursor = 0;
 			edit->Shift  = 0;
