@@ -1260,13 +1260,12 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 			}
 			
-			/*________________________HW_proprietary___
 			if (!ignore_colours) {
 				WORD color = get_value_color (parser, KEY_COLOR);
 				if (color >= 0) {
 					fontstack_setColor (current, color);
 				}
-			}*/
+			}
 		}
 	
 	} else {
