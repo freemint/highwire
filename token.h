@@ -117,7 +117,7 @@
 		__KEY_ITEM (ALIGN),        /* DIV,H#,HR,P,IMG,TABLE,TD,TH,TR */
 		__KEY_ITEM (ALT),          /* IMG */
 		__KEY_ITEM (BGCOLOR),      /* BODY,TABLE,TD,TH,TR */
-		__KEY_ITEM (BORDER),       /* TABLE, FRAMESET */
+		__KEY_ITEM (BORDER),       /* TABLE, FRAMESET   -- FRAMESET = NS propr. */
 		__KEY_ITEM (BORDERCOLOR),  /* FRAMESET */
 		__KEY_ITEM (CELLPADDING),  /* TABLE */
 		__KEY_ITEM (CELLSPACING),  /* TABLE */
@@ -129,7 +129,8 @@
 		__KEY_ITEM (COLSPAN),      /* TD,TH */
 		__KEY_ITEM (CONTENT),      /* META */
 		__KEY_ITEM (DISABLED),     /* INPUT */
-		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET */
+		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET   -- IE proprietary */
+		__KEY_ITEM (FRAMESPACING), /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (HEIGHT),       /* HR,IMG,TABLE,TD,TH,TR */
 		__KEY_ITEM (HREF),         /* A */
 		__KEY_ITEM (HSPACE),       /* IMG */

@@ -280,32 +280,29 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 				if (tag == TAG_FRAMESET) {
 
 					char cols[100], rows[100];
-					WORD border = get_value_unum (parser, KEY_FRAMEBORDER, -1);
 					
+					WORD border = get_value_unum (parser, KEY_BORDER, -1);
 					if (border >= 0) {
-						if (!border) {
-							container->BorderSize = 0;
-						} else if (!container->BorderSize) {
-							container->BorderSize = 5;
-						}
-					}
-					
-					border = get_value_unum (parser, KEY_BORDER, -1);
-					if (border > 0) {
 						container->BorderSize = border;
 					
-					} else if (!border) {
-						container->BorderSize = 0;
-					
-					} else if (!container->BorderSize && 
-					           get_value (parser, KEY_BORDER, NULL, 0)) {
-						container->BorderSize = 5;
+					} else {
+						char out[4];
+						if (get_value (parser, KEY_FRAMEBORDER, out, sizeof(out))) {
+							if (out[0] == '0' || stricmp (out, "NO") == 0) {
+								border = 0;
+							} else {
+								border = get_value_unum (parser,
+								                         KEY_FRAMESPACING, BORDER_SIZE);
+							}
+						} else {
+							border = get_value_unum (parser, KEY_FRAMESPACING,
+							                         container->BorderSize);
+						}
+						container->BorderSize = border;
 					}
 					
-					if (!ignore_colours)
-					{
+					if (!ignore_colours) {
 						WORD color;
-
 						if ((color = get_value_color (parser, KEY_BORDERCOLOR)) >= 0)
 							container->BorderColor = color;
 					}
@@ -386,7 +383,6 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 			if (container->Sibling) {
 				if (container->BorderSize) {
 					GRECT area;
-					containr_notify (container, HW_PageStarted, "");
 					containr_calculate (container, NULL);
 					area = container->Area;
 					if (container->Mode == CNT_CLD_H) {
@@ -396,7 +392,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 						area.g_x += area.g_w - container->BorderSize;
 						area.g_w =  container->BorderSize;
 					}
-					containr_notify (container, HW_PageFinished, &area);
+					containr_notify (container, HW_PageUpdated, &area);
 				}
 				container = container->Sibling;
 			}
