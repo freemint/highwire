@@ -796,11 +796,16 @@ rpopup_open (WORD mx, WORD my)
 			break;
 		case RPOP_SAVE:{
 			CONTAINR cont = NULL;
+			char buf[2 * HW_PATH_MAX];
 
-			cont = new_hwWind (frame->Location, NULL, NULL)->Pane;
+			LOCATION loc = frame->Location;
+
+			location_FullName (loc, buf, sizeof(buf));
+
+			cont = new_hwWind (buf, NULL, NULL)->Pane;
 
 			if (cont) {
-				LOADER ldr = start_objc_load (cont, frame->Location, frame->BaseHref, saveas_job, NULL);
+				LOADER ldr = start_objc_load (cont, buf, frame->BaseHref, saveas_job, NULL);
 
 				if (ldr) {
 					ldr->Encoding = frame->Encoding;
@@ -811,7 +816,7 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_COPY: {
 			FILE * file;
 			char buf[2 * HW_PATH_MAX];
-			LOCATION loc = new_location(frame->Location, frame->BaseHref);
+			LOCATION loc = frame->Location;
 
 			location_FullName (loc, buf, sizeof(buf));
 
