@@ -291,7 +291,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 				*(ln_end++) = '\n';
 				*(ln_end)   = '\0';
 			} else {
-				reply = (n == -1 ? -316/*ECONNRESET*/ : (short)n);
+				reply = (short)n;
 			}
 			inet_close (sock);
 			sock = -1;
@@ -351,7 +351,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 	} while (left);
 	
 	if (reply <= 0) {
-		strcpy (buffer, (reply == -316/*ECONNRESET*/
+		strcpy (buffer, (reply == -ECONNRESET
 		                 ? "Connection reset by peer." : "Protocoll Error!\n"));
 	}
 	
