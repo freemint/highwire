@@ -803,10 +803,13 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 						name++;
 						n_len--;
 					}
-				} else {
+				} else {   /* double-dot file, strange but valid file name */
 					break;
 				}
 				while (b_len && b_name[--b_len] != b_delim);
+			
+			} else {   /* dot file, name starting with a dot */
+				break;
 			}
 			if (!n_len) break;
 		}
