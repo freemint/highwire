@@ -13,7 +13,7 @@ void input_draw   (INPUT, WORD x, WORD y);
 void     input_disable  (INPUT, BOOL onNoff);
 WORD     input_handle   (INPUT, PXY, GRECT *, char ***);
 WORDITEM input_activate (INPUT, WORD slct);
-WORDITEM input_keybrd   (INPUT, WORD key, UWORD state, GRECT *);
+WORDITEM input_keybrd   (INPUT, WORD key, UWORD state, GRECT *, INPUT * next);
 
 INPUT form_check (TEXTBUFF, const char * name, char * value, BOOL checkd);
 INPUT form_radio (TEXTBUFF, const char * name, const char * value, BOOL checkd);

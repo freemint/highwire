@@ -938,14 +938,14 @@ input_activate (INPUT input, WORD slct)
 
 /*============================================================================*/
 WORDITEM
-input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
+input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 {
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
 	
-	if (input != form->TextActive) {
+	if (input != (*next = form->TextActive)) {
 		return NULL;   /* shouldn't happen but who knows... */
 	}
 	
@@ -1004,12 +1004,31 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 			}
 			break;
 		
-		case 13:
+		case 13: /* enter/return */
 			if (input->TextLen) {
 				form_activate (form);
 				form->TextActive = NULL;
 			} else {
 				word = NULL;
+			}
+			break;
+		
+		case 9: /* tab */
+			if (state & K_CTRL) {
+				form->TextActive = NULL;
+				*next            = NULL;
+			} else {
+				INPUT srch = input->Next;
+				if (srch) {
+					while ((srch->disabled || srch->Type < IT_TEXT)
+					       && (srch = srch->Next) != NULL);
+				}
+				if (!srch) {
+					srch = form->InputList;
+					while ((srch->disabled || srch->Type < IT_TEXT)
+					       && (srch = srch->Next) != NULL);
+				}
+				*next = srch; 
 			}
 			break;
 		

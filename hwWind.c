@@ -1815,23 +1815,58 @@ hwWind_keybrd (WORD key, UWORD state)
 		return wind;
 	
 	} else if (wind->Input) {
-		GRECT clip;
-		WORDITEM word = input_keybrd (wind->Input, key, state, &clip);
+		GRECT    clip, rect;
+		INPUT    next;
+		WORDITEM word = input_keybrd (wind->Input, key, state, &clip, &next);
 		if (word) {
 			DOMBOX * box = &word->line->Paragraph->Box;
 			FRAME  frame = containr_Frame ((CONTAINR)wind->Active);
-			long   x     = (long)word->h_offset
+			long   x     = (long)clip.g_x + word->h_offset
 			             + frame->clip.g_x - frame->h_bar.scroll;
-			long   y     = word->line->OffsetY
+			long   y     = (long)clip.g_y + word->line->OffsetY
 			             + frame->clip.g_y - frame->v_bar.scroll;
 			do {
 				x += box->Rect.X;
 				y += box->Rect.Y;
 			} while ((box = box->Parent) != NULL);
-			clip.g_x += x;
-			clip.g_y += y;
-			if (rc_intersect (&frame->clip, &clip)) {
-				hwWind_redraw (wind, &clip);
+			
+			if (next != wind->Input) {
+				if (next) {
+					PXY pxy = { 0, 0 };
+					input_handle (next, pxy, &rect, NULL);
+				}
+				wind->Input = next;
+			} else {
+				next = NULL;
+			}
+			clip.g_x = x;
+			clip.g_y = y;
+			hwWind_redraw (wind, &clip);
+			if (next) {
+				long dx = 0, dy = 0, d;
+				x -= rect.g_x + frame->clip.g_x;
+				y -= rect.g_y + frame->clip.g_y;
+				if (frame->h_bar.on) {
+					d = frame->h_bar.scroll + frame->clip.g_w;
+					if ((d = x + rect.g_w - frame->clip.g_w) > 0) x -= (dx = d -2);
+					if ((d = x)                              < 0) x -= (dx = d -2);
+				}
+				if (frame->v_bar.on) {
+					if ((d = y + rect.g_h - frame->clip.g_h) > 0) y -= (dy = d -2);
+					if ((d = y)                              < 0) y -= (dy = d -2);
+				}
+				if (dx || dy) {
+					hwWind_scroll (wind, wind->Active, dx, dy);
+					d = ((rect.g_w > (dx >= 0 ? dx : -dx)) &&
+					     (rect.g_h > (dx >= 0 ? dx : -dx)));
+				} else {
+					d = TRUE;
+				}
+				if (d) {
+					rect.g_x = x + frame->clip.g_x;
+					rect.g_y = y + frame->clip.g_y;
+					hwWind_redraw (wind, &rect);
+				}
 			}
 		}
 	
