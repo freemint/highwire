@@ -13,6 +13,8 @@ typedef struct s_cache_info {
 	size_t       Used;
 	long         Hash;
 	LOCATION     Source;
+	long         Date;
+	long         Expires;
 	const char * File;
 	CACHED       Object;
 } * CACHEINF;
@@ -21,4 +23,5 @@ size_t cache_info (size_t * size, CACHEINF *);
 
 
 BOOL     cache_setup  (const char * dir);
-LOCATION cache_assign (LOCATION, void *, size_t, const char * type);
+LOCATION cache_assign (LOCATION, void *, size_t,
+                       const char * type, long date, long expires);

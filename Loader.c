@@ -143,6 +143,8 @@ new_loader (LOCATION loc)
 	loader->MarginH  = -1;
 	/* */
 	loader->Cached   = NULL;
+	loader->Date     = 0;
+	loader->Expires  = 0;
 	loader->DataSize = 0;
 	loader->DataFill = 0;
 	loader->Data     = NULL;
@@ -393,7 +395,8 @@ receive_job (void * arg, long invalidated)
 		*(p)   = '\0';
 		
 		cache_assign (loader->Location, loader->Data, loader->DataSize,
-		              mime_toExtension (loader->MimeType));
+		              mime_toExtension (loader->MimeType),
+		              loader->Date, loader->Expires);
 	}
 	sched_insert (parser_job, loader, (long)loader->Target);
 	
@@ -457,6 +460,15 @@ loader_job (void * arg, long invalidated)
 			char buf[300];
 			sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
 			containr_notify (loader->Target, HW_SetInfo, buf);
+			
+			if (hdr.Modified > 0) {
+				loader->Date = hdr.Modified;
+			} else if (hdr.SrvrDate > 0) {
+				loader->Date = hdr.SrvrDate;
+			}
+			if (loader->Date && hdr.Expires > 0) {
+				loader->Expires = hdr.Expires;
+			}
 			
 			if (hdr.Size >= 0 && !hdr.Chunked) {
 				loader->Data     = loader->rdDest = malloc (hdr.Size +3);

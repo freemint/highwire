@@ -15,6 +15,8 @@ typedef struct s_loader {
 	short    MarginW, MarginH;
 	/* */
 	LOCATION Cached;
+	long     Date;
+	long     Expires;
 	size_t   DataSize; /* expected data size                   */
 	size_t   DataFill; /* real number of loaded/received bytes */
 	char   * Data;

@@ -19,6 +19,8 @@ typedef struct s_cache_item {
 	long     Hash;
 	CACHEOBJ Object;
 	size_t   Size;
+	long     Date;
+	long     Expires;
 	void   (*dtor)(void*);
 } * CACHEITEM;
 static CACHEITEM __cache     = NULL;
@@ -27,22 +29,35 @@ static size_t    __cache_mem = 0;
 static LOCATION  __cache_dir = NULL;
 
 
-/*============================================================================*/
-CACHED
-cache_insert (LOCATION loc, long hash,
-              CACHEOBJ * object, size_t size, void (*dtor)(void*))
+/*----------------------------------------------------------------------------*/
+static CACHEITEM
+create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem = malloc (sizeof (struct s_cache_item));
 	citem->Location = location_share (loc);
-	citem->Hash     = hash;
-	citem->Object   = *object;
+	citem->Hash     = 0;
+	citem->Object   = object;
 	citem->Size     = size;
+	citem->Date     = 0;
+	citem->Expires  = 0;
 	citem->dtor     = dtor;
 	citem->Reffs    = 1;
 	citem->Next     = __cache;
 	__cache          = citem;
 	__cache_num++;
 	__cache_mem += size;
+	
+	return citem;
+}
+
+
+/*============================================================================*/
+CACHED
+cache_insert (LOCATION loc, long hash,
+              CACHEOBJ * object, size_t size, void (*dtor)(void*))
+{
+	CACHEITEM citem = create_item (loc, *object, size, dtor);
+	citem->Hash     = hash;
 	
 	*object = NULL;
 	
@@ -187,12 +202,14 @@ cache_info (size_t * size, CACHEINF * p_info)
 			CACHEITEM citem = __cache;
 			do {
 				LOCATION local = (citem->Hash ? citem->Location : citem->Object);
-				info->Size   = citem->Size;
-				info->Used   = citem->Reffs;
-				info->Hash   = citem->Hash;
-				info->Source = citem->Location;
-				info->File   = local->File;
-				info->Object = citem->Object;
+				info->Size    = citem->Size;
+				info->Used    = citem->Reffs;
+				info->Hash    = citem->Hash;
+				info->Source  = citem->Location;
+				info->Date    = citem->Date;
+				info->Expires = citem->Expires;
+				info->File    = local->File;
+				info->Object  = citem->Object;
 				citem = citem->Next;
 				info++;
 			} while (--num);
@@ -242,7 +259,8 @@ file_dtor (void * arg)
 
 /*============================================================================*/
 LOCATION
-cache_assign (LOCATION src, void * data, size_t size, const char * type)
+cache_assign (LOCATION src, void * data, size_t size,
+              const char * type, long date, long expires)
 {
 	static long num = 0;
 	LOCATION    loc = NULL;
@@ -260,13 +278,14 @@ cache_assign (LOCATION src, void * data, size_t size, const char * type)
 		loc = new_location (buf, __cache_dir);
 		location_FullName (loc, buf, sizeof(buf));
 		if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
-			CACHED   cached;
-			CACHEOBJ obj = location_share (loc);
+			CACHEITEM citem;
 			write (fh, data, size);
 			close (fh);
 			num++;
-			cached = cache_insert (src, 0, &obj, size, file_dtor);
-			cache_release (&cached, FALSE);
+			citem = create_item (src, location_share (loc), size, file_dtor);
+			citem->Date    = date;
+			citem->Expires = expires;
+			citem->Reffs--;
 		} else {
 			free_location (&loc);
 		}
