@@ -291,8 +291,7 @@ form_text (TEXTBUFF current, const char * name, char * value,
 	input->readonly = readonly;
 	
 	font_byType (pre_font, -1, -1, word);
-	scan_string_to_16bit (value, encoding, &current->text,
-	                      word->font->Base->Mapping);
+	scan_string_to_16bit (value, encoding, &current->text, MAP_UNICODE);
 	if (current->text >= wmark) {
 		current->text = wmark;
 	} else {
@@ -347,9 +346,11 @@ new_input (PARSER parser)
 		                   get_value_exists (parser, KEY_READONLY));
 		if (toupper (*output) == 'P') { /* == "PASSWORD" */
 			const char * star = "*";
-			ENCODER_W encoder = encoder_word (ENCODING_ATARIST,
-			                                  input->Word->font->Base->Mapping);
+			ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 			(*encoder)(&star, &input->HideChar);
+		} else { /* word->item is used as buffer */
+			free (input->Value);
+			input->Value = NULL;
 		}
 		
 	} else if (stricmp (output, "HIDDEN") == 0) {
@@ -640,11 +641,15 @@ input_draw (INPUT input, WORD x, WORD y)
 		v_pline (vdi_handle, 3, (short*)p);
 	}
 	if (input->Type >= IT_TEXT) {
+		BOOL fmap = (word->font->Base->Mapping != MAP_UNICODE);
 		FORM form = input->Form;
 		WORD len  = min (input->TextLen, input->VisibleX);
 		PXY  pos;
 		pos.p_x = x +3;
 		pos.p_y = y;
+		if (fmap) {
+			vst_map_mode (vdi_handle, MAP_UNICODE);
+		}
 		if (input != form->TextActive) {
 			v_ftext16n (vdi_handle, pos, word->item, len);
 		} else {
@@ -659,6 +664,9 @@ input_draw (INPUT input, WORD x, WORD y)
 			vswr_mode (vdi_handle, MD_XOR);
 			v_bar     (vdi_handle, (short*)p);
 			vswr_mode (vdi_handle, MD_TRANS);
+		}
+		if (fmap) {
+			vst_map_mode (vdi_handle, word->font->Base->Mapping);
 		}
 	} else if (input->Type >= IT_BUTTN) {
 		v_ftext16 (vdi_handle,
@@ -834,8 +842,14 @@ form_activate (FORM form)
 				while ((c = *(v++)) != '\0') {
 					size += (c == ' ' || isalnum (c) ? 1 : 3);
 				}
+			} else {
+				WCHAR * beg = elem->Word->item;
+				WCHAR * end = beg + elem->TextLen;
+				while (beg < end) {
+					char c = *(beg++);
+					size += (c == ' ' || isalnum (c) ? 1 : 3);
+				}
 			}
-			      + (elem->Value ? strlen (elem->Value) : 0);
 		} while ((elem = elem->Next) != NULL);
 	}
 	
@@ -878,6 +892,19 @@ form_activate (FORM form)
 			if (elem->Value) {
 				char * v = elem->Value, c;
 				while ((c = *(v++)) != '\0') {
+					if (c == ' ') {
+						*(p++) = '+';
+					} else if (isalnum (c)) {
+						*(p++) = c;
+					} else {
+						p += sprintf (p, "%%%02X", (int)c);
+					}
+				}
+			} else {
+				WCHAR * beg = elem->Word->item;
+				WCHAR * end = beg + elem->TextLen;
+				while (beg < end) {
+					char c = *(beg++);
 					if (c == ' ') {
 						*(p++) = '+';
 					} else if (isalnum (c)) {
@@ -965,7 +992,6 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	if (asc >= ' ' && asc != 127 &&
 	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
 		if (!input->readonly && input->TextLen < input->TextMax) {
-			WORD  mapping = word->font->Base->Mapping;
 			WCHAR tmp[5];
 			{
 				WCHAR * end = input->Word->item + input->TextLen;
@@ -977,7 +1003,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			if (input->HideChar) {
 				input->Word->item[form->TextCursrX] = input->HideChar;
 			} else {
-				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, mapping);
+				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 				const char  * ptr = &((char*)&asc)[1];
 				(*encoder)(&ptr, tmp);
 				input->Word->item[form->TextCursrX] = *tmp;
@@ -988,7 +1014,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				do {
 					*(end +1) = *(end);
 				} while (--end >= dst);
-				if (input->HideChar || mapping != MAP_UNICODE) {
+				if (input->HideChar) {
 					ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 					const char  * ptr = &((char*)&asc)[1];
 					(*encoder)(&ptr, tmp);
@@ -1005,10 +1031,13 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			
 		case 27: /* escape */
 			if (!input->readonly && input->TextLen) {
-				input->Form->TextCursrX = 0;
-				input->Form->TextCursrY = 0;
-				input->TextLen          = 0;
-				input->Value[0]         = '\0';
+				form->TextCursrX = 0;
+				form->TextCursrY = 0;
+				form->TextShiftX = 0;
+				input->TextLen   = 0;
+				if (input->Value) {
+					input->Value[0] = '\0';
+				}
 			} else {
 				word = NULL;
 			}
