@@ -259,6 +259,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 		line->Word      = word;
 		line->Ascend    = word->word_height;
 		line->Descend   = word->word_tail_drop;
+		line->Width     = width - blocker->R.width;
 		offset = int_width - word->word_width + word->space_width - hanging;
 
 		ln_brk = word->line_brk;
@@ -382,10 +383,11 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 		*p_line = NULL;
 	}
 
-	if (par->paragraph_code == PAR_IMG)
-		int_width = par->item->word_width;
-
-	par->Width = int_width;
+	if (par->paragraph_code == PAR_IMG) {
+		par->Width = par->item->word_width;
+	} else {
+		par->Width = width;
+	}
 }
 
 
@@ -424,6 +426,11 @@ paragrph_word (PARAGRPH par, long x, long y, long area[4])
 		area[2] = word->h_offset;
 		word = NULL;
 	
+	} else if (x >= line->Width) {
+		area[0] += line->Width;
+		area[2] =  par->Width - line->Width;
+		word = NULL;
+	
 	} else {
 		WORDITEM url = NULL;
 		short num = line->Count;
@@ -448,7 +455,7 @@ paragrph_word (PARAGRPH par, long x, long y, long area[4])
 		}
 		if (!word) {
 			area[0] += lft;
-			area[2] =  par->Width - lft;
+			area[2] =  line->Width - lft;
 		
 		} else if (url && url != word) {
 			area[0] += lft;
@@ -938,58 +945,169 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 {
 	PARAGRPH par = content->Item;
 	
-	if (!par) {
+	if (!par) {                     /* nothing in it at all */
 		area[2] = content->Width;
 		area[3] = content->Height;
 	
-	} else if (par->Offset.Y > y) {
+	} else if (par->Offset.Y > y) { /* above all paragraphs */
 		area[2] = content->Width;
 		area[3] = par->Offset.Y;
 		par = NULL;
 	
-	} else {
-		PARAGRPH next;
-		long     bot;
-		while ((next = par->next_paragraph) != NULL && next->Offset.Y <= y) {
-			par = next;
-		}
-		if ((bot = par->Offset.Y + par->Height) <= y) {
-			area[1] += bot;
+	} else { /* search the paragraph that includes the y coordinate.  also find
+	          * left/right aligned paragraphs that might affect the resulting
+	          * rectangle.
+		      */
+		PARAGRPH l_par = NULL, r_par = NULL, flt = NULL;
+		long l_bot = 0, r_bot = 0;
+		long top = par->Offset.Y, bot;
+		do {
+			bot = top + par->Height;
+			if (par->floating == ALN_RIGHT) {
+				if (r_bot <= top) r_par = flt = par;
+				if (r_bot <  bot) r_bot = bot;
+			} else if (par->floating == ALN_LEFT) {
+				if (l_bot <= top) l_par = flt = par;
+				if (l_bot <  bot) l_bot = bot;
+			}
+			if (bot > y) { /* this paragraph includes y, ignoring x here */
+				break;
+			}
+			if ((par = par->next_paragraph) == NULL) { /* below the last */
+				top = bot;                              /* paragraph      */
+				bot = content->Height;
+			
+			} else if ((top = par->Offset.Y) > y) { /* between paragraphs */
+				top = bot;
+				bot = par->Offset.Y;
+				par = NULL;
+			}
+		} while (par);
+		
+		if (!par) {       /* below all paragraphs */
+			area[1] += top;
 			area[2] =  content->Width;
-			area[3] =  (next ? next->Offset.Y : content->Height) - bot;
-			par = NULL;
+			area[3] =  bot - top;
 		
 		} else {
-		/*	long lft = 0, rgt = 0;*/
-		/*	do*/ if (x < par->Offset.X) {
-			/*	if (par->floating == ALN_RIGHT) {
-					rgt += par->Width;
-					par = par->next_paragraph;
-				} else */{
-					area[1] += par->Offset.Y;
-					area[2] =  par->Offset.X;
-					area[3] =  par->Height;
-					par = NULL;
+			top = bot = 0;
+			if (r_bot <= top) { flt = l_par; r_par = NULL; r_bot = 0; }
+			if (l_bot <= top) { flt = r_par; l_par = NULL; l_bot = 0; }
+			if (r_par && l_par) flt = (flt == r_par ? l_par : r_par);
+			if (flt) {
+				long lft = 0, rgt = content->Width;
+				
+				while (par->next_paragraph) {
+					PARAGRPH next = par->next_paragraph;
+					if (next->Offset.Y > y) {
+						break;
+					}
+					par = next;
+					if (par->floating == ALN_RIGHT) {
+						if (r_bot < par->Offset.Y + par->Height) {
+							r_bot = par->Offset.Y + par->Height;
+						}
+					} else if (par->floating == ALN_LEFT) {
+						if (l_bot < par->Offset.Y + par->Height) {
+							l_bot = par->Offset.Y + par->Height;
+						}
+					}
 				}
+				do {
+					if (x < flt->Offset.X) {
+						if (flt->floating == ALN_RIGHT) {
+							rgt = flt->Offset.X;
+						} else if (y < l_bot) {
+							bot = l_bot;
+							par = flt; /* break condition */
+						} else {
+							top = l_bot;
+						}
+					
+					} else if (x >= flt->Offset.X + flt->Width) {
+						if (flt->floating == ALN_LEFT) {
+							lft = flt->Offset.X + flt->Width;
+						} else if (y < r_bot) {
+							bot = r_bot;
+							par = flt; /* break condition */
+						} else {
+							top = r_bot;
+							rgt = flt->Offset.X;
+						}
+					
+					} else if (y < flt->Offset.Y + flt->Height) {
+						if (top < flt->Offset.Y) top = flt->Offset.Y;
+						bot = flt->Offset.Y + flt->Height;
+						par = flt;
+						break;
+				
+					} else if (flt == par) { /* between two paragraphs */
+						top = par->Offset.Y + par->Height;
+						area[0] += lft;
+						area[1] += top;
+						area[2] =  rgt - lft;
+						area[3] =  par->next_paragraph->Offset.Y - top;
+						return NULL;
+						
+					} else if (flt->floating == ALN_LEFT) {
+						if (y < l_bot) {
+							top = flt->Offset.Y + flt->Height;
+							bot = l_bot;
+							par = NULL;
+							break;
+					/*	} else {
+							top = l_bot;
+					*/	}
+						lft = flt->Offset.X + flt->Width;
+					
+					} else if (flt->floating == ALN_RIGHT) {
+						if (y < r_bot) {
+							top = flt->Offset.Y + flt->Height;
+							bot = r_bot;
+							par = NULL;
+							break;
+					/*	} else {
+							top = r_bot;
+					*/	}
+						rgt = flt->Offset.X;
+					}
+				} while ((flt = (flt == par ? NULL : flt->next_paragraph)) != NULL);
+				
+				if (flt) {
+					area[0] += flt->Offset.X;
+					area[1] += top;
+					area[2] =  flt->Width;
+					area[3] =  bot - top;
+					return par;
+				}
+			}
+		
+			if (top < par->Offset.Y) {
+				top = par->Offset.Y;
+			}
+			if (bot < par->Offset.Y + par->Height) {
+				bot = par->Offset.Y + par->Height;
+			}
+
+			if (x < par->Offset.X) {
+				area[1] += top;
+				area[2] =  par->Offset.X;
+				area[3] =  bot - top;
+				par = NULL;
+			
 			} else if (x >= par->Offset.X + par->Width) {
-			/*	if (par->floating == ALN_LEFT) {
-					lft += par->Width;
-					par = par->next_paragraph;
-				} else */{
-					area[0] += par->Offset.X + par->Width;
-					area[1] += par->Offset.Y;
-					area[2] =  content->Width - (par->Offset.X + par->Width);
-					area[3] =  par->Height;
-					par = NULL;
-				}
+				area[0] += par->Offset.X + par->Width;
+				area[1] += top;
+				area[2] =  content->Width - (par->Offset.X + par->Width);
+				area[3] =  bot - top;
+				par = NULL;
+			
 			} else {
 				area[0] += par->Offset.X;
 				area[1] += par->Offset.Y;
 				area[2] =  par->Width;
 				area[3] =  par->Height;
-			/*	break;*/
-				
-			} /*while (par);*/
+			}
 		}
 	}
 	return par;
