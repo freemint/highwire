@@ -332,6 +332,10 @@ typedef enum {
 
 typedef struct s_dombox DOMBOX;
 struct s_dombox {
+	struct s_dombox_vtab {
+		void (*delete)(DOMBOX *);
+		void (*draw)  (DOMBOX *, long x, long y, const GRECT * clip, void *);
+	}      * _vtab;
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;
 	LRECT    Rect;
@@ -344,6 +348,7 @@ struct s_dombox {
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 };
+extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
 void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);

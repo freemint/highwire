@@ -86,11 +86,11 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 			return;
 		}
 	}
-
-	draw_contents (&frame->Page,
-	               (long)frame->clip.g_x - frame->h_bar.scroll,
-	               (long)frame->clip.g_y - frame->v_bar.scroll,
-	               &clip, highlight);
+	
+	dombox_draw (&frame->Page.Box,
+	             (long)frame->clip.g_x - frame->h_bar.scroll,
+	             (long)frame->clip.g_y - frame->v_bar.scroll,
+	             &clip, highlight);
 	v_show_c (vdi_handle, 1);
 }
 
@@ -325,7 +325,7 @@ draw_hbar (FRAME frame, BOOL complete)
  * current_paragraph - our paragraph descriptor for the hr tag
  * x,y and w - the location and restraining width for the hr tag
  */
-static void
+void
 draw_hr (PARAGRPH paragraph , WORD x, WORD y)
 {
 	struct word_item * word = paragraph->item;
@@ -455,7 +455,7 @@ draw_image (IMAGE img, short x, short y, void * highlight)
  * l_border, r_border and b_border are borders for the text to avoid
  * alignment any default alignment for the paragraph
  */
-static long
+long
 draw_paragraph (PARAGRPH paragraph,
                 WORD x_off, long y_off, const GRECT * clip, void * highlight)
 {
@@ -582,56 +582,6 @@ draw_paragraph (PARAGRPH paragraph,
 		line  =  line->NextLine;
 	}
 	return y_off;
-}
-
-
-/*==============================================================================
- * draw_contents()
- *
- * current_paragraph -> start paragraph for the frame / table cell
- * current_height -> where is top of page in relation to the real top of the page
- *     so when we start it should equal the y offset of the frame as you scroll down
- *     the page, it moves up beyond the y offset of the frame, so it's not drawn
- *     (ex current_height = -120 ... first list would be printed at 120 pixels above the frame top)
- * frame_h -> should be the height of the frame
- * top_of_page -> this should be the y offset of the frame 
- *					but it can be a different value.  This is the top of where to draw.
- *                  When scrolling a page it is just a small value at the bottom etc.
- */
-void
-draw_contents (CONTENT * content,
-               long x_abs, long y_abs, const GRECT * clip, void * highlight)
-{
-	PARAGRPH paragraph = content->Item;
-	long     clip_y    = (long)clip->g_y - y_abs;
-
-	dombox_draw (&content->Box, x_abs, y_abs, clip, highlight);
-	
-	while (paragraph
-	       && paragraph->Box.Rect.Y + paragraph->Box.Rect.H <= clip_y) {
-		paragraph = paragraph->next_paragraph;
-	}
-	clip_y = clip->g_y + clip->g_h -1;
-
-	while (paragraph) {
-		long x = x_abs + paragraph->Box.Rect.X;
-		long y = y_abs + paragraph->Box.Rect.Y;
-
-		if (y > clip_y) break;
-		
-		dombox_draw (&paragraph->Box, x, y, clip, highlight);
-		
-		if (paragraph->paragraph_code == PAR_HR) {
-			draw_hr (paragraph, x, y);
-
-		} else if (paragraph->paragraph_code == PAR_TABLE) {
-			table_draw (paragraph->Table, x, y, clip, highlight);
-
-		} else { /* normal text */
-			draw_paragraph (paragraph, x, y, clip, highlight);
-		}
-		paragraph = paragraph->next_paragraph;
-	}
 }
 
 

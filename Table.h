@@ -18,7 +18,6 @@ struct s_table_stack {
 	V_ALIGN  AlignV;
 	BOOL     isSpecial; /* will be set for DIV tags */
 	PARSESUB SavedCurr;
-	short    Backgnd;
 
 	char _debug;
 };
@@ -70,8 +69,6 @@ void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,
 void table_finish (PARSER);
 
 long      table_calc    (TABLE, long max_width);
-long      table_draw    (TABLE, short x, long y,
-                         const GRECT *, void * highlight);
 CONTENT * table_content (TABLE, long x, long y, long area[4]);
 
 

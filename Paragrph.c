@@ -17,6 +17,21 @@ struct blocking_area {
 };
 
 
+static struct s_dombox_vtab paragraph_vTab = { 0, };
+
+/*----------------------------------------------------------------------------*/
+static void
+vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
+{
+	PARAGRPH paragraph = (PARAGRPH)This;
+	if (paragraph->paragraph_code == PAR_HR) {
+			draw_hr (paragraph, x, y);
+	} else {
+		draw_paragraph (paragraph, x ,y, clip, highlight);
+	}
+}
+
+
 /*============================================================================*/
 void
 destroy_paragraph_structure (PARAGRPH current_paragraph)
@@ -64,6 +79,11 @@ new_paragraph (TEXTBUFF current)
 	paragraph->eop_space      = 0;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
+	if (!*(long*)&paragraph_vTab) {
+		paragraph_vTab      = DomBox_vTab;
+		paragraph_vTab.draw = vTab_draw;
+	}
+	paragraph->Box._vtab = &paragraph_vTab;
 
 	paragraph->next_paragraph = NULL;
 	
@@ -126,6 +146,11 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->alignment = copy_from->alignment;
 		paragraph->eop_space = 0;
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
+		if (!*(long*)&paragraph_vTab) {
+			paragraph_vTab      = DomBox_vTab;
+			paragraph_vTab.draw = vTab_draw;
+		}
+		paragraph->Box._vtab = &paragraph_vTab;
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->floating       = ALN_NO_FLT;

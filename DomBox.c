@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h> /* debug */
 
@@ -6,11 +7,21 @@
 #include "global.h"
 
 
+static void vTab_delete (DOMBOX *);
+static void vTab_draw   (DOMBOX *, long x, long y, const GRECT * clip, void *);
+struct s_dombox_vtab DomBox_vTab = {
+	vTab_delete,
+	vTab_draw
+};
+
+
 /*============================================================================*/
 DOMBOX *
 dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 {
 	memset (This, 0, sizeof (struct s_dombox));
+	
+	This->_vtab = &DomBox_vTab;
 	
 	if (This == parent) {
 		puts ("dombox_ctor(): This and parent are equal!");
@@ -104,12 +115,43 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 		yy = y - This->BorderWidth + This->Rect.H -1;
 		p[1].p_x = (xx <= 0x7FFFL ? xx : 0x7FFF);
 		p[1].p_y = (yy <= 0x7FFFL ? yy : 0x7FFF);
-		if (p[0].p_x <= p[1].p_x && p[0].p_y <= p[1].p_y) {
-			vsf_color (vdi_handle, This->Backgnd);
-			v_bar     (vdi_handle, (short*)p);
+		if (p[0].p_x > p[1].p_x || p[0].p_y > p[1].p_y) {
+			return;
 		}
+		vsf_color (vdi_handle, This->Backgnd);
+		v_bar     (vdi_handle, (short*)p);
 	}
 	
-	(void)hl;
-	/* (*This->_vtab->draw)(This, x, y, clip, hl); */
+	(*This->_vtab->draw)(This, x, y, clip, hl);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+vTab_delete (DOMBOX * This)
+{
+	free (dombox_dtor (This));
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
+{
+	DOMBOX * box    = This->ChildBeg;
+	long     clip_y = (long)clip->g_y - y;
+	
+	while (box && box->Rect.Y + box->Rect.H <= clip_y) {
+		box = box->Sibling;
+	}
+	clip_y = clip->g_y + clip->g_h -1;
+
+	while (box) {
+		long b_x = x + box->Rect.X;
+		long b_y = y + box->Rect.Y;
+
+		if (b_y > clip_y) break;
+		
+		dombox_draw (box, b_x, b_y, clip, highlight);
+		
+		box = box->Sibling;
+	}
 }

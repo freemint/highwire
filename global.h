@@ -90,11 +90,12 @@ WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
 
 /* in Redraws.c */
 
-void frame_draw    (FRAME, const GRECT *, void * highlight);
-void draw_hbar     (FRAME, BOOL complete);
-void draw_vbar     (FRAME, BOOL complete);
-void draw_contents (CONTENT *, long x, long y, const GRECT *, void * highlight);
-void draw_border   (const GRECT *, short lu, short rd, short width);
+void frame_draw     (FRAME, const GRECT *, void * highlight);
+void draw_hbar      (FRAME, BOOL complete);
+void draw_vbar      (FRAME, BOOL complete);
+void draw_hr        (PARAGRPH, WORD x, WORD y);
+long draw_paragraph (PARAGRPH, WORD x, long y, const GRECT *, void * highlight);
+void draw_border    (const GRECT *, short lu, short rd, short width);
 
 /* in Config.c */
 
