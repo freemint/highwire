@@ -373,6 +373,23 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 }
 
 /*----------------------------------------------------------------------------*/
+static void
+box_anchor (PARSER parser, DOMBOX * box, BOOL force)
+{
+	TEXTBUFF current = &parser->Current;
+	char     out[100];
+	if (get_value (parser, KEY_ID, out, sizeof(out))
+	    && dombox_setId (box, out, force)) {
+		ANCHOR anchor = new_named_location (box->IdName, box);
+		if (anchor) {
+			anchor->offset.Y = 0;
+			*current->anchor = anchor;
+			current->anchor  = &anchor->next_location;
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------*/
 static DOMBOX *
 group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 {
@@ -387,6 +404,8 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
 	css_text_styles (parser, NULL);
+	
+	box_anchor (parser, box, TRUE);
 	
 	return box;
 }
@@ -1103,8 +1122,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		
 		frame->Page.HtmlCode = TAG_BODY;
 		
-		if (!ignore_colours)
-		{
+		if (!ignore_colours) {
 			WORD color;
 	
 			if ((color = get_value_color (parser, KEY_TEXT)) >= 0) {
@@ -1130,7 +1148,9 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
 		}
+		box_anchor (parser, &frame->Page, TRUE);
 	}
+	
 	return flags;
 }
 
@@ -1831,7 +1851,8 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			} else {
 				current->paragraph->Box.Floating = floating|FLT_MASK;
 			}
-			box_frame (parser, &current->paragraph->Box.Margin, CSS_MARGIN);
+			box_frame  (parser, &current->paragraph->Box.Margin, CSS_MARGIN);
+			box_anchor (parser, &current->paragraph->Box, TRUE);
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
 			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
@@ -2005,7 +2026,6 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 	PARAGRPH par     = current->paragraph;
 	
 	if (flags & PF_START) {
-		char * name;
 		
 		/* Prevent a heading paragraph just behind a <LI> tag.
 		 */
@@ -2015,10 +2035,6 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 			if (current->parentbox->BoxClass == BC_LIST) {
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
-		}
-		
-		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
-			insert_anchor (current, name, NULL);
 		}
 		
 		fontstack_push (current, step);
@@ -2032,18 +2048,9 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		} else {
 			par->Box.TextAlign = get_h_align (parser,
 			                                  current->parentbox->TextAlign);
-			
-			/*________________________HW_proprietary___
-			if (!ignore_colours) {
-				WORD color = get_value_color (parser, KEY_BGCOLOR);
-				if (color >= 0 && color != current->Backgnd) {
-					current->paragraph->Box.Backgnd = color;
-				}
-				if ((color = get_value_color (parser, KEY_COLOR)) >= 0) {
-					fontstack_setColor (current, color);
-				}
-			}*/
 		}
+		box_anchor (parser, &par->Box, FALSE);
+		
 		if (!current->font->setBold) {
 			fontstack_setBold (current);
 		}
@@ -2167,7 +2174,6 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		char * name;
 		
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
@@ -2180,8 +2186,8 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
 		}
-		
 		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
+		box_anchor (parser, &par->Box, FALSE);
 		
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
@@ -2190,10 +2196,6 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	
-		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
-			insert_anchor (current, name, NULL);
-		}
-		
 	} else {
 		par = add_paragraph (current, 2);
 
@@ -2439,6 +2441,7 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 		list_start (current, (bullet ? bullet : LT_DECIMAL), counter, TAG_OL);
 		css_box_styles  (parser, current->parentbox, ALN_LEFT);
 		css_text_styles (parser, current->font);
+		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2462,6 +2465,7 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 		list_start (current, list_bullet (parser, bullet), 0, TAG_UL);
 		css_box_styles  (parser, current->parentbox, ALN_LEFT);
 		css_text_styles (parser, current->font);
+		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2486,6 +2490,7 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 		list_start (current, LT_DISC, 0, TAG_MENU);
 		css_box_styles  (parser, current->parentbox, ALN_LEFT);
 		css_text_styles (parser, current->font);
+		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2528,6 +2533,7 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		}
+		box_anchor (parser, &current->paragraph->Box, TRUE);
 		flags |= PF_FONT;
 	}
 	
@@ -2549,6 +2555,7 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 			css_box_styles  (parser, current->parentbox, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		}
+		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2578,6 +2585,7 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 			css_box_styles  (parser, &paragraph->Box, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		}
+		box_anchor (parser, &current->paragraph->Box, TRUE);
 	}
 	return (flags|PF_SPACE);
 }
@@ -2603,6 +2611,7 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 			css_box_styles  (parser, &paragraph->Box, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		}
+		box_anchor (parser, &current->paragraph->Box, TRUE);
 	}
 	return (flags|PF_SPACE);
 }
@@ -2655,6 +2664,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				if (color >= 0) box->BorderColor = color;
 			}
 		}
+		box_anchor (parser, parser->Current.parentbox->ChildEnd, TRUE);
 	
 	} else {
 		TEXTBUFF current = &parser->Current;
@@ -2709,6 +2719,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		current->parentbox->HtmlCode = TAG_TD;
+		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -2735,6 +2746,7 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;
+		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
