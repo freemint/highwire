@@ -351,6 +351,7 @@ check_mouse_position (WORD mx, WORD my)
 	if (elem != PE_TLINK) {
 		hash = NULL;
 	}
+
 	if (hwWind_Focus
 	    && (hwWind_Focus = hwWind_byValue ((long)hwWind_Focus)) != NULL
 	    && hwWind_Focus->isIcon) {
@@ -382,10 +383,15 @@ check_mouse_position (WORD mx, WORD my)
 		hwWind_Focus = wind;
 		focus_rect   = clip;
 	}
-	if      (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,  NULL);
+
+	if ( (cont->Resize == TRUE) && 
+		((elem == PE_BORDER_RT)||(elem == PE_BORDER_LF)||
+		(elem == PE_BORDER_UP)||(elem == PE_BORDER_DN)))
+				graf_mouse(hwWind_Mshape = THICK_CROSS, NULL);
+	else if (elem == PE_EDITABLE) graf_mouse (hwWind_Mshape = TEXT_CRSR,  NULL);
 	else if (PE_isActive (elem))  graf_mouse (hwWind_Mshape = POINT_HAND, NULL);
 	else if (hwWind_Mshape)       graf_mouse (hwWind_Mshape = ARROW,      NULL);
-	
+
 #ifdef WATCH
 	WATCH = watch;
 	if (WATCH.g_w > 0 && WATCH.g_h > 0) {
