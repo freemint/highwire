@@ -233,8 +233,20 @@ destroy_item (CACHEITEM citem)
 	else                 __cache_beg               = citem->NextItem;
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
 	else                 __cache_end               = citem->PrevItem;
+/*>>>>>>>>>> DEBUG */
+	if (!__cache_num) {
+		printf ("destroy_item(%s): counter underflow!\n",
+		        citem->Location->FullName);
+	}
+/*<<<<<<<<<< DEBUG */
 	__cache_num--;
 	if (citem->Ident) {
+/*>>>>>>>>>> DEBUG */
+		if ((long)__cache_mem < (long)citem->Size) {
+			printf ("destroy_item(%s): size underflow %lu/%li!\n",
+			        citem->Location->FullName, citem->Size, (long)__cache_mem);
+		}
+/*<<<<<<<<<< DEBUG */
 		__cache_mem -= citem->Size;
 	} else {
 		__cache_dsk -= citem->Size;
@@ -296,12 +308,7 @@ cache_insert (LOCATION loc, long ident,
 	CACHEITEM citem;
 	
 	if (!__cache_max) {
-		if ((long)(__cache_max = (long)Malloc (-1) /2) < 0) {
-			__cache_max = 0;
-		}
-		if (__cache_max > CACHE_MAX) {
-			__cache_max = CACHE_MAX;
-		}
+		cache_setup (NULL, 0);
 	}
 	if (__cache_mem + size > __cache_max) {
 		cache_throw (__cache_mem + size - __cache_max);
@@ -489,9 +496,21 @@ cache_info (size_t * size, CACHEINF * p_info)
 
 
 /*============================================================================*/
-BOOL
-cache_setup (const char * dir)
+void
+cache_setup (const char * dir, size_t mem_max)
 {
+	if (!__cache_max && !mem_max) {
+		mem_max = CACHE_MAX;
+	}
+	if (mem_max) {
+		if ((long)(__cache_max = (long)Malloc (-1) /2) < 0) {
+			__cache_max = 0;
+		} else if (__cache_max > mem_max) {
+			__cache_max = mem_max;
+		}
+/*		printf ("cache mem %lu\n", __cache_max);*/
+	}
+	
 	if (dir && *dir) {
 		char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
 		LOCATION loc;
@@ -510,7 +529,6 @@ cache_setup (const char * dir)
 			}
 		}
 	}
-	return (__cache_dir != NULL);
 }
 
 
