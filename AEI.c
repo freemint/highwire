@@ -467,6 +467,8 @@ menu_info (void)
 void
 menu_fontsize (char plus_minus)
 {
+	FRAME frame;
+	
 	if (plus_minus == '+') {
 		if (font_size < 18) {
 			font_size++;
@@ -474,7 +476,7 @@ menu_fontsize (char plus_minus)
 			font_size += 3;
 		}
 		logprintf(LOG_BLACK, "+font_size %d\n", (int)font_size);
-		menu_reload (ENCODING_Unknown);
+		frame = hwWind_ActiveFrame (NULL);
 		
 	} else if (font_size > 2) {
 		if (font_size < 20) {
@@ -486,7 +488,13 @@ menu_fontsize (char plus_minus)
 			font_minsize = font_size; /* override setting */
 		}
 		logprintf(LOG_BLACK, "-font_size %d\n", (int)font_size);
-		menu_reload (ENCODING_Unknown);
+		frame = hwWind_ActiveFrame (NULL);
+	
+	} else {
+		frame = NULL; /* nothing to do */
+	}
+	if (frame) {
+		start_cont_load (frame->Container, NULL, frame->Location, TRUE, TRUE);
 	}
 }
 
