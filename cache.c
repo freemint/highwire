@@ -5,6 +5,9 @@
 #if defined (__GNUC__)
 # include <fcntl.h>
 # include <unistd.h>
+
+#elif defined (LATTICE)
+# include <fcntl.h>
 #endif
 
 #include "defs.h"
