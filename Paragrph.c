@@ -141,9 +141,12 @@ add_paragraph (TEXTBUFF current, short vspace)
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->floating       = ALN_NO_FLT;
 	
-	if (current->prev_par) {
-		current->prev_par->eop_space = (vspace
-		                                ? current->word->word_height *2 /3 : 0);
+	if (current->prev_par && vspace) {
+		vspace *= current->word->word_height;
+		vspace /= 3;
+		if (current->prev_par->eop_space < vspace) {
+			current->prev_par->eop_space = vspace;
+		}
 	}
 	
 	return paragraph;

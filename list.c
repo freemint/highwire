@@ -16,7 +16,7 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 	list->Hanging = current->word->font->SpaceWidth *5;
 	
 	if (!current->lst_stack) {
-		par = add_paragraph (current, 1);
+		par = add_paragraph (current, 2);
 		list->Indent = par->Indent;
 	
 	} else if (par->paragraph_code != PAR_LI ||
@@ -60,7 +60,7 @@ list_finish (TEXTBUFF current)
 			par->item         = current->word;
 			current->prev_wrd = NULL;
 		} else {
-			par = add_paragraph (current, 1);
+			par = add_paragraph (current, 2);
 		}
 	} else {
 		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {

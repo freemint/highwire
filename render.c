@@ -1403,7 +1403,7 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 		 */
 		if (!current->lst_stack ||
 		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
-			par = add_paragraph (current, 1);
+			par = add_paragraph (current, 2);
 		}
 
 		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
@@ -1530,7 +1530,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		 */
 		if (!current->lst_stack ||
 		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
-			par = add_paragraph (current, 1);
+			par = add_paragraph (current, 2);
 		}
 
 		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
@@ -1548,7 +1548,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	
 	} else {
-		par = add_paragraph (current, 1);
+		par = add_paragraph (current, 2);
 
 		par->alignment = get_align (parser);
 
@@ -1600,7 +1600,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
 	
-	add_paragraph (current, 1);
+	add_paragraph (current, 2);
 
 	if (flags & PF_START)
 	{
@@ -1622,7 +1622,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 			font_byType (-1, -1, -1, current->word);
 			scan_string_to_16bit (output, parser->Frame->Encoding, &current->text, 
 				                   current->word->font->Base->Mapping);
-			add_paragraph(current, 1);
+			add_paragraph(current, 2);
 			word_set_bold (current, FALSE);
 			flags |= PF_FONT;
 		}
@@ -1650,7 +1650,7 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START)
 	{
-		PARAGRPH paragraph = add_paragraph (&parser->Current, 1);
+		PARAGRPH paragraph = add_paragraph (&parser->Current, 2);
 
 		switch (toupper (get_value_char (parser, KEY_ALIGN)))
 		{
@@ -1677,7 +1677,7 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		add_paragraph (current, 1);
+		add_paragraph (current, 2);
 		current->paragraph->alignment = ALN_LEFT;
 		word_set_font (current, pre_font);
 		if (get_value_unum (parser, KEY_WIDTH, 80) > 80) {
@@ -1703,7 +1703,7 @@ render_PLAINTEXT_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		TEXTBUFF current = &parser->Current;
-		add_paragraph (current, 1);
+		add_paragraph (current, 2);
 		/* from now on plain text, never ending */
 /*		parse_text (*text, frame);*/
 		*text = strchr (*text, '\0');
@@ -1722,13 +1722,13 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		add_paragraph (current, 1);
+		add_paragraph (current, 2);
 		current->paragraph->alignment = ALN_LEFT;
 		word_set_font (current, pre_font);
 		TAsetCondns (current->word->attr, TRUE);
 		flags |= PF_PRE;
 	} else {
-		add_paragraph (current, 1);
+		add_paragraph (current, 2);
 		word_set_font (current, normal_font);
 		TAsetCondns (current->word->attr, FALSE);
 		flags &= ~PF_PRE;
@@ -2459,7 +2459,7 @@ render_text (TEXTBUFF current, const char * text)
 					break;
 				
 				case '\n': /* new paragraph */
-					add_paragraph (current, 1);
+					add_paragraph (current, 2);
 					break;
 				
 				/* 0x10.. 0x12 */
