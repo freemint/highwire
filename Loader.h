@@ -39,14 +39,21 @@ typedef struct s_loader {
 	LOCATION Location;   /* where the data come from ... */
 	CONTAINR Target;     /* ... and where they should go to */
 	ENCODING Encoding;
-	short    MarginW, MarginH;
 	MIMETYPE MimeType;
-	BOOL     notified;   /* if a start notification was sent */
-	short    Socket;
-	short    isChunked;
-	size_t   DataSize;
-	size_t   DataFill;
+	short    MarginW, MarginH;
+	/* */
+	size_t   DataSize; /* expected data size                   */
+	size_t   DataFill; /* real number of loaded/received bytes */
 	char   * Data;
+	BOOL     notified; /* if a start notification was sent     */
+	/* */
+	BOOL   rdChunked;  /* whether the data can't be received in one block */
+	short  rdSocket;   /* handle for remote connection */
+	size_t rdLeft;     /* number of bytes to complete the current data chunk */
+	char * rdDest;     /* pointer to write received data */
+	size_t rdTlen;     /* remaining bytes in rdTemp */
+	char   rdTemp[32]; /* buffer for chunk header data */
+	void * rdList, * rdCurr; /* chunk pointers */
 } * LOADER;
 
 
