@@ -1785,6 +1785,18 @@ hwWind_keybrd (WORD key, UWORD state)
 			
 			case 13: /* enter/return */
 				if (edit->Length) {
+					if (edit->Text[0] != '/' && strchr (edit->Text, ':') == NULL) {
+						/*
+						 * if no protocol, drive letter or local path is given
+						 * we assume that the user means HTTP
+						*/
+						const char http[] = "http://";
+						size_t     gap    = sizeof(http) -1;
+						if (edit->Length < sizeof(edit->Text) - gap) {
+							memmove (edit->Text + gap, edit->Text, edit->Length +1);
+							memcpy  (edit->Text,       http,       gap);
+						}
+					}
 					start_page_load (wind->Pane, edit->Text, NULL);
 					chng_toolbar (wind, 0, 0, -1);
 					break;
