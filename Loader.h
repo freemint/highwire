@@ -34,7 +34,7 @@ typedef struct s_loader {
 } * LOADER;
 
 
-LOADER new_loader    (LOCATION);
+LOADER new_loader    (LOCATION, CONTAINR target);
 void   delete_loader (LOADER *);
 
 LOADER new_loader_job   (const char *address, LOCATION base, CONTAINR target);
