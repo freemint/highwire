@@ -1,3 +1,31 @@
+(non-public of Sep. 11, 2004):
+
+- Large portions of the cache handling code
+  reworked.  This gets rid of several wrong
+  warnings about not found files (mostly due to
+  login pages for forums).
+
+- Image width/height are saves in the disk cache
+  now, this reduces reformat flickering on
+  re-visited pages to the nearly absolute minimum
+  (#0133).
+
+- An ugly hack was added to get yahoo's buggy
+  standard login working (the non-ssl version).
+
+- Named character recognition added for
+  apostroph.
+
+- More types of corrupted jpeg image data are
+  catched now, instead of aborting.
+
+- Some error messages are displayed by alert boxes
+  now instead of console output or simple writing
+  to the screen
+
+- Bugs #0133, #0169, #0170 resolved.
+
+__________________________________________________
 Changes in V. 0.2.1 release  of August 22, 2004:
 
 - Cookie support implemented.  Non-session cookies
