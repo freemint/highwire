@@ -72,6 +72,9 @@ struct s_containr {
 	void      * HighLight;
 	BOOL        Border; /* as given from the <.. BORDER=".." tag   */
 	BOOL 		Resize; /* as given from the <.. RESIZE tag        */
+	WORD Borders;       /* what borders does container have */ 
+	WORD Border_Size; 	/* BAD HTML frame border attribute */ 
+	WORD Border_Colour; /* BAD HTML frame border colour */
 	SCROLL_CODE Scroll; /* as given from the <.. SCROLLING=".."tag */
 		
 	CNTR_HDLR Handler;
