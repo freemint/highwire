@@ -84,14 +84,14 @@ new_parser (LOADER loader)
 	                            loader->MarginW, loader->MarginH);
 	
 	if (loader->ScrollV > 0) {
-		parser->Frame->v_bar.on        = TRUE;
-		parser->Frame->v_bar.scroll    = loader->ScrollV;
-		parser->Frame->Page.Box.Rect.H = parser->Frame->clip.g_h +1024;
+		parser->Frame->v_bar.on     = TRUE;
+		parser->Frame->v_bar.scroll = loader->ScrollV;
+		parser->Frame->Page.Rect.H  = parser->Frame->clip.g_h +1024;
 	}
 	if (loader->ScrollH > 0) {
-		parser->Frame->h_bar.on        = TRUE;
-		parser->Frame->h_bar.scroll    = loader->ScrollH;
-		parser->Frame->Page.Box.Rect.W = parser->Frame->clip.g_w +1024;
+		parser->Frame->h_bar.on     = TRUE;
+		parser->Frame->h_bar.scroll = loader->ScrollH;
+		parser->Frame->Page.Rect.W  = parser->Frame->clip.g_w +1024;
 	}
 	parser->Frame->Container = parser->Target;
 	
@@ -384,7 +384,8 @@ css_values (PARSER parser, const char * line, size_t len)
 			while (--ptr >= val && isspace(*ptr));
 			if (ptr < val) val = NULL;
 		}
-		if (val && ((css < CSS_Unknown && (ent = find_key (parser, css)) == NULL)
+		if (val && ((css < CSS_Unknown
+		             && (ent = find_key (parser, (HTMLKEY)css)) == NULL)
 		            || css != CSS_Unknown)
 		        && (prsdata->KeyNum < numberof(prsdata->KeyValTab))) {
 			ent = entry++;
