@@ -1,6 +1,11 @@
-(unreleased of Feb. 23, 2003)
+(unreleased of Mar. 23, 2003)
 
-- Fixed wrong image colours under TrueColor.
+- Improved handling of framesets, frames are
+  resizeable now.
+
+- Fixed wrong image colours under TrueColor, added
+  support for 16bit HighColor with reverted byte
+  order.
 
 - Initial implementation of OVLs for different
   network support (MiNTnet and STiK2).
@@ -8,13 +13,19 @@
 - Changed the behaviour of the window's info bar
   to have it more logical and informative.
 
+- New control keyword for the configuration file
+  to change the appearance of the info bar, can be
+  displayed now at the window's bottom
+  (see example.cfg\highwire.cfg for explanation).
+
+- Fixed a bug in interpreting of qouted file names
+  from VA_START.
+
 - Improved parsing of urls to encode HTML entities
   and remove control characters from links.
 
 - Fixed a bug in the style=".." parsing function
   which could cause crashes before.
-
-- Improved handling of framesets.
 
 - Mended some more memory leaks.
 
