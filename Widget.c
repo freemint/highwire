@@ -67,6 +67,12 @@ HW_form_do (OBJECT *tree, WORD next)
 				in.emi_bstate  = 0; /* always wait for button released */
 				which =  0;
 				event |= MU_M2;
+			} else if (which > 0 && tree[which].ob_type == G_BUTTON
+				                  && tree[which].ob_state & OS_DISABLED) {
+				in.emi_bmask   = 3;
+				in.emi_bclicks = 0x102;
+				in.emi_bstate  = 0;
+				which = 0;
 			} else {
 				ready = TRUE;
 			}
@@ -84,18 +90,18 @@ HW_form_do (OBJECT *tree, WORD next)
 				objc_offset (tree, which, &in.emi_m2.g_x, &in.emi_m2.g_y);
 				in.emi_m2.g_w = tree[which].ob_width;
 				in.emi_m2.g_h = tree[which].ob_height;
-				if (tree[which].ob_state & OS_DISABLED) {
-					which = 0;
-				} else if (tree[which].ob_type == G_BUTTON) {
+				if (tree[which].ob_type == G_BUTTON) {
 					in.emi_m2.g_x -= 2;
 					in.emi_m2.g_y -= 2;
 					in.emi_m2.g_w += 4;
 					in.emi_m2.g_h += 4;
-					if (out.emo_mbutton) {
+					if (out.emo_mbutton && !(tree[which].ob_state & OS_DISABLED)) {
 						objc_change (tree, which, 0,
 						             in.emi_m2.g_x, in.emi_m2.g_y,
 						             in.emi_m2.g_w, in.emi_m2.g_h, OS_SELECTED, 1);
 					}
+				} else if (tree[which].ob_state & OS_DISABLED) {
+					which = 0;
 				} else {
 					WORD col_tab[] = { G_BLACK, G_WHITE, G_LBLACK },
 					   * color = col_tab;
@@ -123,23 +129,21 @@ WORD
 HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 {
 	static char sepr[] = "----------------------------------------"
-	                     "---------------------------------------";
+	                     "---------------------------------------",
+	            t_dn[] = "", t_up[] = "";
 	static OBJECT * o_tree = NULL;
 	static short    o_pbeg = 1, o_pend;
 	static short    chr_w, chr_h;
 	static GRECT    clip;
 	
-	WORD    ret = -1;
-	short   i;
-	
-	static char t_dn[] = "", t_up[] = "";
 	short tab_num = 0; /* number of lines in tab     */
 	short tab_len = 0; /* maximum line length in tab */
+	WORD  ret     = -1;
 	
 	if (!o_tree) {
 		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_OUTLINED,
 		                { (long)0xFE1100L }, 4,1, 1,1 };
-		short n = 0;
+		short n = 0, i;
 		
 		rsrc_obfix (&root, ROOT);
 		chr_w = root.ob_width;
@@ -195,7 +199,7 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 		WORD num = min (tab_num, o_pend - o_pbeg +1);
 		WORD beg = o_pbeg;
 		WORD end = o_pbeg + num -1;
-		WORD cx, cy, cw, ch, n;
+		WORD cx, cy, cw, ch, n, i;
 		o_tree->ob_tail   = num;
 		o_tree->ob_width  = tab_len * chr_w;
 		o_tree->ob_height = o_tree[num].ob_y + o_tree[num].ob_height;
