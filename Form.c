@@ -62,6 +62,7 @@ struct s_input {
 	char     SubType; /* [S]ubmit, [R]eset, \0 */
 	BOOL     checked;
 	BOOL     disabled;
+	WCHAR    HideChar;
 	UWORD    TextMax;
 	UWORD    TextLen;
 	UWORD    VisibleX;
@@ -150,6 +151,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->Type      = type;
 	input->SubType   = '\0';
 	input->disabled  = FALSE;
+	input->HideChar  = 0;
 	input->TextMax   = 0;
 	input->TextLen   = 0;
 	input->VisibleX  = 0;
@@ -339,6 +341,12 @@ new_input (PARSER parser)
 		else if (!cols)       cols = 20;
 		get_value (parser, KEY_VALUE, value = malloc (mlen +1), mlen +1);
 		input = form_text (current, name, value, mlen, frame->Encoding, cols);
+		if (toupper (*output) == 'P') { /* == "PASSWORD" */
+			const char * star = "*";
+			ENCODER_W encoder = encoder_word (ENCODING_ATARIST,
+			                                  input->Word->font->Base->Mapping);
+			(*encoder)(&star, &input->HideChar);
+		}
 		
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
@@ -956,15 +964,19 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			WORD  mapping = word->font->Base->Mapping;
 			WCHAR tmp[5];
 			{
-				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, mapping);
-				const char  * ptr = &((char*)&asc)[1];
 				WCHAR * end = input->Word->item + input->TextLen;
 				WCHAR * dst = input->Word->item + form->TextCursrX;
 				do {
 					*(end +1) = *(end);
 				} while (--end >= dst);
+			}
+			if (input->HideChar) {
+				input->Word->item[form->TextCursrX] = input->HideChar;
+			} else {
+				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, mapping);
+				const char  * ptr = &((char*)&asc)[1];
 				(*encoder)(&ptr, tmp);
-				*dst = *tmp;
+				input->Word->item[form->TextCursrX] = *tmp;
 			}
 			if (input->Value) {
 				char * end = input->Value + input->TextLen +1;
@@ -972,7 +984,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				do {
 					*(end +1) = *(end);
 				} while (--end >= dst);
-				if (mapping != MAP_UNICODE) {
+				if (input->HideChar || mapping != MAP_UNICODE) {
 					ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 					const char  * ptr = &((char*)&asc)[1];
 					(*encoder)(&ptr, tmp);
