@@ -85,6 +85,34 @@ get_align (PARSER parser)
 	return (frame->Page.Alignment);
 }
 
+/*----------------------------------------------------------------------------*/
+static H_ALIGN
+get_h_align (PARSER parser, H_ALIGN dflt)
+{
+	char out[10];
+	if (get_value (parser, KEY_ALIGN, out, sizeof(out))) {
+		if      (stricmp (out, "left")    == 0) dflt = ALN_LEFT;
+		else if (stricmp (out, "right")   == 0) dflt = ALN_RIGHT;
+		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
+		else if (stricmp (out, "justify") == 0) dflt = ALN_JUSTIFY;
+	}
+	return dflt;
+}
+
+/*----------------------------------------------------------------------------*/
+static V_ALIGN
+get_v_align (PARSER parser, V_ALIGN dflt)
+{
+	char out[10];
+	if (get_value (parser, KEY_VALIGN, out, sizeof(out))) {
+		if      (stricmp (out, "top")      == 0)  dflt = ALN_TOP;
+		else if (stricmp (out, "middle")   == 0)  dflt = ALN_MIDDLE;
+		else if (stricmp (out, "bottom")   == 0)  dflt = ALN_BOTTOM;
+	/*	else if (stricmp (out, "baseline") == 0) dflt = ALN_BASELINE;*/
+	}
+	return dflt;
+}
+
 
 /*------------------------------------------------------------------------------
  * get rid of html entities in an url
@@ -1929,7 +1957,21 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		table_start (parser);
+		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
+		WORD    border   = get_value_unum (parser, KEY_BORDER, -1);
+		if (border < 0) {
+			border = (get_value (parser, KEY_BORDER, NULL,0) ? 1 : 0);
+		}
+		if (floating == ALN_NO_FLT && get_v_align (parser, -1) == ALN_MIDDLE) {
+			floating = ALN_CENTER; /* patch for invalid key value */
+		}
+		table_start (parser,
+		             get_value_color (parser, KEY_BGCOLOR), floating,
+		             get_value_size  (parser, KEY_HEIGHT),
+		             get_value_size  (parser, KEY_WIDTH),
+		             get_value_unum  (parser, KEY_CELLSPACING, 2),
+		             get_value_unum  (parser, KEY_CELLPADDING, 1), border);
+	
 	} else if (parser->Current.tbl_stack) {
 		table_finish (parser);
 		font_switch (parser->Current.word->font, NULL);
@@ -1946,7 +1988,15 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (parser->Current.tbl_stack) {
-		table_row (parser, (flags & PF_START));
+		if (flags & PF_START) {
+			table_row (&parser->Current,
+			           get_value_color (parser, KEY_BGCOLOR),
+			           get_h_align     (parser, ALN_LEFT), 
+			           get_v_align     (parser, ALN_MIDDLE),
+			           get_value_size  (parser, KEY_HEIGHT), TRUE);
+		} else {
+			table_row (&parser->Current, -1,0,0,0, FALSE);
+		}
 	}
 	return (flags|PF_SPACE);
 }
@@ -1960,7 +2010,15 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && parser->Current.tbl_stack) {
-		table_cell (parser, FALSE);
+		table_cell (parser,
+		            get_value_color (parser, KEY_BGCOLOR),
+			         get_h_align     (parser, parser->Current.tbl_stack->AlignH), 
+			         get_v_align     (parser, parser->Current.tbl_stack->AlignV),
+			         get_value_size  (parser, KEY_HEIGHT),
+			         get_value_size  (parser, KEY_WIDTH),
+			         get_value_unum  (parser, KEY_ROWSPAN, 0),
+			         get_value_unum  (parser, KEY_COLSPAN, 0));
+		parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -1975,7 +2033,16 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && parser->Current.tbl_stack) {
-		table_cell (parser, TRUE);
+		table_cell (parser,
+		            get_value_color (parser, KEY_BGCOLOR),
+			         get_h_align     (parser, ALN_CENTER), 
+			         get_v_align     (parser, parser->Current.tbl_stack->AlignV),
+			         get_value_size  (parser, KEY_HEIGHT),
+			         get_value_size  (parser, KEY_WIDTH),
+			         get_value_unum  (parser, KEY_ROWSPAN, 0),
+			         get_value_unum  (parser, KEY_COLSPAN, 0));
+		parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
+		word_set_bold (&parser->Current, TRUE);
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);

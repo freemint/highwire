@@ -62,9 +62,9 @@ delete_table (TABLE * _table)
 
 /*============================================================================*/
 void
-table_start (PARSER parser)
+table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
+             WORD width, WORD spacing, WORD padding, WORD border)
 {
-	char     buf[10];
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = add_paragraph (current, 0);
 	TABLE    table   = malloc (sizeof (struct s_table));
@@ -83,11 +83,7 @@ table_start (PARSER parser)
 	par->paragraph_code = PAR_TABLE;
 	par->Offset.Origin  = (current->tbl_stack && current->tbl_stack->WorkCell
 	                       ? &current->tbl_stack->WorkCell->Offset : NULL);
-	if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
-		if      (stricmp (buf, "right")  == 0) par->floating = ALN_RIGHT;
-		else if (stricmp (buf, "center") == 0) par->floating = ALN_CENTER;
-		else if (stricmp (buf, "left")   == 0) par->floating = ALN_LEFT;
-	}
+	par->floating = floating;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
@@ -103,25 +99,23 @@ table_start (PARSER parser)
 	table->Percent   = NULL;
 	table->ColWidth  = NULL;
 
-	table->Color   = get_value_color (parser, KEY_BGCOLOR);
-	table->Border  = get_value_unum  (parser, KEY_BORDER, -1);
-	if (table->Border < 0) {
-		table->Border = (get_value (parser, KEY_BORDER, NULL, 0) ? 1 : 0);
-	}
-	table->Spacing = get_value_unum (parser, KEY_CELLSPACING, 2);
-	table->Padding = get_value_unum (parser, KEY_CELLPADDING, 1)
-	               + (table->Border ? 1 : 0);
-	table->SetWidth   = get_value_size (parser, KEY_WIDTH);
-	table->SetHeight  = get_value_size (parser, KEY_HEIGHT);
+	table->Color     = color;
+	table->Border    = border;
+	table->Spacing   = spacing;
+	table->Padding   = padding + (border ? 1 : 0);
+	table->SetWidth  = width;
+	table->SetHeight = height;
+	
 	table->t_MinWidth = table->t_MaxWidth = table->Border *2 + table->Spacing;
 }
 
 
 /*============================================================================*/
 void
-table_row (PARSER parser, BOOL beginNend)
+table_row (TEXTBUFF current, WORD color, H_ALIGN h_align, V_ALIGN v_align,
+           WORD height, BOOL beginNend)
 {
-	TBLSTACK stack = parser->Current.tbl_stack;
+	TBLSTACK stack = current->tbl_stack;
 	TABLE    table = stack->Table;
 	TAB_ROW  row   = NULL;
 
@@ -172,30 +166,18 @@ table_row (PARSER parser, BOOL beginNend)
 	}
 	
 	if (beginNend) {
-		char    buf[10];
 		if (!row) {
 			row = malloc (sizeof (struct s_table_row));
 			row->Cells   = NULL;
 			row->NextRow = NULL;
 			table->NumRows++;
 		}
-		row->Color     = get_value_color (parser, KEY_BGCOLOR);
-		row->MinHeight = get_value_size  (parser, KEY_HEIGHT);
+		row->Color     = color;
+		row->MinHeight = height;
 		row->Height    = table->Padding *2;
 	
-		stack->AlignH = ALN_LEFT;
-		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
-			if      (stricmp (buf, "right")   == 0) stack->AlignH = ALN_RIGHT;
-			else if (stricmp (buf, "center")  == 0) stack->AlignH = ALN_CENTER;
-			else if (stricmp (buf, "justify") == 0) stack->AlignH = ALN_JUSTIFY;
-		}
-
-		stack->AlignV = ALN_MIDDLE;
-		if (get_value (parser, KEY_VALIGN, buf, sizeof(buf))) {
-			if      (stricmp (buf, "top")   == 0)    stack->AlignV = ALN_TOP;
-			else if (stricmp (buf, "bottom")  == 0)  stack->AlignV = ALN_BOTTOM;
-		/*	else if (stricmp (buf, "baseline") == 0) stack->AlignV = ALN_BASELINE;*/
-		}
+		stack->AlignH = h_align;
+		stack->AlignV = v_align;
 	
 		if (!table->Rows) {
 			table->Rows = row;
@@ -233,14 +215,13 @@ new_cell (TAB_CELL left_side, short padding)
 
 /*============================================================================*/
 void
-table_cell (PARSER parser, BOOL is_head)
+table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
+            WORD height, WORD width, UWORD rowspan, UWORD colspan)
 {
 	TBLSTACK stack = parser->Current.tbl_stack;
 	TABLE    table = stack->Table;
 	TAB_ROW  row;
 	TAB_CELL cell;
-	short    span;
-	char     buf[10];
 
 /*	printf("table_cell('%c')\n", stack->_debug);*/
 	
@@ -250,7 +231,7 @@ table_cell (PARSER parser, BOOL is_head)
 	}
 	
 	if (!stack->WorkRow) {
-		table_row (parser, TRUE);
+		table_row (&parser->Current, -1, ALN_LEFT, ALN_MIDDLE, 0, TRUE);
 	}
 	row = stack->WorkRow;
 	
@@ -305,55 +286,30 @@ table_cell (PARSER parser, BOOL is_head)
 	}
 	stack->WorkCell = cell;
 
+	cell->_debug = stack->_debug++;
+	
 	cell->Content.Item = new_paragraph (&parser->Current);
 	cell->Offset.Origin               = &table->Paragraph->Offset;
 	cell->Content.Item->Offset.Origin = &cell->Offset;
-	if (is_head) {
-		word_set_bold (&parser->Current, TRUE);
-	}
-	cell->_debug = stack->_debug++;
-
-	#define par cell->Content.Item
-	par->alignment = (is_head ? ALN_CENTER : stack->AlignH);
-
-	parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
 	
-	if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
-		if      (stricmp (buf, "left")    == 0) par->alignment = ALN_LEFT;
-		else if (stricmp (buf, "right")   == 0) par->alignment = ALN_RIGHT;
-		else if (stricmp (buf, "center")  == 0) par->alignment = ALN_CENTER;
-		else if (stricmp (buf, "justify") == 0) par->alignment = ALN_JUSTIFY;
-	}
-	cell->Content.Alignment = par->alignment;
-	#undef par
-
-	cell->AlignV = stack->AlignV;
-	if (get_value (parser, KEY_VALIGN, buf, sizeof(buf))) {
-		if      (stricmp (buf, "top")   == 0)    cell->AlignV = ALN_TOP;
-		else if (stricmp (buf, "bottom")  == 0)  cell->AlignV = ALN_BOTTOM;
-	/*	else if (stricmp (buf, "baseline") == 0) cell->AlignV = ALN_BASELINE;*/
-	}
-
-	if ((cell->Content.Width  = get_value_size (parser, KEY_WIDTH))  > 1024) {
-		  cell->Content.Width  = 0; /*1024;*/
-	}
-	if ((cell->Content.Height = get_value_size (parser, KEY_HEIGHT)) > 1024) {
-		  cell->Content.Height = 1024;
-	}
+	cell->Content.Alignment = cell->Content.Item->alignment = h_align;
+	cell->AlignV            = v_align;
+	cell->Content.Height    = (height <= 1024 ? height : 1024);
+	cell->Content.Width     = (width  <= 1024 ? width  : 0);
 	
-	if ((cell->Content.Backgnd = get_value_color (parser, KEY_BGCOLOR)) < 0) {
+	if ((cell->Content.Backgnd = color) < 0) {
 		if      (row->Color   >= 0) cell->Content.Backgnd = row->Color;
 		else if (table->Color >= 0) cell->Content.Backgnd = table->Color;
 		else                        cell->Content.Backgnd = stack->Backgnd;
 	}
 	parser->Current.backgnd = cell->Content.Backgnd;
 	
-	if ((span = get_value_unum (parser, KEY_ROWSPAN, 0)) > 1) {
-		cell->RowSpan = span;
+	if (rowspan > 1) {
+		cell->RowSpan = rowspan;
 	}
-	if ((span = get_value_unum (parser, KEY_COLSPAN, 0)) > 1) {
-		cell->ColSpan = span;
-		span = 2 - span;
+	if (colspan > 1) {
+		short span = 2 - colspan;
+		cell->ColSpan = colspan;
 		do {
 			if (!stack->WorkCell->RightCell) {
 				TAB_CELL next = new_cell (stack->WorkCell, table->Padding);
@@ -466,7 +422,7 @@ table_finish (PARSER parser)
 	}
 	
 	if (stack->WorkRow) {
-		table_row (parser, FALSE);
+		table_row (&parser->Current, -1,0,0,0, FALSE);
 	}
 	
 	if (!table->Rows) {

@@ -63,9 +63,12 @@ struct s_table_cell {
 
 void delete_table (TABLE*);
 
-void table_start  (PARSER);
-void table_row    (PARSER, BOOL beginNend);
-void table_cell   (PARSER, BOOL is_head);
+void table_start  (PARSER,   WORD color, H_ALIGN floating, WORD height,
+                             WORD wdith, WORD spacng, WORD paddng, WORD border);
+void table_row    (TEXTBUFF, WORD color, H_ALIGN, V_ALIGN, WORD height,
+                             BOOL beginNend);
+void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,
+                             WORD wdith, UWORD rowspan, UWORD colspan);
 void table_finish (PARSER);
 
 long      table_calc    (TABLE, long max_width);
