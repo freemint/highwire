@@ -91,6 +91,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	stack->WorkRow   = NULL;
 	stack->WorkCell  = NULL;
 	stack->NumCells  = 0;
+	stack->AlignH    = ALN_LEFT;
+	stack->AlignV    = ALN_MIDDLE;
 	stack->isSpecial = special;
 	stack->SavedCurr = *current;
 	stack->_debug = 'A';
