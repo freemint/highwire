@@ -274,14 +274,24 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	PARAGRPH   par       = (PARAGRPH)This;
 	WORDLINE * p_line    = &par->Line, line = NULL;
 	WORDITEM   word      = par->item,  next;
-	long       int_width = width -= par->Indent
-	                             + dombox_LftDist (This) + dombox_RgtDist (This);
+	long       int_width;
 	short      blocked   = 0x00;
 	long       l_height  = 0;
 	long       r_height  = 0;
 	H_ALIGN    align;
 	WORD hanging, hang_nxt;
 	
+	if (This->SetWidth) {
+		if (This->SetWidth > 0) {
+			width = This->SetWidth;
+		} else if (This->SetWidth > -1024) {
+			width = (-This->SetWidth * width +512) /1024;
+		}
+		if (width < This->MinWidth) {
+			width = This->MinWidth;
+		}
+	}
+	int_width = width -= dombox_LftDist (This) + dombox_RgtDist (This);
 	This->Rect.X += par->Indent;
 	This->Rect.H =  dombox_TopDist (This);
 	
