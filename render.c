@@ -657,10 +657,15 @@ anc_correct (char * anc)
 				char buf[4]; buf[0] = *(p++); buf[1] = *(p++); buf[2] = '\0';
 				c = strtoul (buf, NULL, 16);
 			} else if (c == '&') {
-				char buf[6] = "";
+				const char ** pp = (const char **)&p;
+				char         uni[16];
 				p--; /* set back to the '&' */
-				scan_namedchar ((const char**)&p, buf, FALSE, MAP_ATARI);
-				c = buf[0];
+				if (scan_namedchar (pp, uni, TRUE, MAP_UNICODE) == uni +2
+				    && !uni[0] && p[-1] == ';') {
+					c = uni[1];
+				} else {
+					p++;
+				}
 			}
 			if (isspace(c) && !b) {
 				*(q++) = ' ';
