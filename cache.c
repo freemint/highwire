@@ -70,8 +70,85 @@ static struct s_cache_node __tree_base = {
 };
 
 
-static BOOL cache_flush  (CACHEITEM, LOCATION);
+/* functions for cache directory handling */
+static BOOL cache_flush  (CACHEITEM);
+static void cache_build  (void);
 static BOOL cache_remove (long num, long use);
+
+
+/*******************************************************************************
+ *
+ *   General setup and information.
+*/
+
+/*============================================================================*/
+void
+cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
+{
+	if (!dir && !mem_max && !dsk_max && !dsk_lim) {
+		puts ("Setting cache defaults:");
+		if (!__cache_mem_max) {
+			mem_max = CACHE_MAX;
+			printf ("  Memory: %lu bytes\n", mem_max);
+		}
+		if (!__cache_dir) {
+			puts (" Disk: (disabled)");
+		} else if (!__cache_dsk_max) {
+			dsk_max = 2L*1024*1024;
+			dsk_lim = 200;
+			printf ("  Disk: %lu bytes, %lu files.\n", dsk_max, dsk_lim);
+		}
+	}
+	
+	if (mem_max) {
+		if ((long)(__cache_mem_max = (long)Malloc (-1) /2) < 0) {
+			__cache_mem_max = 0;
+		} else if (__cache_mem_max > mem_max) {
+			__cache_mem_max = mem_max;
+		}
+/*		printf ("cache mem %lu\n", __cache_mem_max);*/
+	}
+	
+	if (dsk_max) {
+		__cache_dsk_max = dsk_max;
+		__cache_dsk_lim = (dsk_lim ? dsk_lim : 500);
+	}
+	
+	if (dir && *dir && !__cache_dir) {
+		size_t plen = strlen (dir);
+		if ((__cache_path = malloc (plen +14)) != NULL) {
+			memcpy (__cache_path, dir, plen);
+			if (__cache_path[plen-1] != '/' && __cache_path[plen-1] != '\\') {
+				__cache_path[plen++] = (strchr (__cache_path, '/') ? '/' : '\\');
+			}
+			__cache_file = __cache_path + plen;
+			strcpy (__cache_file, "cache.idx");
+			if ((__cache_dir = new_location (__cache_path, NULL)) != NULL) {
+				cache_build();
+			}
+		}
+	}
+	
+	if (__cache_dir && __cache_dsk_max
+	    && (__cache_dsk_num > __cache_dsk_lim ||
+	        __cache_dsk_use > __cache_dsk_max)) {
+		BOOL update = cache_remove (__cache_dsk_num - __cache_dsk_lim,
+		                            __cache_dsk_use - __cache_dsk_max);
+		if (update) {
+			cache_flush (NULL);
+		}
+	}
+}
+
+/*============================================================================*/
+const char *
+cache_DirInfo(void)
+{
+	return (__cache_dir ? location_Path (__cache_dir, NULL) : NULL);
+}
+
+
+/******************************************************************************/
 
 
 /*----------------------------------------------------------------------------*/
@@ -438,7 +515,7 @@ cache_release (CACHED * p_object, BOOL erase)
 						puts ("cache_release(): item is busy!");
 					} else {
 						destroy_item (citem);
-						cache_flush (NULL, __cache_dir);
+						cache_flush (NULL);
 					}
 				}
 				*p_object = NULL;
@@ -480,7 +557,7 @@ cache_clear (CACHED this_n_all)
 		citem = next;
 	}
 	if (dsk) {
-		cache_flush (NULL, __cache_dir);
+		cache_flush (NULL);
 	}
 	return num;
 }
@@ -498,7 +575,7 @@ cache_info (size_t * size, CACHEINF * p_info)
 			CACHEITEM citem = __cache_beg;
 			do {
 				info->Source  = citem->Location;
-				info->Ident   = citem->Ident;
+				info->Ident   = (item_isMem (citem) ?citem->Ident :  0ul);
 				info->Used    = citem->Reffs;
 				info->Cached  = (citem->Cached[0] ? citem->Cached : NULL);
 				info->Local   = (item_isMem (citem) ? NULL : citem->Object);
@@ -515,253 +592,6 @@ cache_info (size_t * size, CACHEINF * p_info)
 		*size = __cache_mem_use /*+ __cache_dsk_use*/;
 	}
 	return num;
-}
-
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-cache_flush (CACHEITEM citem, LOCATION loc)
-{
-	FILE * file;
-	BOOL   single;
-	
-	if (citem && !__cache_changed) {
-		file   = fopen (loc->FullName, "rb+");
-		single = TRUE;
-	} else {
-		citem  = __cache_end;
-		file   = fopen (loc->FullName, "wb");
-		single = FALSE;
-	}
-	if (!file) {
-		puts ("cache_flush(): open failed.");
-		return FALSE;
-	}
-	if (!__cache_dsk_num) {
-		__cache_fid = 1;
-	}
-	fprintf (file, "%08lX:%08lX\n", MAGIC_NUM, __cache_fid);
-	if (single) {
-		fseek (file, 0, SEEK_END);
-	} else {
-		location_wrIdx (NULL, NULL); /* reset location database */
-	}
-	while (citem) {
-		if (!item_isMem (citem) && citem->Cached[0]) {
-			if (location_wrIdx (file, citem->Location)) {
-				fprintf (file, "$%08lX$%08lX$%08lX$%08lX$/%s\n", citem->Ident,
-				         citem->Size, citem->Date, citem->Expires, citem->Cached);
-				if (single) break;
-			}
-		} else if (single) {
-			puts ("cache_flush(): invalid item.");
-			break;
-		}
-		citem = citem->PrevItem;
-	}
-	fclose (file);
-	
-	return TRUE;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-exit_flush (void)
-{
-	CACHEITEM citem = __cache_beg;
-	time_t    locl  = time (NULL);
-	while (citem && citem->Object) {
-		CACHEITEM next = citem->NextItem;
-		if (!item_isMem(citem) && citem->Expires && citem->Expires < locl) {
-			destroy_item (citem);
-		}
-		citem = next;
-	}
-	if (__cache_changed == TRUE) {
-		cache_flush (NULL, __cache_dir);
-	}
-}
-
-/*----------------------------------------------------------------------------*/
-static long
-read_hex (char ** ptr)
-{
-	char * p = (**ptr == '$' ? *ptr + 1 : NULL);
-	long   n = (p ? strtoul (p, &p, 16) : -2);
-	if (p > *ptr +1 && *p == '$') *ptr = p;
-	return n;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-clear_dir (void)
-{
-	DTA * old = Fgetdta(), dta;
-	Fsetdta (&dta);
-	strcpy (__cache_file, "*.*");
-	if (Fsfirst (__cache_path, 0x0000) == E_OK) do {
-		if ((strchr (base32, toupper (dta.d_fname[0])) &&
-		     strchr (base32, toupper (dta.d_fname[1])) &&
-		     strchr (base32, toupper (dta.d_fname[2])) &&
-		     strchr (base32, toupper (dta.d_fname[3])) &&
-		     (!dta.d_fname[4] || (dta.d_fname[4] == '.')))
-		    || stricmp (dta.d_fname, "cache.idx") == 0) {
-			strcpy  (__cache_file,  dta.d_fname);
-			Fdelete (__cache_path);
-		}
-	} while (Fsnext() == E_OK);
-	Fsetdta (old);
-}
-
-/*============================================================================*/
-void
-cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
-{
-	BOOL update = FALSE;
-	
-	if (!dir && !mem_max && !dsk_max && !dsk_lim) {
-		puts ("Setting cache defaults:");
-		if (!__cache_mem_max) {
-			mem_max = CACHE_MAX;
-			printf ("  Memory: %lu bytes\n", mem_max);
-		}
-		if (!__cache_dir) {
-			puts (" Disk: (disabled)");
-		} else if (!__cache_dsk_max) {
-			dsk_max = 2L*1024*1024;
-			dsk_lim = 200;
-			printf ("  Disk: %lu bytes, %lu files.\n", dsk_max, dsk_lim);
-		}
-	}
-	
-	if (mem_max) {
-		if ((long)(__cache_mem_max = (long)Malloc (-1) /2) < 0) {
-			__cache_mem_max = 0;
-		} else if (__cache_mem_max > mem_max) {
-			__cache_mem_max = mem_max;
-		}
-/*		printf ("cache mem %lu\n", __cache_mem_max);*/
-	}
-	
-	if (dsk_max) {
-		__cache_dsk_max = dsk_max;
-		__cache_dsk_lim = (dsk_lim ? dsk_lim : 500);
-	}
-	
-	if (dir && *dir && !__cache_dir) {
-		LOCATION loc  = NULL;
-		FILE   * file = NULL;
-		size_t   plen = strlen (dir);
-		if ((__cache_path = malloc (plen +14)) != NULL) {
-			memcpy (__cache_path, dir, plen);
-			if (__cache_path[plen-1] != '/' && __cache_path[plen-1] != '\\') {
-				__cache_path[plen++] = (strchr (__cache_path, '/') ? '/' : '\\');
-			}
-			__cache_file = __cache_path + plen;
-			strcpy (__cache_file, "cache.idx");
-			loc = new_location (__cache_path, NULL);
-		}
-		if (loc) {
-			char hdr[20];
-			file = fopen (__cache_path, "rb");
-			if (file && fgets (hdr, (int)sizeof(hdr) -1, file)) {
-				int  pos   = 0;
-				long magic = 0;
-				if ((sscanf (hdr, "%8lX:%8lX%n", &magic, &__cache_fid, &pos) == 2)
-				    && (magic == MAGIC_NUM) && (__cache_fid > 0) && (pos == 17)
-				    && (hdr[17] == '\n' || hdr[17] == '\r')) {
-					__cache_dir = loc;
-				} else {
-					__cache_fid = 0l;
-					fclose (file);
-					file = NULL;
-					hwUi_info ("cache::setup()", " \n"
-					           "The cache is out of date and will be cleared now.\n"
-					           "This might need some time.\n");
-					clear_dir();
-				}
-			}
-			if (!file) {
-				if (cache_flush (NULL, loc)) {
-					__cache_dir = loc;
-				} else {
-					free_location (&loc);
-				}
-			}
-		}
-		if (file) {
-			time_t locl = time (NULL);
-			while (!feof (file)) {
-				char buf[1024];
-				loc = location_rdIdx (file);
-				if (!fgets (buf, (int)sizeof(buf) -1, file)) {
-					if (loc) {
-						puts ("cache_setup(): idx truncated.");
-						free_location (&loc);
-					}
-				} else {
-					char * ptr  = buf;
-					long  ident = read_hex (&ptr);
-					long   size = read_hex (&ptr);
-					long   date = read_hex (&ptr);
-					long   expr = read_hex (&ptr);
-					size_t len  = strlen   (++ptr);
-					while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
-					if (size < 0 || date < 0 || expr < -1) {
-						puts ("cache_setup(): idx corrupted.");
-						free_location (&loc);
-						break;
-					} else if (!loc) { /* outdated or invalid */
-						strcpy (__cache_file, ptr +1);
-						unlink (__cache_path);
-						update = TRUE;
-					} else if (expr && expr <= locl) { /* Expired */
-						free_location (&loc);
-						strcpy (__cache_file, ptr +1);
-						unlink (__cache_path);
-						update = TRUE;
-					} else {
-						CACHEITEM item = create_item (loc, NULL, size,
-						                              (void(*)(void*))0);
-						if (!item) {
-							puts ("cache_setup(): create failed.");
-							free_location (&loc);
-							break;
-						} else {
-							strcpy (item->Cached, ptr +1);
-							item->Ident   = ident;
-							item->Date    = date;
-							item->Expires = expr;
-							item->Reffs--;
-						}
-					}
-				}
-			}
-			fclose (file);
-			if (!__cache_changed || __cache_dsk_num > 0) {
-				__cache_changed = -1;
-			}
-			atexit (exit_flush);
-		}
-	}
-	
-	if (__cache_dir && __cache_dsk_max
-	    && (__cache_dsk_num > __cache_dsk_lim ||
-	        __cache_dsk_use > __cache_dsk_max)) {
-		update = cache_remove (__cache_dsk_num - __cache_dsk_lim,
-		                       __cache_dsk_use - __cache_dsk_max);
-	}
-	
-	if (update) {
-		cache_flush (NULL, __cache_dir);
-	}
-}
-
-/*============================================================================*/
-const char *
-cache_DirInfo(void)
-{
-	return (__cache_dir ? location_Path (__cache_dir, NULL) : NULL);
 }
 
 
@@ -805,26 +635,6 @@ cache_abort (LOCATION loc)
 	/*	printf ("cache_abort(%s)\n", loc->FullName);*/
 		destroy_item (citem);
 	}
-}
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-cache_remove (long num, long use)
-{
-	long      cnt   = 0;
-	CACHEITEM citem = __cache_end;
-	while (citem) {
-		CACHEITEM prev = citem->PrevItem;
-		if (!item_isMem (citem) && !citem->Reffs && citem->Cached[0]) {
-			use -= citem->Size;
-			num--;
-			destroy_item (citem);
-			cnt++;
-			if (num <= 0 && use <= 0) break;
-		}
-		citem = prev;
-	}
-	return (cnt > 0);
 }
 
 /*============================================================================*/
@@ -876,7 +686,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Expires = expires;
 				citem->Reffs--;
 				__cache_dsk_use += size;
-				cache_flush (citem, __cache_dir);
+				cache_flush (citem);
 			} else {
 				free_location (&loc);
 			}
@@ -963,4 +773,229 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 		item_reorder (found);
 	}
 	return (res_d | res_m);
+}
+
+
+/*******************************************************************************
+ *
+ *   Functions for cache directory handling.
+*/
+
+/*------------------------------------------------------------------------------
+ * Write the index.cfg file.
+*/
+static BOOL
+cache_flush (CACHEITEM citem)
+{
+	FILE * file;
+	BOOL   single;
+	
+	if (citem && !__cache_changed) {
+		file   = fopen (__cache_dir->FullName, "rb+");
+		single = TRUE;
+	} else {
+		citem  = __cache_end;
+		file   = fopen (__cache_dir->FullName, "wb");
+		single = FALSE;
+	}
+	if (!file) {
+		puts ("cache_flush(): open failed.");
+		return FALSE;
+	}
+	if (!__cache_dsk_num) {
+		__cache_fid = 1;
+	}
+	fprintf (file, "%08lX:%08lX\n", MAGIC_NUM, __cache_fid);
+	if (single) {
+		fseek (file, 0, SEEK_END);
+	} else {
+		location_wrIdx (NULL, NULL); /* reset location database */
+	}
+	while (citem) {
+		if (!item_isMem (citem) && citem->Cached[0]) {
+			if (location_wrIdx (file, citem->Location)) {
+				fprintf (file, "$%08lX$%08lX$%08lX$%08lX$/%s\n", citem->Ident,
+				         citem->Size, citem->Date, citem->Expires, citem->Cached);
+				if (single) break;
+			}
+		} else if (single) {
+			puts ("cache_flush(): invalid item.");
+			break;
+		}
+		citem = citem->PrevItem;
+	}
+	fclose (file);
+	__cache_changed = FALSE;
+	
+	return TRUE;
+}
+
+/*------------------------------------------------------------------------------
+ * Exit handler
+*/
+static void
+_exit_flush (void)
+{
+	CACHEITEM citem = __cache_beg;
+	time_t    locl  = time (NULL);
+	while (citem && citem->Object) {
+		CACHEITEM next = citem->NextItem;
+		if (!item_isMem(citem) && citem->Expires && citem->Expires < locl) {
+			destroy_item (citem);
+		}
+		citem = next;
+	}
+	if (__cache_changed == TRUE) {
+		cache_flush (NULL);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static long
+read_hex (char ** ptr)
+{
+	char * p = (**ptr == '$' ? *ptr + 1 : NULL);
+	long   n = (p ? strtoul (p, &p, 16) : -2);
+	if (p > *ptr +1 && *p == '$') *ptr = p;
+	return n;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+clear_dir (void)
+{
+	DTA * old = Fgetdta(), dta;
+	Fsetdta (&dta);
+	strcpy (__cache_file, "*.*");
+	if (Fsfirst (__cache_path, 0x0000) == E_OK) do {
+		if ((strchr (base32, toupper (dta.d_fname[0])) &&
+		     strchr (base32, toupper (dta.d_fname[1])) &&
+		     strchr (base32, toupper (dta.d_fname[2])) &&
+		     strchr (base32, toupper (dta.d_fname[3])) &&
+		     (!dta.d_fname[4] || (dta.d_fname[4] == '.')))
+		    || stricmp (dta.d_fname, "cache.idx") == 0) {
+			strcpy  (__cache_file,  dta.d_fname);
+			Fdelete (__cache_path);
+		}
+	} while (Fsnext() == E_OK);
+	Fsetdta (old);
+}
+
+/*------------------------------------------------------------------------------
+ * Read the index.cfg file and create all cache structures.
+*/
+static void
+cache_build (void)
+{
+	FILE * file = fopen (__cache_path, "rb");
+	if (file) {
+		char hdr[20] = "";
+		long magic   = 0;
+		long fid     = 0;
+		int  pos     = 0;
+		if (fgets (hdr, (int)sizeof(hdr) -1, file)
+		    && (sscanf (hdr, "%8lX:%8lX%n", &magic, &fid, &pos) == 2)
+		    && (magic == MAGIC_NUM) && (fid > 0) && (pos == 17)
+		    && (hdr[17] == '\n' || hdr[17] == '\r')) {
+			__cache_fid = fid;
+		} else {
+			__cache_fid = 0l;
+			fclose (file);
+			file = NULL;
+			if (hdr[0]) {
+				hwUi_info ("cache::build()", " \n"
+				           "The cache is out of date and will be cleared now.\n"
+				           "This might need some time.\n");
+			}
+			clear_dir();
+		}
+	}
+	
+	if (file) {
+		time_t locl = time (NULL);
+		while (!feof (file)) {
+			char buf[1024];
+			LOCATION loc = location_rdIdx (file);
+			if (!fgets (buf, (int)sizeof(buf) -1, file)) {
+				if (loc) {
+					puts ("cache_setup(): idx truncated.");
+					free_location (&loc);
+				}
+			} else {
+				char * ptr  = buf;
+				long  ident = read_hex (&ptr);
+				long   size = read_hex (&ptr);
+				long   date = read_hex (&ptr);
+				long   expr = read_hex (&ptr);
+				size_t len  = strlen   (++ptr);
+				while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
+				
+				if (size < 0 || date < 0 || expr < -1) {
+					puts ("cache_setup(): idx corrupted.");
+					free_location (&loc);
+					break;
+				
+				} else if (!loc) { /* outdated or invalid */
+					strcpy (__cache_file, ptr +1);
+					unlink (__cache_path);
+					__cache_changed = TRUE;
+				
+				} else if (expr && expr <= locl) { /* Expired */
+					free_location (&loc);
+					strcpy (__cache_file, ptr +1);
+					unlink (__cache_path);
+					__cache_changed = TRUE;
+				
+				} else {
+					CACHEITEM item = create_item (loc, NULL, size,(void(*)(void*))0);
+					if (!item) {
+						puts ("cache_setup(): create failed.");
+						free_location (&loc);
+						break;
+					} else {
+						strcpy (item->Cached, ptr +1);
+						item->Ident   = ident;
+						item->Date    = date;
+						item->Expires = expr;
+						item->Reffs--;
+					}
+				}
+			}
+		}
+		fclose (file);
+	
+	} else { /* !file */
+		__cache_changed = TRUE;
+	}
+	
+	if (__cache_changed) {
+		if (!cache_flush (NULL)) {
+			free_location (&__cache_dir);
+			__cache_changed = FALSE;
+		} else {
+			atexit (_exit_flush);
+		}
+	}
+}
+
+/*------------------------------------------------------------------------------
+ * Delete files to eet the cache liits.
+*/
+static BOOL
+cache_remove (long num, long use)
+{
+	long      cnt   = 0;
+	CACHEITEM citem = __cache_end;
+	while (citem) {
+		CACHEITEM prev = citem->PrevItem;
+		if (!item_isMem (citem) && !citem->Reffs && citem->Cached[0]) {
+			use -= citem->Size;
+			num--;
+			destroy_item (citem);
+			cnt++;
+			if (num <= 0 && use <= 0) break;
+		}
+		citem = prev;
+	}
+	return (cnt > 0);
 }
