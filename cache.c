@@ -53,27 +53,17 @@ static char    * __cache_path = NULL;
 static char    * __cache_file = NULL;
 static long      __cache_fid = 1;
 
-struct s_cache_node {
-	CACHENODE BackNode;
-	UWORD     NodeMask;
-	unsigned  Level4x :8;
-	unsigned  Filled  :8;
-	union {
-		CACHENODE Node;
-		CACHEITEM Item;
-	}         Array[16];
-};
-static struct s_cache_node __tree_base = {
-	NULL, 0x0000, 0, 0,
-	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
-		{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL} }
-};
-
 
 /* functions for cache directory handling */
 static BOOL cache_flush  (CACHEITEM);
 static void cache_build  (void);
 static BOOL cache_remove (long num, long use);
+
+/* search tree handling */
+static CACHEITEM * tree_slot (LOCATION);
+static CACHEITEM   tree_item (LOCATION);
+static CACHENODE tree_insert (CACHEITEM, LOCATION);
+static void      tree_remove (CACHEITEM);
 
 
 /*******************************************************************************
@@ -152,53 +142,10 @@ cache_DirInfo(void)
 
 
 /*----------------------------------------------------------------------------*/
-static CACHENODE
-tree_node (ULONG hash)
-{
-	CACHENODE node = &__tree_base;
-	UWORD     idx  = hash & 0xF;
-	while (node->NodeMask & (1 << idx)) {
-		node = node->Array[idx].Node;
-		idx  = (hash >>= 4) & 0xF;
-	}
-	return node;
-}
-
-/*----------------------------------------------------------------------------*/
-static CACHEITEM *
-tree_slot (LOCATION loc)
-{
-	ULONG     hash  = location_Hash (loc);
-	CACHENODE node  = tree_node (hash);
-	UWORD     idx   = (hash >> node->Level4x) & 0xF;
-	return &node->Array[idx].Item;
-}
-
-/*----------------------------------------------------------------------------*/
-static CACHEITEM
-tree_item (LOCATION loc)
-{
-	ULONG     hash  = location_Hash (loc);
-	CACHENODE node  = tree_node (hash);
-	UWORD     idx   = (hash >> node->Level4x) & 0xF;
-	CACHEITEM citem = node->Array[idx].Item;
-	while (citem && (item_isMem (citem) ||
-	                 !location_equal (loc, citem->Location))) {
-		citem = citem->NodeNext;
-	}
-	return citem;
-}
-
-
-/*----------------------------------------------------------------------------*/
 static CACHEITEM
 create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 {
-	ULONG     hash  = location_Hash (loc);
-	CACHENODE node  = tree_node (hash);
-	UWORD     idx   = (hash >> node->Level4x) & 0xF;
-	CACHEITEM nitem = node->Array[idx].Item;
-	CACHEITEM citem = NULL;
+	CACHEITEM citem;
 	
 	if (dtor) {
 		if (!object) {
@@ -212,34 +159,8 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		}
 	}
 	
-	if (nitem && nitem->NodeHash != hash) {
-		do {
-			CACHENODE back = node;
-			if ((node = malloc (sizeof(struct s_cache_node))) != NULL) {
-				back->Array[idx].Node = node;
-				back->NodeMask       |= (1 << idx);
-				node->BackNode = back;
-				node->NodeMask = 0x0000;
-				node->Level4x  = back->Level4x +4;
-				node->Filled   = 1;
-				memset (node->Array, 0, sizeof(node->Array));
-				node->Array[(nitem->NodeHash >> node->Level4x) & 0xF].Item = nitem;
-				citem = nitem;
-				do {
-					citem->Node = node;
-				} while ((citem = citem->NodeNext) != NULL);
-				idx = (hash >> node->Level4x) & 0xF;
-			}
-		} while (node->Array[idx].Item);
-	}
-	if (node && (citem = malloc (sizeof (struct s_cache_item))) != NULL) {
-		citem->Node           = node;
-		citem->NodeHash       = hash;
-		if ((citem->NodeNext  = node->Array[idx].Item) == NULL) {
-			node->Filled++;
-		}
-		node->Array[idx].Item = citem;
-		
+	citem = malloc (sizeof (struct s_cache_item));
+	if (citem && tree_insert (citem, loc)) {
 		citem->Location = location_share (loc);
 		citem->Reffs    = 1;
 		citem->Ident    = 0;
@@ -262,6 +183,10 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		__cache_beg     = citem;
 		
 		citem->Cached[0] = '\0';
+	
+	} else if (citem) {   /* memory exhausted */
+		free (citem);
+		citem = NULL;
 	}
 	return citem;
 }
@@ -270,32 +195,8 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 static void
 destroy_item (CACHEITEM citem)
 {
-	CACHENODE node = citem->Node;
-	ULONG     hash = citem->NodeHash;
-	UWORD     idx  = (hash >> node->Level4x) & 0xF;
-
-	if (node->Array[idx].Item != citem) {
-		CACHEITEM * nptr = &node->Array[idx].Item;
-		while (*nptr) {
-			if (*nptr == citem) {
-				*nptr = citem->NodeNext;
-				break;
-			}
-			nptr = &(*nptr)->NodeNext;
-		}
-
-	} else if ((node->Array[idx].Item = citem->NodeNext) == NULL) {
-		node->Filled--;
-		while (!node->Filled && node->BackNode) {
-			CACHENODE back = node->BackNode;
-			free (node);
-			node = back;
-			idx  = (hash >> node->Level4x) & 0xF;
-			node->Array[idx].Node = NULL;
-			node->NodeMask       &= ~(1 << idx);
-			node->Filled--;
-		}
-	}
+	
+	tree_remove (citem);
 	
 	if (citem->PrevItem) citem->PrevItem->NextItem = citem->NextItem;
 	else                 __cache_beg               = citem->NextItem;
@@ -433,10 +334,8 @@ cache_location (CACHEITEM citem)
 CACHED
 cache_lookup (LOCATION loc, long ident, long * opt_found)
 {
-	ULONG       hash    = location_Hash (loc);
-	CACHENODE   node    = tree_node (hash);
-	UWORD       idx     = (hash >> node->Level4x) & 0xF;
-	CACHEITEM * p_cache = &node->Array[idx].Item;
+	CACHEITEM * p_array = tree_slot (loc);
+	CACHEITEM * p_cache = p_array;
 	CACHEITEM * p_found = NULL;
 	CACHEITEM   citem;
 
@@ -461,10 +360,10 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 	}
 	if (p_found) {
 		citem = *p_found;
-		if (p_found != &node->Array[idx].Item) {
-			*p_found              = citem->NodeNext;
-			citem->NodeNext       = node->Array[idx].Item;
-			node->Array[idx].Item = citem;
+		if (p_found != p_array) {
+			*p_found        = citem->NodeNext;
+			citem->NodeNext = *p_array;
+			*p_array        = citem;
 		}
 		item_reorder (citem);
 		if (opt_found) {
@@ -979,7 +878,7 @@ cache_build (void)
 }
 
 /*------------------------------------------------------------------------------
- * Delete files to eet the cache liits.
+ * Delete files to meet the cache limits.
 */
 static BOOL
 cache_remove (long num, long use)
@@ -998,4 +897,146 @@ cache_remove (long num, long use)
 		citem = prev;
 	}
 	return (cnt > 0);
+}
+
+
+/*******************************************************************************
+ *
+ *   Search tree handling (sorted by LOCATION)
+*/
+
+struct s_cache_node {
+	CACHENODE BackNode;
+	UWORD     NodeMask;
+	unsigned  Level4x :8;
+	unsigned  Filled  :8;
+	union {
+		CACHENODE Node;
+		CACHEITEM Item;
+	}         Array[16];
+};
+
+/* root node, take care that ALL elements are zero-ed at startup! */
+static struct s_cache_node __tree_base = {
+	NULL, 0x0000, 0, 0,
+	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
+		{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL} }
+};
+
+/*----------------------------------------------------------------------------*/
+static CACHENODE
+tree_node (ULONG hash, UWORD * p_idx)
+{
+	CACHENODE node = &__tree_base;
+	UWORD     idx  = hash & 0xF;
+	while (node->NodeMask & (1 << idx)) { /* go through the tree */
+		node = node->Array[idx].Node;
+		idx  = (hash >>= 4) & 0xF;
+	}
+	*p_idx = idx;
+	return node;
+}
+
+/*------------------------------------------------------------------------------
+ * Return the pointer to the linked list where the location belongs to.
+*/
+static CACHEITEM *
+tree_slot (LOCATION loc)
+{
+	UWORD     idx;
+	CACHENODE node = tree_node (location_Hash (loc), &idx);
+	return &node->Array[idx].Item;
+}
+
+/*------------------------------------------------------------------------------
+ * Returns the cache item fro the tree.
+*/
+static CACHEITEM
+tree_item (LOCATION loc)
+{
+	UWORD     idx;
+	CACHENODE node  = tree_node (location_Hash (loc), &idx);
+	CACHEITEM citem = node->Array[idx].Item;
+	while (citem && (item_isMem (citem) ||
+	                 !location_equal (loc, citem->Location))) {
+		citem = citem->NodeNext;
+	}
+	return citem;
+}
+
+/*------------------------------------------------------------------------------
+ * Insert the cache item in the search tree and expand the tree if necessary.
+*/
+static CACHENODE
+tree_insert (CACHEITEM citem, LOCATION loc)
+{
+	UWORD     idx;
+	ULONG     hash  = location_Hash (loc);
+	CACHENODE node  = tree_node (hash, &idx);
+	CACHEITEM nitem = node->Array[idx].Item;
+	
+	if (nitem && nitem->NodeHash != hash) {
+		do {
+			CACHENODE back = node;
+			CACHEITEM temp;
+			if ((node = malloc (sizeof(struct s_cache_node))) != NULL) {
+				back->Array[idx].Node = node;
+				back->NodeMask       |= (1 << idx);
+				node->BackNode = back;
+				node->NodeMask = 0x0000;
+				node->Level4x  = back->Level4x +4;
+				node->Filled   = 1;
+				memset (node->Array, 0, sizeof(node->Array));
+				node->Array[(nitem->NodeHash >> node->Level4x) & 0xF].Item = nitem;
+				temp = nitem;
+				do {
+					temp->Node = node;
+				} while ((temp = temp->NodeNext) != NULL);
+				idx = (hash >> node->Level4x) & 0xF;
+			}
+		} while (node->Array[idx].Item);
+	}
+	if (node) {
+		citem->Node          = node;
+		citem->NodeHash      = hash;
+		if ((citem->NodeNext = node->Array[idx].Item) == NULL) {
+			node->Filled++;
+		}
+		node->Array[idx].Item = citem;
+	}
+	return node;
+}
+
+/*------------------------------------------------------------------------------
+ * Remove cache item from the search tree and remove empty nodes.
+*/
+static void
+tree_remove (CACHEITEM citem)
+{
+	CACHENODE node = citem->Node;
+	ULONG     hash = citem->NodeHash;
+	UWORD     idx  = (hash >> node->Level4x) & 0xF;
+
+	if (node->Array[idx].Item != citem) {
+		CACHEITEM * nptr = &node->Array[idx].Item;
+		while (*nptr) {
+			if (*nptr == citem) {
+				*nptr = citem->NodeNext;
+				break;
+			}
+			nptr = &(*nptr)->NodeNext;
+		}
+
+	} else if ((node->Array[idx].Item = citem->NodeNext) == NULL) {
+		node->Filled--;
+		while (!node->Filled && node->BackNode) {
+			CACHENODE back = node->BackNode;
+			free (node);
+			node = back;
+			idx  = (hash >> node->Level4x) & 0xF;
+			node->Array[idx].Node = NULL;
+			node->NodeMask       &= ~(1 << idx);
+			node->Filled--;
+		}
+	}
 }
