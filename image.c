@@ -15,12 +15,7 @@
 #include "schedule.h"
 #include "cache.h"
 
-#define img_hash(w,h,c) (((((long)((char)c)<<12) ^ w)<<12) ^ h)
-
 #ifdef LIBGIF
-#	include <gif_lib.h>
-#	undef TRUE
-#	undef FALSE
 	static pIMGDATA read_gif (IMAGE, LOCATION);
 #else
 #	define read_gif( i, l )   NULL
@@ -41,9 +36,23 @@
 #endif
 
 
+typedef struct {
+	void   * _priv_data;   /* decoder private data */
+	UWORD    Width, Height;
+	UWORD    BitDepth;
+	WORD     NumColors;
+	char   * Palette;
+	unsigned PalRpos :8;
+	unsigned PalGpos :8;
+	unsigned PalBpos :8;
+	unsigned PalStep :8;
+	WORD     Transp;
+	/* */
+	ULONG Pixel[256];
+} IMGINFO;
+
 typedef struct raster_info {
-	short  * PixIdx;
-	long   * Palette;
+	ULONG  * Pixel;
 	short  * DthBuf;
 	short    Width;
 	UWORD    PixMask;
@@ -54,10 +63,12 @@ typedef struct raster_info {
 	size_t   IncYfx;
 } RASTERINFO;
 
-typedef void (*RASTERIZER)(UWORD *, RASTERINFO *, char *);
-static RASTERIZER raster_color = NULL;
-static BOOL       stnd_bitmap  = FALSE;
-/*static BOOL       falcon_ovlay = FALSE;*/
+static void   cnvpal_mono  (IMGINFO *, ULONG);
+static void (*cnvpal_color)(IMGINFO *, ULONG) = NULL;
+static void   raster_mono  (UWORD *, RASTERINFO *, char *);
+static void (*raster_color)(UWORD *, RASTERINFO *, char *) = NULL;
+static BOOL   stnd_bitmap  = FALSE;
+/*static BOOL   falcon_ovlay = FALSE;*/
 
 static short pixel_val[256];
 static char  disp_info[10] = "";
@@ -66,6 +77,8 @@ static char  disp_info[10] = "";
 static void init_display (void);
 
 static BOOL image_job (void *, long);
+
+#define img_hash(w,h,c) (((((long)((char)c)<<12) ^ w)<<12) ^ h)
 
 
 /*============================================================================*/
@@ -437,45 +450,63 @@ image_job (void * arg, long invalidated)
 
 /*----------------------------------------------------------------------------*/
 static pIMGDATA
-setup (IMAGE img, short depth, short img_w, short img_h, RASTERINFO * info)
+setup (IMAGE img, IMGINFO * info, RASTERINFO * rast)
 {
-	static void raster_mono (UWORD *, struct raster_info *, char *);
-	
-	short    n_planes = (depth > 1 ? planes : 1);
+	short    n_planes = (info->BitDepth > 1 ? planes : 1);
 	size_t   wd_width;
 	size_t   pg_size;
 	size_t   mem_size;
+	ULONG    transpar;
 	pIMGDATA data;
 	
-	img_scale (img, img_w, img_h, info);
+	img_scale (img, info->Width, info->Height, rast);
 	
 	wd_width = (img->disp_w + 15) / 16;
 	pg_size  = wd_width * img->disp_h;
 	mem_size = pg_size *2 * n_planes;
 	data     = malloc (sizeof (struct s_img_data) + mem_size);
 	data->mem_size   = mem_size;
-	data->img_w      = img_w;
-	data->img_h      = img_h;
+	data->img_w      = info->Width;
+	data->img_h      = info->Height;
 	data->fd_addr    = (data +1);
 	data->fd_w       = img->disp_w;
 	data->fd_h       = img->disp_h;
 	data->fd_wdwidth = wd_width;
-	data->fd_stand   = (depth > 1 ? stnd_bitmap : FALSE);
+	data->fd_stand   = (info->BitDepth > 1 ? stnd_bitmap : FALSE);
 	data->fd_nplanes = n_planes;
 	data->fd_r1 = data->fd_r2 = data->fd_r3 = 0;
 	
-	info->Width   = img->disp_w;
-	info->PixMask = (1 << depth) -1;
-	info->PgSize  = pg_size;
-	info->LnSize  = wd_width;
+	rast->Width   = img->disp_w;
+	rast->PixMask = (1 << info->BitDepth) -1;
+	rast->PgSize  = pg_size;
+	rast->LnSize  = wd_width;
 	if (!data->fd_stand) {
-		info->LnSize *= n_planes;
+		rast->LnSize *= n_planes;
 	}
-	if (planes <= 2 && depth > 1) {
-		info->DthBuf = malloc ((img->disp_w +1) *2);
-		memset (info->DthBuf, 0, (img->disp_w *2));
+	if (info->Transp < 0) {
+		transpar = img->backgnd = -1;
+	} else if (planes <= 8) {
+		transpar = img->backgnd;
+	} else {
+		short  rgb[3];
+		vq_color (vdi_handle, img->backgnd, 0, rgb);
+		transpar = ((( (((long)rgb[0] * 255 +500) / 1000)  <<8)
+		             | (((long)rgb[1] * 255 +500) / 1000)) <<8)
+		           |    ((long)rgb[2] * 255 +500) / 1000;
 	}
-	info->Rasterizer = (depth > 1 ? raster_color : raster_mono);
+	if (info->BitDepth > 1) {
+		if (planes <= 2) {
+			rast->DthBuf = malloc ((img->disp_w +1) *2);
+			memset (rast->DthBuf, 0, (img->disp_w *2));
+		}
+		(*cnvpal_color)(info, transpar);
+		rast->Rasterizer = raster_color;
+	} else {
+		cnvpal_mono (info, transpar);
+		data->bgnd = info->Pixel[0];
+		data->fgnd = info->Pixel[1];
+		rast->Rasterizer = raster_mono;
+	}
 	
 /*	printf ("scale: [%i,%i] %lX.%04lX/%lX.%04lX [%i,%i] \n", img_w, img_h,
 	        scale_x >>16, scale_x & 0xFFFF, scale_y >>16, scale_y & 0xFFFF,
@@ -551,7 +582,7 @@ raster_mono (UWORD * dst, RASTERINFO * info, char * src)
 static void
 raster_stnd (UWORD * dst, RASTERINFO * info, char * src)
 {
-	short * map   = info->PixIdx;
+	ULONG * map   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	short   width = info->Width;
 	size_t  x     = (info->IncXfx +1) /2;
@@ -584,7 +615,7 @@ static void
 raster_D1 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * buf   = info->DthBuf;
-	short * pix   = info->PixIdx;
+	ULONG * pix   = info->Pixel;
 	short   ins   = 0;
 	UWORD   mask  = info->PixMask;
 	short   width = info->Width;
@@ -618,7 +649,7 @@ static void
 raster_D2 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * buf   = info->DthBuf;
-	long  * pal   = info->Palette;
+	ULONG * pal   = info->Pixel;
 	short   ins   = *buf;
 	UWORD   mask  = info->PixMask;
 	short   width = info->Width;
@@ -672,7 +703,7 @@ raster_D2 (UWORD * dst, RASTERINFO * info, char * src)
 static void
 raster_I4 (UWORD * dst, RASTERINFO * info, char * src)
 {
-	short * map   = info->PixIdx;
+	ULONG * map   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	short   width = info->Width;
 	size_t  x     = (info->IncXfx +1) /2;
@@ -723,8 +754,8 @@ raster_I8 (UWORD * dst, RASTERINFO * info, char * src)
 		add.l		%5, (%3)
 		move.b	0(%1,d3.w), d3 | palette index
 		and.w		%6, d3
-		lsl.w		#1, d3
-		move.w	0(%2,d3.w), %4 | pixel value
+		lsl.w		#2, d3
+		move.w	2(%2,d3.w), %4 | pixel value
 		swap		%6 | -> chunk counter
 		
 		moveq.l	#0x03, d3 |chunks 0/1
@@ -763,8 +794,8 @@ raster_I8 (UWORD * dst, RASTERINFO * info, char * src)
 		bpl.b		1b
 		"
 		:
-		: "a"(dst),"a"(src),"a"(info->PixIdx),"a"(&x),
-		/*    %0       %1       %2                %3 */
+		: "a"(dst),"a"(src),"a"(info->Pixel),"a"(&x),
+		/*    %0       %1       %2               %3 */
 		  "d"(info->Width),"d"(info->IncXfx),"d"(info->PixMask)
 		/*    %4               %5                %6          */
 		: "d3","d4","d5","d6","d7"
@@ -772,11 +803,11 @@ raster_I8 (UWORD * dst, RASTERINFO * info, char * src)
 	
 #elif defined(__PUREC__)
 	extern void pc_raster_I8 (void *, void *, void *, short, size_t, UWORD);
-	pc_raster_I8 (dst, src, info->PixIdx,
+	pc_raster_I8 (dst, src, info->Pixel,
 	              info->Width, info->IncXfx, info->PixMask);
 	
 #else
-	short * map   = info->PixIdx;
+	ULONG * map   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	short   width = info->Width;
 	size_t  x     = (info->IncXfx +1) /2;
@@ -809,7 +840,7 @@ static void
 raster_P8 (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	char  * dst   = (char*)_dst;
-	short * pix   = info->PixIdx;
+	ULONG * pix   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	size_t  x     = (info->IncXfx +1) /2;
 	short   width = info->Width;
@@ -826,7 +857,7 @@ raster_P8 (UWORD * _dst, RASTERINFO * info, char * src)
 static void
 raster_16 (UWORD * dst, RASTERINFO * info, char * src)
 {
-	short * pix   = info->PixIdx;
+	ULONG * pix   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	size_t  x     = (info->IncXfx +1) /2;
 	short   width = info->Width;
@@ -843,7 +874,7 @@ raster_16 (UWORD * dst, RASTERINFO * info, char * src)
 static void
 raster_16r (UWORD * dst, RASTERINFO * info, char * src)
 {
-	short * pix   = info->PixIdx;
+	ULONG * pix   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	size_t  x     = (info->IncXfx +1) /2;
 	short   width = info->Width;
@@ -864,13 +895,8 @@ raster_24 (UWORD * _dst, RASTERINFO * info, char * src)
 	UWORD  mask  = info->PixMask;
 	size_t x     = (info->IncXfx +1) /2;
 	short  width = info->Width;
-#if defined(LATTICE) && defined(LIBGIF)
-	GifColorType * pal = (GifColorType*)info->Palette;
-#else
-	long         * pal = info->Palette;
-#endif
 	do {
-		char * rgb = (char*)&pal[(short)src[x >>16] & mask];
+		char * rgb = (char*)&info->Pixel[(short)src[x >>16] & mask];
 		*(dst++) = *(rgb++);
 		*(dst++) = *(rgb++);
 		*(dst++) = *(rgb);
@@ -888,13 +914,8 @@ raster_24r (UWORD * _dst, RASTERINFO * info, char * src)
 	UWORD  mask  = info->PixMask;
 	size_t x     = (info->IncXfx +1) /2;
 	short  width = info->Width;
-#if defined(LATTICE) && defined(LIBGIF)
-	GifColorType * pal = (GifColorType*)info->Palette;
-#else
-	long         * pal = info->Palette;
-#endif
 	do {
-		char * rgb = (char*)&pal[(short)src[x >>16] & mask];
+		char * rgb = (char*)&info->Pixel[(short)src[x >>16] & mask];
 		*(dst++) = rgb[2];
 		*(dst++) = rgb[1];
 		*(dst++) = rgb[0];
@@ -912,20 +933,10 @@ raster_32 (UWORD * _dst, RASTERINFO * info, char * src)
 	UWORD  mask  = info->PixMask;
 	size_t x     = (info->IncXfx +1) /2;
 	short  width = info->Width;
-#if defined(LATTICE) && defined(LIBGIF)
-	GifColorType * pal = (GifColorType*)info->Palette;
 	do {
-		GifColorType * rgb = &pal[src[x >>16] & mask];
-		*(dst++) = ((((rgb->Red <<8) | rgb->Green) <<8) | rgb->Blue);
+		*(dst++) = info->Pixel[(short)src[x >>16] & mask] >>8;
 		x += info->IncXfx;
 	} while (--width);
-#else
-	long         * pal = info->Palette;
-	do {
-		*(dst++) = pal[(short)src[x >>16] & mask] >>8;
-		x += info->IncXfx;
-	} while (--width);
-#endif
 }
 
 /*------------------------------------------------------------------------------
@@ -938,16 +949,131 @@ raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
 	UWORD  mask  = info->PixMask;
 	size_t x     = (info->IncXfx +1) /2;
 	short  width = info->Width;
-#if defined(LATTICE) && defined(LIBGIF)
-	GifColorType * pal = (GifColorType*)info->Palette;
-#else
-	long         * pal = info->Palette;
-#endif
 	do {
-		char * rgb = (char*)&pal[(short)src[x >>16] & mask];
+		char * rgb = (char*)&info->Pixel[(short)src[x >>16] & mask];
 		*(dst++) = (((((long)rgb[2] <<8) | rgb[1]) <<8) | rgb[0]) <<8;
 		x += info->IncXfx;
 	} while (--width);
+}
+
+
+/*******************************************************************************
+ *
+ *   Palette Converter
+ */
+
+/*----------------------------------------------------------------------------*/
+static void
+cnvpal_mono (IMGINFO * info, ULONG backgnd)
+{
+	if (info->Palette) {
+		ULONG  bgnd, fgnd;
+		char * rgb = info->Palette;
+		bgnd = ((((long)rgb[info->PalRpos] <<8) | rgb[info->PalGpos]) <<8)
+		              | rgb[info->PalBpos];
+		rgb += info->PalStep;
+		fgnd = ((((long)rgb[info->PalRpos] <<8) | rgb[info->PalGpos]) <<8)
+		              | rgb[info->PalBpos];
+		info->Pixel[0] = (info->Transp == 0 ? backgnd : remap_color (bgnd));
+		info->Pixel[1] = (info->Transp == 1 ? backgnd : remap_color (fgnd));
+		
+	} else {
+		info->Pixel[0] = G_WHITE;
+		info->Pixel[1] = G_BLACK;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cnvpal_1_2 (IMGINFO * info, ULONG backgnd)
+{
+	ULONG * pal = info->Pixel;
+	char  * r   = info->Palette + info->PalRpos;
+	char  * g   = info->Palette + info->PalGpos;
+	char  * b   = info->Palette + info->PalBpos;
+	short   t   = info->Transp;
+	short   n   = info->NumColors;
+	do {
+		*(pal++) = (!t-- ? (backgnd == G_WHITE ? 4080 : 0)
+		                 : (WORD)*r *5 + (WORD)*g *9 + (WORD)*b *2);
+		r += info->PalStep;
+		g += info->PalStep;
+		b += info->PalStep;
+	} while (--n);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cnvpal_4_8 (IMGINFO * info, ULONG backgnd)
+{
+	ULONG * pal = info->Pixel;
+	char  * r   = info->Palette + info->PalRpos;
+	char  * g   = info->Palette + info->PalGpos;
+	char  * b   = info->Palette + info->PalBpos;
+	short   t   = info->Transp;
+	short   n   = info->NumColors;
+	do {
+		*(pal++) = pixel_val[!t--
+		                     ? backgnd & 0xFF
+		                     : remap_color (((((long)*r <<8) | *g) <<8) | *b)];
+		r += info->PalStep;
+		g += info->PalStep;
+		b += info->PalStep;
+	} while (--n);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cnvpal_high (IMGINFO * info, ULONG backgnd)
+{
+	ULONG * pal = info->Pixel;
+	char  * r   = info->Palette + info->PalRpos;
+	char  * g   = info->Palette + info->PalGpos;
+	char  * b   = info->Palette + info->PalBpos;
+	short   t   = info->Transp;
+	short   n   = info->NumColors;
+	do {
+		if (!t--) {
+			char * z = ((char*)&backgnd) +1;
+			*(pal++) = ((short)(z[0] & 0xF8) <<8)
+			         | ((short)(z[1] & 0xFC) <<3)
+			         |         (z[2]         >>3);
+		} else {
+			*(pal++) = ((short)(*r & 0xF8) <<8)
+			         | ((short)(*g & 0xFC) <<3)
+			         |         (*b         >>3);
+		}
+		r += info->PalStep;
+		g += info->PalStep;
+		b += info->PalStep;
+	} while (--n);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cnvpal_true (IMGINFO * info, ULONG backgnd)
+{
+	ULONG * pal = info->Pixel;
+	short   t   = info->Transp;
+	short   n   = info->NumColors;
+	if (info->PalStep == 4 &&
+	    info->PalRpos == 0 && info->PalGpos == 1 && info->PalBpos == 2) {
+		ULONG * rgb = (ULONG*)info->Palette;
+		do {
+			*(pal++) = (!t-- ? backgnd : *rgb);
+			rgb++;
+		} while (--n);
+	} else {
+		char  * r   = info->Palette + info->PalRpos;
+		char  * g   = info->Palette + info->PalGpos;
+		char  * b   = info->Palette + info->PalBpos;
+		do {
+			*(pal++) = (!t-- ? backgnd : ((((long)*r <<8) | *g) <<8) | *b);
+			r += info->PalStep;
+			g += info->PalStep;
+			b += info->PalStep;
+		} while (--n);
+	}
 }
 
 
@@ -962,27 +1088,45 @@ init_display (void)
 	sprintf (disp_info, "%c%02i%s",
 	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), planes,
 	         (out[14] & 0x80 ? "r" : ""));
-	
+
 	if (planes == 1) {                        /* monochrome */
-		raster_color = raster_D1;
-	
+			raster_color = raster_D1;
+			cnvpal_color = cnvpal_1_2;
 	} else if (out[0] == 0) switch (planes) { /* interleaved words */
-		case 2: raster_color = raster_D2; break;
-		case 4: raster_color = raster_I4; break;
-		case 8: raster_color = raster_I8; break;
-	
+		case 2:
+			raster_color = raster_D2;
+			cnvpal_color = cnvpal_1_2;
+			break;
+		case 4:
+			raster_color = raster_I4;
+			cnvpal_color = cnvpal_4_8;
+			break;
+		case 8:
+			raster_color = raster_I8;
+			cnvpal_color = cnvpal_4_8;
+			break;
 	} else if (out[0] == 2) switch (planes) { /* packed pixels */
-		case  8: raster_color = raster_P8; break;
+		case  8:
+			raster_color = raster_P8;
+			cnvpal_color = cnvpal_4_8;
+			break;
 		case 16:
-			raster_color = (out[14] & 0x80 ? raster_16r : raster_16); break;
+			raster_color = (out[14] & 0x80 ? raster_16r : raster_16);
+			cnvpal_color = cnvpal_high;
+			break;
 		case 24:
-			raster_color = (out[14] & 0x80 ? raster_24r : raster_24); break;
+			raster_color = (out[14] & 0x80 ? raster_24r : raster_24);
+			cnvpal_color = cnvpal_true;
+			break;
 		case 32:
-			raster_color = (out[14] & 0x80 ? raster_32r : raster_32); break;
+			raster_color = (out[14] & 0x80 ? raster_32r : raster_32);
+			cnvpal_color = cnvpal_true;
+			break;
 	}
 	if (!raster_color) {                     /* standard format */
-		raster_color = raster_stnd;
 		stnd_bitmap  = TRUE;
+		raster_color = raster_stnd;
+		cnvpal_color = cnvpal_4_8;
 	}
 }
 
@@ -994,21 +1138,25 @@ init_display (void)
 
 /*============================================================================*/
 #ifdef LIBGIF
+#	include <gif_lib.h>
+#	undef TRUE
+#	undef FALSE
+
 static pIMGDATA
 read_gif (IMAGE img, LOCATION loc)
 {
+	IMGINFO info = { NULL, };
+	
 	pIMGDATA   data      = NULL;
-	RASTERINFO info      = { NULL, NULL, NULL, };
+	RASTERINFO rast      = { NULL, NULL, };
 	short      interlace = 0;
 	short      transpar  = -1;
 	short      img_w     = img->disp_w;
 	short      img_h     = img->disp_h;
-	short      fgnd      = G_BLACK;
-	short      bgnd      = G_WHITE;
 	ColorMapObject * map = NULL;
 	GifFileType    * gif = DGifOpenFileName (loc->FullName);
 	if (gif) {
-		GifRecordType    rec;
+		GifRecordType rec;
 		do {
 			if (DGifGetRecordType (gif, &rec) == GIF_ERROR) {
 				printf ("DGifGetRecordType() ");
@@ -1058,95 +1206,41 @@ read_gif (IMAGE img, LOCATION loc)
 		} while (rec != TERMINATE_RECORD_TYPE);
 	}
 	
-	if (transpar < 0) {
-		img->backgnd = -1;
-	}
-	
 	if (map) {
-		info.Palette = (long*)map->Colors;
-		
-		if (gif->SColorMap->BitsPerPixel == 1) {
-			bgnd = (transpar == 0 ? img->backgnd 
-			                      : remap_color (info.Palette[0] >>8));
-			fgnd = (transpar == 1 ? img->backgnd
-			                      : remap_color (info.Palette[1] >>8));
-		
-		} else if (planes < 24) {
-			short          n   = map->ColorCount;
-			short        * dst = malloc (sizeof(short) * n);
-			GifColorType * src = map->Colors;
-			info.PixIdx = dst;
-			
-			if (planes <= 2) {
-				do {
-					if (!transpar--) {
-						*(dst++) = (img->backgnd == G_WHITE ? 4080 : 0);
-					} else {
-						*(dst++) = (short)src->Red   *5
-						         + (short)src->Green *9
-						         + (short)src->Blue  *2;
-					}
-					src++;
-				} while (--n);
-			
-			} else if (planes == 16) {
-				do {
-					if (!transpar--) {
-						short rgb[3];
-						vq_color (vdi_handle, img->backgnd, 0, rgb);
-						*(dst++) = (((((long)rgb[0] * 255 +500) / 1000) & 0xF8) <<8)
-						         | (((((long)rgb[1] * 255 +500) / 1000) & 0xFC) <<3)
-						         |  ((((long)rgb[2] * 255 +500) / 1000)         >>3);
-					} else {
-						*(dst++) = (((short)src->Red   & 0xF8) <<8)
-						         | (((short)src->Green & 0xFC) <<3)
-						         |         (src->Blue          >>3);
-					}
-					src++;
-				} while (--n);
-			
-			} else {
-				do {
-					if (!transpar--) {
-						*(dst++) = pixel_val[img->backgnd];
-					} else {
-						long rgb = ((((long)src->Red <<8) | src->Green) <<8)
-						         | src->Blue;
-						*(dst++) = pixel_val[remap_color (rgb) & 0xFF];
-					}
-					src++;
-				} while (--n);
-			}
-		
-		} else if (transpar >= 0) {
-			GifColorType * pal = &map->Colors[transpar];
-			short rgb[3];
-			vq_color (vdi_handle, img->backgnd, 0, rgb);
-			pal->Red   = ((long)rgb[0] * 255 +500) / 1000;
-			pal->Green = ((long)rgb[1] * 255 +500) / 1000;
-			pal->Blue  = ((long)rgb[2] * 255 +500) / 1000;
+		info._priv_data = gif;
+		info.Width      = img_w;
+		info.Height     = img_h;
+		info.BitDepth   = gif->SColorMap->BitsPerPixel;
+		info.NumColors  = map->ColorCount;
+		if ((info.Palette = (char*)map->Colors) != NULL) {
+			GifColorType * rgb = NULL;
+			info.PalRpos = (unsigned)&rgb->Red;
+			info.PalGpos = (unsigned)&rgb->Green;
+			info.PalBpos = (unsigned)&rgb->Blue;
+			info.PalStep = (unsigned)&rgb[1];
 		}
-		data = setup (img, map->BitsPerPixel, img_w, img_h, &info);
+		info.Transp     = transpar;
+		
+		rast.Pixel = info.Pixel;
+		data = setup (img, &info, &rast);
 	}
 	
 	if (data) {
-		RASTERIZER raster = info.Rasterizer;
-		char     * buf    = malloc (img_w);
-		UWORD    * dst    = data->fd_addr;
-		short      y      = 0;
+		void (*raster)(UWORD *, RASTERINFO *, char *) = rast.Rasterizer;
 		
-		data->fgnd = fgnd;
-		data->bgnd = bgnd;
+		char  * buf = malloc (img_w);
+		UWORD * dst = data->fd_addr;
+		short   y   = 0;
 		
 		if (!interlace) {
-			size_t scale = (info.IncYfx +1) /2;
+			size_t scale = (rast.IncYfx +1) /2;
 			while (y < img_h) {
 				DGifGetLine (gif, buf, img_w);
 				y++;
 				while ((scale >>16) < y) {
-					(*raster) (dst, &info, buf);
-					dst   += info.LnSize;
-					scale += info.IncYfx;
+					(*raster) (dst, &rast, buf);
+					dst   += rast.LnSize;
+					scale += rast.IncYfx;
 				}
 			}
 		
@@ -1155,16 +1249,16 @@ read_gif (IMAGE img, LOCATION loc)
 			size_t y_mul = (((size_t)img->disp_h <<16) + (img_h /2)) / img_h;
 			do {
 				while (y < img_h) {
-					size_t scale = (size_t)y * y_mul + (info.IncYfx +1) /2;
+					size_t scale = (size_t)y * y_mul + (rast.IncYfx +1) /2;
 					short  y_beg =  scale          >>16;
 					short  y_end = (scale + y_mul) >>16;
 					DGifGetLine (gif, buf, img_w);
 					y += interlace;
 					if (y_beg < y_end) {
-						dst = (UWORD*)data->fd_addr + info.LnSize * y_beg;
+						dst = (UWORD*)data->fd_addr + rast.LnSize * y_beg;
 						do {
-							(*raster) (dst, &info, buf);
-							dst   += info.LnSize;
+							(*raster) (dst, &rast, buf);
+							dst   += rast.LnSize;
 						} while (++y_beg < y_end);
 					}
 				}
@@ -1178,11 +1272,9 @@ read_gif (IMAGE img, LOCATION loc)
 		}
 		free (buf);
 	}
-	if (info.PixIdx) free (info.PixIdx);
-	if (info.DthBuf) free (info.DthBuf);
+	if (rast.DthBuf) free (rast.DthBuf);
 	if (gif) DGifCloseFile (gif);
 
 	return data;
 }
-
 #endif /* LIBGIF */
