@@ -8,6 +8,8 @@
 
 #include "global.h"
 #include "Location.h"
+#include "mime.h"
+#include "http.h"
 #include "hwWind.h"
 #include "fontbase.h"
 #include "cache.h"
@@ -200,6 +202,27 @@ cfg_restrict (char * param, long arg)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+cfg_http_proxy (char * param, long arg)
+{
+	char * p = param;
+	(void)arg;
+	while (*p && *p != ':' && !isspace (*p)) p++;
+	if (isspace (*p)) {
+		*p = '\0';
+		while (isspace (*(++p)));
+	}
+	if (*p == ':') {
+		*(p++) = '\0';
+	}
+	if (p > param) {
+		long port = atol (p);
+		hhtp_proxy (param, (port > 0  && port <= 0xFFFF ? port : 0));
+	}
+}
+
+
 /******************************************************************************/
 WORD
 read_config(char *fn)
@@ -255,34 +278,35 @@ read_config(char *fn)
 				void       (*func)(char*, long);
 				long         arg;
 			} cfg[] = {
-				{ "BOLD_HEADER",          cfg_font,    FA(header_font, 1, 0) },
-				{ "BOLD_ITALIC_HEADER",   cfg_font,    FA(header_font, 1, 1) },
-				{ "BOLD_ITALIC_NORMAL",   cfg_font,    FA(normal_font, 1, 1) },
-				{ "BOLD_ITALIC_TELETYPE", cfg_font,    FA(pre_font,    1, 1) },
-				{ "BOLD_NORMAL",          cfg_font,    FA(normal_font, 1, 0) },
-				{ "BOLD_TELETYPE",        cfg_font,    FA(pre_font,    1, 0) },
-				{ "CACHEDIR",             cfg_cachedir,0 },
-				{ "CACHEDSK",             cfg_cachedsk,0 },
-				{ "CACHEMEM",             cfg_cachemem,0 },
-				{ "COOKIES",              cfg_func,    (long)menu_cookies    },
-				{ "DFLT_BACKGND",         cfg_backgnd, 0 },
-				{ "FONT_MINSIZE",         cfg_minsize, 0 },
-				{ "FONT_SIZE",            cfg_fntsize, 0 },
-				{ "FORCE_FRAMECTRL",      cfg_func,    (long)menu_frm_ctrl   },
-				{ "HEADER",               cfg_font,    FA(header_font, 0, 0) },
-				{ "INFOBAR",              cfg_infobar, 0 },
-				{ "ITALIC_HEADER",        cfg_font,    FA(header_font, 0, 1) },
-				{ "ITALIC_NORMAL",        cfg_font,    FA(normal_font, 0, 1) },
-				{ "ITALIC_TELETYPE",      cfg_font,    FA(pre_font,    0, 1) },
-				{ "LOCAL_WEB",            cfg_localweb,0 },
-				{ "LOGGING",              cfg_func,    (long)menu_logging    },
-				{ "NORMAL",               cfg_font,    FA(normal_font, 0, 0) },
-				{ "NO_IMAGE",             cfg_func,    (long)menu_alt_text   },
-				{ "RESTRICT_HOST",        cfg_restrict,0 },
-				{ "RETRY_HEADER",         cfg_retry,   0 },
-				{ "TELETYPE",             cfg_font,    FA(pre_font,    0, 0) },
+				{ "BOLD_HEADER",          cfg_font,      FA(header_font, 1, 0) },
+				{ "BOLD_ITALIC_HEADER",   cfg_font,      FA(header_font, 1, 1) },
+				{ "BOLD_ITALIC_NORMAL",   cfg_font,      FA(normal_font, 1, 1) },
+				{ "BOLD_ITALIC_TELETYPE", cfg_font,      FA(pre_font,    1, 1) },
+				{ "BOLD_NORMAL",          cfg_font,      FA(normal_font, 1, 0) },
+				{ "BOLD_TELETYPE",        cfg_font,      FA(pre_font,    1, 0) },
+				{ "CACHEDIR",             cfg_cachedir,  0 },
+				{ "CACHEDSK",             cfg_cachedsk,  0 },
+				{ "CACHEMEM",             cfg_cachemem,  0 },
+				{ "COOKIES",              cfg_func,      (long)menu_cookies    },
+				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
+				{ "FONT_MINSIZE",         cfg_minsize,   0 },
+				{ "FONT_SIZE",            cfg_fntsize,   0 },
+				{ "FORCE_FRAMECTRL",      cfg_func,      (long)menu_frm_ctrl   },
+				{ "HEADER",               cfg_font,      FA(header_font, 0, 0) },
+				{ "HTTP_PROXY",           cfg_http_proxy,0 },
+				{ "INFOBAR",              cfg_infobar,   0 },
+				{ "ITALIC_HEADER",        cfg_font,      FA(header_font, 0, 1) },
+				{ "ITALIC_NORMAL",        cfg_font,      FA(normal_font, 0, 1) },
+				{ "ITALIC_TELETYPE",      cfg_font,      FA(pre_font,    0, 1) },
+				{ "LOCAL_WEB",            cfg_localweb,  0 },
+				{ "LOGGING",              cfg_func,      (long)menu_logging    },
+				{ "NORMAL",               cfg_font,      FA(normal_font, 0, 0) },
+				{ "NO_IMAGE",             cfg_func,      (long)menu_alt_text   },
+				{ "RESTRICT_HOST",        cfg_restrict,  0 },
+				{ "RETRY_HEADER",         cfg_retry,     0 },
+				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
-				{ "TIMEOUT_HEADER",       cfg_timeout_hdr,  0 }
+				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;
