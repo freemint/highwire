@@ -45,3 +45,4 @@
 #define RLINK_NEW          2 	/* G_STRING in (#4) RLINKPOP */
 #define RLINK_SAVE         3 	/* G_STRING in (#4) RLINKPOP */
 #define RLINK_INFO         5 	/* G_STRING in (#4) RLINKPOP */
+#define RLINK_COPY         6 	/* G_STRING in (#4) RLINKPOP */
