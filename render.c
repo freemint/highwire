@@ -1026,6 +1026,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 		else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
 		         (output = get_value_str (parser, KEY_ID))   != NULL)
 		{
+			struct url_link * presave = word->link;
 			word->link = new_url_link (word, output, FALSE, NULL);
 			word->link->u.anchor = new_named_location (word->link->address,
 			                                          &current->paragraph->Offset);
@@ -1035,8 +1036,9 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			/* prevent from getting deleted if empty */
 			*(current->text++) = font_Nobrk (word->font);
 			new_word (current, TRUE);
-			current->word->link = NULL;
 			word->word_width = 0;
+			TAsetUndrln (word->attr, FALSE);
+			current->word->link = presave;
 		}	
 	
 	} else if (word->link) {
