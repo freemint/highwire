@@ -31,7 +31,8 @@ WORD fonts[3][2][2] = {
    	header , normal, italic
    	...
 */
-WORD font_size = 12;  /* points */
+WORD font_size    = 12; /* points for size=3 */
+WORD font_minsize = 1;  /* minimum size */
 
 WORD link_colour = 12;  /* G_LBLUE */
 WORD highlighted_link_colour = 10;  /* G_LRED */
@@ -44,6 +45,7 @@ WORD slider_col = 8;  /* G_LWHITE */
 WORD page_margin = 5; 
 
 BOOL alternative_text_is_on = FALSE;
+BOOL force_frame_controls   = FALSE;
 
 
 /* Globals */
