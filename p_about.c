@@ -71,10 +71,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 		size_t count  = num;
 		while (count--) {
 			WORDITEM w = current->word;
-			char source[500] ="";
-			location_FullName (info->Source, source +2, sizeof(source)-2);
+			char source[500] ="";
+			location_FullName (info->Source, source +3, sizeof(source)-3);
 			render_text (current, source);
-			render_text (current, "")->line_brk = BRK_LN;
+			render_text (current, "")->line_brk = BRK_LN;
 			w = current->word;
 			if (info->Ident) {
 				int ic = (int)(info->Ident >>24) & 0x00FF; /* bgnd colour */
@@ -82,10 +82,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				int ih = (int) info->Ident       & 0x0FFF; /* height      */
 				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
 				render_text (current, buf);
-			} else if (!info->Local) {
+			} else if (!info->Cached) {
 				TA_Color (render_text (current, "(busy)")->attr) = G_RED;
 			} else {
-				sprintf (buf, "Disk:%s", info->Local->File);
+				sprintf (buf, "Disk:%s", info->Cached);
 				render_text (current, buf);
 			}
 			sprintf (buf, " %li", info->Size);

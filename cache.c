@@ -37,6 +37,7 @@ struct s_cache_item {
 	long      Date;
 	long      Expires;
 	void    (*dtor)(void*);
+	char      Cached[14];    /* enough for '12345678.xyz' */
 };
 static CACHEITEM __cache_beg = NULL;
 static CACHEITEM __cache_end = NULL;
@@ -136,13 +137,14 @@ tree_item (LOCATION loc)
 
 /*----------------------------------------------------------------------------*/
 static CACHEITEM
-create_item (LOCATION loc, CACHEOBJ object, size_t memsize, void (*dtor)(void*))
+create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 {
 	ULONG     hash  = location_Hash (loc);
 	CACHENODE node  = tree_node (hash);
 	UWORD     idx   = (hash >> node->Level4x) & 0xF;
 	CACHEITEM nitem = node->Array[idx].Item;
 	CACHEITEM citem = NULL;
+	BOOL     in_mem = (object != NULL);
 #ifdef EXIT_STATS
 	static BOOL __once = TRUE;
 	if (__once) {
@@ -180,22 +182,27 @@ create_item (LOCATION loc, CACHEOBJ object, size_t memsize, void (*dtor)(void*))
 		node->Array[idx].Item = citem;
 		
 		citem->Location = location_share (loc);
-		citem->inMem    = (memsize != 0);
+		citem->Reffs    = 1;
 		citem->Ident    = 0;
 		citem->Object   = object;
-		citem->Size     = memsize;
+		citem->Size     = size;
 		citem->Date     = 0;
 		citem->Expires  = 0;
 		citem->dtor     = dtor;
-		citem->Reffs    = 1;
-		
+		if (!in_mem) {
+			citem->inMem = FALSE;
+		} else {
+			citem->inMem = TRUE;
+			__cache_mem += size;
+		}
 		if (__cache_beg) __cache_beg->PrevItem = citem;
 		else             __cache_end           = citem;
 		citem->PrevItem = NULL;
 		citem->NextItem = __cache_beg;
 		__cache_beg     = citem;
 		__cache_num++;
-		__cache_mem += memsize;
+		
+		citem->Cached[0] = '\0';
 	}
 	return citem;
 }
@@ -326,6 +333,16 @@ cache_insert (LOCATION loc, long ident,
 }
 
 
+/*----------------------------------------------------------------------------*/
+static LOCATION
+cache_location (CACHEITEM citem)
+{
+	if (!citem->Object && citem->Cached[0]) {
+		citem->Object = new_location (citem->Cached, __cache_dir);
+	}
+	return citem->Object;
+}
+
 /*============================================================================*/
 CACHED
 cache_lookup (LOCATION loc, long ident, long * opt_found)
@@ -367,7 +384,7 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 		if (opt_found) {
 			*opt_found = citem->Ident;
 		}
-		return citem->Object;
+		return (ident ? citem->Object : (CACHED)cache_location (citem));
 	}
 
 	if (opt_found) {
@@ -449,7 +466,7 @@ cache_clear (CACHED this_n_all)
 		if (!citem->Reffs && citem->dtor
 		    && (!this_n_all || this_n_all == citem->Object)) {
 /*>>>>>>>>>> DEBUG */
-			if (!citem->Object) {
+			if (!cache_location (citem)) {
 				printf ("cache_clear(%s): no object!\n", citem->Location->FullName);
 				return 0uL;
 			}
@@ -480,6 +497,7 @@ cache_info (size_t * size, CACHEINF * p_info)
 				info->Source  = citem->Location;
 				info->Ident   = citem->Ident;
 				info->Used    = citem->Reffs;
+				info->Cached  = (citem->Cached[0] ? citem->Cached : NULL);
 				info->Local   = (citem->inMem ? NULL : citem->Object);
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
@@ -620,8 +638,8 @@ cache_assign (LOCATION src, void * data, size_t size,
 			} else {
 				dot  = ".";
 			}
-			sprintf (buf, "%08lX%s%s", _file_id, dot, type);
-			loc = new_location (buf, __cache_dir);
+			sprintf (citem->Cached, "%08lX%s%s", _file_id, dot, type);
+			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
 			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
 				write (fh, data, size);
@@ -656,6 +674,7 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 	info->Source  = NULL;
 	info->Ident   = 0;
 	info->Used    = 0;
+	info->Cached  = NULL;
 	info->Local   = NULL;
 	info->Date    = 0;
 	info->Expires = 0;
@@ -665,8 +684,9 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 	while (citem) {
 		if (location_equal (loc, citem->Location)) {
 			if (!citem->inMem) {
-				if (citem->Object) {
-					info->Local   = citem->Object;
+				if (citem->Cached[0]) {
+					info->Cached  = citem->Cached;
+					info->Local   = cache_location (citem);
 					info->Date    = citem->Date;
 					info->Expires = citem->Expires;
 					res_d         = CR_LOCAL;

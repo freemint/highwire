@@ -28,14 +28,15 @@ LOCATION cache_assign    (LOCATION, void *, size_t,
                           const char * type, long date, long expires);
 
 typedef struct s_cache_info {
-	LOCATION Source;
-	long     Ident;
-	size_t   Used;
-	LOCATION Local;
-	long     Date;
-	long     Expires;
-	CACHED   Object;
-	size_t   Size;
+	LOCATION     Source;
+	long         Ident;
+	size_t       Used;
+	const char * Cached;
+	LOCATION     Local;
+	long         Date;
+	long         Expires;
+	CACHED       Object;
+	size_t       Size;
 } * CACHEINF;
 
 CRESULT cache_query (LOCATION, long ident, CACHEINF);
