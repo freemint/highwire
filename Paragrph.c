@@ -291,7 +291,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			width = This->MinWidth;
 		}
 	}
-	int_width = width -= dombox_LftDist (This) + dombox_RgtDist (This);
+	int_width = width -= dombox_LftDist (This) + dombox_RgtDist (This)
+	                     + par->Indent;
 	This->Rect.X += par->Indent;
 	This->Rect.H =  dombox_TopDist (This);
 	
