@@ -159,6 +159,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 			curr_area.g_h = (desk_area.g_h *3) /4;
 		}
 		if (!ignore_colours) {
+#if 0 /* this doesn't work with MagiC yet */
 			u   = W_HELEV;
 			out = 0;
 			if (wind_get (0, WF_DCOLOR, &u, &out, &u, &u) && out) {
@@ -169,6 +170,9 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 			} else {
 				info_bgnd = G_LWHITE;
 			}
+#else
+			info_bgnd = G_LWHITE;
+#endif
 		}
 		
 	} else {
