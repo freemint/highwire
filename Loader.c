@@ -108,7 +108,7 @@ start_parser (LOADER loader)
 				break;
 			}
 		#endif
-			while (strncmp(p, "<!--", 4) == 0) {
+			while (strncmp(p, "<!--", 4) == 0 || strncmp(p, "<?xml", 5) == 0) {
 				long i = min(500, (long)(loader->Data - p) + loader->DataSize - 15);
 				while (--i > 0 && *(p++) != '>');
 				while (--i > 0 && isspace(*p)) p++;
