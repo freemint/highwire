@@ -330,13 +330,15 @@ typedef enum {
 	BC_TXTPAR    /* P, IMG, HR, ..    */
 } BOXCLASS;
 
-typedef struct s_dombox DOMBOX;
+typedef struct blocking_area * BLOCKER;
+typedef struct s_dombox        DOMBOX;
 struct s_dombox {
 	struct s_dombox_vtab {
 		void (*delete)(DOMBOX *);
-		LONG (*MinWidth)(DOMBOX *);
-		LONG (*MaxWidth)(DOMBOX *);
+		LONG (*MinWidth) (DOMBOX *);
+		LONG (*MaxWidth) (DOMBOX *);
 		void (*draw)(DOMBOX *, long x, long y, const GRECT * clip, void *);
+		void (*format)(DOMBOX *, long width, BLOCKER);
 	}      * _vtab;
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;
@@ -355,15 +357,23 @@ struct s_dombox {
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
-#define Delete(this)   (this)->_vtab->delete(this)
+#define Delete(this)   ((*((this)->_vtab->delete))(this))
 #define dombox_Dist(this,what)      ((this)->Margin.what + (this)->Padding.what)
 #define dombox_TopDist(this)       (dombox_Dist(this,Top) + (this)->BorderWidth)
 #define dombox_BotDist(this)       (dombox_Dist(this,Bot) + (this)->BorderWidth)
 #define dombox_LftDist(this)       (dombox_Dist(this,Lft) + (this)->BorderWidth)
 #define dombox_RgtDist(this)       (dombox_Dist(this,Rgt) + (this)->BorderWidth)
-#define dombox_MinWidth(this)   ((this)->_vtab->MinWidth(this))
-#define dombox_MaxWidth(this)   ((this)->_vtab->MaxWidth(this))
+#define dombox_MinWidth(this)   ((*((this)->_vtab->MinWidth))(this))
+#define dombox_MaxWidth(this)   ((*((this)->_vtab->MaxWidth))(this))
 void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);
+void dombox_format (DOMBOX *, long width);
+
+struct blocking_area {
+	struct {
+		long width;
+		long bottom;
+	} L, R;
+};
 
 
 /* ************ Parsing Constructs ************************ */
