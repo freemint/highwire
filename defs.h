@@ -351,6 +351,7 @@ struct s_dombox {
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
+#define Delete(this)   (this)->_vtab->delete(this)
 void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);
 
 

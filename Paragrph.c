@@ -21,6 +21,26 @@ static struct s_dombox_vtab paragraph_vTab = { 0, };
 
 /*----------------------------------------------------------------------------*/
 static void
+vTab_delete (DOMBOX * This)
+{
+	PARAGRPH par = (PARAGRPH)This;
+	WORDLINE line = par->Line;
+	while (line) {
+		WORDLINE n_ln = line->NextLine;
+		free (line);
+		line = n_ln;
+	}
+	if (par->item) {
+		destroy_word_list (par->item, NULL);
+	}
+	if (par->Table) {
+		delete_table (&par->Table);
+	}
+	DomBox_vTab.delete (This);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
 	PARAGRPH paragraph = (PARAGRPH)This;
@@ -34,21 +54,12 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 
 /*============================================================================*/
 void
-destroy_paragraph_structure (PARAGRPH current_paragraph)
+destroy_paragraph_structure (PARAGRPH paragraph)
 {
-	struct paragraph_item *temp;
-
-	while (current_paragraph != 0)
-	{
-		if (current_paragraph->item != 0)
-			destroy_word_list (current_paragraph->item, NULL);
-#if 0
-		if (current_paragraph->table != 0)
-			destroy_table_structure (current_paragraph->table);
-#endif
-		temp = current_paragraph->next_paragraph;
-		free (dombox_dtor (&current_paragraph->Box));
-		current_paragraph = temp;
+	while (paragraph != 0) {
+		PARAGRPH next = paragraph->next_paragraph;
+		Delete (&paragraph->Box);
+		paragraph = next;
 	}
 }
 
@@ -80,8 +91,9 @@ new_paragraph (TEXTBUFF current)
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
-		paragraph_vTab      = DomBox_vTab;
-		paragraph_vTab.draw = vTab_draw;
+		paragraph_vTab        = DomBox_vTab;
+		paragraph_vTab.delete = vTab_delete;
+		paragraph_vTab.draw   = vTab_draw;
 	}
 	paragraph->Box._vtab = &paragraph_vTab;
 
@@ -147,8 +159,9 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->eop_space = 0;
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
-			paragraph_vTab      = DomBox_vTab;
-			paragraph_vTab.draw = vTab_draw;
+			paragraph_vTab        = DomBox_vTab;
+			paragraph_vTab.delete = vTab_delete;
+			paragraph_vTab.draw   = vTab_draw;
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
 	}
@@ -610,34 +623,6 @@ content_setup (CONTENT * content, TEXTBUFF current,
 	} else {
 		content->Item    = NULL;
 	}
-}
-
-
-/*============================================================================*/
-void
-content_destroy (CONTENT * content)
-{
-	PARAGRPH par = content->Item;
-
-	while (par) {
-		PARAGRPH next = par->next_paragraph;
-		WORDLINE line = par->Line;
-		while (line) {
-			WORDLINE n_ln = line->NextLine;
-			free (line);
-			line = n_ln;
-		}
-		if (par->item) {
-			destroy_word_list (par->item, NULL);
-		}
-		if (par->Table) {
-			delete_table (&par->Table);
-		}
-		free (dombox_dtor (&par->Box));
-		par = next;
-	}
-	content->Item = NULL;
-	dombox_dtor (&content->Box);
 }
 
 

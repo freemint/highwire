@@ -72,17 +72,13 @@ delete_frame (FRAME * p_frame)
 {
 	FRAME frame = *p_frame;
 	if (frame) {
-		if (frame->Page.Item)
-			content_destroy (&frame->Page);
 		if (frame->first_named_location)
 			destroy_named_location_structure (frame->first_named_location);
 		free_location (&frame->Location);
 		free_location (&frame->BaseHref);
-	
 		if (frame->base_target)
 			free (frame->base_target);
-		free (frame);
-	
+		Delete (&frame->Page.Box);
 		*p_frame = NULL;
 	}
 }

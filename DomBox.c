@@ -52,10 +52,10 @@ DOMBOX *
 dombox_dtor (DOMBOX * This)
 {
 	if ((int)This->BoxClass < 0) {
-		puts ("dombox_ctor(): already destroyed!");
+		puts ("dombox_dtor(): already destroyed!");
 	}
 	if (This->ChildBeg) {
-		puts ("dombox_ctor(): has still children!");
+		puts ("dombox_dtor(): has still children!");
 	}
 	if (This->Parent) {
 		DOMBOX ** ptr = &This->Parent->ChildBeg;
@@ -129,6 +129,9 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 static void
 vTab_delete (DOMBOX * This)
 {
+	while (This->ChildBeg) {
+		Delete (This->ChildBeg);
+	}
 	free (dombox_dtor (This));
 }
 

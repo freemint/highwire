@@ -56,12 +56,7 @@ delete_table (TABLE * _table)
 			TAB_CELL cell     = row->Cells;
 			while (cell) {
 				TAB_CELL next_cell = cell->RightCell;
-				if (!cell->DummyFor) {
-					content_destroy (&cell->Content);
-				} else {
-					dombox_dtor (&cell->Content.Box);
-				}
-				free (cell);
+				Delete (&cell->Content.Box);
 				cell = next_cell;
 			}
 			free (row);
