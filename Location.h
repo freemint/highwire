@@ -46,6 +46,11 @@ BOOL         location_equal    (LOCATION, LOCATION);
 BOOL location_resolve (LOCATION);
 int  location_open    (LOCATION, const char ** host_name);
 
+#if defined(_STDIO_H) || defined(__STDIO)
+BOOL     location_wrIdx (FILE *, LOCATION);
+LOCATION location_rdIdx (FILE *);
+#endif /* <stdio.h> */
+
 
 /*----- private -----*/
 

@@ -30,6 +30,7 @@ char * local_web = NULL;
 
 typedef struct s_host_entry {
 	struct s_host_entry * Next;
+	unsigned long         IdxTag;
 	unsigned long         Ip;
 	char                  Name[1];
 } * HOST_ENT;
@@ -39,6 +40,7 @@ static void * host_entry (const char ** name);
 
 typedef struct s_dir_entry {
 	struct s_dir_entry * Next;
+	unsigned long        IdxTag;
 	BOOL                 isTos;
 	UWORD                Length;
 	char                 Name[2];
@@ -409,14 +411,41 @@ location_open (LOCATION loc, const char ** host_name)
  * Database Stuff
  *
  */
+static        HOST_ENT    host_base = NULL;
+static struct s_dir_entry dir_base  = { NULL, 0ul, FALSE, 1, "/" };
+
+
+/*----------------------------------------------------------------------------*/
+static HOST_ENT
+host_store (const char * name, size_t len)
+{
+	HOST_ENT ent = malloc (sizeof(struct s_host_entry) + len);
+	if (ent) {
+		memcpy (ent->Name, name, len +1);
+		ent->IdxTag = 0uL;
+		ent->Ip     = 0uL;
+		ent->Next   = host_base;
+		host_base   = ent;
+	}
+	return ent;
+}
+
+/*----------------------------------------------------------------------------*/
+static HOST_ENT
+host_search (unsigned long tag)
+{
+	HOST_ENT ent = host_base;
+	while (ent && ent->IdxTag != tag) {
+		ent = ent->Next;
+	}
+	return ent;
+}
 
 /*----------------------------------------------------------------------------*/
 static void *
 host_entry (const char ** name)
 {
-	static HOST_ENT _base = NULL;
-	
-	HOST_ENT ent = _base;
+	HOST_ENT ent = host_base;
 	const char * n = *name;
 	char buf[258], c;
 	short len = 0;
@@ -447,14 +476,10 @@ host_entry (const char ** name)
 		}
 	}
 	if (!ent) {
-		ent = malloc (sizeof(struct s_host_entry) + len);
-		memcpy (ent->Name, buf, len +1);
-		ent->Ip   = 0uL;
-		ent->Next = _base;
-		_base     = ent;
+		ent = host_store (buf, len);
 	}
 #ifdef USE_INET
-	if (!ent->Ip) {
+	if (ent && !ent->Ip) {
 		inet_host_addr (ent->Name, (long*)&ent->Ip);
 	}
 #endif /* USE_INET */
@@ -464,12 +489,50 @@ host_entry (const char ** name)
 
 
 /*----------------------------------------------------------------------------*/
+static DIR_ENT
+dir_store (const char * name, size_t len)
+{
+	DIR_ENT * p_dir = &dir_base.Next, dir;
+	
+	while ((dir = *p_dir) != NULL && dir->Length < len) {
+		p_dir = &dir->Next;
+	}
+	while (dir) {
+		if (dir->Length > len) {
+			dir = NULL;
+		} else if (memcmp (name, dir->Name, len) == 0) {
+			break;
+		} else {
+			dir = *(p_dir = &dir->Next);
+		}
+	}
+	if (!dir && (dir = malloc (sizeof(struct s_dir_entry) + len -1)) != NULL) {
+		dir->IdxTag = 0uL;
+		dir->isTos  = (name[1] == ':');
+		dir->Length = len;
+		memcpy (dir->Name, name, len +1);
+		dir->Next = *p_dir;
+		*p_dir    = dir;
+	}
+	return dir;
+}
+
+/*----------------------------------------------------------------------------*/
+static DIR_ENT
+dir_search (unsigned long tag)
+{
+	DIR_ENT ent = &dir_base;
+	while (ent && ent->IdxTag != tag) {
+		ent = ent->Next;
+	}
+	return ent;
+}
+
+/*----------------------------------------------------------------------------*/
 static void *
 dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 {
-	static struct s_dir_entry _base = { NULL, FALSE, 1, "/" };
-	
-	DIR_ENT dir = &_base;
+	DIR_ENT dir = &dir_base;
 	
 	char buf[1024 +2] = "", * b = buf;
 	
@@ -617,7 +680,7 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 		b = buf;
 	
 	} else if (n_len) {
-		DIR_ENT d     = &_base;
+		DIR_ENT d     = &dir_base;
 		size_t  b_len = b - buf +1; /* plus slash */
 		*(b++) = n_delim;
 		*(b)   = '\0';
@@ -645,32 +708,205 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 	}
 	
 	if ((n_len = b - buf) > 1) {
-		DIR_ENT * p_dir = &_base.Next;
-		
-		while ((dir = *p_dir) != NULL && dir->Length < n_len) {
-			p_dir = &dir->Next;
-		}
-		while (dir) {
-			if (dir->Length > n_len) {
-				dir = NULL;
-			} else if (memcmp (buf, dir->Name, n_len) == 0) {
-				break;
-			} else {
-				dir = *(p_dir = &dir->Next);
-			}
-		}
-		if (!dir) {
-			dir = malloc (sizeof(struct s_dir_entry) + n_len -1);
-			dir->isTos  = (buf[1] == ':');
-			dir->Length = n_len;
-			memcpy (dir->Name, buf, n_len +1);
-			dir->Next = *p_dir;
-			*p_dir    = dir;
-		}
+		dir = dir_store (buf, n_len);
 	
 	} else if (!n_len && base) {
 		dir = base;
 	}
 	
 	return dir;
+}
+
+
+/*---------------------------------------------------------------------------*/
+static void
+clear_idx_tags (void)
+{
+	DIR_ENT dir = &dir_base;
+	do {
+		dir->IdxTag = 0ul;
+	} while ((dir = dir->Next) != NULL);
+	if (host_base) {
+		HOST_ENT host = host_base;
+		do {
+			host->IdxTag = 0ul;
+		} while ((host = host->Next) != NULL);
+	}
+}
+
+/*---------------------------------------------------------------------------*/
+static char * 
+wr_hex (char * ptr, short len, long val)
+{
+	const char hex[] = "0123456789ABCDEF";
+	short shift = (len -1) *4;
+	do {
+		*(ptr++) = hex[(BYTE)(val >> shift) & 0x0F];
+	} while ((shift -= 4) >= 0);
+	*(ptr++) = ':';
+	return ptr;
+}
+
+/*---------------------------------------------------------------------------*/
+static long
+rd_hex (char ** ptr, short len)
+{
+	char * p = *ptr;
+	long val = 0;
+	while(1) {
+		if      (*p >  'F') break;
+		else if (*p >= 'A') val = (val <<4) | (*(p++) - 'A' +10);
+		else if (*p >  '9') break;
+		else if (*p >= '0') val = (val <<4) | (*(p++) - '0');
+		else                break;
+	}
+	if (*p == ':' && p == *ptr + len) *ptr = p +1;
+	else                              val  = -2;
+	return val;
+}
+
+/*============================================================================*/
+BOOL
+location_wrIdx (FILE * file, LOCATION loc)
+{
+	char buf[30], * p = buf;
+	
+	if (!file) {
+		clear_idx_tags();
+		return FALSE;
+	
+	} else if (!loc) {
+		return FALSE;
+	}
+	
+	if (loc->Host) {
+		HOST_ENT entry = loc->Host;
+		if (!entry->IdxTag) {
+			entry->IdxTag = (long)entry;
+			*(p++) = 'H';
+			*(p++) = ':';
+			p = wr_hex (p, 8, entry->IdxTag);
+			fwrite (buf, 1, p - buf, file);
+			fputs  (entry->Name, file);
+			p = buf;
+			*(p++) = '\n';
+		}
+	}
+	if (loc->Dir) {
+		DIR_ENT entry = loc->Dir;
+		if (!entry->IdxTag) {
+			entry->IdxTag = (long)entry;
+			*(p++) = 'D';
+			*(p++) = ':';
+			p = wr_hex (p, 8, entry->IdxTag);
+			fwrite (buf, 1, p - buf, file);
+			fputs  (entry->Name, file);
+			p = buf;
+			*(p++) = '\n';
+		}
+	}
+	*(p++) = 'L';
+	*(p++) = ':';
+	p = wr_hex (p, 8, (long)loc->Host);
+	p = wr_hex (p, 8, (long)loc->Dir);
+	p = wr_hex (p, 2, loc->Proto);
+	p = wr_hex (p, 4, loc->Port);
+	fwrite (buf, 1, p - buf, file);
+	fputs  (loc->File, file);
+	fputc  ('\n', file);
+	
+	return TRUE;
+}
+
+/*============================================================================*/
+LOCATION
+location_rdIdx (FILE * file)
+{
+	HOST_ENT host = NULL;
+	DIR_ENT  dir  = NULL;
+	LOCATION loc  = NULL;
+	char     buf[2048];
+	
+	if (!file) {
+		clear_idx_tags();
+		return NULL;
+	
+	} else if (!fgets (buf, (int)sizeof(buf), file)) {
+		return NULL;
+	}
+	
+	if (buf[0] == 'H' && buf[1] == ':') {
+		char * ptr = buf +2;
+		long   tag = rd_hex (&ptr, 8);
+		size_t len = (tag > 0 ? strlen (ptr) : 0);
+		while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
+		if (!len) {
+			puts ("location_rdIdx(): zero host name.");
+			return NULL;
+		} else if ((host = host_store (ptr, len)) == NULL) {
+			puts ("location_rdIdx(): memory exhausted at host name.");
+			return NULL;
+		} else {
+			host->IdxTag = tag;
+			if (!fgets (buf, (int)sizeof(buf), file)) {
+				puts ("location_rdIdx(): unexpected EOF after host name.");
+				return NULL;
+			}
+		}
+	}
+	if (buf[0] == 'D' && buf[1] == ':') {
+		char * ptr = buf +2;
+		long   tag = rd_hex (&ptr, 8);
+		size_t len = (tag > 0 ? strlen (ptr) : 0);
+		while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
+		if (!len) {
+			puts ("location_rdIdx(): zero dir name.");
+			return NULL;
+		} else if (len > 1 && (dir = dir_store (ptr, len)) == NULL) {
+			puts ("location_rdIdx(): memory exhausted at dir name.");
+			return NULL;
+		} else {
+			if (!dir) dir = &dir_base;
+			dir->IdxTag = tag;
+			if (!fgets (buf, (int)sizeof(buf), file)) {
+				puts ("location_rdIdx(): unexpected EOF after dir name.");
+				return NULL;
+			}
+		}
+	}
+	if (buf[0] != 'L' && buf[1] == ':') {
+		if (buf[0] != '!') {
+			puts ("location_rdIdx(): main entry missing.");
+		}
+	} else {
+		char * ptr   = buf +2;
+		long   h_tag = rd_hex (&ptr, 8);
+		long   d_tag = rd_hex (&ptr, 8);
+		short  proto = rd_hex (&ptr, 2);
+		short  port  = rd_hex (&ptr, 4);
+		size_t len   = (d_tag > 0 ? strlen (ptr) : 0);
+		while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
+		if (h_tag <= 0) {
+			puts ("location_rdIdx(): host tag missing.");
+			return NULL;
+		} else if (!host && (host = host_search (h_tag)) == NULL) {
+			puts ("location_rdIdx(): host entry not found.");
+			return NULL;
+		} else if (d_tag <= 0) {
+			puts ("location_rdIdx(): dir tag missing.");
+			return NULL;
+		} else if (!dir && (dir = dir_search (d_tag)) == NULL) {
+			puts ("location_rdIdx(): dir entry not found.");
+			return NULL;
+		} else if (proto < 0 || port < 0) {
+			printf ("location_rdIdx(): format error %i/%i.", proto, port);
+			return NULL;
+		} else if ((loc = _alloc (dir, ptr)) != NULL) {
+			loc->Proto    = PROT_HTTP;
+			loc->Port     = 80;
+			loc->resolved = FALSE;
+			loc->Host     = host;
+		}
+	}
+	return loc;
 }
