@@ -953,6 +953,20 @@ hwWind_byValue (long val)
 	return wind;
 }
 
+/*============================================================================*/
+HwWIND
+hwWind_byContainr (CONTAINR cont)
+{
+	HwWIND wind = (cont ? hwWind_Top : NULL);
+	while (wind) {
+		if (wind->Pane == cont->Base) {
+			break;
+		}
+		wind = wind->Next;
+	}
+	return wind;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static void

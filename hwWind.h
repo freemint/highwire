@@ -58,6 +58,7 @@ extern HwWIND hwWind_Focus;
 HwWIND  hwWind_byValue  (long);
 HwWIND  hwWind_byHandle (WORD);
 #define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
+HwWIND  hwWind_byContainr (CONTAINR);
 
 void   hwWind_redraw (HwWIND, const GRECT *);
 BOOL   hwWind_message(WORD msg[], PXY mouse, UWORD state);
