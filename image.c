@@ -21,23 +21,23 @@
 #	include <gif_lib.h>
 #	undef TRUE
 #	undef FALSE
-	static pIMGDATA read_gif (IMAGE);
+	static pIMGDATA read_gif (IMAGE, LOCATION);
 #else
-#	define read_gif( i )   NULL
+#	define read_gif( i, l )   NULL
 #endif
 
 #ifdef LIBPNG
 #	include <png.h>
-	static pIMGDATA read_png (IMAGE);
+	static pIMGDATA read_png (IMAGE, LOCATION);
 #else
-#	define read_png( i )   NULL
+#	define read_png( i, l )   NULL
 #endif
 
 #ifdef LIBJPG
 #	include <jpeglib.h>
-	static pIMGDATA read_jpg (IMAGE);
+	static pIMGDATA read_jpg (IMAGE, LOCATION);
 #else
-#	define read_jpg( i )   NULL
+#	define read_jpg( i, l )   NULL
 #endif
 
 
@@ -280,7 +280,7 @@ image_calculate (IMAGE img, short par_width)
 			cIMGDATA data = img->u.Data;
 			if (!data) {
 				long hash = 0;
-				data = cache_lookup (img->source, 0, &hash);
+				data = cache_lookup (img->source, -1, &hash);
 			}
 			img->disp_w = width;
 			if (data) {
@@ -305,7 +305,7 @@ image_calculate (IMAGE img, short par_width)
 	
 	} else if (!img->u.Data && (!img->set_w || !img->set_h)) {
 		long     hash = 0;
-		cIMGDATA data = cache_lookup (img->source, 0, &hash);
+		cIMGDATA data = cache_lookup (img->source, -1, &hash);
 		if (data) {
 			if (!img->set_w) {
 				img->set_w = img->disp_w = data->img_w;
@@ -334,6 +334,7 @@ image_job (void * arg, long ignore)
 {
 	IMAGE    img = arg;
 	PARAGRPH par = img->paragraph;
+	LOCATION loc = img->source;
 	FRAME frame = img->frame;
 	GRECT rec   = frame->Container->Area, * clip = &rec;
 	short old_w = img->disp_w;
@@ -342,7 +343,7 @@ image_job (void * arg, long ignore)
 	
 	long   hash   = (img->set_w && img->set_h
 	                 ? img_hash (img->disp_w, img->disp_h, img->backgnd) : 0);
-	CACHED cached = cache_lookup (img->source, hash, (hash ? & hash : NULL));
+	CACHED cached = (hash ? cache_lookup (loc, hash, &hash) : NULL);
 	
 	(void)ignore; /* not used here */
 	
@@ -362,8 +363,9 @@ image_job (void * arg, long ignore)
 		
 		containr_notify (frame->Container, HW_ImgBegLoad, img->source->FullName);
 		
-		if ((data = read_gif (img)) != NULL ||
-		    (data = read_png (img)) != NULL || (data = read_jpg (img)) != NULL) {
+		if ((data = read_gif (img, loc)) != NULL ||
+		    (data = read_png (img, loc)) != NULL ||
+		    (data = read_jpg (img, loc)) != NULL) {
 			
 			if (data->fd_stand) {
 				pIMGDATA trns = malloc (sizeof (struct s_img_data)
@@ -957,7 +959,7 @@ raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
 /*============================================================================*/
 #ifdef LIBGIF
 static pIMGDATA
-read_gif (IMAGE img)
+read_gif (IMAGE img, LOCATION loc)
 {
 	pIMGDATA   data      = NULL;
 	RASTERINFO info      = { NULL, NULL, NULL, };
@@ -968,7 +970,7 @@ read_gif (IMAGE img)
 	short      fgnd      = G_BLACK;
 	short      bgnd      = G_WHITE;
 	ColorMapObject * map = NULL;
-	GifFileType    * gif = DGifOpenFileName (img->source->FullName);
+	GifFileType    * gif = DGifOpenFileName (loc->FullName);
 	if (gif) {
 		GifRecordType    rec;
 		do {
