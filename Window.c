@@ -239,7 +239,7 @@ window_evKeybrd (UWORD key, UWORD kstate)
 			wind_close  (hdl);
 			wind_delete (hdl);
 			
-		} else if (!wind->isIcon) {
+		} else if (!wind->isIcon && (wind->Widgets & (FULLER|SIZER))) {
 			GRECT curr, prev;
 			WORD  hdl = wind->Handle;
 			wind_calc_grect (WC_BORDER, 0, &desk_area, &curr);
