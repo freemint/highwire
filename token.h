@@ -204,6 +204,8 @@
 #ifndef __TOKEN_CSS
 #define __TOKEN_CSS
 	__BEG_CSSS
+		__CSS_ITEM (BACKGROUND,       KEY_BGCOLOR), /* not correct but the only *
+		                                             * supported attribute yet  */
 		__CSS_ITEM (BACKGROUND_COLOR, KEY_BGCOLOR),
 		/*          BORDER_COLOR      */
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
