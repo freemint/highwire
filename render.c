@@ -2011,7 +2011,6 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		
 		fontstack_push (current, step);
 		fontstack_setType (current, header_font);
-		fontstack_setBold (current);
 
 		if (parser->hasStyle) {
 			css_block_styles (parser, current->font);
@@ -2030,6 +2029,9 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 					fontstack_setColor (current, color);
 				}
 			}*/
+		}
+		if (!current->font->setBold) {
+			fontstack_setBold (current);
 		}
 		
 	} else {
