@@ -662,6 +662,18 @@ insert_anchor (TEXTBUFF current, char * name, struct url_link * presave)
 	WORDITEM word = current->word;
 	char   * p    = name;
 	
+	if (*p == '#') {          /* skip leading hashes */
+		while (*(++p) == '#');
+	}
+	while (*p && *p <= ' ') { /* skip leading blanks */
+		p++;
+	}
+	if (p > name) {
+		char * n = name;
+		while ((*(n++) = *(p++)) != '\0');
+		p = name;
+	}
+	
 	while (*p > ' ') { /* remove controll characters from the name */
 		p++;
 	}
