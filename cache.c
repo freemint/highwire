@@ -593,10 +593,11 @@ read_hex (char ** ptr)
 static void
 clear_dir (void)
 {
-	DTA * dta = Fgetdta();
+	DTA * old = Fgetdta(), dta;
+	Fsetdta (&dta);
 	strcpy (__cache_file, "*.*");
 	if (Fsfirst (__cache_path, 0x0000) == E_OK) do {
-		char * name = strupr (dta->d_fname);
+		char * name = strupr (dta.d_fname);
 		if ((strchr (base32, name[0]) && strchr (base32, name[1]) &&
 		     strchr (base32, name[2]) && strchr (base32, name[3]) &&
 		     (!name[4] || (name[4] == '.')))
@@ -605,6 +606,7 @@ clear_dir (void)
 			Fdelete (__cache_path);
 		}
 	} while (Fsnext() == E_OK);
+	Fsetdta (old);
 }
 
 /*============================================================================*/
@@ -661,16 +663,15 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 			if (file && fgets (hdr, (int)sizeof(hdr) -1, file)) {
 				int  pos   = 0;
 				long magic = 0;
-				if ((sscanf (hdr, "%8lX:%8lX%n", &magic, &__cache_fid, &pos) == 2)
-				    && (magic == MAGIC_NUM) && (__cache_fid > 0) && (pos == 17)
-				    && (hdr[17] == '\n' || hdr[17] == '\r')) {
-					__cache_dir = loc;
-				} else {
+				if ((sscanf (hdr, "%8lX:%8lX%n", &magic, &__cache_fid, &pos) != 2)
+				    || (magic != MAGIC_NUM) || (__cache_fid == 0) || (pos != 17)
+				    || (hdr[17] != '\n' && hdr[17] != '\r')) {
 					__cache_fid = 0l;
 					fclose (file);
 					file = NULL;
 					clear_dir();
 				}
+				__cache_dir = loc;
 			} else if (cache_flush (NULL, loc)) {
 				__cache_dir = loc;
 			} else {
