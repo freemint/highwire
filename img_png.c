@@ -64,6 +64,9 @@ decPng_start (const char * name, IMGINFO info)
 		png_set_strip_16 (png_ptr);
 	} else if (info_ptr->bit_depth < 8) {
 		png_set_packing (png_ptr);
+		if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+			png_set_gray_1_2_4_to_8 (png_ptr);
+		}
 	}
 	if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA) {
 		png_set_strip_alpha (png_ptr);
