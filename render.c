@@ -2146,8 +2146,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	add_paragraph (current, 2);
 
-	if (flags & PF_START)
-	{
+	if (flags & PF_START) {
 		#if 1
 		/* BUG: TITLE support not ready.  This try leads to another problem:
 		 * We need the entity and encoding conversion as a separate function.
@@ -2171,11 +2170,12 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 			flags |= PF_FONT;
 		}
 		#endif
-	}
-	else
-	{
-		current->paragraph->Indent  -= list_indent(2);
-		current->paragraph->Rindent -= list_indent(2);
+	
+	} else {
+		short    indent = list_indent(2);
+		PARAGRPH par    = current->paragraph;
+		if (par->Indent  >= indent) par->Indent  -= indent;
+		if (par->Rindent >= indent) par->Rindent -= indent;
 	}
 	
 	return (flags|PF_SPACE);
