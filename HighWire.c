@@ -19,6 +19,7 @@
 #ifdef GEM_MENU
 # include "highwire.h"
 #endif
+#include "ovl_sys.h"
 
 
 extern char *gslongname;
@@ -226,7 +227,9 @@ static void
 highwire_ex (void)
 {
 	if (gl_apid > 0) {
-
+		
+		kill_ovl (NULL);
+		
 		Exit_AV_Protocol();
 
 	#ifdef GEM_MENU
