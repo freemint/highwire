@@ -372,15 +372,14 @@ cache_info (size_t * size, CACHEINF * p_info)
 			size_t    num   = __cache_num;
 			CACHEITEM citem = __cache_beg;
 			do {
-				LOCATION local = (citem->Ident ? citem->Location : citem->Object);
-				info->Size    = citem->Size;
-				info->Used    = citem->Reffs;
-				info->Ident   = citem->Ident;
 				info->Source  = citem->Location;
+				info->Ident   = citem->Ident;
+				info->Used    = citem->Reffs;
+				info->Local   = (citem->Ident ? NULL : citem->Object);
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
-				info->File    = (local ? local->File : NULL);
 				info->Object  = citem->Object;
+				info->Size    = citem->Size;
 				citem = citem->NextItem;
 				info++;
 			} while (--num);
@@ -418,19 +417,19 @@ cache_setup (const char * dir)
 
 
 /*============================================================================*/
-CQRESULT
+CRESULT
 cache_exclusive (LOCATION loc)
 {
 	CACHEITEM citem = tree_item (loc);
-	CQRESULT  res;
+	CRESULT   res;
 	
 	if (citem) {
-		res = (!citem->Object ? CQ_BUSY : CQ_LOCAL);
+		res = (!citem->Object ? CR_BUSY : CR_LOCAL);
 	/*	printf ("cache_exclusive(%s): %s\n",
-		        loc->FullName, (res == CQ_BUSY ? "busy" : "found"));*/
+		        loc->FullName, (res == CR_BUSY ? "busy" : "found"));*/
 	} else {
 		create_item (loc, NULL, 0uL, (void(*)(void*))0);
-		res = CQ_NONE;
+		res = CR_NONE;
 	/*	printf ("cache_exclusive(%s) set\n", loc->FullName);*/
 	}
 	return res;

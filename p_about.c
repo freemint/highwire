@@ -82,10 +82,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				int ih = (int) info->Ident       & 0x0FFF; /* height      */
 				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
 				render_text (current, buf);
-			} else if (!info->Object) {
+			} else if (!info->Local) {
 				render_text (current, "(busy)");
 			} else {
-				sprintf (buf, "Disk:%s", info->File);
+				sprintf (buf, "Disk:%s", info->Local->File);
 				render_text (current, buf);
 			}
 			sprintf (buf, " %li", info->Size);
@@ -102,7 +102,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				}
 				line++;
 			}
-			if (info->Used || !info->File) {
+			if (info->Used || !info->Local) {
 				sprintf (buf, "[%li]", info->Used);
 				render_text (current, buf);
 			} else {
