@@ -1443,8 +1443,23 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 			check = TRUE;
 			break;
 		case WM_ARROWED:
-			if (msg[4] == WA_LFLINE) {
-				hwWind_undo (This, ((kstate & (K_RSHIFT|K_LSHIFT)) != 0));
+			switch (msg[4]) {
+				case WA_LFLINE:
+					hwWind_undo (This, ((kstate & (K_RSHIFT|K_LSHIFT)) != 0));
+					break;
+				
+				case WA_UPLINE: {
+					FRAME active = hwWind_ActiveFrame (This);
+					if (active) {
+						hwWind_scroll (This, active->Container, 0, -scroll_step);
+					}
+				}	break;
+				case WA_DNLINE: {
+					FRAME active = hwWind_ActiveFrame (This);
+					if (active) {
+						hwWind_scroll (This, active->Container, 0, +scroll_step);
+					}
+				}	break;
 			}
 			break;
 		case 22360: /* shaded */
