@@ -576,7 +576,9 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				blocker->L.bottom = blocker->L.width =
 				blocker->R.bottom = blocker->R.width = 0;
 			} else {
-				box->Rect.X += blocker->L.width;
+				if ((box->Floating & ~FLT_MASK) == ALN_LEFT) {
+					box->Rect.X += blocker->L.width;
+				}
 				set_width = blk_width;
 				floating  = TRUE;
 			}
