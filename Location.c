@@ -36,7 +36,7 @@ typedef struct s_host_entry {
 	UWORD                 Length;
 	char                  Name[1];
 } * HOST_ENT;
-static void * host_entry (const char ** name, UWORD max_len);
+static void * host_entry (const char ** name, UWORD max_len, BOOL resolve);
 #define       host_addr(h)   (h ? h->Ip : 0uL)
 
 
@@ -180,7 +180,7 @@ new_location (const char * p_src, LOCATION base)
 	
 	if (read_host) {
 		const char * s = src;
-		loc_host = host_entry (&s, 0);
+		loc_host = host_entry (&s, 0, TRUE);
 		if (loc_host) {
 			if (*s == ':') {
 				char * end;
@@ -591,7 +591,7 @@ host_search (unsigned long tag)
 
 /*----------------------------------------------------------------------------*/
 static void *
-host_entry (const char ** name, UWORD max_len)
+host_entry (const char ** name, UWORD max_len, BOOL resolve)
 {
 	HOST_ENT     ent;
 	const char * n = *name;
@@ -621,7 +621,7 @@ host_entry (const char ** name, UWORD max_len)
 		ent = host_store (buf, len);
 	}
 #ifdef USE_INET
-	if (ent && !ent->Ip) {
+	if (ent && !ent->Ip && resolve) {
 		inet_host_addr (ent->Name, (long*)&ent->Ip);
 	}
 #endif /* USE_INET */
@@ -633,7 +633,7 @@ host_entry (const char ** name, UWORD max_len)
 const char *
 location_DBhost (const char * name, UWORD len, ULONG * p_flags)
 {
-	HOST_ENT ent = host_entry (&name, len);
+	HOST_ENT ent = host_entry (&name, len, FALSE);
 	if (ent) {
 		ULONG flags = *p_flags;
 		if (flags & 0x80000000uL) ent->Flags &= ~flags;
