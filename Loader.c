@@ -711,8 +711,7 @@ header_job (void * arg, long invalidated)
 				loader->rdDest[0] = '\0';
 				loader->rdDest[1] = '\0';
 				loader->rdDest[2] = '\0';
-				inet_close (sock);
-				sock = -1;
+				/* nothing more to do, falls through */
 			} else {
 				loader->rdSocket = sock;
 				sched_insert (receive_job,
@@ -737,14 +736,15 @@ header_job (void * arg, long invalidated)
 	
 	}
 	
-	/* else error case
+	/* else either a very short file or an error case occured
 	*/
 	inet_close  (sock);
 	cache_abort (loc);
 	
-	loader->MimeType = MIME_TEXT;
-	loader->Data     = strdup (hdr.Head);
-	
+	if (!loader->Data) {
+		loader->MimeType = MIME_TEXT;
+		loader->Data     = strdup (hdr.Head);
+	}
 	if (loader->SuccJob) {
 		(*loader->SuccJob)(loader, (long)loader->Target);
 	} else {
