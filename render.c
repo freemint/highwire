@@ -1268,7 +1268,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		FRAME    frame    = parser->Frame;
 		TEXTBUFF current  = &parser->Current;
-		H_ALIGN  floating = ALN_NO_FLT;
+		H_ALIGN  floating = get_h_align (parser, ALN_NO_FLT);
 		V_ALIGN  v_align  = ALN_BOTTOM;
 		TEXTATTR word_attr   = current->word->attr;
 		short word_height    = current->word->word_height;
@@ -1287,19 +1287,15 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			return flags;
 		}
 	
-		if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
-			if      (stricmp (output, "left")   == 0) floating = ALN_LEFT;
-			else if (stricmp (output, "right")  == 0) floating = ALN_RIGHT;
-			else if (stricmp (output, "center") == 0) floating = ALN_CENTER;
-			
-			else if (stricmp (output, "top")    == 0) v_align = ALN_TOP;
+		if (floating != ALN_NO_FLT) {
+			add_paragraph (current, 0);
+			current->paragraph->paragraph_code = PAR_IMG;
+			current->paragraph->floating       = floating;
+		
+		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
+			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
 			else if (stricmp (output, "middle") == 0) v_align = ALN_MIDDLE;
 			/* else                                   v_align = ALN_BOTTOM */
-			if (floating != ALN_NO_FLT) {
-				add_paragraph (current, 0);
-				current->paragraph->paragraph_code = PAR_IMG;
-				current->paragraph->floating       = floating;
-			}
 		}
 		word = current->word;
 		word->vertical_align = v_align;
@@ -1425,8 +1421,6 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		H_ALIGN align = get_align (parser);
-		char    buf[8];
 
 		/* Prevent a heading paragraph just behind a <LI> tag.
 		 */
@@ -1435,12 +1429,7 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 			par = add_paragraph (current, 2);
 		}
 
-		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
-			if      (stricmp (buf, "right")   == 0) align = ALN_RIGHT;
-			else if (stricmp (buf, "center")  == 0) align = ALN_CENTER;
-			else if (stricmp (buf, "justify") == 0) align = ALN_JUSTIFY;
-		}
-		par->alignment = align;
+		par->alignment = get_h_align (parser, get_align (parser));
 		
 		step_push (current, 7 - (get_value_char (parser, KEY_H_HEIGHT) - '0'));
 
@@ -1491,7 +1480,6 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		TEXTBUFF current = &parser->Current;
 		TEXTATTR attrib  = current->word->attr;
-		char output[100];
 		
 		PARAGRPH hr_par = add_paragraph(current, 0);
 		WORDITEM hr_wrd = current->word;
@@ -1500,11 +1488,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		add_paragraph (current, 0);
 	
 		hr_par->paragraph_code = PAR_HR;
-		hr_par->alignment      = ALN_CENTER;
-		if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
-			if      (stricmp (output, "left")  == 0) hr_par->alignment = ALN_LEFT;
-			else if (stricmp (output, "right") == 0) hr_par->alignment = ALN_RIGHT;
-		}
+		hr_par->alignment      = get_h_align (parser, ALN_CENTER);
 		
 		if ((hr_wrd->word_tail_drop = get_value_unum (parser, KEY_SIZE, 0)) == 0 &&
 		    (hr_wrd->word_tail_drop = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
@@ -1551,8 +1535,6 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		H_ALIGN align = get_align (parser);
-		char    buf[8];
 
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
@@ -1562,12 +1544,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			par = add_paragraph (current, 2);
 		}
 
-		if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
-			if      (stricmp (buf, "right")   == 0) align = ALN_RIGHT;
-			else if (stricmp (buf, "center")  == 0) align = ALN_CENTER;
-			else if (stricmp (buf, "justify") == 0) align = ALN_JUSTIFY;
-		}
-		par->alignment = align;
+		par->alignment = get_h_align (parser, get_align (parser));
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
