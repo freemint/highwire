@@ -1,4 +1,4 @@
-(non-public of April 22, 2003)
+(non-public of May 08, 2003)
 
 - The new implemented navigation bar allows easy
   entering of URLs as well as going for/backward
@@ -29,6 +29,10 @@
 - Initial implementation of OVLs for different
   network support (MiNTnet and STiK2).
 
+- Improved calculation of the width of tables and
+  their cells, makes several pages looking a bit
+  better.
+
 - Fixed a bug in interpreting of quoted file names
   from VA_START.
 
@@ -37,10 +41,16 @@
   invalid urls of the form //<server_name>/ with a
   missing http: are supported now.
 
+- Fixed a bug in parsing of plain text files which
+  led to an endless loop on very long lines.
+
 - Fixed a bug in the style=".." parsing function
   which could cause crashes before.
 
 - Mended some more memory leaks.
+
+- Overworked charset encoding to speedo encoding
+  for better performance.
 
 - Bugs #0063, #0064, #0090, 0094 resolved.
 
