@@ -50,8 +50,8 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	current->font_size = font_step2size (NULL, 3);
 	current->font_step = new_step (3, frame->text_color);
 	
-	content_setup (&frame->Page, current,
-	               page_margin, (ignore_colours ? G_WHITE : G_LWHITE));
+	content_setup (&frame->Page, current, page_margin, background_colour);
+	
 	if (margin_w >= 0) {
 		frame->Page.MarginLft = frame->Page.MarginRgt = margin_w;
 	}
