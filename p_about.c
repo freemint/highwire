@@ -268,6 +268,7 @@ parse_about (void * arg, long invalidated)
 		title = "Version Information";
 		mode  = 0;
 	}
+	font_switch (current->word->font, NULL);
 	render_text  (current, title);
 	render_hrule (current, ALN_CENTER, -1024, 2);
 	
