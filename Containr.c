@@ -337,6 +337,37 @@ containr_highlight (CONTAINR cont, void * highlight)
 	return old;
 }
 
+/*============================================================================*/
+ULONG
+containr_escape (CONTAINR cont)
+{
+	ULONG num   = 0;
+	short depth = 0;
+	BOOL  up   = TRUE;
+	while (cont) {
+		if (up) {
+			num += sched_clear ((long)cont);
+			if (cont->Mode > CNT_FRAME && cont->u.Child) {
+				cont = cont->u.Child;
+				depth++;
+				continue;
+			}
+		}
+		if (!depth) {
+			break;
+		}
+		if (cont->Sibling) {
+			cont = cont->Sibling;
+			up   = TRUE;
+			continue;
+		}
+		cont = cont->Parent;
+		up   = FALSE;
+		depth--;
+	}
+	return num;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static HISTITEM *

@@ -136,6 +136,8 @@ void     containr_register  (CONTAINR, CNTR_HDLR, long arg);
 					*/
 void   * containr_highlight (CONTAINR, void * highlight);
 
+ULONG    containr_escape    (CONTAINR);
+
 
 /*--- History stuff ---*/
 
