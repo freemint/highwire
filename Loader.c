@@ -70,6 +70,9 @@ parser_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
+	if (!loader->MimeType) {
+		loader->MimeType = MIME_TEXT;
+	}
 	parser = new_parser (loader);
 	
 	switch (loader->MimeType)
@@ -176,14 +179,7 @@ new_loader (LOCATION loc)
 		}
 	}
 	
-	if (appl) {
-		loader->ExtAppl = strdup (appl);
-	} else {
-		loader->ExtAppl = NULL;
-	}
-	if (!loader->MimeType) {
-		loader->MimeType = MIME_TEXT;
-	}
+	loader->ExtAppl = (appl ? strdup (appl) : NULL);
 	
 	return loader;
 }
@@ -447,21 +443,25 @@ loader_job (void * arg, long invalidated)
 			reply = http_header (loc, &hdr, &sock, sizeof (loader->rdTemp) -2);
 		} while (reply == -ECONNRESET && retry++ < 1);
 		
-		if (hdr.MimeType) {
-			loader->MimeType = hdr.MimeType;
-			if (hdr.Encoding) {
-				loader->Encoding = hdr.Encoding;
-			}
-		}
 		if ((reply == 301 || reply == 302) && hdr.Rdir) {
+			if (!loader->MimeType && hdr.MimeType) {
+				loader->MimeType = hdr.MimeType;
+			}
 			loc = new_location (hdr.Rdir, loader->Location);
 			free_location (&loader->Location);
 			loader->Location = loc;
 			inet_close (sock);
 			
 			return TRUE; /* re-schedule with the new location */
-			
-		} else if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
+		}
+		
+		if (hdr.MimeType) {
+			loader->MimeType = hdr.MimeType;
+			if (hdr.Encoding) {
+				loader->Encoding = hdr.Encoding;
+			}
+		}
+		if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
 			char buf[300];
 			sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
 			containr_notify (loader->Target, HW_SetInfo, buf);
