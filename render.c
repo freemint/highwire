@@ -2507,12 +2507,9 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (floating == ALN_NO_FLT) {
 			if (get_v_align (parser, -1) == ALN_MIDDLE) {
 				floating = ALN_CENTER; /* patch for invalid key value */
-			} else if (parser->Current.parentbox->BoxClass == BC_STRUCT) {
-				/* workaround, needs to be replaced soon */
-				if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
-				    parser->Current.parentbox->TextAlign == ALN_CENTER) {
-					floating = parser->Current.parentbox->TextAlign;
-				}
+			} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
+				        parser->Current.parentbox->TextAlign == ALN_CENTER) {
+				floating = parser->Current.parentbox->TextAlign;
 			}
 		}
 		table_start (parser,
