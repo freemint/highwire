@@ -367,7 +367,7 @@ image_job (void * arg, long invalidated)
 		
 		if ((info = get_decoder (loc->FullName)) != NULL &&
 		    (data = setup (img, info))           != NULL) {
-			info->RowBuf = malloc (info->ImgWidth * info->NumComps);
+			info->RowBuf = malloc ((info->ImgWidth +1) * info->NumComps);
 			read_img (img, info, data);
 			(*info->quit)(info);
 			if (info->RowBuf) free (info->RowBuf);
@@ -467,7 +467,7 @@ setup (IMAGE img, IMGINFO info)
 	
 	img_scale (img, info->ImgWidth, info->ImgHeight, info);
 	
-	wd_width = (img->disp_w + 15) / 16;
+	wd_width = (img->disp_w + 31) / 16;
 	pg_size  = wd_width * img->disp_h;
 	mem_size = pg_size *2 * n_planes;
 	data     = malloc (sizeof (struct s_img_data) + mem_size);
@@ -1320,30 +1320,122 @@ raster_16 (IMGINFO info, void * _dst)
 static void
 gscale_16 (IMGINFO info, void * _dst)
 {
-	UWORD * dst   = _dst;
-	short   width = info->DthWidth;
-	size_t  x     = (info->IncXfx +1) /2;
-	do {
-		UWORD rgb = info->RowBuf[(x >>16)];
-		*(dst++)  = ((rgb & 0xF8) <<8) | ((rgb & 0xFC) <<3) | (rgb >>3);
-		x += info->IncXfx;
-	} while (--width);
-}
-/*------------------------------------*/
-static void
-dither_16 (IMGINFO info, void * _dst)
+#if defined (__GNUC__)
+	if (info->IncXfx == 0x00010000uL) {
+		__asm__ volatile ("
+			subq.l	#1, %2
+			lsr.l		#1, %2
+			1:
+			clr.l		d0
+			move.w	(%0)+, d0 |........:........|12345678:12345678|
+			lsl.l		#8, d0    |........:12345678|12345678:........|
+			lsr.w		#8, d0    |........:12345678|........:12345678|
+			move.l	d0, d1
+			lsr.l		#2, d0    |........:..123456|78......:..123456|
+			andi.w	#0x3F, d0 |........:..123456|........:..123456|
+			lsl.l		#5, d0    |.....123:456.....|.....123:456.....|
+			lsr.l		#3, d1    |........:...12345|678.....:...12345|
+			andi.w	#0x1F, d1 |........:...12345|........:...12345|
+			or.l		d1, d0
+			lsl.l		#8, d1    |...12345:........|...12345:........|
+			lsl.l		#3, d1    |12345...:........|12345...:........|
+			or.l		d1, d0
+			move.l	d0, (%1)+
+			dbra		%2, 1b
+			" : /* no return */
+			: "a"(info->RowBuf),"a"(_dst), "d"((long)info->DthWidth)
+			/*    %0                %1         %2           */
+			: "d0","d1","d2"
+		);
+	} else
+#endif
 {
 	UWORD * dst   = _dst;
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	do {
+#if defined (__GNUC__)
+		__asm__ volatile ("
+			move.b	(%0), d0
+			move.b	d0, d1
+			lsl.w		#5, d0
+			move.b	d1, d0
+			lsl.l		#6, d0
+			move.b	d1, d0
+			lsr.l		#3, d0
+			move.w	d0, (%1)
+			" : /* no return */
+			: "a"(&info->RowBuf[x >>16]),"a"(dst++)
+			: "d0","d1"
+		);
+#else
+		UWORD rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = ((rgb & 0xF8) <<8) | ((rgb & 0xFC) <<3) | (rgb >>3);
+#endif
+		x += info->IncXfx;
+	} while (--width);
+}}
+/*------------------------------------*/
+static void
+dither_16 (IMGINFO info, void * _dst)
+{
+#if defined (__GNUC__)
+	if (info->IncXfx == 0x00010000uL) {
+		__asm__ volatile ("
+			subq.l	#1, %2
+			lsr.l		#1, %2
+			1:
+			movem.w	(%0), d0/d1/d2 |R8:G8| / |B8:r8| / |g8:b8|
+			addq.l	#6, %0
+			lsl.l		#5, d0      |........:...RRRRR|RRRGGGGG:GGG00000|
+			lsl.w		#3, d0      |........:...RRRRR|GGGGGGGG:00000000|
+			lsl.l		#6, d0      |.....RRR:RRGGGGGG|GG000000:00000000|
+			move.w	d1, d0      |.....RRR:RRGGGGGG|BBBBBBBB:rrrrrrrr|
+			lsl.l		#5, d0      |RRRRRGGG:GGGBBBBB|BBBrrrrr:rrr00000|
+			move.w	d0, d1      |........:........|BBBrrrrr:rrr00000|
+			lsl.l		#8, d1      |........:BBBrrrrr|rrr00000:00000000|
+			move.w	d2, d1      |........:BBBrrrrr|gggggggg:bbbbbbbb|
+			lsl.l		#6, d1      |..BBBrrr:rrgggggg|ggbbbbbb:bb000000|
+			lsl.w		#2, d1      |..BBBrrr:rrgggggg|bbbbbbbb:00000000|
+			lsl.l		#5, d1      |rrrrrggg:gggbbbbb|bbb00000:00000000|
+			swap		d1
+			move.w	d1, d0
+			move.l	d0, (%1)+
+			dbra		%2, 1b
+			" : /* no return */
+			: "a"(info->RowBuf),"a"(_dst), "d"(info->DthWidth)
+			/*    %0                %1        %2           */
+			: "d0","d1","d2"
+		);
+	} else
+#endif
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+#if defined (__GNUC__)
+		__asm__ volatile ("
+			move.b	(%0)+, d0
+			lsl.w		#5, d0
+			move.b	(%0)+, d0
+			lsl.l		#6, d0
+			move.b	(%0)+, d0
+			lsr.l		#3, d0
+			move.w	d0, (%1)
+			" : /* no return */
+			: "a"(&info->RowBuf[(x >>16) *3]),"a"(dst++)
+			: "d0"
+		);
+#else
 		CHAR * rgb = &info->RowBuf[(x >>16) *3];
 		*(dst++)   = (((UWORD)rgb[0] & 0xF8) <<8)
 		           | (((UWORD)rgb[1] & 0xFC) <<3)
 		           |         (rgb[2]         >>3);
+#endif
 		x += info->IncXfx;
 	} while (--width);
-}
+}}
 
 /*------------------------------------------------------------------------------
  * 16 planes packed pixels formart in wrong (intel) byte order, the pixel index
@@ -1928,3 +2020,4 @@ get_decoder (const char * file)
 	}
 	return info;
 }
+
