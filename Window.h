@@ -5,7 +5,7 @@ typedef struct s_window * WINDOW;
 
 #else
 WINDOW_t window_ctor (WINDOW_t, WORD widgets, GRECT *, BOOL modal);
-WINDOW_t window_dtor (WINDOW_t);
+WINDOW   window_dtor (WINDOW_t);
 #endif
 typedef struct s_window {   /* all of the following are private attributes, */
 	WORD   Handle;           /* only to be read, by foreign modules          */
@@ -17,6 +17,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	BOOL   isScrn;     /* special full screen mode as from F11 in Mozilla/IE */
 	GRECT  Curr;       /* outer extents of the window */
 	/***/
+	WINDOW(*destruct)(WINDOW_t);
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
 	void (*evButton) (WINDOW_t, WORD bmask, PXY, UWORD kstate, WORD clicks);
 	void (*evKeybrd) (WINDOW_t, WORD scan, WORD ascii, UWORD kstate);
@@ -31,6 +32,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 
 #undef WINDOW_t
 
+#define delete_window(WINDOW) {if (WINDOW) free((*(WINDOW)->destruct)(WINDOW));}
 
 BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 void window_evButton  (WORD bmask, PXY mouse, UWORD kstate, WORD clicks);

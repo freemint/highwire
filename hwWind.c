@@ -21,6 +21,7 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
+static WINDOW vTab_destruct(HwWIND);
 static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
 static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
 static void vTab_evKeybrd  (HwWIND, WORD scan, WORD ascii, UWORD kstate);
@@ -206,6 +207,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	}
 	
 	window_ctor (This, wind_kind, NULL, FALSE);
+	This->Base.destruct  = vTab_destruct;
 	This->Base.evMessage = vTab_evMessage;
 	This->Base.evButton  = vTab_evButton;
 	This->Base.evKeybrd  = vTab_evKeybrd;
@@ -279,8 +281,8 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 }
 
 /*============================================================================*/
-void
-delete_hwWind (HwWIND This)
+static WINDOW
+vTab_destruct (HwWIND This)
 {
 	short i;
 	
@@ -302,7 +304,7 @@ delete_hwWind (HwWIND This)
 		hwWind_Focus = NULL;
 	}
 	
-	free (window_dtor(This));
+	return window_dtor(This);
 }
 
 
@@ -686,8 +688,7 @@ static BOOL
 vTab_close (HwWIND This, UWORD state)
 {
 	if (!(state & K_ALT)) {
-		delete_hwWind (This);
-		return FALSE; /*TRUE;*/
+		return TRUE; /* to be deleted */
 	
 	} else if (tbar_set) {
 		GRECT work = This->Work;

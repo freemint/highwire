@@ -43,6 +43,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->isScrn  = FALSE;
 		This->Next = This->Prev = NULL;
 		
+		This->destruct  = window_dtor;
 		This->evMessage = vTab_evMessage;
 		This->evButton  = vTab_evButton;
 		This->evKeybrd  = vTab_evKeybrd;
@@ -162,7 +163,7 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 		
 		case WM_CLOSED:
 			if ((*wind->close)(wind, kstate)) {
-				free (window_dtor (wind));
+				delete_window (wind);
 			}
 			break;
 		
