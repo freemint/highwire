@@ -1,4 +1,4 @@
-(non-released of Aug. 03, 2003)
+Changes in V. 0.1.4 release  of August 10, 2003:
 
 - Implemented disk caching of text/html files from
   remote (only per session yet).  To enable this
@@ -8,22 +8,24 @@
   where <path> must be a valid and writeable
   directory.
 
+- Added a new config keyword to define the default
+  background colour for pages that doesn't define
+  any:
+    DFLT_BACKGND = <colour>
+  (see example.cfg\highwire.cfg for details).
+
 - The toolbar got a stop button now to allow page
   loading to be stopped.  The same function is
   implemented for the escape key now as well.
   Additional there is also a new button for open
   file now.
 
+- Some adaptions for monochrome screen mode done.
+
 - Improved history functionality to not messed up
   due to frames that are loaded from a different
   server than the frameset.  Furthermore slider
   positions of frames are stored also now.
-
-- Added a new config keyword to define the default
-  background colour for pages that doesn't define
-  any:
-    DFLT_BACKGND = <colour>
-  (see example.cfg\highwire.cfg for details).
 
 - Implemented ID keyword as anchor for <P> and
   <Hx> tags, blanks in anchor names are filtered
