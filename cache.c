@@ -696,7 +696,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 					__cache_fid = 0l;
 					fclose (file);
 					file = NULL;
-					hwUi_info ("cache::setup()", "\n"
+					hwUi_info ("cache::setup()", " \n"
 					           "The cache is out of date and will be cleared now.\n"
 					           "This might need some time.\n");
 					clear_dir();
