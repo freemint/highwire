@@ -873,10 +873,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 	if (asc >= ' ' && asc != 127 &&
 	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
 		if (input->TextLen < input->TextMax) {
+			WORD  mapping = word->font->Base->Mapping;
+			WCHAR tmp[5];
 			{
-				ENCODER_W encoder = encoder_word (ENCODING_ATARIST,
-				                                  word->font->Base->Mapping);
-				WCHAR   tmp[5];
+				ENCODER_W encoder = encoder_word (ENCODING_ATARIST, mapping);
 				const char  * ptr = &((char*)&asc)[1];
 				WCHAR * end = input->Word->item + input->TextLen;
 				WCHAR * dst = input->Word->item + form->TextCursrX;
@@ -892,7 +892,12 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 				do {
 					*(end +1) = *(end);
 				} while (--end >= dst);
-				*dst = asc;
+				if (mapping != MAP_UNICODE) {
+					ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
+					const char  * ptr = &((char*)&asc)[1];
+					(*encoder)(&ptr, tmp);
+				}
+				*dst = (char)*tmp;
 			}
 			input->TextLen++;
 			scrl = +1;
