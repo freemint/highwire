@@ -244,29 +244,29 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 			if (c_top < bot + r->Y) {
 				c_top = r->Y + bot;
 			}
-			if (c_bot > r->Y + cld->Rect.Y) {
-				c_bot = r->Y + cld->Rect.Y;
+			if (c_bot >= r->Y + cld->Rect.Y) {
+				c_bot = r->Y + cld->Rect.Y -1;
 			}
 			cld = NULL;
 			break;
 		}
 		if (x < cld->Rect.X) {
 			if (y < cld->Rect.Y + cld->Rect.H) {
-				long rgt = r->X + cld->Rect.X;
+				long rgt = r->X + cld->Rect.X -1;
 				if (rgt < c_rgt) {
 					c_rgt = rgt;
 				}
 			}
 		} else if (x >= cld->Rect.X + cld->Rect.W) {
 			if (y < cld->Rect.Y + cld->Rect.H) {
-				long lft = r->X + cld->Rect.X + cld->Rect.W -1;
+				long lft = r->X + cld->Rect.X + cld->Rect.W -1 +1;
 				if (lft > c_lft) {
 					c_lft = lft;
 				}
 			}
 		} else {
-			if (y < (bot = cld->Rect.Y + cld->Rect.H)) {
-				break;
+			if (y < (bot = cld->Rect.Y + cld->Rect.H -1 +1)) {
+				break; /* inside the child box */
 			} else if (c_top < bot + r->Y) {
 				c_top = bot + r->Y;
 			}
@@ -319,32 +319,34 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 
 	while (cld) {
 		if (y < cld->Rect.Y) {
-			c_bot = r->Y + cld->Rect.Y;
-			
-		} else if (x < dombox_LftDist (box)) {
-			c_rgt = r->X + dombox_LftDist (box);
-			
-		} else if (x >= box->Rect.W - dombox_RgtDist (box)) {
-			c_lft = r->X + box->Rect.W - dombox_RgtDist (box) -1;
-		
-		} else if (y >= box->Rect.H - dombox_BotDist (box)) {
-			c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1;
-		
-		} else if ((cld = box->_vtab->ChildAt (box, r, x, y, clip)) != NULL) {
+			c_bot = r->Y + cld->Rect.Y -1;
+			break;
+		}
+		if (x < dombox_LftDist (box)) {
+			c_rgt = r->X + dombox_LftDist (box) -1;
+			break;
+		}
+		if (x >= box->Rect.W - dombox_RgtDist (box)) {
+			c_lft = r->X + box->Rect.W - dombox_RgtDist (box) -1 +1;
+			break;
+		}
+		if (y >= box->Rect.H - dombox_BotDist (box)) {
+			c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1 +1;
+			break;
+		}
+		if ((cld = box->_vtab->ChildAt (box, r, x, y, clip)) != NULL) {
 			r->X += cld->Rect.X;
 			r->Y += cld->Rect.Y;
 			box  =  cld;
 			cld  =  box->ChildBeg;
 			x    -= box->Rect.X;
 			y    -= box->Rect.Y;
-			continue;
 		}
-		break;   /* finished */
 	}
 	*px = r->X;
 	*py = r->Y;
 	if (c_rgt < r->X + box->Rect.W -1) {
-		r->W = c_rgt - r->X;
+		r->W = c_rgt - r->X +1;
 	} else {
 		r->W = box->Rect.W;
 	}
@@ -353,7 +355,7 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 		r->X =  c_lft;
 	}
 	if (c_bot < r->Y + box->Rect.H -1) {
-		r->H = c_bot - r->Y;
+		r->H = c_bot - r->Y +1;
 	} else {
 		r->H = box->Rect.H;
 	}
