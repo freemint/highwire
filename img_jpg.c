@@ -54,8 +54,8 @@ decJpg_start (const char * name, IMGINFO info)
 	int header = 0;
 	
 	if (!file) {
-		puts ("decJpg_start(): file not found.");
-		return FALSE;
+	/*	puts ("decJpg_start(): file not found.");*/
+		return TRUE; /* avoid further tries of decoding */
 	
 	} else if ((jpeg = malloc (sizeof(struct jpeg_decompress_struct))) == NULL ||
 	           (jerr = malloc (sizeof(struct jpeg_error_mgr)))         == NULL) {

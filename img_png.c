@@ -33,8 +33,8 @@ decPng_start (const char * name, IMGINFO info)
 	FILE * file = fopen (name, "rb");
 	
 	if (!file) {
-		puts ("decPng_start(): file not found.");
-		return FALSE;
+	/*	puts ("decPng_start(): file not found.");*/
+		return TRUE; /* avoid further tries of decoding */
 	
 	} else if (fread (header, sizeof(header), 1, file) != 1 ||
 	           png_sig_cmp (header, 0, sizeof(header))) {
