@@ -402,6 +402,13 @@ cache_release (CACHED * p_object, BOOL erase)
 			if (citem->Object == cached) {
 				if ((!citem->Reffs || !--citem->Reffs) && erase) {
 					if (citem->dtor) {
+/*>>>>>>>>>> DEBUG */
+						if (!citem->Object) {
+							printf ("cache_release(%s): no object!\n",
+							        citem->Location->FullName);
+							return NULL;
+						}
+/*<<<<<<<<<< DEBUG */
 						(*citem->dtor)(citem->Object);
 					} else {
 						object = citem->Object;
@@ -413,6 +420,9 @@ cache_release (CACHED * p_object, BOOL erase)
 			}
 			citem = citem->NextItem;
 		}
+	}
+	if (__cache_mem > __cache_max) {
+		cache_throw (__cache_mem - __cache_max);
 	}
 	return object;
 }
@@ -429,6 +439,12 @@ cache_clear (CACHED this_n_all)
 		CACHEITEM next = citem->NextItem;
 		if (!citem->Reffs && citem->dtor
 		    && (!this_n_all || this_n_all == citem->Object)) {
+/*>>>>>>>>>> DEBUG */
+			if (!citem->Object) {
+				printf ("cache_clear(%s): no object!\n", citem->Location->FullName);
+				return 0uL;
+			}
+/*<<<<<<<<<< DEBUG */
 			(*citem->dtor)(citem->Object);
 			destroy_item (citem);
 			num++;
@@ -476,20 +492,22 @@ cache_info (size_t * size, CACHEINF * p_info)
 BOOL
 cache_setup (const char * dir)
 {
-	char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
-	LOCATION loc;
-	if (p[-1] != '/' && p[-1] != '\\') {
-		*(p++) = (strchr (buf, '/') ? '/' : '\\');
-	}
-	strcpy (p, "cache.idx");
-	if ((loc = new_location (buf, NULL)) != NULL) {
-		int fh;
-		location_FullName (loc, buf, sizeof(buf));
-		if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
-			close (fh);
-			__cache_dir = loc;
-		} else {
-			free_location (&loc);
+	if (dir && *dir) {
+		char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
+		LOCATION loc;
+		if (p[-1] != '/' && p[-1] != '\\') {
+			*(p++) = (strchr (buf, '/') ? '/' : '\\');
+		}
+		strcpy (p, "cache.idx");
+		if ((loc = new_location (buf, NULL)) != NULL) {
+			int fh;
+			location_FullName (loc, buf, sizeof(buf));
+			if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
+				close (fh);
+				__cache_dir = loc;
+			} else {
+				free_location (&loc);
+			}
 		}
 	}
 	return (__cache_dir != NULL);
@@ -524,6 +542,14 @@ cache_abort (LOCATION loc)
 	if (!citem) {
 		printf ("cache_abort(%s): not found!\n", loc->FullName);
 	
+/*>>>>>>>>>> DEBUG */
+	} else if (citem->Object) {
+		printf ("cache_abort(%s): not busy!\n", loc->FullName);
+	
+	} else if (citem->Size) {
+		printf ("cache_abort(%s): has size %lu!\n", loc->FullName, citem->Size);
+	
+/*<<<<<<<<<< DEBUG */
 	} else {
 	/*	printf ("cache_abort(%s)\n", loc->FullName);*/
 		destroy_item (citem);
@@ -536,6 +562,12 @@ file_dtor (void * arg)
 {
 	LOCATION loc = arg;
 	char buf[1024];
+/*>>>>>>>>>> DEBUG */
+	if (!loc) {
+		puts ("file_dtor(): NULL pointer!");
+		return;
+	}
+/*<<<<<<<<<< DEBUG */
 	location_FullName (loc, buf, sizeof(buf));
 	unlink (buf);
 	free_location (&loc);
