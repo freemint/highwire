@@ -67,6 +67,7 @@ void     fontstack_setSize  (TEXTBUFF, WORD size);
 #define  fontstack_setItalic(textbuff)      _fstk_set(textbuff,italic,Italic)
 #define  fontstack_setUndrln(textbuff)      _fstk_set(textbuff,underline,Undrln)
 #define  fontstack_setStrike(textbuff)      _fstk_set(textbuff,strike,Strike)
+#define  fontstack_setNoWrap(textb)   {textb->nowrap+=textb->font->setNoWrap=1;}
 
 
 #endif /*__FONTBASE_H__*/

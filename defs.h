@@ -361,6 +361,8 @@ struct s_fontstack {
 	BOOL setItalic;
 	BOOL setUndrln;
 	BOOL setStrike;
+	BOOL setCondns;
+	BOOL setNoWrap;
 };
 
 struct font_style {

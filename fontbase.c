@@ -306,6 +306,8 @@ fontstack_push (TEXTBUFF current, WORD step)
 	fstk->setItalic = FALSE;
 	fstk->setUndrln = FALSE;
 	fstk->setStrike = FALSE;
+	fstk->setCondns = FALSE;
+	fstk->setNoWrap = FALSE;
 	
 	return (current->font = fstk);
 }
@@ -319,6 +321,8 @@ fontstack_pop (TEXTBUFF current)
 	if (fstk->setItalic) word_set_italic    (current, fstk->setItalic = FALSE);
 	if (fstk->setStrike) word_set_strike    (current, fstk->setStrike = FALSE);
 	if (fstk->setUndrln) word_set_underline (current, fstk->setUndrln = FALSE);
+	if (fstk->setCondns) TAsetCondns        (current->word->attr,       FALSE);
+	if (fstk->setNoWrap && current->nowrap)  current->nowrap--;
 	if (fstk->Prev) {
 		current->font = fstk = fstk->Prev;
 		word_set_font  (current, fstk->Type);
