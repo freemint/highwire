@@ -794,39 +794,6 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_INFO:
 			menu_info();
 			break;
-		case RPOP_SAVE:{
-			CONTAINR cont = NULL;
-			char buf[2 * HW_PATH_MAX];
-
-			LOCATION loc = frame->Location;
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			cont = new_hwWind (buf, NULL, NULL)->Pane;
-
-			if (cont) {
-				LOADER ldr = start_objc_load (cont, buf, frame->BaseHref, saveas_job, NULL);
-
-				if (ldr) {
-					ldr->Encoding = frame->Encoding;
-				}
-			}
-			
-			} break;
-		case RPOP_COPY: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-			LOCATION loc = frame->Location;
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
 	}
 }
 
