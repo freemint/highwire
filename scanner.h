@@ -9,6 +9,7 @@
 #define __SCANNER_H__
 
 
+#ifdef HTMLTAG
 HTMLTAG scan_tag (const char ** pptr);
 				/* Scanner for html TAG name expressions inside of
 				 *    <TAG>  |  <TAG ...>  |  <TAG(n) ...>
@@ -17,6 +18,8 @@ HTMLTAG scan_tag (const char ** pptr);
 				 * first character behind the expression.
 				 * If not successful the symbol TAG_Unknown is returned.
 				*/
+#endif
+#ifdef HTMLKEY
 HTMLKEY scan_key (const char ** pptr, BOOL lookup);
 				/* Scanner for html variable KEY name expressions inside of
 				 *    <TAG KEY ...>  |  <TAG KEY= ...>
@@ -27,10 +30,13 @@ HTMLKEY scan_key (const char ** pptr, BOOL lookup);
 				 * modified but no name lookup is performed.  In this case or if not
 				 * successful the symbol KEY_Unknown is returned.
 				*/
+#endif
+#ifdef HTMLCSS
 short   scan_css (const char ** pptr, size_t len);
 				/* Same as scan_key() but for css variable KEY name expressions.
 				 * 'len' is the maximum number of characters to evaluate.
 				*/
+#endif
 
 BOOL scan_numeric (const char ** pptr, long * num, UWORD * unit);
 				/* Scanns a floating point number and it unit.  The result will be

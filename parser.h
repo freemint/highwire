@@ -41,6 +41,8 @@ int     parser_resume (PARSER, void * func, const char * ptr_or_sub, LOCATION);
 				/* Shortcut, resets the resume data fields.
 				*/
 
+#ifdef HTMLTAG
+
 HTMLTAG parse_tag (PARSER, const char ** pptr);
 				/* Parses a html TAG expression of the forms
 				 *    <TAG>  |  <TAG KEY ...>  |  <TAG KEY=VALUE ...>
@@ -101,6 +103,8 @@ WORD    get_value_color (PARSER, HTMLKEY);
 				 * parse() call.  If not successful a negative number will be
 				 * returned.
 				*/
+
+#endif /*HTMLTAG*/
 
 
 #endif /*__PARSER_C__*/

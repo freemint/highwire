@@ -7,7 +7,6 @@
 
 #include "file_sys.h"
 #include "global.h"
-#include "token.h"
 #include "Loader.h"
 #include "parser.h"
 #include "Location.h"

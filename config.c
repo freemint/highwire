@@ -15,8 +15,6 @@
 #include "fontbase.h"
 #include "cache.h"
 
-#define HTMLTAG int
-#define HTMLKEY int
 #include "scanner.h"
 
 

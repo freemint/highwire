@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "token.h" /* must be included before gem/gemx.h */
 #include <gem.h>
 
 #include "global.h"

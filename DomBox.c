@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h> /* debug */
 
-#include "token.h" /* must be included before gem/gemx.h */
 #include <gem.h>
 
 #include "global.h"

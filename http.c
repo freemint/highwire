@@ -15,7 +15,6 @@
 #include "mime.h"
 #include "http.h"
 #include "inet.h"
-#include "token.h"  /* needed for and before scanner.h */
 #include "scanner.h"
 #include "cookie.h"
 

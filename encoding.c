@@ -3,7 +3,6 @@
 #include <stdio.h> /* printf */
 
 #include "defs.h"
-#include "token.h"
 #include "scanner.h"
 
 

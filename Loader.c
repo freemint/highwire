@@ -23,7 +23,6 @@
 #include "schedule.h"
 #include "Containr.h"
 #include "Location.h"
-#include "token.h"
 #include "Loader.h"
 #include "parser.h"
 #include "http.h"
