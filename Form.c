@@ -67,6 +67,7 @@ struct s_input {
 	UWORD    TextMax;
 	UWORD    TextLen;
 	UWORD    VisibleX;
+	WCHAR ** TextArray;
 	char     Name[1];
 };
 
@@ -87,7 +88,9 @@ struct s_slctitem {
 
 static void finish_selct (INPUT);
 
-static BOOL edit_char (INPUT input, WORD chr, WORD col);
+static WCHAR * edit_init (INPUT, TEXTBUFF, UWORD cols, size_t size);
+static BOOL    edit_zero (INPUT);
+static BOOL    edit_char (INPUT, WORD chr, WORD col);
 
 
 /*============================================================================*/
@@ -159,6 +162,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->TextMax   = 0;
 	input->TextLen   = 0;
 	input->VisibleX  = 0;
+	input->TextArray = NULL;
 	
 	if (type <= IT_GROUP) {
 		input->Word    = NULL;
@@ -283,37 +287,28 @@ form_text (TEXTBUFF current, const char * name, char * value,
           UWORD maxlen, ENCODING encoding, UWORD cols, BOOL readonly)
 {
 	WORDITEM word  = current->word;
-	TEXTATTR attr  = word->attr;
 	WCHAR  * wmark = current->buffer + maxlen;
 	INPUT    input = _alloc (IT_TEXT, current, name);
-	WORD     p[8], i;
+	WORD     i;
 	
-	input->Value    = value;
-	input->TextMax  = input->TextLen = maxlen;
-	input->VisibleX = cols;
+	input->TextMax  = maxlen;
 	input->readonly = readonly;
+	edit_init (input, current, cols, maxlen);
 	
-	font_byType (pre_font, -1, -1, word);
 	scan_string_to_16bit (value, encoding, &current->text, MAP_UNICODE);
-	if (current->text >= wmark) {
-		current->text = wmark;
+	if (wmark > current->text) {
+		input->TextLen = current->text - current->buffer;
+		wmark          = current->text;
 	} else {
-		WCHAR nobrk = font_Nobrk (word->font);
-		do {
-			*(current->text++) = nobrk;
-			input->TextLen--;
-		} while (current->text < wmark);
+		input->TextLen = input->TextMax;
 	}
-	vqt_f_extent16n (vdi_handle, word->item, cols, p);
-	set_word (current, word->word_height, word->word_tail_drop, p[2] - p[0] +2);
-	current->word->attr = attr;
-	
-	if (word->font->Base->Mapping != MAP_UNICODE) {
-		scan_string_to_16bit (value, encoding, &current->text, MAP_UNICODE);
-		current->text = current->buffer;
+	*wmark        = '\0';
+	current->text = current->buffer;
+	input->Value  = value;
+	for (i = 0; i <= input->TextLen; i++) {
+		*(value++) = word->item[i] = current->text[i];
 	}
-	for (i = 0; i < input->TextLen; *(value++) = current->text[i++]);
-	*value = '\0';
+	input->TextArray[1] += input->TextLen;
 	
 	return input;
 }
@@ -984,6 +979,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 {
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
+	WCHAR ** text = input->TextArray;
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
 	
@@ -1004,14 +1000,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	} else if (asc) switch (asc) {
 			
 		case 27: /* escape */
-			if (!input->readonly && input->TextLen) {
+			if (!input->readonly && text[0] < text[1] -1 && edit_zero (input)) {
 				form->TextCursrX = 0;
 				form->TextCursrY = 0;
 				form->TextShiftX = 0;
-				input->TextLen   = 0;
-				if (input->Value) {
-					input->Value[0] = '\0';
-				}
 			} else {
 				word = NULL;
 			}
@@ -1138,7 +1130,71 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 /*******************************************************************************
  *
  * Edit field functions
+ *
+ *   ||W0|W1|W2|...|\0||...(free)...|| L0 | L1 | L2 |...|Ln-1| Ln ||
 */
+
+/*----------------------------------------------------------------------------*/
+static WCHAR *
+edit_init (INPUT input, TEXTBUFF current, UWORD cols, size_t size)
+{
+	WORDITEM word = current->word;
+	TEXTATTR attr = word->attr;
+	void   * buff;
+	WORD     p[8], n;
+	
+	font_byType (pre_font, -1, -1, word);
+	if (word->font->Base->Mapping != MAP_UNICODE) {
+		vst_map_mode (vdi_handle, MAP_UNICODE);
+	}
+	for (n = 0; n < cols; current->text[n++] = NOBRK_UNI);
+	vqt_f_extent16n (vdi_handle, word->item, cols, p);
+	*(current->text++) = word->font->Base->SpaceCode;
+	set_word (current, word->word_height, word->word_tail_drop, p[2] - p[0] +2);
+	if (word->font->Base->Mapping != MAP_UNICODE) {
+		vst_map_mode (vdi_handle, word->font->Base->Mapping);
+	}
+	current->word->attr = attr;
+	
+	size += 1;                 /* space for the trailing 0 */
+	size *= sizeof(WCHAR);
+	size =  (size +3) & ~3uL;  /* aligned to (WCHAR*) boundary */
+	size += sizeof(WCHAR*) *2;
+	if ((buff = malloc (size)) != NULL) {
+		word->item          = buff;
+		input->TextArray    = (WCHAR**)((char*)buff + size) -2;
+	
+	} else { /* memory exhausted */
+		input->TextMax  = 1;
+		input->readonly = TRUE;
+	}
+	edit_zero (input);
+	
+	input->VisibleX = cols;
+	
+	return buff;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+edit_zero (INPUT input)
+{
+	BOOL ok;
+	if (input->TextArray) {
+		input->TextArray[0]  = input->Word->item;
+		input->TextArray[1]  = input->Word->item +1;
+		input->Word->item[0] = '\0';
+		ok = TRUE;
+	} else {
+		ok = FALSE;
+	}
+	if (input->Value) {
+		input->Value[0] = '\0';
+	}
+	input->TextLen = 0;
+	
+	return ok;
+}
 
 /*----------------------------------------------------------------------------*/
 static BOOL
@@ -1170,6 +1226,7 @@ edit_char (INPUT input, WORD chr, WORD col)
 			} while (--end >= dst);
 			*dst = *uni;
 		}
+		input->TextArray[1]++;
 		ok = TRUE;
 	
 	} else { /* buffer full */
