@@ -63,17 +63,22 @@ CONTAINR
 new_containr (CONTAINR parent)
 {
 	CONTAINR cont = calloc (1, sizeof (struct s_containr));
-	
+
 	if (parent == NULL) {
 		cont->Base    = cont;
 		cont->ColSize = -1024;
 		cont->RowSize = -1024;
 		cont->Name    = strdup ("_top");
-		
+		cont->Borders  = BRD_NONE;
+		cont->Border_Size = 3;
+		cont->Border_Colour = G_LWHITE;
 	} else {
 		cont->Base    = parent->Base;
 		cont->Parent  = parent;
 		cont->Border  = parent->Border;
+		cont->Borders = parent->Borders;
+		cont->Border_Size = parent->Border_Size;
+		cont->Border_Colour = parent->Border_Colour;
 		cont->Handler = parent->Handler;
 		cont->HdlrArg = parent->HdlrArg;
 	}
@@ -106,13 +111,15 @@ void
 containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 {
 	CONTAINR * ptr = &parent->u.Child;
+	CONTAINR * last = &parent->u.Child;
+	int 	   abs_val = 0;
 	int        num = 0;
 	
 	short perc_cnt = 0; /* number of percent values */
 	long  perc_sum = 0; /* sum of all percents */
 	short rest_cnt = 0; /* number of all '*','2*',.. and invalid values */
 	long  rest_sum = 0; /* sum of fractionals */
-	
+
 	/* go through the text list and create children
 	 */
 	while (*text) {
@@ -132,6 +139,7 @@ containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 					val      = -tmp +1;
 				} else { /* absolute value */
 					val = tmp;
+					abs_val = 1;
 				}
 			}
 			text = tail;
@@ -142,17 +150,37 @@ containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 		}
 		*ptr = new_containr (parent);
 		if (colsNrows) {
+			if (abs_val)
+			{
+				val = val + (*ptr)->Border_Size;
+				abs_val = 0;
+			}
 			(*ptr)->ColSize = val;
 			(*ptr)->RowSize = (parent->RowSize > 0 ? parent->RowSize : -1024);
+			(*ptr)->Borders += BRD_RIGHT;
 		} else {
+			if (abs_val)
+			{
+				val = val + (*ptr)->Border_Size;
+				abs_val = 0;
+			}
 			(*ptr)->ColSize = (parent->ColSize > 0 ? parent->ColSize : -1024);
 			(*ptr)->RowSize = val;
+			(*ptr)->Borders += BRD_BOTTOM;
 		}
+		last = ptr;
 		ptr = &(*ptr)->Sibling;
 		num++;
 		while (*text && *(text++) != ',');
 	}
-	
+
+	/* get rid of last BOTTOM or RIGHT Border */
+	if (colsNrows) {
+		(*last)->Borders -= BRD_RIGHT;
+	} else {
+		(*last)->Borders -= BRD_BOTTOM;
+	}
+
 	/* post process the percent sizes
 	 */
 	if (num) {
@@ -184,6 +212,7 @@ containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 			do {
 				short * var = (colsNrows ? &cont->ColSize : &cont->RowSize);
 				short   val = -*var;
+
 				if (val >= 0) {
 					if (!--perc_cnt) {
 						val = perc;
@@ -221,6 +250,9 @@ containr_setup (CONTAINR cont, FRAME frame, const char * anchor)
 		cont->u.Frame = frame;
 		frame->Container = cont;
 		frame->border    = cont->Border;
+		frame->borders  = cont->Borders;
+		frame->border_size = cont->Border_Size;
+		frame->border_colour = cont->Border_Colour;
 		frame->resize    = cont->Resize;
 		frame->scroll    = cont->Scroll;
 		frame_calculate (frame, &cont->Area);
@@ -259,6 +291,7 @@ containr_clear (CONTAINR cont)
 		if (!depth) {
 			cont->Mode   = CNT_EMPTY;
 			cont->Border = (cont->Parent ? cont->Parent->Border : FALSE);
+			cont->Border_Colour = (cont->Parent ? cont->Parent->Border_Colour : G_LWHITE);
 			break;
 		
 		} else {
@@ -632,28 +665,53 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	*_cont = cont;
 	
 	if (cont->Border) {
-		if (x == cont->Area.g_x) {
-			*watch = cont->Area;
-			watch->g_w = 1;
-			type = PE_BORDER_LF;
-		} else if (x == cont->Area.g_x + cont->Area.g_w -1) {
-			*watch = cont->Area;
-			watch->g_x = x;
-			watch->g_w = 1;
-			type = PE_BORDER_RT;
-		} else if (y == cont->Area.g_y) {
-			*watch = cont->Area;
-			watch->g_h = 1;
-			type = PE_BORDER_UP;
-		} else if (y == cont->Area.g_y + cont->Area.g_h -1) {
-			*watch = cont->Area;
-			watch->g_y = y;
-			watch->g_h = 1;
-			type = PE_BORDER_DN;
+		if (cont->Borders != 0)
+		{
+			switch (cont->Borders)
+			{
+				case 1: /* BRD_RIGHT */
+					if ((x <= cont->Area.g_x + cont->Area.g_w -1) &&
+					   (x >= cont->Area.g_x + cont->Area.g_w - cont->Border_Size))
+					{
+						*watch = cont->Area;
+						watch->g_x = x;
+						watch->g_w = cont->Border_Size;
+						type = PE_BORDER_RT;
+					}
+					break;
+				case 2: /* BRD_BOTTOM */
+					if ((y <= cont->Area.g_y + cont->Area.g_h -1) &&
+					   (y >= cont->Area.g_y + cont->Area.g_h - cont->Border_Size))
+					{
+						*watch = cont->Area;
+						watch->g_y = y;
+						watch->g_h = cont->Border_Size;
+						type = PE_BORDER_DN;
+					}
+					break;
+				case 3: /* BRD_BOTH */
+					if ((x <= cont->Area.g_x + cont->Area.g_w -1) &&
+					   (x >= cont->Area.g_x + cont->Area.g_w - cont->Border_Size))
+					{
+						*watch = cont->Area;
+						watch->g_x = x;
+						watch->g_w = cont->Border_Size;
+						type = PE_BORDER_RT;
+					}
+					else if ((y <= cont->Area.g_y + cont->Area.g_h -1) &&
+					   (y >= cont->Area.g_y + cont->Area.g_h - cont->Border_Size))
+					{
+						*watch = cont->Area;
+						watch->g_y = y;
+						watch->g_h = cont->Border_Size;
+						type = PE_BORDER_DN;
+					}
+			}
 		}
+		
 		if (type) return type;
 	}
-	
+
 	if ((frame = containr_Frame (cont)) == NULL) {
 		*watch = cont->Area;
 		if (cont->Border) {
