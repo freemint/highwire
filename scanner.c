@@ -556,7 +556,14 @@ scan_color (const char * text, size_t len)
 	if (len) {
 		if (text[0] == '#') {
 			if (!isspace(text[1])) {
-				col = strtol (text + 1, NULL, 16);
+				char * end;
+				col = strtol (text + 1, &end, 16);
+				if (end == text +4) {
+					/* three digit #RGB format in CSS */
+					col = ((((col & 0xF00) <<4) | (col & 0xF00)) <<8)
+					    | ((((col & 0x0F0) <<4) | (col & 0x0F0)) <<4)
+					    | ((((col & 0x00F) <<4) | (col & 0x00F))    );
+				}
 				if (col > 0xFFFFFFL) {
 					col = -1;
 				}
