@@ -172,6 +172,7 @@ set_word (TEXTBUFF current, WORD asc, WORD dsc, WORD wid)
 	word->word_width     = wid +4;
 	word->word_height    = asc +2;
 	word->word_tail_drop = dsc +2;
+	TA_Color(word->attr) = G_BLACK;
 }
 
 /*============================================================================*/
@@ -586,7 +587,6 @@ input_draw (INPUT input, WORD x, WORD y)
 		v_pline (vdi_handle, 3, (short*)p);
 	}
 	if (input->Type >= IT_BUTTN) {
-		font_switch (word->font, NULL);
 		v_ftext16 (vdi_handle,
 		           x + (input->Type == IT_BUTTN ? 4 : 3), y, word->item);
 	}
