@@ -133,9 +133,6 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		}
 	}
 	
-	hash   = (w > 0 && h > 0 ? img_hash (w, h, current->backgnd) : 0);
-	cached = cache_lookup (loc, hash, (hash ? NULL : &hash));
-	
 	img->vspace = vspace;
 	img->hspace = hspace;
 
@@ -152,6 +149,20 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->alt_h     = img->word->word_height;
 	img->offset.Origin = &img->paragraph->Offset;
 	img->word->image = img;
+	
+	hash   = img_hash ((w > 0 ? w : 0), (h > 0 ? h : 0), -1);
+	cached = cache_lookup (loc, hash, &hash);
+	
+	if (cached) {
+		short bgnd = (hash >>24) & 0xFF;
+		if (bgnd == 0xFF) {
+			img->backgnd = bgnd = -1;  /* no transparency */
+		}
+		if (w > 0 && h > 0 && hash != img_hash (w, h, bgnd)) {
+			cached = NULL;  /* absolute size doesn't match */
+		}
+		hash = bgnd;
+	}
 	
 	if (cached) {
 		cIMGDATA data = cached;
@@ -172,7 +183,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 			if (h < 0) {
 				h = img->set_h = ((long)data->img_h * -h +512) /1024;
 			}
-			if (w != data->fd_w || h != data->fd_h) {
+			if (w != data->fd_w || h != data->fd_h || hash != img->backgnd) {
 				cached = cache_lookup (loc, img_hash (w, h, img->backgnd), NULL);
 			}
 		}
@@ -300,6 +311,9 @@ image_calculate (IMAGE img, short par_width)
 				img->set_h = img->disp_h = ((long)data->img_h * -img->set_h +512)
 				                         / 1024;
 			}
+			if ((char)(hash >>24) == 0xFF) {
+				img->backgnd = -1;
+			}
 			set_word (img);
 		}
 	}
@@ -320,10 +334,18 @@ image_job (void * arg, long ignore)
 	
 	long   hash   = (img->set_w && img->set_h
 	                 ? img_hash (img->disp_w, img->disp_h, img->backgnd) : 0);
-	CACHED cached = (hash ? cache_lookup (img->source, hash, NULL) : NULL);
+	CACHED cached = cache_lookup (img->source, hash, (hash ? & hash : NULL));
 	
 	(void)ignore; /* not used here */
 	
+	if (cached) {
+		if ((char)(hash >>24) == 0xFF) {
+			img->backgnd = -1;
+		}
+		if (hash != img_hash (img->disp_w, img->disp_h, img->backgnd)) {
+			cached = NULL;
+		}
+	}	
 	if (cached) {
 		img->u.Data = cache_bound (cached, &img->source);
 	
@@ -928,6 +950,10 @@ read_gif (IMAGE img)
 				break;
 			}
 		} while (rec != TERMINATE_RECORD_TYPE);
+	}
+	
+	if (transpar < 0) {
+		img->backgnd = -1;
 	}
 	
 	if (map) {
