@@ -96,7 +96,7 @@ cfg_timeout_connect (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	conn_timeout= n;
+	if (n > 0) conn_timeout = n;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -106,10 +106,8 @@ cfg_timeout_hdr (char * param, long arg)
 	long n = strtoul (param, &param, 10);
 	long m = strtoul (param, &param, 10);
 	(void)arg;
-	if (n > 0 || m > 0) {
-		hdr_tout_gfx=1000*m;
-		hdr_tout_doc=1000*n;
-	}
+	if (n > 0) hdr_tout_doc = n *1000;
+	if (m > 0) hdr_tout_gfx = m *1000;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -118,7 +116,7 @@ cfg_retry (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	conn_retry = n;
+	if (n > 0) conn_retry = n;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -251,10 +249,10 @@ read_config(char *fn)
 				{ "LOGGING",              cfg_func,    (long)menu_logging    },
 				{ "NORMAL",               cfg_font,    FA(normal_font, 0, 0) },
 				{ "NO_IMAGE",             cfg_func,    (long)menu_alt_text   },
-				{ "RETRY_HEADER",	cfg_retry, 0 },
+				{ "RETRY_HEADER",         cfg_retry,   0 },
 				{ "TELETYPE",             cfg_font,    FA(pre_font,    0, 0) },
-				{ "TIMEOUT_CONNECT",            cfg_timeout_connect, 0 },
-				{ "TIMEOUT_HEADER",            cfg_timeout_hdr, 0 }
+				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
+				{ "TIMEOUT_HEADER",       cfg_timeout_hdr,  0 }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;
