@@ -202,7 +202,7 @@ inet_connect (long addr, long port)
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
 			timeout = FALSE;
-			Talarm (2);
+			Talarm (3);
 		}
 		if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
 			close (fh);
@@ -221,7 +221,7 @@ inet_connect (long addr, long port)
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
 			timeout = FALSE;
-			Talarm (2);
+			Talarm (3);
 		}
 		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
 			fh = -(fh == -1001L ? ETIMEDOUT : 1);
