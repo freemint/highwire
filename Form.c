@@ -497,7 +497,7 @@ input_draw (INPUT input, WORD x, WORD y)
 {
 	WORDITEM word = input->Word;
 	short c_lu, c_rd;
-	PXY p[5];
+	PXY p[6];
 	p[2].p_x = (p[0].p_x = x) + word->word_width -1;
 	p[1].p_y = y - word->word_height;
 	p[3].p_y = y + word->word_tail_drop -1;
@@ -513,7 +513,7 @@ input_draw (INPUT input, WORD x, WORD y)
 		c_lu = G_BLACK;
 		c_rd = G_WHITE;
 	} else {
-		vsf_color (vdi_handle, G_LWHITE);
+		vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
 		vsl_color (vdi_handle, G_BLACK);
 		c_lu = G_WHITE;
 		c_rd = G_LBLACK;
@@ -570,10 +570,15 @@ input_draw (INPUT input, WORD x, WORD y)
 			p[4].p_x = p[2].p_x -2;
 			p[3].p_x = p[4].p_x - w;
 			p[2].p_x = p[3].p_x + w /2;
-			v_pline (vdi_handle, 3, (short*)(p +2));
-			vsl_color (vdi_handle, c_rd);
-			p[3] = p[2];
-			v_pline (vdi_handle, 2, (short*)(p +3));
+			p[5]     = p[2];
+			if (ignore_colours) {
+				vsl_color (vdi_handle, c_rd);
+				v_pline (vdi_handle, 4, (short*)(p +2));
+			} else {
+				v_pline (vdi_handle, 3, (short*)(p +2));
+				vsl_color (vdi_handle, c_rd);
+				v_pline (vdi_handle, 2, (short*)(p +4));
+			}
 			p[2] = p[1];
 			p[0].p_x++;
 			p[2].p_y++;
@@ -595,8 +600,13 @@ input_draw (INPUT input, WORD x, WORD y)
 		p[0].p_y = y - word->word_height;
 		p[1].p_y = y + word->word_tail_drop -1;
 		vsf_interior (vdi_handle, FIS_PATTERN);
-		vsf_style    (vdi_handle, 4);
-		vsf_color    (vdi_handle, G_LWHITE);
+		if (ignore_colours) {
+			vsf_style (vdi_handle, 3);
+			vsf_color (vdi_handle, G_WHITE);
+		} else {
+			vsf_style (vdi_handle, 4);
+			vsf_color (vdi_handle, G_LWHITE);
+		}
 		v_bar (vdi_handle, (short*)p);
 		vsf_interior (vdi_handle, FIS_SOLID);
 	}
