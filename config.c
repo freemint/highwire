@@ -7,6 +7,7 @@
 #include <ctype.h>
 
 #include "global.h"
+#include "Location.h"
 #include "hwWind.h"
 #include "cache.h"
 
@@ -172,6 +173,36 @@ cfg_cachedsk (char * param, long arg)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+cfg_restrict (char * param, long arg)
+{
+	ULONG flags;
+	(void)arg;
+	if (*param == '*') {
+		flags = 0x7FFFFFFFuL;
+		param++;
+	} else {
+		flags = 0uL;
+		while (isalpha(*param)) {
+			flags |= (1uL << (toupper(*(param++)) - 'A'));
+		}
+	}
+	if (!isspace(*param)) {
+		flags = 0uL;
+	} else {
+		while (isspace(*(++param)));
+	}
+	if (flags) {
+		if (isalnum(*param)) {
+			location_DBhost (param, 0, flags);
+		} else if (*param == '.') {
+			location_DBdomain (param, 0, flags);
+		}
+	}
+}
+
+
 /******************************************************************************/
 WORD
 read_config(char *fn)
@@ -249,6 +280,7 @@ read_config(char *fn)
 				{ "LOGGING",              cfg_func,    (long)menu_logging    },
 				{ "NORMAL",               cfg_font,    FA(normal_font, 0, 0) },
 				{ "NO_IMAGE",             cfg_func,    (long)menu_alt_text   },
+				{ "RESTRICT_HOST",        cfg_restrict,0 },
 				{ "RETRY_HEADER",         cfg_retry,   0 },
 				{ "TELETYPE",             cfg_font,    FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
