@@ -32,6 +32,7 @@ typedef struct s_host_entry {
 	struct s_host_entry * Next;
 	unsigned long         IdxTag;
 	unsigned long         Ip;
+	UWORD                 Length;
 	char                  Name[1];
 } * HOST_ENT;
 static void * host_entry (const char ** name);
@@ -368,11 +369,22 @@ location_Path  (LOCATION loc, UWORD * opt_len)
 
 /*============================================================================*/
 const char *
-location_Host  (LOCATION loc)
+location_Host  (LOCATION loc, UWORD * opt_len)
 {
-	HOST_ENT host = loc->Host;
-	
-	return (host ? host->Name : "localhost");
+	HOST_ENT     host = loc->Host;
+	const char * name;
+	UWORD        len;
+	if (host) {
+		name = host->Name;
+		len  = host->Length;
+	} else {
+		name = "localhost";
+		len  = 9;
+	}
+	if (opt_len) {
+		*opt_len = len;
+	}
+	return name;
 }
 
 
@@ -425,13 +437,27 @@ static struct s_dir_entry dir_base  = { NULL, 0ul, FALSE, 1, "/" };
 static HOST_ENT
 host_store (const char * name, size_t len)
 {
-	HOST_ENT ent = malloc (sizeof(struct s_host_entry) + len);
-	if (ent) {
-		memcpy (ent->Name, name, len +1);
+	HOST_ENT * ptr = &host_base, ent;
+	
+	while ((ent = *ptr) != NULL && ent->Length < len) {
+		ptr = &ent->Next;
+	}
+	while (ent) {
+		if (ent->Length > len) {
+			ent = NULL;
+		} else if (memcmp (name, ent->Name, len) == 0) {
+			break;
+		} else {
+			ent = *(ptr = &ent->Next);
+		}
+	}
+	if (!ent && (ent = malloc (sizeof(struct s_host_entry) + len)) != NULL) {
 		ent->IdxTag = 0uL;
 		ent->Ip     = 0uL;
-		ent->Next   = host_base;
-		host_base   = ent;
+		ent->Length = len;
+		memcpy (ent->Name, name, len +1);
+		ent->Next = *ptr;
+		*ptr      = ent;
 	}
 	return ent;
 }
@@ -451,7 +477,7 @@ host_search (unsigned long tag)
 static void *
 host_entry (const char ** name)
 {
-	HOST_ENT ent = host_base;
+	HOST_ENT     ent;
 	const char * n = *name;
 	char buf[258], c;
 	short len = 0;
@@ -471,17 +497,8 @@ host_entry (const char ** name)
 	*name    = n;
 	
 	if (!len || strcmp (buf, "localhost") == 0) {
-		return NULL;
-	}
-	
-	while (ent) {
-		if (strcmp (buf, ent->Name) == 0) {
-			break;
-		} else {
-			ent = ent->Next;
-		}
-	}
-	if (!ent) {
+		ent = NULL;
+	} else {
 		ent = host_store (buf, len);
 	}
 #ifdef USE_INET
