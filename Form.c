@@ -742,8 +742,9 @@ input_activate (INPUT input, WORD slct)
 	}
 	
 	if (input->SubType == 'S' && form->Action) {
-		INPUT  elem = form->InputList;
-		size_t size = 0, len;
+		FRAME  frame = form->Frame;
+		INPUT  elem  = form->InputList;
+		size_t size  = 0, len;
 		char * url;
 		
 		if (elem) {
@@ -777,7 +778,7 @@ input_activate (INPUT input, WORD slct)
 			len = size;
 		}
 		url[len] = '\0';
-		start_page_load (form->Frame->Container, url, form->Frame->Location);
+		start_page_load (frame->Container, url, frame->Location, TRUE);
 		free (url);
 	}
 	

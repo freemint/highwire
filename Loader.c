@@ -237,7 +237,7 @@ delete_loader (LOADER * p_loader)
 
 /*============================================================================*/
 LOADER
-start_page_load (CONTAINR target, const char * url, LOCATION base)
+start_page_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 {
 	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
 	LOADER   loader = NULL;
@@ -246,7 +246,7 @@ start_page_load (CONTAINR target, const char * url, LOCATION base)
 		start_application (NULL, loc);
 	
 	} else {
-		loader = start_cont_load (target, NULL, loc);
+		loader = start_cont_load (target, NULL, loc, u_act);
 	}
 	free_location (&loc);
 	
@@ -255,7 +255,7 @@ start_page_load (CONTAINR target, const char * url, LOCATION base)
 
 /*============================================================================*/
 LOADER
-start_cont_load (CONTAINR target, const char * url, LOCATION base)
+start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 {
 	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
 	LOADER   loader = new_loader (loc, target);

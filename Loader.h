@@ -40,8 +40,10 @@ typedef struct s_loader {
 LOADER new_loader    (LOCATION, CONTAINR target);
 void   delete_loader (LOADER *);
 
-LOADER start_page_load (CONTAINR target, const char * url, LOCATION base);
-LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base);
+LOADER start_page_load (CONTAINR target, const char * url, LOCATION base,
+                        BOOL user_action);
+LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base,
+                        BOOL user_action);
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
                         int (*successor)(void*, long), void * objc);
 

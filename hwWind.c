@@ -250,7 +250,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {
-		start_page_load (This->Pane, url, loc);
+		start_page_load (This->Pane, url, loc, TRUE);
 	}
 	
 #ifdef GEM_MENU
@@ -891,7 +891,7 @@ hwWind_history (HwWIND This, UWORD menu)
 			}
 			do {
 				LOADER ldr = start_cont_load (entr[i].Target,
-				                              NULL, entr[i].Location);
+				                              NULL, entr[i].Location, FALSE);
 				if (ldr) {
 					ldr->Encoding = entr[i].Encoding;
 					ldr->ScrollV  = entr[i].ScrollV;
@@ -1936,7 +1936,7 @@ hwWind_keybrd (WORD key, UWORD state)
 							memcpy  (edit->Text,       http,       gap);
 						}
 					}
-					start_page_load (wind->Pane, edit->Text, NULL);
+					start_page_load (wind->Pane, edit->Text, NULL, TRUE);
 					chng_toolbar (wind, 0, 0, -1);
 					break;
 				}
