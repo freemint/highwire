@@ -1922,6 +1922,50 @@ dither_32r (IMGINFO info, void * _dst)
 	} while (--width);
 }
 
+/*------------------------------------------------------------------------------
+ * 32 planes packed pixels formart in wrong (intel) byte order with the
+ * zero byte at the left side in the pixel.
+ */
+static void
+raster_32z (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	ULONG * map   = info->Pixel;
+	UWORD   mask  = info->PixMask;
+	do {
+		*(dst++) = map[(short)info->RowBuf[x >>16] & mask] <<8;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_32z (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		ULONG rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = ((((rgb <<8) | rgb) <<8) | rgb) <<8;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_32z (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++)   = (((((ULONG)rgb[0] <<8) | rgb[1]) <<8) | rgb[2]) <<8;
+		x += info->IncXfx;
+	} while (--width);
+}
+
 
 /*******************************************************************************
  *
@@ -2087,20 +2131,17 @@ init_display (void)
 {
 	short out[273] = { -1, };
 	short depth;
-	BOOL  pervert;
+	BOOL  reverse, z_trail;
 	
 	vq_scrninfo (vdi_handle, out);
 	memcpy (pixel_val, out + 16, 512);
 	depth   = ((UWORD)out[4] == 0x8000u ? 15 : out[2]); /* bits per pixel used */
-	pervert = (out[14] & 0x80);                         /* intel crap... */
-	
-	if (!pervert && depth > 8) {  /* extra check for reverted byte order: */
-		pervert = (out[16] < out[48]);    /* compare red and blue position */
-	}
+	reverse = (out[16] < out[48]);                      /* intel crap...       */
+	z_trail = (out[48] > 0);             /* bits are shifted to the right side */
 	
 	sprintf (disp_info, "%c%02i%s",
 	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), depth,
-	         (pervert ? "r" : ""));
+	         (reverse ? "r" : z_trail ? "z" : ""));
 
 	if (depth == 1) {                        /* monochrome */
 			cnvpal_color = cnvpal_1_2;
@@ -2135,28 +2176,56 @@ init_display (void)
 			break;
 		case 15: if (!(out[14] & 0x02)) {
 			cnvpal_color = cnvpal_15;
-			raster_cmap  = (pervert ? raster_15r : raster_15);
-			raster_gray  = (pervert ? gscale_15r : gscale_15);
-			raster_true  = (pervert ? dither_15r : dither_15);
+			if (reverse) {
+				raster_cmap = raster_15r;
+				raster_gray = gscale_15r;
+				raster_true = dither_15r;
+			} else {
+				raster_cmap = raster_15;
+				raster_gray = gscale_15;
+				raster_true = dither_15;
+			}
 			break;
 		}
 		case 16:
 			cnvpal_color = cnvpal_high;
-			raster_cmap  = (pervert ? raster_16r : raster_16);
-			raster_gray  = (pervert ? gscale_16r : gscale_16);
-			raster_true  = (pervert ? dither_16r : dither_16);
+			if (reverse) {
+				raster_cmap = raster_16r;
+				raster_gray = gscale_16r;
+				raster_true = dither_16r;
+			} else {
+				raster_cmap = raster_16;
+				raster_gray = gscale_16;
+				raster_true = dither_16;
+			}
 			break;
 		case 24:
 			cnvpal_color = cnvpal_true;
-			raster_cmap  = (pervert ? raster_24r : raster_24);
-			raster_gray  = (pervert ? gscale_24r : gscale_24);
-			raster_true  = (pervert ? dither_24r : dither_24);
+			if (reverse) {
+				raster_cmap = raster_24r;
+				raster_gray = gscale_24r;
+				raster_true = dither_24r;
+			} else {
+				raster_cmap = raster_24;
+				raster_gray = gscale_24;
+				raster_true = dither_24;
+			}
 			break;
 		case 32:
 			cnvpal_color = cnvpal_true;
-			raster_cmap  = (pervert ? raster_32r : raster_32);
-			raster_gray  = (pervert ? gscale_32r : gscale_32);
-			raster_true  = (pervert ? dither_32r : dither_32);
+			if (reverse) {
+				raster_cmap = raster_32r;
+				raster_gray = gscale_32r;
+				raster_true = dither_32r;
+			} else if (z_trail) {
+				raster_cmap = raster_32z;
+				raster_gray = gscale_32z;
+				raster_true = dither_32z;
+			} else {
+				raster_cmap = raster_32;
+				raster_gray = gscale_32;
+				raster_true = dither_32;
+			}
 			break;
 	} else {
 		hwUi_error ("image::init_display()",
