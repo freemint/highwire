@@ -279,7 +279,7 @@ form_text (TEXTBUFF current, const char * name, char * value,
 	TEXTATTR attr  = word->attr;
 	WCHAR  * wmark = current->buffer + maxlen;
 	INPUT    input = _alloc (IT_TEXT, current, name);
-	WORD     p[8];
+	WORD     p[8], i;
 	
 	input->Value    = value;
 	input->TextMax  = input->TextLen = maxlen;
@@ -300,6 +300,13 @@ form_text (TEXTBUFF current, const char * name, char * value,
 	vqt_f_extent16n (vdi_handle, word->item, cols, p);
 	set_word (current, word->word_height, word->word_tail_drop, p[2] - p[0] +2);
 	current->word->attr = attr;
+	
+	if (word->font->Base->Mapping != MAP_UNICODE) {
+		scan_string_to_16bit (value, encoding, &current->text, MAP_UNICODE);
+		current->text = current->buffer;
+	}
+	for (i = 0; i < input->TextLen; *(value++) = current->text[i++]);
+	*value = '\0';
 	
 	return input;
 }
@@ -811,12 +818,7 @@ input_activate (INPUT input, WORD slct)
 				if (elem->Value) {
 					char * v = elem->Value, c;
 					while ((c = *(v++)) != '\0') {
-						if (c < ' ' || c >= 0x80 || c == '+'
-						    || c == '&' || c == '=' || c == '%' || c == '?') {
-							size += 3;
-						} else {
-							size += 1;
-						}
+						size += (c == ' ' || isalnum (c) ? 1 : 3);
 					}
 				}
 				      + (elem->Value ? strlen (elem->Value) : 0);
@@ -864,11 +866,10 @@ input_activate (INPUT input, WORD slct)
 					while ((c = *(v++)) != '\0') {
 						if (c == ' ') {
 							*(p++) = '+';
-						} else if (c < ' ' || c >= 0x80 || c == '+'
-						           || c == '&' || c == '=' || c == '%' || c == '?') {
-							p += sprintf (p, "%%%02X", (int)c);
-						} else {
+						} else if (isalnum (c)) {
 							*(p++) = c;
+						} else {
+							p += sprintf (p, "%%%02X", (int)c);
 						}
 					}
 				}
