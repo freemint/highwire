@@ -1,4 +1,22 @@
-(unreleased of Mar. 23, 2003)
+(non-public of Apr. 09, 2003)
+
+- The new implemented navigation bar allows easy
+  entering of URLs as well as going for/backward
+  in view history (can be hidden/shown by holding
+  down the ALT key while clicking the window's
+  closer button).
+
+- Changed the behaviour of the window's info bar
+  to have it more logical and informative.
+
+- New control keyword for the configuration file
+  to change the appearance of the info bar, can be
+  displayed now at the window's bottom
+  (see example.cfg\highwire.cfg for explanation).
+
+- Formulars now also support selection lists, as
+  given from <select name=foo><option value=bar>..
+  tags.
 
 - Improved handling of framesets, frames are
   resizeable now.
@@ -10,15 +28,7 @@
 - Initial implementation of OVLs for different
   network support (MiNTnet and STiK2).
 
-- Changed the behaviour of the window's info bar
-  to have it more logical and informative.
-
-- New control keyword for the configuration file
-  to change the appearance of the info bar, can be
-  displayed now at the window's bottom
-  (see example.cfg\highwire.cfg for explanation).
-
-- Fixed a bug in interpreting of qouted file names
+- Fixed a bug in interpreting of quoted file names
   from VA_START.
 
 - Improved parsing of urls to encode HTML entities
@@ -29,7 +39,7 @@
 
 - Mended some more memory leaks.
 
-- Bugs #0063, #0064, #0090 resolved.
+- Bugs #0063, #0064, #0090, 0094 resolved.
 
 __________________________________________________
 Changes in V. 0.1.1 release  of January 15, 2003:
