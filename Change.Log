@@ -29,7 +29,7 @@
 
 - Mended some more memory leaks.
 
-- Bugs #0063, #0090 resolved.
+- Bugs #0063, #0064, #0090 resolved.
 
 __________________________________________________
 Changes in V. 0.1.1 release  of January 15, 2003:
