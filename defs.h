@@ -2,9 +2,9 @@
  */
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     1
-#define _HIGHWIRE_REVISION_  5
-#define _HIGHWIRE_BETATAG_   "beta"
-#define _HIGHWIRE_VERSION_   "0.1.5"
+#define _HIGHWIRE_REVISION_  6
+#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_VERSION_   "0.1.6"
 
 #include "hw-types.h"   /* get base definitions */
 
@@ -350,8 +350,14 @@ typedef struct s_image {
 } * IMAGE;
 
 struct font_step {
-	WORD step;  /* HTML font size 0..7 */
 	WORD color;
+	WORD step;  /* HTML font size 0..7 */
+	WORD size;  /* in pt */
+	WORD type;
+	BOOL setBold;
+	BOOL setItalic;
+	BOOL setUndrln;
+	BOOL setStrike;
 	struct font_step *previous_font_step;
 };
 
