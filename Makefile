@@ -82,6 +82,7 @@ CFILES = \
 	Redraws.c \
 	\
 	Window.c \
+	formwind.c \
 	Widget.c \
 	hwWind.c \
 	av_prot.c \

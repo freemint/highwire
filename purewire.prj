@@ -53,6 +53,7 @@ Loader.c   (global.h,defs.h,hw-types.h, token.h, parser.h,mime.h,av_comm.h,sched
 Redraws.c  (global.h,defs.h,hw-types.h, Table.h,Form.h,fontbase.h)
 ;
 Window.c   (  hw-types.h, Window.h)
+formwind.c (global.h,defs.h,hw-types.h, Window.h)
 Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h)
 hwWind.c   (global.h,defs.h,hw-types.h, hwWind.h,Containr.h,Form.h,mime.h,Loader.h,Logging.h,Location.h,cache.h)
 av_prot.c  (global.h,defs.h,hw-types.h, av_comm.h)
