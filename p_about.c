@@ -102,7 +102,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				}
 				line++;
 			}
-			if (info->Used || !info->Local) {
+			if (info->Used || !info->Object) {
 				sprintf (buf, "[%li]", info->Used);
 				render_text (current, buf);
 			} else {
