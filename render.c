@@ -2806,6 +2806,31 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
+ * Text Area
+*/
+static UWORD
+render_TEXTAREA_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	if (flags & PF_START) {
+		const char * beg = *text, * end;
+		UWORD       rows = 1;
+		while (isspace (*beg)) {
+			beg++;
+		}
+		end = beg;
+		while (*end && *end != '<') {
+			if (*(end++) == '\n') rows++;
+		}
+		if (new_tarea (parser, beg, end, rows)) {
+			*text =  end;
+			flags |= PF_FONT;
+			flags &= ~PF_SPACE;
+		}
+	}
+	return flags;
+}
+
+/*------------------------------------------------------------------------------
  * Selection List
 */
 static UWORD
@@ -2864,8 +2889,6 @@ render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
 	}
 	return (flags|PF_SPACE);
 }
-
-#define render_TEXTAREA_tag NULL
 
 
 /*==============================================================================
