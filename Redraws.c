@@ -463,12 +463,9 @@ draw_paragraph (PARAGRPH paragraph,
 	long     clip_y = clip->g_y;
 	FONT     font   = NULL;
 	TEXTATTR attrib;
-
-	while (line) {
-		long y = y_off + line->Ascend + line->Descend;
-		if (y > clip_y) break;
-		y_off = y;
-		line  = line->NextLine;
+	
+	while (line && y_off + line->OffsetY + line->Descend <= clip_y) {
+		line = line->NextLine;
 	}
 	clip_y += clip->g_h -1;
 
@@ -482,11 +479,14 @@ draw_paragraph (PARAGRPH paragraph,
 	
 	attrib.packed = ~line->Word->attr.packed;
 	
-	while (line && y_off < clip_y) {
+	do {
 		struct word_item * word = line->Word;
 		WCHAR * text = (word->space_width ? word->item +1 : word->item);
 		short   n    = line->Count;
-		y_off += line->Ascend;
+		long   y_abs = y_off + line->OffsetY;
+		if (y_abs - line->Ascend > clip_y) {
+			break;
+		}
 
 		if (*text == font_Space (word->font)) {
 			text++;
@@ -494,7 +494,7 @@ draw_paragraph (PARAGRPH paragraph,
 
 		while(1) {
 			short x = x_off + word->h_offset;
-			short y = y_off;
+			short y = y_abs;
 
 		 	if (!word) {
 		 		puts ("draw_paragraph(): empty line (3)!");
@@ -578,9 +578,8 @@ draw_paragraph (PARAGRPH paragraph,
 			text = word->item;
 		}
 
-		y_off += line->Descend;
-		line  =  line->NextLine;
-	}
+	} while ((line = line->NextLine) != NULL);
+	
 	return y_off;
 }
 
