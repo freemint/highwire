@@ -161,7 +161,7 @@ content_length (const char * beg, long len, HTTP_HDR * hdr)
 	BOOL       found;
 	
 	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
-		long size = atol (beg + sizeof(token));
+		long size = atol (beg + sizeof(token)-1);
 		if (size > 0) {
 			hdr->Size = size;
 		}
@@ -257,19 +257,16 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 		return sock;
 	
 	} else {
-		#ifdef __GNUC__
-			const char * stack = "MiNTnet";
-		#else
-			const char * stack = "STiK2";
-		#endif
+		const char * stack = inet_info();
 		size_t len = sprintf (buffer,
 		     "%s %s%s HTTP/1.1\r\n"
 		     "HOST: %s\r\n"
-		     "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%02i %s)\r\n"
+		     "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n"
 		     "\r\n",
 		     (keep_alive ? "GET" : "HEAD"), location_Path (loc, NULL), loc->File,
 		     name,
-		     _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_, stack);
+		     _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
+		     _HIGHWIRE_REVISION_, (stack ? stack : ""));
 		if ((len = inet_send (sock, buffer, len)) < 0) {
 			if (len < -1) {
 				sprintf (buffer, "Error: %s\n", strerror((int)-len));
