@@ -320,7 +320,8 @@ expires (const char * beg, long len, HTTP_HDR * hdr)
 #ifdef USE_INET
 short
 http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
-             short * keep_alive, const char * post_buf, long tout_msec)
+             short * keep_alive, long tout_msec,
+             LOCATION referer, const char * post_buf)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
@@ -384,6 +385,15 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			      _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
 			      _HIGHWIRE_REVISION_, (stack ? stack : ""));
 			len = inet_send (sock, buffer, len);
+		}
+		if ((long)len > 0 && referer) {
+			const char text[] = "Referer: ";
+			len = sizeof (text) -1;
+			memcpy (buffer, text, len);
+			len += location_FullName (referer,
+			                          buffer + len, sizeof(buffer) - len -2);
+			strcpy (buffer + len, "\r\n");
+			len = inet_send (sock, buffer, len +2);
 		}
 		if ((long)len > 0 && post_buf) {
 			long n = strlen (post_buf);
