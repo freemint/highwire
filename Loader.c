@@ -644,7 +644,7 @@ header_job (void * arg, long invalidated)
 	
 	/* Check for HTTP header redirect
 	*/
-	if ((reply == 301 || reply == 302) && hdr.Rdir) {
+	if ((reply == 301 || reply == 302 || reply == 303) && hdr.Rdir) {
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = cache_lookup (redir, 0, NULL);
 		inet_close  (sock);
