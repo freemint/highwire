@@ -247,7 +247,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 
 				if (tag == TAG_FRAMESET) {
 
-					char output[100];
+					char cols[100], rows[100];
 					BOOL border = (container->Parent
 					               ? container->Parent->Border : TRUE);
 					container->Border
@@ -257,9 +257,14 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					 * since when we are dumped here we are looking at a
 					 * beginning of a FRAMESET tag
 					 */
-
-					if (get_value (parser, KEY_COLS, output, sizeof(output))) {
-						containr_fillup (container, output, TRUE);
+					if ((!get_value (parser, KEY_COLS, cols, sizeof(cols))
+					     || !strchr (cols, ',')) &&
+					      get_value (parser, KEY_ROWS, rows, sizeof(rows))) {
+						cols[0] = '\0';
+					}
+					
+					if (*cols) {
+						containr_fillup (container, cols, TRUE);
 						container = container->u.Child;
 						depth++;
 					}
@@ -267,8 +272,8 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					else /* at the moment settings of either COLS _and_ ROWS aren't
 					      * working yet, so we make it mutual exlusive for now   */
 
-					if (get_value (parser, KEY_ROWS, output, sizeof(output))) {
-						containr_fillup (container, output, FALSE);
+					if (*rows) {
+						containr_fillup (container, rows, FALSE);
 						container = container->u.Child;
 						depth++;
 					}
