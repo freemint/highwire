@@ -1,4 +1,4 @@
-(non-public of Oct. 04, 2004):
+(non-public of Oct. 11, 2004):
 
 - Large portions of the cache handling code
   reworked.  This gets rid of several wrong
@@ -33,7 +33,8 @@
   used as the base (wrong usage that is, but also
   used by the W3C staff!).
 
-- Bugs #0133, #0150, #0167, #0169, #0170 resolved.
+- Bugs #0133, #0150, #0167, #0169, #0170, #0176
+  resolved.
 
 __________________________________________________
 Changes in V. 0.2.1 release  of August 22, 2004:
