@@ -2289,9 +2289,13 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
+		char out[100];
 		DOMBOX * box = group_box (parser, TAG_DIV, ALN_LEFT);
-		box->SetWidth = get_value_size (parser, KEY_WIDTH);
-	
+		if (get_value (parser, KEY_WIDTH, out, sizeof(out))) {
+			short size = numerical (out, NULL, parser->Current.font->Size,
+			                        parser->Current.word->font->SpaceWidth);
+			if (size > 0) box->SetWidth = size;
+		}
 	} else {
 		DOMBOX * box = leave_box (parser, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
