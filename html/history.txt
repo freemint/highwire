@@ -1,5 +1,129 @@
 Ok here are the new supports and changes
 
+January 10, 2003
+
+  Baldricks patches
+  
+  Highwire.c:
+    - line 174 added line to test OVL layer.  NOT PERMANENT
+      DELETE before any release
+      
+  Inet.c:
+    - 201 changed 0 to E_NODATA 
+    
+  Verified that I had the correct Docs in archive and fixed lt
+  error in dletter.htm
+  
+  AltF4's patches
+  
+  hwWind.c:
+    - line 187 (set_size):  added a workaround for Geneva because this
+      returns here wrongly a CURRXYWH of 0,0,0,0 when the window is
+      already created but not opend.
+
+  Table.c:
+    - line 343..351 (table_cell):  simplyfied a bit the code for
+      background colour setting.
+    - line 439 + 441 (free_stack) + 479 + 485 + 707 (table_finish):
+      changed parameter type to current, instead of parser.
+    - line 448 (free_stack):  removed obsolete code because this sets a
+      wrong background colour.
+
+January 09, 2003
+
+  Baldrick's patches
+  
+  ovl_sys.c: ovl_sys.h:
+    - new routines for handling OVL files
+      (probably buggy)
+      
+  purewire.prj 
+    - updated for ovl_sys.c and ovl_sys.h
+    
+  Modules folder added
+  Modules\example folder added
+  Sample OVL src code added in Modules\example
+  sample.ovl added to modules folder
+  
+January 08, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 136 + 155 + 175 (new_image) + 302 (image_calculate):  take
+      care for images which are known to be non-transparent.
+    - line 323 + 327 (image_job):  also compare background coulour of
+      cached images.
+    - line 930 (read_gif):  set background colour to -1 if transparency
+      is not set.
+
+  p_about.c:
+    - line 34..36 (about_cache):  also display background colour of
+      transparent gifs.
+
+January 07, 2003
+
+  AltF4's patches
+
+  Containr.c:
+    - line 604 + 649 (containr_Element):  corrected calculation of the
+      frame border extents.
+
+  defs.h:
+    - line 417:  in struct word_line, new attribute Width to take care
+      for obstackles (overlapping left/right aligned areas).
+
+  hwWind.h:
+    - line 42:  new global to store the current mouse shape and avoid
+      useless changes.
+
+  hwWind.c:
+    - line 25 + 564 + 583 (wnd_hdlr):  update mouse shape variable.
+
+  Mouse_R.c:
+    - line 312 (check_mouse_position):  check for mouse pointer over
+      some window widgets or the shadowed area.
+    -line 379:  update mouse shape variable and avoid useless changes.
+
+  Paragrph.c:
+    - line 261 (paragraph_calc):  set line->Width to the right blocking
+      size.
+    - line 385:  paragraphs width must only set to the real width if it
+      is a image paragraph.
+    - line 426 + 451 (paragrph_word):  take care for overlapping
+      obstacles.
+     -line 949..992 (content_paragraph):  overworked to take care for
+      overlapping (left/right aligned) paragraphs.
+
+January 04, 2003
+
+  AltF4's patches
+
+  AEI.c:
+    - line 625.. 638 (rpopup_open):  corrected coordinates to have the
+      real extents (outlined, 3D) used.
+
+  highwire.h, highwire.rsc, highwire.hrd, highwire.rsd, highwire.rso
+    - updated due to changed popup.
+
+  list.c:
+    - line 17..27 (list_start):  corrected the indention value saved in
+      list stack.
+    - line 50..59 (list_finish):  added code to avoid epmty lists.
+    - line 283..302 + 377..379 (list_marker):  code simplyfied.
+
+  render.c:
+    - line 143..186 (render_TITLE_tag):  reworked to avoid contiguous
+      spaces.
+    - line 1274..1329 (render_H_tag):  adapted to render_P_tag()
+      because the code is _very_ similar.
+
+  Widget.c:
+    - line 30:  rewrote HW_form_do() to make it real crash proof on all
+      setups and as well have fancy 3D-look.  the previous code is
+      still in place because I'm not shure to have really all aspects
+      implemented yet.
+
 January 02, 2003
 
   AltF4's patches
