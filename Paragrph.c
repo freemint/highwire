@@ -349,6 +349,15 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		line->Descend   = word->word_tail_drop;
 		line->Width     = width - blocker->R.width;
 		offset = int_width - word->word_width + word->space_width - hanging;
+		
+		if (offset < 0) {
+			This->Rect.H      = max (l_height, r_height);
+			int_width        += blocker->L.width + blocker->R.width;
+			offset           += blocker->L.width + blocker->R.width;
+			blocker->L.bottom = blocker->L.width = l_height = 0;
+			blocker->R.bottom = blocker->R.width = r_height = 0;
+			blocked   = 0x00;
+		}
 
 		ln_brk = word->line_brk;
 
