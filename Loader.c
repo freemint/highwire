@@ -49,7 +49,6 @@ char help_file[HW_PATH_MAX];
 
 
 static short  start_application (const char * appl, LOCATION loc);
-static char * load_file (const LOCATION, size_t * expected, size_t * loaded);
 
 
 /*______________return_values_of_scheduled_jobs,_controlling_their_priority___*/
@@ -890,13 +889,8 @@ launch_viewer(const char *name)
 /******************************************************************************/
 
 
-/*==============================================================================
- * load_file()
- *
- * I modified the hell out of this to do local searching
- * It is probably not the prettiest.  - baldrick July 10, 2001
-*/
-static char *
+/*============================================================================*/
+char *
 load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 {
 	const char *filename = loc->FullName;
