@@ -184,7 +184,10 @@ static
 void set_size (HwWIND This, const GRECT * curr)
 {
 	wind_set_grect (This->Handle, WF_CURRXYWH, curr);
-	wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr);
+	if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
+	    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
+		This->Curr = *curr;    /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
+	}                         /* if the window was created but not opend       */
 	wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
 	containr_calculate (This->Pane, &This->Work);
 }
