@@ -86,6 +86,16 @@ HW_form_do (OBJECT *tree, WORD next)
 				in.emi_m2.g_h = tree[which].ob_height;
 				if (tree[which].ob_state & OS_DISABLED) {
 					which = 0;
+				} else if (tree[which].ob_type == G_BUTTON) {
+					in.emi_m2.g_x -= 2;
+					in.emi_m2.g_y -= 2;
+					in.emi_m2.g_w += 4;
+					in.emi_m2.g_h += 4;
+					if (out.emo_mbutton) {
+						objc_change (tree, which, 0,
+						             in.emi_m2.g_x, in.emi_m2.g_y,
+						             in.emi_m2.g_w, in.emi_m2.g_h, OS_SELECTED, 1);
+					}
 				} else {
 					WORD col_tab[] = { G_BLACK, G_WHITE, G_LBLACK },
 					   * color = col_tab;
@@ -120,10 +130,11 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 	static GRECT    clip;
 	
 	WORD    ret = -1;
-	char ** str = tab;
-	short   num = 0;
-	short   len = 0;
 	short   i;
+	
+	static char t_dn[] = "", t_up[] = "";
+	short tab_num = 0; /* number of lines in tab     */
+	short tab_len = 0; /* maximum line length in tab */
 	
 	if (!o_tree) {
 		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_OUTLINED,
@@ -163,40 +174,30 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 		o_tree->ob_height = n;
 	}
 	
-	i = o_pbeg -1;
-	while (*str && ++i <= o_pend) {
-		size_t l = strlen (*str);
-		if (l >= 80) (*str)[l = 79] = '\0';
-		if (**str == '-') {
-			o_tree[i].ob_flags &= ~OF_SELECTABLE;
-			o_tree[i].ob_state = OS_DISABLED;
-			if (strspn ((*str) +1, "-") == l) {
-				o_tree[i].ob_spec.free_string = sepr;
-				l = 0;
-			} else {
-				o_tree[i].ob_spec.free_string = *str;
-				while ((*str)[l -1] == '-' && (*str)[l -2] == '-') l--;
-			}
+	/* count number of lines in tab[] and calculate the maximum line length
+	*/
+	while (tab[tab_num]) {
+		char * str = tab[tab_num++];
+		size_t len = strlen (str);
+		if (len >= 80) str[len = 79] = '\0';
+		while (len && isspace (str[len -1])) len--;
+		if (str[0] == '-') {
+			while (str[len -1] == '-' && str[len -2] == '-') len--;
 		} else {
-			o_tree[i].ob_flags |= OF_SELECTABLE;
-			if (**str == '!') {
-				**str = ' ';
-				o_tree[i].ob_state = OS_DISABLED;
-			} else {
-				o_tree[i].ob_state = OS_NORMAL;
-			}
-			o_tree[i].ob_spec.free_string = *str;
-			if ((*str)[l -1] != ' ') l++;
+			len++;
 		}
-		if (l > len) len = l;
-		str++;
-		num++;
+		if (len > tab_len) tab_len = len;
 	}
+	
 	wind_update (BEG_MCTRL);
-	if (len) {
+	if (tab_num) {
+		WORD off = 0;
+		WORD num = min (tab_num, o_pend - o_pbeg +1);
+		WORD beg = o_pbeg;
+		WORD end = o_pbeg + num -1;
 		WORD cx, cy, cw, ch, n;
-		o_tree->ob_tail   = (num += o_pbeg -1);
-		o_tree->ob_width  = len * chr_w;
+		o_tree->ob_tail   = num;
+		o_tree->ob_width  = tab_len * chr_w;
 		o_tree->ob_height = o_tree[num].ob_y + o_tree[num].ob_height;
 		o_tree[num].ob_next  =  0;
 		o_tree[num].ob_flags |= OF_LASTOB;
@@ -222,23 +223,89 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 		o_tree->ob_x += cx;
 		o_tree->ob_y += cy;
 		
+		if (num < tab_num) {
+			num -= 2;
+			o_tree[beg].ob_type   = G_BUTTON;
+			o_tree[beg].ob_flags |= OF_SELECTABLE|OF_FL3DIND;
+			o_tree[beg].ob_state  = OS_NORMAL;
+			o_tree[beg].ob_height = chr_h -2;
+			o_tree[beg].ob_spec.free_string = t_up;
+			beg++;
+			o_tree[end].ob_type   = G_BUTTON;
+			o_tree[end].ob_flags |= OF_SELECTABLE|OF_FL3DIND;
+			o_tree[end].ob_state  = OS_NORMAL;
+			o_tree[end].ob_height = chr_h -2;
+			o_tree[end].ob_y      = o_tree->ob_height - o_tree[end].ob_height;
+			o_tree[end].ob_spec.free_string = t_dn;
+			end--;
+		}
+		
 		form_dial (FMD_START, cx, cy, cw, ch, cx, cy, cw, ch);
-		objc_draw (o_tree, ROOT, MAX_DEPTH, cx, cy, cw, ch);
-		if ((n = HW_form_do (o_tree, 0)) > 0) {
-			ret = n - o_pbeg;
+		while (TRUE) {
+			if (num < tab_num) {
+				o_tree[beg -1].ob_state = (off > 0 ? OS_NORMAL : OS_DISABLED);
+				o_tree[end +1].ob_state = (off < tab_num - num
+				                                   ? OS_NORMAL : OS_DISABLED);
+			}
+			for (n = off, i = beg; i <= end; i++) {
+				char * str = tab[n++];
+				if (*str == '-') {
+					char * p = str;
+					while (*(++p) == '-');
+					o_tree[i].ob_flags &= ~OF_SELECTABLE;
+					o_tree[i].ob_state  = OS_DISABLED;
+					o_tree[i].ob_spec.free_string = (*p ? str : sepr);
+				} else {
+					o_tree[i].ob_flags |= OF_SELECTABLE;
+					if (*str == '!') {
+						*str = ' ';
+						o_tree[i].ob_state = OS_DISABLED;
+					} else {
+						o_tree[i].ob_state = OS_NORMAL;
+					}
+					o_tree[i].ob_spec.free_string = str;
+				}
+			}
+			objc_draw (o_tree, ROOT, MAX_DEPTH, cx, cy, cw, ch);
+			if ((n = HW_form_do (o_tree, 0)) > 0) {
+				ret = n - beg + off;
+			}
+			for (i = beg; i <= end; i++) {
+				if (o_tree[i].ob_spec.free_string[0] == ' ' &&
+				    o_tree[i].ob_state & OS_DISABLED) {
+					o_tree[i].ob_spec.free_string[0] = '!';
+				}
+			}
+			if (num < tab_num) {
+				if (n == beg -1) {
+					ret = 0;
+					off = max (off - num, 0);
+					continue;
+				} else if (n == end +1) {
+					ret = 0;
+					off = min (off + num, tab_num - num);
+					continue;
+				}
+			}
+			break;
 		}
 		form_dial (FMD_FINISH, cx, cy, cw, ch, cx, cy, cw, ch);
 		
-		for (i = o_pbeg; i <= num; i++) {
-			if (o_tree[i].ob_spec.free_string[0] == ' ' &&
-			    o_tree[i].ob_state & OS_DISABLED) {
-				o_tree[i].ob_spec.free_string[0] = '!';
-			}
-		}
-		if (num < o_pend) {
-			o_tree[num].ob_next  =  num +1;
-			o_tree[num].ob_flags &= ~OF_LASTOB;
-			o_tree->ob_tail      =  o_pend;
+		if (tab_num < o_pend) {
+			o_tree[tab_num].ob_next  =  tab_num +1;
+			o_tree[tab_num].ob_flags &= ~OF_LASTOB|OF_FL3DIND;
+			o_tree->ob_tail          =  o_pend;
+		} else if (num < tab_num) {
+			beg--;
+			o_tree[beg].ob_type   = G_STRING;
+			o_tree[beg].ob_flags &= ~OF_FL3DIND;
+			o_tree[beg].ob_state  = OS_NORMAL;
+			o_tree[beg].ob_height = chr_h;
+			end++;
+			o_tree[end].ob_type   = G_STRING;
+			o_tree[end].ob_flags &= ~OF_FL3DIND;
+			o_tree[end].ob_height = chr_h;
+			o_tree[end].ob_y      = o_tree->ob_height - o_tree[end].ob_height;
 		}
 	}
 	wind_update (END_MCTRL);
