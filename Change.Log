@@ -1,7 +1,13 @@
 (non-public of Jun 11, 2004)
 
 - Http request-header field 'Referer:'
-  iplemented.
+  implemented.
+
+- Bugfix for anchors inside of tables which got
+  lost when more than one was defined.
+
+- Added handling for wrong opend/closed formulars
+  regarding table structures.
 
 __________________________________________________
 Changes in V. 0.2.0 release  of June 10, 2004:
