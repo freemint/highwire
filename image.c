@@ -109,7 +109,8 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	if (!raster_color) {
 		STATIC RASTERFUNC
 			raster_stnd, raster_D1, raster_D2, raster_I4, raster_I8,
-			raster_P8, raster_16, raster_24, raster_24r, raster_32, raster_32r;
+			raster_P8, raster_16, raster_16r, raster_24, raster_24r,
+			raster_32, raster_32r;
 		short out[273] = { -1, }; out[14] = 0;
 		vq_scrninfo (vdi_handle, out);
 		memcpy (pixel_val, out + 16, 512);
@@ -124,7 +125,8 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		
 		} else if (out[0] == 2) switch (planes) { /* packed pixels */
 			case  8: raster_color = raster_P8; break;
-			case 16: raster_color = raster_16; break;
+			case 16:
+				raster_color = (out[14] & 0x80 ? raster_16r : raster_16); break;
 			case 24:
 				raster_color = (out[14] & 0x80 ? raster_24r : raster_24); break;
 			case 32:
@@ -834,6 +836,24 @@ raster_16 (UWORD * dst, RASTERINFO * info, char * src)
 }
 
 /*------------------------------------------------------------------------------
+ * 16 planes packed pixels formart in wrong (intel) byte order, the pixel index
+ * array must contain 16bit RGB values.
+ */
+STATIC void
+raster_16r (UWORD * dst, RASTERINFO * info, char * src)
+{
+	short * pix   = info->PixIdx;
+	UWORD   mask  = info->PixMask;
+	size_t  x     = (info->IncXfx +1) /2;
+	short   width = info->Width;
+	do {
+		UWORD rgb = pix[(short)src[x >>16] & mask];
+		*(dst++) = (rgb >> 8) | (rgb << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+
+/*------------------------------------------------------------------------------
  * 24 planes packed pixels formart.
  */
 STATIC void
@@ -858,7 +878,7 @@ raster_24 (UWORD * _dst, RASTERINFO * info, char * src)
 }
 
 /*------------------------------------------------------------------------------
- * 24 planes packed pixels formart, wrong (intel) byte order.
+ * 24 planes packed pixels formart in wrong (intel) byte order.
  */
 STATIC void
 raster_24r (UWORD * _dst, RASTERINFO * info, char * src)
@@ -908,7 +928,7 @@ raster_32 (UWORD * _dst, RASTERINFO * info, char * src)
 }
 
 /*------------------------------------------------------------------------------
- * 32 planes packed pixels formart, wrong (intel) byte order.
+ * 32 planes packed pixels formart in wrong (intel) byte order.
  */
 STATIC void
 raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
