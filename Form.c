@@ -807,7 +807,18 @@ input_activate (INPUT input, WORD slct)
 		
 		if (elem) {
 			do if (elem->checked && *elem->Name) {
-				size += 2 + strlen (elem->Name)
+				size += 2 + strlen (elem->Name);
+				if (elem->Value) {
+					char * v = elem->Value, c;
+					while ((c = *(v++)) != '\0') {
+						if (c < ' ' || c >= 0x80 || c == '+'
+						    || c == '&' || c == '=' || c == '%' || c == '?') {
+							size += 3;
+						} else {
+							size += 1;
+						}
+					}
+				}
 				      + (elem->Value ? strlen (elem->Value) : 0);
 			} while ((elem = elem->Next) != NULL);
 		}
@@ -833,10 +844,16 @@ input_activate (INPUT input, WORD slct)
 				p += len;
 				*(p++) = '=';
 				if (elem->Value) {
-					char * v = elem->Value;
-					while (*v) {
-						*(p++) = (*v > ' ' ? *v : '+');
-						v++;
+					char * v = elem->Value, c;
+					while ((c = *(v++)) != '\0') {
+						if (c == ' ') {
+							*(p++) = '+';
+						} else if (c < ' ' || c >= 0x80 || c == '+'
+						           || c == '&' || c == '=' || c == '%' || c == '?') {
+							p += sprintf (p, "%%%02X", (int)c);
+						} else {
+							*(p++) = c;
+						}
 					}
 				}
 				*(p++) = '&';
