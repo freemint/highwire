@@ -198,16 +198,17 @@ button_clicked (WORD button, WORD mx, WORD my)
 				WORD meta, u;
 				graf_mkstate (&u,&u,&u, &meta);
 				if (meta & K_ALT) {
-					cont = new_hwWind ("", "", NULL)->Pane;
+					cont = new_hwWind (link->address, "", NULL)->Pane;
 				} else if (link->u.target) {
 					if (stricmp (link->u.target, "_blank") == 0) {
-						cont = new_hwWind ("", "", NULL)->Pane;
+						cont = new_hwWind (link->address, "", NULL)->Pane;
 					} else {
 						CONTAINR target = containr_byName (cont, link->u.target);
 						if (target) cont = target;
 					}
 				}
-				new_loader_job (link->address, loc, cont, link->encoding, -1,-1);
+				loader_setParams (new_loader_job (link->address, loc, cont),
+				                  link->encoding, -1,-1);
 			}
 		} break;
 		

@@ -29,7 +29,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <gemx.h>
+#include <gem.h>
 
 #include "global.h"
 #include "av_comm.h"
@@ -160,7 +160,10 @@ new_loader (LOCATION loc)
 	LOADER loader = malloc (sizeof (struct s_loader));
 	loader->Location = location_share (loc);
 	loader->Target   = NULL;
+	loader->Encoding = ENCODING_WINDOWS1252;
 	loader->MimeType = MIME_TEXT;
+	loader->MarginW  = -1;
+	loader->MarginH  = -1;
 	/* */
 	loader->DataSize = 0;
 	loader->DataFill = 0;
@@ -567,17 +570,13 @@ launch_viewer(const char *name)
  * The parameters 'address', 'base' or 'target' can be NULL.
  * address == NULL: reread the file in base with default_encoding
  */
-void
-new_loader_job (const char *address, LOCATION base, CONTAINR target,
-                ENCODING encoding, short margin_w, short margin_h)
+LOADER
+new_loader_job (const char *address, LOCATION base, CONTAINR target)
 {
 	LOCATION loc    = new_location (address, base);
 	LOADER   loader = new_loader (loc);
 	
 	loader->Target   = target;
-	loader->Encoding = encoding;
-	loader->MarginW  = margin_w;
-	loader->MarginH  = margin_h;
 
 	if (loc->Proto == PROT_DIR) {
 		loader->MimeType = MIME_TXT_HTML;
@@ -648,6 +647,20 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target,
 	}
 	
 	free_location (&loc);
+	
+	return loader;
+}
+
+/*============================================================================*/
+void
+loader_setParams (LOADER loader,
+                  ENCODING encoding, short margin_w, short margin_h)
+{
+	if (loader) {
+		if (encoding > ENCODING_Unknown) loader->Encoding = encoding;
+		if (margin_w >= 0)               loader->MarginW  = margin_w;
+		if (margin_h >= 0)               loader->MarginH  = margin_h;
+	}
 }
 
 
@@ -742,8 +755,7 @@ page_load(void)
 			size_t len = slash - fsel_path +1;
 			memcpy (file, fsel_path, len);
 			strcpy (file + len, fsel_file);
-			new_loader_job (file, NULL,
-			                hwWind_Top->Pane, ENCODING_WINDOWS1252, -1,-1);
+			new_loader_job (file, NULL, hwWind_Top->Pane);
 		} else {
 			butt = FALSE;
 		}

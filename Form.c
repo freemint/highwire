@@ -547,8 +547,7 @@ input_activate (INPUT input)
 			len = size;
 		}
 		url[len] = '\0';
-		new_loader_job (url, form->Frame->Location, form->Frame->Container,
-		                ENCODING_WINDOWS1252, -1,-1);
+		new_loader_job (url, form->Frame->Location, form->Frame->Container);
 		free (url);
 	}
 	

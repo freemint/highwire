@@ -40,7 +40,7 @@ static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
 /*============================================================================*/
 HwWIND
-new_hwWind (const char * name, const char * info, const char * url)
+new_hwWind (const char * name, const char * url, LOCATION loc)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST);
@@ -119,7 +119,7 @@ new_hwWind (const char * name, const char * info, const char * url)
 	for (i = 0; i <= HISTORY_LAST; This->History[i++] = NULL);
 	
 	set_size (This, &curr_area);
-	hwWind_setName (This, name);
+	hwWind_setName (This, (name && *name ? name : url));
 	This->Stat[0] = ' ';
 	This->Info[0] = '\0';
 #if (_HIGHWIRE_REALINFO_==TRUE)
@@ -136,11 +136,11 @@ new_hwWind (const char * name, const char * info, const char * url)
 	}
 	wind_open_grect (This->Handle, &This->Curr);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-	hwWind_setInfo (This, info, TRUE);
+	hwWind_setInfo (This, "", TRUE);
 #endif
 
-	if (url && *url) {
-		new_loader_job (url, NULL, This->Pane, ENCODING_WINDOWS1252, -1,-1);
+	if ((url && *url) || loc) {
+		new_loader_job (url, loc, This->Pane);
 	}
 	
 #ifdef GEM_MENU
@@ -537,8 +537,8 @@ hwWind_history (HwWIND This, UWORD menu)
 			This->HistMenu = menu;
 		}
 		for (i = 0; i < num; i++) {
-			new_loader_job (NULL, entr[i].Location, entr[i].Target,
-			                entr->Encoding, -1, -1);
+			LOADER ldr = new_loader_job (NULL, entr[i].Location, entr[i].Target);
+			loader_setParams (ldr, entr->Encoding, -1, -1);
 		}
 	}
 }

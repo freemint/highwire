@@ -60,8 +60,8 @@ typedef struct s_loader {
 LOADER new_loader    (LOCATION);
 void   delete_loader (LOADER *);
 
-void new_loader_job (const char *address, LOCATION base, CONTAINR target,
-                     ENCODING, short margin_w, short margin_h);
+LOADER new_loader_job   (const char *address, LOCATION base, CONTAINR target);
+void   loader_setParams (LOADER, ENCODING, short margin_w, short margin_h);
 
 
 #endif /* __LOADER_H__ */

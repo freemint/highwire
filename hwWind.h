@@ -27,7 +27,7 @@ struct hw_window {
 };
 
 
-HwWIND new_hwWind    (const char * name, const char * info, const char * url);
+HwWIND new_hwWind    (const char * name, const char * url, LOCATION);
 void   delete_hwWind (HwWIND);
 
 void hwWind_setName (HwWIND, const char *);

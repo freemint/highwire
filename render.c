@@ -301,11 +301,12 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					}
 
 					if (get_value (parser, KEY_SRC, frame_file, sizeof(frame_file))) {
-						/* BUG: is there a CHARSET attribute? */
-						new_loader_job (frame_file, base, container,
-						                ENCODING_WINDOWS1252,
-						                get_value_unum (parser, KEY_MARGINWIDTH,  -1),
-						                get_value_unum (parser, KEY_MARGINHEIGHT, -1));
+						LOADER loader = new_loader_job (frame_file, base, container);
+						short margn_w = get_value_unum (parser, KEY_MARGINWIDTH,  -1);
+						short margn_h = get_value_unum (parser, KEY_MARGINHEIGHT, -1);
+						if (margn_w >= 0 || margn_h >= 0) {
+							loader_setParams (loader, 0, margn_w, margn_h);
+						}
 					} else {
 						containr_notify (container, HW_PageStarted, "");
 						containr_calculate (container, NULL);
@@ -410,9 +411,8 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 							if (*end == '\'') *end = '\0';
 						}
 						if (*url) {
-							new_loader_job (url, parser->Frame->Location,
-							                parser->Target, ENCODING_WINDOWS1252,
-							                -1,-1);
+							new_loader_job (url,
+							                parser->Frame->Location, parser->Target);
 						}
 					}
 				}
@@ -467,8 +467,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 		char snd_file[HW_PATH_MAX];
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
-			new_loader_job (snd_file, parser->Frame->Location,
-			                NULL, ENCODING_WINDOWS1252, -1,-1);
+			new_loader_job (snd_file, parser->Frame->Location, NULL);
 		}
 	}
 	return flags;

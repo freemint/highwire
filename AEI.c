@@ -84,13 +84,12 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 		}
 		p[-1] = '\0';  /* overwrite closing ' */
 		cmd = filename;
-		new_hwWind (filename, "", filename);
 	}
 	
 	if (wind) {
-		new_loader_job (cmd, NULL, wind->Pane, ENCODING_WINDOWS1252, -1,-1);
+		new_loader_job (cmd, NULL, wind->Pane);
 	} else {
-		new_hwWind (cmd, "", cmd);
+		new_hwWind ("", cmd, NULL);
 	}
 
 	answ[0] = (msg[0] == VA_START)? AV_STARTED : VA_WINDOPEN;
@@ -228,7 +227,7 @@ doGSCommand(const WORD msg[8])
 		else if (!stricmp(cmd, "Open"))
 		{
 			cmd = nextToken(cmd);
-			new_hwWind (cmd, "", cmd);
+			new_hwWind ("", cmd, NULL);
 			answ[7] = GSACK_OK;
 		}
 		else if (!stricmp(cmd, "AppGetLongName"))
@@ -292,8 +291,7 @@ menu_open (BOOL fsel)
 		n = form_do (form, URL_EDIT);
 		form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 		if (n == URL_OK && ptext[0]) {
-			new_loader_job (ptext, NULL,
-			                hwWind_Top->Pane, ENCODING_WINDOWS1252, -1,-1);
+			new_loader_job (ptext, NULL, hwWind_Top->Pane);
 		} else if (n == URL_FILE) {
 			fsel = TRUE;
 		}
@@ -310,14 +308,14 @@ void
 menu_reload (ENCODING encoding)
 {
 	if (encoding > ENCODING_Unknown) {
-		FRAME frame = hwWind_ActiveFrame (NULL);
+		FRAME  frame  = hwWind_ActiveFrame (NULL);
+		LOADER loader = new_loader_job (NULL, frame->Location, frame->Container);
 		
 		/* if an encoding is given (!=ENCODING_Unknown) set bit 7 to instruct
 		 * the parser not to switch it.
 		 */
-		new_loader_job (NULL, frame->Location,
-		                frame->Container, (encoding | 0x80u),
-		                frame->Page.MarginLft, frame->Page.MarginTop);
+		loader_setParams (loader, (encoding | 0x80u),
+		                  frame->Page.MarginLft, frame->Page.MarginTop);
 	} else {
 		hwWind_history (hwWind_Top, hwWind_Top->HistMenu);
 	}
@@ -376,8 +374,7 @@ menu_info (void)
 	                enc_ln,  enc_ptr);
 	switch (form_alert (1, text)) {
 		case 2:
-			new_loader_job ("about:", NULL, new_hwWind ("", "", NULL)->Pane,
-			                ENCODING_WINDOWS1252, -1,-1);
+			new_hwWind ("About", "about:", NULL);
 			break;
 		case 3:
 			menu_about();

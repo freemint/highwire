@@ -162,12 +162,12 @@ main (int argc, char **argv)
 	if (argc > 1) {
 		short i = 1;
 		do {
-			if (argv[i][0] != '-' && new_hwWind (argv[i], "", argv[i])) {
+			if (argv[i][0] != '-' && new_hwWind ("", argv[i], NULL)) {
 				u++;
 			}
 		} while (++i < argc);
 	}
-	if (!u && !new_hwWind ("", "", def_address)) {
+	if (!u && !new_hwWind ("", def_address, NULL)) {
 		exit (EXIT_FAILURE);
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
