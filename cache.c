@@ -24,9 +24,8 @@
 typedef struct s_cache_item * CACHEITEM;
 typedef struct s_cache_node * CACHENODE;
 
-static BOOL     cache_flush    (CACHEITEM, LOCATION);
-static BOOL     cache_remove   (long num, long use);
-static LOCATION cache_location (CACHEITEM);
+static BOOL cache_flush  (CACHEITEM, LOCATION);
+static BOOL cache_remove (long num, long use);
 
 
 struct s_cache_item {
@@ -57,7 +56,9 @@ static size_t    __cache_dsk_use = 0;
 static size_t    __cache_dsk_max = 0;
 static size_t    __cache_dsk_num = 0;
 static size_t    __cache_dsk_lim = 0;
-static LOCATION  __cache_dir = NULL;
+static LOCATION  __cache_dir  = NULL;
+static char    * __cache_path = NULL;
+static char    * __cache_file = NULL;
 static long      __cache_fid = 1;
 
 struct s_cache_node {
@@ -237,10 +238,10 @@ destroy_item (CACHEITEM citem)
 	
 	} else { /* citem is (probably) on disk */
 		if (citem->Cached[0]) {
-			LOCATION loc = cache_location (citem);
-			if (loc) unlink (loc->FullName);
-			free_location (&loc);
+			strcpy (__cache_file, citem->Cached);
+			unlink (__cache_path);
 		}
+		free_location ((LOCATION*)&citem->Object);
 		__cache_dsk_num--;
 		__cache_dsk_use -= citem->Size;
 	}
@@ -437,14 +438,11 @@ cache_clear (CACHED this_n_all)
 		CACHEITEM next = citem->NextItem;
 		if (!citem->Reffs && (item_isMem (citem) || citem->Cached[0])
 		    && (!this_n_all || this_n_all == citem->Object)) {
-			if (!item_isMem (citem) && citem->Cached[0]) {
-/*>>>>>>>>>> DEBUG */
-				if (!cache_location (citem)) {
-					printf ("cache_clear(%s): no object!\n",
-					        citem->Location->FullName);
-					return 0uL;
+			if (!item_isMem (citem)) {
+				if (!citem->Cached[0]) {
+					citem = next;
+					continue;   /* skip this, busy item */
 				}
-/*<<<<<<<<<< DEBUG */
 				dsk++;
 			}
 			destroy_item (citem);
@@ -602,18 +600,23 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 	}
 	
 	if (dir && *dir && !__cache_dir) {
-		FILE * file = NULL;
-		char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
-		LOCATION loc;
-		if (p[-1] != '/' && p[-1] != '\\') {
-			*(p++) = (strchr (buf, '/') ? '/' : '\\');
+		LOCATION loc  = NULL;
+		FILE   * file = NULL;
+		size_t   plen = strlen (dir);
+		if ((__cache_path = malloc (plen +12)) != NULL) {
+			memcpy (__cache_path, dir, plen);
+			if (__cache_path[plen-1] != '/' && __cache_path[plen-1] != '\\') {
+				__cache_path[plen++] = (strchr (__cache_path, '/') ? '/' : '\\');
+			}
+			__cache_file = __cache_path + plen;
+			strcpy (__cache_file, "cache.idx");
+			loc = new_location (__cache_path, NULL);
 		}
-		strcpy (p, "cache.idx");
-		if ((loc = new_location (buf, NULL)) != NULL) {
+		if (loc) {
 			char hdr[16];
-			location_FullName (loc, buf, sizeof(buf));
-			if ((file = fopen (buf, "rb")) != NULL
+			if ((file = fopen (__cache_path, "rb")) != NULL
 			    && fgets (hdr, (int)sizeof(hdr) -1, file)) {
+				char * p;
 				long num = strtol (hdr, &p, 16);
 				if ((num > 0) && (p == hdr +8) && ((*p == '\n') || (*p == '\r'))) {
 					__cache_fid = num;
@@ -632,6 +635,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 			time_t locl = time (NULL);
 			long   ndel = 0;
 			while (!feof (file)) {
+				char buf[1024];
 				loc = location_rdIdx (file);
 				if (!fgets (buf, (int)sizeof(buf) -1, file)) {
 					if (loc) {
@@ -650,15 +654,13 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 						free_location (&loc);
 						break;
 					} else if (!loc) { /* outdated or invalid */
-						loc = new_location (ptr +1, __cache_dir);
-						unlink (loc->FullName);
-						free_location (&loc);
+						strcpy (ptr +1, __cache_file);
+						unlink (__cache_path);
 						ndel++;
 					} else if (expr && expr <= locl) { /* Expired */
 						free_location (&loc);
-						loc = new_location (ptr +1, __cache_dir);
-						unlink (loc->FullName);
-						free_location (&loc);
+						strcpy (ptr +1, __cache_file);
+						unlink (__cache_path);
 						ndel++;
 					} else {
 						CACHEITEM item = create_item (loc, NULL, size,
