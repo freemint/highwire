@@ -168,6 +168,9 @@ key_pressed (WORD key, UWORD state)
 	case 0x0012:  /* CTRL+R, F5 (Internet Explorer): reload */
 		menu_reload (ENCODING_Unknown);
 		break;
+	case 0x000E:  /* CTRL+N */
+		new_hwWind ("HighWire", NULL, NULL);
+		break;
 	case 0x000F:  /* CTRL+O */
 		menu_open (!(state & (K_RSHIFT|K_LSHIFT)));
 		break;
