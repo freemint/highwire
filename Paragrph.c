@@ -99,6 +99,15 @@ vTab_MaxWidth (DOMBOX * This)
 	return This->MaxWidth;
 }
 
+
+/*----------------------------------------------------------------------------*/
+static PARAGRPH
+vTab_Paragrph (DOMBOX * This)
+{
+	return (PARAGRPH)This;
+}
+
+
 /*----------------------------------------------------------------------------*/
 static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
@@ -137,6 +146,7 @@ new_paragraph (TEXTBUFF current)
 		paragraph_vTab.delete   = vTab_delete;
 		paragraph_vTab.MinWidth = vTab_MinWidth;
 		paragraph_vTab.MaxWidth = vTab_MaxWidth;
+		paragraph_vTab.Paragrph = vTab_Paragrph;
 		paragraph_vTab.draw     = vTab_draw;
 		paragraph_vTab.format   = vTab_format;
 	}
@@ -206,8 +216,9 @@ add_paragraph (TEXTBUFF current, short vspace)
 			paragraph_vTab.delete   = vTab_delete;
 			paragraph_vTab.MinWidth = vTab_MinWidth;
 			paragraph_vTab.MaxWidth = vTab_MaxWidth;
-			paragraph_vTab.format   = vTab_format;
+			paragraph_vTab.Paragrph = vTab_Paragrph;
 			paragraph_vTab.draw     = vTab_draw;
+			paragraph_vTab.format   = vTab_format;
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
 		

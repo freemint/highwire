@@ -943,8 +943,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		LRECT    rect;
 		long     px  = (long)x - frame->clip.g_x + frame->h_bar.scroll;
 		long     py  = (long)y - frame->clip.g_y + frame->v_bar.scroll;
-		DOMBOX * box = dombox_byCoord (&frame->Page, &rect, &px, &py);
-		PARAGRPH par = (box->BoxClass >= BC_GROUP ? (PARAGRPH)box : NULL);
+		DOMBOX * box = dombox_byCoord  (&frame->Page, &rect, &px, &py);
+		PARAGRPH par = dombox_Paragrph (box);
 		rect.X += x - frame->clip.g_x;
 		rect.Y += y - frame->clip.g_y;
 		

@@ -11,6 +11,7 @@
 static void     vTab_delete   (DOMBOX *);
 static LONG     vTab_MinWidth (DOMBOX *);
 static LONG     vTab_MaxWidth (DOMBOX *);
+static PARAGRPH vTab_Paragrph (DOMBOX *);
 static DOMBOX * vTab_ChildAt  (DOMBOX *, LRECT *, long x, long y, long clip[4]);
 static void     vTab_draw     (DOMBOX *, long x, long y, const GRECT *, void *);
 static void     vTab_format   (DOMBOX *, long width, BLOCKER);
@@ -18,6 +19,7 @@ struct s_dombox_vtab DomBox_vTab = {
 	vTab_delete,
 	vTab_MinWidth,
 	vTab_MaxWidth,
+	vTab_Paragrph,
 	vTab_ChildAt,
 	vTab_draw,
 	vTab_format
@@ -194,6 +196,15 @@ vTab_MaxWidth (DOMBOX * This)
 	This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This);
 	
 	return This->MaxWidth;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static PARAGRPH
+vTab_Paragrph (DOMBOX * This)
+{
+	(void)This;
+	return NULL;
 }
 
 
