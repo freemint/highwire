@@ -25,11 +25,15 @@ button_clicked (WORD button, WORD mx, WORD my)
 	
 	EVMULT_IN multi_in = { 0, };
 	
-	HwWIND   wind = hwWind_byCoord (mx, my);
-	CONTAINR cont = (wind ? wind->Pane : NULL);
-	UWORD    elem = containr_Element (&cont, mx, my, &watch, NULL, &hash);
-	FRAME   frame = hwWind_setActive (wind, cont);
-	
+	CONTAINR cont;
+	UWORD    elem = PE_NONE;
+	FRAME   frame = NULL;
+	HwWIND   wind = hwWind_button (mx, my);
+	if (wind) {
+		cont  = wind->Pane;
+		elem  = containr_Element (&cont, mx, my, &watch, NULL, &hash);
+		frame = hwWind_setActive (wind, cont);
+	}
 #if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 	if (frame) {
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
@@ -287,39 +291,14 @@ check_mouse_position (WORD mx, WORD my)
 	void   * hash = NULL;
 	UWORD    elem = PE_NONE;
 	GRECT    clip, watch;
-	WORD     whdl = wind_find (mx, my);
-	HwWIND   wind = hwWind_byHandle (whdl);
+	HwWIND   wind = hwWind_mouse  (mx, my, &watch);
 	
-	if (wind && !wind->isIcon) {
+	if (wind) {
+		GRECT rect;
 		clip = wind->Work;
-	} else {
-		wind_get_grect (whdl, WF_WORKXYWH, &clip);
-	}
-	if (mx < clip.g_x || mx >= clip.g_x + clip.g_w ||
-	    my < clip.g_y || my >= clip.g_y + clip.g_h) {
-		watch.g_x = mx;
-		watch.g_y = my;
-		watch.g_w = watch.g_h = 1;
-	
-	} else {
-		wind_get_grect (whdl, WF_FIRSTXYWH, &watch);
-		while (watch.g_w > 0 && watch.g_h > 0 &&
-			    (mx < watch.g_x || mx >= watch.g_x + watch.g_w ||
-			     my < watch.g_y || my >= watch.g_y + watch.g_h)) {
-			wind_get_grect (whdl, WF_NEXTXYWH, &watch);
-		}
-		if (watch.g_w <= 0 || watch.g_h <= 0) {
-			watch.g_x = mx;
-			watch.g_y = my;
-			watch.g_w = watch.g_h = 1;
-			wind = NULL;
-		
-		} else if (wind && !wind->isIcon) {
-			GRECT rect;
-			cont = wind->Pane;
-			elem = containr_Element (&cont, mx, my, &rect, &clip, &hash);
-			rc_intersect (&rect, &watch);
-		}
+		cont = wind->Pane;
+		elem = containr_Element (&cont, mx, my, &rect, &clip, &hash);
+		rc_intersect (&rect, &watch);
 	}
 	set_mouse_watch (MO_LEAVE, &watch);
 	
