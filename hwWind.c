@@ -905,7 +905,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 		vs_clip_pxy (vdi_handle, (PXY*)&clip);
 		v_hide_c (vdi_handle);
 		if (all) {
-			vsf_color (vdi_handle, G_LWHITE);
+			vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
 			v_bar   (vdi_handle, (short*)&clip);
 			p[3].p_x = (p[2].p_x = area.g_x) + area.g_w -1;
 			p[3].p_y =  p[2].p_y = area.g_y  + area.g_h -1;
@@ -971,6 +971,12 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					v_pline (vdi_handle, 4, (short*)l);
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+					if (ignore_colours) {
+						vsf_interior (vdi_handle, FIS_PATTERN);
+						vsf_style    (vdi_handle, 3);
+						v_bar        (vdi_handle, (short*)(p +2));
+						vsf_interior (vdi_handle, FIS_SOLID);
+					}
 				}
 			}
 		}
