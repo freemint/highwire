@@ -356,7 +356,9 @@ table_cell (PARSER parser, BOOL is_head)
 		span = 2 - span;
 		do {
 			if (!stack->WorkCell->RightCell) {
-				stack->WorkCell = new_cell (stack->WorkCell, table->Padding);
+				TAB_CELL next = new_cell (stack->WorkCell, table->Padding);
+				next->RowSpan = stack->WorkCell->RowSpan;
+				stack->WorkCell = next;
 			} else {
 				stack->WorkCell = stack->WorkCell->RightCell;
 			}
@@ -504,7 +506,8 @@ table_finish (PARSER parser)
 		int x = table->NumCols;
 		y--;
 		do {
-			printf ("%c ", (cell->DummyFor ? tolower (cell->DummyFor->_debug) : cell->_debug));
+			printf ("%c", (cell->DummyFor ? tolower (cell->DummyFor->_debug) : cell->_debug));
+			printf ("%+i%+i ", cell->ColSpan, cell->RowSpan);
 			if ((!--x && cell->RightCell) || (x && !cell->RightCell)) {
 				printf ("BOINK %i -> %p \n", x, cell->RightCell);
 				exit(EXIT_FAILURE);
