@@ -540,6 +540,17 @@ menu_frm_ctrl (void)
 
 
 /*============================================================================*/
+void
+menu_cookies (void)
+{
+	cookies_allowed = !cookies_allowed;
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_COOKIES, cookies_allowed);
+#endif
+}
+
+
+/*============================================================================*/
 #ifdef GEM_MENU
 WORD
 menu_history (HISTORY hist[], UWORD used, WORD check)
@@ -657,6 +668,7 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_ALT_TEXT:  menu_alt_text();     break;
 		case M_LOGGING:   menu_logging();      break;
 		case M_FRM_CTRL:  menu_frm_ctrl();     break;
+		case M_COOKIES :  menu_cookies();      break;
 	}
 	if (title > 0) {
 		menu_tnormal (menutree, title, UNHIGHLIGHT);

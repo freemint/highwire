@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <time.h>
 
-#include "defs.h"
+#include "global.h"
 #include "Location.h"
 #include "mime.h"
 #include "http.h"
@@ -414,7 +414,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			strcpy (buffer + len, "\r\n");
 			len = inet_send (sock, buffer, len +2);
 		}
-		if ((long)len > 0) {
+		if ((long)len > 0 && cookies_allowed) {
 			COOKIESET cset;
 			WORD      num = cookie_Jar (loc, &cset);
 			if (num) {
@@ -544,8 +544,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 				 && !server_date    (ln_beg, n, hdr)
 				 && !last_modified  (ln_beg, n, hdr)
 				 && !expires        (ln_beg, n, hdr)
-				/* && cookies_allow */ ) {
-			   long r = set_cookie (ln_beg, n, hdr);
+				) {
+			   long r = (cookies_allowed ? set_cookie (ln_beg, n, hdr) : 0);
 			   if (r && r < n) {
 					cookie_set (loc, ln_beg + r, n - r, hdr->SrvrDate);
 			   }
