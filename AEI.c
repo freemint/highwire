@@ -786,7 +786,7 @@ rpopup_open (WORD mx, WORD my)
 	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 	wind_update (END_MCTRL);
 	
-	switch(which_obj)
+	switch (which_obj)
 	{
 		case RPOP_BACK:
 			hwWind_undo (wind, FALSE);
@@ -856,15 +856,14 @@ rpopup_open (WORD mx, WORD my)
  * baldrick April 28, 2004
  */
 void
-rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
+rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 {
 	extern OBJECT *rpoplink;
-	CONTAINR cont = NULL;
-	CONTAINR target;
+	CONTAINR          cont = NULL;
 	struct url_link * link = hash;
 	const char      * addr = link->address;
 	
-	HwWIND wind  = hwWind_byCoord (mx, my);
+	HwWIND wind  = hwWind_byContainr (current);
 	FRAME  frame = hwWind_ActiveFrame (wind);
 	short x, y, w, h, which_obj;
 	GRECT desk;
@@ -906,20 +905,18 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 	wind_update (END_MCTRL);
 	
-	switch(which_obj)
+	switch (which_obj)
 	{
 		case RLINK_OPEN: 
-			target = (link->u.target &&
-			                   stricmp (link->u.target, "_blank") != 0
-			                   ? containr_byName (current, link->u.target) : NULL);
-			if (target) {
+			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
+			        ? containr_byName (current, link->u.target) : NULL);
+			if (cont) {
 				const char * p = strchr (addr, '#');
-				FRAME  t_frame = containr_Frame (target);
+				FRAME  t_frame = containr_Frame (cont);
 				if (p && t_frame) {
 					const char * fname = t_frame->Location->File;
 					if (strncmp (fname, addr, (p - addr)) == 0 && !fname[p - addr]) {
-						addr = p;
-						cont = target;   /* content matches */
+						addr = p;   /* content matches */
 					}
 				}
 			}
@@ -929,26 +926,21 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 					hwWind_scroll (wind, current, dx, dy);
 					check_mouse_position (mx, my);
 				}
-			} else {
-				if (link->u.target) {
-					cont = target;
+				break;
+			
+			} else if (cont) {
+				LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
+				                              TRUE, NULL);
+				if (ldr) {
+					ldr->Encoding = link->encoding;
 				}
-				if (!cont) {
-					cont = new_hwWind (addr, NULL, NULL)->Pane;
-				}
-				if (cont) {
-					LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
-					                              TRUE, NULL);
-					if (ldr) {
-						ldr->Encoding = link->encoding;
-					}
-				}
-			}
-			break;
+				break;
+			
+			} /* else fall through */
 			
 		case RLINK_NEW:
-			cont = new_hwWind (addr, NULL, NULL)->Pane;
-
+			wind = new_hwWind (addr, NULL, NULL);
+			cont = (wind ? wind->Pane : NULL);
 			if (cont) {
 				LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
 				                              TRUE, NULL);
