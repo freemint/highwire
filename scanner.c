@@ -279,7 +279,7 @@ static const struct NAMEDCHAR named_char[] = {
 	/* L */ {"Lambda", 923},
 	/* M */ {"Mu",     924},
 	/* N */ {"Ntilde", 209},{"Nu",      925},
-	/* O */ {"Oacute", 211},{"Ocirc",   212},{"OElig",  338},{"Ograve", 210},
+	/* O */ {"OElig",  338},{"Oacute", 211},{"Ocirc",   212},{"Ograve", 210},
 	        {"Omega",  937},{"Omicron", 927},{"Oslash", 216},{"Otilde", 213},
 	        {"Ouml",   214},
 	/* P */ {"Phi",    934},{"Pi",      928},{"Prime", 8243},{"Psi",    936},
