@@ -40,6 +40,10 @@
 #endif
 
 
+static struct s_dombox_vtab table_vTab = { 0, };
+static void vTab_draw (DOMBOX *, long x, long y, const GRECT *, void *);
+
+
 /*============================================================================*/
 void
 delete_table (TABLE * _table)
@@ -90,13 +94,17 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	stack->NumCells  = 0;
 	stack->isSpecial = special;
 	stack->SavedCurr = *current;
-	stack->Backgnd   = current->backgnd;
 	stack->_debug = 'A';
 	
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
 	par->floating       = floating;
 	par->Box.BoxClass   = BC_TABLE;
+	if (!*(long*)&table_vTab) {
+		table_vTab      = DomBox_vTab;
+		table_vTab.draw = vTab_draw;
+	}
+	par->Box._vtab = &table_vTab;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
@@ -113,7 +121,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->Percent   = NULL;
 	table->ColWidth  = NULL;
 
-	table->t_Backgnd = color;
+	table->t_Backgnd = (color != current->backgnd ? color : -1);
 	table->t_BorderW = border;
 	table->t_BorderC = -1; /* 3D outset */
 	table->Spacing   = spacing;
@@ -187,7 +195,7 @@ table_row (TEXTBUFF current, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 			row->NextRow = NULL;
 			table->NumRows++;
 		}
-		row->Color     = color;
+		row->Color     = (color != table->t_Backgnd ? color : -1);
 		row->MinHeight = height;
 		row->Height    = table->Padding *2;
 	
@@ -314,12 +322,18 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	cell->c_Height           = (height <= 1024 ? height : 1024);
 	cell->c_Width            = (width  <= 1024 ? width  : 0);
 	
-	if ((cell->c_Backgnd = color) < 0) {
-		if      (row->Color       >= 0) cell->c_Backgnd = row->Color;
-		else if (table->t_Backgnd >= 0) cell->c_Backgnd = table->t_Backgnd;
-		else                            cell->c_Backgnd = stack->Backgnd;
+	if (color < 0) {
+		color = row->Color;
+	} else if (color == table->t_Backgnd) {
+		color = -1;
 	}
-	parser->Current.backgnd = cell->c_Backgnd;
+	if (color >= 0) {
+		parser->Current.backgnd = cell->c_Backgnd = color;
+	} else if (table->t_Backgnd >= 0) {
+		parser->Current.backgnd = table->t_Backgnd;
+	} else {
+		parser->Current.backgnd = stack->SavedCurr.backgnd;
+	}
 	
 	if (rowspan > 1) {
 		cell->RowSpan = rowspan;
@@ -999,16 +1013,15 @@ table_calc (TABLE table, long max_width)
 
 
 /*============================================================================*/
-long
-table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
+static void
+vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
-	long clip_bottom = clip->g_y + clip->g_h -1;
-	long row_y       = y + table->t_BorderW + table->Spacing;
-	TAB_ROW row = table->Rows;
+	TABLE table       = ((PARAGRPH)This)->Table;
+	long  clip_bottom = clip->g_y + clip->g_h -1;
+	long  row_y       = y + table->t_BorderW + table->Spacing;
+	TAB_ROW row       = table->Rows;
 
 	/*puts("table_draw");*/
-
-	dombox_draw (&table->Paragraph->Box, x, y, clip, highlight);
 
 	while (row) {
 		TAB_CELL cell = row->Cells;
@@ -1016,8 +1029,8 @@ table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
 
 		while (cell) {
 			if (cell->Content.Item && (cell->c_Height > clip_top)) {
-				draw_contents (&cell->Content, x + cell->c_OffsetX,
-				               y + cell->c_OffsetY, clip, highlight);
+				dombox_draw (&cell->Content.Box, x + cell->c_OffsetX,
+				             y + cell->c_OffsetY, clip, highlight);
 			}
 			cell = cell->RightCell;
 		}
@@ -1027,8 +1040,6 @@ table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
 
 		row = row->NextRow;
 	}
-
-	return (table->t_Height);
 }
 
 
