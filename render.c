@@ -338,6 +338,43 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 {
 	char out[100];
 	
+	if (get_value (parser, CSS_BORDER, out, sizeof(out))) {
+		char * p = out;
+		while (*p) {
+			long color = -1;
+			if (isdigit (*p)) {
+				char * tail = p;
+				short width = numerical (p, &tail, parser->Current.font->Size,
+			                            parser->Current.word->font->SpaceWidth);
+				if (width >= 0 && tail > p) {
+					box->BorderWidth = width;
+					p = tail;
+				} else {
+					break;
+				}
+			} else if (*p == '#') {
+				short len = 0;
+				while (isxdigit (p[++len]));
+				if ((color = scan_color (p, len)) >= 0) {
+					p += len;
+				} else {
+					break;
+				}
+			} else if (isalpha (*p)) {
+				short len = 0;
+				while (isalpha (p[++len]));
+				color = scan_color (p, len);
+				p += len;
+			}
+			if (color >= 0 && !ignore_colours) {
+				box->BorderColor = remap_color (color);
+			}
+			if (!isspace (*p)) {
+				break;
+			}
+			while (isspace (*(++p)));
+		}
+	}
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
 		if (color >= 0 && color != parser->Current.backgnd) {
@@ -347,7 +384,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->BorderColor = color;
 		}
 	}
-	box->BorderWidth = get_value_unum (parser, KEY_BORDER, 0);
+	box->BorderWidth = get_value_unum (parser, KEY_BORDER, box->BorderWidth);
 	
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
