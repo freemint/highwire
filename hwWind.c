@@ -400,6 +400,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			v_bar (vdi_handle, (short*)p);
 			
 			if (This->isBusy) {
+				vs_clip_pxy (vdi_handle, p);
 				draw_busybar (This, &area, &rect);
 				vsf_color (vdi_handle, info_bgnd & 0x000F);
 			}
@@ -470,14 +471,10 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	} else {
 		short top;
 		wind_get (0, WF_TOP, &top, &dmy, &dmy, &dmy);
-		if (top != This->Handle)
+		if (top != This->Handle) {
 			return;
+		}
 	}
-	wind_get_grect (This->Handle, WF_FIRSTXYWH, (GRECT*)clip);
-	if (clip[1].p_y <= 0 || clip[1].p_y <= 0) {
-		return; /* probably shaded */
-	}
-	
 	p[0].p_y = This->Work.g_y + This->Work.g_h                       +1;
 	p[1].p_y = This->Curr.g_y + This->Curr.g_h            - widget_b -1;
 	p[0].p_x = This->Curr.g_x                  + widget_w - widget_b +1;
