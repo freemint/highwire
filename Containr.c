@@ -31,6 +31,7 @@ typedef struct {
 	WORD        BorderSize;
 	WORD        BorderColor;
 	SCROLL_CODE Scroll;
+	WORD        ScrollV, ScrollH;
 	union {
 		WORD     ChildNum;
 		ENCODING Encoding;
@@ -346,6 +347,8 @@ create_r (CONTAINR cont, HISTITEM * item, BOOL h_N_v)
 	item->BorderSize  = cont->BorderSize;
 	item->BorderColor = cont->BorderColor;
 	item->Scroll      = cont->Scroll;
+	item->ScrollV     = 0;
+	item->ScrollH     = 0;
 	item->Location    = NULL;
 	item->u.ChildNum  = 0;
 	
@@ -461,7 +464,76 @@ history_create (CONTAINR cont, const char * name, HISTORY prev)
 
 
 /*============================================================================*/
-void history_destroy (HISTORY * _hst)
+void
+history_update (CONTAINR cont, HISTORY hist)
+{
+	HISTITEM * item = hist->List;
+	UWORD      num  = hist->Count;
+	BOOL       b    = TRUE;
+	if (!cont->Mode) {
+		puts ("history_update(): empty containr.");
+		return;
+	}
+	while (cont && num) {
+		if (b) {
+			if (cont->Mode == CNT_FRAME) {
+				FRAME frame = cont->u.Frame;
+				if (!item->Location) {
+					printf ("history_update(): frame '%s' doesn't match #%i.\n",
+					        (frame && frame->Location ?frame->Location->FullName:""),
+					        hist->Count - num);
+					return;
+				} else if (frame && frame->Location != item->Location) {
+					printf ("history_update(): frame '%s' doesn't match '%s' #%i.\n",
+					        frame->Location->FullName, item->Location->FullName,
+					        hist->Count - num);
+					return;
+				}
+				if (cont->u.Frame) {
+					if (frame->v_bar.on && frame->v_bar.scroll > 0) {
+						long height = frame->Page.Height - frame->clip.g_h;
+						item->ScrollV = (frame->v_bar.scroll * 1024 + height /2)
+						              / height;
+					} else {
+						item->ScrollV = 0;
+					}
+					if (frame->h_bar.on && frame->h_bar.scroll > 0) {
+						long width = frame->Page.Width - frame->clip.g_w;
+						item->ScrollH = (frame->h_bar.scroll * 1024 + width /2)
+						              / width;
+					} else {
+						item->ScrollH = 0;
+					}
+				}
+				item++;
+				num--;
+			} else if (cont->Mode && cont->u.Child) {
+				if (item->Location) {
+					printf ("history_update(): node doesn't match '%s' #%i.\n",
+					        item->Location->FullName, hist->Count - num);
+					return;
+				}
+				cont = cont->u.Child;
+				item++;
+				num--;
+				continue;
+			}
+		}
+		if (cont->Sibling) {
+			cont = cont->Sibling;
+			b    = TRUE;
+			continue;
+		}
+		cont = cont->Parent;
+		b    = FALSE;
+	}
+	if (num) printf ("history_update(): too few containers #%i.\n", num);
+}
+
+
+/*============================================================================*/
+void
+history_destroy (HISTORY * _hst)
 {
 	HISTORY hist = *_hst;
 	if (hist) {
@@ -499,6 +571,8 @@ process_r (CONTAINR cont, HISTITEM * item, HISTENTR ** entr, UWORD * count)
 		(*entr)->Target   = cont;
 		(*entr)->Location = item->Location;
 		(*entr)->Encoding = item->u.Encoding;
+		(*entr)->ScrollV  = item->ScrollV;
+		(*entr)->ScrollH  = item->ScrollH;
 		(*entr)++;
 		(*count)--;
 	
@@ -508,6 +582,8 @@ process_r (CONTAINR cont, HISTITEM * item, HISTENTR ** entr, UWORD * count)
 		                                   : +item->u.ChildNum);
 		BOOL h_N_v = (item->u.ChildNum == num);
 		cont->Mode = (h_N_v ? CNT_CLD_H : CNT_CLD_V);
+		(*entr)->ScrollV = 0;
+		(*entr)->ScrollH = 0;
 		do {
 			*ptr = new_containr (cont);
 			if (next->Name) {

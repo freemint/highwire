@@ -795,10 +795,13 @@ hwWind_history (HwWIND This, UWORD menu)
 {
 	if (menu < This->HistUsed) {
 		HISTENTR entr[100];
-		UWORD i;
-		UWORD num = containr_process (This->Pane, This->History[menu],
-		                              This->History[This->HistMenu],
-		                              entr, numberof(entr));
+		UWORD    num, i;
+		
+		history_update (This->Pane, This->History[This->HistMenu]);
+		
+		num = containr_process (This->Pane, This->History[menu],
+		                        This->History[This->HistMenu],
+		                        entr, numberof(entr));
 		
 		This->History[menu]->Text[0] = '*';
 		if (This->HistMenu != menu) {
@@ -811,7 +814,9 @@ hwWind_history (HwWIND This, UWORD menu)
 		}
 		for (i = 0; i < num; i++) {
 			LOADER ldr = new_loader_job (NULL, entr[i].Location, entr[i].Target);
-			loader_setParams (ldr, entr->Encoding, -1, -1);
+			loader_setParams (ldr, entr[i].Encoding, -1, -1);
+			ldr->ScrollV = entr[i].ScrollV;
+			ldr->ScrollH = entr[i].ScrollH;
 		}
 	}
 }
@@ -1205,8 +1210,13 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		case HW_PageStarted:
 			if (!wind->loading++ && wind->HistUsed) {
 				char * flag = wind->History[wind->HistMenu]->Text;
-				if (*flag == ' ' && cont->Parent) {
-					*flag = '.';
+				if (*flag == ' ') {
+					if (cont->Parent) {
+						*flag = '.';
+					}
+					if (((CONTAINR)wind->Pane)->Mode) {
+						history_update (wind->Pane, wind->History[wind->HistMenu]);
+					}
 				}
 			}
 			if (!wind->isBusy++) {

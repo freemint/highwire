@@ -152,6 +152,10 @@ HISTORY history_create  (CONTAINR, const char * name, HISTORY prev);
 					 * title string will be created from the name argument, else it
 					 * will be taken from prev.
 					*/
+void    history_update  (CONTAINR, HISTORY);
+					/* Stores a snapshot of the content states in the history item
+					 * (scroll bar positions).
+					*/
 void    history_destroy (HISTORY*);
 					/* Deletes a history item and frees all shared resources.
 					*/
@@ -160,6 +164,7 @@ typedef struct {
 	CONTAINR Target;
 	LOCATION Location;
 	ENCODING Encoding;
+	WORD     ScrollV, ScrollH;
 } HISTENTR; 
 
 UWORD   containr_process (CONTAINR, HISTORY hist, HISTORY prev,

@@ -142,6 +142,8 @@ new_loader (LOCATION loc)
 	loader->MimeType = MIME_Unknown;
 	loader->MarginW  = -1;
 	loader->MarginH  = -1;
+	loader->ScrollV  = 0;
+	loader->ScrollH  = 0;
 	/* */
 	loader->Cached   = NULL;
 	loader->Date     = 0;

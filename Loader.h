@@ -14,6 +14,7 @@ typedef struct s_loader {
 	MIMETYPE MimeType;
 	char   * ExtAppl;
 	short    MarginW, MarginH;
+	short    ScrollV, ScrollH;
 	/* */
 	LOCATION Cached;
 	long     Date;
