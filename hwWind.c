@@ -215,10 +215,10 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	                                 + This->TbarElem[TBAR_EDIT -1].Width *3 /2;
 	set_size (This, &curr_area);
 	edit = TbarEdit (This);
-	strcpy (edit->Text, "html/highwire.htm");
-	edit->Length = strlen (edit->Text);
-	edit->Shift  = 0;
-	edit->Cursor = 0;
+	edit->Text[0] = '\0';
+	edit->Length  = 0;
+	edit->Shift   = 0;
+	edit->Cursor  = 0;
 
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
