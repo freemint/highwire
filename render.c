@@ -1724,8 +1724,10 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	
 		if (floating != ALN_NO_FLT) {
-			add_paragraph (current, 0)->Box.HtmlCode = TAG_IMG;
+			add_paragraph (current, 0);
 			current->paragraph->paragraph_code = PAR_IMG;
+			current->paragraph->Box.BoxClass   = BC_SINGLE;
+			current->paragraph->Box.HtmlCode   = TAG_IMG;
 			current->paragraph->Box.Floating   = floating;
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
@@ -3049,7 +3051,7 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 {
 	PARAGRPH par = add_paragraph(current, 0);
 	DOMBOX * box = dombox_ctor (malloc (sizeof (DOMBOX)),
-	                            current->parentbox, BC_STRUCT);
+	                            current->parentbox, BC_SINGLE);
 	box->HtmlCode = TAG_HR;
 	
 	if (shade) {
