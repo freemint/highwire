@@ -443,6 +443,9 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	if (blocker->L.bottom) blocker->L.bottom -= This->Rect.Y;
 	if (blocker->R.bottom) blocker->R.bottom -= This->Rect.Y;
 	
+	if (This->BoxClass >= BC_GROUP && This->MaxWidth && This->MaxWidth < width) {
+		width = This->MaxWidth;
+	}
 	This->Rect.W = width;
 	width -= dombox_LftDist (This) + dombox_RgtDist (This);
 	
@@ -523,7 +526,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		This->Rect.H = height;
 	}
 	This->Rect.H += dombox_BotDist (This);
-	
 	if (This->BoxClass == BC_GROUP) {
 		if (This->Rect.H <= blocker->L.bottom) {
 			This->Rect.H = blocker->L.bottom;
