@@ -686,6 +686,37 @@ input_isEdit (INPUT input)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+coord_diff (INPUT check, INPUT input,  GRECT * rect)
+{
+	WORDITEM c_w = check->Word, i_w = input->Word;
+	rect->g_x = c_w->h_offset
+	           - i_w->h_offset;
+	rect->g_y = (c_w->line->OffsetY - c_w->word_height)
+	           - (i_w->line->OffsetY - i_w->word_height);
+	rect->g_w = c_w->word_width;
+	rect->g_h = c_w->word_height + c_w->word_tail_drop;
+	if (check->Paragraph != input->Paragraph) {
+		DOMBOX * box = &check->Paragraph->Box;
+		long     x   = box->Rect.X;
+		long     y   = box->Rect.Y;
+		while ((box = box->Parent) != NULL) {
+			x += box->Rect.X;
+			y += box->Rect.Y;
+		}
+		box = &input->Paragraph->Box;
+		x  -= box->Rect.X;
+		y  -= box->Rect.Y;
+		while ((box = box->Parent) != NULL) {
+			x -= box->Rect.X;
+			y -= box->Rect.Y;
+		}
+		rect->g_x += x;
+		rect->g_y += y;
+	}
+}
+
 /*============================================================================*/
 WORD
 input_handle (INPUT input, GRECT * radio, char *** popup)
@@ -701,31 +732,7 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 				if (group->checked) {
 					INPUT check = group->u.Group;
 					do if (check->checked) {
-						WORDITEM c_w = check->Word, i_w = input->Word;
-						radio->g_x = c_w->h_offset
-						           - i_w->h_offset;
-						radio->g_y = (c_w->line->OffsetY - c_w->word_height)
-						           - (i_w->line->OffsetY - i_w->word_height);
-						radio->g_w = c_w->word_width;
-						radio->g_h = c_w->word_height + c_w->word_tail_drop;
-						if (check->Paragraph != input->Paragraph) {
-							DOMBOX * box = &check->Paragraph->Box;
-							long     x   = box->Rect.X;
-							long     y   = box->Rect.Y;
-							while ((box = box->Parent) != NULL) {
-								x += box->Rect.X;
-								y += box->Rect.Y;
-							}
-							box = &input->Paragraph->Box;
-							x  -= box->Rect.X;
-							y  -= box->Rect.Y;
-							while ((box = box->Parent) != NULL) {
-								x -= box->Rect.X;
-								y -= box->Rect.Y;
-							}
-							radio->g_x += x;
-							radio->g_y += y;
-						}
+						coord_diff (check, input, radio);
 						check->checked = FALSE;
 						rtn = 2;
 						break;
@@ -738,13 +745,19 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 			}
 			break;
 		
-		case IT_TEXT:
-			input->Form->TextActive = input;
-			input->Form->TextCursrX = 0;
-			input->Form->TextCursrY = 0;
-			input->Form->TextShiftX = 0;
-			rtn = 1;
-			break;
+		case IT_TEXT: {
+			FORM form = input->Form;
+			if (form->TextActive && form->TextActive != input) {
+				coord_diff (form->TextActive, input, radio);
+				rtn = 2;
+			} else {
+				rtn = 1;
+			}
+			form->TextActive = input;
+			form->TextCursrX = 0;
+			form->TextCursrY = 0;
+			form->TextShiftX = 0;
+		}	break;
 		
 		case IT_CHECK:
 			input->checked = !input->checked;
