@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "hw-types.h"
 #include "mime.h"
@@ -52,7 +53,7 @@ static const struct mime_2_ext ext_list[] = {
 
 /*============================================================================*/
 MIMETYPE
-mime_byExtension (const char * file, const char ** stored)
+mime_byExtension (const char * file, const char ** stored, char * ptr)
 {
 	const char * end =                     strchr (file, '?');
 	const char * ext = (end ? end : (end = strchr (file, '\0')));
@@ -68,8 +69,21 @@ mime_byExtension (const char * file, const char ** stored)
 			if (stored) {
 				*stored = mime_list[i].Appl;
 			}
+			if (ptr) {
+				strcpy (ptr, mime_toExtension (type));
+			}
 			break;
 		} while (++i < (short)numberof(mime_list));
+		
+		if (!type && ptr) {
+			ptr[0] = toupper (ext[0]);
+			ptr[1] = toupper (ext[1]);
+			ptr[2] = toupper (ext[2]);
+			ptr[len < 3 ? len : 3] = '\0';
+		}
+	
+	} else if (ptr) {
+		*ptr = '\0';
 	}
 	
 	return type;

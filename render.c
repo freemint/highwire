@@ -1544,7 +1544,7 @@ render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 		if (get_value (parser, KEY_SRC, src, sizeof(src))) {
 			MIMETYPE mime = (get_value (parser, KEY_TYPE, type, sizeof(type))
 		                 ? mime_byString   (type, NULL)
-		                 : mime_byExtension (src, NULL));
+		                 : mime_byExtension (src, NULL, NULL));
 			if (MIME_Major(mime) == MIME_AUDIO) {
 				start_objc_load (parser->Target, src, parser->Frame->BaseHref,
 				                 (int(*)(void*,long))NULL, NULL);

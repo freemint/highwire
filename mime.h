@@ -35,7 +35,7 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 #define MIME_Minor(t)   (t & 0x0FFF)
 
 
-MIMETYPE     mime_byExtension (const char *, const char ** stored);
+MIMETYPE     mime_byExtension (const char *, const char ** stored, char * ext);
 const char * mime_toExtension (MIMETYPE);
 
 MIMETYPE mime_byString (const char *, const char ** tail);
