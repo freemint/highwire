@@ -10,9 +10,9 @@
 
 
 static WORDITEM paragraph_filter (PARAGRPH);
-static void     paragraph_calc   (PARAGRPH, long, struct blocking_area *);
 
 
+static void vTab_format (DOMBOX *, long width, BLOCKER);
 static struct s_dombox_vtab paragraph_vTab = { 0, };
 
 /*----------------------------------------------------------------------------*/
@@ -41,39 +41,33 @@ static LONG
 vTab_MinWidth (DOMBOX * This)
 {
 	PARAGRPH paragraph = (PARAGRPH)This;
-	
-	if (paragraph->paragraph_code == PAR_HR) {
-		This->MinWidth = 2;
-	
-	} else {
-		WORDITEM  word = paragraph_filter (paragraph);
-		BOOL      lbrk = TRUE;
-		long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
-		long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
-		This->MinWidth = 0;
-		while (word) {
-			if (lbrk || !word->wrap) {
-				if (word->image && word->image->set_w < 0) {
-					wrd_width += 1 + word->image->hspace *2;
-				} else {
-					wrd_width += word->word_width - (lbrk ? word->space_width :0);
-				}
-				lbrk = word->line_brk;
-				word = word->next_word;
-				if (!lbrk) {
-					continue;
-				}
-			} /* else wrap || ln_brk */
-			
-			if (This->MinWidth < wrd_width) {
-				 This->MinWidth = wrd_width;
+	WORDITEM word      = paragraph_filter (paragraph);
+	BOOL      lbrk = TRUE;
+	long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
+	long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
+	This->MinWidth = 0;
+	while (word) {
+		if (lbrk || !word->wrap) {
+			if (word->image && word->image->set_w < 0) {
+				wrd_width += 1 + word->image->hspace *2;
+			} else {
+				wrd_width += word->word_width - (lbrk ? word->space_width :0);
 			}
-			wrd_width = hanging;
-			lbrk = TRUE;
-		}
+			lbrk = word->line_brk;
+			word = word->next_word;
+			if (!lbrk) {
+				continue;
+			}
+		} /* else wrap || ln_brk */
+		
 		if (This->MinWidth < wrd_width) {
 			 This->MinWidth = wrd_width;
 		}
+		wrd_width = hanging;
+		lbrk = TRUE;
+	}
+	if (This->MinWidth < wrd_width) {
+		 This->MinWidth = wrd_width;
 	}
 	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This)
 	                + paragraph->Indent + paragraph->Rindent;
@@ -110,58 +104,7 @@ static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
 	PARAGRPH paragraph = (PARAGRPH)This;
-	if (paragraph->paragraph_code == PAR_HR) {
-		draw_hr (paragraph, x, y);
-	} else {
-		draw_paragraph (paragraph, x ,y, clip, highlight);
-	}
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-vTab_format (DOMBOX * This, long width, BLOCKER blocker)
-{
-	PARAGRPH par = (PARAGRPH)This;
-	
-	This->Rect.X += par->Indent;
-	width        -= par->Indent + par->Rindent;
-	
-	if (par->paragraph_code == PAR_HR) {
-		struct word_item * word = par->item;
-		long blk_width = width - (blocker->L.width + blocker->R.width);
-		if (word->space_width < 0) {
-			word->word_width = (blk_width * -word->space_width + 512) / 1024;
-		} else {
-			word->word_width = word->space_width;
-		}
-		if (word->word_width >= blk_width) {
-			word->word_width = blk_width;
-			word->h_offset   = 0;
-		} else {
-			if (word->word_width < 2) {
-				word->word_width = 2;
-			}
-			if (par->Box.TextAlign <= ALN_JUSTIFY) {
-				word->h_offset   = 0;
-			} else {
-				word->h_offset   = blk_width - word->word_width;
-				if (par->Box.TextAlign == ALN_CENTER) {
-					word->h_offset /= 2;
-				}
-			}
-		}
-		This->Rect.X += blocker->L.width;
-		This->Rect.W = width;
-		This->Rect.H = word->word_height *2
-		             + (word->word_tail_drop > 0
-		                ? +word->word_tail_drop : -word->word_tail_drop);
-	
-	} else {   /* normal text or image */
-		if (par->paragraph_code == PAR_IMG) {
-			par->Box.Rect.X += blocker->L.width;
-		}
-		paragraph_calc (par, width, blocker);
-	}
+	draw_paragraph (paragraph, x ,y, clip, highlight);
 }
 
 
@@ -315,19 +258,21 @@ void paragrph_finish (TEXTBUFF current)
 }
 
 
-/*------------------------------------------------------------------------------
- */
+/*----------------------------------------------------------------------------*/
 static void
-paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
+vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 {
+	PARAGRPH   par       = (PARAGRPH)This;
 	WORDLINE * p_line    = &par->Line, line;
 	WORDITEM   word      = par->item,  next;
-	long       int_width = width;
+	long       int_width = width -= par->Indent + par->Rindent;
 	short      blocked   = 0x00;
 	long       l_height  = 0;
 	long       r_height  = 0;
 	H_ALIGN    align;
 	WORD hanging, hang_nxt;
+	
+	This->Rect.X += par->Indent;
 	
 	if (par->Hanging < 0) {
 		hanging  = 0;
@@ -338,6 +283,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 	}
 	
 	if (par->paragraph_code == PAR_IMG) {
+		par->Box.Rect.X += blocker->L.width;
 		align = ALN_LEFT;
 	} else {
 		align = par->Box.TextAlign;
