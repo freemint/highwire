@@ -23,6 +23,8 @@
 WORD         cfg_UptoDate     = -1;
 const char * cfg_StartPage    = "html\\highwire.htm";
 BOOL         cfg_AllowCookies = FALSE;
+BOOL         cfg_ViewImages   = TRUE;
+BOOL         cfg_UseCSS       = TRUE;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " (" __DATE__ ")";
@@ -323,6 +325,13 @@ cfg_func (char * param, long arg)
 	(*(gen_func)arg)(n > 0);
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+cfg_BOOL (char * param, long arg)
+{
+	*((BOOL*)arg) = (atol (param) > 0);
+}
+
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -477,7 +486,9 @@ read_config(void)
 				{ "START_PAGE",           cfg_startpage, 0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
-				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 }
+				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 },
+				{ "USE_CSS",              cfg_BOOL,      (long)&cfg_UseCSS     },
+				{ "VIEW_IMAGES",          cfg_BOOL,      (long)&cfg_ViewImages }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;
