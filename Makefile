@@ -25,7 +25,7 @@ WARN = \
 	-Wmissing-prototypes \
 	-Wshadow \
 	-Wpointer-arith \
-	-Wcast-qual
+	-Wcast-qual -Werror
 
 INCLUDE = -I/usr/GEM/include
 
@@ -59,6 +59,7 @@ CFILES = \
 	http.c \
 	cache.c \
 	Location.c \
+	DomBox.c \
 	O_Struct.c \
 	fontbase.c \
 	W_Struct.c \
