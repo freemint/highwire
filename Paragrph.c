@@ -45,7 +45,7 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
 	PARAGRPH paragraph = (PARAGRPH)This;
 	if (paragraph->paragraph_code == PAR_HR) {
-			draw_hr (paragraph, x, y);
+		draw_hr (paragraph, x, y);
 	} else {
 		draw_paragraph (paragraph, x ,y, clip, highlight);
 	}
@@ -87,7 +87,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->alignment      = ALN_LEFT;
 	paragraph->floating       = ALN_NO_FLT;
-	paragraph->eop_space      = 0;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -156,7 +155,6 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Indent  = indent;
 		paragraph->Rindent = copy_from->Rindent;
 		paragraph->alignment = copy_from->alignment;
-		paragraph->eop_space = 0;
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
 			paragraph_vTab        = DomBox_vTab;
@@ -170,11 +168,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 	paragraph->Hanging        = 0;
 	
 	if (current->prev_par && vspace) {
-		vspace *= current->word->word_height;
-		vspace /= 3;
-		if (current->prev_par->eop_space < vspace) {
-			current->prev_par->eop_space = vspace;
-		}
+		paragraph->Box.Margin.Top = (vspace * current->word->word_height) /3;
 	}
 	
 	return paragraph;
@@ -206,7 +200,7 @@ void paragrph_finish (TEXTBUFF current)
 			}
 		} else if (current->prev_par) {
 			current->prev_par->next_paragraph = NULL;
-			current->prev_par->eop_space      = 0;
+/*			current->prev_par->eop_space      = 0;*/
 			destroy_paragraph_structure (current->paragraph);
 		}
 	}
@@ -253,7 +247,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			blocked   |= (BRK_RIGHT & ~BRK_LN);
 		}
 	}
-	par->Box.Rect.H = 0;
+	par->Box.Rect.H = dombox_TopDist (&par->Box);
 	do {
 		short count = 1;
 		short img_h = 0;
@@ -432,6 +426,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 	} else {
 		par->Box.Rect.W = width;
 	}
+	par->Box.Rect.H += dombox_BotDist (&par->Box);
 }
 
 
@@ -450,7 +445,11 @@ paragrph_word (PARAGRPH par, long x, long y, long area[4])
 	WORDLINE line = par->Line;
 	long     bot  = 0;
 	
-	while (line) {
+	if (line && line->OffsetY - line->Ascend > y) {
+		area[3] = line->OffsetY - line->Ascend;
+		return NULL;
+	
+	} else while (line) {
 		bot = line->OffsetY + line->Descend;
 		if (bot <= y) {
 			line = line->NextLine;
@@ -587,7 +586,7 @@ paragraph_extend (WORDITEM word)
 				short d_x = next_par->Box.Rect.X - par->Box.Rect.X;
 				lft     += d_x;
 				rgt     += d_x;
-				ext.g_h += par->eop_space;
+				ext.g_h += par->Box.Margin.Bot + next_par->Box.Margin.Top;
 				line = next_par->Line;
 			}
 		}
@@ -821,7 +820,7 @@ content_calc (CONTENT * content, long set_width)
 			paragraph->Box.Rect.H = word->word_height *2
 			                  + (word->word_tail_drop > 0
 			                     ? +word->word_tail_drop : -word->word_tail_drop);
-			paragraph->eop_space = 0;
+/*			paragraph->eop_space = 0;*/
 			
 		} else if (paragraph->paragraph_code == PAR_TABLE) {
 			paragraph->Box.Rect.X += blocker.L.width;
@@ -858,7 +857,7 @@ content_calc (CONTENT * content, long set_width)
 					if (paragraph->alignment == ALN_CENTER) indent /= 2;
 					paragraph->Box.Rect.X += indent;
 				}
-				height += paragraph->Box.Rect.H + paragraph->eop_space;
+				height += paragraph->Box.Rect.H;
 				if (blocker.L.bottom && blocker.L.bottom < height) {
 					blocker.L.bottom = blocker.L.width = 0;
 				}
@@ -870,14 +869,14 @@ content_calc (CONTENT * content, long set_width)
 		paragraph = paragraph->next_paragraph;
 	}
 
+	height += dombox_BotDist (&content->Box);
+	
 	if (height < blocker.L.bottom) {
 		 height = blocker.L.bottom;
 	}
 	if (height < blocker.R.bottom) {
 		 height = blocker.R.bottom;
 	}
-	height += dombox_BotDist (&content->Box);
-	
 	return (content->Box.Rect.H = height);
 }
 

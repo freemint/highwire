@@ -521,29 +521,16 @@ struct paragraph_item {
 	WORD     Indent;  /* horizontal offset to the left side */
 	WORD     Rindent; /* indent of the right side */
 	WORD     Hanging; /* <0: left, >0: right hanging */
-/*	short    Backgnd; / * colour or -1 */
-/*	OFFSET   Offset;*/
-/*	long     Width;*/
-/*	long     Height;*/
 	PARAGRAPH_CODE paragraph_code;
 	H_ALIGN alignment;
 	H_ALIGN floating;
-	WORD eop_space;
-/*	long min_width;*/
-/*	long max_width;*/
 	PARAGRPH next_paragraph;
 };
 
 typedef struct {
 	DOMBOX   Box;
 	PARAGRPH Item;
-/*	long     Minimum; / * smallest width where the content fits in    */
-/*	long     Width;   / * set Value, must not be smaller than Minimum */
-/*	long     Height;  / * calculated value resulting from given Width */
-/*	short    Backgnd; / * -1 or colour value                          */
 	H_ALIGN  Alignment;
-/*	short    MarginTop, MarginBot; / * top and bottom margins */
-/*	short    MarginLft, MarginRgt; / * left and right margins */
 } CONTENT;
 
 struct frame_item {
