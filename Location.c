@@ -253,9 +253,21 @@ location_share  (LOCATION loc)
 size_t
 location_FullName (LOCATION loc, char * buffer, size_t max_len)
 {
-	DIR_ENT      dir = loc->Dir;
 	char       * dst = buffer;
+	DIR_ENT      dir;
 	const char * src;
+	
+	if (!loc) {
+		const char inv[] = "<nil>";
+		size_t     len   = sizeof(inv);
+		if (len > max_len) {
+			len = max_len;
+		}
+		memcpy (dst, inv, len);
+		return len;
+	}
+	
+	dir = loc->Dir;
 	
 	switch (loc->Proto) {
 		case PROT_ABOUT:  src = "about:"; break;
@@ -270,7 +282,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		if (len > max_len) {
 			len = max_len;
 		}
-		strncpy (dst, src, len);
+		memcpy (dst, src, len);
 		dst     += len;
 		max_len -= len;
 	}
@@ -281,7 +293,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		if (len > max_len) {
 			len = max_len;
 		}
-		strncpy (dst, host->Name, len);
+		memcpy (dst, host->Name, len);
 		dst     += len;
 		max_len -= len;
 	}
@@ -294,7 +306,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 			len--;
 		}
 		if (len) {
-			strncpy (dst, dir->Name, len);
+			memcpy (dst, dir->Name, len);
 			dst     += len;
 			max_len -= len;
 		}
@@ -305,7 +317,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		if (len > max_len) {
 			len = max_len;
 		}
-		strncpy (dst, loc->File, len);
+		memcpy (dst, loc->File, len);
 		dst     += len;
 		max_len -= len;
 	}
@@ -341,12 +353,12 @@ location_Host  (LOCATION loc)
 BOOL
 location_equal (LOCATION a, LOCATION b)
 {
-	return (a == b
-	        || (*(long*)&a->Proto == *(long*)&b->Proto
-	            && a->Host == b->Host
-	            && a->Dir == b->Dir
-	            && ((!a->File[0] && !b->File[0])
-	                || strcmp (a->File, b->File) == 00)));
+	return (a == b || (a && b
+	                   && *(long*)&a->Proto == *(long*)&b->Proto
+	                   && a->Host == b->Host
+	                   && a->Dir == b->Dir
+	                   && ((!a->File[0] && !b->File[0])
+	                       || strcmp (a->File, b->File) == 00)));
 }
 
 
