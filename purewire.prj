@@ -17,7 +17,8 @@ HIGHWIRE.PRG
 PCSTART.O
 ;
 ;modules\network.src\iconnect.prj
-modules\network.src\purec.prj
+;modules\network.src\sting.prj
+;modules\network.src\purec.prj
 modules\example.src\sample.prj
 ;
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)

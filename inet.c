@@ -10,7 +10,7 @@
 
 # elif defined(__PUREC__)
 #  ifndef USE_ICNN
-#   define USE_STIK
+#   define USE_STIK /* also if USE_STNG is already defined, (nearly) same API */
 #  endif
 # endif
 #endif /* USE_INET */
@@ -127,12 +127,16 @@ static BOOL init_iconnect (void)
 # include <time.h>
 # undef min
 # undef max
-# include <transprt.h>
+# ifdef USE_STNG
+#  include <sting/transprt.h>
+# else /*STiK2*/
+#  include <transprt.h>
+# endif
 
 static TPL * tpl = NULL;
 
 /*----------------------------------------------------------------------------*/
-static BOOL init_stick (void)
+static BOOL init_stik (void)
 {
 	if (!tpl) {
 		struct {
@@ -183,7 +187,7 @@ inet_host_addr (const char * name, long * addr)
 	}
 
 #elif defined(USE_STIK)
-	if (init_stick()) {
+	if (init_stik()) {
 		if (resolve ((char*)name, NULL, (uint32*)addr, 1) > 0) {
 			ret = E_OK;
 		}
@@ -264,8 +268,8 @@ inet_connect (long addr, long port, long tout_sec)
 	} while (1);
 
 #elif defined(USE_STIK)
-	if (!init_stick()) {
-		puts ("No STiK");
+	if (!init_stik()) {
+		puts ("No STiK/Sting");
 	} else {
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
@@ -303,7 +307,7 @@ inet_send (long fh, const char * buf, size_t len)
 
 #elif defined(USE_STIK)
 	if (!tpl) {
-		puts ("No STiK");
+		puts ("No STiK/Sting");
 	} else if ((ret = TCP_send ((int)fh, (char*)buf, (int)len)) == 0) {
 		ret = len;
 	}
@@ -360,7 +364,7 @@ inet_recv (long fh, char * buf, size_t len)
 
 #elif defined(USE_STIK)
 	if (!tpl) {
-		puts ("No STiK");
+		puts ("No STiK/Sting");
 		ret = -1;
 	} else while (len) {
 		short n = CNbyte_count ((int)fh);
@@ -405,9 +409,13 @@ inet_close (long fh)
 
 	#elif defined(USE_STIK)
 		if (!tpl) {
-			puts ("No STiK");
+			puts ("No STiK/Sting");
 		} else {
+		#ifdef USE_STNG
+			TCP_close ((int)fh, 0, NULL);
+		#else /*STiK2*/
 			TCP_close ((int)fh, 0);
+		#endif
 		}
 	
 	#endif
@@ -424,6 +432,9 @@ inet_info (void)
 
 #elif defined(USE_ICNN)
 	return "Iconnect";
+
+#elif defined(USE_STNG)
+	return "Sting";
 
 #elif defined(USE_STIK)
 	return "STiK2";

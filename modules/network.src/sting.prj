@@ -1,0 +1,13 @@
+..\sting.ovl
+.C [ -P -M -DUSE_INET]
+.L [ -L -V -S=1024]
+.S [ -V ]
+=
+
+PCSTART.O          ; startup code
+
+sting.c (network.c,..\..\ovl_sys.h, ..\..\hw-types.h,..\..\inet.c,..\..\inet.h)
+
+PCSTDLIB.LIB       ; standard library
+PCEXTLIB.LIB       ; extended library
+PCTOSLIB.LIB       ; TOS library
