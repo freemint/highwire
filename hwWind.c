@@ -384,7 +384,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 		vst_height (vdi_handle, pnt, &dmy,&dmy,&dmy,&dmy);
 	}
 	vst_color     (vdi_handle, info_fgnd);
-	vst_map_mode  (vdi_handle, 1);
+	vst_map_mode  (vdi_handle, MAP_UNICODE);
 	vst_effects   (vdi_handle, TXT_NORMAL);
 	
 	v_hide_c (vdi_handle);
@@ -496,7 +496,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 		vst_height (vdi_handle, 14, &dmy, &dmy, &dmy, &dmy);
 	}
 	vst_color     (vdi_handle, info_fgnd);
-	vst_map_mode  (vdi_handle, 1);
+	vst_map_mode  (vdi_handle, MAP_UNICODE);
 	vst_effects   (vdi_handle, TXT_NORMAL);
 	vst_alignment (vdi_handle, TA_LEFT, TA_DESCENT, &dmy, &dmy);
 
