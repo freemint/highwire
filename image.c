@@ -41,15 +41,6 @@
 #endif
 
 
-#ifdef LATTICE
-#	define STATIC
-#else
-#	define STATIC static
-#endif
-
-static short pixel_val[256];
-
-
 typedef struct raster_info {
 	short  * PixIdx;
 	long   * Palette;
@@ -63,14 +54,29 @@ typedef struct raster_info {
 	size_t   IncYfx;
 } RASTERINFO;
 
-typedef void (RASTERFUNC)(UWORD *, RASTERINFO *, char *);
-typedef       RASTERFUNC * RASTERIZER;
+typedef void (*RASTERIZER)(UWORD *, RASTERINFO *, char *);
 static RASTERIZER raster_color = NULL;
 static BOOL       stnd_bitmap  = FALSE;
 /*static BOOL       falcon_ovlay = FALSE;*/
 
+static short pixel_val[256];
+static char  disp_info[10] = "";
+
+
+static void init_display (void);
 
 static BOOL image_job (void *, long);
+
+
+/*============================================================================*/
+const char *
+image_dispinfo(void)
+{
+	if (!disp_info[0]) {
+		init_display();
+	}
+	return disp_info;
+}
 
 
 /*----------------------------------------------------------------------------*/
@@ -106,36 +112,8 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	long     hash;
 	CACHED   cached;
 	
-	if (!raster_color) {
-		STATIC RASTERFUNC
-			raster_stnd, raster_D1, raster_D2, raster_I4, raster_I8,
-			raster_P8, raster_16, raster_16r, raster_24, raster_24r,
-			raster_32, raster_32r;
-		short out[273] = { -1, }; out[14] = 0;
-		vq_scrninfo (vdi_handle, out);
-		memcpy (pixel_val, out + 16, 512);
-		
-		if (planes == 1) {                        /* monochrome */
-			raster_color = raster_D1;
-		
-		} else if (out[0] == 0) switch (planes) { /* interleaved words */
-			case 2: raster_color = raster_D2; break;
-			case 4: raster_color = raster_I4; break;
-			case 8: raster_color = raster_I8; break;
-		
-		} else if (out[0] == 2) switch (planes) { /* packed pixels */
-			case  8: raster_color = raster_P8; break;
-			case 16:
-				raster_color = (out[14] & 0x80 ? raster_16r : raster_16); break;
-			case 24:
-				raster_color = (out[14] & 0x80 ? raster_24r : raster_24); break;
-			case 32:
-				raster_color = (out[14] & 0x80 ? raster_32r : raster_32); break;
-		}
-		if (!raster_color) {                     /* standard format */
-			raster_color = raster_stnd;
-			stnd_bitmap  = TRUE;
-		}
+	if (!disp_info[0]) {
+		init_display();
 	}
 	
 	img->vspace = vspace;
@@ -461,7 +439,8 @@ image_job (void * arg, long invalidated)
 static pIMGDATA
 setup (IMAGE img, short depth, short img_w, short img_h, RASTERINFO * info)
 {
-	static   RASTERFUNC raster_mono;
+	static void raster_mono (UWORD *, struct raster_info *, char *);
+	
 	short    n_planes = (depth > 1 ? planes : 1);
 	size_t   wd_width;
 	size_t   pg_size;
@@ -514,7 +493,7 @@ setup (IMAGE img, short depth, short img_w, short img_h, RASTERINFO * info)
 /*------------------------------------------------------------------------------
  * monochrome format
  */
-STATIC void
+static void
 raster_mono (UWORD * dst, RASTERINFO * info, char * src)
 {
 #if defined(__GNUC__)
@@ -569,7 +548,7 @@ raster_mono (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * device independend, for unrecognized screen format.
  */
-STATIC void
+static void
 raster_stnd (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * map   = info->PixIdx;
@@ -601,7 +580,7 @@ raster_stnd (UWORD * dst, RASTERINFO * info, char * src)
  * 1 plane, uses a simple intensity dither.  the pixel index array must contain
  * intensity values of [0..4080].
  */
-STATIC void
+static void
 raster_D1 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * buf   = info->DthBuf;
@@ -635,7 +614,7 @@ raster_D1 (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 2 planes interleaved words format, uses a simple intensity dither.
  */
-STATIC void
+static void
 raster_D2 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * buf   = info->DthBuf;
@@ -690,7 +669,7 @@ raster_D2 (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 4 planes interleaved words format
  */
-STATIC void
+static void
 raster_I4 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * map   = info->PixIdx;
@@ -721,7 +700,7 @@ raster_I4 (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 8 planes interleaved words format
  */
-STATIC void
+static void
 raster_I8 (UWORD * dst, RASTERINFO * info, char * src)
 {
 #if defined(__GNUC__)
@@ -826,7 +805,7 @@ raster_I8 (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 8 planes packed pixels formart.
  */
-STATIC void
+static void
 raster_P8 (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	char  * dst   = (char*)_dst;
@@ -844,7 +823,7 @@ raster_P8 (UWORD * _dst, RASTERINFO * info, char * src)
  * 16 planes packed pixels formart, the pixel index array must contain 16bit RGB
  * values.
  */
-STATIC void
+static void
 raster_16 (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * pix   = info->PixIdx;
@@ -861,7 +840,7 @@ raster_16 (UWORD * dst, RASTERINFO * info, char * src)
  * 16 planes packed pixels formart in wrong (intel) byte order, the pixel index
  * array must contain 16bit RGB values.
  */
-STATIC void
+static void
 raster_16r (UWORD * dst, RASTERINFO * info, char * src)
 {
 	short * pix   = info->PixIdx;
@@ -878,7 +857,7 @@ raster_16r (UWORD * dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 24 planes packed pixels formart.
  */
-STATIC void
+static void
 raster_24 (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	char * dst   = (char*)_dst;
@@ -902,7 +881,7 @@ raster_24 (UWORD * _dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 24 planes packed pixels formart in wrong (intel) byte order.
  */
-STATIC void
+static void
 raster_24r (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	char * dst   = (char*)_dst;
@@ -926,7 +905,7 @@ raster_24r (UWORD * _dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 32 planes packed pixels formart.
  */
-STATIC void
+static void
 raster_32 (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	long * dst   = (long*)_dst;
@@ -952,7 +931,7 @@ raster_32 (UWORD * _dst, RASTERINFO * info, char * src)
 /*------------------------------------------------------------------------------
  * 32 planes packed pixels formart in wrong (intel) byte order.
  */
-STATIC void
+static void
 raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
 {
 	long * dst   = (long*)_dst;
@@ -969,6 +948,42 @@ raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
 		*(dst++) = (((((long)rgb[2] <<8) | rgb[1]) <<8) | rgb[0]) <<8;
 		x += info->IncXfx;
 	} while (--width);
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+init_display (void)
+{
+	short out[273] = { -1, }; out[14] = 0;
+	vq_scrninfo (vdi_handle, out);
+	memcpy (pixel_val, out + 16, 512);
+	
+	sprintf (disp_info, "%c%02i%s",
+	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), planes,
+	         (out[14] & 0x80 ? "r" : ""));
+	
+	if (planes == 1) {                        /* monochrome */
+		raster_color = raster_D1;
+	
+	} else if (out[0] == 0) switch (planes) { /* interleaved words */
+		case 2: raster_color = raster_D2; break;
+		case 4: raster_color = raster_I4; break;
+		case 8: raster_color = raster_I8; break;
+	
+	} else if (out[0] == 2) switch (planes) { /* packed pixels */
+		case  8: raster_color = raster_P8; break;
+		case 16:
+			raster_color = (out[14] & 0x80 ? raster_16r : raster_16); break;
+		case 24:
+			raster_color = (out[14] & 0x80 ? raster_24r : raster_24); break;
+		case 32:
+			raster_color = (out[14] & 0x80 ? raster_32r : raster_32); break;
+	}
+	if (!raster_color) {                     /* standard format */
+		raster_color = raster_stnd;
+		stnd_bitmap  = TRUE;
+	}
 }
 
 
