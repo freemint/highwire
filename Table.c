@@ -91,7 +91,7 @@ table_start (PARSER parser)
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
-	current->font_step = new_step (3, parser->Frame->text_colour);
+	current->font_step = new_step (3, parser->Frame->text_color);
 
 	table->Paragraph = par;
 	table->Rows      = NULL;
@@ -246,7 +246,7 @@ table_cell (PARSER parser, BOOL is_head)
 	
 	if (stack->WorkCell) {
 		paragrph_finish (&parser->Current);
-		parser->Current.font_step = new_step (3, parser->Frame->text_colour);
+		parser->Current.font_step = new_step (3, parser->Frame->text_color);
 	}
 	
 	if (!stack->WorkRow) {

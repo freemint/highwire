@@ -63,11 +63,6 @@ typedef enum {
 	METH_GET = 0, METH_POST
 } FORM_METHOD;
 
-/* Frame Border Codes */
-#define  BRD_NONE 	 0; /* initial state - No Borders      */
-#define  BRD_RIGHT 	 1; /* Right border only               */
-#define  BRD_BOTTOM  2; /* Bottom border                   */
-#define  BRD_BOTH 	 3; /* Both Right and Bottom Borders   */
 
 typedef enum {disc,square,circle,Number,alpha,Alpha,roman,Roman} BULLET;
 
@@ -347,7 +342,7 @@ typedef struct s_image {
 
 struct font_step {
 	WORD step;  /* HTML font size 0..7 */
-	WORD colour;
+	WORD color;
 	struct font_step *previous_font_step;
 };
 
@@ -493,14 +488,9 @@ struct frame_item {
 		WORD pos;    /* slider position */
 		WORD size;   /* slider size     */
 	}    v_bar, h_bar;
-	BOOL border;
-	BOOL resize;
-	WORD borders;     /* what borders does frame have */
-	WORD border_size; /* incorrect frame border attribute */ 
-	WORD border_colour; /* BAD HTML frame border colour */
 	SCROLL_CODE scroll;
-	WORD   text_colour;
-	WORD   link_colour;
+	WORD   text_color;
+	WORD   link_color;
 	char * base_target;
 	GRECT  clip;
 	ANCHOR first_named_location;

@@ -32,14 +32,9 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->v_bar.scroll = 0;
 	frame->v_bar.on     = FALSE;
 	frame->h_bar.on     = FALSE;
-	frame->border       = FALSE;
-	frame->borders = BRD_NONE;
-	frame->border_size = 3;
-	frame->border_colour = G_LWHITE;
-	frame->resize       = TRUE;
 	frame->scroll       = SCROLL_AUTO;
-	frame->text_colour  = G_BLACK;
-	frame->link_colour  = link_colour;
+	frame->text_color   = G_BLACK;
+	frame->link_color   = link_colour;
 	frame->base_target  = NULL;
 	frame->clip.g_x = 0;
 	frame->clip.g_y = 0;
@@ -51,7 +46,7 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	current->anchor    = &frame->first_named_location;
 	current->quot_lang = frame->Language;
 	current->font_size = font_step2size (NULL, 3);
-	current->font_step = new_step (3, frame->text_colour);
+	current->font_step = new_step (3, frame->text_color);
 	
 	content_setup (&frame->Page, current,
 	               page_margin, (ignore_colours ? G_WHITE : G_LWHITE));
@@ -120,24 +115,6 @@ frame_calculate (FRAME frame, const GRECT * clip)
 	short scrollbar_size = scroll_bar_width;
 	
 	frame->clip = *clip;
-
-#if 0 /***** REPLACED *****/
-	if (frame->border) {
-		switch (frame->borders)
-		{
-			case 1: /* BRD_RIGHT */
-				frame->clip.g_w -= frame->border_size;
-				break;
-			case 2: /* BRD_BOTTOM */
-				frame->clip.g_h -= frame->border_size;
-				break;
-			case 3: /* BRD_BOTH */
-				frame->clip.g_w -= frame->border_size;
-				frame->clip.g_h -= frame->border_size;
-				break;
-		}
-	}
-#endif /***** REPLACED *****/
 
 	if (!frame->scroll) {
 		

@@ -220,10 +220,9 @@ button_clicked (WORD button, WORD mx, WORD my)
 			WORD dx, dy;
 			
 			if (elem == PE_BORDER_RT) {
-				bound.g_w += sibl->Area.g_w
-				           - (sibl->Sibling ? sibl->Border_Size : 0);
+				bound.g_w += sibl->Area.g_w - (sibl->Sibling ? sibl->BorderSize :0);
 			} else { /* PE_BORDER_DN */
-				bound.g_h += sibl->Area.g_h - (sibl->Sibling ? sibl->Border_Size : 0);
+				bound.g_h += sibl->Area.g_h - (sibl->Sibling ? sibl->BorderSize :0);
 			}
 			graf_dragbox (watch.g_w, watch.g_h, watch.g_x, watch.g_y,
 			              bound.g_x, bound.g_y, bound.g_w, bound.g_h, &dx, &dy);

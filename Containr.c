@@ -70,17 +70,13 @@ new_containr (CONTAINR parent)
 		cont->ColSize = -1024;
 		cont->RowSize = -1024;
 		cont->Name    = strdup ("_top");
-		cont->Border        = TRUE;
-		cont->Borders       = BRD_NONE;
-		cont->Border_Size   = 5;
-		cont->Border_Colour = G_LWHITE;
+		cont->BorderSize  = 5;
+		cont->BorderColor = G_LWHITE;
 	} else {
 		cont->Base    = parent->Base;
 		cont->Parent  = parent;
-		cont->Border  = parent->Border;
-		cont->Borders       = parent->Borders;
-		cont->Border_Size   = parent->Border_Size;
-		cont->Border_Colour = parent->Border_Colour;
+		cont->BorderSize  = parent->BorderSize;
+		cont->BorderColor = parent->BorderColor;
 		cont->Handler = parent->Handler;
 		cont->HdlrArg = parent->HdlrArg;
 	}
@@ -155,33 +151,24 @@ containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 		if (colsNrows) {
 			if (abs_val)
 			{
-				val = val + (*ptr)->Border_Size;
+				val = val + (*ptr)->BorderSize;
 				abs_val = 0;
 			}
 			(*ptr)->ColSize = val;
 			(*ptr)->RowSize = (parent->RowSize > 0 ? parent->RowSize : -1024);
-			(*ptr)->Borders += BRD_RIGHT;
 		} else {
 			if (abs_val)
 			{
-				val = val + (*ptr)->Border_Size;
+				val = val + (*ptr)->BorderSize;
 				abs_val = 0;
 			}
 			(*ptr)->ColSize = (parent->ColSize > 0 ? parent->ColSize : -1024);
 			(*ptr)->RowSize = val;
-			(*ptr)->Borders += BRD_BOTTOM;
 		}
 		last = ptr;
 		ptr = &(*ptr)->Sibling;
 		num++;
 		while (*text && *(text++) != ',');
-	}
-
-	/* get rid of last BOTTOM or RIGHT Border */
-	if (colsNrows) {
-		(*last)->Borders -= BRD_RIGHT;
-	} else {
-		(*last)->Borders -= BRD_BOTTOM;
 	}
 
 	/* post process the percent sizes
@@ -253,17 +240,12 @@ containr_setup (CONTAINR cont, FRAME frame, const char * anchor)
 		cont->Mode    = CNT_FRAME;
 		cont->u.Frame = frame;
 		frame->Container = cont;
-		frame->border    = cont->Border;
-		frame->borders  = cont->Borders;
-		frame->border_size = cont->Border_Size;
-		frame->border_colour = cont->Border_Colour;
-		frame->resize    = cont->Resize;
 		frame->scroll    = cont->Scroll;
-		if (cont->Border_Size && cont->Sibling) {
+		if (cont->BorderSize && cont->Sibling) {
 			if (cont->Parent->Mode == CNT_CLD_H) {
-				area.g_w -= cont->Border_Size;
+				area.g_w -= cont->BorderSize;
 			} else {            /* == CNT_CLD_V */
-				area.g_h -= cont->Border_Size;
+				area.g_h -= cont->BorderSize;
 			}
 		}
 		frame_calculate (frame, &area);
@@ -300,9 +282,10 @@ containr_clear (CONTAINR cont)
 		}
 		
 		if (!depth) {
-			cont->Mode   = CNT_EMPTY;
-			cont->Border = (cont->Parent ? cont->Parent->Border : FALSE);
-			cont->Border_Colour = (cont->Parent ? cont->Parent->Border_Colour : G_LWHITE);
+			cont->Mode        = CNT_EMPTY;
+			cont->BorderSize  = (cont->Parent ? cont->Parent->BorderSize : 5);
+			cont->BorderColor = (cont->Parent
+			                     ? cont->Parent->BorderColor : G_LWHITE);
 			break;
 		
 		} else {
@@ -352,8 +335,8 @@ create_r (CONTAINR cont, HISTITEM * item, BOOL h_N_v)
 {
 	HISTITEM * next = item +1;
 	item->Size        = (h_N_v ? cont->ColSize : cont->RowSize);
-	item->BorderSize  = cont->Border_Size;
-	item->BorderColor = cont->Border_Colour;
+	item->BorderSize  = cont->BorderSize;
+	item->BorderColor = cont->BorderColor;
 	item->Scroll      = cont->Scroll;
 	item->Location    = NULL;
 	item->u.ChildNum  = 0;
@@ -500,9 +483,9 @@ process_r (CONTAINR cont, HISTITEM * item, HISTENTR ** entr, UWORD * count)
 {
 	HISTITEM * next = item +1;
 	
-	cont->Border_Size   = item->BorderSize;
-	cont->Border_Colour = item->BorderColor;
-	cont->Scroll        = item->Scroll;
+	cont->BorderSize  = item->BorderSize;
+	cont->BorderColor = item->BorderColor;
+	cont->Scroll      = item->Scroll;
 	
 	if (item->Location) {
 		(*entr)->Target   = cont;
@@ -612,17 +595,17 @@ containr_byCoord (CONTAINR cont, short x, short y)
 	while (cont->Mode > CNT_FRAME) {
 		CONTAINR child = cont->u.Child;
 		if (cont->Mode == CNT_CLD_H) {
-			if (cont->Border_Size && cont->Sibling) {
+			if (cont->BorderSize && cont->Sibling) {
 				short bot = cont->Area.g_y + cont->Area.g_h;
-				if (y < bot && y >= bot - cont->Border_Size) break;
+				if (y < bot && y >= bot - cont->BorderSize) break;
 			}
 			while (child && x >= child->Area.g_x + child->Area.g_w) {
 				child = child->Sibling;
 			}
 		} else {   /* == CNT_CLD_V */
-			if (cont->Border_Size && cont->Sibling) {
+			if (cont->BorderSize && cont->Sibling) {
 				short rgt = cont->Area.g_x + cont->Area.g_w;
-				if (x < rgt && x >= rgt - cont->Border_Size) break;
+				if (x < rgt && x >= rgt - cont->BorderSize) break;
 			}
 			while (child && y >= child->Area.g_y + child->Area.g_h) {
 				child = child->Sibling;
@@ -690,83 +673,34 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	area_rgt = cont->Area.g_x + cont->Area.g_w;
 	area_bot = cont->Area.g_y + cont->Area.g_h;
 	
-	if (cont->Border_Size && cont->Sibling) {
+	if (cont->BorderSize && cont->Sibling) {
 		if (cont->Parent->Mode == CNT_CLD_H) {
 			short rgt = area_rgt;
-			area_rgt -= cont->Border_Size;
+			area_rgt -= cont->BorderSize;
 			if (x < rgt && x >= area_rgt) {
 				*watch = cont->Area;
 				watch->g_x = area_rgt;
-				watch->g_w = cont->Border_Size;
+				watch->g_w = cont->BorderSize;
 				type = PE_BORDER_RT;
 			}
 		} else {            /* == CNT_CLD_V */
 			short bot = area_bot;
-			area_bot -= cont->Border_Size;
+			area_bot -= cont->BorderSize;
 			if (y < bot && y >= area_bot) {
 				*watch = cont->Area;
 				watch->g_y = area_bot;
-				watch->g_h = cont->Border_Size;
+				watch->g_h = cont->BorderSize;
 				type = PE_BORDER_DN;
 			}
 		}
 		if (type) return (cont->Resize ? type : PE_FRAME);
 	}
-#if 0 /***** REPLACED *****/
-	if (cont->Border) {
-		if (cont->Borders != 0)
-		{
-			switch (cont->Borders)
-			{
-				case 1: /* BRD_RIGHT */
-					if ((x <= cont->Area.g_x + cont->Area.g_w -1) &&
-					   (x >= cont->Area.g_x + cont->Area.g_w - cont->Border_Size))
-					{
-						*watch = cont->Area;
-						watch->g_x = x;
-						watch->g_w = cont->Border_Size;
-						type = PE_BORDER_RT;
-					}
-					break;
-				case 2: /* BRD_BOTTOM */
-					if ((y <= cont->Area.g_y + cont->Area.g_h -1) &&
-					   (y >= cont->Area.g_y + cont->Area.g_h - cont->Border_Size))
-					{
-						*watch = cont->Area;
-						watch->g_y = y;
-						watch->g_h = cont->Border_Size;
-						type = PE_BORDER_DN;
-					}
-					break;
-				case 3: /* BRD_BOTH */
-					if ((x <= cont->Area.g_x + cont->Area.g_w -1) &&
-					   (x >= cont->Area.g_x + cont->Area.g_w - cont->Border_Size))
-					{
-						*watch = cont->Area;
-						watch->g_x = x;
-						watch->g_w = cont->Border_Size;
-						type = PE_BORDER_RT;
-					}
-					else if ((y <= cont->Area.g_y + cont->Area.g_h -1) &&
-					   (y >= cont->Area.g_y + cont->Area.g_h - cont->Border_Size))
-					{
-						*watch = cont->Area;
-						watch->g_y = y;
-						watch->g_h = cont->Border_Size;
-						type = PE_BORDER_DN;
-					}
-			}
-		}
-		
-		if (type) return type;
-	}
-#endif /***** REPLACED *****/
 	
 	if ((frame = containr_Frame (cont)) == NULL) {
 		*watch = cont->Area;
-		if (cont->Border_Size && cont->Sibling) {
-			if (cont->Parent->Mode == CNT_CLD_H)  watch->g_w -= cont->Border_Size;
-			else                /* == CNT_CLD_V*/ watch->g_h -= cont->Border_Size;
+		if (cont->BorderSize && cont->Sibling) {
+			if (cont->Parent->Mode == CNT_CLD_H)  watch->g_w -= cont->BorderSize;
+			else                /* == CNT_CLD_V*/ watch->g_h -= cont->BorderSize;
 		}
 		return PE_EMPTY;
 	}
@@ -944,11 +878,11 @@ containr_calculate (CONTAINR cont, const GRECT * p_rect)
 			if (cont->Mode == CNT_FRAME) {
 				if (cont->u.Frame) {
 					GRECT area = cont->Area;
-					if (cont->Border_Size && cont->Sibling) {
+					if (cont->BorderSize && cont->Sibling) {
 						if (cont->Parent->Mode == CNT_CLD_H) {
-							area.g_w -= cont->Border_Size;
+							area.g_w -= cont->BorderSize;
 						} else {            /* == CNT_CLD_V */
-							area.g_h -= cont->Border_Size;
+							area.g_h -= cont->BorderSize;
 						}
 					}
 					frame_calculate (cont->u.Frame, &area);
@@ -963,7 +897,7 @@ containr_calculate (CONTAINR cont, const GRECT * p_rect)
 				short    frc;
 				if (cont->Mode == CNT_CLD_H) {
 					if (cont->Sibling) {
-						h -= cont->Border_Size;
+						h -= cont->BorderSize;
 					}
 					do {
 						if (cld->ColSize > 0) w -= cld->ColSize;
@@ -972,7 +906,7 @@ containr_calculate (CONTAINR cont, const GRECT * p_rect)
 					frc = w;
 				} else {
 					if (cont->Sibling) {
-						w -= cont->Border_Size;
+						w -= cont->BorderSize;
 					}
 					do {
 						if (cld->RowSize > 0) h -= cld->RowSize;
@@ -1103,7 +1037,7 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 				PXY  p[4];
 				WORD brd_w = 1, brd_h = 1;
 				
-				if (cont->Border_Size && cont->Sibling) {
+				if (cont->BorderSize && cont->Sibling) {
 					BOOL h_not_v = (cont->Mode <= CNT_FRAME
 					                ? cont->Parent->Mode == CNT_CLD_V
 					                : cont->Mode         == CNT_CLD_H);
@@ -1115,24 +1049,24 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 					p[2].p_y = cont->Area.g_y + cont->Area.g_h -1;
 					if (h_not_v) { /* horizontal border */
 						p[3].p_x = p[1].p_x = cont->Area.g_x;
-						p[0].p_y = p[1].p_y = p[2].p_y - cont->Border_Size +1;
+						p[0].p_y = p[1].p_y = p[2].p_y - cont->BorderSize +1;
 						p[0].p_x = p[2].p_x;
 						p[3].p_y = p[2].p_y;
-						brd_h   += cont->Border_Size;
+						brd_h   += cont->BorderSize;
 					} else {       /* vertical border */
-						p[0].p_x = p[1].p_x = p[2].p_x - cont->Border_Size +1;
+						p[0].p_x = p[1].p_x = p[2].p_x - cont->BorderSize +1;
 						p[3].p_y = p[1].p_y = cont->Area.g_y;
 						p[3].p_x = p[2].p_x;
 						p[0].p_y = p[2].p_y;
-						brd_w   += cont->Border_Size;
+						brd_w   += cont->BorderSize;
 					}
 					if (!mouse) {
 						v_hide_c (vdi_handle);
 						mouse = TRUE;
 					}
-					vsf_color (vdi_handle, cont->Border_Colour);
+					vsf_color (vdi_handle, cont->BorderColor);
 					v_bar (vdi_handle, (short*)(p +1));
-					if (cont->Border_Size > 3) {
+					if (cont->BorderSize > 3) {
 						vsl_color (vdi_handle, G_WHITE);
 						v_pline (vdi_handle, 2, (short*)(p +0));
 						vsl_color (vdi_handle, G_LBLACK);

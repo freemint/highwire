@@ -287,7 +287,7 @@ parse_about (void * arg, long invalidated)
 			clrable = about_cache (current, frame->Encoding, info, c_num);
 			break;
 		default:
-			about_highwire (current, frame->link_colour);
+			about_highwire (current, frame->link_color);
 	}
 	
 	if (c_num) {

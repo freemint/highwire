@@ -117,7 +117,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 	if (!copy_from) {
 		word = _alloc (NULL); /*malloc (sizeof (struct word_item));*/
 		word->attr.packed    = TEXTATTR (current->font_size,
-			                              current->font_step->colour);
+			                              current->font_step->color);
 		word->font           = NULL;
 		font_byType (-1, -1, -1, word);
 		word->vertical_align = ALN_BOTTOM;
@@ -288,52 +288,3 @@ word_offset (WORDITEM word)
 	WORDLINE line = word->line;
 	return (line->OffsetY + line->Paragraph->Offset.Y - word->word_height);
 }
-
-
-#if 0 /***** REPLACED *****/
-
-/* word_set_color()
- *
- * changes the text colour of the current word
-*/
-void
-word_set_color (TEXTBUFF current, WORD color)
-{
-	if (color != current->word->colour) {
-		current->word->colour         = color;
-		current->word->changed.colour = TRUE;
-	}
-	TA_Color (current->word->attr) = color;
-}
-
-
-/* word_set_point()
- *
- * changes the text height in points of the current word
-*/
-void
-word_set_point (TEXTBUFF current, WORD point)
-{
-	if (point != current->word->styles.font_size) {
-		current->word->styles.font_size = point;
-		current->word->changed.font     = TRUE;
-	}
-	TA_Size (current->word->attr) = point;
-}
-
-
-/* word_set_font()
- *
- * changes the font face of the current word
-*/
-void
-word_set_font (TEXTBUFF current, WORD font)
-{
-	if (font != current->word->styles.font) {
-		current->word->styles.font  = font;
-		current->word->changed.font = TRUE;
-	}
-	TAsetFont (current->word->attr, font);
-}
-
-#endif /***** REPLACED *****/

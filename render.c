@@ -284,27 +284,22 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					
 					if (border >= 0) {
 						if (!border) {
-							container->Border      = FALSE;
-							container->Border_Size = 0;
-						} else if (!container->Border) {
-							container->Border      = TRUE;
-							container->Border_Size = 5;
+							container->BorderSize = 0;
+						} else if (!container->BorderSize) {
+							container->BorderSize = 5;
 						}
 					}
 					
 					border = get_value_unum (parser, KEY_BORDER, -1);
 					if (border > 0) {
-						container->Border      = TRUE;
-						container->Border_Size = border;
+						container->BorderSize = border;
 					
 					} else if (!border) {
-						container->Border      = FALSE;
-						container->Border_Size = 0;
+						container->BorderSize = 0;
 					
-					} else if (!container->Border && 
+					} else if (!container->BorderSize && 
 					           get_value (parser, KEY_BORDER, NULL, 0)) {
-						container->Border      = TRUE;
-						container->Border_Size = 5;
+						container->BorderSize = 5;
 					}
 					
 					if (!ignore_colours)
@@ -312,7 +307,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 						WORD color;
 
 						if ((color = get_value_color (parser, KEY_BORDERCOLOR)) >= 0)
-							container->Border_Colour = color;
+							container->BorderColor = color;
 					}
 					
 					/* ok the first thing we do is look for ROWS or COLS
@@ -389,17 +384,17 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 				break;
 			}
 			if (container->Sibling) {
-				if (container->Border_Size) {
+				if (container->BorderSize) {
 					GRECT area;
 					containr_notify (container, HW_PageStarted, "");
 					containr_calculate (container, NULL);
 					area = container->Area;
 					if (container->Mode == CNT_CLD_H) {
-						area.g_y += area.g_h - container->Border_Size;
-						area.g_h =  container->Border_Size;
+						area.g_y += area.g_h - container->BorderSize;
+						area.g_h =  container->BorderSize;
 					} else {         /* == CNT_CLD_V */
-						area.g_x += area.g_w - container->Border_Size;
-						area.g_w =  container->Border_Size;
+						area.g_x += area.g_w - container->BorderSize;
+						area.g_w =  container->BorderSize;
 					}
 					containr_notify (container, HW_PageFinished, &area);
 				}
@@ -570,8 +565,8 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 	
 			if ((color = get_value_color (parser, KEY_TEXT)) >= 0)
 			{
-				frame->text_colour = parser->Current.font_step->colour = color;
-				TA_Color(parser->Current.word->attr)                   = color;
+				frame->text_color = parser->Current.font_step->color = color;
+				TA_Color(parser->Current.word->attr)                 = color;
 			}
 			if ((color = get_value_color (parser, KEY_BGCOLOR)) >= 0)
 			{
@@ -579,7 +574,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 			if ((color = get_value_color (parser, KEY_LINK)) >= 0)
 			{
-				frame->link_colour = color;
+				frame->link_color = color;
 			}
 		}
 		
@@ -719,8 +714,8 @@ render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 			WORD color = get_value_color (parser, KEY_COLOR);
 
 			if (color >= 0) {
-				f_step->colour = color;
-				parser->Frame->text_colour = current->font_step->colour = color;
+				f_step->color = color;
+				parser->Frame->text_color = current->font_step->color = color;
 				word_set_color (current, color);
 			}
 		}
@@ -823,7 +818,7 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 
 			if (color >= 0)
 			{
-				parser->Current.font_step->colour = color;
+				parser->Current.font_step->color = color;
 				word_set_color (&parser->Current, color);
 			}
 		}
@@ -831,8 +826,8 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 	} else {
 		step_pop (&parser->Current);
 		word_set_color (&parser->Current, (parser->Current.word->link
-		                                  ? parser->Frame->link_colour
-		                                  : parser->Current.font_step->colour));
+		                                  ? parser->Frame->link_color
+		                                  : parser->Current.font_step->color));
 	}
 	word_set_point (&parser->Current, parser->Current.font_size);
 	return flags;
@@ -1023,7 +1018,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			if (!word->link) {
 				word_set_underline (current, TRUE);
 			}
-			word_set_color (current, frame->link_colour);
+			word_set_color (current, frame->link_color);
 
 			word->link = new_url_link (word, output, TRUE, target);
 			
@@ -1049,7 +1044,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 		}	
 	
 	} else if (word->link) {
-		word_set_color     (current, current->font_step->colour);
+		word_set_color     (current, current->font_step->color);
 		word_set_underline (current, FALSE);
 		word->link = NULL;
 	}
@@ -1408,9 +1403,9 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 			
 			color = get_value_color (parser, KEY_COLOR);
-			if (color < 0)	color = current->font_step->colour;
-			if (color < 0)	color = parser->Frame->text_colour;
-			current->font_step->colour = (color);
+			if (color < 0)	color = current->font_step->color;
+			if (color < 0)	color = parser->Frame->text_color;
+			current->font_step->color = (color);
 		}
 		word_set_font (current, header_font);
 		word_set_bold (current, TRUE);
@@ -1425,7 +1420,7 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 		word_set_bold (current, FALSE);
 	}
 	word_set_point (current, current->font_size);
-	word_set_color (current, current->font_step->colour);
+	word_set_color (current, current->font_step->color);
 	
 	return (flags|PF_SPACE);
 }
@@ -1539,7 +1534,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		par->alignment = get_align (parser);
 
 		if (!ignore_colours) {
-			word_set_color (current, current->font_step->colour);
+			word_set_color (current, current->font_step->color);
 		}
 	}
 
@@ -2319,7 +2314,7 @@ parse_image (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	current->font_step = new_step (3, frame->text_colour);
+	current->font_step = new_step (3, frame->text_color);
 	
 	font_byType (normal_font, 0x0000, -1, current->word);
 	

@@ -55,7 +55,7 @@ parse_dir (void * arg, long invalidated)
 	const char * dir   = loc->File -1;
 	char         delim = *loc->Path;
 	char         sort  = (loc->Anchor ? toupper(*loc->Anchor) : '\0');
-	WORD         color = frame->link_colour;
+	WORD         color = frame->link_color;
 	
 	struct dir_ent {
 		struct dir_ent * next;

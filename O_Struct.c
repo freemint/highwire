@@ -37,7 +37,7 @@ new_step (WORD size, WORD color)
 {
 	struct font_step * temp = malloc (sizeof (struct font_step));
 	temp->step               = size;
-	temp->colour             = color;
+	temp->color              = color;
 	temp->previous_font_step = NULL;
 	
 	return (temp);
@@ -46,7 +46,7 @@ new_step (WORD size, WORD color)
 struct font_step *
 add_step (struct font_step *old)
 {
-	struct font_step * temp = new_step (old->step, old->colour);
+	struct font_step * temp = new_step (old->step, old->color);
 	temp->previous_font_step = old;
 	
 	return (temp);
