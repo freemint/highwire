@@ -2910,9 +2910,12 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
 		WORD    border   = get_value_unum (parser, KEY_BORDER, -1);
 		WORD    padding  = get_value_unum (parser, KEY_CELLPADDING, -1);
+		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
+		WORD    height   = 0;
+		WORD    width    = 0;
+		WORD    min_wid  = 0;
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
@@ -2929,11 +2932,33 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		} else {
 			floating = ALN_LEFT;
 		}
+		if (parser->hasStyle) {
+			short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;
+			char  out[100];
+			short val;
+			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+				height = val;
+			}
+			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+				width = val;
+			}
+			if (get_value (parser, KEY_MIN_WIDTH, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+				min_wid = val;
+			}
+		}
+		if (!height) {
+			height = get_value_size  (parser, KEY_HEIGHT);
+		}
+		if (!width) {
+			width = get_value_size  (parser, KEY_WIDTH);
+		}
 		table_start (parser,
 		             get_value_color (parser, KEY_BGCOLOR), floating,
-		             get_value_size  (parser, KEY_HEIGHT),
-		             get_value_size  (parser, KEY_WIDTH),
-		             get_value_size  (parser, KEY_MIN_WIDTH),
+		             height, width, min_wid,
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border);
 		if (parser->hasStyle) {
