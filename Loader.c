@@ -4,36 +4,32 @@
  * loading routine and some assorted other routines
  * for file handling.
 */
-#ifdef __PUREC__
+#if defined (__PUREC__)
 #include <tos.h>
 #include <ext.h>
-#endif
 
-#ifdef LATTICE
+#elif defined (LATTICE)
 #include <dos.h>
 #include <mintbind.h>
-
-/* I'm certain this is in a .H somewhere, just couldn't find it - Baldrick*/
-#define O_RDONLY    0x00
-#define DTA struct FILEINFO
+#define DTA      struct FILEINFO
 #define d_length size
-#define E_OK		0x00
-#endif
+/* I'm certain this is in a .H somewhere, just couldn't find it - Baldrick*/
+#define O_RDONLY 0x00
 
-#ifdef __GNUC__
-# include <sys/types.h>
-# include <sys/stat.h>
+#elif defined (__GNUC__)
+#include <mintbind.h>
+# define DTA      _DTA
+# define d_length dta_size
 # include <fcntl.h>
 # include <unistd.h>
-# include <mintbind.h>
 #endif
-
-#include <gemx.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
+#include <gemx.h>
 
 #include "global.h"
 #include "av_comm.h"
@@ -49,7 +45,7 @@
 #include "hwWind.h"
 
 
-static char *load_file (const LOCATION);
+static char *load_file (const LOCATION, size_t * expected, size_t * loaded);
 
 
 /*******************************************************************************
@@ -68,7 +64,6 @@ parser_job (void * arg, long invalidated)
 	
 	if (invalidated) {
 		delete_loader (&loader);
-		
 		return FALSE;
 	}
 	
@@ -124,6 +119,14 @@ parser_job (void * arg, long invalidated)
 /******************************************************************************/
 
 
+typedef struct s_ldr_chunk * LDRCHUNK;
+struct s_ldr_chunk {
+	LDRCHUNK next;
+	size_t   size;
+	char     data[1];
+};
+
+
 /*============================================================================*/
 const struct {
 	const char * Ext;
@@ -158,12 +161,18 @@ new_loader (LOCATION loc)
 	loader->Location = location_share (loc);
 	loader->Target   = NULL;
 	loader->MimeType = MIME_TEXT;
+	/* */
+	loader->DataSize = 0;
+	loader->DataFill = 0;
+	loader->Data     = NULL;
 	loader->notified = FALSE;
-	loader->Socket   = -1;
-	loader->isChunked = 0;
-	loader->DataSize  = 0;
-	loader->DataFill  = 0;
-	loader->Data      = NULL;
+	/* */
+	loader->rdChunked = FALSE;
+	loader->rdSocket  = -1;
+	loader->rdLeft    = 0;
+	loader->rdDest    = NULL;
+	loader->rdTlen    = 0;
+	loader->rdList    = loader->rdCurr = NULL;
 	
 	if ((loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) &&
 	    (ext = strrchr (loc->File, '.')) != NULL && *(++ext)) {
@@ -193,10 +202,21 @@ delete_loader (LOADER * p_loader)
 			containr_notify (loader->Target, HW_PageFinished, NULL);
 		}
 #ifdef USE_INET
-		inet_close (loader->Socket);
+		if (loader->rdSocket >= 0) {
+			inet_close (loader->rdSocket);
+		}
 #endif /* USE_INET */
+		if (loader->rdList) {
+			LDRCHUNK chunk = loader->rdList, next;
+			do {
+				next =  chunk->next;
+				free (chunk);
+			} while ((chunk = next) != NULL);
+		}
+		if (loader->Data) {
+			free (loader->Data);
+		}
 		free_location (&loader->Location);
-		if (loader->Data) free (loader->Data);
 		free (loader);
 		*p_loader = NULL;
 	}
@@ -206,70 +226,190 @@ delete_loader (LOADER * p_loader)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #ifdef USE_INET
 static BOOL
-receive_job (void * arg, long invalidated)
+chunked_job (void * arg, long invalidated)
 {
-	LOADER loader = arg;
-	long   left = loader->DataSize - (loader->DataFill - loader->isChunked);
-	char * p    = loader->Data     +  loader->DataFill;
-	long   n    = -1;
+	LOADER   loader = arg;
+	BOOL     s_recv = (loader->rdDest == NULL);
 	
 	if (invalidated) {
 		delete_loader (&loader);
-		
 		return FALSE;
 	}
 	
-/*	printf ("recive '%s' (%li) %li/%li+%i \n",
-	        loader->Location->FullName, loader->DataFill,
-	        left, loader->DataSize, loader->isChunked);
-*/	
-	while (left > 0 && (n = inet_recv (loader->Socket, p, left)) > 0) {
-		p    += n;
-		left -= n;
-	}
-	loader->DataFill = p - loader->Data;
-	*p = '\0';
+	loader->rdDest = NULL;
+	loader->rdLeft = 0;
 	
-	if (!n && left) {
-		return TRUE; /* re-schedule */
-	}
-	
-	if (loader->isChunked && loader->DataFill > loader->DataSize) {
-		char * ln_brk;
-		char * chunk = loader->Data + loader->DataSize;
-		*(chunk++) = '\0';
-		if (*chunk == '\n') chunk++;
+	while (1) {
+		char * data = NULL;
+		size_t size = 0;
 		
-		loader->DataFill = loader->DataSize;
-		
-		if ((ln_brk = strchr (chunk, '\n')) != NULL) {
-			char * tail = chunk;
-			long   size = strtoul (chunk, &tail, 16);
-			if (size > 0 && tail > chunk && tail <= ln_brk) {
-				char * mem;
-				loader->DataSize += size;
-				if ((mem = malloc (loader->DataSize
-				                   + loader->isChunked +1)) != NULL) {
-					memcpy (mem, loader->Data, loader->DataFill);
-					while (*(++ln_brk)) {
-						mem[loader->DataFill++] = *ln_brk;
+		if (!loader->rdChunked) {
+			if (loader->rdSocket >= 0) {
+				size = 8192;
+			}
+			if (loader->rdTlen) {
+				data = loader->rdTemp;
+				if (size < loader->rdTlen) {
+					 size = loader->rdTlen;
+				}
+			}
+			
+		} else {
+			char * ln_brk = (loader->rdTlen > 2
+			                 ? memchr (loader->rdTemp +2, '\n', loader->rdTlen -2)
+			                 : NULL);
+			if (!ln_brk) {
+				long n = inet_recv (loader->rdSocket,
+				                    loader->rdTemp + loader->rdTlen,
+				                    sizeof (loader->rdTemp) - loader->rdTlen);
+				if (n > 0) {
+					loader->rdTlen += n;
+					if (loader->rdTlen > 2) {
+						ln_brk = memchr (loader->rdTemp +2, '\n', loader->rdTlen -2);
 					}
-					free (loader->Data);
-					loader->Data = mem;
-					
-					return TRUE; /* re-schedule */
+				}
+			}
+			if (ln_brk) {
+				char * tail = loader->rdTemp;
+				*ln_brk = '\0';
+				size = strtoul (loader->rdTemp, &tail, 16);
+				if (size > 0 && ++ln_brk < loader->rdTemp + loader->rdTlen) {
+					data = ln_brk;
+				}
+			
+			} else if (loader->rdTlen == sizeof(loader->rdTemp)) {
+				printf ("rotten chunk header\n");
+				loader->rdDest = NULL;
+				loader->rdLeft = 0;
+				break;
+			
+			} else {
+				if (!s_recv) {
+					sched_insert (chunked_job, loader, (long)loader->Target);
+				}
+				return TRUE;
+			}
+		}
+		
+		if (size) {
+			LDRCHUNK chunk = malloc (sizeof (struct s_ldr_chunk) + size -1);
+			if (!loader->rdList) loader->rdList                   = chunk;
+			else                 ((LDRCHUNK)loader->rdCurr)->next = chunk;
+			loader->rdCurr = chunk;
+			loader->rdDest = chunk->data;
+			loader->rdLeft = size;
+			chunk->next = NULL;
+			chunk->size = size;
+			
+			if (data) {
+				loader->rdTlen -= data - loader->rdTemp;
+				if (size > loader->rdTlen) {
+					 size = loader->rdTlen;
+				}
+				memcpy (loader->rdDest, data, size);
+				loader->rdDest   += size;
+				loader->rdLeft   -= size;
+				loader->DataFill += size;
+				
+				loader->rdTlen -= size;
+				if (loader->rdTlen) { /* there are still data in the temp buffer */
+					memmove (loader->rdTemp, data + size, loader->rdTlen);
+				}
+				if (!loader->rdLeft) {     /* chunk was completely filled from */
+					loader->rdDest = NULL;  /* the temp buffer                  */
+					continue;
 				}
 			}
 		}
+		break;
 	}
-	inet_close (loader->Socket);
-	loader->Socket   = -1;
 	
-	sched_insert (parser_job, loader, (long)loader->Target);
+	if (!loader->rdDest) {
+		LDRCHUNK next = loader->rdList, chunk;
+		long     left = loader->DataFill;
+		char   * p    = loader->Data = malloc (left +3);
+		
+		while ((chunk = next) != NULL) {
+			if (left > 0) {
+				memcpy (p, chunk->data, (left < chunk->size ? left : chunk->size));
+				p += chunk->size;
+			}
+			left -= chunk->size;
+			next =  chunk->next;
+			free (chunk);
+		}
+		loader->rdList   = loader->rdCurr = NULL;
+		loader->DataSize = loader->DataFill;
+		if (loader->rdChunked && left < 0) {
+			loader->DataSize -= left;
+		}
+	}
+	if (s_recv) {
+		static BOOL receive_job (void *, long);
+
+		sched_insert (receive_job, loader, (long)loader->Target);
+	}
 	
 	return FALSE;
 }
 #endif /* USE_INET */
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+#ifdef USE_INET
+static BOOL
+receive_job (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	
+	if (invalidated) {
+		delete_loader (&loader);
+		return FALSE;
+	}
+	
+	if (loader->rdLeft) {
+		long n = inet_recv (loader->rdSocket, loader->rdDest, loader->rdLeft);
+		
+		if (n < 0) { /* no more data available */
+			inet_close (loader->rdSocket);
+			loader->rdSocket = -1;
+			loader->rdLeft   = 0;
+		
+		} else if (n) {
+			loader->rdDest   += n;
+			loader->rdLeft   -= n;
+			loader->DataFill += n;
+		}
+		if (loader->rdLeft) {
+			return TRUE;  /* re-schedule for next block of data */
+		}
+		
+		if (!loader->DataSize) {
+			if (chunked_job (arg, 0)) {
+				return FALSE;  /* chunk head need to be completed */
+			
+			} else if (loader->rdLeft) {
+				return TRUE;  /* re-schedule for start of next chunk */
+			}
+		}
+	}
+	/* else download finished */
+	
+	if (loader->rdSocket >= 0) {
+		inet_close (loader->rdSocket);
+		loader->rdSocket   = -1;
+	}
+	if (loader->Data) {
+		char * p = loader->Data + loader->DataFill;
+		*(p++) = '\0';
+		*(p++) = '\0';
+		*(p)   = '\0';
+	}
+	sched_insert (parser_job, loader, (long)loader->Target);
+	
+	return FALSE;
+}	
+#endif /* USE_INET */
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
@@ -279,7 +419,6 @@ loader_job (void * arg, long invalidated)
 	
 	if (invalidated) {
 		delete_loader (&loader);
-		
 		return FALSE;
 	}
 	
@@ -301,7 +440,8 @@ loader_job (void * arg, long invalidated)
 			containr_notify (loader->Target, HW_SetInfo, buf);
 		}
 		
-		reply = http_header (loader->Location, &hdr, &sock);
+		reply = http_header (loader->Location,
+		                     &hdr, &sock, sizeof (loader->rdTemp) -2);
 		
 		if (hdr.MimeType) {
 			loader->MimeType = hdr.MimeType;
@@ -319,23 +459,43 @@ loader_job (void * arg, long invalidated)
 			
 			return TRUE; /* re-schedule with the new location */
 			
-		} else if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT
-		           && hdr.Size > 0) {
-			loader->isChunked = (hdr.Chunked ? 10 : 0);
-			loader->DataSize  = hdr.Size;
-			loader->DataFill  = strlen (hdr.Tail);
+		} else if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
 			
-			if (sock < 0) {
-				loader->Data = malloc (loader->DataFill +1);
-				memcpy (loader->Data, hdr.Tail, loader->DataFill +1);
-				inet_close (sock);
+			if (hdr.Size >= 0 && !hdr.Chunked) {
+				loader->Data     = loader->rdDest = malloc (hdr.Size +3);
+				loader->DataSize = loader->rdLeft = hdr.Size;
+				loader->DataFill = hdr.Tlen;
+				if (loader->DataFill) {
+					if (loader->DataFill > loader->rdLeft) {
+						 loader->DataFill = loader->rdLeft;
+					}
+					memcpy (loader->rdDest, hdr.Tail, loader->DataFill);
+					loader->rdDest += loader->DataFill;
+					loader->rdLeft -= loader->DataFill;
+				}
+				if (sock < 0 || !loader->rdLeft) {
+					loader->rdDest[0] = '\0';
+					loader->rdDest[1] = '\0';
+					loader->rdDest[2] = '\0';
+					inet_close (sock);
+				} else {
+					loader->rdSocket = sock;
+					sched_insert (receive_job, loader, (long)loader->Target);
+					return FALSE;
+				}
 			
 			} else {
-				loader->Socket = sock;
-				loader->Data   = malloc (loader->DataSize + loader->isChunked +1);
-				memcpy (loader->Data, hdr.Tail, loader->DataFill);
-				
-				sched_insert (receive_job, loader, (long)loader->Target);
+				if ((loader->rdChunked = hdr.Chunked) == TRUE) {
+					loader->rdTemp[0] = '\r';
+					loader->rdTemp[1] = '\n';
+					loader->rdTlen = 2;
+				}
+				if (hdr.Tlen) {
+					memcpy (loader->rdTemp + loader->rdTlen, hdr.Tail, hdr.Tlen);
+					loader->rdTlen += hdr.Tlen;
+				}
+				loader->rdSocket = sock;
+				sched_insert (chunked_job, loader, (long)loader->Target);
 				return FALSE;
 			}
 		
@@ -345,7 +505,8 @@ loader_job (void * arg, long invalidated)
 		}
 #endif /* USE_INET */
 	} else {
-		loader->Data = load_file (loader->Location);
+		loader->Data = load_file (loader->Location,
+		                          &loader->DataSize, &loader->DataFill);
 	}
 	if (!loader->Data) {
 		loader->Data     = strdup ("<html><head><title>Error</title></head>"
@@ -505,55 +666,49 @@ char help_file[HW_PATH_MAX];
  * It is probably not the prettiest.  - baldrick July 10, 2001
 */
 static char *
-load_file (const LOCATION loc)
+load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 {
 	const char *filename = loc->FullName;
-	long   size = 0;
-	char * file = NULL;
-	
-#ifdef DEBUG
-	fprintf (stderr, "load_file: %s\n", filename);
-#endif
-
-#ifndef LATTICE
-	struct stat file_info;
-
-	if (stat (filename, &file_info) == 0) {
-		size = file_info.st_size;
-	}
-	
-#else
-	/* for Lattice */
+	long         size = 0;
+	char       * file = NULL;
 	struct xattr file_info;
-	long r = Fxattr(0, filename, &file_info);
+	long         xret = Fxattr(0, filename, &file_info);
 	
-	if (r == E_OK) {  /* Fxattr() exists */
+	if (xret == 0) {  /* Fxattr() exists */
 		size = file_info.st_size;
 	
-	} else if (r == EINVFN) {  /* here for TOS filenames */
+	} else if (xret == EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();
 		Fsetdta(&new);
 
-		if (Fsfirst(filename, 0) == E_OK) {
+		if (Fsfirst(filename, 0) == 0) {
 			size = new.d_length;
 		}
 		Fsetdta(old);
+	
+	} else {
+		*expected = *loaded = 0;
+		return NULL;
 	}
-#endif
-
-	if (size) {
+	
+	*expected = size;
+	
+	if ((file = malloc (size + 3)) == NULL) {
+		size = 0;
+	
+	} else if (size) {
 		int fh = open (filename, O_RDONLY);
-
-		file = malloc (size + 3);
-		if (fh > 0 && file) {
-			read (fh, file, size);
+		if (fh < 0) {
+			size = 0;
+		} else {
+			size = read (fh, file, size);
 			close (fh);
-
-			file[size +0] = '\0';
-			file[size +1] = '\0';
-			file[size +2] = '\0';
 		}
+		file[size +0] = '\0';
+		file[size +1] = '\0';
+		file[size +2] = '\0';
 	}
+	*loaded = size;
 	
 	return file;
 }
@@ -639,9 +794,9 @@ init_paths(void)
 }
 
 
-/* This identifies what AES you are running under.
- */
-
+/*==============================================================================
+ * This identifies what AES you are running under.
+*/
 WORD
 identify_AES(void)
 {
@@ -666,10 +821,10 @@ identify_AES(void)
 }	/* Ends:	WORD identify_AES(void) */
 
 
-/* Looks for MiNT or MagiC Cookies.  If found TRUE returned,
+/*==============================================================================
+ * Looks for MiNT or MagiC Cookies.  If found TRUE returned,
  * which indicates we can call extended Mxalloc() with GLOBAL flag.
- */
-
+*/
 BOOL
 can_extended_mxalloc(void)
 {
