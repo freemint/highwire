@@ -1,5 +1,87 @@
 Ok here are the new supports and changes
 
+January 02, 2003
+
+  AltF4's patches
+
+  http.h:
+    - line 13:  additional attribute for the number of remaining bytes
+      in Tail.
+    - line 17:  extended argument list.
+
+  http.c:
+    - line 228 + 286 (http_header):  additional argument to determine
+      the size of a data block to read from remote.  this way a calling
+      function can be shure that the returned number of bytes in Tail
+      will fit into a buffer of that size.
+    - line 223 + 334:  removed interpretation of chunk header data.
+    - line 248 + 336:  set hdr.Tlen to the remaining number of bytes in
+      hdr.Tail.
+
+  Loader.h:
+    - line 41..49:  reorganized current attributes and added new to
+      meet the needs of the several modes of remote data access.
+
+  Loader.c:
+    - line 7..37:  reorganized includes and removed unused.
+    - line 126:  new structure for storing data chunks.
+    - line 161 (new_loader) + 197 (delete_loader):  initialize and
+      release newly added resources.
+    - line 208:  new function chunked_job().
+    - line 209 (receive_job):  completey reworked.
+    - line 304 (loader_job):  additional block_size argument for
+      http_header() to make shure that the remaining bytes in hdr.Tail
+      fits into the loader buffer.
+    - line 322..342:  completely overworked to support more modes of
+      chunked data.
+    - line 508..556 (load_file):  completely overworked to avoid call
+      of stat() because this don't allow access to long named files in
+      Pure C, at least with my stone old (original) libraries.
+
+December 23, 2002
+
+  AltF4's patches
+
+  defs.h:
+    - line 5:  bumped version to 0.1.1.
+    - line 11:  added #define to make alerts more handy.
+    - line 430:  in struct word_item, added attribute wrap.
+    - line 508:  in struct parse_sub, added attribute nowrap.
+
+  Paragrph.c:
+    - line 170 (paragrph_finish):  set wrap attribute if the last word
+      item contains only a single space to allow later removing.
+    - line 265 (paragraph_calc) + 648 (content_minimum):  uses wrap
+      attribute instead of space_width for word wrapping.
+
+  Redraws.c:
+    - line 425 (draw_image):  avoid drawing of the place holder frame
+      if the images has no more than one pixel width and/or height.
+
+  render.c:
+    - line 1223:  new functions render_WBR_tag() and render_NOBR_tag().
+
+  Table.h:
+    - line 38:  in struct s_table, new array pointer Percent.
+
+  Table.c:
+    - line 55 (delete_table):  free Percent array.
+    - line 100 (table_start):  initialize Percent array to NULL.
+    - line 315 (table_cell):  check for NOWRAP keyword.
+    - line 493 (table_finish):  alloc and preset Percent array.
+    - line 553 + 609:  set percentage values of table cells.
+    - line 734 + 752 + 766 (table_calc):  calculate percentage values
+      to pixel widths.
+
+  token.h:
+    - line 59 + 86:  new tags NOBR and WBR.
+    - line 152:  new keyword NOWRAP, for <td> and <th>.
+
+  W_Struct.c:
+    - line 125 (new_word):  clear wrap attribute.
+    - line 148 (word_store):  set wrap attribute depending on word
+      starts with a space and current->nowrap not set.
+
 December 20, 2002
 
   AltF4's patches
