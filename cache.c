@@ -36,6 +36,7 @@ struct s_cache_item {
 static CACHEITEM __cache_beg = NULL;
 static CACHEITEM __cache_end = NULL;
 static size_t    __cache_num = 0;
+static size_t    __cache_dsk = 0;
 static size_t    __cache_mem = 0;
 static LOCATION  __cache_dir = NULL;
 
@@ -227,7 +228,11 @@ destroy_item (CACHEITEM citem)
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
 	else                 __cache_end               = citem->PrevItem;
 	__cache_num--;
-	__cache_mem -= citem->Size;
+	if (citem->Ident) {
+		__cache_mem -= citem->Size;
+	} else {
+		__cache_dsk -= citem->Size;
+	}
 	free_location (&citem->Location);
 	free (citem);
 }
@@ -238,11 +243,14 @@ CACHED
 cache_insert (LOCATION loc, long ident,
               CACHEOBJ * object, size_t size, void (*dtor)(void*))
 {
-	CACHEITEM citem = create_item (loc, *object, size, dtor);
-	citem->Ident    = ident;
-
-	*object = NULL;
-
+	CACHEITEM citem;
+	
+	if ((citem = create_item (loc, *object, size, dtor)) == NULL) {
+		return NULL;
+	}
+	citem->Ident = ident;
+	*object      = NULL;
+	
 	return citem->Object;
 }
 
@@ -396,7 +404,7 @@ cache_info (size_t * size, CACHEINF * p_info)
 		}
 	}
 	if (size) {
-		*size = __cache_mem;
+		*size = __cache_mem /*+ __cache_dsk*/;
 	}
 	return __cache_num;
 }
@@ -511,12 +519,12 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Date    = date;
 				citem->Expires = expires;
 				citem->Reffs--;
-				__cache_mem += size;
+				__cache_dsk += size;
 			} else {
 				free_location (&loc);
 			}
 		}
-		if (!loc) { /* either no cache dir set or file coudn't be written */
+		if (!loc) { /* either no cache dir set or file couldn't be written */
 			destroy_item (citem);
 		}
 	}
