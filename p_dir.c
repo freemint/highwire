@@ -1,35 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#if defined (__PUREC__)
-# include <tos.h>
+#ifdef __PUREC__
 # include <ext.h>
-
-#elif defined (LATTICE)
-# include <dos.h>
-# include <mintbind.h>
-# define DTA      struct FILEINFO
-# define d_attrib attr
-# define d_length size
-# define d_time   time
-# define d_fname  name
-
-#else /*__GNUC__*/
-# include <sys/stat.h>
-# include <mintbind.h>
-# define DTA      _DTA
-# define d_attrib dta_attribute
-# define d_length dta_size
-# define d_time   dta_time
-# define d_date   dta_date
-# define d_fname  dta_name
 #endif
 
-#ifndef S_ISDIR
-#	define S_ISDIR(mode) (((mode) & 0170000) == (0040000))
-#endif
-
+#include "file_sys.h"
 #include "global.h"
 #include "token.h"
 #include "Loader.h"
@@ -128,11 +104,9 @@ parse_dir (void * arg, long invalidated)
 		char * p_nm = strchr (strcpy (path, loc->FullName), '\0');
 		while (Dreaddir (sizeof(buf), dh, buf) == E_OK) {
 			strcpy (p_nm, name);
-			xret = Fxattr (0, path, &xattr);
-#elif defined (LATTICE)
-		while (Dxreaddir (sizeof(buf), dh, buf, (long*)&xattr, &xret) == E_OK) {
+			xret = F_xattr (0, path, &xattr);
 #else
-		while (Dxreaddir (sizeof(buf), dh, buf, &xattr, &xret) == E_OK) {
+		while (D_xreaddir (sizeof(buf), dh, buf, &xattr, &xret) == E_OK) {
 #endif
 			if (name[0] != '.' || (name[1] && (name[1] != '.' || name[2]))) {
 				size_t           len = strlen (name);
@@ -142,7 +116,7 @@ parse_dir (void * arg, long invalidated)
 					ent->name[len++] = delim;
 				}
 				ent->name[len] = '\0';
-				ent->size = xattr.st_size;
+				ent->size = xattr.size;
 				ent->date.us[0] = xattr.mdate;
 				ent->date.us[1] = xattr.mtime;
 				ent->next = list;

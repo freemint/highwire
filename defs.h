@@ -285,31 +285,6 @@ typedef struct {
 } VDI_Workstation;
 
 
-/* Modified size to st_size to eliminate one #ifdef in loader.c - Baldrick */
-struct xattr {
-	UWORD mode;
-	long index;
-	UWORD dev;
-	UWORD reserved1;
-	UWORD nlink;
-	UWORD uid;
-	UWORD gid;
-	unsigned long st_size;
-	long blksize;
-	long nblocks;
-	UWORD mtime;
-	UWORD mdate;
-	UWORD atime;
-	UWORD adate;
-	UWORD ctime;
-	UWORD cdate;
-	WORD attr;
-	WORD reserved2;
-	long reserved3;
-	long reserved4;
-};
-
-
 /***** Generic Structure, used in all Block Elements *****/
 
 typedef struct {

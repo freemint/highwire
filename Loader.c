@@ -4,40 +4,19 @@
  * loading routine and some assorted other routines
  * for file handling.
 */
-#if defined (__PUREC__)
+#ifdef __PUREC__
 # include <tos.h>
 # include <ext.h>
-# define fxattr(f,n,a)  Fxattr (f, n, a)
-
-#elif defined (LATTICE)
-# include <dos.h>
-# include <mintbind.h>
-# define DTA      struct FILEINFO
-# define d_length size
-# include <fcntl.h>
-# define fxattr(f,n,a)  Fxattr (f, (char*)n, a)
-
-#elif defined (__GNUC__)
-# include <mintbind.h>
-# define DTA      _DTA
-# define d_length dta_size
-# include <fcntl.h>
-# include <unistd.h>
-# define fxattr(f,n,a)  Fxattr (f, n, a)
 #endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
 #include <errno.h>
-#ifndef EPROTONOSUPPORT
-#define EPROTONOSUPPORT 305
-#endif
 
 #include <gem.h>
 
+#include "file_sys.h"
 #include "global.h"
 #include "hwWind.h"
 #include "av_comm.h"
@@ -1053,10 +1032,10 @@ file_size(const LOCATION loc)
 	const char *filename = loc->FullName;
 	long         size = 0;
 	struct xattr file_info;
-	long         xret = fxattr(0, filename, &file_info);
+	long         xret = F_xattr(0, filename, &file_info);
 	
 	if (xret == E_OK) {  /* Fxattr() exists */
-		size = file_info.st_size;
+		size = file_info.size;
 	
 	} else if (xret == -EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();
@@ -1083,10 +1062,10 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	long         size = 0;
 	char       * file = NULL;
 	struct xattr file_info;
-	long         xret = fxattr(0, filename, &file_info);
+	long         xret = F_xattr(0, filename, &file_info);
 	
 	if (xret == E_OK) {  /* Fxattr() exists */
-		size = file_info.st_size;
+		size = file_info.size;
 	
 	} else if (xret == -EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();

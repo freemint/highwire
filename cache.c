@@ -4,28 +4,7 @@
 #include <ctype.h>
 #include <time.h>
 
-#ifdef __PUREC__
-# include <tos.h>
-
-#else /* LATTICE || __GNUC__ */
-# include <mintbind.h>
-# include <fcntl.h>
-
-# if defined (__GNUC__)
-#  include <unistd.h>
-#  define DTA     _DTA
-#  define d_fname dta_name
-
-# else /* LATTICE */
-#  include <dos.h>
-#  define DTA     struct FILEINFO
-#  define d_fname name
-# endif
-#endif
-#ifndef O_RAW    /* Lattice uses this for open() to write binary files */
-# define O_RAW 0
-#endif
-
+#include "file_sys.h"
 #include "global.h"
 #include "Location.h"
 #include "cache.h"
