@@ -45,7 +45,8 @@ typedef enum {
 	IT_CHECK,
 	IT_BUTTN,
 	IT_SELECT,
-	IT_TEXT
+	IT_TEXT,
+	IT_TAREA
 } INP_TYPE;
 
 struct s_input {
@@ -404,6 +405,38 @@ new_input (PARSER parser)
 	
 	if (input && get_value (parser, KEY_DISABLED, NULL,0)) {
 		input->disabled = TRUE;
+	}
+	
+	return input;
+}
+
+/*============================================================================*/
+INPUT
+new_tarea (PARSER parser, const char * beg, const char * end, UWORD nlines)
+{
+	INPUT    input   = NULL;
+	FRAME    frame   = parser->Frame;
+	TEXTBUFF current = &parser->Current;
+	
+	size_t size = (end - beg) + nlines * (sizeof(WCHAR*) / sizeof(WCHAR));
+	UWORD  rows = get_value_unum (parser, KEY_ROWS, 0);
+	UWORD  cols = get_value_unum (parser, KEY_COLS, 0);
+	char   name[100];
+	
+	if (!current->form) {
+		current->form = new_form (frame, NULL, NULL, NULL);
+	}
+	get_value (parser, KEY_NAME, name, sizeof(name));
+	input = _alloc (IT_TAREA, current, name);
+	
+	input->disabled = get_value_exists (parser, KEY_DISABLED);
+	input->readonly = get_value_exists (parser, KEY_READONLY);
+	
+	if (!rows) rows = 5;
+	if (!cols) cols = 40;
+	
+	if (edit_init (input, current, cols, rows, size)) {
+		edit_feed (input, frame->Encoding, beg, end);
 	}
 	
 	return input;
@@ -785,6 +818,7 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 			}
 			break;
 		
+		case IT_TAREA:
 		case IT_TEXT: {
 			FORM form = input->Form;
 			if (form->TextActive && form->TextActive != input) {
@@ -1068,7 +1102,14 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 13: /* enter/return */
-			if (edit_rowln (input, form->TextCursrY)) {
+			if (input->Type == IT_TAREA) {
+				if (edit_crlf (input, form->TextCursrX, form->TextCursrY)) {
+					scrl = -form->TextCursrX;
+					lift = +1;
+				} else {
+					word = NULL;
+				}
+			} else if (edit_rowln (input, form->TextCursrY)) {
 				form_activate (form);
 				form->TextActive = NULL;
 			} else {

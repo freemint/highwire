@@ -6,6 +6,7 @@ void * new_form (FRAME, char * target, char * action, const char * method);
 void form_finish (TEXTBUFF);
 
 INPUT new_input (PARSER);
+INPUT new_tarea (PARSER, const char * beg, const char * end, UWORD nlines);
 
 BOOL input_isEdit (INPUT);
 void input_draw   (INPUT, WORD x, WORD y);
