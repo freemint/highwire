@@ -506,7 +506,22 @@ render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		parser->Frame->base_target = get_value_str (parser, KEY_TARGET);
+		char output[HW_PATH_MAX];
+		if (get_value (parser, KEY_HREF, output, sizeof(output))) {
+			LOCATION base = new_location (output, parser->Frame->Location);
+			if (base) {
+				free_location (&parser->Frame->BaseHref);
+				parser->Frame->BaseHref = base;
+			}
+		} else {
+			char * target = get_value_str (parser, KEY_TARGET);
+			if (target) {
+				if (parser->Frame->base_target) {
+					free (parser->Frame->base_target);
+				}
+				parser->Frame->base_target = target;
+			}
+		}
 	}
 	return flags;
 }
@@ -607,7 +622,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 		char snd_file[HW_PATH_MAX];
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
-			new_loader_job (snd_file, parser->Frame->Location, NULL);
+			new_loader_job (snd_file, parser->Frame->BaseHref, NULL);
 		}
 	}
 	return flags;
@@ -1327,7 +1342,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		if (get_value (parser, KEY_SRC, img_file, sizeof(img_file))) {
 			url_correct (img_file);
 		}
-		new_image (frame, current, img_file, frame->Location,
+		new_image (frame, current, img_file, frame->BaseHref,
 		           get_value_size (parser, KEY_WIDTH),
 		           get_value_size (parser, KEY_HEIGHT),
 		           get_value_size (parser, KEY_VSPACE),

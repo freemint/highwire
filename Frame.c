@@ -25,6 +25,7 @@ new_frame (LOCATION loc, TEXTBUFF current,
 
 	frame->Container    = NULL;
 	frame->Location     = location_share (loc);
+	frame->BaseHref     = location_share (loc);
 	frame->Encoding     = encoding & 0x7Fu;
 	frame->ForceEnc     = ((encoding & 0x80u) != 0);
 	frame->Language     = LANG_Unknown;
@@ -77,6 +78,7 @@ delete_frame (FRAME * p_frame)
 		if (frame->first_named_location)
 			destroy_named_location_structure (frame->first_named_location);
 		free_location (&frame->Location);
+		free_location (&frame->BaseHref);
 	
 		if (frame->base_target)
 			free (frame->base_target);

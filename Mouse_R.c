@@ -209,7 +209,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 					check_mouse_position (mx, my);
 				}
 			} else {
-				LOCATION loc = frame->Location;
+				LOCATION loc = frame->BaseHref;
 				if (state & K_ALT) {
 					cont = new_hwWind (link->address, "", NULL)->Pane;
 				} else if (link->u.target) {

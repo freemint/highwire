@@ -476,6 +476,7 @@ typedef struct {
 struct frame_item {
 	CONTAINR Container;
 	LOCATION Location;
+	LOCATION BaseHref;
 	ENCODING Encoding;
 	BOOL     ForceEnc; /* don't use encoding from meta tag */
 	LANGUAGE Language;
