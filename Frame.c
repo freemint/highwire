@@ -52,10 +52,10 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	               page_margin, background_colour);
 	
 	if (margin_w >= 0) {
-		frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin_w;
+		frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin_w;
 	}
 	if (margin_h >= 0) {
-		frame->Page.Box.Margin.Top = frame->Page.Box.Margin.Bot = margin_h;
+		frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot = margin_h;
 	}
 	
 	if (frame->MimeType == MIME_TXT_PLAIN) {

@@ -78,12 +78,19 @@ dombox_dtor (DOMBOX * This)
 void
 dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 {
+	long x1 = x + This->Margin.Lft;
+	long x2 = x - This->Margin.Rgt + This->Rect.W -1;
+	long y1 = y + This->Margin.Top;
+	long y2 = y - This->Margin.Bot + This->Rect.H -1;
+	
 	if (This->BorderWidth) {
 		if (This->BorderColor >= 0) {
 			short n = This->BorderWidth;
 			PXY b[5];
-			b[1].p_x = b[2].p_x = (b[3].p_x = b[0].p_x = x) + This->Rect.W -1;
-			b[3].p_y = b[2].p_y = (b[1].p_y = b[0].p_y = y) + This->Rect.H -1;
+			b[3].p_x = b[0].p_x = x1;
+			b[1].p_x = b[2].p_x = x2;
+			b[1].p_y = b[0].p_y = y1;
+			b[3].p_y = b[2].p_y = y2;
 			vsl_color (vdi_handle, This->BorderColor);
 			while(1) {
 				b[4] = b[0];
@@ -94,27 +101,27 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			}
 		} else { /* 3D */
 			GRECT b;
-			b.g_x = x;
-			b.g_y = y;
-			b.g_w = This->Rect.W;
-			b.g_h = This->Rect.H;
+			b.g_x = x1;
+			b.g_y = y1;
+			b.g_w = x2 - x1 +1;
+			b.g_h = y2 - y1 +1;
 			if (This->BorderColor == -1) { /* outset */
 				draw_border (&b, G_WHITE, G_LBLACK, This->BorderWidth);
 			} else { /* inset */
 				draw_border (&b, G_LBLACK, G_WHITE, This->BorderWidth);
 			}
 		}
+		x1 += This->BorderWidth;
+		x2 -= This->BorderWidth;
+		y1 += This->BorderWidth;
+		y2 -= This->BorderWidth;
 	}
 	if (This->Backgnd >= 0) {
 		PXY p[2];
-		long xx = x + This->BorderWidth;
-		long yy = y + This->BorderWidth;
-		p[0].p_x = ((long)clip->g_x >= xx ? clip->g_x : xx);
-		p[0].p_y = ((long)clip->g_y >= yy ? clip->g_y : yy);
-		xx = x - This->BorderWidth + This->Rect.W -1;
-		yy = y - This->BorderWidth + This->Rect.H -1;
-		p[1].p_x = (xx <= 0x7FFFL ? xx : 0x7FFF);
-		p[1].p_y = (yy <= 0x7FFFL ? yy : 0x7FFF);
+		p[0].p_x = ((long)clip->g_x >= x1 ? clip->g_x : x1);
+		p[0].p_y = ((long)clip->g_y >= y1 ? clip->g_y : y1);
+		p[1].p_x = (x2 <= 0x7FFFL ? x2 : 0x7FFF);
+		p[1].p_y = (y2 <= 0x7FFFL ? y2 : 0x7FFF);
 		if (p[0].p_x > p[1].p_x || p[0].p_y > p[1].p_y) {
 			return;
 		}

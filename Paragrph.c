@@ -344,7 +344,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 		}
 
 		offset -= word->space_width;
-		offset += hanging;
+		offset += hanging + dombox_LftDist (&par->Box);
 
 		if (blocked)
 			offset += blocker->L.width;
@@ -607,14 +607,14 @@ paragraph_extend (WORDITEM word)
 /*============================================================================*/
 void
 content_setup (CONTENT * content, TEXTBUFF current,
-               DOMBOX * parent, BOXCLASS class, short margns, short backgnd)
+               DOMBOX * parent, BOXCLASS class, short padding, short backgnd)
 {
 	dombox_ctor (&content->Box, parent, class);
 	content->Box.Backgnd = backgnd;
 	content->Alignment   = ALN_LEFT;
-	if (margns) {
-		content->Box.Margin.Top = content->Box.Margin.Bot =
-		content->Box.Margin.Lft = content->Box.Margin.Rgt = margns;
+	if (padding) {
+		content->Box.Padding.Top = content->Box.Padding.Bot =
+		content->Box.Padding.Lft = content->Box.Padding.Rgt = padding;
 	}
 	if (current) {
 		current->parentbox = &content->Box;
@@ -717,7 +717,7 @@ content_minimum (CONTENT * content)
 		paragraph = paragraph->next_paragraph;
 	}
 	
-	min_width += content->Box.Margin.Lft + content->Box.Margin.Rgt;
+	min_width += dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
 	
 	return (content->Box.MinWidth = min_width);
 }
@@ -737,7 +737,9 @@ content_maximum (CONTENT * content)
 	while (paragraph) {
 		if (!paragraph->Box.MaxWidth) {
 			struct word_item * word = paragraph->item;
-			long width = paragraph->Indent + paragraph->Rindent;
+			long width = paragraph->Indent + paragraph->Rindent
+			           + dombox_LftDist (&paragraph->Box)
+			           + dombox_RgtDist (&paragraph->Box);
 			while (word) {
 				BOOL ln_brk = word->line_brk;
 				width += word->word_width;
@@ -755,7 +757,9 @@ content_maximum (CONTENT * content)
 		}
 		paragraph = paragraph->next_paragraph;
 	}
-	return (max_width + content->Box.Margin.Lft + content->Box.Margin.Rgt);
+	max_width += dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
+	
+	return (content->Box.MaxWidth = max_width);
 }
 
 
@@ -765,16 +769,17 @@ long
 content_calc (CONTENT * content, long set_width)
 {
 	PARAGRPH paragraph = content->Item;
-	long     height    = content->Box.Margin.Top;
+	long     height    = dombox_TopDist (&content->Box);
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 	
 	content->Box.Rect.W = set_width;
-	set_width     -= content->Box.Margin.Lft + content->Box.Margin.Rgt;
+	set_width -= dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
 	
 	while (paragraph) {
 		long par_width = set_width - paragraph->Indent - paragraph->Rindent;
 		long blk_width = set_width - blocker.L.width - blocker.R.width;
-		paragraph->Box.Rect.X = content->Box.Margin.Lft + paragraph->Indent;
+		paragraph->Box.Rect.X = paragraph->Indent
+		                      + dombox_LftDist (&content->Box);
 		paragraph->Box.Rect.Y = height;
 
 		if (paragraph->Box.MinWidth > blk_width) {
@@ -871,7 +876,9 @@ content_calc (CONTENT * content, long set_width)
 	if (height < blocker.R.bottom) {
 		 height = blocker.R.bottom;
 	}
-	return (content->Box.Rect.H = height + content->Box.Margin.Bot);
+	height += dombox_BotDist (&content->Box);
+	
+	return (content->Box.Rect.H = height);
 }
 
 
