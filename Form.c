@@ -653,14 +653,14 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 						radio->g_h = c_w->word_height + c_w->word_tail_drop;
 						if (check->Paragraph != input->Paragraph) {
 							DOMBOX * box = &check->Paragraph->Box;
-							long     x   = box->Rect.X + check->Paragraph->Indent;
+							long     x   = box->Rect.X;
 							long     y   = box->Rect.Y;
 							while ((box = box->Parent) != NULL) {
 								x += box->Rect.X;
 								y += box->Rect.Y;
 							}
 							box = &input->Paragraph->Box;
-							x  -= box->Rect.X + input->Paragraph->Indent;
+							x  -= box->Rect.X;
 							y  -= box->Rect.Y;
 							while ((box = box->Parent) != NULL) {
 								x -= box->Rect.X;
@@ -691,7 +691,7 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 			if (sel && sel->NumItems > 0) {
 				WORDITEM word   = input->Word;
 				DOMBOX * box = &input->Paragraph->Box;
-				long     x   = word->h_offset + input->Paragraph->Indent;
+				long     x   = word->h_offset;
 				long     y   = word->line->OffsetY;
 				do {
 					x += box->Rect.X;

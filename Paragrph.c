@@ -66,9 +66,8 @@ vTab_MinWidth (DOMBOX * This)
 	if (This->MinWidth < wrd_width) {
 		 This->MinWidth = wrd_width;
 	}
-	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This)
-	                + paragraph->Indent;
-	return This->MinWidth;
+	
+	return (This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This));
 }
 
 /*----------------------------------------------------------------------------*/
@@ -88,12 +87,11 @@ vTab_MaxWidth (DOMBOX * This)
 			if (This->MaxWidth < width) {
 				 This->MaxWidth = width;
 			}
-			width = paragraph->Indent;
+			width = 0;
 		}
 	}
-	This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This)
-	                + paragraph->Indent;
-	return This->MaxWidth;
+	
+	return (This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This));
 }
 
 
@@ -128,9 +126,8 @@ new_paragraph (TEXTBUFF current)
 	
 	current->word = NULL;
 	
-	paragraph->item   = new_word (current, FALSE);
-	paragraph->Line   = NULL;
-	paragraph->Indent = 0;
+	paragraph->item = new_word (current, FALSE);
+	paragraph->Line = NULL;
 	paragraph->paragraph_code = PAR_NONE;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
@@ -185,7 +182,6 @@ add_paragraph (TEXTBUFF current, short vspace)
 	
 	if (!paragraph) {
 		PARAGRPH copy_from = current->paragraph;
-		WORD     indent    = 0;
 		
 		paragraph = malloc (sizeof (struct paragraph_item));
 		
@@ -194,9 +190,8 @@ add_paragraph (TEXTBUFF current, short vspace)
 		current->paragraph        = paragraph;
 		paragraph->next_paragraph = NULL;
 		
-		paragraph->item   = current->word;
-		paragraph->Line   = NULL;
-		paragraph->Indent = indent;
+		paragraph->item = current->word;
+		paragraph->Line = NULL;
 		
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
@@ -286,10 +281,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 			width = This->MinWidth;
 		}
 	}
-	int_width = width -= dombox_LftDist (This) + dombox_RgtDist (This)
-	                     + par->Indent;
-	This->Rect.X += par->Indent;
-	This->Rect.H =  dombox_TopDist (This);
+	int_width    = width -= dombox_LftDist (This) + dombox_RgtDist (This);
+	This->Rect.H = dombox_TopDist (This);
 	
 	if (par->Box.TextIndent < 0) {
 		hanging  = 0;

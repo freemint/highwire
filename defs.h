@@ -523,7 +523,7 @@ typedef struct word_line {
 
 struct word_item {
 	const UWORD _priv; /* * for internal use, don't touch! */
-	UWORD     length;  /* number of 16-bit characters in item */
+	UWORD    length;   /* number of 16-bit characters in item */
 	WCHAR  * item;
 	TEXTATTR attr;
 	FONT     font;
@@ -538,7 +538,7 @@ struct word_item {
 	struct url_link  * link;
 	IMAGE    image;
 	INPUT    input;
-	WORDLINE line;  /* back reference */
+	WORDLINE line;     /* back reference */
 	WORDITEM next_word;
 };
 
@@ -546,7 +546,6 @@ struct paragraph_item {
 	DOMBOX   Box;
 	WORDITEM item;
 	WORDLINE Line;    /* list of word lines */
-	WORD     Indent;  /* horizontal offset to the left side */
 	PARAGRAPH_CODE paragraph_code;
 	PARAGRPH next_paragraph;
 };
