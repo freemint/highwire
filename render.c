@@ -807,27 +807,32 @@ static UWORD
 render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if (flags & PF_START) {
+		char out[100];
 		const char * line = *text;
 		
-		while (isspace (*line)) line++;
-		
-		if (*line == '<') {        /* skip leading '<!--' */
-			if (*(++line) == '!') {
+			if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+			     mime_byString (out, NULL) == MIME_TXT_CSS) &&
+			    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
+			     strstr (out, "all") || strstr (out, "screen"))) {
+			while (isspace (*line)) line++;
+			
+			if (*line == '<') {        /* skip leading '<!--' */
+				if (*(++line) == '!') {
+					while (*(++line) == '-');
+				} else {
+					line--;
+				}
+			}
+			if (*line != '<') {
+				line = parse_css (parser, line, NULL);
+			}
+			if (*line == '-') {        /* skip trailing '-->' */
 				while (*(++line) == '-');
-			} else {
-				line--;
+				if (*line == '>') {
+					while (isspace (*(++line)));
+				}
 			}
 		}
-		if (*line != '<') {
-			line = parse_css (parser, line, NULL);
-		}
-		if (*line == '-') {        /* skip trailing '-->' */
-			while (*(++line) == '-');
-			if (*line == '>') {
-				while (isspace (*(++line)));
-			}
-		}
-		
 		/* should be positioned just before the next tag now */
 		do {
 			BOOL slash;
@@ -840,6 +845,39 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		} while (*line);
 	
 		*text = line;
+	}
+	return flags;
+}
+
+
+/*------------------------------------------------------------------------------
+ * Logical Reference
+*/
+static UWORD
+render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	char out[HW_PATH_MAX];
+	UNUSED (text);
+	
+	if ((flags & PF_START) && get_value (parser, KEY_REL, out, sizeof(out))) {
+		if (stricmp (out, "StyleSheet") == 0) {
+			if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+			     mime_byString (out, NULL) == MIME_TXT_CSS)
+		       && (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
+			        strstr (out, "all") || strstr (out, "screen"))
+			    && get_value (parser, KEY_HREF, out, sizeof(out))) {
+				LOCATION loc = new_location (out, parser->Frame->BaseHref);
+				if (PROTO_isLocal (loc->Proto)) {
+					size_t size = 0;
+					char * file = load_file (loc, &size, &size);
+					if (file) {
+						if (size > 0) parse_css (parser, NULL, file);
+						else          free (file);
+					}
+				}
+				free_location (&loc);
+			}
+		}
 	}
 	return flags;
 }
