@@ -1,4 +1,9 @@
-(non-public of Aug. 12, 2003)
+(non-public of Aug. 18, 2003)
+
+- Added functions for GrayScale and TrueColor
+  images, only a rough basic implementation yet.
+
+- Support for jpg and png enabled (gcc only yet).
 
 - Fixed the cache screwing up bug which occured
   when storing of files failed for some reason
