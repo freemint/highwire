@@ -9,7 +9,7 @@
 #include "Table.h"
 #include "Form.h"
 #include "Location.h"
-#include "Loader.h"  /* for mime types */
+#include "mime.h"
 #include "fontbase.h"
 
 

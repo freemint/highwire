@@ -8,7 +8,7 @@
 
 #include "defs.h"
 #include "Location.h"
-#include "Loader.h" /* for MIME types */
+#include "mime.h"
 #include "http.h"
 #include "inet.h"
 #include "token.h"  /* needed for and before scanner.h */
