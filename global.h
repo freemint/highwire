@@ -161,8 +161,6 @@ WORDITEM paragrph_word    (PARAGRPH, long x, long y, long area[4]);
 GRECT    paragraph_extend (WORDITEM);
 void     content_setup     (CONTENT *, TEXTBUFF, DOMBOX * parent, BOXCLASS,
                             short margins, short backgnd);
-long     content_minimum   (CONTENT *);
-long     content_maximum   (CONTENT *);
 long     content_calc      (CONTENT *, long width);
 void     content_stretch   (CONTENT *, long height, V_ALIGN);
 PARAGRPH content_paragraph (CONTENT *, long x, long y, long area[4]);
