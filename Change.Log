@@ -39,7 +39,7 @@
 - Improved handling of forms without a defined
   action.
 
-- Bug #0117 resolved.
+- Bugs #0116, #0117 resolved.
 
 __________________________________________________
 Changes in V. 0.1.7 release  of March 25, 2004:
