@@ -1,3 +1,22 @@
+(non-public of May 18, 2003)
+
+- implemented handling of shift + left/right
+  cursor keys (page-wise horizontal scrolling).
+
+- added a fix for <meta http-equiv="refresh" ..>
+  tags with large refresh URLs.
+
+- corrected wrong setting of hanging indentions in
+  and after lists.
+
+- added resetting of font characteristics after
+  tables and title tags, this was messing up the
+  rendere while calculating text word widths (only
+  rarely seen on very simple pages).
+
+- Bugs #0103, #0106, #0108 resolved.
+
+__________________________________________________
 Changes in V. 0.1.2 release  of May 12, 2003:
 
 - The new implemented navigation bar allows easy
