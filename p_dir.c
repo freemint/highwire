@@ -129,6 +129,8 @@ parse_dir (void * arg, long invalidated)
 		while (Dreaddir (sizeof(buf), dh, buf) == E_OK) {
 			strcpy (p_nm, name);
 			xret = Fxattr (0, path, &xattr);
+#elif defined (LATTICE)
+		while (Dxreaddir (sizeof(buf), dh, buf, (long*)&xattr, &xret) == E_OK) {
 #else
 		while (Dxreaddir (sizeof(buf), dh, buf, &xattr, &xret) == E_OK) {
 #endif
