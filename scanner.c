@@ -496,7 +496,7 @@ static const struct COLORNAME color[] = {
 	{"gainsboro",       0xDCDCDCL}, {"ghostwhite",    0xF8F8FFL},
 	{"gold",            0xFFD700L}, {"goldenrod",     0xDAA520L},
 	{"gray",            0x808080L}, {"green",         0x008000L},
-	{"greenyellow",     0xADFF2FL},
+	{"greenyellow",     0xADFF2FL}, {"grey",          0x808080L},
 	{"honeydew",        0xF0FFF0L}, {"hotpink",       0xFF69B4L},
 	{"indianred",       0xCD5C5CL}, {"indigo",        0x4B0082L},
 	{"ivory",           0xFFFFF0L},
