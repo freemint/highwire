@@ -327,18 +327,22 @@ image_job (void * arg, long invalidated)
 	if (invalidated) {
 		containr_notify (frame->Container, HW_ActivityEnd, NULL);
 		return FALSE;
-	}
 	
-	/* search for ready to use bitmaps ***
-	*/
-	if (img->set_w && img->set_h) {
-		hash = img_hash (img->disp_w, img->disp_h, img->backgnd);
-		if ((cached = cache_lookup (loc, hash, &hash)) != NULL) {
-			if ((char)(hash >>24) == 0xFF) {
+	} else {
+		struct s_cache_info info;
+		long    ident = (img->set_w <= 0 || img->set_h <= 0 ? 0
+		                 : img_hash (img->disp_w, img->disp_h, img->backgnd));
+		CRESULT res   = cache_query (loc, ident, &info);
+		if (res & CR_MATCH) {
+			cached = info.Object;
+		
+		} else if (res & CR_FOUND) {
+			ident = info.Ident;
+			if ((char)(ident >>24) == 0xFF) {
 				img->backgnd = -1;
 			}
-			if (hash != img_hash (img->disp_w, img->disp_h, img->backgnd)) {
-				cached = NULL;
+			if (ident == img_hash (img->disp_w, img->disp_h, img->backgnd)) {
+				cached = info.Object;
 			}
 		}
 	}	

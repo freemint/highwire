@@ -12,7 +12,7 @@ CACHED   cache_bound   (CACHED, LOCATION * exchange);
 CACHEOBJ cache_release (CACHED *, BOOL erase);
 size_t   cache_clear   (CACHED this_n_all);
 
-BOOL     cache_setup  (const char * dir);
+BOOL     cache_setup   (const char * dir);
 
 typedef enum {
 	CR_NONE  = 0,
@@ -38,7 +38,9 @@ typedef struct s_cache_info {
 	size_t   Size;
 } * CACHEINF;
 
-size_t cache_info (size_t * size, CACHEINF *);
+CRESULT cache_query (LOCATION, long ident, CACHEINF);
+
+size_t  cache_info  (size_t * size, CACHEINF *);
 
 
 #endif /*__CACHE_H__*/

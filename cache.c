@@ -102,6 +102,16 @@ tree_node (ULONG hash)
 }
 
 /*----------------------------------------------------------------------------*/
+static CACHEITEM *
+tree_slot (LOCATION loc)
+{
+	ULONG     hash  = location_Hash (loc);
+	CACHENODE node  = tree_node (hash);
+	UWORD     idx   = (hash >> node->Level4x) & 0xF;
+	return &node->Array[idx].Item;
+}
+
+/*----------------------------------------------------------------------------*/
 static CACHEITEM
 tree_item (LOCATION loc)
 {
@@ -472,10 +482,10 @@ cache_assign (LOCATION src, void * data, size_t size,
 	CACHEITEM citem = tree_item (src);
 	
 	if (!citem) {
-	/*	printf ("cache_assign(%s): not found!\n", src->FullName);*/
+		printf ("cache_assign(%s): not found!\n", src->FullName);
 	
 	} else if (citem->Object) {
-	/*	printf ("cache_assign(%s): already in use!\n", src->FullName);*/
+		printf ("cache_assign(%s): already in use!\n", src->FullName);
 	
 	} else {
 		if (__cache_dir) {
@@ -510,4 +520,59 @@ cache_assign (LOCATION src, void * data, size_t size,
 		}
 	}
 	return loc;
+}
+
+
+/*============================================================================*/
+CRESULT
+cache_query (LOCATION loc, long ident, CACHEINF info)
+{
+	CACHEITEM citem = *tree_slot (loc);
+	CRESULT   res_d = CR_NONE, res_m = CR_NONE;
+	
+	info->Source  = NULL;
+	info->Ident   = 0;
+	info->Used    = 0;
+	info->Local   = NULL;
+	info->Date    = 0;
+	info->Expires = 0;
+	info->Object  = NULL;
+	info->Size    = 0;
+	
+	while (citem) {
+		if (location_equal (loc, citem->Location)) {
+			if (!citem->Ident) {
+				if (citem->Object) {
+					info->Local   = citem->Object;
+					info->Date    = citem->Date;
+					info->Expires = citem->Expires;
+					res_d         = CR_LOCAL;
+				} else {
+					res_d         = CR_BUSY;
+				}
+				if (!ident || !info->Source) {
+					info->Source = citem->Location;
+				}
+				if (!ident || (res_m == CR_MATCH)) break;
+			
+			} else if (ident == citem->Ident || !info->Object) {
+				info->Object = citem->Object;
+				info->Ident  = citem->Ident;
+				info->Size   = citem->Size;
+				if (ident != citem->Ident) {
+					if (!ident || !info->Source) {
+						info->Source = citem->Location;
+					}
+					res_m     = CR_FOUND;
+				} else {
+					info->Source = citem->Location;
+					res_m     = CR_MATCH;
+					if (res_d) break;
+				}
+			}
+		}
+		citem = citem->NodeNext;
+	}
+	
+	return (res_d | res_m);
 }
