@@ -93,8 +93,8 @@ pc_raster_I8:
 	add.l		scale, (a7)
 	move.b	0(src,d3.w), d3 ; palette index
 	and.w		mask, d3
-	lsl.w		#1, d3
-	move.w	0(palette,d3.w), d0 ; pixel value
+	lsl.w		#2, d3
+	move.w	2(palette,d3.w), d0 ; pixel value
 	swap		mask  ;-> chunk counter
 	
 	moveq.l	#0x03, d3 ; chunks 0/1
