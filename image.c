@@ -1084,12 +1084,25 @@ raster_I4 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	
+#if 1
+	BYTE * dth    = info->DthBuf;
+	WORD   err[3] = { 0, 0, 0 };
+	
+	CHAR   buf[16];
+	short  n   = 16;
+	CHAR * tmp = buf;
+	do {
+		UWORD idx = info->RowBuf[x >>16];
+		*(tmp++)  = dither_true ((CHAR*)&info->Pixel[idx] +1, err, &dth);
+		
+#else
 	CHAR   buf[16];
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
 		UWORD idx = info->RowBuf[x >>16];
 		*(tmp++)  = *(CHAR*)&info->Pixel[idx];
+#endif
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -1885,9 +1898,18 @@ cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
+#if 1 /* store original RGB values for dithering */
+		if (!t--) {
+			*(pal++) = color_lookup ((~0xFFuL|backgnd), pixel_val);
+		} else {
+			ULONG rgb = ((((long)*r <<8) | *g) <<8) | *b;
+			*(pal++)  = rgb | ((long)pixel_val[remap_color (rgb)] <<24);
+		}
+#else
 		*(pal++) = color_lookup (!t-- ? (~0xFFuL|backgnd)
                                     : (((((long)*r <<8) | *g) <<8) | *b),
                                pixel_val);
+#endif
 		r += info->PalStep;
 		g += info->PalStep;
 		b += info->PalStep;
