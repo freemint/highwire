@@ -135,7 +135,7 @@ numerical (char * buf, char ** tail, short em, short ex)
 	UWORD  mean;
 	char * ptr;
 	long   size = strtol (buf, &ptr, 10);
-	if (size < 0 || ptr <= buf) {
+	if (ptr <= buf) {
 		if (tail) *tail = buf;
 		return -1;
 	}
@@ -424,9 +424,9 @@ leave_box (PARSER parser, HTMLTAG tag)
 	
 	} else{
 		PARAGRPH par = add_paragraph (current, 0);
-		current->parentbox = box = box->Parent;
-		dombox_adopt (box, &par->Box);
-		par->Box.TextAlign = box->TextAlign;
+		current->parentbox = box->Parent;
+		dombox_adopt (box->Parent, &par->Box);
+		par->Box.TextAlign = box->Parent->TextAlign;
 	}
 	return box;
 }
@@ -2263,42 +2263,24 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	TEXTBUFF current = &parser->Current;
-	UNUSED (text);
+	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		if (!current->tbl_stack || current->tbl_stack->WorkCell) {
-			char out[10];
-			WORD    width  = get_value_size  (parser, KEY_WIDTH);
-			WORD    color  = get_value_color (parser, KEY_BGCOLOR);
-			WORD    border = get_value_unum  (parser, KEY_BORDER, 0);
-			H_ALIGN align  = get_h_align     (parser, ALN_LEFT);
-			H_ALIGN fltng  = (!get_value (parser, CSS_FLOAT, out, sizeof(out))
-			                  ? ALN_NO_FLT :
-			                  !stricmp (out, "left")  ? ALN_LEFT  :
-			                  !stricmp (out, "right") ? ALN_RIGHT : ALN_NO_FLT);
-			table_start (parser, color, fltng,
-			             0, (width ? width : -1024/*100%*/), 0, 0, border, TRUE);
-			table_cell (parser, -1, align, ALN_TOP, 0, 0, 0, 0);
-			current->parentbox->HtmlCode = TAG_DIV;
-		}
-	} else if (current->tbl_stack && current->tbl_stack->isSpecial) {
-		DOMBOX * box = current->parentbox;
-		table_finish (parser);
-		font_switch (current->word->font, NULL);
-		
-		/* If there is only one child object the parent needs to inherit the
-		 * child's float attribute to get proper formatted.
-		*/
-		if (box->Floating == ALN_NO_FLT) {
-			DOMBOX * cld = box->ChildBeg;
-			if (cld == box->ChildEnd) {
-				box = box->Parent;
-				box->SetWidth = 0;
-				box->Floating = cld->Floating;
-			}
+		DOMBOX * box = group_box (parser, TAG_DIV, ALN_LEFT);
+		box->SetWidth = get_value_size (parser, KEY_WIDTH);
+	
+	} else {
+		DOMBOX * box = leave_box (parser, TAG_DIV);
+		if (box           && box->Floating           == ALN_NO_FLT &&
+		    box->ChildBeg && box->ChildBeg->Floating != ALN_NO_FLT &&
+		    box->ChildBeg == box->ChildEnd) {
+			/* If there is only one child object the parent needs to inherit *
+			 * the child's float attribute to get proper formatted.          */
+			box->Floating = box->ChildBeg->Floating;
+			dombox_MaxWidth (box);
 		}
 	}
+	
 	return (flags|PF_SPACE);
 }
 
