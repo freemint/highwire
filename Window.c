@@ -148,7 +148,7 @@ window_raise (WINDOW This, BOOL topNbot)
 			if ((This->Next->Prev = This->Prev) != NULL) {
 				This->Prev->Next = This->Next;
 			} else {
-				window_Top->Prev = This->Next;
+				window_Top       = This->Next;
 			}
 			This->Next = NULL;
 			This->Prev = bot;
