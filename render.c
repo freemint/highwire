@@ -2009,9 +2009,12 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		
 		/* Prevent a heading paragraph just behind a <LI> tag.
 		 */
-		if (!current->lst_stack ||
-		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
+		if (!current->lst_stack || !current->lst_stack->ListItem ||
+		    current->lst_stack->ListItem->item->next_word->next_word->next_word) {
 			par = add_paragraph (current, 2);
+			if (current->parentbox->BoxClass == BC_LIST) {
+				par->Box.Margin.Lft = current->lst_stack->Hanging;
+			}
 		}
 		
 		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
@@ -2169,10 +2172,13 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
 		 */
-		if (!current->lst_stack ||
-		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
+		if (!current->lst_stack || !current->lst_stack->ListItem ||
+		    current->lst_stack->ListItem->item->next_word->next_word->next_word) {
 			par = add_paragraph (current, 2);
 			par->Box.HtmlCode = TAG_P;
+			if (current->parentbox->BoxClass == BC_LIST) {
+				par->Box.Margin.Lft = current->lst_stack->Hanging;
+			}
 		}
 		
 		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
@@ -2430,7 +2436,9 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		short  counter = get_value_unum (parser, KEY_START, 1);
 		BULLET bullet  = list_bullet    (parser, LT_DECIMAL);
-		list_start (current, (bullet ? bullet : LT_DECIMAL), counter);
+		list_start (current, (bullet ? bullet : LT_DECIMAL), counter, TAG_OL);
+		css_box_styles  (parser, current->parentbox, ALN_LEFT);
+		css_text_styles (parser, current->font);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2451,7 +2459,9 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		BULLET bullet = (current->lst_stack
 		                 ? current->lst_stack->BulletStyle %3 +1 : LT_DISC);
-		list_start (current, list_bullet (parser, bullet), 0);
+		list_start (current, list_bullet (parser, bullet), 0, TAG_UL);
+		css_box_styles  (parser, current->parentbox, ALN_LEFT);
+		css_text_styles (parser, current->font);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2473,7 +2483,9 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		list_start (current, LT_DISC, 0);
+		list_start (current, LT_DISC, 0, TAG_MENU);
+		css_box_styles  (parser, current->parentbox, ALN_LEFT);
+		css_text_styles (parser, current->font);
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2508,6 +2520,14 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 		                                 current->lst_stack->Counter);
 		BULLET bullet = list_bullet (parser, current->lst_stack->BulletStyle);
 		list_marker (current, bullet, counter);
+		if (current->lst_stack->FontStk != current->font) {
+			fontstack_pop (current);
+		}
+		if (parser->hasStyle) {
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
+			css_text_styles (parser, current->font);
+		}
 		flags |= PF_FONT;
 	}
 	
@@ -2524,9 +2544,9 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		list_start (current, LT_NONE, 0);
+		list_start (current, LT_NONE, 0, TAG_DL);
 		if (parser->hasStyle) {
-			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
+			css_box_styles  (parser, current->parentbox, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		}
 	
@@ -2548,10 +2568,9 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START && current->lst_stack){
 		PARAGRPH paragraph = add_paragraph (current, 0);
-		paragraph->Box.TextAlign = ALN_LEFT;
-		paragraph->Indent    = current->lst_stack->Indent;
-		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
-		if (current->lst_stack->FontStk !=  current->font) {
+		paragraph->Box.TextAlign  = ALN_LEFT;
+		paragraph->Box.Margin.Lft = 0;
+		if (current->lst_stack->FontStk != current->font) {
 			fontstack_pop (current);
 		}
 		if (parser->hasStyle) {
@@ -2574,11 +2593,9 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START && current->lst_stack){
 		PARAGRPH paragraph = add_paragraph (current, 0);
-		paragraph->Box.TextAlign = ALN_LEFT;
-		paragraph->Indent    = current->lst_stack->Indent
-		                     + current->lst_stack->Hanging;
-		paragraph->Box.Backgnd = get_value_color (parser, KEY_BGCOLOR);
-		if (current->lst_stack->FontStk !=  current->font) {
+		paragraph->Box.TextAlign  = ALN_LEFT;
+		paragraph->Box.Margin.Lft = current->lst_stack->Hanging;
+		if (current->lst_stack->FontStk != current->font) {
 			fontstack_pop (current);
 		}
 		if (parser->hasStyle) {

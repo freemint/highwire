@@ -185,12 +185,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 	
 	if (!paragraph) {
 		PARAGRPH copy_from = current->paragraph;
-		WORD     indent    = copy_from->Indent;
-		
-		if (copy_from->paragraph_code == PAR_LI &&
-		    copy_from->Box.TextIndent < 0) {
-			indent -= copy_from->Box.TextIndent;
-		}
+		WORD     indent    = 0;
 		
 		paragraph = malloc (sizeof (struct paragraph_item));
 		

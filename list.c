@@ -8,82 +8,50 @@
 
 /*============================================================================*/
 void
-list_start (TEXTBUFF current, BULLET bullet, short counter)
+list_start (TEXTBUFF current, BULLET bullet, short counter, short type)
 {
 	LSTSTACK list = malloc (sizeof (struct list_stack_item));
-	PARAGRPH par  = current->paragraph;
+	DOMBOX * nest = (current->parentbox->BoxClass == BC_LIST
+	                 ? current->parentbox : NULL);
+	DOMBOX * box  = create_box (current, BC_LIST, (nest ? 0 : 2));
 	
-	list->FontStk = fontstack_push (current, -1);
-	list->Hanging = current->word->font->SpaceWidth *5;
+	box->HtmlCode = list->Type = type;
 	
-	if (!current->lst_stack) {
-		par = add_paragraph (current, 2);
-		list->Indent = par->Indent;
-	
-	} else if (par->paragraph_code != PAR_LI ||
-	           current->lst_stack->Spacer->next_word != current->prev_wrd) {
-		par = add_paragraph (current, 0);
-		list->Indent = par->Indent - par->Box.TextIndent;
-	
-	} else { /* reuse actual (empty) <li> line */
-		list->Indent = par->Indent - par->Box.TextIndent;
+	if (nest) {
+		PARAGRPH last = current->lst_stack->ListItem;
+		if (last && last->Box.Sibling == box
+		    && !last->item->next_word->next_word) {
+			last->Box.SetWidth = dombox_MinWidth (&last->Box);
+			last->Box.Floating = FLT_MASK|ALN_CENTER;
+		}
+		box->Margin.Lft = current->lst_stack->Hanging;
 	}
+	list->BulletStyle = bullet;
+	list->Counter     = counter;
+	list->Hanging     = current->word->font->SpaceWidth *5;
+	list->ListItem    = NULL;
+	list->FontStk     = current->font;
 	
-	par->Box.BoxClass   =  BC_MIXED;
-	par->Box.HtmlCode   =  TAG_LI;
-	par->Box.TextAlign  =  ALN_LEFT;
-	par->Box.TextIndent -= list->Hanging;
-
 	list->next_stack_item = current->lst_stack;
 	current->lst_stack    = list;
 	
-	list->BulletStyle = bullet;
-	list->Counter     = counter;
-	list->Spacer      = current->word;
-	
-	if (bullet > LT_NONE) {
-		*(current->text++) = font_Nobrk (current->word->font);
-		new_word (current, TRUE);
-		list->Spacer->word_width = list->Hanging;
-	}
+	current->paragraph->Box.Margin.Lft = list->Hanging;
 }
 
 /*============================================================================*/
 void
 list_finish (TEXTBUFF current)
 {
-	PARAGRPH par   = current->paragraph;
-	LSTSTACK list  = current->lst_stack;
-	current->lst_stack = list->next_stack_item;
-	
-	if (list->FontStk !=  current->font) {
+	LSTSTACK list = current->lst_stack;
+	if (list->FontStk != current->font) {
 		fontstack_pop (current);
 	}
-	fontstack_pop (current);
-	
-	if (!current->lst_stack) {
-		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
-			current->prev_wrd->next_word = NULL;
-			destroy_word_list (par->item, NULL);
-			par->item         = current->word;
-			current->prev_wrd = NULL;
-		} else {
-			par = add_paragraph (current, 2);
+	if (leave_box (current, list->Type)) {
+		if ((current->lst_stack = list->next_stack_item) == NULL) {
+			add_paragraph (current, 2);
 		}
-	} else {
-		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
-			current->lst_stack->Spacer = list->Spacer;
-			list->Indent -= -par->Box.TextIndent;
-		} else {
-			par = add_paragraph (current, 0);
-		}
-/* This one seems to be wrong:
-		par->Box.TextIndent = -current->lst_stack->Hanging;
-*/
+		free (list);
 	}
-	par->Indent = list->Indent;
-	
-	free (list);
 }
 
 
@@ -293,25 +261,16 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	char buffer[80] = "", * text = buffer;
 	WORD mapping    = current->word->font->Base->Mapping;
 	LSTSTACK list   = current->lst_stack;
-	PARAGRPH par    = current->paragraph;
 	WORD     width  = list->Hanging;
 	WORD     spc_wd = (current->word->font->SpaceWidth +1) /2;
 	
-	if (!(list->Spacer == current->prev_wrd && /* item is empty and...*/
-	      (par->paragraph_code != PAR_LI ||    /* ...first item of the list  */
-	       list->Spacer != par->item))) {      /* ...no nesting bullet befor */
-		par = add_paragraph (current, 0);
-		par->Box.BoxClass   = BC_MIXED;
-		par->Box.HtmlCode   = TAG_LI;
-		par->Indent         =  list->Indent;
-		par->Box.TextIndent = -list->Hanging;
-		
-		list->Spacer = current->word;
-		*(current->text++) = font_Nobrk (current->word->font);
-		new_word (current, TRUE);
-	}
-	list->Spacer->word_width = current->word->font->SpaceWidth;
+	PARAGRPH par = add_paragraph (current, 0);
+	par->Box.Margin.Lft = 0;
+	par->Box.TextIndent = -list->Hanging;
 	par->paragraph_code = PAR_LI;
+	list->ListItem = par;
+	*(current->text++) = font_Nobrk (current->word->font);
+	new_word (current, TRUE);
 	
 	switch (bullet)
 	{
@@ -394,5 +353,5 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	}
 	new_word (current, TRUE);
 	width -= (current->prev_wrd->word_width += spc_wd);
-	list->Spacer->word_width = (spc_wd > width ? spc_wd : width);
+	par->item->word_width = (spc_wd > width ? spc_wd : width);
 }

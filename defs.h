@@ -324,13 +324,14 @@ typedef struct {
 } TBLR;
 
 typedef enum {
-	BC_MAIN = 0, /* BODY                   */
-	BC_TABLE,    /* TABLE                  */
-	BC_STRUCT,   /* TD, TH, ..             */
-	BC_GROUP,    /* DIV, DL,OL, UL, Hn, .. */
-	BC_MIXED,    /* LI, ..                 */
-	BC_TXTPAR,   /* P, ..                  */
-	BC_SINGLE    /* IMG, HR, ..            */
+	BC_MAIN = 0, /* BODY                        */
+	BC_TABLE,    /* TABLE                       */
+	BC_STRUCT,   /* TD, TH                      */
+	BC_GROUP,    /* DIV, CENTER, BLOCKQUOTE, .. */
+	BC_LIST,     /* DL, OL, UL, MENU            */
+	BC_MIXED,    /* LI, ..                      */
+	BC_TXTPAR,   /* P, ..                       */
+	BC_SINGLE    /* IMG, HR, ..                 */
 } BOXCLASS;
 
 typedef struct blocking_area * BLOCKER;
@@ -599,11 +600,11 @@ typedef struct parse_sub {
 typedef struct parse_sub * TEXTBUFF;
 
 struct list_stack_item {
+	WORD     Type;
 	BULLET   BulletStyle;
 	WORD     Counter;
-	short    Indent;  /* horizontal offset to the left side */
-	short    Hanging; /* left shift value for <li> bullet/number */
-	WORDITEM Spacer;  /* item just befor the bullet/number of actual <li> line */
+	short    Hanging;  /* left shift value for <li> bullet/number  */
+	PARAGRPH ListItem; /* last <li> which contains a bullet/number */
 	FNTSTACK FontStk;
 	LSTSTACK next_stack_item;
 };
