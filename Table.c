@@ -320,7 +320,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	parser->Current.parentbox = &cell->Content.Box;
 	cell->Content.Item = new_paragraph (&parser->Current);
 	
-	cell->Content.Alignment  = cell->Content.Item->alignment = h_align;
+	cell->Content.Box.TextAlign = cell->Content.Item->alignment = h_align;
 	cell->AlignV             = v_align;
 	cell->c_Height           = (height <= 1024 ? height : 1024);
 	cell->c_Width            = (width  <= 1024 ? width  : 0);

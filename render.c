@@ -65,14 +65,14 @@ get_align (PARSER parser)
 {
 	FRAME frame = parser->Frame;
 	
-	if (frame->Page.Alignment == ALN_CENTER &&
+	if (frame->Page.Box.TextAlign == ALN_CENTER &&
 	    parser->Current.paragraph->alignment == ALN_CENTER) {
 		return (ALN_CENTER);
 	}
 	if (parser->Current.tbl_stack && parser->Current.tbl_stack->WorkCell) {
-		return (parser->Current.tbl_stack->WorkCell->Content.Alignment);
+		return (parser->Current.tbl_stack->WorkCell->Content.Box.TextAlign);
 	}
-	return (frame->Page.Alignment);
+	return (frame->Page.Box.TextAlign);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -2120,10 +2120,10 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 	add_paragraph (&parser->Current, 0);
 
 	if (flags & PF_START) {
-		frame->Page.Alignment                = ALN_CENTER;
+		frame->Page.Box.TextAlign            = ALN_CENTER;
 		parser->Current.paragraph->alignment = ALN_CENTER;
 	} else {
-		frame->Page.Alignment                = ALN_LEFT;
+		frame->Page.Box.TextAlign            = ALN_LEFT;
 		parser->Current.paragraph->alignment = get_align (parser);
 	}
 	
@@ -2527,9 +2527,9 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				floating = ALN_CENTER; /* patch for invalid key value */
 			} else if (parser->Current.parentbox->BoxClass == BC_STRUCT) {
 				/* workaround, needs to be replaced soon */
-				CONTENT * cont = (CONTENT*)parser->Current.parentbox;
-				if (cont->Alignment == ALN_CENTER || cont->Alignment == ALN_RIGHT) {
-					floating = cont->Alignment;
+				if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
+				    parser->Current.parentbox->TextAlign == ALN_CENTER) {
+					floating = parser->Current.parentbox->TextAlign;
 				}
 			} else if (parser->Current.paragraph->alignment == ALN_RIGHT ||
 			           parser->Current.paragraph->alignment == ALN_CENTER) {

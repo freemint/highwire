@@ -712,8 +712,8 @@ content_setup (CONTENT * content, TEXTBUFF current,
                DOMBOX * parent, BOXCLASS class, short padding, short backgnd)
 {
 	dombox_ctor (&content->Box, parent, class);
-	content->Box.Backgnd = backgnd;
-	content->Alignment   = ALN_LEFT;
+	content->Box.Backgnd   = backgnd;
+	content->Box.TextAlign = ALN_LEFT;
 	if (padding) {
 		content->Box.Padding.Top = content->Box.Padding.Bot =
 		content->Box.Padding.Lft = content->Box.Padding.Rgt = padding;

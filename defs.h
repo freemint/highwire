@@ -354,6 +354,7 @@ struct s_dombox {
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 	H_ALIGN  Floating;
+	H_ALIGN  TextAlign;
 };
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
@@ -548,7 +549,6 @@ struct paragraph_item {
 typedef struct {
 	DOMBOX   Box;
 	PARAGRPH Item;
-	H_ALIGN  Alignment;
 } CONTENT;
 
 struct frame_item {
