@@ -28,7 +28,8 @@ typedef struct s_history_priv * HISTORY;
 typedef struct {
 	char      * Name;
 	WORD        Size; /* width or height, depends on parent */
-	BOOL        Border;
+	WORD        BorderSize;
+	WORD        BorderColor;
 	SCROLL_CODE Scroll;
 	union {
 		WORD     ChildNum;
@@ -350,11 +351,12 @@ static HISTITEM *
 create_r (CONTAINR cont, HISTITEM * item, BOOL h_N_v)
 {
 	HISTITEM * next = item +1;
-	item->Size       = (h_N_v ? cont->ColSize : cont->RowSize);
-	item->Border     = cont->Border;
-	item->Scroll     = cont->Scroll;
-	item->Location   = NULL;
-	item->u.ChildNum = 0;
+	item->Size        = (h_N_v ? cont->ColSize : cont->RowSize);
+	item->BorderSize  = cont->Border_Size;
+	item->BorderColor = cont->Border_Colour;
+	item->Scroll      = cont->Scroll;
+	item->Location    = NULL;
+	item->u.ChildNum  = 0;
 	
 	if (cont->Mode == CNT_FRAME) {
 		if (cont->u.Frame) {
@@ -498,8 +500,9 @@ process_r (CONTAINR cont, HISTITEM * item, HISTENTR ** entr, UWORD * count)
 {
 	HISTITEM * next = item +1;
 	
-	cont->Border = item->Border;
-	cont->Scroll = item->Scroll;
+	cont->Border_Size   = item->BorderSize;
+	cont->Border_Colour = item->BorderColor;
+	cont->Scroll        = item->Scroll;
 	
 	if (item->Location) {
 		(*entr)->Target   = cont;
@@ -550,6 +553,7 @@ containr_process (CONTAINR cont, HISTORY hist, HISTORY prev,
 	}
 	process_r (cont, hist->List, &entr, &count);
 	containr_calculate (cont, NULL);
+	containr_notify (cont, HW_PageUpdated, &cont->Area);
 	
 	return (max_num - count);
 }
