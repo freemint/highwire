@@ -539,8 +539,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	while (box) {
 		long set_width = width;
 		BOOL floating  = FALSE;
-		box->Rect.X = dombox_LftDist (This);
-		box->Rect.Y = height;
 		
 		if (box->ClearFlt) {
 			L_BRK clear = box->ClearFlt & ~BRK_LN;
@@ -557,6 +555,9 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				blocker->R.bottom = blocker->R.width = 0;
 			}
 		}
+		box->Rect.X = dombox_LftDist (This);
+		box->Rect.Y = height;
+		
 		if (box->Floating != ALN_NO_FLT) {
 			long blk_width = width - blocker->L.width - blocker->R.width;
 			if (box->MinWidth > blk_width) {
