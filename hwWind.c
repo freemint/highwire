@@ -40,7 +40,7 @@ HwWIND hwWind_Focus  = NULL;
 
 
 static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
-static void draw_toolbar (HwWIND This, const GRECT * p_clip);
+static void draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all);
 static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
@@ -230,7 +230,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	}
 	wind_open_grect (This->Handle, &This->Curr);
 	if (This->TbarH) {
-		draw_toolbar (This, &This->Work);
+		draw_toolbar (This, &This->Work, TRUE);
 	}
 	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
 		hwWind_setInfo (This, "", TRUE);
@@ -849,120 +849,135 @@ hwWind_byValue (long val)
 
 /*----------------------------------------------------------------------------*/
 static void
-draw_toolbar (HwWIND This, const GRECT * p_clip)
+draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 {
 	GRECT clip, area = This->Work;
 	area.g_h = This->TbarH;
 	clip = area;
 	
 	if (rc_intersect (p_clip, &clip)) {
-		MFDB scrn = { NULL, }, icon = { NULL, 15,15,1, 1, 1, 0,0,0 };
-		WORD off[] = { G_LBLACK, 0 };
 		PXY  p[4] = { {0,0}, {14,14}, };
-		TOOLBTN * btn = hw_buttons;
-		int i;
 		clip.g_w += clip.g_x -1;
 		clip.g_h += clip.g_y -1;
-		vsf_color (vdi_handle, G_LWHITE);
-		p[3].p_x = (p[2].p_x = area.g_x) + area.g_w -1;
-		p[3].p_y =  p[2].p_y = area.g_y  + area.g_h -1;
-		vsl_color (vdi_handle, G_BLACK);
 		vs_clip_pxy (vdi_handle, (PXY*)&clip);
 		v_hide_c (vdi_handle);
-		v_bar   (vdi_handle, (short*)&clip);
-		v_pline (vdi_handle, 2, (short*)(p +2));
-		
+		if (all) {
+			vsf_color (vdi_handle, G_LWHITE);
+			v_bar   (vdi_handle, (short*)&clip);
+			p[3].p_x = (p[2].p_x = area.g_x) + area.g_w -1;
+			p[3].p_y =  p[2].p_y = area.g_y  + area.g_h -1;
+			vsl_color (vdi_handle, G_BLACK);
+			v_pline (vdi_handle, 2, (short*)(p +2));
+		}
 		vsf_color (vdi_handle, G_WHITE);
 		
 		p[3].p_y = (p[2].p_y = area.g_y +3) +15 -1;
-		for (i = 0; i < numberof(hw_buttons); i++, btn++) {
-			p[2].p_x = area.g_x + This->TbarElem[i].Offset +3;
-			p[3].p_x = p[2].p_x + This->TbarElem[i].Width  -7;
-			icon.fd_addr = btn->Data;
-			if (This->TbarMask & (1 << i)) {
-				short c_lu, c_rd;
-				PXY l[4];
-				if (!ignore_colours) {
-					vrt_cpyfm (vdi_handle,
-					           MD_TRANS, (short*)p, &icon, &scrn, &btn->Fgnd);
-					icon.fd_addr = btn->Fill;
-					vrt_cpyfm (vdi_handle,
-					           MD_TRANS, (short*)p, &icon, &scrn, &btn->Bgnd);
+		if (all) {
+			MFDB scrn = { NULL, }, icon = { NULL, 15,15,1, 1, 1, 0,0,0 };
+			WORD off[] = { G_LBLACK, 0 };
+			TOOLBTN * btn = hw_buttons;
+			int i;
+			for (i = 0; i < numberof(hw_buttons); i++, btn++) {
+				p[2].p_x = area.g_x + This->TbarElem[i].Offset +3;
+				p[3].p_x = p[2].p_x + This->TbarElem[i].Width  -7;
+				icon.fd_addr = btn->Data;
+				if (This->TbarMask & (1 << i)) {
+					short c_lu, c_rd;
+					PXY l[4];
+					if (!ignore_colours) {
+						vrt_cpyfm (vdi_handle,
+						           MD_TRANS, (short*)p, &icon, &scrn, &btn->Fgnd);
+						icon.fd_addr = btn->Fill;
+						vrt_cpyfm (vdi_handle,
+						           MD_TRANS, (short*)p, &icon, &scrn, &btn->Bgnd);
+					} else {
+						vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+					}
+		if (i != TBAR_STOP) {
+					l[0].p_x = p[2].p_x -1;
+					l[2].p_y = p[2].p_y -1;
+					if (i == This->TbarActv) {
+						l[0].p_y = l[2].p_y;
+						l[1].p_x = p[3].p_x +1;
+						l[1].p_y = p[3].p_y +1;
+						vswr_mode (vdi_handle, MD_XOR);
+						v_bar     (vdi_handle, (short*)l);
+						vswr_mode (vdi_handle, MD_TRANS);
+						l[1].p_x++;
+						l[1].p_y++;
+						c_rd = G_LWHITE;
+						c_lu = G_BLACK;
+					} else {
+						l[1].p_x = p[3].p_x +2;
+						l[1].p_y = p[3].p_y +2;
+						c_rd = G_LBLACK;
+						c_lu = G_WHITE;
+					}
+					l[2].p_x = l[1].p_x;
+					l[0].p_y = l[1].p_y;
+					vsl_color (vdi_handle, c_rd);
+					v_pline (vdi_handle, 3, (short*)l);
+					l[1].p_y = --l[2].p_y;  --l[2].p_x;
+					l[1].p_x = --l[0].p_x;  --l[0].p_y;
+					vsl_color (vdi_handle, c_lu);
+					v_pline (vdi_handle, 3, (short*)l);
+					l[1].p_x = --l[0].p_x;
+					l[1].p_y = --l[2].p_y;
+					l[3].p_x = l[2].p_x += 2;
+					l[3].p_y = l[0].p_y += 1;
+					vsl_color (vdi_handle, G_BLACK);
+					v_pline (vdi_handle, 4, (short*)l);
+		}
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 				}
-	if (i != TBAR_STOP) {
-				l[0].p_x = p[2].p_x -1;
-				l[2].p_y = p[2].p_y -1;
-				if (i == This->TbarActv) {
-					l[0].p_y = l[2].p_y;
-					l[1].p_x = p[3].p_x +1;
-					l[1].p_y = p[3].p_y +1;
-					vswr_mode (vdi_handle, MD_XOR);
-					v_bar     (vdi_handle, (short*)l);
-					vswr_mode (vdi_handle, MD_TRANS);
-					l[1].p_x++;
-					l[1].p_y++;
-					c_rd = G_LWHITE;
-					c_lu = G_BLACK;
-				} else {
-					l[1].p_x = p[3].p_x +2;
-					l[1].p_y = p[3].p_y +2;
-					c_rd = G_LBLACK;
-					c_lu = G_WHITE;
-				}
-				l[2].p_x = l[1].p_x;
-				l[0].p_y = l[1].p_y;
-				vsl_color (vdi_handle, c_rd);
-				v_pline (vdi_handle, 3, (short*)l);
-				l[1].p_y = --l[2].p_y;  --l[2].p_x;
-				l[1].p_x = --l[0].p_x;  --l[0].p_y;
-				vsl_color (vdi_handle, c_lu);
-				v_pline (vdi_handle, 3, (short*)l);
-				l[1].p_x = --l[0].p_x;
-				l[1].p_y = --l[2].p_y;
-				l[3].p_x = l[2].p_x += 2;
-				l[3].p_y = l[0].p_y += 1;
-				vsl_color (vdi_handle, G_BLACK);
-				v_pline (vdi_handle, 4, (short*)l);
-	}
-			} else {
-				vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 			}
 		}
-		
 		p[1].p_x = area.g_x + This->TbarElem[TBAR_EDIT].Offset;
 		p[2].p_x = p[1].p_x + This->TbarElem[TBAR_EDIT].Width -1;
 		if (p[1].p_x <= clip.g_w && p[2].p_x >= clip.g_x) {
 			TBAREDIT * edit = TbarEdit (This);
-			BOOL       cursor;
-			p[0].p_x = p[1].p_x;
-			p[0].p_y = ++p[3].p_y;
-			p[1].p_y = --p[2].p_y;
-			vsl_color (vdi_handle, G_LBLACK);
-			v_pline (vdi_handle, 3, (short*)p);
-			if (This->TbarActv != TBAR_EDIT) {
-				p[1].p_x = p[2].p_x; ++p[0].p_x;
-				p[1].p_y = p[0].p_y; ++p[2].p_y;
-				vsl_color (vdi_handle, G_WHITE);
-				v_pline (vdi_handle, 3, (short*)p);
-				p[1].p_x =  p[0].p_x +1;
+			BOOL       actv = (This->TbarActv == TBAR_EDIT);
+			BOOL       bgnd;
+			if (!all) {
+				p[1].p_x += 2;
 				p[1].p_y =  p[2].p_y;
 				p[2].p_x -= 2;
-				p[2].p_y =  p[0].p_y;
-				cursor   = FALSE;
+				p[2].p_y =  p[3].p_y +1;
+				bgnd = TRUE;
 			} else {
-				p[1].p_x = --p[0].p_x; p[3].p_x = p[2].p_x += 2;
-				p[1].p_y = --p[2].p_y; p[3].p_y = p[0].p_y += 1;
-				vsl_color (vdi_handle, G_BLACK);
-				v_pline (vdi_handle, 4, (short*)p);
-				p[1].p_x += 2;
-				p[1].p_y += 2;
-				p[2].p_x -= 2;
-				p[2].p_y =  p[0].p_y -1;
+				p[0].p_x = ++p[1].p_x;
+				p[2].p_x--;
+				p[0].p_y = ++p[3].p_y;
+				p[1].p_y = --p[2].p_y;
+				vsl_color (vdi_handle, G_LBLACK);
+				v_pline (vdi_handle, 3, (short*)p);
+				if (actv) {
+					p[1].p_x = --p[0].p_x; p[3].p_x = ++p[2].p_x;
+					p[1].p_y = --p[2].p_y; p[3].p_y = ++p[0].p_y;
+					vsl_color (vdi_handle, G_BLACK);
+					v_pline (vdi_handle, 4, (short*)p);
+					p[1].p_x += 2;
+					p[1].p_y += 2;
+					p[2].p_x -= 2;
+					p[2].p_y =  p[0].p_y -1;
+					bgnd = TRUE;
+				} else {
+					p[1].p_x = p[2].p_x; ++p[0].p_x;
+					p[1].p_y = p[0].p_y; ++p[2].p_y;
+					vsl_color (vdi_handle, G_WHITE);
+					v_pline (vdi_handle, 3, (short*)p);
+					p[1].p_x =  p[0].p_x +1;
+					p[1].p_y =  p[2].p_y;
+					p[2].p_x -= 2;
+					p[2].p_y =  p[0].p_y;
+					bgnd = FALSE;
+				}
+			}
+			if (bgnd) {
 				v_bar (vdi_handle, (short*)(p +1));
 				p[1].p_x++;
-				cursor   = TRUE;;
+				p[2].p_x--;
 			}
 			p[0] = p[1];
 			if (*edit->Text) {
@@ -977,15 +992,16 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 					vst_point     (vdi_handle, 12, &dmy, &dmy, &dmy, &dmy);
 					vst_effects   (vdi_handle, TXT_NORMAL);
 					vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy, &dmy);
-					vst_color     (vdi_handle, (cursor ? G_BLACK : G_LBLACK));
+					vst_color     (vdi_handle, (actv ? G_BLACK : G_LBLACK));
 					v_gtext       (vdi_handle, p[0].p_x, p[0].p_y,
 					               edit->Text + edit->Shift);
 					vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
 				}
 			}
-			if (cursor) {
-				p[1].p_x = p[0].p_x += (edit->Cursor - edit->Shift) *8;
-				p[1].p_y = p[0].p_y +15;
+			if (actv) {
+				vs_clip_pxy (vdi_handle, (PXY*)&clip);
+				p[1].p_x =  p[0].p_x += (edit->Cursor - edit->Shift) *8;
+				p[1].p_y = (p[0].p_y -= 1) +17;
 				vswr_mode (vdi_handle, MD_XOR);
 				v_pline   (vdi_handle, 2, (short*)p);
 				vswr_mode (vdi_handle, MD_TRANS);
@@ -1043,7 +1059,7 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 		wind_get_grect (This->Handle, WF_FIRSTXYWH, &area);
 		while (area.g_w > 0 && area.g_h > 0) {
 			if (rc_intersect (&clip, &area)) {
-				draw_toolbar (This, &area);
+				draw_toolbar (This, &area, TRUE);
 			}
 			wind_get_grect (This->Handle, WF_NEXTXYWH, &area);
 		}
@@ -1093,7 +1109,7 @@ hwWind_redraw (HwWIND This, const GRECT * clip)
 		while (rect.g_w > 0 && rect.g_h > 0) {
 			if (rc_intersect (&work, &rect)) {
 				if (rect.g_y <= tbar) {
-					draw_toolbar (This, &rect);
+					draw_toolbar (This, &rect, TRUE);
 				}
 				if (info) {
 					draw_infobar (This, &rect, info);
@@ -1393,7 +1409,7 @@ hwWind_button (WORD mx, WORD my)
 			clip.g_w = wind->TbarElem[TBAR_EDIT].Width;
 			clip.g_y = wind->Work.g_y +1;
 			clip.g_h = wind->TbarH    -2;
-			draw_toolbar (wind, &clip);
+			draw_toolbar (wind, &clip, FALSE);
 		}
 		wind = NULL;
 	
@@ -1484,6 +1500,8 @@ hwWind_button (WORD mx, WORD my)
 		wind = NULL;
 	
 	} else if (wind->TbarActv == TBAR_EDIT) {
+		TBAREDIT * edit = TbarEdit (wind);
+		edit->Shift = 0;
 		chng_toolbar (wind, 0, 0, -1);
 	}
 	return wind;
@@ -1632,9 +1650,8 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 13: /* enter/return */
 				if (edit->Length) {
 					new_loader_job (edit->Text, NULL, wind->Pane);
+					break;
 				}
-				break;
-			
 			case 9: /* tab */
 				chng_toolbar (wind, 0, 0, -1);
 				break;
@@ -1732,9 +1749,9 @@ hwWind_keybrd (WORD key, UWORD state)
 			}
 		}
 		if (clip.g_w) {
-			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +2;
+			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +3;
 			clip.g_y =  wind->Work.g_y +3;
-			draw_toolbar (wind, &clip);
+			draw_toolbar (wind, &clip, FALSE);
 		}
 	}
 	return NULL;
