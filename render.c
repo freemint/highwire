@@ -1382,6 +1382,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		           get_value_size (parser, KEY_HEIGHT),
 		           get_value_size (parser, KEY_VSPACE),
 		           get_value_size (parser, KEY_HSPACE));
+		font_switch (current->word->font, NULL);
 		
 		new_word (current, TRUE);
 		current->word->attr           = word_attr;
