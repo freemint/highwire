@@ -131,40 +131,14 @@ struct s_ldr_chunk {
 
 
 /*============================================================================*/
-const struct {
-	const char * Ext;
-	const MIMETYPE Type;
-	const char * Appl;
-}
-mime_list[] = {
-	{ "au",   MIME_AUDIO,      "GEMJing"  },
-	{ "avr",  MIME_AUDIO,      "GEMJing"  },
-	{ "dvs",  MIME_AUDIO,      "GEMJing"  },
-	{ "gif",  MIME_IMG_GIF,    NULL       },
-	{ "hsn",  MIME_AUDIO,      "GEMJing"  },
-	{ "htm",  MIME_TXT_HTML,   NULL       },
-	{ "html", MIME_TXT_HTML,   NULL       },
-	{ "hyp",  MIME_APPL,       "ST-Guide" },
-	{ "img",  MIME_IMG_X_XIMG, ""         },
-	{ "jpeg", MIME_IMG_JPEG,   ""         },
-	{ "jpg",  MIME_IMG_JPEG,   ""         },
-	{ "mpg",  MIME_VID_MPEG,   "ANIPLAY"  },
-	{ "pdf",  MIME_APP_PDF,    "MyPdf"    },
-	{ "png",  MIME_IMG_PNG,    ""         },
-	{ "snd",  MIME_AUDIO,      "GEMJing"  },
-	{ "txt",  MIME_TXT_PLAIN,  NULL       },
-	{ "wav",  MIME_AUDIO,      "GEMJing"  }
-};
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 LOADER
 new_loader (LOCATION loc)
 {
-	const char * ext;
 	LOADER loader = malloc (sizeof (struct s_loader));
 	loader->Location = location_share (loc);
 	loader->Target   = NULL;
 	loader->Encoding = ENCODING_WINDOWS1252;
-	loader->MimeType = MIME_TEXT;
+	loader->MimeType = MIME_Unknown;
 	loader->MarginW  = -1;
 	loader->MarginH  = -1;
 	/* */
@@ -180,20 +154,16 @@ new_loader (LOCATION loc)
 	loader->rdTlen    = 0;
 	loader->rdList    = loader->rdCurr = NULL;
 	
-	if ((loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) &&
-	    (ext = strrchr (loc->File, '.')) != NULL && *(++ext)) {
-		/*
-		 * resolve the MIME type depending on the file name extension
-		 */
-		size_t i = 0;
-		do if (stricmp (ext, mime_list[i].Ext) == 0) {
-			loader->MimeType = mime_list[i].Type;
-			if (mime_list[i].Appl) {
-				loader->Data  = strdup (mime_list[i].Appl);
-			}
-			break;
-		} while (++i < numberof(mime_list));
+	if (loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) {
+		const char * appl = NULL;
+		loader->MimeType = mime_byExtension (loc->File, &appl);
+		if (appl) loader->Data = strdup (appl);
 	}
+	
+	if (!loader->MimeType) {
+		loader->MimeType = MIME_TEXT;
+	}
+	
 	return loader;
 }
 
