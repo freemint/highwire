@@ -106,7 +106,7 @@ decXmp_start (const char * name, IMGINFO info)
 	if (xmap->Type == TYPE_XPM) {
 		ULONG * pix = NULL, * map = NULL;
 		if ((p = xmap_read (file, xmap, FALSE)) != NULL) {
-			int i = sscanf (p, "\" %hi %hi %hi %hi \",",
+			int i = sscanf (p, "\"%hi %hi %hi %hi \",",
 			                &xmap->W, &xmap->H, &xmap->Colors, &xmap->NumChrs);
 			if (i == 4 && xmap->W > 0 && xmap->H > 0
 			    && xmap->Colors >= 2 && xmap->Colors <= 255
@@ -115,11 +115,21 @@ decXmp_start (const char * name, IMGINFO info)
 				map = pix +256;
 			}
 			if (pix) {
-				char form[] = "\"%0s c #%lx\",";
+				char form[] = "\"%0[^\t] c %19[^\"]\",", val[20];
 				form[2] += xmap->NumChrs;
 				for (i = 0; i < xmap->Colors; i++) {
+					BOOL ok = TRUE;
 					if ((p = xmap_read (file, xmap, FALSE)) == NULL ||
-					    sscanf (p, form, (char*)&pix[i], &map[i]) != 2) {
+					    sscanf (p, form, (char*)&pix[i], val) != 2) {
+						ok = FALSE;
+					} else if (val[0] == '#' && isxdigit (val[1])) {
+						map[i] = strtoul (val +1, NULL, 16);
+					} else if (stricmp ("None", val) == 0) {
+						map[i] = 0ul; /* transparency value? */
+					} else {
+						ok = FALSE;
+					}
+					if (!ok) {
 						free (pix);
 						pix = NULL;
 						break;
