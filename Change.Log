@@ -1,10 +1,17 @@
-(non-public of Nov. 06, 2004)
+(non-public of Nov. 08, 2004)
+
+- Support for image link maps implemented (MAP/
+  AREA/USEMAP that is) for all three area types
+  rectangle, circle and polygone.
 
 - Image formats XBM and XPM (X11 bitmap/pixmap)
   implemented.  These formats are very rare
   nowadays but still used by some stone old server
   (eg. the NCSA one) and all other browsers
-  support at least the first format.
+  support at least the first format (even CAB
+  does).
+
+- Bugs #0078, #128 resolved.
 
 __________________________________________________
 Changes in V. 0.2.2 release  of October 31, 2004:
