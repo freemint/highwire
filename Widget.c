@@ -26,7 +26,85 @@
 
 
 WORD
-HW_form_do(OBJECT *tree, WORD next)
+HW_form_do (OBJECT *tree, WORD next)
+{
+	WORD which = 0;
+	BOOL ready = FALSE;
+	
+	EVMULT_IN in = {
+		MU_BUTTON|MU_M1,
+		0x102, 3, 0,      /* mouse buttons     */
+		MO_ENTER, { 0, }, /* popup enter/leave */
+		MO_LEAVE, { 0, }, /* entry leave       */
+	};
+	in.emi_m1 = *(GRECT*)&tree->ob_x;
+	
+	(void)next;
+	
+	do {
+		WORD       msg[8];
+		EVMULT_OUT out;
+		WORD       event = evnt_multi_fast (&in, msg, &out);
+		
+		if (event & MU_M1) {
+			if (!in.emi_m1leave) {        /* entered the popup */
+				in.emi_m1leave = MO_LEAVE;
+				in.emi_flags |= MU_M2;
+			} else if (out.emo_mbutton) { /* left, but still button pressed */
+				in.emi_m1leave = MO_ENTER;
+				in.emi_flags &= ~MU_M2;
+			} else {
+				ready = TRUE;
+			}
+			event |= MU_M2;
+		}
+		if (event & MU_BUTTON) {
+			if (out.emo_mbutton) {
+				in.emi_bmask   = out.emo_mbutton;
+				in.emi_bclicks = 1;
+				in.emi_bstate  = 0; /* always wait for button released */
+				which =  0;
+				event |= MU_M2;
+			} else {
+				ready = TRUE;
+			}
+		}
+		if (event & MU_M2) {
+			if (which > 0) {
+				tree[which].ob_state &= ~OS_SELECTED;
+				objc_draw (tree, ROOT, MAX_DEPTH,
+				           in.emi_m2.g_x, in.emi_m2.g_y,
+				           in.emi_m2.g_w, in.emi_m2.g_h);
+			}
+			which = objc_find (tree, ROOT, MAX_DEPTH,
+			                   out.emo_mouse.p_x, out.emo_mouse.p_y);
+			if (which > 0) {
+				objc_offset (tree, which, &in.emi_m2.g_x, &in.emi_m2.g_y);
+				in.emi_m2.g_w = tree[which].ob_width;
+				in.emi_m2.g_h = tree[which].ob_height;
+				if (tree[which].ob_state & OS_DISABLED) {
+					which = 0;
+				} else {
+					WORD col_tab[] = { G_BLACK, G_WHITE, G_LBLACK },
+					   * color = col_tab;
+					if (out.emo_mbutton) {
+						objc_change (tree, which, 0,
+						             in.emi_m2.g_x, in.emi_m2.g_y,
+						             in.emi_m2.g_w, in.emi_m2.g_h, OS_SELECTED, 1);
+					} else {
+						color++;
+					}
+					v_hide_c (vdi_handle);
+					draw_border (&in.emi_m2, color[0], color[1], 1);
+					v_show_c (vdi_handle, 1);
+				}
+			}
+		}
+	} while (!ready);
+	
+	return which;
+}
+#if 0 /***** REPLACED *****/
 {
 	WORD edit;
 	WORD which, cont;
@@ -123,3 +201,4 @@ HW_form_do(OBJECT *tree, WORD next)
 
 	return next;
 }
+#endif  /***** REPLACED *****/
