@@ -69,6 +69,7 @@ WORD identify_AES(void);
 BOOL can_extended_mxalloc(void);
 BOOL page_load   (void);
 void rpopup_open (WORD, WORD);
+void rpoplink_open (WORD, WORD, CONTAINR, void *);
 void update_menu (ENCODING, BOOL raw_text);
 BOOL process_messages (WORD msg[], PXY, UWORD state);
 void    menu_open     (BOOL fsel);
