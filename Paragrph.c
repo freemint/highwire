@@ -186,6 +186,7 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Rindent = 0;
 	paragraph->Hanging = 0;
 	paragraph->paragraph_code = PAR_NONE;
+	paragraph->Box.TextAlign  = ALN_LEFT;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -704,28 +705,6 @@ paragraph_extend (WORDITEM word)
 	ext.g_w = rgt - lft +1;
 	
 	return ext;
-}
-
-
-/*============================================================================*/
-void
-content_setup (CONTENT * content, TEXTBUFF current,
-               DOMBOX * parent, BOXCLASS class, short padding, short backgnd)
-{
-	dombox_ctor (&content->Box, parent, class);
-	content->Box.Backgnd   = backgnd;
-	content->Box.TextAlign = ALN_LEFT;
-	if (padding) {
-		content->Box.Padding.Top = content->Box.Padding.Bot =
-		content->Box.Padding.Lft = content->Box.Padding.Rgt = padding;
-	}
-	if (current) {
-		current->parentbox = &content->Box;
-		content->Item    = new_paragraph (current);
-		current->backgnd = backgnd;
-	} else {
-		content->Item    = NULL;
-	}
 }
 
 

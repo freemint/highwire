@@ -157,8 +157,6 @@ PARAGRPH add_paragraph    (TEXTBUFF, short vspace);
 void     paragrph_finish  (TEXTBUFF);
 WORDITEM paragrph_word    (PARAGRPH, long x, long y, long area[4]);
 GRECT    paragraph_extend (WORDITEM);
-void     content_setup    (CONTENT *, TEXTBUFF, DOMBOX * parent, BOXCLASS,
-                           short margins, short backgnd);
 
 /* in image.c */
 
