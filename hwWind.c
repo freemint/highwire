@@ -344,7 +344,6 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	}
 	
 	vsf_interior (vdi_handle, FIS_SOLID);
-	vsf_style    (vdi_handle, 4);
 	vsf_color    (vdi_handle, info_bgnd & 0x000F);
 	
 	fnt = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
@@ -366,6 +365,34 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			p[1].p_y += p[0].p_y -1;
 			v_bar (vdi_handle, (short*)p);
 			
+			if (This->isBusy) {
+				WORD width = (This->isBusy - This->loading) *2;
+				WORD style;
+				PXY  r[2];
+				r[0].p_x = area.g_x +2;
+				r[0].p_y = area.g_y +2;
+				r[1].p_x = area.g_w -4 - This->IbarH;
+				r[1].p_y = area.g_h -4;
+				if (r[1].p_x >= width) {
+					r[0].p_x += r[1].p_x - width;
+					r[1].p_x =  width;
+					style = (ignore_colours ? 1 : 4);
+				} else {
+					style = (ignore_colours ? 4 : 8);
+				}
+				if (rc_intersect (&clip, (GRECT*)r)) {
+					r[1].p_x += r[0].p_x -1;
+					r[1].p_y += r[0].p_y -1;
+					vsf_perimeter(vdi_handle, PERIMETER_ON);
+					vsf_interior (vdi_handle, FIS_PATTERN);
+					vsf_style    (vdi_handle, style);
+					vsf_color    (vdi_handle, G_RED);
+					v_bar        (vdi_handle, (short*)r);
+					vsf_perimeter(vdi_handle, PERIMETER_OFF);
+					vsf_interior (vdi_handle, FIS_SOLID);
+					vsf_color    (vdi_handle, info_bgnd & 0x000F);
+				}
+			}
 			if (*info && p[0].p_x < x_btn) {
 				short rgt = p[1].p_x;
 				if (p[1].p_x >= x_btn){
@@ -1224,8 +1251,13 @@ static void
 wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 {
 	HwWIND wind = hwWind_byValue (arg);
+	WORD   old_busy;
 	
-	if (wind) switch (event) {
+	if (!wind) return;
+	
+	old_busy = wind->isBusy;
+	
+	switch (event) {
 		
 		case HW_PageCleared:
 			if (wind->Active == cont) {
@@ -1260,7 +1292,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			if (!cont->Parent) {
 				hwWind_setName (wind, gen_ptr);
 			} else {
+				old_busy = ++wind->isBusy;
 				hwWind_setInfo (wind, gen_ptr, TRUE);
+				wind->isBusy--;
 			}
 			goto case_HW_ActivityBeg;
 		
@@ -1311,7 +1345,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		goto case_HW_ActivityEnd;
 			
 		case HW_ImgBegLoad:
+			old_busy = ++wind->isBusy;
 			hwWind_setInfo (wind, gen_ptr, TRUE);
+			wind->isBusy--;
 			goto case_HW_ActivityBeg;
 		
 		case HW_ImgEndLoad:
@@ -1335,6 +1371,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		case HW_ActivityEnd:
 		case_HW_ActivityEnd:
 			if (!wind->isBusy || !--wind->isBusy) {
+				if (wind->Stat[0]) {
+					old_busy = wind->isBusy;
+				}
 				hwWind_setInfo (wind, "", TRUE);
 				if (wind->isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
@@ -1349,6 +1388,10 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		
 		default:
 			errprintf ("wind_handler (%i, %p)\n", event, cont);
+	}
+	
+	if (old_busy != wind->isBusy && !wind->isIcon && wind->IbarH) {
+		draw_infobar (wind, NULL, (*wind->Info ? wind->Info : wind->Stat));
 	}
 }
 
