@@ -2,19 +2,20 @@
  */
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     1
-#define _HIGHWIRE_REVISION_  0
-#define _HIGHWIRE_BETATAG_   "release"
-#define _HIGHWIRE_VERSION_   "0.1.0"
+#define _HIGHWIRE_REVISION_  1
+#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_VERSION_   "0.1.1"
 
 #include "hw-types.h"   /* get base definitions */
 
-#define _HIGHWIRE_RSC_       "highwire.rsc"
 #define _HIGHWIRE_FULLNAME_  "HighWire"
+#define _HIGHWIRE_RSC_       "highwire.rsc"
 #define _HIGHWIRE_CFG_       "highwire.cfg"
 
-#define _ERROR_SPEEDO_ "[3][HighWire needs SpeedoGDOS |or NVDI ò 3!][ Exit ]"
-#define _ERROR_NOMEM_  "[3][HighWire got no GLOBAL memory! ][ Exit ]"
-#define _ERROR_NORSC_  "[3][HighWire cannot load |highwire.rsc!][ Exit ]"
+#define _HW_ALERT(text) "[3][" _HIGHWIRE_FULLNAME_ " " text " ][ Exit ]"
+#define _ERROR_SPEEDO_   _HW_ALERT("needs SpeedoGDOS |or NVDI ò 3!")
+#define _ERROR_NOMEM_    _HW_ALERT("got no GLOBAL memory!")
+#define _ERROR_NORSC_    _HW_ALERT("cannot load |" _HIGHWIRE_RSC_ "!")
 
 
 #ifdef _HW_NO_GUI
@@ -428,6 +429,7 @@ struct word_item {
 	WORD word_height;
 	WORD word_tail_drop;
 	WORD space_width;
+	BOOL wrap;
 	L_BRK   line_brk;
 	V_ALIGN vertical_align;
 	struct url_link  * link;
@@ -506,6 +508,7 @@ typedef struct parse_sub {
 	PARAGRPH           prev_par;
 	WORDITEM           word;      /* the item actually to process */
 	WORDITEM           prev_wrd;  /* <br> tags affect this        */
+	UWORD              nowrap;
 	WORD               font_size;
 	struct font_step * font_step;
 	ANCHOR           * anchor;
