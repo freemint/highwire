@@ -46,7 +46,7 @@ about_modules (TEXTBUFF current, ENCODING enc)
 			mod++;
 		}
 		if (num > 0) {
-			render_hrule (current, ALN_LEFT, -512, 2);
+			render_hrule (current, ALN_LEFT, -512, 2, TRUE);
 		}
 		free (mod - num);
 	
@@ -139,7 +139,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 			free (mem);
 		}
 		if (num > 0) {
-			render_hrule (current, ALN_LEFT, -512, 2);
+			render_hrule (current, ALN_LEFT, -512, 2, TRUE);
 		}
 		free (info - num);
 	}
@@ -229,7 +229,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
 		render_text (current, buf);
 	}
 	#endif
-	render_hrule (current, ALN_LEFT, -512, 2);
+	render_hrule (current, ALN_LEFT, -512, 2, TRUE);
 	
 	sprintf (buf, "Screen Mode: '%s'\r", image_dispinfo());
 	render_text (current, buf);
@@ -306,7 +306,7 @@ parse_about (void * arg, long invalidated)
 	}
 	font_switch (current->word->font, NULL);
 	render_text  (current, title);
-	render_hrule (current, ALN_CENTER, -1024, 2);
+	render_hrule (current, ALN_CENTER, -1024, 2, TRUE);
 	
 	current->paragraph->Box.TextAlign = ALN_LEFT;
 	font_byType (normal_font, 0x0000, font_step2size (3), current->word);

@@ -193,7 +193,7 @@ parse_dir (void * arg, long invalidated)
 		render_link (current, "Date", buf, color);
 	}
 	current->word->word_height = 2;
-	render_hrule (current, ALN_CENTER, -1024, 2);
+	render_hrule (current, ALN_CENTER, -1024, 2, TRUE);
 
 	font_byType (-1, -1, font_step2size (3), current->word);
 	if (list) {
