@@ -608,7 +608,6 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 /*------------------------------------------------------------------------------
  * Background Sound
  *
- * Processes embedded multi media objects.
  * Currently it simply fires up a new loader job and lets
  * the loader find out what to do.
  *
@@ -623,7 +622,8 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 		char snd_file[HW_PATH_MAX];
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
-			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref);
+			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref,
+			                 (BOOL(*)(void*,long))NULL);
 		}
 	}
 	return flags;
@@ -1260,8 +1260,31 @@ render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
 	return flags;
 }
 
-/*----------------------------------------------------------------------------*/
-#define render_EMBED_tag   render_BGSOUND_tag
+/*------------------------------------------------------------------------------
+ * Processes embedded multi media objects, normally to be handled by an external
+ * application.
+ *
+ * actually only sound is supported.
+*/
+static UWORD
+render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		char src[HW_PATH_MAX], type[100];
+		if (get_value (parser, KEY_SRC, src, sizeof(src))) {
+			MIMETYPE mime = (get_value (parser, KEY_TYPE, type, sizeof(type))
+		                 ? mime_byString   (type, NULL)
+		                 : mime_byExtension (src, NULL));
+			if (MIME_Major(mime) == MIME_AUDIO) {
+				start_objc_load (parser->Target, src, parser->Frame->BaseHref,
+				                 (BOOL(*)(void*,long))NULL);
+			}
+		}
+	}
+	return flags;
+}
 
 
 /*------------------------------------------------------------------------------
