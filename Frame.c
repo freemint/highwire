@@ -121,6 +121,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 	
 	frame->clip = *clip;
 
+#if 0 /***** REPLACED *****/
 	if (frame->border) {
 		switch (frame->borders)
 		{
@@ -136,6 +137,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 				break;
 		}
 	}
+#endif /***** REPLACED *****/
 
 	if (!frame->scroll) {
 		

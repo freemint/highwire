@@ -33,6 +33,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 		vsl_color (vdi_handle, G_BLACK);
 		vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
 
+#if 0 /***** REPLACED *****/
 		if (frame->border) {
 			switch (frame->borders)
 			{
@@ -116,6 +117,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 			
 			vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
 		}
+#endif /***** REPLACED *****/
 		
 		if (frame->scroll != SCROLL_NEVER)
 		{
