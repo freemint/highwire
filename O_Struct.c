@@ -69,7 +69,7 @@ create_imagemap (IMAGEMAP * list, const char * name, BOOL empty)
 		map->Link.address  = NULL;
 		map->Link.start    = NULL;
 		map->Link.u.target = NULL;
-		map->Link.encoding = ENCODING_Unknown;
+		map->Link.encoding = ENCODING_WINDOWS1252;
 		memcpy (map->Name, name, len +1);
 		map->Areas = NULL;
 		map->Next  = *list;
