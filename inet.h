@@ -13,8 +13,8 @@
 typedef struct {
 	short __CDECL (*host_addr) (const char * host, long * addr);
 	long  __CDECL (*connect) (long addr, long port);
-	long  __CDECL (*send)    (long fh, char * buf, size_t len);
-	long  __CDECL (*recv)    (long fh, char * buf, size_t len);
+	long  __CDECL (*send)    (long fh, const char * buf, size_t len);
+	long  __CDECL (*recv)    (long fh, char       * buf, size_t len);
 	void  __CDECL (*close)   (long fh);
 	const char * __CDECL (*info) (void);
 } INET_FTAB;
@@ -35,8 +35,8 @@ extern INET_FTAB inet_ftab; /* This must be global accessible. */
 
 short __CDECL inet_host_addr (const char * host, long * addr);
 long  __CDECL inet_connect (long addr, long port);
-long  __CDECL inet_send    (long fh, char * buf, size_t len);
-long  __CDECL inet_recv    (long fh, char * buf, size_t len);
+long  __CDECL inet_send    (long fh, const char * buf, size_t len);
+long  __CDECL inet_recv    (long fh, char       * buf, size_t len);
 void  __CDECL inet_close   (long fh);
 const char * __CDECL inet_info (void);
 

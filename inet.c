@@ -233,7 +233,7 @@ inet_connect (long addr, long port)
 
 /*============================================================================*/
 long __CDECL
-inet_send (long fh, char * buf, size_t len)
+inet_send (long fh, const char * buf, size_t len)
 {
 	long ret = -1;
 
@@ -243,7 +243,7 @@ inet_send (long fh, char * buf, size_t len)
 #elif defined(USE_STIK)
 	if (!tpl) {
 		puts ("No STiK");
-	} else if ((ret = TCP_send ((int)fh, buf, (int)len)) == 0) {
+	} else if ((ret = TCP_send ((int)fh, (char*)buf, (int)len)) == 0) {
 		ret = len;
 	}
 
