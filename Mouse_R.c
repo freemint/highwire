@@ -209,7 +209,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			                   stricmp (link->u.target, "_blank") != 0
 			                   ? containr_byName (cont, link->u.target) : NULL);
 			if (target) {
-				char * p = strchr (addr, '#');
+				const char * p = strchr (addr, '#');
 				if (p && containr_Frame (target)) {
 					const char * file = containr_Frame (target)->Location->File;
 					if (strncmp (file, addr, (p - addr)) == 0 && !file[p - addr]) {
