@@ -941,15 +941,15 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 			BOOL       bgnd;
 			if (!all) {
 				p[1].p_x += 2;
-				p[1].p_y =  p[2].p_y;
+				p[1].p_y =  p[2].p_y -1;
 				p[2].p_x -= 2;
 				p[2].p_y =  p[3].p_y +1;
 				bgnd = TRUE;
 			} else {
 				p[0].p_x = ++p[1].p_x;
 				p[2].p_x--;
-				p[0].p_y = ++p[3].p_y;
-				p[1].p_y = --p[2].p_y;
+				p[0].p_y = p[3].p_y += 1;
+				p[1].p_y = p[2].p_y -= 2;
 				vsl_color (vdi_handle, G_LBLACK);
 				v_pline (vdi_handle, 3, (short*)p);
 				if (actv) {
@@ -1001,7 +1001,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 			if (actv) {
 				vs_clip_pxy (vdi_handle, (PXY*)&clip);
 				p[1].p_x = (p[0].p_x += (edit->Cursor - edit->Shift) *8 -1) +1;
-				p[1].p_y = (p[0].p_y -= 1) +17;
+				p[1].p_y =  p[0].p_y +16;
 				vswr_mode (vdi_handle, MD_XOR);
 				v_bar     (vdi_handle, (short*)p);
 				vswr_mode (vdi_handle, MD_TRANS);
@@ -1407,8 +1407,8 @@ hwWind_button (WORD mx, WORD my)
 			GRECT clip;
 			clip.g_x = x;
 			clip.g_w = wind->TbarElem[TBAR_EDIT].Width;
-			clip.g_y = wind->Work.g_y +1;
-			clip.g_h = wind->TbarH    -2;
+			clip.g_y = wind->Work.g_y;
+			clip.g_h = wind->TbarH;
 			draw_toolbar (wind, &clip, FALSE);
 		}
 		wind = NULL;
@@ -1447,15 +1447,17 @@ hwWind_button (WORD mx, WORD my)
 			}
 			wind_get_grect (wind->Handle, WF_NEXTXYWH, (GRECT*)w);
 		}
-		c[0] = c[4] = *(PXY*)&wind->Curr;
+		c[0] = *(PXY*)&wind->Curr;
 		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + wind->Curr.g_w -1;
 		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + wind->Curr.g_h -1;
-		c[4].p_y++;
-		w[0] = w[4] = *(PXY*)&wind->Work;
+		c[4].p_x = c[0].p_x;
+		c[4].p_y = c[0].p_y +1;
+		w[0] = *(PXY*)&wind->Work;
 		w[1].p_x = w[2].p_x = (w[3].p_x = w[0].p_x) + wind->Work.g_w -1;
 		w[1].p_y = w[0].p_y;
 		w[3].p_y = w[2].p_y = ib_y;
-		w[4].p_y++;
+		w[4].p_x = w[0].p_x;
+		w[4].p_y = w[0].p_y +1;
 		m_in.emi_m1.g_x = mx;
 		m_in.emi_m1.g_y = my;
 		m_in.emi_m1.g_w = m_in.emi_m1.g_h = 1;
@@ -1544,7 +1546,7 @@ hwWind_keybrd (WORD key, UWORD state)
 	} else {
 		TBAREDIT * edit = TbarEdit (wind);
 		WORD       asc  = key & 0xFF;
-		GRECT      clip = { 0,0,0,16 };
+		GRECT      clip = { 0,0,0, };
 		WORD       shft = 0;
 		
 		if (state & K_CTRL) switch (key) {
@@ -1750,7 +1752,8 @@ hwWind_keybrd (WORD key, UWORD state)
 		}
 		if (clip.g_w) {
 			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +2;
-			clip.g_y =  wind->Work.g_y +3;
+			clip.g_y =  wind->Work.g_y;
+			clip.g_h =  wind->TbarH;
 			draw_toolbar (wind, &clip, FALSE);
 		}
 	}
