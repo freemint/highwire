@@ -1,4 +1,4 @@
-(non-public of Sep. 11, 2004):
+(non-public of Sep. 27, 2004):
 
 - Large portions of the cache handling code
   reworked.  This gets rid of several wrong
@@ -19,11 +19,16 @@
 - More types of corrupted jpeg image data are
   catched now, instead of aborting.
 
+- Improved detection of system type (AES + kernel),
+  now XaAES is recognized also.  This also allows
+  to get rid of the window fuller bug with XaAES
+  (#0159, #0167).
+
 - Some error messages are displayed by alert boxes
   now instead of console output or simple writing
   to the screen
 
-- Bugs #0133, #0169, #0170 resolved.
+- Bugs #0133, #0150, #0167, #0169, #0170 resolved.
 
 __________________________________________________
 Changes in V. 0.2.1 release  of August 22, 2004:
