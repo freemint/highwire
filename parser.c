@@ -636,7 +636,10 @@ css_import (PARSER parser, const char * ptr)
 		p = (e ? strchr (++e, ';') : e);
 		p = (p ? ++p : e ? e : strchr (ptr, '\0'));
 	}
-	if (loc) {
+	if (!loc) {
+		ptr = p; /* invalid syntax or stack exceeded, skip it */
+	
+	} else {
 		BOOL   push;
 		size_t size = 0;
 		char * file = NULL;
