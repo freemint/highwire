@@ -140,6 +140,14 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 	short tab_len = 0; /* maximum line length in tab */
 	WORD  ret     = -1;
 	
+	BOOL  right;
+	if (x < 0) {
+		x = -x;
+		right = TRUE;
+	} else {
+		right = FALSE;
+	}
+	
 	if (!o_tree) {
 		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_OUTLINED,
 		                { (long)0xFE1100L }, 4,1, 1,1 };
@@ -216,6 +224,9 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 			o_tree->ob_state = OS_SHADOWED;
 			o_tree->ob_spec.obspec.framesize = -1;
 			i = 3;
+		}
+		if (right) {
+			x -= o_tree->ob_width + i *2;
 		}
 		form_center (o_tree, &cx, &cy, &cw, &ch);
 		o_tree->ob_x -= cx - i;
