@@ -18,14 +18,14 @@
 #include "fontbase.h"
 #include "Table.h"
 
-#define t_Width      Paragraph->Box.Rect.W
-#define t_Height     Paragraph->Box.Rect.H
-#define t_MinWidth   Paragraph->Box.MinWidth
-#define t_MaxWidth   Paragraph->Box.MaxWidth
-#define t_SetWidth   Paragraph->Box.SetWidth
-#define t_Backgnd    Paragraph->Box.Backgnd
-#define t_BorderW    Paragraph->Box.BorderWidth
-#define t_BorderC    Paragraph->Box.BorderColor
+#define t_Width      Box.Rect.W
+#define t_Height     Box.Rect.H
+#define t_MinWidth   Box.MinWidth
+#define t_MaxWidth   Box.MaxWidth
+#define t_SetWidth   Box.SetWidth
+#define t_Backgnd    Box.Backgnd
+#define t_BorderW    Box.BorderWidth
+#define t_BorderC    Box.BorderColor
 
 #define c_OffsetX Box.Rect.X
 #define c_OffsetY Box.Rect.Y
@@ -97,8 +97,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	stack->SavedCurr = *current;
 	stack->_debug = 'A';
 	
-	par->Table          = table;
-	par->paragraph_code = PAR_TABLE;
+	dombox_ctor (&table->Box, current->parentbox, BC_TABLE);
 	if (!*(long*)&table_vTab) {
 		table_vTab          = DomBox_vTab;
 		table_vTab.MinWidth = vTab_MinWidth;
@@ -107,18 +106,20 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 		table_vTab.draw     = vTab_draw;
 		table_vTab.format   = vTab_format;
 	}
-	par->Box._vtab = &table_vTab;
-	par->Box.Floating    = floating;
-	par->Box.BoxClass    = BC_TABLE;
-	par->Box.Padding.Top = par->Box.Padding.Bot =
-	par->Box.Padding.Lft = par->Box.Padding.Rgt = spacing;
+	table->Box._vtab = &table_vTab;
+	table->Box.Floating    = floating;
+	table->Box.BoxClass    = BC_TABLE;
+	table->Box.HtmlCode    = TAG_TABLE;
+	table->Box.Padding.Top = table->Box.Padding.Bot =
+	table->Box.Padding.Lft = table->Box.Padding.Rgt = spacing;
+	
+	(void)par;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
 	current->font      = fontstack_setup (&current->fnt_stack,
 	                                      parser->Frame->text_color);
 
-	table->Paragraph = par;
 	table->Rows      = NULL;
 	table->NumCols   = 0;
 	table->FixCols   = 0;
@@ -253,13 +254,26 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 {
 	TBLSTACK stack = parser->Current.tbl_stack;
 	TABLE    table = stack->Table;
-	DOMBOX * box   = &table->Paragraph->Box;
+	DOMBOX * box   = &table->Box;
 	TAB_ROW  row;
 	TAB_CELL cell;
 
 /*	printf("table_cell('%c')\n", stack->_debug);*/
 	
-	if (stack->WorkCell) {
+	if (!table->NumCols) {
+		/*
+		 * For the very first cell of a table check wether there were illegally
+		 * placed text just behind the <table> or <tr> tag to collect this into
+		 * an own paragraph placed before the table.
+		*/
+		if (parser->Current.word != stack->SavedCurr.word) {
+			stack->SavedCurr.word      = parser->Current.word;
+			stack->SavedCurr.prev_wrd  = parser->Current.prev_wrd;
+			stack->SavedCurr.paragraph = parser->Current.paragraph;
+			stack->SavedCurr.prev_par  = parser->Current.prev_par;
+		}
+	
+	} else if (stack->WorkCell) {
 		paragrph_finish (&parser->Current);
 		parser->Current.font = fontstack_setup (&parser->Current.fnt_stack,
 	                                           parser->Frame->text_color);
@@ -436,8 +450,9 @@ free_stack (TEXTBUFF current)
 	
 	fontstack_clear (&current->fnt_stack);
 	*current = stack->SavedCurr;
-
+	
 	add_paragraph (current, 0);
+	dombox_reorder (&current->paragraph->Box, &stack->Table->Box);
 	
 	free (stack);
 }
@@ -479,8 +494,8 @@ table_finish (PARSER parser)
 	}
 	
 	table->t_MinWidth = table->t_MaxWidth
-	                  = dombox_LftDist (&table->Paragraph->Box)
-	                  + dombox_RgtDist (&table->Paragraph->Box);
+	                  = dombox_LftDist (&table->Box)
+	                  + dombox_RgtDist (&table->Box);
 	
 	padding = table->Padding *2;
 	table->Minimum = malloc (sizeof (*table->Minimum) * table->NumCols);
@@ -719,7 +734,7 @@ table_finish (PARSER parser)
 static void
 vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 {
-	TABLE   table = ((PARAGRPH)This)->Table;
+	TABLE   table = (TABLE)This;
 	TAB_ROW row;
 	long    set_width, y;
 	
@@ -964,7 +979,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	* now all cells are calculated that spread more than one row.  we also 
 	* get now the needed table hight.
 	*/
-	table->t_Height = dombox_TopDist (&table->Paragraph->Box);
+	table->t_Height = dombox_TopDist (&table->Box);
 	row = table->Rows;
 	do {
 		TAB_CELL cell = row->Cells;
@@ -992,7 +1007,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		}
 		table->t_Height += row->Height + table->Spacing;
 	} while ((row = row->NextRow) != NULL);
-	table->t_Height += dombox_BotDist (&table->Paragraph->Box) - table->Spacing;
+	table->t_Height += dombox_BotDist (&table->Box) - table->Spacing;
 	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * in case of a given table hight we need to spread the calculated row
@@ -1015,7 +1030,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	 *             for the case of valign=middle/bottom.
 	*/
 	row = table->Rows;
-	y   = dombox_TopDist (&table->Paragraph->Box);
+	y   = dombox_TopDist (&table->Box);
 	do {
 		long   * col_width = table->ColWidth;
 		TAB_CELL cell      = row->Cells;
@@ -1061,7 +1076,7 @@ vTab_MaxWidth (DOMBOX * This)
 static DOMBOX *
 vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 {
-	TABLE    table = ((PARAGRPH)This)->Table;
+	TABLE    table = (TABLE)This;
 	TAB_ROW  row   = (table->NumCols ? table->Rows : NULL);
 	TAB_CELL cell  = NULL;
 	
@@ -1120,7 +1135,7 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
-	TABLE table       = ((PARAGRPH)This)->Table;
+	TABLE table       = (TABLE)This;
 	long  clip_bottom = clip->g_y + clip->g_h -1;
 	long  row_y       = y + table->t_BorderW + table->Spacing;
 	TAB_ROW row       = table->Rows;
