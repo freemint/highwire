@@ -134,6 +134,7 @@ struct s_ldr_chunk {
 LOADER
 new_loader (LOCATION loc)
 {
+	const char * appl = NULL;
 	LOADER loader = malloc (sizeof (struct s_loader));
 	loader->Location = location_share (loc);
 	loader->Target   = NULL;
@@ -158,9 +159,7 @@ new_loader (LOCATION loc)
 	loader->rdList    = loader->rdCurr = NULL;
 	
 	if (loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) {
-		const char * appl = NULL;
 		loader->MimeType = mime_byExtension (loc->File, &appl);
-		if (appl) loader->Data = strdup (appl);
 	}
 	
 	if (loc->Proto == PROT_HTTP) {
@@ -170,13 +169,16 @@ new_loader (LOCATION loc)
 			u.c            = cache_bound (cached, &loader->Location);
 			loader->Cached = u.l;
 			if (!loader->MimeType) {
-				const char * appl = NULL;
 				loader->MimeType = mime_byExtension (loader->Cached->File, &appl);
-				if (appl) loader->Data = strdup (appl);
 			}
 		}
 	}
 	
+	if (appl) {
+		loader->ExtAppl = strdup (appl);
+	} else {
+		loader->ExtAppl = NULL;
+	}
 	if (!loader->MimeType) {
 		loader->MimeType = MIME_TEXT;
 	}
@@ -205,6 +207,9 @@ delete_loader (LOADER * p_loader)
 				next =  chunk->next;
 				free (chunk);
 			} while ((chunk = next) != NULL);
+		}
+		if (loader->ExtAppl) {
+			free (loader->ExtAppl);
 		}
 		if (loader->Data) {
 			free (loader->Data);
@@ -609,8 +614,8 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 		}
 		delete_loader (&loader);
 	
-	} else if (loader->Data) {
-		short           id = find_application (loader->Data);
+	} else if (loader->ExtAppl) {
+		short           id = find_application (loader->ExtAppl);
 		if (id >= 0 || (id = find_application (NULL)) >= 0) {
 			short msg[8];
 			msg[0] = (loader->MimeType == MIME_APP_PDF
@@ -622,7 +627,6 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 			appl_write (id, 16, msg);
 
 			if (target && !target->Mode) {
-				free (loader->Data);
 				loader->Data     = strdup ("\n\tLoading application...\n");
 				loader->MimeType = MIME_TXT_PLAIN;
 

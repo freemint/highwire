@@ -12,6 +12,7 @@ typedef struct s_loader {
 	CONTAINR Target;     /* ... and where they should go to */
 	ENCODING Encoding;
 	MIMETYPE MimeType;
+	char   * ExtAppl;
 	short    MarginW, MarginH;
 	/* */
 	LOCATION Cached;
