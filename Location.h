@@ -19,6 +19,7 @@ typedef enum {
 #define PROTO_isRemote(p) ((p) >= PROT_HTTP)
 
 struct s_location {
+	ULONG    __hash;
 	unsigned __reffs;
 	LC_PROTO Proto;
 	short    Port;
@@ -36,6 +37,7 @@ void     free_location (LOCATION *);
 
 LOCATION location_share (LOCATION);
 
+#define      location_Hash(l)  (!l ? 0uL : l->__hash ? l->__hash : _loc_Hash(l))
 size_t       location_FullName (LOCATION, char * buffer, size_t max_len);
 const char * location_Path     (LOCATION, UWORD * opt_len);
 const char * location_Host     (LOCATION);
@@ -44,6 +46,10 @@ BOOL         location_equal    (LOCATION, LOCATION);
 BOOL location_resolve (LOCATION);
 int  location_open    (LOCATION, const char ** host_name);
 
+
+/*----- private -----*/
+
+ULONG _loc_Hash (LOCATION);
 
 
 #endif /*__LOCATION_H__*/

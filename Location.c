@@ -53,6 +53,7 @@ _alloc (DIR_ENT dir, const char * file)
 	size_t   size = (file && *file ? strlen (file) : 0);
 	LOCATION loc  = malloc (sizeof (struct s_location) + dir->Length + size);
 	char   * ptr  = (char*)loc + offsetof (struct s_location, FullName);
+	loc->__hash   = 0uL;
 	loc->__reffs  = 0;
 	loc->Proto    = PROT_FILE;
 	loc->Port     = 0;
@@ -246,6 +247,24 @@ location_share  (LOCATION loc)
 		loc->__reffs++;
 	}
 	return loc;
+}
+
+
+/*============================================================================*/
+ULONG
+_loc_Hash (LOCATION loc)
+{
+	ULONG hash = 0;
+	if (*loc->File) {
+		const char * src = strchr (loc->File, '\0');
+		do {
+			hash =  ((long)hash < 0 ? (hash <<1) | 1 : (hash <<1));
+			hash ^= (ULONG)*(--src);
+		} while (src > loc->File);
+	}
+	hash ^= (ULONG)loc->Dir ^ (ULONG)loc->Host;
+	
+	return (loc->__hash = (hash ? hash : 0xFFFFFFFFuL));
 }
 
 
