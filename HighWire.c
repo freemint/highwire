@@ -17,6 +17,7 @@
 #include "global.h"
 #include "Logging.h"
 #include "schedule.h"
+#define WINDOW_t WINDOW
 #include "hwWind.h"
 #ifdef GEM_MENU
 # include "highwire.h"
@@ -31,6 +32,7 @@ extern char *va_helpbuf;
 
 
 static void highwire_ex(void);
+static void open_splash(void);
 
 
 VDI_Workstation vdi_dev;
@@ -82,7 +84,9 @@ main (int argc, char **argv)
 	    && (memcmp (&gdostype, "fVDI", 4) != 0)) {
 		hwUi_fatal (NULL, _ERROR_SPEEDO_);
 	}
-
+	
+	open_splash();
+	
 	/* Allocate all GLOBAL memory merged to one block.  The reason for using one
 	 * block is, that MiNT with memory protection internally allocates 8 KiB.
 	 * GLOBAL is needed for inter process communication under memory protection.
@@ -243,3 +247,74 @@ highwire_ex (void)
 	vst_unload_fonts (vdi_handle, 0);
 	v_clsvwk         (vdi_handle);
 }
+
+
+/******************************************************************************/
+
+extern MFDB       logo_icon;
+static WINDOW     splash     = NULL;
+static const char spl_name[] = _HIGHWIRE_FULLNAME_;
+static const char spl_vers[] = _HIGHWIRE_VERSION_" "_HIGHWIRE_BETATAG_;
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static int
+close_job (void * arg, long invalidated)
+{
+	(void)invalidated;
+	if (arg == splash) {
+		free (window_dtor(splash));
+		splash = NULL;
+	}
+	return FALSE;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_draw (WINDOW This, const GRECT * clip)
+{
+	MFDB  scrn     = { NULL, };
+	WORD  color[2] = { G_BLACK, G_LBLACK }, dmy;
+	PXY   p[4];
+	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
+	p[1].p_y = (p[0].p_y = clip->g_y) + clip->g_h -1;
+	vs_clip_pxy (vdi_handle, p);
+	wind_get_grect (This->Handle, WF_CURRXYWH, (GRECT*)(p +2));
+	p[3].p_x = (p[2].p_x += 8) + logo_icon.fd_w -1;
+	p[3].p_y = (p[2].p_y += 8) + logo_icon.fd_h -1;
+	vswr_mode     (vdi_handle, MD_TRANS);
+	vsf_color     (vdi_handle, G_LWHITE);
+	vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy,&dmy);
+	vst_color     (vdi_handle, G_BLACK);
+	vst_effects   (vdi_handle, TXT_NORMAL);
+	vst_font      (vdi_handle, 1);
+	v_hide_c (vdi_handle);
+	v_bar (vdi_handle, (short*)p);
+	p[0].p_x = p[0].p_y = 0;
+	p[1] = *(PXY*)&logo_icon.fd_w;
+	vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
+	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y,     spl_name);
+	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y +16, spl_vers);
+	v_show_c (vdi_handle, 1);
+	vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy,&dmy);
+	vs_clip_off (vdi_handle);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+open_splash (void)
+{
+	GRECT curr;
+	WORD w = 8 + logo_icon.fd_w + 8 + (sizeof(spl_vers) -1) *8 + 8;
+	WORD h = 8 + logo_icon.fd_h + 8;
+	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &curr);
+	curr.g_x += (curr.g_w - w) /2;
+	curr.g_y += (curr.g_h - h) /2;
+	curr.g_w =  w;
+	curr.g_h =  h;
+	splash = window_ctor (malloc (sizeof (WINDOWBASE)), 0, &curr, TRUE);
+	splash->drawWork = vTab_draw;
+	window_redraw (splash, NULL);
+	sched_insert (close_job, splash, 0l, 20);
+}
+
+
