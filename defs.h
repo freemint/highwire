@@ -2,9 +2,9 @@
  */
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     2
-#define _HIGHWIRE_REVISION_  5
-#define _HIGHWIRE_BETATAG_   "beta"
-#define _HIGHWIRE_VERSION_   "0.2.5"
+#define _HIGHWIRE_REVISION_  6
+#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_VERSION_   "0.2.6"
 
 #include "hw-types.h"   /* get base definitions */
 
