@@ -9,6 +9,8 @@
 #include "Form.h"
 #include "fontbase.h"
 
+#include "Location.h" /* loc->Flags */
+
 
 /*==============================================================================
  * Patch for gemlib <= 0.42.2
@@ -379,11 +381,11 @@ draw_hr (PARAGRPH paragraph , WORD x, WORD y)
 static short
 draw_image (IMAGE img, short x, short y, void * highlight)
 {
-	static unsigned short sml_bits[] = {
+	static unsigned short filler_sml[1*16] = {
 		0xffff,0x8001,0x8401,0x8e71,0x8e89,0x9f05,0x9f05,0xbf05,
 		0x8a89,0x8d71,0x8aa1,0x8d61,0x8aa1,0x8fe1,0x8001,0xffff
 	};
-	static unsigned short big_bits[] = {
+	static unsigned short filler_big[2*32] = {
 		0xffff,0xffff,0x8000,0x0001,0x8000,0x0001,0x8020,0x0001,
 		0x8050,0x0001,0x8070,0x0001,0x80d8,0x1f01,0x80a8,0x60c1,
 		0x8154,0x8021,0x81ad,0x0011,0x8357,0x0011,0x82aa,0x0009,
@@ -393,9 +395,15 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 		0x80aa,0xaa01,0x8080,0x0201,0x80aa,0xaa01,0x8080,0x0201,
 		0x80ff,0xfe01,0x8000,0x0001,0x8000,0x0001,0xffff,0xffff
 	};
-	static MFDB filler_sml = { sml_bits, 16,16,1, 0, 1, 0,0,0 };
-	static MFDB filler_big = { big_bits, 32,32,2, 0, 1, 0,0,0 };
-
+	static unsigned short blcked_sml[1*16] = {
+		0x0000,
+	};
+	static unsigned short blcked_big[2*32] = {
+		0x0000,
+	};
+	static MFDB mfdb_sml = { filler_sml, 16,16,1, 0, 1, 0,0,0 };
+	static MFDB mfdb_big = { filler_big, 32,32,2, 0, 1, 0,0,0 };
+	
 	short offs;
 	MFDB scrn = { NULL, }, * mfdb;
 	short colors[2] = { G_BLACK, G_WHITE };
@@ -405,16 +413,43 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 
 	(void)highlight; /* not used yet */
 	
+	if (img->source->Flags & (1uL << ('I' - 'A'))) {
+		if (!blcked_big[0]) {
+			long  m0 = 0xE000;
+			long  m1 = 0x0007;
+			short i, j;
+			blcked_sml[0] = filler_sml[0];
+			blcked_big[0] = filler_big[0];
+			blcked_big[1] = filler_big[1];
+			for (i = 1, j = 2; i <= 15; i++, j += 2) {
+				blcked_sml[i]        = (filler_sml[i] ^ (m0 | m1)) | 0x8001;
+				blcked_big[j+0]      = (filler_big[j+0]      ^ m0) | 0x8000;
+				blcked_big[2*32-j-2] = (filler_big[2*32-j-2] ^ m0) | 0x8000;
+				blcked_big[j+1]      = (filler_big[j+1]      ^ m1) | 0x0001;
+				blcked_big[2*32-j-1] = (filler_big[2*32-j-1] ^ m1) | 0x0001;
+				m0 >>= 1;
+				m1 <<= 1;
+			}
+			blcked_sml[15]     = filler_sml[15];
+			blcked_big[2*32-2] = filler_big[2*32-2];
+			blcked_big[2*32-1] = filler_big[2*32-1];
+		}
+		mfdb_big.fd_addr = blcked_big;
+		mfdb_sml.fd_addr = blcked_sml;
+	} else {
+		mfdb_big.fd_addr = filler_big;
+		mfdb_sml.fd_addr = filler_sml;
+	}
 	if (img->u.Mfdb) {
 		colors[0] = img->u.Data->fgnd;
 		colors[1] = img->u.Data->bgnd;
 		mfdb = img->u.Mfdb;
 		offs = 0;
 	} else if (img->disp_w >= 32 && img->disp_h >= 32) {
-		mfdb = &filler_big;
+		mfdb = &mfdb_big;
 		offs = (img->disp_w > 33 ? 33 : 0);
 	} else if (img->disp_w >= 10 && img->disp_h >= 10) {
-		mfdb = &filler_sml;
+		mfdb = &mfdb_sml;
 		offs = (img->disp_w > 17 ? 17 : 0);
 	} else {
 		mfdb = NULL;
