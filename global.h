@@ -172,6 +172,10 @@ ANCHOR new_named_location (const char * address, DOMBOX *);
 void   destroy_named_location_structure (ANCHOR);
 struct url_link * new_url_link (WORDITEM start,
                                 char * address, BOOL is_href, char * target);
+IMAGEMAP create_imagemap  (IMAGEMAP * list, const char * name, BOOL empty);
+void     destroy_imagemap (IMAGEMAP * list, BOOL all);
+MAPAREA  new_maparea (const char * shape, const char * coords,
+                      char * href, char * target, char * text);
 
 /* in color.c */
 

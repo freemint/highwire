@@ -1657,21 +1657,11 @@ render_MAP_tag (PARSER parser, const char ** _text, UWORD flags)
 	
 	if (flags & PF_START) {
 		char     name[100];
-		size_t   len;
-		IMAGEMAP map;
-		if (get_value (parser, KEY_NAME, name, sizeof(name))
-		    && (len = strlen (name)) > 0
-		    && (map = malloc (sizeof(struct s_img_map) + len)) != NULL) {
-			map->Link.isHref   = TRUE;
-			map->Link.address  = NULL;
-			map->Link.start    = NULL;
-			map->Link.u.target = NULL;
-			map->Link.encoding = ENCODING_Unknown;
-			memcpy (map->Name, name, len +1);
-			map->Areas              = NULL;
-			map->Next               = parser->Frame->MapList;
-			parser->Frame->MapList  = map;
-			parser->Current.maparea = &map->Areas;
+		if (get_value (parser, KEY_NAME, name, sizeof(name)) && strlen (name)) {
+			IMAGEMAP map = create_imagemap (&parser->Frame->MapList, name, TRUE);
+			if (map) {
+				parser->Current.maparea = &map->Areas;
+			}
 		}
 	
 	} else {
@@ -1694,73 +1684,17 @@ render_AREA_tag (PARSER parser, const char ** _text, UWORD flags)
 		if (get_value (parser, KEY_SHAPE,  shape,  sizeof(shape)) &&
 		    get_value (parser, KEY_COORDS, coords, sizeof(coords)) &&
 		    (href = get_value_str (parser, KEY_HREF)) != NULL) {
-			MAPAREA area = NULL;
-			if (stricmp (shape, "rect") == 0) {
-				WORD x1, y1, x2, y2;
-				if (sscanf (coords, "%hu,%hu,%hu,%hu", &x1, &y1, &x2, &y2) == 4
-				    && x1 <= x2 && y1 <= y2
-				    && (area = malloc (sizeof(struct s_map_area))) != NULL) {
-					area->Type = 'R';
-					area->u.Extent.g_w = x2 - (area->u.Extent.g_x = x1) +1;
-					area->u.Extent.g_h = y2 - (area->u.Extent.g_y = y1) +1;
-				}
-			} else if (stricmp (shape, "circle") == 0) {
-				WORD xc, yc, r;
-				if (sscanf (coords, "%hu,%hu,%hu", &xc, &yc, &r) == 3 && r >= 1
-				    && (area = malloc (sizeof(struct s_map_area))) != NULL) {
-					area->Type = 'C';
-					area->u.Extent.g_x = (area->u.Circ.Centre.p_x = xc) - r;
-					area->u.Extent.g_y = (area->u.Circ.Centre.p_y = yc) - r;
-					area->u.Extent.g_w =
-					area->u.Extent.g_h = (area->u.Circ.Radius = r) * 2 +1;
-				}
-			} else if (stricmp (shape, "poly") == 0) {
-				WORD   n = 0;
-				char * p = coords;
-				while (isdigit(*(p++))) {
-					if (*p == ',') {
-						p++;
-						n++;
-					} else if (!*p) {
-						n++;
-					}
-				}
-				if ((n /= 2) >= 3) {
-					area = malloc (sizeof(struct s_map_area) + sizeof(PXY) * n);
-				}
-				if (area) {
-					PXY *c = area->u.Poly.P;
-					p = coords;
-					area->Type = 'P';
-					area->u.Poly.Count = 0;
-					area->u.Extent.g_x = area->u.Extent.g_y = 0x7FFF;
-					area->u.Extent.g_w = area->u.Extent.g_h = 0;
-					while (n--) {
-						int l;
-						sscanf (p, "%hu,%hu,%n", &c->p_x, &c->p_y, &l);
-						if (area->u.Extent.g_x > c->p_x) area->u.Extent.g_x = c->p_x;
-						if (area->u.Extent.g_w < c->p_x) area->u.Extent.g_w = c->p_x;
-						if (area->u.Extent.g_y > c->p_y) area->u.Extent.g_y = c->p_y;
-						if (area->u.Extent.g_h < c->p_y) area->u.Extent.g_h = c->p_y;
-						area->u.Poly.Count++;
-						p += l;
-						c++;
-					}
-					if (*(long*)(c -1) != *(long*)area->u.Poly.P) {
-						*c = *area->u.Poly.P;
-						area->u.Poly.Count++;
-					}
-					area->u.Extent.g_w -= area->u.Extent.g_x -1;
-					area->u.Extent.g_h -= area->u.Extent.g_y -1;
-				}
-			}
+			char * target = get_value_str (parser, KEY_TARGET);
+			char * alt    = get_value_str (parser, KEY_ALT);
+			MAPAREA area = new_maparea (shape, coords, href, target, alt);
 			if (area) {
-				area->Address = href;
-				area->Target  = get_value_str (parser, KEY_TARGET);
-				area->AltText = get_value_str (parser, KEY_ALT);
 				area->Next    = NULL;
 				*parser->Current.maparea = area;
 				parser->Current.maparea  = &area->Next;
+			} else {
+				if (target) free (target);
+				if (alt)    free (alt);
+				if (href)   free (href);
 			}
 		}
 	}

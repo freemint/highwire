@@ -79,25 +79,17 @@ delete_frame (FRAME * p_frame)
 {
 	FRAME frame = *p_frame;
 	if (frame) {
-		while (frame->MapList) {
-			IMAGEMAP map   = frame->MapList;
-			frame->MapList = map->Next;
-			while (map->Areas) {
-				MAPAREA area = map->Areas;
-				map->Areas   = area->Next;
-				if (area->Address) free (area->Address);
-				if (area->Target)  free (area->Target);
-				if (area->AltText) free (area->AltText);
-				free (area);
-			}
-			free (map);
+		if (frame->MapList) {
+			destroy_imagemap (&frame->MapList, TRUE);
 		}
-		if (frame->first_named_location)
+		if (frame->first_named_location) {
 			destroy_named_location_structure (frame->first_named_location);
+		}
+		if (frame->base_target) {
+			free (frame->base_target);
+		}
 		free_location (&frame->Location);
 		free_location (&frame->BaseHref);
-		if (frame->base_target)
-			free (frame->base_target);
 		Delete (&frame->Page);
 		*p_frame = NULL;
 	}
