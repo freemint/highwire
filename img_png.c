@@ -53,7 +53,6 @@ decPng_start (const char * name, IMGINFO info)
 	if (setjmp (png_jmpbuf (png_ptr))) {
 		png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
 		fclose (file);
-		puts ("BUMMER");
 		return TRUE;
 	}
 	png_init_io       (png_ptr, file);
@@ -110,7 +109,9 @@ decPng_quit  (IMGINFO info)
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
 	if (png_ptr) {
-		png_read_end             (png_ptr,  info_ptr);
+		if (!setjmp (png_jmpbuf (png_ptr))) {
+			png_read_end         (png_ptr,  info_ptr);
+		}
 		png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
 		fclose (info->_priv_file);
 		info->_priv_file = NULL;
