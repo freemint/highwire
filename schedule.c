@@ -15,6 +15,7 @@ typedef BOOL (*SCHED_FUNC) (void *, long);
 
 typedef struct s_SCHED {
 	struct s_SCHED * Next;
+	struct s_SCHED * Prev;
 	SCHED_FUNC       func;
 	void           * Value;
 	long             Hash;
@@ -37,6 +38,37 @@ sched_init (void (*func) (long msec))
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+sort_in (SCHED sched)
+{
+	if (!__end) {
+		sched->Prev = sched->Next = NULL;
+		__beg       = __end       = sched;
+	
+	} else {
+		sched->Next = NULL;
+		sched->Prev = __end;
+		__end->Next = sched;
+		__end       = sched;
+	}
+	__cnt++;
+}
+
+/*----------------------------------------------------------------------------*/
+static SCHED
+move_out (SCHED sched)
+{
+	if (sched->Prev) sched->Prev->Next = sched->Next;
+	else             __beg             = sched->Next;
+	if (sched->Next) sched->Next->Prev = sched->Prev;
+	else             __end             = sched->Prev;
+	__cnt--;
+	
+	return sched;
+}
+
+
 /*==============================================================================
  */
 BOOL
@@ -44,14 +76,10 @@ sched_insert (SCHED_FUNC func, void * value, long hash)
 {
 	SCHED sched = malloc (sizeof (struct s_SCHED));
 	if (sched) {
-		sched->Next  = NULL;
 		sched->func  = func;
 		sched->Value = value;
 		sched->Hash  = hash;
-		if (__end) __end->Next = sched;
-		else       __beg       = sched;
-		__end = sched;
-		__cnt++;
+		sort_in (sched);
 		
 		if (on_off) (*on_off) (1);
 		
@@ -66,24 +94,15 @@ sched_insert (SCHED_FUNC func, void * value, long hash)
 ULONG
 sched_remove (SCHED_FUNC func, void * value)
 {
-	SCHED sched = __beg, prev = NULL;
+	SCHED sched = __beg;
 	ULONG num   = 0;
 	
 	while (sched) {
 		SCHED next = sched->Next;
 		if (sched->Value == value && (!func || sched->func == func)) {
-			if (prev) {
-				if ((prev->Next = next) == NULL)
-					__end = prev;
-			} else if ((__beg = next) == NULL) {
-				__end = NULL;
-				if (on_off) (*on_off) (-1);
-			}
-			free (sched);
-			__cnt--;
+			free (move_out (sched));
 			num++;
-		} else {
-			prev = sched;
+			if (on_off && !__beg) (*on_off) (-1);
 		}
 		sched = next;
 	}
@@ -95,25 +114,16 @@ sched_remove (SCHED_FUNC func, void * value)
 ULONG
 sched_clear (long hash)
 {
-	SCHED sched = __beg, prev = NULL;
+	SCHED sched = __beg;
 	ULONG num   = 0;
 	
 	while (sched) {
 		SCHED next = sched->Next;
 		if (sched->Hash == hash) {
 			(*sched->func)(sched->Value, hash);
-			if (prev) {
-				if ((prev->Next = next) == NULL)
-					__end = prev;
-			} else if ((__beg = next) == NULL) {
-				__end = NULL;
-				if (on_off) (*on_off) (-1);
-			}
-			free (sched);
-			__cnt--;
+			free (move_out (sched));
 			num++;
-		} else {
-			prev  = sched;
+			if (on_off && !__beg) (*on_off) (-1);
 		}
 		sched = next;
 	}
@@ -133,17 +143,9 @@ schedule (int max_do)
 		if (max_do < 0) max_do = (int)__cnt;
 		
 		while (__beg) {
-			SCHED sched = __beg;
-			__beg       = sched->Next;
-			if (!__beg) __end = NULL;
-			__cnt--;
-			
+			SCHED sched = move_out (__beg);
 			if ((*sched->func)(sched->Value, 0)) {
-				sched->Next = NULL;
-				if (__end) __end->Next = sched;
-				else       __beg       = sched;
-				__end = sched;
-				__cnt++;
+				sort_in (sched);
 			} else {
 				free (sched);
 			}
