@@ -1,4 +1,4 @@
-(non-released of Jun. 25, 2003)
+(non-released of Jul. 10, 2003)
 
 - Implemented disk caching of text/html files from
   remote (only per session yet).  To enable this
@@ -7,6 +7,9 @@
     CACHEDIR = <path>
   where <path> must be a valid and writeable
   directory.
+
+- Improved history functionality, stores also
+  slider positions now.
 
 - Implemented ID keyword as anchor for <P> and
   <Hx> tags, blanks in anchor names are filtered
