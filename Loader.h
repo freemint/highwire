@@ -51,6 +51,8 @@ LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base,
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
                         int (*successor)(void*, long), void * objc);
 
+int saveas_job (void * arg, long invalidated);
+
 long file_size (const LOCATION);
 char * load_file (const LOCATION, size_t * expected, size_t * loaded);
 
