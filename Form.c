@@ -754,10 +754,11 @@ input_activate (INPUT input, WORD slct)
 	}
 	
 	if (input->SubType == 'S' && form->Action) {
+		LOADER ldr;
 		FRAME  frame = form->Frame;
 		INPUT  elem  = form->InputList;
 		size_t size  = 0, len;
-		char * url;
+		char * data, * url;
 		
 		if (elem) {
 			do if (elem->checked && *elem->Name) {
@@ -766,13 +767,21 @@ input_activate (INPUT input, WORD slct)
 			} while ((elem = elem->Next) != NULL);
 		}
 		
-		len = strlen (form->Action);
-		url = strcpy (malloc (len + size +1), form->Action);
+		if (form->Method == METH_POST) {
+			len  = 0;
+			url  = form->Action;
+			data = malloc (size +1);
+			if (size) size--;
+		} else {
+			len  = strlen (form->Action);
+			url  = strcpy (malloc (len + size +1), form->Action);
+			data = url;
+			data[len] = (strchr (url, '?') ? '&' : '?');
+		}
 		if (size) {
-			char * p = url + len;
+			char * p = data + (len > 0 ? len +1 : 0);
 			size += len;
 			elem = form->InputList;
-			*(p++) = (strchr (url, '?') ? '&' : '?');
 			do if (elem->checked && *elem->Name) {
 				len = strlen (elem->Name);
 				memcpy (p, elem->Name, len);
@@ -789,9 +798,15 @@ input_activate (INPUT input, WORD slct)
 			} while ((elem = elem->Next) != NULL);
 			len = size;
 		}
-		url[len] = '\0';
-		start_page_load (frame->Container, url, frame->Location, TRUE);
-		free (url);
+		data[len] = '\0';
+		ldr = start_page_load (frame->Container, url, frame->Location, TRUE);
+		if (form->Method != METH_POST) {
+			free (url);
+		} else if (ldr) {
+			ldr->PostBuf = data;
+		} else {
+			free (data);
+		}
 	}
 	
 	input->checked = FALSE;
