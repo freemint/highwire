@@ -82,6 +82,8 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				int ih = (int) info->Ident       & 0x0FFF; /* height      */
 				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
 				render_text (current, buf);
+			} else if (!info->Object) {
+				render_text (current, "(busy)");
 			} else {
 				sprintf (buf, "Disk:%s", info->File);
 				render_text (current, buf);
@@ -100,7 +102,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				}
 				line++;
 			}
-			if (info->Used) {
+			if (info->Used || !info->File) {
 				sprintf (buf, "[%li]", info->Used);
 				render_text (current, buf);
 			} else {
@@ -226,6 +228,9 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	}
 	#endif
 	render_hrule (current, ALN_LEFT, -512, 2);
+	
+	sprintf (buf, "Screen Mode: '%s'\r", image_dispinfo());
+	render_text (current, buf);
 	
 	render_link (current, "modules: ", "about:modules", link_color);
 	if (m_num) {
