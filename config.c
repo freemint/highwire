@@ -8,6 +8,7 @@
 
 #include "global.h"
 #include "hwWind.h"
+#include "cache.h"
 
 
 /*----------------------------------------------------------------------------*/
@@ -43,6 +44,7 @@ cfg_minsize (char * param, long arg)
 	}
 }
 
+
 /*----------------------------------------------------------------------------*/
 static void
 cfg_infobar (char * param, long arg)
@@ -52,6 +54,7 @@ cfg_infobar (char * param, long arg)
 	hwWind_setup (HWWS_INFOBAR, n);
 }
 
+
 /*----------------------------------------------------------------------------*/
 static void
 cfg_localweb (char * param, long arg)
@@ -59,6 +62,7 @@ cfg_localweb (char * param, long arg)
 	(void)arg;
 	local_web = strdup (param);
 }
+
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -69,6 +73,15 @@ cfg_func (char * param, long arg)
 		typedef void (*gen_func)(void);
 		(*(gen_func)arg)();
 	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_cachedir (char * param, long arg)
+{
+	(void)arg;
+	cache_setup (param);
 }
 
 
@@ -133,6 +146,7 @@ read_config(char *fn)
 				{ "BOLD_ITALIC_TELETYPE", cfg_font,    FA(pre_font,    1, 1) },
 				{ "BOLD_NORMAL",          cfg_font,    FA(normal_font, 1, 0) },
 				{ "BOLD_TELETYPE",        cfg_font,    FA(pre_font,    1, 0) },
+				{ "CACHEDIR",             cfg_cachedir,0 },
 				{ "FONT_MINSIZE",         cfg_minsize, 0 },
 				{ "FONT_SIZE",            cfg_fntsize, 0 },
 				{ "FORCE_FRAMECTRL",      cfg_func,    (long)menu_frm_ctrl   },
