@@ -1,5 +1,88 @@
 Ok here are the new supports and changes
 
+April 07, 2004
+
+  AltF4's patches
+    
+  render.c
+    - line 2935 (parse_html):  avoid useless CSS interpretation for
+      closing tags, saves up to 20% parsing time on some sites.
+    
+April 06, 2004
+
+  AltF4's patches
+    .
+  defs.h:
+    - line 5..7:  bumped to version 0.1.8 alpha.
+    
+  Loader.h:    line 44 (new_loader) + 48 (start_page_load)
+               + 50 (start_cont_load):
+  Form.c:      line 757 + 802..808 (input_activate):
+  render.c:    line 803 (render_FRAMESET_tag)
+               + 928..929 (render_META_tag):
+  hwWind.c:    line 254 (new_hwWind) + 903 (hwWind_history)
+               + 1967 (hwWind_keybrd):
+  keyinput.c:  line 140 (key_pressed):
+  Mouse_R.c:   line 246 (button_clicked):
+  AEI.c:       line 141 (page_load) + 180 (vastart) + 384 (menu_open)
+               + 407 (menu_reload):
+    - parameter lists extended for cache control.
+    
+  Loader.c:
+    - line 162 + 201 (new_loader) + 266 + 275 (start_page_load) + 284
+      287 (start_cont_load) + 354 (start_objc_load):  parameter lists
+      extended for cache control.
+    - line 568 +  574..579 (receive_job) + 614 (header_job):  avoid
+      cache usage for contents resulting from POST actions.
+    
+April 05, 2004
+
+  AltF4's patches
+    
+  http.c:
+    - line 334 + 346..347 + 350 + 397 (http_header):  reworked to allow
+      subsequent header reciving.
+    
+  Loader.c:
+    - line 658 (header_job):  added handling of 100-continue server
+      replies.
+    
+April 04, 2004
+
+  AltF4's patches
+    
+  Table.c:
+    - line 849 (vTab_format):  column width calculation changed, was
+      causing crashes sometimes.
+    
+April 02, 2004
+
+  AltF4's patches
+    
+  http.h:  line 22 (http_header):
+  http.c:  line 323 + 362 + 372 + + 378..379 (http_header):
+    - additional parameter for handling of POST method.
+    
+  Loader.h:  line 14 (struct s_loader):
+  Loader.c:  line 169 (new_loader) + 252 (delete_loader)
+               + 651 (header_job):
+    - buffer added for POST method arguments.
+    
+  Form.c:
+    - line 756 + 760 + 769..770 + 772 + 775
+      + 792..794 (input_activate):  handling of form method POST
+      implemented.
+    
+April 01, 2004
+
+  AltF4's patches
+    
+  Form.c:
+    - line 90..93 (new_form):  improved handling of forms without
+      defined action.
+    - line 346..347 (new_input) + 771 (input_activate):  avoid multiple
+      question marks in GET urls.
+
 March 30, 2004   [V. 0.1.7 release]
 
   AltF4's patches

@@ -1,6 +1,22 @@
-(non-public of April 02, 2004)
+(non-public of April 07, 2004)
+
+- Table column width calculation changed, was
+  causing crashes sometimes.
+
+- Speed up CSS parsing by avoiding useless CSS
+  interpretation for closing tags, saves up to 20%
+  parsing time on some sites.
+
+- Cache improved to avoid storing of contents
+  resulting from POST actions.
+
+- Implementation added to handle 100-continue
+  server replies, often used for POST method.
 
 - Handling of form method POST implemented.
+
+- Improved handling of forms without a defined
+  action.
 
 __________________________________________________
 Changes in V. 0.1.7 release  of March 25, 2004:
