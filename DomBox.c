@@ -418,7 +418,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
 
-		if (box->MinWidth > blk_width) {
+		if (box->BoxClass != BC_MIXED && box->BoxClass != BC_TXTPAR
+		    && box->MinWidth > blk_width) {
 			if (height < blocker->L.bottom) height = blocker->L.bottom;
 			if (height < blocker->R.bottom) height = blocker->R.bottom;
 			box->Rect.Y = height;
