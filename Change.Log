@@ -1,3 +1,15 @@
+(non-public changes of Dec. 04, 2004)
+
+- High/TrueColor (24/32bit) screen modes for Hades
+  graphic card drivers added.  Now images will
+  appear with correct colours (#0101).
+
+- Initialization order of AES and VDI exchanged at
+  program start to avoid problems with some AESs.
+
+- Bugs #0101 resolved.
+
+__________________________________________________
 Changes in V. 0.2.3 release  of November 21, 2004:
 
 - Support for image link maps implemented (MAP/
