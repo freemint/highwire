@@ -34,9 +34,9 @@
 #define URL_EDIT               6 /* FBOXTEXT in tree URLINPUT */
 
 #define RPOPUP                 3 /* form/dialog */
-#define RPOP_BACK              1 /* TEXT in tree RPOPUP */
-#define RPOP_FORWARD           3 /* TEXT in tree RPOPUP */
-#define RPOP_VIEWSRC           4 /* TEXT in tree RPOPUP */
-#define RPOP_RELOAD            5 /* TEXT in tree RPOPUP */
-#define RPOP_INFO              7 /* TEXT in tree RPOPUP */
+#define RPOP_BACK              1 /* STRING in tree RPOPUP */
+#define RPOP_FORWARD           2 /* STRING in tree RPOPUP */
+#define RPOP_RELOAD            3 /* STRING in tree RPOPUP */
+#define RPOP_VIEWSRC           5 /* STRING in tree RPOPUP */
+#define RPOP_INFO              7 /* STRING in tree RPOPUP */
 
