@@ -805,12 +805,14 @@ rpopup_open (WORD mx, WORD my)
 void
 rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 {
+	extern FILE * open_scrap (BOOL rdNwr);
 	extern int saveas_job (void * arg, long invalidated);
 	extern OBJECT *rpoplink;
 	CONTAINR cont = NULL;
 	CONTAINR target;
 	struct url_link * link = hash;
 	const char      * addr = link->address;
+	FILE * file;
 	
 	HwWIND wind  = hwWind_byCoord (mx, my);
 	FRAME  frame = hwWind_ActiveFrame (wind);
@@ -916,6 +918,15 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 					ldr->Encoding = link->encoding;
 				}
 			}
+			break;
+
+		case RLINK_COPY:
+			file = open_scrap (FALSE);
+			if (file) {
+				fwrite (addr, 1, strlen(addr), file);
+				fclose (file);
+			}
+
 			break;
 
 		case RLINK_INFO:
