@@ -1,4 +1,4 @@
-(non-public changes of Dec. 19, 2004)
+Changes in V. 0.2.4 release  of December 25, 2004:
 
 - When a config file was created because none was
   found at program start the user gets a
@@ -32,6 +32,16 @@
 - Initialization order of AES and VDI exchanged at
   program start to avoid problems with some AESs.
 
+- Fixed a bug that was causing endless reload try
+  loops due to empty or not found CSS files.
+
+- Fixed loading of very short files which got lost
+  due to wrong handling.
+
+- Added an extra check for images that were tryed
+  to load from a HTTPS source, this could cause
+  crashes in the past.
+
 - Old bug fixed: avoid reloading pages from remote
   when the base font size got changed, use files
   from cache instead.
@@ -39,7 +49,7 @@
 - Improved palette parsing for XPMs, to get more
   types of such images decoded.
 
-- Bugs #0101 resolved.
+- Bug #0101 resolved.
 
 __________________________________________________
 Changes in V. 0.2.3 release  of November 21, 2004:
