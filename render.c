@@ -2006,51 +2006,30 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		TEXTBUFF current = &parser->Current;
-		TEXTATTR attrib  = current->word->attr;
+		short size    = get_value_unum   (parser, KEY_SIZE, 0);
+		BOOL  noshade = get_value_exists (parser, KEY_NOSHADE);
+		DOMBOX * box;
 		
-		PARAGRPH hr_par = add_paragraph(current, 0);
-		WORDITEM hr_wrd = current->word;
-		
-		hr_par->Box.HtmlCode = TAG_HR;
-		
-		new_word (current, TRUE);
-		add_paragraph (current, 0);
-	
-		hr_par->paragraph_code = PAR_HR;
-		hr_par->Box.TextAlign  = get_h_align (parser, ALN_CENTER);
-		
-		if ((hr_wrd->word_tail_drop = get_value_unum (parser, KEY_SIZE, 0)) == 0 &&
-		    (hr_wrd->word_tail_drop = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
-			hr_wrd->word_tail_drop = 2;
-		} else if (hr_wrd->word_tail_drop > 100) {
-			hr_wrd->word_tail_drop = 100;
+		if (size == 0 && (size = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
+			size = 2;
+		} else if (size == 1) {
+			noshade = TRUE;
 		}
-		hr_wrd->word_height = (hr_wrd->word_height + hr_wrd->word_tail_drop) /2;
-		if (get_value_exists (parser, KEY_NOSHADE)) {
-			hr_wrd->word_tail_drop = -hr_wrd->word_tail_drop;
-		}
-		if ((hr_wrd->space_width = get_value_size (parser, KEY_WIDTH)) == 0) {
-			hr_wrd->space_width = -1024;
-		}
-		if (!ignore_colours) {
-			WORD color = get_value_color (parser, KEY_BGCOLOR);
-			if (color >= 0 && color != current->backgnd) {
-				hr_par->Box.Backgnd = color;
+		box = render_hrule (&parser->Current, get_h_align (parser, ALN_CENTER),
+		                    get_value_size (parser, KEY_WIDTH), size, !noshade);
+		if (noshade || size >= 2) {
+			WORD color = get_value_color (parser, KEY_COLOR);
+			if (color < 0) {
+				color = get_value_color (parser, KEY_BGCOLOR);
 			}
-			color = get_value_color (parser, KEY_COLOR);
-			TA_Color(hr_wrd->attr) = (color                  >= 0 ? color    :
-			                          hr_wrd->word_tail_drop <= 1 ? G_LBLACK :
-			                          hr_par->Box.Backgnd    >= 0 ? hr_par->Box.Backgnd :
-			                                                        current->backgnd);
-		} else if (hr_wrd->word_tail_drop <= 1) {
-			TA_Color(hr_wrd->attr) = G_BLACK;
+			if (color < 0 && noshade) {
+				box->Backgnd = G_LBLACK;
+			} else if (color != parser->Current.backgnd) {
+				box->Backgnd = color;
+			}
 		}
-		
-		current->word->attr = attrib;
 		flags |= PF_SPACE;
 	}
-	
 	return flags;
 }
 
@@ -3065,20 +3044,35 @@ parse_image (void * arg, long invalidated)
 
 
 /*============================================================================*/
-void
-render_hrule (TEXTBUFF current, H_ALIGN align, short w, short h)
+DOMBOX *
+render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 {
-	PARAGRPH par  = add_paragraph (current, 0);
-	WORDITEM word = current->word;
+	PARAGRPH par = add_paragraph(current, 0);
+	DOMBOX * box = dombox_ctor (malloc (sizeof (DOMBOX)),
+	                            current->parentbox, BC_STRUCT);
+	box->HtmlCode = TAG_HR;
 	
-	new_word (current, TRUE);
-	add_paragraph (current, 0);
+	if (shade) {
+		box->BorderWidth = 1;
+		box->BorderColor = -2;
+		size -= 2;
+	}
+	box->Padding.Top = size;
+	box->Padding.Lft = 3; /* minimum width */
 	
-	par->paragraph_code  = PAR_HR;
-	par->Box.TextAlign   = align;
-	word->word_tail_drop = h;
-	word->word_height    = (word->word_height + word->word_tail_drop) /2;
-	word->space_width    = w;
+	if (par->item->word_height > size) {
+		box->Margin.Top = box->Margin.Bot = par->item->word_height - size;
+	} else {
+		box->Margin.Top = box->Margin.Bot = par->item->word_tail_drop;
+	}
+	box->Margin.Lft = box->Margin.Rgt = 1;
+	
+	box->SetWidth = w;
+	box->Floating = align;
+	
+	dombox_reorder (&par->Box, box);
+	
+	return box;
 }
 
 
