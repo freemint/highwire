@@ -274,7 +274,7 @@ location_open (LOCATION loc, const char ** host_name)
 		
 #ifdef USE_INET
 		if (host->Ip) {
-			sock = inet_connect (host->Ip, loc->Port);
+			sock = (int)inet_connect (host->Ip, loc->Port);
 		}
 #endif /* USE_INET */
 	}
