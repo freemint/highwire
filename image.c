@@ -472,7 +472,7 @@ image_job (void * arg, long invalidated)
 			 par->Box.MinWidth = img->disp_w;
 			 par->Box.MaxWidth = 0;
 		}
-		dombox_MinWidth (&frame->Page.Box);
+		dombox_MinWidth (&frame->Page);
 		
 	/*	if (containr_calculate (frame->Container, NULL)) {
 			calc_xy = 0;

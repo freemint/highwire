@@ -407,8 +407,8 @@ menu_reload (ENCODING encoding)
 			                              NULL, frame->Location, TRUE);
 			if (ldr) {
 				ldr->Encoding = (encoding | 0x80u);
-				ldr->MarginW  = frame->Page.Box.Margin.Lft;
-				ldr->MarginH  = frame->Page.Box.Margin.Top;
+				ldr->MarginW  = frame->Page.Margin.Lft;
+				ldr->MarginH  = frame->Page.Margin.Top;
 			}
 		}
 	} else {

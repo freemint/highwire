@@ -23,6 +23,19 @@ new_frame (LOCATION loc, TEXTBUFF current,
 {
 	FRAME frame = malloc (sizeof (struct frame_item));
 
+	current->parentbox    = dombox_ctor (&frame->Page, NULL, BC_MAIN);
+	frame->Page.Backgnd   = current->backgnd = background_colour;
+	frame->Page.TextAlign = ALN_LEFT;
+	if (margin_w >= 0) {
+		frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin_w;
+	} else {
+		frame->Page.Padding.Lft = frame->Page.Padding.Rgt = page_margin;
+	}
+	if (margin_h >= 0) {
+		frame->Page.Padding.Top = frame->Page.Padding.Bot = margin_h;
+	} else {
+		frame->Page.Padding.Top = frame->Page.Padding.Bot = page_margin;
+	}
 	frame->Container    = NULL;
 	frame->Location     = location_share (loc);
 	frame->BaseHref     = location_share (loc);
@@ -47,16 +60,8 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	
 	current->anchor    = &frame->first_named_location;
 	current->quot_lang = frame->Language;
-	
-	content_setup (&frame->Page, current, NULL, BC_MAIN,
-	               page_margin, background_colour);
-	
-	if (margin_w >= 0) {
-		frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin_w;
-	}
-	if (margin_h >= 0) {
-		frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot = margin_h;
-	}
+	current->backgnd   = background_colour;
+	new_paragraph (current);
 	
 	if (frame->MimeType == MIME_TXT_PLAIN) {
 		font_byType (pre_font, -1, -1, current->word);
@@ -78,7 +83,7 @@ delete_frame (FRAME * p_frame)
 		free_location (&frame->BaseHref);
 		if (frame->base_target)
 			free (frame->base_target);
-		Delete (&frame->Page.Box);
+		Delete (&frame->Page);
 		*p_frame = NULL;
 	}
 }
@@ -96,7 +101,7 @@ frame_finish (FRAME frame, PARSER parser, TEXTBUFF current)
 	}
 	paragrph_finish (current);
 	
-	dombox_MinWidth (&frame->Page.Box);
+	dombox_MinWidth (&frame->Page);
 }
 
 
@@ -110,42 +115,42 @@ void
 frame_calculate (FRAME frame, const GRECT * clip)
 {
 	long  old_width  = (frame->h_bar.on
-	                    ? frame->Page.Box.Rect.W - frame->clip.g_w : 0);
+	                    ? frame->Page.Rect.W - frame->clip.g_w : 0);
 	long  old_height = (frame->v_bar.on
-	                    ? frame->Page.Box.Rect.H - frame->clip.g_h : 0);
+	                    ? frame->Page.Rect.H - frame->clip.g_h : 0);
 	short scrollbar_size = scroll_bar_width;
 	
 	frame->clip = *clip;
 
 	if (!frame->scroll) {
 		
-		if (frame->Page.Box.MinWidth <= frame->clip.g_w) {
+		if (frame->Page.MinWidth <= frame->clip.g_w) {
 			frame->h_bar.on = FALSE;
-			dombox_format (&frame->Page.Box, frame->clip.g_w);
+			dombox_format (&frame->Page, frame->clip.g_w);
 		
 		} else {
 			frame->h_bar.on = TRUE;
 			frame->clip.g_h -= scrollbar_size;
-			dombox_format (&frame->Page.Box, frame->Page.Box.MinWidth);
+			dombox_format (&frame->Page, frame->Page.MinWidth);
 		}
 		
-		if (frame->Page.Box.Rect.H <= frame->clip.g_h) {
-			frame->v_bar.on        = FALSE;
-			frame->Page.Box.Rect.H = frame->clip.g_h;
+		if (frame->Page.Rect.H <= frame->clip.g_h) {
+			frame->v_bar.on    = FALSE;
+			frame->Page.Rect.H = frame->clip.g_h;
 		
 		} else {
 			frame->v_bar.on = TRUE;
 			frame->clip.g_w -= scrollbar_size;
 	
 			if (!frame->h_bar.on) {
-				if (frame->Page.Box.MinWidth > frame->clip.g_w) {
-					frame->Page.Box.Rect.W = frame->Page.Box.MinWidth;
-					frame->h_bar.on        = TRUE;
-					frame->clip.g_h       -= scrollbar_size;
+				if (frame->Page.MinWidth > frame->clip.g_w) {
+					frame->Page.Rect.W = frame->Page.MinWidth;
+					frame->h_bar.on    = TRUE;
+					frame->clip.g_h   -= scrollbar_size;
 				} else {
-				   dombox_format (&frame->Page.Box, frame->clip.g_w);
-					if (frame->Page.Box.Rect.H < frame->clip.g_h) {
-						 frame->Page.Box.Rect.H = frame->clip.g_h;
+				   dombox_format (&frame->Page, frame->clip.g_w);
+					if (frame->Page.Rect.H < frame->clip.g_h) {
+						 frame->Page.Rect.H = frame->clip.g_h;
 					}
 				}
 			}
@@ -157,13 +162,13 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->clip.g_w -= scrollbar_size;
 			frame->clip.g_h -= scrollbar_size;
 		}
-		if (frame->clip.g_w > frame->Page.Box.MinWidth) {
-			dombox_format (&frame->Page.Box, frame->clip.g_w);
+		if (frame->clip.g_w > frame->Page.MinWidth) {
+			dombox_format (&frame->Page, frame->clip.g_w);
 		} else {
-			dombox_format (&frame->Page.Box, frame->Page.Box.MinWidth);
+			dombox_format (&frame->Page, frame->Page.MinWidth);
 		}
-		if (frame->Page.Box.Rect.H < frame->clip.g_h) {
-			 frame->Page.Box.Rect.H = frame->clip.g_h;
+		if (frame->Page.Rect.H < frame->clip.g_h) {
+			 frame->Page.Rect.H = frame->clip.g_h;
 		}
 	}
 	
@@ -171,7 +176,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		frame->h_bar.scroll = 0;
 	
 	} else {
-		long new_width = frame->Page.Box.Rect.W - frame->clip.g_w;
+		long new_width = frame->Page.Rect.W - frame->clip.g_w;
 		if (old_width) {
 			long scroll = +(frame->h_bar.scroll * 1024 + old_width /2)
 			            / old_width;
@@ -186,7 +191,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->h_bar.rd--;
 		}
 		frame->h_bar.size = (long)(frame->h_bar.rd - frame->h_bar.lu +1)
-		                  * frame->clip.g_w / frame->Page.Box.Rect.W;
+		                  * frame->clip.g_w / frame->Page.Rect.W;
 		if (frame->h_bar.size < scroll_bar_width) {
 			 frame->h_bar.size = scroll_bar_width;
 		}
@@ -197,9 +202,9 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		frame->v_bar.scroll = 0;
 	
 	} else {
-		long new_height = frame->Page.Box.Rect.H - frame->clip.g_h;
+		long new_height = frame->Page.Rect.H - frame->clip.g_h;
 
-		if (frame->Page.Box.Rect.H <= frame->clip.g_h) {
+		if (frame->Page.Rect.H <= frame->clip.g_h) {
 			new_height = frame->clip.g_h;
 		
 		} else {
@@ -220,11 +225,11 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->v_bar.rd--;
 		}
 
-		if (frame->Page.Box.Rect.H <= frame->clip.g_h) {
+		if (frame->Page.Rect.H <= frame->clip.g_h) {
 			frame->v_bar.size = (long)(frame->v_bar.rd - frame->v_bar.lu +1);
 		} else {
 			frame->v_bar.size = (long)(frame->v_bar.rd - frame->v_bar.lu +1)
-		                     * frame->clip.g_h / frame->Page.Box.Rect.H;
+		                     * frame->clip.g_h / frame->Page.Rect.H;
 		}
 		if (frame->v_bar.size < scroll_bar_width) {
 			 frame->v_bar.size = scroll_bar_width;

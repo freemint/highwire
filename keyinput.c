@@ -91,13 +91,13 @@ key_pressed (WORD key, UWORD state)
 	case 0x4700:  /* home */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
 			hwWind_scroll (hwWind_Top, active->Container,
-			               -active->Page.Box.Rect.W, -active->Page.Box.Rect.H);
+			               -active->Page.Rect.W, -active->Page.Rect.H);
 			break;
 		}
 		/* else fall through */
 	case 0x4F00:  /* end */
 		hwWind_scroll (hwWind_Top, active->Container,
-		               -active->Page.Box.Rect.W, +active->Page.Box.Rect.H);
+		               -active->Page.Rect.W, +active->Page.Rect.H);
 		break;
 	case 0x4800:  /* /|\ */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {

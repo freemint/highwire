@@ -65,14 +65,14 @@ get_align (PARSER parser)
 {
 	FRAME frame = parser->Frame;
 	
-	if (frame->Page.Box.TextAlign == ALN_CENTER &&
+	if (frame->Page.TextAlign == ALN_CENTER &&
 	    parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
 		return (ALN_CENTER);
 	}
 	if (parser->Current.tbl_stack && parser->Current.tbl_stack->WorkCell) {
 		return (parser->Current.tbl_stack->WorkCell->Box.TextAlign);
 	}
-	return (frame->Page.Box.TextAlign);
+	return (frame->Page.TextAlign);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1000,7 +1000,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		FRAME frame = parser->Frame;
 		WORD  margin;
 		
-		frame->Page.Box.HtmlCode = TAG_BODY;
+		frame->Page.HtmlCode = TAG_BODY;
 		
 		if (!ignore_colours)
 		{
@@ -1011,7 +1011,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 				frame->text_color = color;
 			}
 			if ((color = get_value_color (parser, KEY_BGCOLOR)) >= 0) {
-				frame->Page.Box.Backgnd = parser->Current.backgnd = color;
+				frame->Page.Backgnd = parser->Current.backgnd = color;
 			}
 			if ((color = get_value_color (parser, KEY_LINK)) >= 0) {
 				frame->link_color = color;
@@ -1019,17 +1019,17 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if ((margin = get_value_unum (parser, CSS_MARGIN, -1)) >= 0) {
-			frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot =
-			frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin;
+			frame->Page.Padding.Top = frame->Page.Padding.Bot =
+			frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
 			
 		} else {
 			if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
-				frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot = margin;
+				frame->Page.Padding.Top = frame->Page.Padding.Bot = margin;
 			}
 			if ((margin = get_value_unum (parser, KEY_MARGINWIDTH, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
-				frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin;
+				frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
 			}
 		}
 	}
@@ -2120,10 +2120,10 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 	add_paragraph (&parser->Current, 0);
 
 	if (flags & PF_START) {
-		frame->Page.Box.TextAlign                = ALN_CENTER;
+		frame->Page.TextAlign                    = ALN_CENTER;
 		parser->Current.paragraph->Box.TextAlign = ALN_CENTER;
 	} else {
-		frame->Page.Box.TextAlign                = ALN_LEFT;
+		frame->Page.TextAlign                    = ALN_LEFT;
 		parser->Current.paragraph->Box.TextAlign = get_align (parser);
 	}
 	

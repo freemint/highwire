@@ -58,7 +58,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			if (y >= frame->v_bar.pos + frame->v_bar.size) {
 				
 				if (y >= frame->v_bar.rd) {                         /* down arrow */
-					step = (clicks == 1 ? scroll_step : frame->Page.Box.Rect.H);
+					step = (clicks == 1 ? scroll_step : frame->Page.Rect.H);
 					step = (button & LEFT_BUTTON ? +step : -step);
 				
 				} else if (button & LEFT_BUTTON) {                   /* down page */
@@ -72,7 +72,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			} else if (y <= frame->v_bar.pos) {
 				
 				if (y <= frame->v_bar.lu) {                           /* up arrow */
-					step = (clicks == 1 ? scroll_step : frame->Page.Box.Rect.H);
+					step = (clicks == 1 ? scroll_step : frame->Page.Rect.H);
 					step = (button & LEFT_BUTTON ? -step : +step);
 				
 				} else if (button & LEFT_BUTTON) {                     /* up page */
@@ -97,7 +97,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				              scroll_bar_width, sldr,
 				              &s_x, &s_y);
 				sldr -= frame->v_bar.size;
-				step  = ((frame->Page.Box.Rect.H - frame->clip.g_h)
+				step  = ((frame->Page.Rect.H - frame->clip.g_h)
 				         * ((s_y - frame->clip.g_y) - frame->v_bar.lu) + (sldr /2))
 				         / sldr
 				      - frame->v_bar.scroll;
@@ -126,7 +126,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			if (x >= frame->h_bar.pos + frame->h_bar.size) {
 				
 				if (x >= frame->h_bar.rd) {                        /* right arrow */
-					step = (clicks == 1 ? scroll_step : frame->Page.Box.Rect.W);
+					step = (clicks == 1 ? scroll_step : frame->Page.Rect.W);
 					step = (button & LEFT_BUTTON ? +step : -step);
 				
 				} else if (button & LEFT_BUTTON) {                  /* right page */
@@ -140,7 +140,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			} else if (x <= frame->h_bar.pos) {
 				
 				if (x <= frame->h_bar.lu) {                         /* left arrow */
-					step = (clicks == 1 ? scroll_step : frame->Page.Box.Rect.W);
+					step = (clicks == 1 ? scroll_step : frame->Page.Rect.W);
 					step = (button & LEFT_BUTTON ? -step : +step);
 				
 				} else if (button & LEFT_BUTTON) {                   /* left page */
@@ -165,7 +165,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				              sldr, scroll_bar_width,
 				              &s_x, &s_y);
 				sldr -= frame->h_bar.size;
-				step  = ((frame->Page.Box.Rect.W - frame->clip.g_w)
+				step  = ((frame->Page.Rect.W - frame->clip.g_w)
 				         * ((s_x - frame->clip.g_x) - frame->h_bar.lu) + (sldr /2))
 				         / sldr
 				      - frame->h_bar.scroll;
@@ -284,11 +284,11 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	}
 	
 	if (multi_in.emi_flags) {
-		long pg_h = frame->Page.Box.Rect.H - frame->clip.g_h;
+		long pg_h = frame->Page.Rect.H - frame->clip.g_h;
 		WORD sl_h = frame->v_bar.rd - frame->v_bar.lu - frame->v_bar.size;
 		long top  = frame->clip.g_y + frame->v_bar.lu +1;
 		long bot  = frame->clip.g_y + frame->v_bar.rd -1;
-		long pg_w = frame->Page.Box.Rect.W - frame->clip.g_w;
+		long pg_w = frame->Page.Rect.W - frame->clip.g_w;
 		WORD sl_w = frame->h_bar.rd - frame->h_bar.lu - frame->h_bar.size;
 		long lft  = frame->clip.g_x + frame->h_bar.lu +1;
 		long rgt  = frame->clip.g_x + frame->h_bar.rd -1;

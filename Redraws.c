@@ -69,7 +69,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 				short b  = scroll_bar_width - 2;
 				l[1].p_x = (l[0].p_x = bgnd[1].p_x +2) + b;
 				l[1].p_y = (l[0].p_y = bgnd[1].p_y +2) + b;
-				vsf_color (vdi_handle, frame->Page.Box.Backgnd);
+				vsf_color (vdi_handle, frame->Page.Backgnd);
 				v_bar (vdi_handle, (short*)l);
 			}
 		}
@@ -87,7 +87,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 		}
 	}
 	
-	dombox_draw (&frame->Page.Box,
+	dombox_draw (&frame->Page,
 	             (long)frame->clip.g_x - frame->h_bar.scroll,
 	             (long)frame->clip.g_y - frame->v_bar.scroll,
 	             &clip, highlight);
