@@ -228,8 +228,14 @@ add_paragraph (TEXTBUFF current, short vspace)
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->Hanging        = 0;
 	
-	if (current->prev_par && vspace) {
-		paragraph->Box.Margin.Top = (vspace * current->word->word_height) /3;
+	if (vspace) {
+		vspace = (vspace * current->word->word_height) /3;
+		if (current->parentbox->ChildBeg != &paragraph->Box) {
+			paragraph->Box.Margin.Top = vspace;
+		} else if (current->parentbox->BoxClass == BC_GROUP &&
+		           current->parentbox->Margin.Top < vspace) {
+			current->parentbox->Margin.Top = vspace;
+		}
 	}
 	
 	return paragraph;
@@ -275,7 +281,7 @@ static void
 vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 {
 	PARAGRPH   par       = (PARAGRPH)This;
-	WORDLINE * p_line    = &par->Line, line;
+	WORDLINE * p_line    = &par->Line, line = NULL;
 	WORDITEM   word      = par->item,  next;
 	long       int_width = width -= par->Indent + par->Rindent;
 	short      blocked   = 0x00;
@@ -484,6 +490,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		hanging = hang_nxt;
 	
 	} while ((word = next) != NULL);
+	
+	if (line && (word = line->Word) != NULL) do {
+		if (word->length) {
+			This->Rect.H++;
+			break;
+		}
+	} while ((word = word->next_word) != NULL);
 
 	if ((line = *p_line) != NULL) {
 		WORDLINE next_line;
