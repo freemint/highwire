@@ -51,42 +51,43 @@ $(OBJDIR)/%.o: %.c
 # files
 #
 CFILES = \
-	HighWire.c \
-	AEI.c \
-	Mouse_R.c \
-	keyinput.c \
-	Nice_VDI.c \
-	Variable.c \
-	color.c \
-	config.c \
-	av_prot.c \
-	\
-	hwWind.c \
-	Redraws.c \
-	Loader.c \
-	Containr.c \
-	render.c \
-	p_dir.c \
-	p_about.c \
-	parser.c \
-	scanner.c \
-	encoding.c \
-	Frame.c \
-	Table.c \
-	Form.c \
-	list.c \
-	Paragrph.c \
-	image.c \
-	W_Struct.c \
-	O_Struct.c \
-	Location.c \
-	cache.c \
-	schedule.c \
-	http.c inet.c \
 	Logging.c \
-	Widget.c \
+	schedule.c \
+	ovl_sys.c \
+	inet.c \
 	fontbase.c \
-	ovl_sys.c
+	http.c \
+	cache.c \
+	Location.c \
+	O_Struct.c \
+	W_Struct.c \
+	image.c \
+	Paragrph.c \
+	list.c \
+	Form.c \
+	Table.c \
+	Frame.c \
+	encoding.c \
+	scanner.c \
+	parser.c \
+	p_about.c \
+	p_dir.c \
+	render.c \
+	Containr.c \
+	Loader.c \
+	Redraws.c \
+	Widget.c \
+	hwWind.c \
+	\
+	av_prot.c \
+	config.c \
+	color.c \
+	Variable.c \
+	Nice_VDI.c \
+	keyinput.c \
+	Mouse_R.c \
+	AEI.c \
+	HighWire.c
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 
