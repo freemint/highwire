@@ -772,8 +772,16 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			}
 			
 			if (*p == '*') { /*................................ joker */
-				if ((err = (*(++p) != '.')) == TRUE) break;
-				key = TAG_LastDefined; /* matches all */
+				if (*(++p) == '.') {
+					key = TAG_LastDefined; /* matches all */
+				} else if (isspace (*p)) {
+					/* ignore IE6 nonsense */
+					while (isspace (*(++p)));
+					continue;
+				} else {
+					err = TRUE;
+					break;
+				}
 			
 			} else if (isalpha (*p)) { /*........................ tag */
 				key = scan_tag (&p);
@@ -840,6 +848,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			} else if (*p == '>' || *p == '+' || *p == '*') {
 				if (style) style->Css.Value = p;
 				p++;
+				continue;
+			} else if (*p == ':') { /* pseudo format, to be ignored */
 				continue;
 			}
 			
@@ -933,7 +943,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 	} while (*p && !err);
 	
 	if (*p && *p != '-' && *p != '<') {
-		printf("parse_css(): stopped at '%.20s'\n", p);
+		printf("parse_css(): stopped at '%.70s'\n", p);
 	}
 	return p;
 }
