@@ -42,6 +42,7 @@ HwWIND hwWind_Focus  = NULL;
 
 static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
 static void draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all);
+static BOOL chng_toolbar (HwWIND, UWORD, UWORD, WORD);
 static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
@@ -802,7 +803,6 @@ hwWind_history (HwWIND This, UWORD menu)
 		                        This->History[This->HistMenu],
 		                        entr, numberof(entr));
 		if (!num) {
-			static BOOL chng_toolbar (HwWIND, UWORD, UWORD, WORD);
 			UWORD bttn_on  = TBAR_REDO_MASK|TBAR_OPEN_MASK;
 			UWORD bttn_off = 0;
 			if (This->HistMenu != menu) {
