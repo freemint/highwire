@@ -1,5 +1,250 @@
 Ok here are the new supports and changes
 
+November 25, 2003
+
+  AltF4's patches
+
+  cache.h:   line 15:
+  cache.c:   line 56 + 58 + 323 (cache_insert) + 591 + 593..597 + 607
+             + 685..689 (cache_setup) + 804 (cache_assign):
+  config.c:  line 119 (cfg_cachedir) + 129 (cfg_cachemem)
+             + 133 (cfg_cachedsk):
+    - made disk cache related values configurable.
+
+  ovl_sys.c:
+    - line 72 (clear_slot) + 101 (sig_chld) + 158 (load_ovl) + 241
+      + 244..245 + 262..263 + 265..266 (kill_ovl) + 283 + 320:
+      disabled debug output.
+
+November 24, 2003
+
+  AltF4's patches
+
+  Location.h.
+    - line 48:  new functions location_wrIdx() and location_rdIdx().
+
+  Location.c:
+    - line 32 (struct s_host_entry) + 41 (struct s_dir_entry):  new
+      elements IdxTag.
+    - line 411 (host_store) + (host_search) + 417..419
+      + 450..454 (host_entry) + 466 (dir_store) + (dir_search)
+      + 470..472 + 620 + 648..669 (dir_entry):  code exported to own
+      functions.
+    - line 676:  new functions location_wrIdx() and location_rdIdx() to
+      store and read location entries in a cache index file.
+
+  cache.c:
+    - line 3 + 24 + 52:  includes and static declarations added.
+    - line 431 (cache_release) + 455 + 467 + 474 (cache_clear)
+      + 510 (cache_flush) + 677 (cache_assign):  new function to update
+      the cache's index file.
+    - line 514 + 535 + 537..538 (cache_setup):  use FILE* instead of
+      int filehandler.
+    - line 535 + 537 + 543 + 633..634 + 652 + 663 + 670 (cache_setup):
+      initialize the cache database from the index file.
+
+November 23, 2003
+
+  AltF4's patches
+
+  cache.c:
+    - line 48 + 49 + 588 (cache_remove) + 635 (cache_assign):
+      implemented limitation of filling the disk cache.
+
+November 22, 2003
+
+  AltF4's patches
+
+  cache.c:
+    - line 44..47 + 192..196 + 203 (create_item) + 245..251 + 253..259
+      + 261 (destroy_item) + 311 + 314..315 (cache_insert)
+      + 450..451 (cache_release) + 488 + 490..492 + 494 + 508 + 512
+      + 514 (cache_info) + 522 + 526..529 + 531 (cache_setup)
+      + 658 (cache_assign):  static variables renamed vor better code
+      readability.
+
+November 21, 2003
+
+  AltF4's patches
+
+  http.h:
+    - line 7 (struct HTTP_HDR):  new element LoclDate.
+    - line 22:  http_date() is global accessible now.
+
+  http.c:
+    - line 19 (http_date):  made global accessible.
+    - line 303 (expires):  added support for delta seconds format.
+    - line 431 (http_header):  store local time of receive.
+    - line 475 (http_header):  for faulty headers without server date
+      use the local time.
+
+  Loader.h:
+    - line 21 (struct s_loader):  new element Tdiff.
+
+  Loader.c:
+    - line 173 (new_loader) + 697..703 (header_job):  file expiration
+      is stored as local time now.
+
+  cache.h:  line 28:
+  cache.c:  line 669:
+    - new function cache_expires().
+
+  render.c:
+    - line 802 (render_META_tag):  'http-equiv=expires' implemented.
+
+November 19, 2003
+
+  AltF4's patches
+
+  cache.h:
+    - line 34 (struct s_cache_info): new element Cached points to a
+      file name if stored in cache.
+
+  cache.c:
+    - line 39 (s_cache_item) + 198 (create_item) + 482 (cache_info)
+      + 623..624 (cache_assign) + 658 + 668 (cache_query):  new element
+      Cached to store the file name when stored in cache.
+    - line 139 + 145 + 183 + 190..191 + 198 (create_item):  parameter
+      'object' is used now to decide if a cache item stores a memory
+      object or refers to a file.
+    - line 328 (cache_location) + 370 (cache_lookup)
+      + 452 (cache_clear) + 669 (cache_query):  locations for cache
+      files are created on demand now.
+    - line 614..619 (cache_assign):  changed cached file names scheme
+      to a Base32 encoded number.
+
+  p_about.c:
+    - line 74..75 + 77 (about_cache):  display cache entry locations in
+      bold.
+    - line 85 + 88 (about_cache):  the name of cached files is now
+      accessible over an own pointer.
+
+November 18, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 341..342 (image_ldr):  if condition for load error fixed.
+
+  cache.c:
+    - line 32 (struct s_cache_item) + 129 (tree_item) + 138 + 181 + 184
+      + 196 (create_item) + 243 (destroy_item) + 273 (cache_throw)
+      + 481 (cache_info) + 665 (cache_query):  made the code more
+      logical by avoiding side effects/conditions.
+
+  hwWind.c:
+    - line 1629 + 1642 + 1679 (hwWind_button):  more functionality for
+      the redo button:  holding the ALT key clears now the whole cache.
+
+November 15, 2003
+
+  AltF4's patches
+
+  hwWind.h:  line 51 (hwWind_history):
+  hwWind.c:  line 18 + 847 + 891 (hwWind_history) + 910
+             + 912 (hwWind_undo) + 1621 + 1634 + 1652
+             + 1671..1672 (hwWind_button):
+  AEI.c:     line 415 (menu_reload) + 636 (handle_menu)
+             + 760 (rpopup_open):
+    - hwWind_history() got a third parameter to decide if reload should
+      take data from cache or receive new from remote.
+
+  Mouse_R.c:
+    - line 212 (button_clicked):  avoid Pure C compiler warning.
+
+November 14, 2003
+
+  AltF4's patches
+
+  parser.c:
+    - line 35 (struct s_parser_priv) + 571 + 716 (parse_css):
+      implemented a pointer stack to allow recursive processing of
+      included files.
+    - line 20 + 547 (css_import) + 603..607 (parse_css):  implemented
+      parsing of '@import' command, includes additional CSS files.
+
+  render.c
+    - line 26 + 40 + 820..832 (render_STYLE_tag)
+      + 876..885 (render_LINK_tag):  modified to allow reentrance for
+      processing of recursively included CSS files.
+
+  Loader.c:
+    - line 647 (header_job):  added HTTP reply 303 as redirect
+      (contributed by M.Lutz).
+
+November 13, 2003
+
+  AltF4's patches
+
+  parser.h:  line 22 (struct s_parser) + 27 (parser_resume):
+  parser.c:  line 64 (new_parser) + 146 (resume_job)
+             + 147 (parser_resume):
+  render.c:  line 11 + 36 + 2630 + 2638..2641 + 2648
+             + 2653 (parse_html):
+    - added functionality to allow the parser getting interrupted, eg.
+      for loading additional files.
+
+November 12, 2003
+
+  AltF4's patches
+
+  Loader.h:  line 26 (struct s_loader):
+  Loader.c:  line 31 + 174 (new_loader) + 311 (start_cont_load)
+             + 361 (start_objc_load) + 736 + 749 (header_job)
+             + 778 (loader_job) + 796 (generic_job):
+  image.c:   line 341 (image_ldr):
+    - error flag added.
+
+  token.h:
+    - line 206:  keyword CSS_BACKGROUND added (preliminary workaround).
+
+  parser.c:
+    - line 578 (parse_css):  recognize cascaded pseudo formats.
+
+November 11, 2003
+
+  AltF4's patches
+
+  render.c:
+    - line 838..842 (render_STYLE_tag):  code added to catch faulty
+      HTML code.
+
+  Loader.c:
+    - line 83..100 + 110 + 115 + 118 + 121 + 132 + 143 + 147
+      + 151 (parser_job) + 576 (receive_job) + 764 (header_job)
+      + 797 (loader_job):  function renamed to start_parser() and code
+      simplified.
+    - line 727..728 + 753 + 758..760 (header_job):  corrected handling
+      of very short files.
+
+  http.c:
+    - line 187..188 (content_length):  valid 'Content-Length: 0' wasn't
+      identified correctly, resulting in an useless connection timeout.
+
+November 10, 2003
+
+  AltF4's patches
+
+  mime.c:
+    - line 158..173 (mime_byString):  changed string comparsion to case
+      insensitive.
+
+  render.c
+    - line 1796 + 1818..1820 (render_H_tag):  reordered code, because
+      insert_anchor() destroyes text attributes when an ID attribute is
+      found (knows the hell why).
+    - line 2636..2637 + 2662..2663 + 2666 + 2677..2678 + 2708 + 2712
+      + 2723 + 2742 + 2752 + 2757 + 2765 + 2775 (parse_html):  small
+      code optimation.
+
+  parser.c
+    - line 324..326 + 331..338 + 340 (css_values) + 635 (parse_css):
+      reject empty attributes.
+    - line 533..535 (parse_css):  added parsing of C++ style comments.
+
+  hwWind.c:
+    - line 318 (draw_busybar):  reduced busy bar growing.
+
 November 06, 2003
 
   AltF4's patches
