@@ -95,7 +95,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
-	par->floating       = floating;
+	par->Box.Floating   = floating;
 	par->Box.BoxClass   = BC_TABLE;
 	if (!*(long*)&table_vTab) {
 		table_vTab      = DomBox_vTab;

@@ -350,6 +350,7 @@ struct s_dombox {
 	TBLR     Margin;
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
+	H_ALIGN  Floating;
 };
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
@@ -528,7 +529,6 @@ struct paragraph_item {
 	WORD     Hanging; /* <0: left, >0: right hanging */
 	PARAGRAPH_CODE paragraph_code;
 	H_ALIGN alignment;
-	H_ALIGN floating;
 	PARAGRPH next_paragraph;
 };
 

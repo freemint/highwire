@@ -1726,7 +1726,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		if (floating != ALN_NO_FLT) {
 			add_paragraph (current, 0)->Box.HtmlCode = TAG_IMG;
 			current->paragraph->paragraph_code = PAR_IMG;
-			current->paragraph->floating       = floating;
+			current->paragraph->Box.Floating   = floating;
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
 			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
@@ -3035,8 +3035,8 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short h)
 	new_word (current, TRUE);
 	add_paragraph (current, 0);
 	
-	par->paragraph_code = PAR_HR;
-	par->alignment      = align;
+	par->paragraph_code  = PAR_HR;
+	par->alignment       = align;
 	word->word_tail_drop = h;
 	word->word_height    = (word->word_height + word->word_tail_drop) /2;
 	word->space_width    = w;

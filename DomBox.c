@@ -47,6 +47,7 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	}
 	This->BoxClass = class;
 	This->Backgnd  = -1;
+	This->Floating = ALN_NO_FLT;
 	
 	return This;
 }

@@ -158,7 +158,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Hanging = 0;
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->alignment      = ALN_LEFT;
-	paragraph->floating       = ALN_NO_FLT;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -240,7 +239,6 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Box._vtab = &paragraph_vTab;
 	}
 	paragraph->paragraph_code = PAR_NONE;
-	paragraph->floating       = ALN_NO_FLT;
 	paragraph->Hanging        = 0;
 	
 	if (current->prev_par && vspace) {
@@ -806,7 +804,7 @@ content_calc (CONTENT * content, long set_width)
 			paragraph_calc (paragraph, par_width, &blocker);
 		}
 		
-		switch (paragraph->floating) {
+		switch (paragraph->Box.Floating) {
 			case ALN_LEFT: {
 				long new_bottom = height + paragraph->Box.Rect.H;
 				if (blocker.L.bottom < new_bottom)
@@ -898,10 +896,10 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 		long top = par->Box.Rect.Y, bot;
 		do {
 			bot = top + par->Box.Rect.H;
-			if (par->floating == ALN_RIGHT) {
+			if (par->Box.Floating == ALN_RIGHT) {
 				if (r_bot <= top) r_par = flt = par;
 				if (r_bot <  bot) r_bot = bot;
-			} else if (par->floating == ALN_LEFT) {
+			} else if (par->Box.Floating == ALN_LEFT) {
 				if (l_bot <= top) l_par = flt = par;
 				if (l_bot <  bot) l_bot = bot;
 			}
@@ -938,11 +936,11 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 						break;
 					}
 					par = next;
-					if (par->floating == ALN_RIGHT) {
+					if (par->Box.Floating == ALN_RIGHT) {
 						if (r_bot < par->Box.Rect.Y + par->Box.Rect.H) {
 							 r_bot = par->Box.Rect.Y + par->Box.Rect.H;
 						}
-					} else if (par->floating == ALN_LEFT) {
+					} else if (par->Box.Floating == ALN_LEFT) {
 						if (l_bot < par->Box.Rect.Y + par->Box.Rect.H) {
 							 l_bot = par->Box.Rect.Y + par->Box.Rect.H;
 						}
@@ -950,7 +948,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 				}
 				do {
 					if (x < flt->Box.Rect.X) {
-						if (flt->floating == ALN_RIGHT) {
+						if (flt->Box.Floating == ALN_RIGHT) {
 							rgt = flt->Box.Rect.X;
 						} else if (y < l_bot) {
 							bot = l_bot;
@@ -960,7 +958,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 						}
 					
 					} else if (x >= flt->Box.Rect.X + flt->Box.Rect.W) {
-						if (flt->floating == ALN_LEFT) {
+						if (flt->Box.Floating == ALN_LEFT) {
 							lft = flt->Box.Rect.X + flt->Box.Rect.W;
 						} else if (y < r_bot) {
 							bot = r_bot;
@@ -984,7 +982,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 						area[3] =  par->next_paragraph->Box.Rect.Y - top;
 						return NULL;
 						
-					} else if (flt->floating == ALN_LEFT) {
+					} else if (flt->Box.Floating == ALN_LEFT) {
 						if (y < l_bot) {
 							top = flt->Box.Rect.Y + flt->Box.Rect.H;
 							bot = l_bot;
@@ -995,7 +993,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 					*/	}
 						lft = flt->Box.Rect.X + flt->Box.Rect.W;
 					
-					} else if (flt->floating == ALN_RIGHT) {
+					} else if (flt->Box.Floating == ALN_RIGHT) {
 						if (y < r_bot) {
 							top = flt->Box.Rect.Y + flt->Box.Rect.H;
 							bot = r_bot;
