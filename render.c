@@ -341,7 +341,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
 		if (color >= 0 && color != parser->Current.backgnd) {
-			box->Backgnd = color;
+			box->Backgnd = parser->Current.backgnd = color;
 		}
 		if ((color = get_value_color (parser, CSS_BORDER_COLOR)) >= 0) {
 			box->BorderColor = color;
@@ -440,13 +440,21 @@ leave_box (TEXTBUFF current, WORD tag)
 	if (box->HtmlCode != tag) {
 		box = NULL;
 	
-	} else{
+	} else {
 		PARAGRPH par = add_paragraph (current, 0);
 		current->parentbox = box->Parent;
 		dombox_adopt (box->Parent, &par->Box);
 		par->Box.TextAlign = box->Parent->TextAlign;
 		
 		fontstack_pop (current);
+		
+		{	/* find the next box below with valid background color */
+			DOMBOX * tmp = box;
+			do if (tmp->Backgnd >= 0) {
+				current->backgnd = tmp->Backgnd;
+				break;
+			} while ((tmp = tmp->Parent) != NULL);
+		}
 	}
 	return box;
 }
