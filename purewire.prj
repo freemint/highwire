@@ -10,7 +10,7 @@
 HIGHWIRE.PRG
 ;
 
-.C [-K -P -DLIBGIF -DUSE_INET -DUSE_OVL]
+.C [-K -P -DUSE_OVL -DUSE_INET -DLIBGIF -DLIBJPG -DLIBPNG]
 .S [] ; -Y]
 .L [-S=16384]
 =
@@ -31,7 +31,7 @@ O_Struct.c (global.h,defs.h,hw-types.h)
 fontbase.c (global.h,defs.h,hw-types.h, fontbase.h)
 W_Struct.c (global.h,defs.h,hw-types.h, fontbase.h)
 pc_rastr.s
-image.c    (global.h,defs.h,hw-types.h, Location.h,Containr.h,schedule.h,cache.h)
+image.c    (global.h,defs.h,hw-types.h, Location.h,Containr.h,schedule.h,cache.h, img_gif.c,img_jpg.c,img_png.c)
 Paragrph.c (global.h,defs.h,hw-types.h, Table.h,fontbase.h)
 list.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, fontbase.h)
 Form.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Form.h,fontbase.h)
@@ -64,3 +64,7 @@ PCSTDLIB.LIB
 PCEXTLIB.LIB
 PCTOSLIB.LIB
 GEM.LIB
+UNGIF.LIB
+JPEG.LIB
+PNG.LIB
+ZLIB.LIB
