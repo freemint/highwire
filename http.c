@@ -14,6 +14,7 @@
 #include "inet.h"
 #include "token.h"  /* needed for and before scanner.h */
 #include "scanner.h"
+#include "cookie.h"
 
 
 long
@@ -318,6 +319,22 @@ expires (const char * beg, long len, HTTP_HDR * hdr)
 	return found;
 }
 
+/*----------------------------------------------------------------------------*/
+static LONG
+set_cookie (const char * beg, long len, HTTP_HDR * hdr)
+{
+	const char token[] = "Set-Cookie:";
+	BOOL       found;
+	(void)hdr;
+	
+	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
+		found = sizeof(token)-1;
+	} else {
+		found = 0;
+	}
+	return found;
+}
+
 /*============================================================================*/
 #ifdef USE_INET
 short
@@ -396,6 +413,33 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			                          buffer + len, sizeof(buffer) - len -2);
 			strcpy (buffer + len, "\r\n");
 			len = inet_send (sock, buffer, len +2);
+		}
+		if ((long)len > 0) {
+			COOKIESET cset;
+			WORD      num = cookie_Jar (loc, &cset);
+			if (num) {
+				WORD       i      = 0;
+				const char text[] = "Cookie: ";
+				len = inet_send (sock, text, sizeof(text) -1);
+				do if ((long)len > 0) {
+					COOKIE cookie = cset.Cookie[i++];
+					if (cookie->NameLen + cookie->ValueLen < sizeof(buffer) -3) {
+						len = sprintf (buffer, "%s=%s%s",
+						               cookie->NameStr, cookie->ValueStr,
+						               (i < num ? "; " : "\r\n"));
+						len = inet_send (sock, buffer, len);
+					} else { /* buffer isn't large enough */
+						if (inet_send (sock, cookie->NameStr, cookie->NameLen) > 0 &&
+						    inet_send (sock, "=",             1)               > 0 &&
+						    inet_send (sock, cookie->ValueStr,cookie->ValueLen) > 0) {
+							len = inet_send (sock, (i < num ? "; " : "\r\n"), 2);
+						} else {
+							len = -1;
+							break;
+						}
+					}
+				} while (i < num);
+			}
 		}
 		if ((long)len > 0 && post_buf) {
 			long n = strlen (post_buf);
@@ -500,8 +544,11 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 				 && !server_date    (ln_beg, n, hdr)
 				 && !last_modified  (ln_beg, n, hdr)
 				 && !expires        (ln_beg, n, hdr)
-				) {
-				/* something else? */
+				/* && cookies_allow */ ) {
+			   long r = set_cookie (ln_beg, n, hdr);
+			   if (r && r < n) {
+					cookie_set (loc, ln_beg + r, n - r, hdr->SrvrDate);
+			   }
 			}
 			*ln_brk = '\n';
 			ln_beg = ln_brk +1;

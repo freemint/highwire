@@ -59,6 +59,7 @@ CFILES = \
 	http.c \
 	cache.c \
 	Location.c \
+	cookie.c \
 	DomBox.c \
 	O_Struct.c \
 	fontbase.c \
