@@ -2,9 +2,9 @@
  */
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     2
-#define _HIGHWIRE_REVISION_  4
-#define _HIGHWIRE_BETATAG_   "beta"
-#define _HIGHWIRE_VERSION_   "0.2.4"
+#define _HIGHWIRE_REVISION_  5
+#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_VERSION_   "0.2.5"
 
 #include "hw-types.h"   /* get base definitions */
 
@@ -318,6 +318,7 @@ struct s_dombox {
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 	H_ALIGN  Floating;
+	L_BRK    ClearFlt;
 	H_ALIGN  TextAlign;
 	WORD     TextIndent; /* paragraph hanginging, <0: left, >0: right       */
 };
