@@ -41,8 +41,9 @@ struct s_img_info {
 	WORD     Interlace;
 	/* */
 	void   (*raster)(IMGINFO, void * dst);
-	char   * RowMem;
-	char   * RowBuf; /* initially RowMem but might be changed for interlaced */
+	void   * RowMem;
+	char   * RowBuf;   /* initially RowMem but might be changed for interlaced */
+	ULONG    RowBytes; /* >0: RowBuf will cover the whole ig, else one line    */
 	void   * DthBuf;
 	UWORD    DthWidth; /* calculated width of the image */
 	UWORD    PixMask;
@@ -567,19 +568,6 @@ setup (IMAGE img, IMGINFO info)
 	
 	img_scale (img, info->ImgWidth, info->ImgHeight, info);
 	
-	info->RowMem = malloc ((info->ImgWidth +1) * info->NumComps);
-	if ((info->RowBuf = info->RowMem) == NULL) {
-		return NULL;
-	}
-	if (info->BitDepth > 1 && planes <= 8) {
-		size_t size = (img->disp_w +1) *3;
-		if ((info->DthBuf = malloc (size)) == NULL) {
-			return NULL;
-		} else {
-			memset (info->DthBuf, 0, size);
-		}
-	}
-	
 	wd_width = (img->disp_w + 31) / 16;
 	pg_size  = wd_width * img->disp_h;
 	mem_size = pg_size *2 * n_planes;
@@ -596,6 +584,29 @@ setup (IMAGE img, IMGINFO info)
 	data->fd_stand   = (info->BitDepth > 1 ? stnd_bitmap : FALSE);
 	data->fd_nplanes = n_planes;
 	data->fd_r1 = data->fd_r2 = data->fd_r3 = 0;
+	
+	if (info->RowBytes) {
+		size_t psize = sizeof(void*) * info->ImgHeight;
+		info->RowMem = malloc (psize +
+		                       info->RowBytes * info->ImgHeight + info->NumComps);
+		info->RowBuf = (char*)info->RowMem + psize;
+	} else {
+		info->RowMem = malloc ((info->ImgWidth +1) * info->NumComps);
+		info->RowBuf = info->RowMem;
+	}
+	if (!info->RowMem) {
+		free (data);
+		return NULL;
+	}
+	
+	if (info->BitDepth > 1 && planes <= 8) {
+		size_t size = (img->disp_w +1) *3;
+		if ((info->DthBuf = malloc (size)) == NULL) {
+			free (data);
+			return NULL;
+		}
+		memset (info->DthBuf, 0, size);
+	}
 	
 	info->DthWidth = img->disp_w;
 	info->PixMask  = (1 << info->BitDepth) -1;
