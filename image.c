@@ -60,7 +60,6 @@ static void (*raster_cmap) (IMGINFO, void *) = (void*)invalid_raster;
 static void (*raster_gray) (IMGINFO, void *) = (void*)invalid_gscale;
 static void (*raster_true) (IMGINFO, void *) = (void*)invalid_dither;
 static BOOL   stnd_bitmap  = FALSE;
-/*static BOOL   falcon_ovlay = FALSE;*/
 
 static char  disp_info[10] = "";
 static short pixel_val[256];
@@ -1143,6 +1142,101 @@ dither_P8 (IMGINFO info, void * _dst)
 }
 
 /*------------------------------------------------------------------------------
+ * 15 planes packed pixels formart, the pixel index array must contain 15bit RGB
+ * values.
+ */
+static void
+raster_15 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	ULONG * map   = info->Pixel;
+	UWORD   mask  = info->PixMask;
+	do {
+		*(dst++) = map[(short)info->RowBuf[x >>16] & mask];
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_15 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		UWORD rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = ((rgb & 0xF8) <<7) | ((rgb & 0xF8) <<2) | (rgb >>3);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_15 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++)   = (((UWORD)rgb[0] & 0xF8) <<7)
+		           | (((UWORD)rgb[1] & 0xF8) <<2)
+		           |         (rgb[2]         >>3);
+		x += info->IncXfx;
+	} while (--width);
+}
+
+/*------------------------------------------------------------------------------
+ * 15 planes packed pixels formart in wrong (intel) byte order, the pixel index
+ * array must contain 15bit RGB values.
+ */
+static void
+raster_15r (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	ULONG * map   = info->Pixel;
+	UWORD   mask  = info->PixMask;
+	do {
+		UWORD rgb = map[(short)info->RowBuf[x >>16] & mask];
+		*(dst++)  = (rgb >> 8) | (rgb << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_15r (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		UWORD rgb = info->RowBuf[(x >>16)];
+		rgb       = ((rgb & 0xF8) <<7) | ((rgb & 0xF8) <<2) | (rgb >>3);
+		*(dst++)  = (rgb >> 8) | (rgb << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_15r (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		UWORD  pix = (((UWORD)rgb[0] & 0xF8) <<7)
+		           | (((UWORD)rgb[1] & 0xF8) <<2)
+		           |         (rgb[2]         >>3);
+		*(dst++)   = (pix >> 8) | (pix << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+
+/*------------------------------------------------------------------------------
  * 16 planes packed pixels formart, the pixel index array must contain 16bit RGB
  * values.
  */
@@ -1492,6 +1586,33 @@ cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 
 /*----------------------------------------------------------------------------*/
 static void
+cnvpal_15 (IMGINFO info, ULONG backgnd)
+{
+	ULONG * pal = info->Pixel;
+	char  * r   = info->Palette + info->PalRpos;
+	char  * g   = info->Palette + info->PalGpos;
+	char  * b   = info->Palette + info->PalBpos;
+	short   t   = info->Transp;
+	short   n   = info->NumColors;
+	do {
+		if (!t--) {
+			char * z = ((char*)&backgnd) +1;
+			*(pal++) = ((short)(z[0] & 0xF8) <<7)
+			         | ((short)(z[1] & 0xF8) <<2)
+			         |         (z[2]         >>3);
+		} else {
+			*(pal++) = ((short)(*r & 0xF8) <<7)
+			         | ((short)(*g & 0xF8) <<2)
+			         |         (*b         >>3);
+		}
+		r += info->PalStep;
+		g += info->PalStep;
+		b += info->PalStep;
+	} while (--n);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
 cnvpal_high (IMGINFO info, ULONG backgnd)
 {
 	ULONG * pal = info->Pixel;
@@ -1549,20 +1670,25 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 static void
 init_display (void)
 {
-	short out[273] = { -1, }; out[14] = 0;
+	short out[273] = { -1, };
+	short depth;
+	BOOL  pervert;
+	
 	vq_scrninfo (vdi_handle, out);
 	memcpy (pixel_val, out + 16, 512);
+	depth   = ((UWORD)out[4] == 0x8000u ? 15 : out[2]); /* bits per pixel used */
+	pervert = (out[14] & 0x80);                         /* intel crap... */
 	
 	sprintf (disp_info, "%c%02i%s",
-	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), planes,
-	         (out[14] & 0x80 ? "r" : ""));
+	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), depth,
+	         (pervert ? "r" : ""));
 
-	if (planes == 1) {                        /* monochrome */
+	if (depth == 1) {                        /* monochrome */
 			cnvpal_color = cnvpal_1_2;
 			raster_cmap  = raster_D1;
 			raster_gray  = gscale_D1;
 			raster_true  = dither_D1;
-	} else if (out[0] == 0) switch (planes) { /* interleaved words */
+	} else if (out[0] == 0) switch (depth) { /* interleaved words */
 		case 2:
 			cnvpal_color = cnvpal_1_2;
 			raster_cmap  = raster_D2;
@@ -1581,30 +1707,37 @@ init_display (void)
 			raster_gray  = gscale_I8;
 			raster_true  = dither_I8;
 			break;
-	} else if (out[0] == 2) switch (planes) { /* packed pixels */
+	} else if (out[0] == 2) switch (depth) { /* packed pixels */
 		case  8:
 			cnvpal_color = cnvpal_4_8;
 			raster_cmap  = raster_P8;
 			raster_gray  = gscale_P8;
 			raster_true  = dither_P8;
 			break;
+		case 15: if (!(out[14] & 0x02)) {
+			cnvpal_color = cnvpal_15;
+			raster_cmap  = (pervert ? raster_15r : raster_15);
+			raster_gray  = (pervert ? gscale_15r : gscale_15);
+			raster_true  = (pervert ? dither_15r : dither_15);
+			break;
+		}
 		case 16:
 			cnvpal_color = cnvpal_high;
-			raster_cmap  = (out[14] & 0x80 ? raster_16r : raster_16);
-			raster_gray  = (out[14] & 0x80 ? gscale_16r : gscale_16);
-			raster_true  = (out[14] & 0x80 ? dither_16r : dither_16);
+			raster_cmap  = (pervert ? raster_16r : raster_16);
+			raster_gray  = (pervert ? gscale_16r : gscale_16);
+			raster_true  = (pervert ? dither_16r : dither_16);
 			break;
 		case 24:
 			cnvpal_color = cnvpal_true;
-			raster_cmap  = (out[14] & 0x80 ? raster_24r : raster_24);
-			raster_gray  = (out[14] & 0x80 ? gscale_24r : gscale_24);
-			raster_true  = (out[14] & 0x80 ? dither_24r : dither_24);
+			raster_cmap  = (pervert ? raster_24r : raster_24);
+			raster_gray  = (pervert ? gscale_24r : gscale_24);
+			raster_true  = (pervert ? dither_24r : dither_24);
 			break;
 		case 32:
 			cnvpal_color = cnvpal_true;
-			raster_cmap  = (out[14] & 0x80 ? raster_32r : raster_32);
-			raster_gray  = (out[14] & 0x80 ? gscale_32r : gscale_32);
-			raster_true  = (out[14] & 0x80 ? dither_32r : dither_32);
+			raster_cmap  = (pervert ? raster_32r : raster_32);
+			raster_gray  = (pervert ? gscale_32r : gscale_32);
+			raster_true  = (pervert ? dither_32r : dither_32);
 			break;
 	}
 	if (!raster_cmap) {                     /* standard format */
@@ -1613,7 +1746,7 @@ init_display (void)
 		stnd_bitmap  = TRUE;
 	}
 	
-	if (planes == 4 || planes == 8) {
+	if (depth == 4 || depth == 8) {
 		ULONG * dst;
 		ULONG   r, g, b;
 		dst = cube216;
@@ -1630,8 +1763,8 @@ init_display (void)
 			}
 		}
 		dst = graymap;
-		for (g = 0x000000uL; g <= 0xF0F0F0uL; g += 0x080808uL) {
-			short i = remap_color (g), rgb[3];
+		for (g = 0x000000uL; g <= 0xF8F8F8uL; g += 0x080808uL) {
+			short i = remap_color (g | ((g >>5) & 0x030303uL)), rgb[3];
 			vq_color (vdi_handle, i, 0, rgb);
 			*(dst++) = ((((((long)pixel_val[i] <<8)
 			         | (((long)rgb[0] * 255 +500) / 1000)) <<8)
