@@ -265,8 +265,9 @@ form_text (TEXTBUFF current, const char * name, char * value,
 {
 	WORDITEM word  = current->word;
 	TEXTATTR attr  = word->attr;
-	WCHAR  * wmark = current->buffer + cols;
+	WCHAR  * wmark = current->buffer + maxlen;
 	INPUT    input = _alloc (IT_TEXT, current, name);
+	WORD     p[8];
 	
 	input->Value   = value;
 	input->TextMax = maxlen;
@@ -282,7 +283,8 @@ form_text (TEXTBUFF current, const char * name, char * value,
 			*(current->text++) = nobrk;
 		} while (current->text < wmark);
 	}
-	set_word (current, word->word_height, word->word_tail_drop, -2);
+	vqt_f_extent16n (vdi_handle, word->item, cols, p);
+	set_word (current, word->word_height, word->word_tail_drop, p[2] - p[0] +2);
 	current->word->attr = attr;
 	
 	return input;
@@ -311,8 +313,9 @@ new_input (PARSER parser)
 		char * value;
 		UWORD  mlen = get_value_unum (parser, KEY_MAXLENGTH, 0);
 		UWORD  cols = get_value_unum (parser, KEY_SIZE, 0);
-		if (!cols) cols = 20;
-		if (!mlen) mlen = cols;
+		if (!mlen || mlen > 500) mlen = 500;
+		if      (cols > mlen) cols = mlen;
+		else if (!cols)       cols = 20;
 		get_value (parser, KEY_VALUE, value = malloc (mlen +1), mlen +1);
 		input = form_text (current, name, value, mlen, frame->Encoding, cols);
 		
