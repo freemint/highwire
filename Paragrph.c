@@ -636,8 +636,9 @@ paragraph_filter (PARAGRPH par)
 	
 	while (word) {
 		if (word->length == 1) {
-			if (word->space_width) {
-				remv = (!word->next_word || word->next_word->space_width);
+			if (word->space_width && (word->line_brk
+			    || !word->next_word || word->next_word->space_width)) {
+				remv = TRUE;
 			}
 		} else if (!word->length) {
 			remv = (word->image == NULL);
@@ -682,17 +683,21 @@ content_minimum (CONTENT * content)
 		             + paragraph->Indent + paragraph->Rindent;
 		
 		} else {
-			long wrd_width = par_width = 0;
 			WORDITEM  word = paragraph_filter (paragraph);
+			BOOL      lbrk = TRUE;
+			long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
+			long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
+			par_width = 0;
 			while (word) {
-				if (!word->wrap || !wrd_width) {
+				if (lbrk || !word->wrap) {
 					if (word->image && word->image->set_w < 0) {
 						wrd_width += 1 + word->image->hspace *2;
 					} else {
-						wrd_width += word->word_width;
+						wrd_width += word->word_width - (lbrk ? word->space_width :0);
 					}
-					if (!word->line_brk) {
-						word = word->next_word;
+					lbrk = word->line_brk;
+					word = word->next_word;
+					if (!lbrk) {
 						continue;
 					}
 				} /* else wrap || ln_brk */
@@ -700,8 +705,8 @@ content_minimum (CONTENT * content)
 				if (par_width < wrd_width) {
 					 par_width = wrd_width;
 				}
-				wrd_width = 0;
-				word = word->next_word;
+				wrd_width = hanging;
+				lbrk = TRUE;
 			}
 			if (par_width < wrd_width) {
 				 par_width = wrd_width;
