@@ -68,7 +68,6 @@ void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,
                              WORD wdith, UWORD rowspan, UWORD colspan);
 void table_finish (PARSER);
 
-long      table_calc    (TABLE, long max_width);
 CONTENT * table_content (TABLE, long x, long y, long area[4]);
 
 

@@ -43,7 +43,8 @@
 static struct s_dombox_vtab table_vTab = { 0, };
 static LONG vTab_MinWidth (DOMBOX *);
 static LONG vTab_MaxWidth (DOMBOX *);
-static void vTab_draw (DOMBOX *, long x, long y, const GRECT *, void *);
+static void vTab_draw   (DOMBOX *, long x, long y, const GRECT *, void *);
+static void vTab_format (DOMBOX *, long width, BLOCKER);
 
 
 /*============================================================================*/
@@ -96,10 +97,11 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
 	if (!*(long*)&table_vTab) {
-		table_vTab      = DomBox_vTab;
+		table_vTab          = DomBox_vTab;
 		table_vTab.MinWidth = vTab_MinWidth;
 		table_vTab.MaxWidth = vTab_MaxWidth;
-		table_vTab.draw = vTab_draw;
+		table_vTab.draw     = vTab_draw;
+		table_vTab.format   = vTab_format;
 	}
 	par->Box._vtab = &table_vTab;
 	par->Box.Floating    = floating;
@@ -706,17 +708,24 @@ table_finish (PARSER parser)
 
 
 /*============================================================================*/
-long
-table_calc (TABLE table, long max_width)
+static void
+vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 {
+	TABLE   table = ((PARAGRPH)This)->Table;
 	TAB_ROW row;
 	long    set_width, y;
-
+	
+	(void)blocker;
+	
+	This->Rect.X += blocker->L.width;
+	This->Rect.W -= blocker->L.width + blocker->R.width;
+	max_width    -= blocker->L.width + blocker->R.width;
+	
 	if (!table->NumCols) {
 		#ifdef _DEBUG
 			printf ("table_calc(): no columns!\n");
 		#endif
-		return table->t_Height;
+		return;
 	}
 	/*printf ("table_calc(%li) %i\n", max_width, table->t_SetWidth);*/
 
@@ -932,7 +941,7 @@ table_calc (TABLE table, long max_width)
 			if (cell->Content.Item) {
 				short span = cell->ColSpan -1;
 				while (span--) width += col_width[span] + table->Spacing;
-				content_calc (&cell->Content, width);
+				dombox_format (&cell->Content.Box, width);
 				if (cell->RowSpan == 1 && row->Height < cell->c_Height) {
 					row->Height = cell->c_Height;
 				}
@@ -1022,8 +1031,6 @@ table_calc (TABLE table, long max_width)
 		} while ((cell = cell->RightCell) != NULL);
 		y += row->Height + table->Spacing;
 	} while ((row = row->NextRow) != NULL);
-
-	return table->t_Height;
 }
 
 
