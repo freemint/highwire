@@ -15,6 +15,9 @@
 #  include <unistd.h>
 # endif
 #endif
+#ifndef O_RAW    /* Lattice uses this for open() to write binary files */
+# define O_RAW 0
+#endif
 
 #include "defs.h"
 #include "Location.h"
@@ -812,7 +815,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 			}
 			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
-			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
+			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC|O_RAW, 0666)) >= 0) {
 				write (fh, data, size);
 				close (fh);
 				__cache_fid++;
