@@ -1,0 +1,15 @@
+; @(#)highwire/tools/make_tab.prj
+; Rainer Seitel, 2002-08-02
+
+make_tab.tos
+
+.C [-K]  ; default character unsigned
+.L [-S=4096]
+
+=
+
+pcstart.o
+
+make_tab.c
+
+pcstdlib.lib

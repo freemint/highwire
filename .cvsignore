@@ -1,0 +1,7 @@
+.deps
+obj.*
+*.o
+*[~%]
+*.bak
+*.app
+*.prg

@@ -1,0 +1,17 @@
+; @(#)highwire/tools/num_char.prj
+; Rainer Seitel, 2002-08-02
+
+num_char.tos
+
+.C [-K]  ; default character unsigned
+.L [-S=4096]
+
+=
+
+pcstart.o
+
+num_char.c
+
+pcstdlib.lib
+pctoslib.lib
+gem.lib

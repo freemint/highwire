@@ -1,0 +1,16 @@
+; @(#)highwire/tools/uni_bics.prj
+; Rainer Seitel, 2002-04-09
+
+uni_bics.tos
+
+.C [-K]  ; default character unsigned
+.L [-S=4096]
+
+=
+
+pcstart.o
+
+uni_bics.c (..\uni_bics.h)
+
+pcstdlib.lib
+pctoslib.lib
