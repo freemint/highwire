@@ -19,17 +19,17 @@
 
 
 #ifdef _HW_NO_GUI
-# define _HIGHWIRE_REALINFO_  FALSE /* switch for the window infoline */
-# define _HIGHWIRE_INFOLINE_  FALSE /* switch for the window infoline */
-# define _HIGHWIRE_ENCMENU_   FALSE /* show encoding in menu */
-# define _HIGHWIRE_RPOP_      FALSE /* switch for the right mouse popup */
+# define _HIGHWIRE_REALINFO_  0 /* switch for the window infoline */
+# define _HIGHWIRE_INFOLINE_  0 /* switch for the window infoline */
+# define _HIGHWIRE_ENCMENU_   0 /* show encoding in menu */
+# define _HIGHWIRE_RPOP_      0 /* switch for the right mouse popup */
 # undef  GEM_MENU
 
 #else
-# define _HIGHWIRE_REALINFO_  FALSE /* switch for the window infoline */
-# define _HIGHWIRE_INFOLINE_  TRUE /* switch for displaying info */
-# define _HIGHWIRE_ENCMENU_   TRUE /* show encoding in menu */
-# define _HIGHWIRE_RPOP_      TRUE /* switch for the right mouse popup */
+# define _HIGHWIRE_REALINFO_  0 /* switch for the window infoline */
+# define _HIGHWIRE_INFOLINE_  1 /* switch for displaying info */
+# define _HIGHWIRE_ENCMENU_   1 /* show encoding in menu */
+# define _HIGHWIRE_RPOP_      1 /* switch for the right mouse popup */
 # define  GEM_MENU
 #endif
 

@@ -30,12 +30,10 @@ button_clicked (WORD button, WORD mx, WORD my)
 	UWORD    elem = containr_Element (&cont, mx, my, &watch, NULL, &hash);
 	FRAME   frame = hwWind_setActive (wind, cont);
 	
-#ifdef GEM_MENU
-#if (_HIGHWIRE_ENCMENU_==TRUE)
+#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 	if (frame) {
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
 	}
-#endif
 #endif
 	
 	switch (PE_Type (elem)) {
@@ -214,7 +212,7 @@ button_clicked (WORD button, WORD mx, WORD my)
 		
 		default:
 			if (elem >= PE_FRAME && (button & RIGHT_BUTTON)) {
-#if (_HIGHWIRE_RPOP_==TRUE)
+#if (_HIGHWIRE_RPOP_ == 1)
 				rpopup_open (mx, my);
 #endif
 			} else if (wind) {

@@ -530,7 +530,7 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_INFO:      menu_info();  break;
 		case M_QUIT:      menu_quit();  break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);     break;
-#if (_HIGHWIRE_ENCMENU_==TRUE)
+#if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
 		case M_I8859_2:   menu_reload (ENCODING_ISO8859_2);   break;
 		case M_I8859_15:  menu_reload (ENCODING_ISO8859_15);  break;
@@ -550,10 +550,11 @@ handle_menu (WORD title, WORD item, UWORD state)
 		menu_tnormal (menutree, title, UNHIGHLIGHT);
 	}
 }
+#endif
 
 
 /*============================================================================*/
-#if (_HIGHWIRE_ENCMENU_==TRUE)
+#if (_HIGHWIRE_ENCMENU_ == 1)
 void
 update_menu (ENCODING encoding, BOOL raw_text)
 {
@@ -582,8 +583,6 @@ update_menu (ENCODING encoding, BOOL raw_text)
 }
 #endif
 
-#endif
-
 
 /*============================================================================*/
 /* rpopup_open
@@ -596,8 +595,7 @@ update_menu (ENCODING encoding, BOOL raw_text)
  *
  * baldrick August 9, 2002
  */
-#ifdef GEM_MENU
-#if (_HIGHWIRE_RPOP_==TRUE)
+#if defined(GEM_MENU) && (_HIGHWIRE_RPOP_ == 1)
 void
 rpopup_open (WORD mx, WORD my)
 {
@@ -657,7 +655,6 @@ rpopup_open (WORD mx, WORD my)
 			break;
 	}
 }
-#endif
 #endif
 
 /*==============================================================================

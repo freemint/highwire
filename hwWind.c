@@ -26,7 +26,7 @@ static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
-#if (0&&   _HIGHWIRE_INFOLINE_ == 0)
+#if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
 #else
 static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER |INFO|LFARROW;
@@ -727,11 +727,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 			if (gen_ptr) {
 				FRAME active = hwWind_setActive (wind, cont);
-#ifdef GEM_MENU
-#	if (_HIGHWIRE_ENCMENU_==TRUE)
+#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 				update_menu (active->Encoding,
 				             (active->MimeType == MIME_TXT_PLAIN));
-#	endif
 #endif
 			}
 		case HW_ImgEndLoad:

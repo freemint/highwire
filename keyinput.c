@@ -67,10 +67,8 @@ key_pressed (WORD key, UWORD state)
 	case 0x0F00:  /* Tab: change active frame */
 		if ((active = frame_next (active)) != NULL) {
 			hwWind_setActive (hwWind_Top, active->Container);
-		#ifdef GEM_MENU
-		#if (_HIGHWIRE_ENCMENU_==TRUE)
+		#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 			update_menu (active->Encoding, (active->MimeType == MIME_TXT_PLAIN));
-		#endif
 		#endif
 		} else {
 			hwWind_setActive (hwWind_Top, NULL);
