@@ -126,7 +126,7 @@ void draw_border    (const GRECT *, short lu, short rd, short width);
 
 /* in Config.c */
 
-WORD read_config(char *fn);
+BOOL read_config(void);
 
 /* in Frame.c */
 
