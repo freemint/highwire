@@ -171,6 +171,8 @@ main (int argc, char **argv)
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 
+load_sampleovl();
+
 	while (!quit)
 	{
 		WORD       msg[8];
