@@ -1,8 +1,11 @@
-(non-public of Jan. 08, 2004)
+(non-public of Jan. 12, 2004)
 
 - Large rework of most of the internal structures
   to reach better compatibility to the 'Document
   Object Model'.
+
+- Fixed a bug that was sometimes causing wrong
+  text word widths.
 
 - Improved handling of cells with percentage width
   inside tables without any width set.
