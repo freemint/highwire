@@ -605,19 +605,7 @@ draw_contents (CONTENT * content,
 	PARAGRPH paragraph = content->Item;
 	long     clip_y    = (long)clip->g_y - y_abs;
 
-	if (content->Box.Backgnd >= 0) {
-		long x = x_abs + content->Box.Rect.W -1;
-		long y = y_abs + content->Box.Rect.H -1;
-		PXY  p[2];
-		p[0].p_x = ((long)clip->g_x >= x_abs ? clip->g_x : x_abs);
-		p[0].p_y = ((long)clip->g_y >= y_abs ? clip->g_y : y_abs);
-		p[1].p_x = (x <= 0x7FFFL ? x : 0x7FFF);
-		p[1].p_y = (y <= 0x7FFFL ? y : 0x7FFF);
-		if (p[0].p_x <= p[1].p_x && p[0].p_y <= p[1].p_y) {
-			vsf_color (vdi_handle, content->Box.Backgnd);
-			v_bar     (vdi_handle, (short*)p);
-		}
-	}
+	dombox_draw (&content->Box, x_abs, y_abs, clip, highlight);
 	
 	while (paragraph
 	       && paragraph->Box.Rect.Y + paragraph->Box.Rect.H <= clip_y) {
@@ -631,22 +619,8 @@ draw_contents (CONTENT * content,
 
 		if (y > clip_y) break;
 		
-		if (paragraph->Box.Backgnd >= 0) {
-			PXY p[2];
-			p[1].p_x = (p[0].p_x = x) + paragraph->Box.Rect.W -1;
-			p[1].p_y = (p[0].p_y = y) + paragraph->Box.Rect.H -1;
-			if (paragraph->eop_space > 0) {
-			/*	if (paragraph->next_paragraph &&
-				    paragraph->next_paragraph->Backgnd >= 0) */{
-					p[1].p_y += paragraph->eop_space;
-			/*	} else {
-					p[1].p_y += paragraph->eop_space /2;
-			*/	}
-			}
-			vsf_color (vdi_handle, paragraph->Box.Backgnd);
-			v_bar     (vdi_handle, (short*)p);
-		}
-
+		dombox_draw (&paragraph->Box, x, y, clip, highlight);
+		
 		if (paragraph->paragraph_code == PAR_HR) {
 			draw_hr (paragraph, x, y);
 

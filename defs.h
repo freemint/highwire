@@ -339,13 +339,14 @@ struct s_dombox {
 	LONG     MinWidth; /* smallest width where the content fits in    */
 	LONG     SetWidth; /* set Value, must not be smaller than Minimum */
 	BOXCLASS BoxClass;
-	WORD     Backgnd;  /* -1 for transparence, or colour value        */
+	WORD     Backgnd;  /* -1 for transparency, or colour value        */
 	TBLR     Margin;
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 };
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
+void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);
 
 
 /* ************ Parsing Constructs ************************ */
@@ -365,7 +366,7 @@ struct s_img_data {
 	WORD   fd_r1, fd_r2, fd_r3;
 	/*---*/
 	UWORD  img_w, img_h; /* original extents           */
-	WORD   fgnd,  bgnd;  /* colors for due-chrome data */
+	WORD   fgnd,  bgnd;  /* colors for duo-chrome data */
 	size_t mem_size;     /* additional size, of data   */
 };
 typedef const struct s_img_data * cIMGDATA;
@@ -535,6 +536,7 @@ typedef struct {
 } CONTENT;
 
 struct frame_item {
+	CONTENT  Page;
 	CONTAINR Container;
 	LOCATION Location;
 	LOCATION BaseHref;
@@ -542,7 +544,6 @@ struct frame_item {
 	BOOL     ForceEnc; /* don't use encoding from meta tag */
 	LANGUAGE Language;
 	UWORD    MimeType; /* determines whether the content needs no parsing */
-	CONTENT  Page;
 	struct slider {
 		long scroll;
 		BOOL on;

@@ -25,11 +25,8 @@ struct s_table_stack {
 
 struct s_table {
 	PARAGRPH Paragraph;
-	short    Color;
-	short    Border;
 	short    Spacing;
 	short    Padding;
-	short    SetWidth;
 	short    SetHeight;
 	TAB_ROW  Rows;
 	unsigned NumCols;

@@ -22,11 +22,16 @@
 #define t_Height     Paragraph->Box.Rect.H
 #define t_MinWidth   Paragraph->Box.MinWidth
 #define t_MaxWidth   Paragraph->Box.MaxWidth
+#define t_SetWidth   Paragraph->Box.SetWidth
+#define t_Backgnd    Paragraph->Box.Backgnd
+#define t_BorderW    Paragraph->Box.BorderWidth
+#define t_BorderC    Paragraph->Box.BorderColor
 
 #define c_OffsetX Content.Box.Rect.X
 #define c_OffsetY Content.Box.Rect.Y
 #define c_Width   Content.Box.Rect.W
 #define c_Height  Content.Box.Rect.H
+#define c_Backgnd Content.Box.Backgnd
 
 #ifdef DEBUG
 	#define _DEBUG
@@ -108,14 +113,15 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->Percent   = NULL;
 	table->ColWidth  = NULL;
 
-	table->Color     = color;
-	table->Border    = border;
+	table->t_Backgnd = color;
+	table->t_BorderW = border;
+	table->t_BorderC = -1; /* 3D outset */
 	table->Spacing   = spacing;
 	table->Padding   = padding + (border ? 1 : 0);
-	table->SetWidth  = width;
+	table->t_SetWidth = width;
 	table->SetHeight = height;
 	
-	table->t_MinWidth = table->t_MaxWidth = table->Border *2 + table->Spacing;
+	table->t_MinWidth = table->t_MaxWidth = table->t_BorderW *2 + table->Spacing;
 }
 
 
@@ -209,6 +215,8 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 		left_side->RightCell = cell;
 	}
 	content_setup (&cell->Content, NULL, parent, BC_STRUCT, padding, -1);
+	cell->Content.Box.BorderWidth = (parent->BorderWidth ? 1 : 0);
+	cell->Content.Box.BorderColor = -2; /* 3D inset */
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;
@@ -303,15 +311,15 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	
 	cell->Content.Alignment  = cell->Content.Item->alignment = h_align;
 	cell->AlignV             = v_align;
-	cell->Content.Box.Rect.H = (height <= 1024 ? height : 1024);
-	cell->Content.Box.Rect.W = (width  <= 1024 ? width  : 0);
+	cell->c_Height           = (height <= 1024 ? height : 1024);
+	cell->c_Width            = (width  <= 1024 ? width  : 0);
 	
-	if ((cell->Content.Box.Backgnd = color) < 0) {
-		if      (row->Color   >= 0) cell->Content.Box.Backgnd = row->Color;
-		else if (table->Color >= 0) cell->Content.Box.Backgnd = table->Color;
-		else                        cell->Content.Box.Backgnd = stack->Backgnd;
+	if ((cell->c_Backgnd = color) < 0) {
+		if      (row->Color       >= 0) cell->c_Backgnd = row->Color;
+		else if (table->t_Backgnd >= 0) cell->c_Backgnd = table->t_Backgnd;
+		else                            cell->c_Backgnd = stack->Backgnd;
 	}
-	parser->Current.backgnd = cell->Content.Box.Backgnd;
+	parser->Current.backgnd = cell->c_Backgnd;
 	
 	if (rowspan > 1) {
 		cell->RowSpan = rowspan;
@@ -448,7 +456,8 @@ table_finish (PARSER parser)
 	}
 	
 	table->t_MinWidth =
-	table->t_MaxWidth = table->Border *2 + table->Spacing * (table->NumCols +1);
+	table->t_MaxWidth = table->t_BorderW *2
+	                  + table->Spacing * (table->NumCols +1);
 	
 	padding = table->Padding *2;
 	table->Minimum = malloc (sizeof (*table->Minimum) * table->NumCols);
@@ -503,8 +512,8 @@ table_finish (PARSER parser)
 		adjust_rowspans (cell, i--);
 		do {
 			if (cell->Content.Item) {
-				if (cell->c_Width < 0 && table->SetWidth > 0) {
-					short width = table->SetWidth - table->t_MinWidth;
+				if (cell->c_Width < 0 && table->t_SetWidth > 0) {
+					short width = table->t_SetWidth - table->t_MinWidth;
 					cell->c_Width = (-cell->c_Width * width +512) /1024;
 					if (cell->c_Width <= 0) cell->c_Width = 1;
 				}
@@ -634,15 +643,15 @@ table_finish (PARSER parser)
 	} while ((column = column->RightCell) != NULL);
 
 	if (table->FixCols == table->NumCols) {
-		table->SetWidth = table->t_MaxWidth = table->t_MinWidth;
+		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 
-	} else if (table->SetWidth > 0) {
-		if (table->SetWidth < table->t_MinWidth) {
-			 table->SetWidth = table->t_MinWidth;
+	} else if (table->t_SetWidth > 0) {
+		if (table->t_SetWidth < table->t_MinWidth) {
+			 table->t_SetWidth = table->t_MinWidth;
 		} else {
-			short spread = table->SetWidth - table->t_MinWidth;
-			table->t_MinWidth = table->SetWidth;
-			table->SetWidth  += spread;
+			short spread = table->t_SetWidth - table->t_MinWidth;
+			table->t_MinWidth =  table->t_SetWidth;
+			table->t_SetWidth += spread;
 		}
 		table->t_MaxWidth = table->t_MinWidth;
 	}
@@ -687,7 +696,7 @@ table_calc (TABLE table, long max_width)
 {
 	TAB_ROW row;
 	long    set_width;
-	long    y = table->Border + table->Spacing;
+	long    y = table->t_BorderW + table->Spacing;
 
 	if (!table->NumCols) {
 		#ifdef _DEBUG
@@ -695,16 +704,16 @@ table_calc (TABLE table, long max_width)
 		#endif
 		return table->t_Height;
 	}
-	/*printf ("table_calc(%li) %i\n", max_width, table->SetWidth);*/
+	/*printf ("table_calc(%li) %i\n", max_width, table->t_SetWidth);*/
 
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 1:  adjust the given width to the table's boundarys.
 	 */
-	if (table->SetWidth > 0) {
-		set_width = table->SetWidth;
-	} else if (table->SetWidth) {
-		set_width = (max_width * -table->SetWidth + 512) / 1024;
+	if (table->t_SetWidth > 0) {
+		set_width = table->t_SetWidth;
+	} else if (table->t_SetWidth) {
+		set_width = (max_width * -table->t_SetWidth + 512) / 1024;
 	} else {
 		set_width = max_width;
 	}
@@ -731,7 +740,7 @@ table_calc (TABLE table, long max_width)
 			*(col_width++) = *(minimum++);
 		} while (--i);
 
-	} else if (table->SetWidth) { /* - - - - - - - - - - - - - - - - - - - - -
+	} else if (table->t_SetWidth) { /* - - - - - - - - - - - - - - - - - - - -
 		 *
 		 * Step 2.b:  for a defined width policy spread the extra size evenly
 		 *            over all columns that hasn't a fixed width.
@@ -804,7 +813,7 @@ table_calc (TABLE table, long max_width)
 			} while (i);
 		}
 		
-		if (table->SetWidth > table->t_MinWidth) {
+		if (table->t_SetWidth > table->t_MinWidth) {
 			col_width = table->ColWidth;
 			minimum   = table->Minimum;
 			i         = table->NumCols;
@@ -812,7 +821,7 @@ table_calc (TABLE table, long max_width)
 				*(minimum++) = *(col_width++);
 			} while (--i);
 
-			set_width = table->SetWidth = table->t_MinWidth;
+			set_width = table->t_SetWidth = table->t_MinWidth;
 		}
 
 	} else { /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -917,7 +926,7 @@ table_calc (TABLE table, long max_width)
 	} while ((row = row->NextRow) != NULL);
 
 
-	table->t_Height = table->Border *2 + table->Spacing;
+	table->t_Height = table->t_BorderW *2 + table->Spacing;
 	row = table->Rows;
 	do {
 		TAB_CELL cell = row->Cells;
@@ -964,7 +973,7 @@ table_calc (TABLE table, long max_width)
 	do {
 		long   * col_width = table->ColWidth;
 		TAB_CELL cell      = row->Cells;
-		long     x         = table->Border + table->Spacing;
+		long     x         = table->t_BorderW + table->Spacing;
 		do {
 			long height = row->Height;
 			if (cell->RowSpan > 1) {
@@ -994,52 +1003,23 @@ long
 table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
 {
 	long clip_bottom = clip->g_y + clip->g_h -1;
-	long row_y       = y;
+	long row_y       = y + table->t_BorderW + table->Spacing;
 	TAB_ROW row = table->Rows;
 
 	/*puts("table_draw");*/
 
-	if (table->Border) {
-		GRECT b;
-		b.g_x = x;
-		b.g_y = y;
-		b.g_w = table->t_Width;
-		b.g_h = table->t_Height;
-		draw_border (&b, G_WHITE, G_LBLACK, table->Border);
-		row_y += table->Border;
-	}
-	if (table->Color >= 0) {
-		PXY   p[2];
-		short col_x = x + table->Border;
-		p[1].p_x = (p[0].p_x = col_x) + table->t_Width  - table->Border *2 -1;
-		p[1].p_y = (p[0].p_y = row_y) + table->t_Height - table->Border *2 -1;
-		vsf_color (vdi_handle, table->Color);
-		v_bar     (vdi_handle, (short*)p);
-	}
-	row_y += table->Spacing;
+	dombox_draw (&table->Paragraph->Box, x, y, clip, highlight);
 
 	while (row) {
-		long   * width = table->ColWidth;
-		short    col_x = x + table->Border + table->Spacing;
-		TAB_CELL cell  = row->Cells;
-		long clip_top  = (long)clip->g_y - row_y;
+		TAB_CELL cell = row->Cells;
+		long clip_top = (long)clip->g_y - row_y;
 
 		while (cell) {
 			if (cell->Content.Item && (cell->c_Height > clip_top)) {
 				draw_contents (&cell->Content, x + cell->c_OffsetX,
 				               y + cell->c_OffsetY, clip, highlight);
-				if (table->Border) {
-					GRECT b;
-					b.g_x = col_x;
-					b.g_y = row_y;
-					b.g_w = cell->c_Width;
-					b.g_h = cell->c_Height;
-					draw_border (&b, G_LBLACK, G_WHITE, 1);
-					vsl_color (vdi_handle, G_BLACK);
-				}
 			}
-			col_x += *(width++) + table->Spacing;
-			cell  =  cell->RightCell;
+			cell = cell->RightCell;
 		}
 
 		if ((row_y += row->Height + table->Spacing) > clip_bottom)
@@ -1057,7 +1037,7 @@ CONTENT *
 table_content (TABLE table, long x, long y, long area[4])
 {
 	CONTENT * cont   = NULL;
-	short     border = table->Border + table->Spacing;
+	short     border = table->t_BorderW + table->Spacing;
 	TAB_ROW   row    = (table->NumCols ? table->Rows : NULL);
 	
 	if (row && border) {
