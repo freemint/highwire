@@ -48,17 +48,41 @@ char fsel_path[HW_PATH_MAX];
 char help_file[HW_PATH_MAX];
 
 
+static short  start_application (const char * appl, LOCATION loc);
+static char * load_file (const LOCATION, size_t * expected, size_t * loaded);
+
+
+/*______________return_values_of_scheduled_jobs,_controlling_their_priority___*/
+#define JOB_KEEP 1  /* restart again later and doesn't change priority   */
+#define JOB_AGED -1 /* restart, but decrease the prio a bit because the job is
+                     * running already a bit longer now   */
+#define JOB_NOOP -2 /* restart also, but decrease the priority much more because
+                     * this job didn't got anything to do (was stalled)   */
+#define JOB_DONE 0  /* job is done, remove from list and don't start it again */
+
+/*____________________________________________priorities_for_following_jobs___*/
+#define PRIO_INTERN   200   /* internal produced pages like error pages, about,
+                      * dir listings etc, get the highest priority in general */
+#define PRIO_USERACT  100   /* start of loading something initiated by a user
+                      * action, normally a link clicked.  this should have be
+                      * the next highest value   */
+#define PRIO_AUTOMATIC 10   /* start loading some part of a page, usually a
+                      * frame */
+#define PRIO_TRIVIAL    1   /* start loading some object, usually an image   */
+#define PRIO_RECIVE    20   /* begin receiving data from remote   */
+#define PRIO_SUCCESS   91   /* decode a file, usually an image    */
+#define PRIO_LOADFILE  95   /* load a local file into memory      */
+#define PRIO_FINISH    99   /* decode from memory, usually html or text   */
+#define PRIO_KEEP       0   /* generic, when nothing from above matches   */
+
 static int loader_job  (void * arg, long invalidated);
 static int header_job  (void * arg, long invalidated);
 static int receive_job (void * arg, long invalidated);
 static int generic_job (void * arg, long invalidated);
 
-static short  start_application (const char * appl, LOCATION loc);
-static char * load_file (const LOCATION, size_t * expected, size_t * loaded);
-
 
 /*******************************************************************************
- * the following function should placed either in parse.c or render.c but
+ * the following function should be placed either in parse.c or render.c but
  * at the moment I have no clue where to do it best - AltF4 Feb. 4, 2002
  */
 
@@ -73,7 +97,7 @@ parser_job (void * arg, long invalidated)
 	
 	if (invalidated) {
 		delete_loader (&loader);
-		return FALSE;
+		return JOB_DONE;
 	}
 	
 	if (!loader->MimeType) {
@@ -125,7 +149,7 @@ parser_job (void * arg, long invalidated)
 			parse_plain (parser, 0);
 	}
 	
-	return FALSE;
+	return JOB_DONE;
 }
 
 /******************************************************************************/
@@ -271,15 +295,15 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 	
 	if (loc->Proto == PROT_DIR) {
 		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parse_dir, new_parser (loader), (long)target, 1);
+		sched_insert (parse_dir, new_parser (loader), (long)target, PRIO_INTERN);
 		
 	} else if (loc->Proto == PROT_ABOUT) {
 		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parse_about, new_parser (loader), (long)target, 1);
+		sched_insert (parse_about, new_parser (loader),(long)target, PRIO_INTERN);
 		
 	} else if (MIME_Major(loader->MimeType) == MIME_IMAGE) {
 		loader->MimeType = MIME_IMAGE;
-		sched_insert (parse_image, new_parser (loader), (long)target, 1);
+		sched_insert (parse_image, new_parser (loader),(long)target, PRIO_INTERN);
 		
 #ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
@@ -288,7 +312,8 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 			containr_notify (loader->Target, HW_PageFinished, NULL);
 			loader->notified = FALSE;
 		}
-		sched_insert (header_job, loader, (long)target, 1);
+		sched_insert (header_job, loader, (long)target,
+		              (u_act ? PRIO_USERACT : PRIO_AUTOMATIC));
 #endif /* USE_INET */
 	
 	} else if (loc->Proto) {
@@ -298,14 +323,14 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base, BOOL u_act)
 		sprintf (buf, txt, loc->Proto);
 		loader->Data     = strdup (buf);
 		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parse_html, new_parser (loader), (long)target, 1);
+		sched_insert (parse_html, new_parser (loader), (long)target, PRIO_INTERN);
 	
 	} else if (loader->ExtAppl) {
 		start_application (loader->ExtAppl, loc);
 		delete_loader (&loader);
 		
 	} else {
-		sched_insert (loader_job, loader, (long)target, 1);
+		sched_insert (loader_job, loader, (long)target, PRIO_LOADFILE);
 	}
 	
 	return loader;
@@ -336,11 +361,11 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 	loader->FreeArg = objc;
 	
 	if (PROTO_isLocal (loc->Proto)) {
-		sched_insert (loader->SuccJob, loader, (long)target, 1);
+		sched_insert (loader->SuccJob, loader, (long)target, PRIO_SUCCESS);
 	
 #ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
-		sched_insert (header_job, loader, (long)target, 1);
+		sched_insert (header_job, loader, (long)target, PRIO_TRIVIAL);
 #endif
 	
 	} else {
@@ -409,7 +434,8 @@ chunked_job (void * arg, long invalidated)
 			
 			} else {
 				if (!s_recv) {
-					sched_insert (chunked_job, loader, (long)loader->Target, 1);
+					sched_insert (chunked_job, loader, (long)loader->Target,
+					              PRIO_KEEP);
 				}
 				return TRUE;
 			}
@@ -468,10 +494,10 @@ chunked_job (void * arg, long invalidated)
 		}
 	}
 	if (s_recv) {
-		sched_insert (receive_job, loader, (long)loader->Target, 1);
+		sched_insert (receive_job, loader, (long)loader->Target, PRIO_KEEP);
 	}
 	
-	return FALSE;
+	return JOB_DONE;
 }
 #endif /* USE_INET */
 
@@ -489,11 +515,12 @@ receive_job (void * arg, long invalidated)
 		} else {
 			delete_loader (&loader);
 		}
-		return FALSE;
+		return JOB_DONE;
 	}
 	
 	if (loader->rdLeft) {
 		long n = inet_recv (loader->rdSocket, loader->rdDest, loader->rdLeft);
+		int  r = JOB_AGED;
 		
 		if (n < 0) { /* no more data available */
 			inet_close (loader->rdSocket);
@@ -504,17 +531,20 @@ receive_job (void * arg, long invalidated)
 			loader->rdDest   += n;
 			loader->rdLeft   -= n;
 			loader->DataFill += n;
+		
+		} else {
+			r = JOB_NOOP;
 		}
 		if (loader->rdLeft) {
-			return TRUE;  /* re-schedule for next block of data */
+			return r;  /* re-schedule for next block of data */
 		}
 		
 		if (!loader->DataSize) {
 			if (chunked_job (arg, 0)) {
-				return FALSE;  /* chunk head need to be completed */
+				return JOB_DONE;  /* chunk head need to be completed */
 			
 			} else if (loader->rdLeft) {
-				return TRUE;  /* re-schedule for start of next chunk */
+				return r;  /* re-schedule for start of next chunk */
 			}
 		}
 	}
@@ -538,10 +568,12 @@ receive_job (void * arg, long invalidated)
 			cache_bound (loader->Location, NULL);
 		}
 	}
-	sched_insert ((loader->SuccJob ? loader->SuccJob : parser_job),
-	              loader, (long)loader->Target, 1);
-	
-	return FALSE;
+	if (loader->SuccJob) {
+		sched_insert (loader->SuccJob, loader,(long)loader->Target, PRIO_SUCCESS);
+	} else {
+		sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
+	}
+	return JOB_DONE;
 }	
 #endif /* USE_INET */
 
@@ -565,14 +597,14 @@ header_job (void * arg, long invalidated)
 		} else {
 			delete_loader (&loader);
 		}
-		return FALSE;
+		return JOB_DONE;
 	}
 	
 	switch (CResultDsk (cache_exclusive (loc))) {
 		
 		case CR_BUSY:
 		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
-			return TRUE;
+			return JOB_KEEP;
 		
 		case CR_LOCAL: {
 			CACHED cached = cache_lookup (loc, 0, NULL);
@@ -584,11 +616,16 @@ header_job (void * arg, long invalidated)
 					loader->MimeType = mime_byExtension (loader->Cached->File, NULL);
 				}
 			/*	printf ("header_job(%s): cache hit\n", loc->FullName);*/
-				sched_insert ((loader->SuccJob ? loader->SuccJob : loader_job),
-				              loader, (long)loader->Target, 1);
-				return FALSE;
+				if (loader->SuccJob) {
+					sched_insert (loader->SuccJob,
+					              loader, (long)loader->Target, PRIO_SUCCESS);
+				} else {
+					sched_insert (loader_job,
+					              loader, (long)loader->Target, PRIO_LOADFILE);
+				}
+				return JOB_DONE;
 			
-			} else { /* cache incosistance error */
+			} else { /* cache inconsistance error */
 				printf ("header_job(%s): not in cache!\n", loc->FullName);
 				return header_job (arg, (long)loader->Target); /* invalidate */
 			}
@@ -626,14 +663,19 @@ header_job (void * arg, long invalidated)
 			u.c = cache_bound (cached, &loader->Location);
 			loader->Cached = loc = u.l;
 			free_location (&redir);
-			sched_insert ((loader->SuccJob ? loader->SuccJob : loader_job),
-			              loader, (long)loader->Target, 1);
-			return FALSE;
+			if (loader->SuccJob) {
+				sched_insert (loader->SuccJob,
+				              loader, (long)loader->Target, PRIO_SUCCESS);
+			} else {
+				sched_insert (loader_job,
+				              loader, (long)loader->Target, PRIO_LOADFILE);
+			}
+			return JOB_DONE;
 		
 		} else {
 			free_location (&loader->Location);
 			loader->Location = loc = redir;
-			return TRUE; /* re-schedule with the new location */
+			return JOB_KEEP; /* re-schedule with the new location */
 		}
 	}
 	
@@ -679,8 +721,9 @@ header_job (void * arg, long invalidated)
 				sock = -1;
 			} else {
 				loader->rdSocket = sock;
-				sched_insert (receive_job, loader, (long)loader->Target, 1);
-				return FALSE;
+				sched_insert (receive_job,
+				              loader, (long)loader->Target, PRIO_RECIVE);
+				return JOB_DONE;
 			}
 		
 		} else {
@@ -694,8 +737,8 @@ header_job (void * arg, long invalidated)
 				loader->rdTlen += hdr.Tlen;
 			}
 			loader->rdSocket = sock;
-			sched_insert (chunked_job, loader, (long)loader->Target, 1);
-			return FALSE;
+			sched_insert (chunked_job, loader, (long)loader->Target, PRIO_RECIVE);
+			return JOB_DONE;
 		}
 	
 	}
@@ -711,10 +754,10 @@ header_job (void * arg, long invalidated)
 	if (loader->SuccJob) {
 		(*loader->SuccJob)(loader, (long)loader->Target);
 	} else {
-		sched_insert (parser_job, loader, (long)loader->Target, 1);
+		sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
 	}
 
-	return FALSE;
+	return JOB_DONE;
 }
 #endif /* USE_INET */
 
@@ -728,7 +771,7 @@ loader_job (void * arg, long invalidated)
 	
 	if (invalidated) {
 		delete_loader (&loader);
-		return FALSE;
+		return JOB_DONE;
 	}
 	
 	if (!loader->notified) {
@@ -744,9 +787,9 @@ loader_job (void * arg, long invalidated)
 		loader->MimeType = MIME_TXT_HTML;
 	}
 	/* registers a parser job with the scheduler */
-	sched_insert (parser_job, loader, (long)loader->Target, 1);
+	sched_insert (parser_job, loader, (long)loader->Target, PRIO_FINISH);
 
-	return FALSE;
+	return JOB_DONE;
 }
 
 
@@ -771,7 +814,7 @@ generic_job (void * arg, long invalidated)
 	}
 	delete_loader (&loader);
 	
-	return FALSE;
+	return JOB_DONE;
 }
 
 
