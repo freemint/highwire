@@ -327,7 +327,8 @@ typedef enum {
 	BC_STRUCT,   /* TD, TH, ..             */
 	BC_GROUP,    /* DIV, DL,OL, UL, Hn, .. */
 	BC_MIXED,    /* LI, ..                 */
-	BC_TXTPAR    /* P, IMG, HR, ..         */
+	BC_TXTPAR,   /* P, ..                  */
+	BC_SINGLE    /* IMG, HR, ..            */
 } BOXCLASS;
 
 typedef struct blocking_area * BLOCKER;
@@ -337,7 +338,8 @@ struct s_dombox {
 		void     (*delete)(DOMBOX *);
 		LONG     (*MinWidth) (DOMBOX *);
 		LONG     (*MaxWidth) (DOMBOX *);
-		DOMBOX * (*ChildAt)(DOMBOX *, LRECT *, long x, long y, long clip[4]);
+		PARAGRPH (*Paragrph) (DOMBOX *);
+		DOMBOX * (*ChildAt)  (DOMBOX *, LRECT *, long x, long y, long clip[4]);
 		void     (*draw)   (DOMBOX *, long x, long y, const GRECT * clip, void *);
 		void     (*format) (DOMBOX *, long width, BLOCKER);
 	}      * _vtab;
@@ -367,6 +369,7 @@ DOMBOX * dombox_dtor (DOMBOX *);
 #define  dombox_RgtDist(this)      (dombox_Dist(this,Rgt) + (this)->BorderWidth)
 #define  dombox_MinWidth(this)     ((*((this)->_vtab->MinWidth))(this))
 #define  dombox_MaxWidth(this)     ((*((this)->_vtab->MaxWidth))(this))
+#define  dombox_Paragrph(this)     ((*((this)->_vtab->Paragrph))(this))
 DOMBOX * dombox_byCoord (DOMBOX *, LRECT *, long * px, long * py);
 void     dombox_draw    (DOMBOX *, long x, long y, const GRECT * clip, void *);
 void     dombox_reorder (DOMBOX *, DOMBOX * behind);
