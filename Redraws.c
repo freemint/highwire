@@ -185,8 +185,8 @@ draw_vbar (FRAME frame, BOOL complete)
 #if 0
 /* This is code that doesn't work yet */
 
-		if (frame->v_bar.on) 
-			p[0].p_y += scroll_bar_width -1;
+		if (frame->h_bar.on) 
+			p[0].p_y += scroll_bar_width;
 
 		if (frame->border && (frame->borders > 1)) /* bottom or both */
 		{
@@ -221,15 +221,15 @@ draw_vbar (FRAME frame, BOOL complete)
 			p[2].p_x = p[3].p_x = rgt +1;
 			p[2].p_y = p[1].p_y;
 			p[3].p_y = p[0].p_y;
-			if (frame->v_bar.on) {
+			if (frame->h_bar.on) {
 				n = 4;
 			} else {
 				p[4] = p[0];
 				n = 5;
 			}
 /*		}*/
-		if (frame->v_bar.on) {
-			p[0].p_y += scroll_bar_width -1;
+		if (frame->h_bar.on) {
+			p[0].p_y += scroll_bar_width;
 		}
 
 		v_pline (vdi_handle, n, (short*)p);		/* left border line */
@@ -267,7 +267,7 @@ draw_vbar (FRAME frame, BOOL complete)
 			b.g_x = lft;
 			b.g_y = top - (scroll_bar_width -2);
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
-			b.g_y = bot + 2;
+			b.g_y = bot +1;
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
 			v_pline (vdi_handle, 2, (short*)(p +0));
 			v_pline (vdi_handle, 3, (short*)(p +5));
@@ -342,15 +342,15 @@ draw_hbar (FRAME frame, BOOL complete)
 			p[2].p_y = p[3].p_y = bot +1;
 			p[2].p_x = p[1].p_x;
 			p[3].p_x = p[0].p_x;
-			if (frame->h_bar.on) {
+			if (frame->v_bar.on) {
 				n = 4;
 			} else {
 				p[4] = p[0];
 				n = 5;
 			}
 /*		}*/
-		if (frame->h_bar.on) {
-			p[0].p_x += scroll_bar_width -1;
+		if (frame->v_bar.on) {
+			p[0].p_x += scroll_bar_width;
 		}
 		v_pline (vdi_handle, n, (short*)p);
 
