@@ -39,32 +39,22 @@
             <td width="49%">
 <h3>A Message from the HighWire Development Team</h3>
 <hr>
-<p><b><i>Welcome to the latest release of HighWire, version 0.2.3</i></b></p>
+<p><b><i>Welcome to the latest release of HighWire, version 0.2.4</i></b></p>
 <img src="images/twisted.gif" alt="HighWire viewing Highwire" width="161" height="131" align="right" vspace="4" hspace="4">
 <p>
-Even though it has not been that long since the last release of HighWire, the
-recent changes seems to suggest that it's already time to make another public
-release available.  The useability of HighWire has now been significantly
-increased due to the implementation of imagemaps.  This means that all those
-sites you have been unable to utilize due to their site navigation being hidden
-in imagemaps are now likely to be working just fine!
-<p>
-Another improvement regarding site navigation and functionality is that HighWire
-now can handle having images working as form elements. When it comes to the 
-user interface HighWire is now also better at handling popup menus that are too
-long to fit the desktop height. If such a menu is opened now, you will notice
-that there are scroll  buttons added to the menu in order to allow you to scroll
-to the part of the popup menu that is currently located outside the visible
-screen area. A small bugfix has also been made to text input fields, were
-HighWire earlier on has been overriding the document when it tried setting a
-field width below 20 characters.
-<p>
-HighWire has also extended its support for image formats since 0.2.2 release.
-The new formats XBM and XPM are rarely used these days but are still in use by
-servers like eg. NCSA. Furthermore, all other decent browsers does support at
-least XBM. Even CAB does actually, and since HighWire is setting out to be a
-replacement for CAB it seemed obvious we should support these formats too!
-<p>
+Main changes and additions in this versions:
+<ul>
+<li>New config file keyword START_PAGE to define what page or file should be
+    displayed at program start.
+<li>High/TrueColor (24/32bit) screen modes for Hades and Falcon Nova graphic
+    card drivers added.  Now images will appear with correct colours.
+<li>Menu bar entry 'Options' changed, now when one of the entries
+    "<tt>Cookies&nbsp;allowed</tt>", "<tt>View&nbsp;Images</tt>" and
+    "<tt>Use&nbsp;CSS</tt>" got changed this will be saved to the config file.
+<li>Bugs fixed which were causing very short files not to be loaded and endless
+    reload tries due to empty or not found CSS files.
+<li>Several more (but less obvious) bugs fixed.
+</ul>
 As usual, more details of changes can be seen in the
 <a href="../Change.Log">Change.Log</a> file.
 
