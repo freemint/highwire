@@ -156,6 +156,7 @@ containr_resume (CONTAINR last)
 	CONTAINR cont;
 	BOOL     colsNrows;
 	
+	long  size_sum = 0; /* num of all absolute size values */
 	short perc_cnt = 0; /* number of percent values */
 	long  perc_sum = 0; /* sum of all percents */
 	short frac_cnt = 0; /* number of all '*','2*',.. and invalid values */
@@ -175,19 +176,52 @@ containr_resume (CONTAINR last)
 	colsNrows = (parent->Mode == CNT_CLD_H);
 	cont      =  parent->u.Child;
 	while (cont) {
-		short val = -(colsNrows ? cont->ColSize : cont->RowSize);
+		long val = (colsNrows ? cont->ColSize : cont->RowSize);
 		if (val > 0) {
-			if (val >= 10000) {
-				frac_sum += val - 10000;
-				frac_cnt++;
-			} else {
-				perc_sum += val;
-				perc_cnt++;
-			}
+			size_sum += val;
+		} else if (val <= -10000) {
+			frac_sum += -val - 10000;
+			frac_cnt++;
+		} else {
+			perc_sum += -val;
+			perc_cnt++;
 		}
 		if (cont->Sibling == last) {
 			cont->Sibling = NULL;
 		}
+		
+		/* If all children has fixed sizes we need to perform a check if they fit
+		 * correctly into their parents size, to avoid overlappings or empty gaps.
+		*/
+		if (!cont->Sibling && !frac_cnt && !perc_cnt) {
+			
+			/* If the parent has a variable size the last children gets changed
+			 * to be also variable.
+			*/
+			if ((val = (colsNrows ? parent->ColSize : parent->RowSize)) < 0) {
+				if (colsNrows) cont->ColSize = -10001;
+				else           cont->RowSize = -10001;
+				frac_cnt++;
+			
+			/* If the sum of all children sizes is smaller than the absolute size
+			 * of the parent, the last children gets expanded by the difference.
+			*/
+			} else if ((val -= size_sum + parent->BorderSize) > 0) {
+				if (colsNrows) cont->ColSize += val;
+				else           cont->RowSize += val;
+			
+			/* If the sum of all children sizes is larger than the absolute size
+			 * of the parent, all parents has to be expanded by the difference.
+			*/
+			} else if (val) {
+				CONTAINR temp = parent;
+				do if ((colsNrows ? parent->ColSize : parent->RowSize) > 0) {
+					if (colsNrows) temp->ColSize -= val;
+					else           temp->RowSize -= val;
+				} while ((temp = temp->Parent) != NULL);
+			}
+		}
+		
 		cont = cont->Sibling;
 	}
 	while (last) {
