@@ -1,4 +1,4 @@
-(non-public of Nov. 03, 2003)
+(non-public of Nov. 22, 2003)
 
 - Implementation of parsing of <STYLE> areas.
 
@@ -9,7 +9,18 @@
   implemented basic CSS support for BIG, SMALL,
   FONT, SUB, SUP, H1..6, P, DD, DT and DD tags.
 
-- Bugs #0138 resolved.
+- The reload button performes now a real reload of
+  online pages, not only a reparse (#0134).  For a
+  reparse only shift must be held in addition and
+  the alt key causes clearing the whole cache.
+
+- Meta tag 'http-equiv=expires' implemented.
+
+- Fixed a bug that occured when an image couldn't
+  be received and led to endless reloads of that
+  image.
+
+- Bugs #0134, #0138 resolved.
 
 __________________________________________________
 Changes in V. 0.1.5 release  of October 24, 2003:
