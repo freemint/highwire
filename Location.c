@@ -158,12 +158,19 @@ new_location (const char * p_src, LOCATION base)
 			src = (*(++s) == '/' && *(++s) == '/' ? ++s : s);
 			if (PROTO_isLocal(loc_proto) || PROTO_isRemote(loc_proto)) {
 				loc_host = host_entry (&s);
-				if (loc_host && !loc_port) {
-					loc_proto = PROT_FTP;
-					loc_port  = 21; /* ftp */
-				}
-				if (local_web && loc_host && !host_addr (loc_host)) {
-					s = src;
+				if (loc_host) {
+					if (*s == ':') {
+						char * end;
+						loc_port = strtoul (s +1, &end, 10);
+						s        = end;
+					}
+					if (!loc_port) {
+						loc_proto = PROT_FTP;
+						loc_port  = 21; /* ftp */
+					}
+					if (local_web && !host_addr (loc_host)) {
+						s = src;
+					}
 				}
 				src  = s;
 			}
