@@ -575,7 +575,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			
 			if (*p == ':') { /*........................ pseudo format */
 				key = TAG_Unknown;
-				while (isalpha (*(++p))); /* ignore */
+				while (isalpha (*(++p)) || *p == ':'); /* ignore */
 			}
 			
 			if (skip) { /* was a conditional rule, ignore */
