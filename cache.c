@@ -626,7 +626,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 			printf ("  Memory: %lu bytes\n", mem_max);
 		}
 		if (!__cache_dir) {
-			puts (" Disk: (diabled)");
+			puts (" Disk: (disabled)");
 		} else if (!__cache_dsk_max) {
 			dsk_max = 2L*1024*1024;
 			dsk_lim = 200;
