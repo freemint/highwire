@@ -37,6 +37,7 @@ HwWIND hwWind_Top    = NULL;
 HwWIND hwWind_Focus  = NULL;
 
 
+static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
 static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
@@ -50,8 +51,9 @@ hwWind_setup (HWWIND_SET set, long arg)
 		case HWWS_INFOBAR:
 			if (arg & 1) wind_kind |=  INFO;
 			else         wind_kind &= ~INFO;
-			if (arg & 2) wind_kind |=  LFARROW;
-			else         wind_kind &= ~LFARROW;
+			if      (arg & 4) wind_kind &= ~(HSLIDE|LFARROW|SIZER);
+			else if (arg & 2) wind_kind |=  LFARROW;
+			else              wind_kind &= ~LFARROW;
 			break;
 	}
 }
@@ -88,12 +90,14 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		}
 		if (!ignore_colours) {
 			u   = W_HELEV;
-			out = -1;
-			if (wind_get (0, WF_DCOLOR, &u, &out, &u, &u) && out != -1) {
+			out = 0;
+			if (wind_get (0, WF_DCOLOR, &u, &out, &u, &u) && out) {
 				info_bgnd = out | 0x00F0;
 				if ((info_bgnd & 0x000F) == G_BLACK) {
 					info_fgnd = G_WHITE;
 				}
+			} else {
+				info_bgnd = G_LWHITE;
 			}
 		}
 		
@@ -121,17 +125,24 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->HistMenu = 0;
 	for (i = 0; i <= HISTORY_LAST; This->History[i++] = NULL);
 	
-	set_size (This, &curr_area);
 	hwWind_setName (This, (name && *name ? name : url));
 	This->Stat[0] = ' ';
 	This->Info[0] = '\0';
 	if (wind_kind & INFO) {
 		wind_set_str (This->Handle, WF_INFO, This->Info);
 	}
-	if (wind_kind & HSLIDE) {
-		wind_set (This->Handle, WF_HSLIDE,   0, 0,0,0);
-		wind_set (This->Handle, WF_HSLSIZE, -1, 0,0,0);
+	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
+		if (wind_kind & HSLIDE) {
+			wind_set (This->Handle, WF_HSLIDE,   0, 0,0,0);
+			wind_set (This->Handle, WF_HSLSIZE, -1, 0,0,0);
+		}
+		This->TbarH = 0;
+		This->IbarH = 0;
+	} else {
+		This->TbarH = 0;
+		This->IbarH = widget_h - widget_b -1;
 	}
+	set_size (This, &curr_area);
 
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
@@ -141,7 +152,11 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
-	hwWind_setInfo (This, "", TRUE);
+	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
+		hwWind_setInfo (This, "", TRUE);
+	} else if (This->IbarH) {
+		draw_infobar (This, &This->Work, "");
+	}
 
 	if ((url && *url) || loc) {
 		new_loader_job (url, loc, This->Pane);
@@ -206,6 +221,115 @@ hwWind_setName (HwWIND This, const char * name)
 }
 
 /*----------------------------------------------------------------------------*/
+static void
+draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
+{
+	GRECT area, clip;
+	PXY   p[2];
+	short x_btn, dmy, fnt, pnt;
+	
+	if (This->isIcon) return;
+	
+	area = This->Work;
+	area.g_y += area.g_h - This->IbarH +1;
+	area.g_h =             This->IbarH -1;
+	clip  = area;
+	x_btn = area.g_x + area.g_w - This->IbarH;
+	
+	if (p_clip) {
+		clip.g_y--;
+		clip.g_h++;
+		if (clip.g_y >= p_clip->g_y + p_clip->g_h) {
+			return;
+		}
+		*(GRECT*)p = *p_clip;
+	
+	} else {
+		clip.g_w -= This->IbarH +1;
+		if (!rc_intersect (&desk_area, &clip)) {
+			return;
+		}
+		wind_update (BEG_UPDATE);
+		wind_get_grect (This->Handle, WF_FIRSTXYWH, (GRECT*)p);
+	}
+	
+	vsf_interior (vdi_handle, FIS_SOLID);
+	vsf_style    (vdi_handle, 4);
+	vsf_color    (vdi_handle, info_bgnd & 0x000F);
+	
+	fnt = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
+	if ((fnt = vst_font (vdi_handle, fnt)) == 1) {
+		pnt = (inc_xy < 16 ? 11 : 12);
+		vst_point (vdi_handle, pnt, &dmy,&dmy,&dmy,&dmy);
+	} else {
+		pnt = 14;
+		vst_height (vdi_handle, pnt, &dmy,&dmy,&dmy,&dmy);
+	}
+	vst_color     (vdi_handle, info_fgnd);
+	vst_map_mode  (vdi_handle, 1);
+	vst_effects   (vdi_handle, TXT_NORMAL);
+	
+	v_hide_c (vdi_handle);
+	while (p[1].p_x > 0 && p[1].p_y > 0) {
+		if (rc_intersect (&clip, (GRECT*)p)) {
+			p[1].p_x += p[0].p_x -1;
+			p[1].p_y += p[0].p_y -1;
+			v_bar (vdi_handle, (short*)p);
+			
+			if (*info && p[0].p_x < x_btn) {
+				short rgt = p[1].p_x;
+				if (p[1].p_x >= x_btn){
+					p[1].p_x = x_btn -1;
+				}
+				vs_clip_pxy (vdi_handle, p);
+				vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy, &dmy);
+				v_ftext (vdi_handle, area.g_x +1, area.g_y -1, info);
+				if (!p_clip) {
+					vs_clip_off (vdi_handle);
+				}
+				p[1].p_x = rgt;
+			}
+			if (p_clip) {
+				vs_clip_pxy (vdi_handle, p);
+				vsl_color   (vdi_handle, info_fgnd & 0x000F);
+				if (p[0].p_y < area.g_y) {
+					PXY l[2];
+					l[1].p_x = (l[0].p_x = area.g_x) + area.g_w -1;
+					l[1].p_y =  l[0].p_y = area.g_y -1;
+					v_pline (vdi_handle, 2, (short*)l);
+				}
+				if (p[1].p_x >= x_btn) {
+					p[0].p_x = p[1].p_x = x_btn;
+					v_pline (vdi_handle, 2, (short*)p);
+					p[0].p_x++;
+					p[0].p_y = area.g_y;
+					p[1].p_x = p[1].p_y = This->IbarH -1;
+					draw_border ((GRECT*)p, G_WHITE, G_LBLACK, 1);
+					if (fnt != 1) {
+						vst_font  (vdi_handle, 1);
+						vst_point (vdi_handle, (inc_xy < 16 ? 11 : 12),
+						           &dmy,&dmy,&dmy,&dmy);
+					}
+					vst_alignment (vdi_handle, TA_CENTER, TA_TOP, &dmy, &dmy);
+					v_gtext (vdi_handle,
+					         p[0].p_x + This->IbarH /2, p[0].p_y +1, "");
+				}
+				vs_clip_off (vdi_handle);
+				break;
+			}
+		}
+		wind_get_grect (This->Handle, WF_NEXTXYWH, (GRECT*)p);
+	}
+	v_show_c (vdi_handle, 1);
+	
+	vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
+	
+	if (!p_clip) {
+		wind_update (END_UPDATE);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
 /* Set Horizontal scroller space text - only works on top windows */
 
 static void
@@ -214,7 +338,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	short dmy;
 	PXY   p[2];
 
-	if (This != hwWind_Top || !(wind_kind & (LFARROW|HSLIDE)) || This->isIcon) {
+	if (This != hwWind_Top || This->isIcon) {
 		return;
 	} else {
 		short top;
@@ -292,7 +416,11 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 		if (wind_kind & INFO) {
 			wind_set_str (This->Handle, WF_INFO, info);
 		}
-		hwWind_setHSInfo(This, info);
+		if (wind_kind & (LFARROW|HSLIDE)) {
+			hwWind_setHSInfo(This, info);
+		} else if (This->IbarH) {
+			draw_infobar (This, NULL, info);
+		}
 	}
 }
 
@@ -307,7 +435,14 @@ void set_size (HwWIND This, const GRECT * curr)
 		This->Curr = *curr;    /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
 	}                         /* if the window was created but not opend       */
 	wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
-	containr_calculate (This->Pane, &This->Work);
+	if (This->TbarH || This->IbarH) {
+		GRECT work = This->Work;
+		work.g_y += This->TbarH;
+		work.g_h -= This->TbarH + This->IbarH;
+		containr_calculate (This->Pane, &work);
+	} else {
+		containr_calculate (This->Pane, &This->Work);
+	}
 }
 
 /*============================================================================*/
@@ -356,7 +491,9 @@ hwWind_full (HwWIND This)
 		if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
 			hwWind_redraw (This, &prev);
 		}
-		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+		if (wind_kind & (LFARROW|HSLIDE)) {
+			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+		}
 	}
 }
 
@@ -379,8 +516,10 @@ hwWind_iconify (HwWIND This, const GRECT * icon)
 				wind_get_grect (This->Handle, WF_FULLXYWH, &This->Curr);
 				wind_set_grect (This->Handle, WF_CURRXYWH, &This->Curr);
 			}
+			if (wind_kind & (LFARROW|HSLIDE)) {
+				hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+			}
 			This->isIcon = FALSE;
-			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 		}
 	}
 }
@@ -406,8 +545,10 @@ hwWind_raise (HwWIND This, BOOL topNbot)
 			}
 		}
 		wind_set (This->Handle, WF_TOP, 0,0,0,0);
-		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
-		
+		if (wind_kind & (LFARROW|HSLIDE)) {
+			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+		}
+	
 	} else {
 		if (This->Next) {
 			HwWIND * ptr = &hwWind_Top;
@@ -587,6 +728,7 @@ void
 hwWind_redraw (HwWIND This, const GRECT * clip)
 {
 	GRECT work, rect = desk_area;
+	char * info = (!This->IbarH ? NULL : *This->Info ? This->Info : This->Stat);
 	
 	wind_update (BEG_UPDATE);
 	
@@ -603,6 +745,9 @@ hwWind_redraw (HwWIND This, const GRECT * clip)
 		}
 		while (rect.g_w > 0 && rect.g_h > 0) {
 			if (rc_intersect (&work, &rect)) {
+				if (info) {
+					draw_infobar (This, &rect, info);
+				}
 				containr_redraw (This->Pane, &rect);
 			}
 			wind_get_grect (This->Handle, WF_NEXTXYWH, &rect);
@@ -756,6 +901,139 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		default:
 			errprintf ("wind_handler (%i, %p)\n", event, cont);
 	}
+}
+
+
+/*============================================================================*/
+HwWIND
+hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
+{
+	GRECT  clip;
+	WORD   whdl = wind_find (mx, my);
+	HwWIND wind = hwWind_byHandle (whdl);
+	
+	if (wind && !wind->isIcon) {
+		clip = wind->Work;
+	} else {
+		wind_get_grect (whdl, WF_WORKXYWH, &clip);
+	}
+	if (mx < clip.g_x || mx >= clip.g_x + clip.g_w ||
+	    my < clip.g_y || my >= clip.g_y + clip.g_h) {
+		watch->g_x = mx;
+		watch->g_y = my;
+		watch->g_w = watch->g_h = 1;
+		wind = NULL;
+	
+	} else {
+		wind_get_grect (whdl, WF_FIRSTXYWH, watch);
+		while (watch->g_w > 0 && watch->g_h > 0 &&
+			    (mx < watch->g_x || mx >= watch->g_x + watch->g_w ||
+			     my < watch->g_y || my >= watch->g_y + watch->g_h)) {
+			wind_get_grect (whdl, WF_NEXTXYWH, watch);
+		}
+		if (watch->g_w <= 0 || watch->g_h <= 0) {
+			watch->g_x = mx;
+			watch->g_y = my;
+			watch->g_w = watch->g_h = 1;
+			wind = NULL;
+		
+		} else if (wind) {
+			if (wind->isIcon) {
+				wind = NULL;
+			
+			} else if (wind->IbarH) {
+				WORD y = clip.g_y + clip.g_h - wind->IbarH;
+				if (my < y) {
+					clip.g_h -= wind->IbarH;
+				} else {
+					clip.g_y += wind->IbarH;
+					clip.g_h =  wind->IbarH;
+					wind = NULL;
+				}
+				rc_intersect (&clip, watch);
+			}
+		}
+	}
+	return wind;
+}
+
+
+/*============================================================================*/
+HwWIND
+hwWind_button (WORD mx, WORD my)
+{
+	HwWIND wind = hwWind_byCoord (mx, my);
+	WORD   ib_x = 0, ib_y = 0;
+	if (wind && wind->IbarH &&
+		 ((ib_y = wind->Work.g_y + wind->Work.g_h - wind->IbarH) > my ||
+		  (ib_x = wind->Work.g_x + wind->Work.g_w - wind->IbarH) > mx)) {
+		ib_y = 0;
+	}
+	if (!wind) {
+		short dmy;
+		wind_update (BEG_MCTRL);
+		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
+		wind_update (END_MCTRL);
+	
+	} else if (ib_y) {
+		short     event = wind_update (BEG_MCTRL);
+		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
+		PXY c[5], w[5];
+		c[0] = c[4] = *(PXY*)&wind->Curr;
+		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + wind->Curr.g_w -1;
+		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + wind->Curr.g_h -1;
+		c[4].p_y++;
+		w[0] = w[4] = *(PXY*)&wind->Work;
+		w[1].p_x = w[2].p_x = (w[3].p_x = w[0].p_x) + wind->Work.g_w -1;
+		w[1].p_y = w[0].p_y;
+		w[3].p_y = w[2].p_y = ib_y;
+		w[4].p_y++;
+		m_in.emi_m1.g_x = mx;
+		m_in.emi_m1.g_y = my;
+		m_in.emi_m1.g_w = m_in.emi_m1.g_h = 1;
+		vswr_mode (vdi_handle, MD_XOR);
+		vsl_type  (vdi_handle, USERLINE);
+		vsl_udsty (vdi_handle, 0xAAAA);
+		v_hide_c  (vdi_handle);
+		do {
+			EVMULT_OUT out;
+			WORD       msg[8];
+			v_pline  (vdi_handle, 5, (short*)c);
+			v_pline  (vdi_handle, 5, (short*)w);
+			v_show_c (vdi_handle, 1);
+			event = evnt_multi_fast (&m_in, msg, &out);
+			v_hide_c (vdi_handle);
+			v_pline  (vdi_handle, 5, (short*)c);
+			v_pline  (vdi_handle, 5, (short*)w);
+			if (event & MU_M1) {
+				WORD dx = out.emo_mouse.p_x - m_in.emi_m1.g_x;
+				WORD dy = out.emo_mouse.p_y - m_in.emi_m1.g_y;
+				WORD d;
+				if ((d = (w[2].p_x += dx) - w[0].p_x -80) < 0) {
+					dx       -= d;
+					w[2].p_x -= d;
+				}
+				if ((d = (w[2].p_y += dy) - w[0].p_y -40) < 0) {
+					dy       -= d;
+					w[2].p_y -= d;
+				}
+				w[1].p_x = w[2].p_x;
+				w[3].p_y = w[2].p_y;
+				c[1].p_x = c[2].p_x += dx;
+				c[3].p_y = c[2].p_y += dy;
+				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
+			}
+		} while (!(event & MU_BUTTON));
+		v_show_c  (vdi_handle, 1);
+		vsl_type  (vdi_handle, SOLID);
+		vswr_mode (vdi_handle, MD_TRANS);
+		wind_update (END_MCTRL);
+		c[1].p_x = c[2].p_x - c[0].p_x +1;
+		c[1].p_y = c[2].p_y - c[0].p_y +1;
+		hwWind_resize (wind, (GRECT*)c);
+		wind = NULL;
+	}
+	return wind;
 }
 
 
