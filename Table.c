@@ -41,6 +41,8 @@
 
 
 static struct s_dombox_vtab table_vTab = { 0, };
+static LONG vTab_MinWidth (DOMBOX *);
+static LONG vTab_MaxWidth (DOMBOX *);
 static void vTab_draw (DOMBOX *, long x, long y, const GRECT *, void *);
 
 
@@ -97,6 +99,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	par->Box.BoxClass   = BC_TABLE;
 	if (!*(long*)&table_vTab) {
 		table_vTab      = DomBox_vTab;
+		table_vTab.MinWidth = vTab_MinWidth;
+		table_vTab.MaxWidth = vTab_MaxWidth;
 		table_vTab.draw = vTab_draw;
 	}
 	par->Box._vtab = &table_vTab;
@@ -527,7 +531,7 @@ table_finish (PARSER parser)
 					if (cell->c_Width <= 0) cell->c_Width = 1;
 				}
 				if (cell->ColSpan == 1) {
-					long width = content_minimum (&cell->Content);
+					long width = dombox_MinWidth (&cell->Content.Box);
 					if (width <= padding) {
 						cell->c_Width = 0;
 					}
@@ -538,7 +542,7 @@ table_finish (PARSER parser)
 						*minimum = *fixed = width;
 					} else {
 						if (*minimum < width) *minimum = width;
-						width = content_maximum (&cell->Content);
+						width = dombox_MaxWidth (&cell->Content.Box);
 						if (*maximum < width) *maximum = width;
 						if (cell->c_Width < 0) {
 							if (table->NumCols > 1) {
@@ -575,7 +579,7 @@ table_finish (PARSER parser)
 		TAB_CELL cell = column;
 		do {
 			if (cell->Content.Item && cell->ColSpan > 1) {
-				long width = content_minimum (&cell->Content);
+				long width = dombox_MinWidth (&cell->Content.Box);
 				spread_width (minimum, cell->ColSpan, table->Spacing, width);
 				if (cell->c_Width > 0) {
 					short empty = 0;
@@ -604,7 +608,7 @@ table_finish (PARSER parser)
 					}
 				} else {
 					spread_width (maximum, cell->ColSpan, table->Spacing,
-					              content_maximum (&cell->Content));
+					              dombox_MaxWidth (&cell->Content.Box));
 					if (cell->c_Width < 0 && cell->ColSpan < table->NumCols) {
 						short empty = 0;
 						percent = table->Percent + (fixed - table->ColWidth);
@@ -1009,7 +1013,21 @@ table_calc (TABLE table, long max_width)
 }
 
 
-/*============================================================================*/
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MinWidth (DOMBOX * This)
+{
+	return This->MinWidth;
+}
+
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MaxWidth (DOMBOX * This)
+{
+	return This->MaxWidth;
+}
+
+/*----------------------------------------------------------------------------*/
 static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
