@@ -198,7 +198,7 @@ inet_recv (int fh, char * buf, size_t len)
 		ret = -1;
 	} else while (len) {
 		short n = CNbyte_count (fh);
-		if (n < 0) {
+		if (n < E_NODATA) {
 			if (!ret) ret = -1;
 			break;
 		} else if (n) {
