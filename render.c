@@ -498,10 +498,11 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
-	
+
 	if ((int)(align = get_h_align (parser, align)) >= 0) {
 		box->TextAlign = align;
 	}
+
 	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
 		char * tail   = out;
 		short  indent = numerical (out, &tail, parser->Current.font->Size,
@@ -565,7 +566,7 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	box->HtmlCode = tag;
 	
 	css_box_styles (parser, box, align);
-	
+
 	current->paragraph->Box.TextAlign  = box->TextAlign;
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
@@ -2456,7 +2457,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = current->paragraph;
 	UNUSED  (text);
-	
+		
 	if (flags & PF_START) {
 		
 		/* Ignore a paragraph start just behind a <LI> tag.
@@ -2470,9 +2471,10 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
 		}
+
 		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
 		box_anchor (parser, &par->Box, FALSE);
-		
+
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
@@ -2916,6 +2918,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		WORD    height   = 0;
 		WORD    width    = 0;
 		WORD    min_wid  = 0;
+
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
@@ -2926,6 +2929,9 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			if (floating != ALN_CENTER) floating |= FLT_MASK;
 		} else if (get_v_align (parser, -1) == ALN_MIDDLE) {
 			floating = ALN_CENTER; /* patch for invalid key value */
+		} else if (parser->Current.paragraph->Box.TextAlign == ALN_RIGHT ||
+			        parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
+			floating = parser->Current.paragraph->Box.TextAlign;
 		} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
 			        parser->Current.parentbox->TextAlign == ALN_CENTER) {
 			floating = parser->Current.parentbox->TextAlign;
