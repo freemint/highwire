@@ -923,8 +923,9 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 			if (!form->TextCursrX) {
 				word = NULL;
 				break;
-			} else {
-				form->TextCursrX--;
+			} else if (--form->TextCursrX < form->TextShiftX) {
+				WORD n = form->TextCursrX - (WORD)input->VisibleX;
+				form->TextShiftX = max (0, n);
 			}
 		case 127: /* delete */
 			if (form->TextCursrX < input->TextLen) {
@@ -936,7 +937,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect)
 					*(c) = *(c +1); c++;
 				}
 				*(c) = '\0';
-				input->TextLen--;
+				if (--input->TextLen < form->TextShiftX + input->VisibleX) {
+					WORD n = input->TextLen - (WORD)input->VisibleX;
+					form->TextShiftX = max (0, n);
+				}
 				break;
 			}
 		default:
