@@ -93,7 +93,7 @@ decPng_start (const char * name, IMGINFO info)
 		int         num_pass     = png_set_interlace_handling (png_ptr);
 		png_read_update_info (png_ptr, info_ptr);
 		if (row_pointers) {
-			size_t size = info_ptr->width * png_get_rowbytes (png_ptr, info_ptr);
+			size_t size = png_get_rowbytes (png_ptr, info_ptr);
 			int    row;
 			for (row = 0; row < info_ptr->height; row++) {
 				if ((row_pointers[row] = malloc (size)) == NULL) {
@@ -101,6 +101,7 @@ decPng_start (const char * name, IMGINFO info)
 					while (row) free (row_pointers[--row]);
 					free (row_pointers);
 					row_pointers = NULL;
+					break;
 				}
 			}
 		}
