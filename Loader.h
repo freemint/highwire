@@ -12,6 +12,7 @@ typedef struct s_loader {
 	CONTAINR Target;     /* ... and where they should go to */
 	ENCODING Encoding;
 	MIMETYPE MimeType;
+	LOCATION Referer;    /* resource from which the Request-URI was obtained */
 	char   * PostBuf;
 	char     FileExt[4];
 	char   * ExtAppl;

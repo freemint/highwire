@@ -167,6 +167,7 @@ new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 	loader->Target     = target;
 	loader->Encoding   = ENCODING_WINDOWS1252;
 	loader->MimeType   = MIME_Unknown;
+	loader->Referer    = NULL;
 	loader->PostBuf    = NULL;
 	loader->FileExt[0] = '\0';
 	loader->MarginW    = -1;
@@ -254,6 +255,7 @@ delete_loader (LOADER * p_loader)
 		if (loader->PostBuf) {
 			free (loader->PostBuf);
 		}
+		free_location (&loader->Referer);
 		free_location (&loader->Location);
 		free (loader);
 		*p_loader = NULL;
@@ -660,9 +662,9 @@ header_job (void * arg, long invalidated)
 		containr_notify (loader->Target, HW_SetInfo, buf);
 	}
 	do {
+		long tout = (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc);
 		reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
-		                     &sock, loader->PostBuf,
-		                     (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc));
+		                     &sock, tout, loader->Referer, loader->PostBuf);
 		if (reply == -ECONNRESET) {
 			retry++;
 		} else if (reply != 100) {
