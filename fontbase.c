@@ -7,6 +7,34 @@
 #include "fontbase.h"
 
 
+/*============================================================================*/
+void
+font_setup (UWORD id, WORD type, BOOL bold, BOOL italic)
+{
+	if (vst_font (vdi_handle, id) != id) {
+		printf ("font #%i for '%s%s%s' not available.\n", id,
+		        (type == normal_font ? "normal" :
+		         type == header_font ? "header" : "pre"),
+		         (bold ? ",bold" : ""), (italic ? ",italic" : ""));
+		id = 0;
+	
+	} else if (type == pre_font) { /* check for monospaced */
+		WORD w1, w2, pts[8];
+		vst_point (vdi_handle, 24, pts,pts,pts,pts);
+		vqt_extent (vdi_handle, ".", pts);   w1 = pts[2] - pts[0];
+		vqt_extent (vdi_handle, "W", pts);   w2 = pts[2] - pts[0];
+		if (w1 != w2) {
+			printf ("font #%i for 'pre%s%s' is not monospace (%i/%i), ignored.\n",
+			        id, (bold ? ",bold" : ""), (italic ? ",italic" : ""), w1, w2);
+			id = 0;
+		}
+	}
+	if (id) {
+		fonts[type][bold ? 1 : 0][italic ? 1 : 0] = id;
+	}
+}
+
+
 /*----------------------------------------------------------------------------*/
 static FONTBASE
 font_base (WORD id, UWORD style)

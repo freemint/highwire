@@ -9,6 +9,7 @@
 #include "global.h"
 #include "Location.h"
 #include "hwWind.h"
+#include "fontbase.h"
 #include "cache.h"
 
 #define HTMLTAG int
@@ -21,9 +22,9 @@
 static void
 cfg_font (char * param, long arg)
 {
-	long n = atol (param);
-	if (n >= 1 && n <= 0xFFFF) {
-		fonts[(short)(arg >>16)][arg & 0x10 ? 1 : 0][arg & 0x01] = n;
+	long id = atol (param);
+	if (id >= 1 && id <= 0xFFFF) {
+		font_setup (id, (arg >>16), (arg & 0x10) != 0, (arg & 0x01) != 0);
 	}
 }
 

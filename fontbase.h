@@ -2,6 +2,9 @@
 #define __FONTBASE_H__
 
 
+void font_setup (UWORD id, WORD type, BOOL bold, BOOL italic);
+
+
 #define FNT_BOLD   0x0001 /* TXT_THICKENED */
 #define FNT_ITALIC 0x0004 /* TXT_SKEWED    */
 #define FNT_CONDNS 0x1000
