@@ -1,6 +1,6 @@
 /* @(#)highwire/inet.c
  */
-#ifdef USE_INET
+#if defined (USE_INET) && !defined(USE_OVL)
 # if defined(__GNUC__)
 #  define USE_MINT
 
@@ -13,16 +13,55 @@
 #include <stddef.h>
 #include <errno.h>
 
-#include "inet.h"
+#ifndef __HW_INET_H__
+# include "hw-types.h"
+# include "inet.h"
+#endif
 
 
-/*******************************************************************************
- *
- * Basic functions
- *
- */
+typedef struct {
+	short __CDECL (*host_addr) (const char * host, long * addr);
+	long  __CDECL (*connect) (long addr, long port);
+	long  __CDECL (*send)    (long fh, char * buf, size_t len);
+	long  __CDECL (*recv)    (long fh, char * buf, size_t len);
+	void  __CDECL (*close)   (long fh);
+	const char * __CDECL (*info) (void);
+} INET_FTAB;
 
-#if defined(USE_MINT)
+
+#if defined(USE_OVL) /*********************************************************/
+# include "ovl_sys.h"
+
+static OVL_METH  * inet_ovl  = NULL;
+static INET_FTAB * inet_ftab = NULL;
+
+/*----------------------------------------------------------------------------*/
+static void ovl_invalid (void * ignore)
+{
+	(void)ignore;
+	inet_ovl  = NULL;
+	inet_ftab = NULL;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL ovl_load(void)
+{
+	if (inet_ftab) {
+		return TRUE;
+	}
+	if ((inet_ovl = load_ovl ("modules\\network.ovl", ovl_invalid)) == NULL) {
+		return FALSE; /* no OVL found */
+	}
+	if ((inet_ftab = (void*)(*inet_ovl->ovl_init)()) == NULL) {
+		inet_ovl = NULL;
+		return FALSE;    /* wrong OVL */
+	}
+	return TRUE;
+}
+
+/* endif defined(USE_OVL) */
+
+#elif defined(USE_MINT) /******************************************************/
 # include <netdb.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -30,7 +69,7 @@
 # include <mintbind.h>
 
 
-#elif defined(USE_STIK)
+#elif defined(USE_STIK) /******************************************************/
 # include <stdio.h> /*printf/puts */
 # include <string.h>
 # include <tos.h>
@@ -73,7 +112,7 @@ static int init_stick (void)
 	return (tpl != NULL);
 }
 
-#endif /* USE_STIK */
+#endif /* USE_STIK ************************************************************/
 
 
 /*============================================================================*/
@@ -98,8 +137,13 @@ inet_host_addr (const char * name, long * addr)
 		}
 	}
 
+#elif defined(USE_OVL)
+	if (ovl_load()) {
+		ret = (*inet_ftab->host_addr)(name, addr);
+	}
+
 #else
-	(void)name, addr;
+	(void)name; (void)addr;
 #endif
 
 	return ret;
@@ -133,8 +177,13 @@ inet_connect (long addr, long port)
 		}
 	}
 
+#elif defined(USE_OVL)
+	if (ovl_load()) {
+		fh = (*inet_ftab->connect)(addr, port);
+	}
+
 #else
-	(void)addr, port;
+	(void)addr; (void)port;
 #endif
 
 	return fh;
@@ -157,8 +206,13 @@ inet_send (long fh, char * buf, size_t len)
 		ret = TCP_send ((int)fh, buf, (int)len);
 	}
 
+#elif defined(USE_OVL)
+	if (inet_ftab) {
+		fh = (*inet_ftab->send)(fh, buf, len);
+	}
+
 #else
-	(void)fh, buf, len;
+	(void)fh; (void)buf; (void)len;
 #endif
 
 	return ret;
@@ -216,9 +270,14 @@ inet_recv (long fh, char * buf, size_t len)
 		}
 	}
 
+#elif defined(USE_OVL)
+	if (inet_ftab) {
+		ret = (*inet_ftab->recv)(fh, buf, len);
+	}
+
 #else
 	ret = -1;
-	(void)fh, buf, len;
+	(void)fh; (void)buf; (void)len;
 #endif
 
 	return ret;
@@ -240,6 +299,11 @@ inet_close (long fh)
 		} else {
 			TCP_close ((int)fh, 0);
 		}
+	
+	#elif defined(USE_OVL)
+		if (inet_ftab) {
+			(*inet_ftab->close)(fh);
+		}
 	#endif
 	}
 }
@@ -254,6 +318,13 @@ inet_info (void)
 
 #elif defined(USE_STIK)
 	return "STiK2";
+
+#elif defined(USE_OVL)
+	if (inet_ftab) {
+		return (*inet_ftab->info)();
+	} else {
+		return NULL;
+	}
 
 #else
 	return NULL;
