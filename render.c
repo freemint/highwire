@@ -624,85 +624,98 @@ leave_box (TEXTBUFF current, WORD tag)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+anc_correct (char * anc)
+{
+	char * p = anc;
+	
+	while (*p == '#') {         /* skip leading hashes */
+		p++;
+	}
+	while (*p && *p <= ' ') {   /* skip leading blanks */
+		p++;
+	}
+	if (p > anc) {
+		char * q = anc;
+		while ((*(q++) = *(p++)) != '\0');
+		p = anc;
+	}
+	
+	while (*p != '%' && *p != '&' && *p > ' ') { /* search for something to do */
+		p++;
+	}
+	
+	/* encode '%xx' and named entities, compact white spaces
+	 * and remove control characters
+	*/
+	if (*p) {
+		BOOL   b = FALSE;
+		char * q = p, c;
+		while ((c = *(p++)) != '\0') {
+			if (c == '%' && isxdigit(p[0]) && isxdigit(p[1])) {
+				char buf[4]; buf[0] = *(p++); buf[1] = *(p++); buf[2] = '\0';
+				c = strtoul (buf, NULL, 16);
+			} else if (c == '&') {
+				char buf[6] = "";
+				p--; /* set back to the '&' */
+				scan_namedchar ((const char**)&p, buf, FALSE, MAP_ATARI);
+				c = buf[0];
+			}
+			if (isspace(c) && !b) {
+				*(q++) = ' ';
+				b      = TRUE;
+			} else if (c > ' ') {
+				*(q++) = c;
+				b      = FALSE;
+			}
+		}
+		if (b && q > anc) {
+			q--;
+		}
+		*q = '\0';
+	}
+	
+	return (*anc != '\0');
+}
+
 /*------------------------------------------------------------------------------
  * get rid of html entities in an url
 */
 static char *
 url_correct (char * url)
 {
-	const char * src;
-	char * dst = (url ? strchr (url, '&') : NULL);
-	if ((src = dst) != NULL) {
-		do {
-			char uni[16];
-			const char * amp = src;
-			char * end = scan_namedchar (&src, uni, TRUE, MAP_UNICODE);
-			if (end != uni +2 || uni[0] || src[-1] != ';') {
-				if (amp > dst) {
-					while ((*(dst++) = *(amp++)) != '\0');
-				}
-				break;
-			
-			} else {
-				*(dst++) = uni[1];
-			}
-			while (*src != '&') {
-				if ((*(dst++) = *src) != '\0') src++;
-				else                           break;
-			}
-		} while (*src);
-	}
-	return url;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-insert_anchor (TEXTBUFF current, char * name, struct url_link * presave)
-{
-	WORDITEM word = current->word;
-	char   * p    = name;
+	char * p = url;
 	
-	if (*p == '#') {          /* skip leading hashes */
-		while (*(++p) == '#');
-	}
-	while (*p && *p <= ' ') { /* skip leading blanks */
-		p++;
-	}
-	if (p > name) {
-		char * n = name;
-		while ((*(n++) = *(p++)) != '\0');
-		p = name;
+	if (*p && *p <= ' ') { /* skip leading control characters */
+		char * q = url;
+		while (*(++p) && *q <= ' ');
+		while ((*(q++) = *(p++)) != '\0');
+		p = url;
 	}
 	
-	while (*p > ' ') { /* remove controll characters from the name */
-		p++;
-	}
-	if (*p) {
-		char * dst = p;
-		do if ((*dst = *(++p)) > ' ') {
-			dst++;
-		} while (*p);
-	}
-			
-	if ((word->link = new_url_link (word, name, FALSE, NULL)) != NULL) {
-		ANCHOR anchor = new_named_location (word->link->address,
-		                                    &current->paragraph->Box);
-		if (!anchor) {  /* memory exhausted! */
-			free (word->link);
-			word->link = NULL;
-		
-		} else {
-			word->link->u.anchor = anchor;
-			*current->anchor     = anchor;
-			current->anchor      = &anchor->next_location;
-			
-			/* prevent from getting deleted if empty */
-			*(current->text++) = font_Nobrk (word->font);
-			new_word (current, TRUE);
-			word->word_width = 0;
-			current->word->link = presave;
+	if (*p && *p != '#') do {
+		if (*p == '&') {
+			const char * src = p;
+			char         uni[16];
+			if (scan_namedchar (&src, uni, TRUE, MAP_UNICODE) == uni +2
+			    && !uni[0] && src[-1] == ';') {
+				char * dst = p +1;
+				while ((*(dst++) = *(src++)) != '\0');
+				*p = uni[1];
+			}
 		}
+	} while (*(++p) && *p != '#');
+	
+	if (*p != '#') {
+		while (--p >= url && *p <= ' ') {
+			*p = '\0';
+		}
+	} else if (!anc_correct (p +1)) {
+		*p = '\0';
 	}
+	
+	return url;
 }
 
 
@@ -1788,13 +1801,11 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				target = strdup (frame->base_target);
 			}
 			
-			while (*p > ' ') { /* remove controll characters from the url */
-				p++;
-			}
-			if (*p) {
+			if (*p && *p != '#') {
+				BOOL  skip = FALSE;
 				char * dst = p;
-				do if ((*dst = *(++p)) > ' ') {
-					dst++;
+				do if ((*dst = *(++p)) > ' ' || skip) {
+					skip |= (*(dst++) == '#');
 				} while (*p);
 			}
 			
@@ -1835,12 +1846,31 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 			}
 			
-		} else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
-		           (output = get_value_str (parser, KEY_ID))   != NULL) {
-			insert_anchor (current, output, word->link);
-			TAsetUndrln (word->attr, FALSE);
+		} else if (((output = get_value_str (parser, KEY_NAME)) != NULL ||
+		            (output = get_value_str (parser, KEY_ID))   != NULL)
+		           && anc_correct (output)) {
+			struct url_link * presave = word->link;
+			if ((word->link = new_url_link (word, output, FALSE, NULL)) != NULL) {
+				ANCHOR anchor = new_named_location (word->link->address,
+				                                    &current->paragraph->Box);
+				if (!anchor) {  /* memory exhausted! */
+					free (word->link);
+					word->link = NULL;
+				
+				} else {
+					word->link->u.anchor = anchor;
+					*current->anchor     = anchor;
+					current->anchor      = &anchor->next_location;
+					
+					/* prevent from getting deleted if empty */
+					*(current->text++) = font_Nobrk (word->font);
+					new_word (current, TRUE);
+					word->word_width = 0;
+					TAsetUndrln (word->attr, FALSE);
+					current->word->link = presave;
+				}
+			}
 		}	
-	
 	} else if (word->link) {
 		word_set_color     (current, current->font->Color);
 		word_set_underline (current, FALSE);
