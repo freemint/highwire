@@ -2636,7 +2636,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_size  (parser, KEY_HEIGHT),
 		             get_value_size  (parser, KEY_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
-		             padding, border, FALSE);
+		             padding, border);
 		if (parser->hasStyle) {
 			DOMBOX * box = parser->Current.parentbox->ChildEnd;
 			box_frame (parser, &box->Margin, CSS_MARGIN);
@@ -2648,9 +2648,6 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	} else {
 		TEXTBUFF current = &parser->Current;
-		while (current->tbl_stack && current->tbl_stack->isSpecial) {
-			table_finish (parser); /* remove all not closed DIV tags */
-		}
 		if (current->tbl_stack) {
 			table_finish (parser);
 			font_switch (current->word->font, NULL);
@@ -2668,9 +2665,6 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	while (current->tbl_stack && current->tbl_stack->isSpecial) {
-		table_finish (parser); /* remove all not closed DIV tags */
-	}
 	if (current->tbl_stack) {
 		if (flags & PF_START) {
 			table_row (current,
@@ -2694,9 +2688,6 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	while (current->tbl_stack && current->tbl_stack->isSpecial) {
-		table_finish (parser); /* remove all not closed DIV tags */
-	}
 	if (flags & PF_START && current->tbl_stack) {
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
@@ -2722,9 +2713,6 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	while (current->tbl_stack && current->tbl_stack->isSpecial) {
-		table_finish (parser); /* remove all not closed DIV tags */
-	}
 	if (flags & PF_START && current->tbl_stack) {
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),

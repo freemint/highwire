@@ -16,7 +16,6 @@ struct s_table_stack {
 	unsigned NumCells; /* number of used cells in the actual row */
 	H_ALIGN  AlignH;
 	V_ALIGN  AlignV;
-	BOOL     isSpecial; /* will be set for DIV tags */
 	PARSESUB SavedCurr;
 
 	char _debug;
@@ -60,8 +59,7 @@ struct s_table_cell {
 void delete_table (TABLE*);
 
 void table_start  (PARSER,   WORD color, H_ALIGN floating, WORD height,
-                             WORD wdith, WORD spacng, WORD paddng, WORD border,
-                             BOOL special);
+                             WORD wdith, WORD spacng, WORD paddng, WORD border);
 void table_row    (TEXTBUFF, WORD color, H_ALIGN, V_ALIGN, WORD height,
                              BOOL beginNend);
 void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,

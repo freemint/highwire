@@ -79,7 +79,7 @@ delete_table (TABLE * _table)
 /*============================================================================*/
 void
 table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
-             WORD width, WORD spacing, WORD padding, WORD border, BOOL special)
+             WORD width, WORD spacing, WORD padding, WORD border)
 {
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = add_paragraph (current, 0);
@@ -93,7 +93,6 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	stack->NumCells  = 0;
 	stack->AlignH    = ALN_LEFT;
 	stack->AlignV    = ALN_MIDDLE;
-	stack->isSpecial = special;
 	stack->SavedCurr = *current;
 	stack->_debug = 'A';
 	
