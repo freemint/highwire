@@ -23,6 +23,7 @@
 #include "Containr.h"
 #include "hwWind.h"
 #include "Loader.h"
+#include "cache.h"
 #include "Logging.h"
 #ifdef GEM_MENU
 # include "highwire.h"
@@ -703,9 +704,20 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_RELOAD:
 			hwWind_history (wind, wind->HistMenu);
 			break;
-		case RPOP_VIEWSRC:
-			launch_viewer(frame->Location->FullName);
-			break;
+		case RPOP_VIEWSRC: {
+			char buf[2 * HW_PATH_MAX];
+			LOCATION loc = frame->Location;
+			if (PROTO_isRemote (loc->Proto)) {
+				CACHED cached = cache_lookup (loc, 0, NULL);
+				if (cached) {
+					union { CACHED c; LOCATION l; } u;
+					u.c = cache_bound (cached, NULL);
+					loc = u.l;
+				}
+			}
+			location_FullName (loc, buf, sizeof(buf));
+			launch_viewer (buf);
+		}	break;
 		case RPOP_INFO:
 			menu_info();
 			break;
