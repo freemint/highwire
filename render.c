@@ -2950,6 +2950,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_color (parser, KEY_BGCOLOR), floating,
 		             get_value_size  (parser, KEY_HEIGHT),
 		             get_value_size  (parser, KEY_WIDTH),
+		             get_value_size  (parser, KEY_MIN_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border);
 		if (parser->hasStyle) {

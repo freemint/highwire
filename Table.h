@@ -58,7 +58,7 @@ struct s_table_cell {
 void delete_table (TABLE*);
 
 void table_start  (PARSER,   WORD color, H_ALIGN floating, WORD height,
-                             WORD wdith, WORD spacng, WORD paddng, WORD border);
+                             WORD wdith, WORD minwidth, WORD spacng, WORD paddng, WORD border);
 void table_row    (TEXTBUFF, WORD color, H_ALIGN, V_ALIGN, WORD height,
                              BOOL beginNend);
 void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,

@@ -23,6 +23,7 @@
 #define t_MinWidth   Box.MinWidth
 #define t_MaxWidth   Box.MaxWidth
 #define t_SetWidth   Box.SetWidth
+#define t_SetMinWid  Box.SetMinWid
 #define t_SetHeight  Box.SetHeight
 #define t_Backgnd    Box.Backgnd
 #define t_BorderW    Box.BorderWidth
@@ -81,7 +82,7 @@ delete_table (TABLE * _table)
 /*============================================================================*/
 void
 table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
-             WORD width, WORD spacing, WORD padding, WORD border)
+             WORD width, WORD minwidth, WORD spacing, WORD padding, WORD border)
 {
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = add_paragraph (current, 0);
@@ -137,6 +138,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->Padding   = padding + (border ? 1 : 0);
 	table->t_SetWidth  = width;
 	table->t_SetHeight = height;
+	table->t_SetMinWid = minwidth;
 }
 
 
@@ -1084,10 +1086,32 @@ static LONG
 vTab_MinWidth (DOMBOX * This)
 {
 	TABLE table = (TABLE)This;
+	LONG	minwid_ret;
+
 	if (table->Minimum) {
 		calc_minmax (table);
 	}
-	return (This->SetWidth > 0 ? This->SetWidth : This->MinWidth);
+
+	if (This->SetMinWid) {
+		if (This->SetWidth) {
+			if (This->SetWidth < This->SetMinWid)
+				minwid_ret = This->SetMinWid;
+			else 
+				minwid_ret = This->SetWidth;
+		} else {
+			if (This->MinWidth > This->SetMinWid)
+				minwid_ret = This->MinWidth;
+			else
+				minwid_ret = This->SetMinWid;
+		}
+	} else {
+		if (This->SetWidth > 0)
+			minwid_ret = This->SetWidth;
+		else
+			minwid_ret = This->MinWidth;	
+	}
+
+	return (minwid_ret);
 }
 
 /*----------------------------------------------------------------------------*/

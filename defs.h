@@ -306,6 +306,7 @@ struct s_dombox {
 	LONG     MinWidth;  /* smallest width where the content fits in          */
 	LONG     SetWidth;  /* set Value, must not be smaller than Minimum       */
 	LONG     SetHeight;
+	LONG     SetMinWid; /* from CSS, Minimum width                           */
 	PXY      SetPos;    /* from CSS, left and right attribute                */
 	UWORD    SetPosMsk; /* bit mask: absolute=0x100, left= 0x001, top=0x002  */
 	UWORD    SetPosCld; /* mask as above, or'ed together from all childrens  */
