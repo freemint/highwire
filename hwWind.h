@@ -85,4 +85,8 @@ typedef enum {
 void hwWind_setup (HWWIND_SET, long arg);
 
 
+/* service function, not really releated here */
+FILE * open_scrap (BOOL rdNwr);
+
+
 #endif /*__HW_WIND_H__*/
