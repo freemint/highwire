@@ -1,4 +1,4 @@
-(non-public of Mar. 11, 2005)
+Changes in V. 0.2.5 release  of March 15, 2005:
 
 - Dir listing corrected for displaying file/dir
   names containing blanks (#0085).
