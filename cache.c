@@ -37,7 +37,7 @@ struct s_cache_item {
 	long      Date;
 	long      Expires;
 	void    (*dtor)(void*);
-	char      Cached[14];    /* enough for '12345678.xyz' */
+	char      Cached[10];    /* enough for 'ABCD.xyz' */
 };
 static CACHEITEM __cache_beg = NULL;
 static CACHEITEM __cache_end = NULL;
@@ -629,16 +629,20 @@ cache_assign (LOCATION src, void * data, size_t size,
 	
 	} else {
 		if (__cache_dir) {
-			const char * dot;
-			char buf[1024];
-			int  fh;
-			if (!type || !*type) {
-				type = "";
-				dot  = "";
+			char   buf[1024];
+			int    fh;
+			char * p = citem->Cached;
+			short  n = 15; /* 5bit * (4 -1) = one million possible files, */
+			do {           /* should be enough                            */
+				static const char * base32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+				*(p++) = base32[(_file_id >>n) & 0x1F];
+			} while ((n -= 5) >= 0);
+			if (type && *type) {
+				*(p++) = '.';
+				strcpy (p, type);
 			} else {
-				dot  = ".";
+				*p = '\0';
 			}
-			sprintf (citem->Cached, "%08lX%s%s", _file_id, dot, type);
 			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
 			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
