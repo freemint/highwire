@@ -20,8 +20,9 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
 	void (*evButton) (WINDOW_t, WORD bmask, PXY, UWORD kstate, WORD clicks);
 	void (*evKeybrd) (WINDOW_t, WORD scan, WORD ascii, UWORD kstate);
-	void (*drawWork)(WINDOW_t, const GRECT *);
-	void (*drawIcon)(WINDOW_t, const GRECT *);
+	void (*drawWork) (WINDOW_t, const GRECT *);
+	void (*drawIcon) (WINDOW_t, const GRECT *);
+	BOOL (*close)    (WINDOW_t, UWORD kstate);
 	void (*raised)   (WINDOW_t, BOOL topNbot);
 	void (*moved)    (WINDOW_t);
 	BOOL (*sized)    (WINDOW_t);

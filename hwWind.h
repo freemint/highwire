@@ -41,7 +41,6 @@ void   delete_hwWind (HwWIND);
 void hwWind_setName (HwWIND, const char *);
 void hwWind_setInfo (HwWIND, const char *, BOOL statNinfo);
 #define hwWind_raise(HwWIND, BOOL)      window_raise (&HwWIND->Base, BOOL, NULL)
-void hwWind_close   (HwWIND, UWORD state);
 void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);
 void hwWind_history (HwWIND, UWORD menu, BOOL renew);
 void hwWind_undo    (HwWIND, BOOL redo);

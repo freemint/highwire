@@ -12,6 +12,7 @@ static BOOL vTab_evMessage (WINDOW, WORD msg[], PXY, UWORD);
 static void vTab_evButton  (WINDOW, WORD bmask, PXY, UWORD, WORD clicks);
 static void vTab_evKeybrd  (WINDOW, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_draw      (WINDOW, const GRECT *);
+static BOOL vTab_close     (WINDOW, UWORD kstate);
 static void vTab_raised    (WINDOW, BOOL topNbot);
 #define     vTab_moved     ((void(*)(WINDOW))dummy_Void)
 #define     vTab_sized     ((BOOL(*)(WINDOW))dummy_False)
@@ -47,6 +48,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->evKeybrd  = vTab_evKeybrd;
 		This->drawWork  = vTab_draw;
 		This->drawIcon  = vTab_draw;
+		This->close     = vTab_close;
 		This->raised    = vTab_raised;
 		This->moved     = vTab_moved;
 		This->sized     = vTab_sized;
@@ -147,6 +149,7 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			wind->isIcon = TRUE;
 			(*wind->iconified)(wind);
 			break;
+		
 		case WM_UNICONIFY:
 			wind_set_grect (wind->Handle, WF_UNICONIFY, &wind->Curr);
 			if (wind->isFull) {
@@ -155,6 +158,12 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			}
 			wind->isIcon = FALSE;
 			(*wind->iconified)(wind);
+			break;
+		
+		case WM_CLOSED:
+			if ((*wind->close)(wind, kstate)) {
+				free (window_dtor (wind));
+			}
 			break;
 		
 		default: return (*wind->evMessage)(wind, msg, mouse, kstate);
@@ -298,6 +307,16 @@ window_redraw (WINDOW This, const GRECT * clip)
 	}
 	
 	wind_update (END_UPDATE);
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+vTab_close (WINDOW This, UWORD kstate)
+{
+	(void)This;
+	(void)kstate;
+	return TRUE; /* to be deleted */
 }
 
 

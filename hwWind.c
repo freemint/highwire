@@ -26,6 +26,7 @@ static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
 static void vTab_evKeybrd  (HwWIND, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_drawWork  (HwWIND, const GRECT *);
 static void vTab_drawIcon  (HwWIND, const GRECT *);
+static BOOL vTab_close     (HwWIND, UWORD kstate);
 static void vTab_raised    (HwWIND, BOOL topNbot);
 static void vTab_moved     (HwWIND);
 static BOOL vTab_sized     (HwWIND);
@@ -210,6 +211,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->Base.evKeybrd  = vTab_evKeybrd;
 	This->Base.drawWork  = vTab_drawWork;
 	This->Base.drawIcon  = vTab_drawIcon;
+	This->Base.close     = vTab_close;
 	This->Base.raised    = vTab_raised;
 	This->Base.moved     = vTab_moved;
 	This->Base.sized     = vTab_sized;
@@ -679,12 +681,13 @@ vTab_iconified (HwWIND This)
 }
 
 
-/*============================================================================*/
-void
-hwWind_close (HwWIND This, UWORD state)
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+vTab_close (HwWIND This, UWORD state)
 {
 	if (!(state & K_ALT)) {
 		delete_hwWind (This);
+		return FALSE; /*TRUE;*/
 	
 	} else if (tbar_set) {
 		GRECT work = This->Work;
@@ -708,6 +711,7 @@ hwWind_close (HwWIND This, UWORD state)
 		work.g_h += This->TbarH;
 		hwWind_redraw (This, &work);
 	}
+	return FALSE;
 }
 
 /*============================================================================*/
@@ -1420,10 +1424,6 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 			break;
 		case 22361: /* unshaded */
 			This->shaded = FALSE;
-			break;
-		case WM_CLOSED:
-			hwWind_close (This, kstate);
-			check = (hwWind_Top != NULL);
 			break;
 		
 		default:

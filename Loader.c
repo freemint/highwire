@@ -959,7 +959,7 @@ saveas_bottom:
 
 	/* We should close the window here	 */
 	if (wind) {
-		hwWind_close (wind, 0);
+		delete_hwWind (wind);
 	}
 
 	return JOB_DONE;
