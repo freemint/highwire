@@ -7,6 +7,7 @@
 #include <ctype.h>
 
 #include "global.h"
+#include "hwWind.h"
 
 
 WORD
@@ -102,6 +103,9 @@ read_config(char *fn)
 		
 		} else if (strncmp ("NO_IMAGE", buf, b) == 0) {
 			if (n) menu_alt_text();
+		
+		} else if (strncmp ("INFOBAR", buf, b) == 0) {
+			hwWind_setup (HWWS_INFOBAR, n);
 		}
 	}
 	fclose (fp);
