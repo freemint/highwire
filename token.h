@@ -222,6 +222,7 @@
 		__CSS_ITEM (COLOR,            KEY_COLOR),
 		/*          EMPTY_CELLS       */
 		__CSS_ITEM (FLOAT,            0),
+		__CSS_ITEM (FONT,             0),
 		__CSS_ITEM (FONT_FAMILY,      KEY_FACE),
 		__CSS_ITEM (FONT_SIZE,        0),
 		/*          FONT_STRETCH      */

@@ -106,6 +106,7 @@ font_face (char * buf, short dflt)
 			end[1] = '\0';
 		}
 		if (stricmp (beg, "sans-serif") == 0 ||
+		    stricmp (beg, "helvetica")  == 0 ||
 		    stricmp (beg, "verdana")    == 0 ||
 		    stricmp (beg, "arial")      == 0) {
 			fnt = header_font;
@@ -198,6 +199,132 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	TEXTBUFF current = &parser->Current;
 	short    step    = -1;
 	char output[100];
+	
+	if (get_value (parser, CSS_FONT, output, sizeof(output))) {
+		WORD comma = 0;
+		char *   p = output;
+		if (!fstk) {
+			fstk = fontstack_push (current, -1);
+		}
+		while (*p) {
+			long color = -1;
+			
+			if (isdigit (*p)) {
+				char * tail = p;
+				short size = numerical (p, &tail, current->font->Size,
+			                           current->word->font->SpaceWidth);
+				if (size > 0) {
+					fontstack_setSize (current, size);
+					p = tail;
+				} else {
+					break;
+				}
+			
+			} else if (*p == '#') {
+				short len = 0;
+				while (isxdigit (p[++len]));
+				if ((color = scan_color (p, len)) >= 0) {
+					p += len;
+				} else {
+					break;
+				}
+			} else if (isalpha (*p) || *p =='\'') {
+				char * tail;
+				short  len = 0;
+				if (*p =='\'') {
+					tail = strchr (++p, '\'');
+					len  = (short)((tail ? tail++ : strchr (p, '\0')) -p);
+				} else {
+					while (isalpha (p[++len]) || p[len] == '-');
+					tail = p + len;
+				}
+				if ((color = scan_color (p, len)) < 0) {
+					WORD fstep = -1, ftype = -1;
+					
+					/* font-style */
+					if (strnicmp (p, "italic",  len) == 0 ||
+					    strnicmp (p, "oblique", len) == 0) {
+						fontstack_setItalic (current);
+						/* n/i: normal */
+					
+					/* font-weight */
+					} else if (strnicmp (p, "bold",   len) == 0 ||
+					           strnicmp (p, "bolder", len) == 0) {
+						fontstack_setBold (current);
+						/* n/i: lighter, medium */
+					
+					/* font-decoration */
+					} else if (strnicmp (p, "line-through", len) == 0) {
+						fontstack_setStrike (current);
+					} else if (strnicmp (p, "underline",    len) == 0) {
+						fontstack_setUndrln (current);
+						/* n/i: overline */
+					
+					/* font-size */
+					} else if (strnicmp (p, "xx-small", len) == 0) {
+						step = 0;
+					} else if (strnicmp (p, "x-small",  len) == 0) {
+						step = 1;
+					} else if (strnicmp (p, "small",    len) == 0) {
+						step = 2;
+					} else if (strnicmp (p, "medium",   len) == 0) {
+						step = 3;
+					} else if (strnicmp (p, "large",    len) == 0) {
+						step = 4;
+					} else if (strnicmp (p, "x-large",  len) == 0) {
+						step = 5;
+					} else if (strnicmp (p, "xx-large", len) == 0) {
+						step = 6;
+						/* n/i: smaller, larger */
+					
+					/* font-family */
+					} else if (strnicmp (p, "sans-serif", len) == 0 ||
+					           strnicmp (p, "helvetica",  len) == 0 ||
+					           strnicmp (p, "verdana",    len) == 0 ||
+					           strnicmp (p, "arial",      len) == 0) {
+						ftype = (comma > 0 ? -1 : header_font);
+						comma = +1;
+					} else if (strnicmp (p, "serif",      len) == 0 ||
+					           strnicmp (p, "times",      len) == 0) {
+						ftype = (comma > 0 ? -1 : normal_font);
+						comma = +1;
+					} else if (strnicmp (p, "monospace",  len) == 0 ||
+					           strnicmp (p, "courier",    len) == 0) {
+						ftype = (comma > 0 ? -1 : pre_font);
+						comma = +1;
+					} else {
+						/* other family, not yet supported */
+						if (!comma) comma = -1;
+					}
+					
+					/* n/i: font-variant */
+					
+					if (fstep >= 0 && fstk) {
+						fstk->Size = font_step2size (fstk->Step = fstep);
+						word_set_point (current, fstk->Size);
+					}
+					if (ftype >= 0 && ftype != TAgetFont (current->word->attr)) {
+						fontstack_setType (current, ftype);
+					}
+					if (*tail != ',') {
+						p = tail;
+						while (isspace (*p)) p++;
+						if (*p == ',') tail = p;
+					}
+				}
+				p = tail;
+			}
+			if (color >= 0 && !ignore_colours) {
+				fontstack_setColor (current, remap_color (color));
+			}
+			if (isspace (*p)) {
+				comma = 0;
+			} else if (*p != ',' || !comma) {
+				break;
+			}
+			while (isspace (*(++p)));
+		}
+	}
 	
 	if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
 	
