@@ -10,6 +10,27 @@
 #include "fontbase.h"
 
 
+/*==============================================================================
+ * Patch for gemlib <= 0.42.2
+*/
+#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<=2))
+void
+vsf_udpat (short handle, short pat[], short n_planes)
+{
+	vdi_params.intin = pat;
+	
+	vdi_control[0] = 112;
+	vdi_control[1] = 0;
+	vdi_control[3] = n_planes *16;
+	vdi_control[5] = 0;
+	vdi_control[6] = handle;
+	vdi (&vdi_params);
+
+	vdi_params.intin = vdi_intin;
+}
+#endif
+
+
 /*============================================================================*/
 void
 frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
