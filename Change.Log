@@ -1,11 +1,11 @@
-(non-public of Oct. 24, 2004):
+Changes in V. 0.2.2 release  of October 31, 2004:
 
 - Large portions of the cache handling code
   reworked.  This gets rid of several wrong
   warnings about not found files (mostly due to
   login pages for forums).
 
-- Image width/height are saves in the disk cache
+- Image width/height are saved in the disk cache
   now, this reduces reformat flickering on
   re-visited pages to the nearly absolute minimum
   (#0133).
@@ -17,6 +17,9 @@
 
 - An ugly hack was added to get yahoo's buggy
   standard login working (the non-ssl version).
+
+- CTRL-V can be used now to paste text from the
+  clipboard into formular input fields.
 
 - Named character recognition added for
   apostroph.
@@ -39,11 +42,11 @@
   used by the W3C staff!).
 
 - Additional filtering method to detect images
-  which has a particulare directory name in their
+  that has a particulare directory name in their
   URL.  This method is used if the search pattern
   starts with a '/'.  Eg.
      RESTRICT_HOST I /ads/
-  matches all images which has '/ads/' somewhere
+  matches all images that has '/ads/' somewhere
   in their path.
 
 - Bugs #0133, #0148, #0150, #0167, #0169, #0170,
