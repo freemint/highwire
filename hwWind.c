@@ -1,5 +1,5 @@
-#include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <gem.h>
 
@@ -555,8 +555,8 @@ hwWind_resize (HwWIND This, const GRECT * curr)
 	if (!This->isIcon) {
 		GRECT prev = This->Curr;
 		set_size (This, curr);
-		curr_area.g_w = This->Work.g_w;
-		curr_area.g_h = This->Work.g_h;
+		curr_area.g_w = This->Curr.g_w;
+		curr_area.g_h = This->Curr.g_h;
 		This->isFull = FALSE;
 		hwWind_redraw (This, &prev);
 	}
@@ -969,7 +969,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 					vst_point     (vdi_handle, 12, &dmy, &dmy, &dmy, &dmy);
 					vst_effects   (vdi_handle, TXT_NORMAL);
 					vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy, &dmy);
-					vst_color     (vdi_handle, G_BLACK);
+					vst_color     (vdi_handle, (cursor ? G_BLACK : G_LBLACK));
 					v_gtext       (vdi_handle, p[0].p_x, p[0].p_y,
 					               edit->Text + edit->Shift);
 					vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
@@ -1482,6 +1482,30 @@ hwWind_button (WORD mx, WORD my)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static FILE *
+open_scrap (BOOL rdNwr)
+{
+	char path[HW_PATH_MAX] = "";
+	const char * mode = (rdNwr ? "rb" : "wb");
+	FILE * file;
+	
+	if (scrp_read (path) <= 0 || !path[0]) {
+		file = NULL;
+	
+	} else {
+		char * scrp = strchr (path, '\0');
+		if (scrp[-1] != '\\') *(scrp++) = '\\';
+		if (path[0]  >= 'a')  path[0]  -= ('a' - 'A');
+		strcpy (scrp, "scrap.txt");
+		if ((file = fopen (path, mode)) == NULL && rdNwr) {
+			strcpy (scrp, "SCRAP.TXT");
+			file = fopen (path, mode);
+		}
+	}
+	return file;
+}
+
 /*============================================================================*/
 HwWIND
 hwWind_keybrd (WORD key, UWORD state)
@@ -1496,12 +1520,48 @@ hwWind_keybrd (WORD key, UWORD state)
 		WORD       asc  = key & 0xFF;
 		GRECT      clip = { 0,0,0,16 };
 		
-		if (state & K_CTRL) {
+		if (state & K_CTRL) switch (key) {
 			
-			/* ... */
+			case 0x2E03: /* ^C */
+				if (edit->Length) {
+					FILE * file = open_scrap (FALSE);
+					if (file) {
+						fwrite (edit->Text, 1, edit->Length, file);
+						fclose (file);
+					}
+				}
+				break;
 			
-			chng_toolbar (wind, 0, 0, -1);
-			return wind;
+			case 0x2F16: /* ^V */
+				if (edit->Length < sizeof(edit->Text) -1) {
+					FILE * file = open_scrap (TRUE);
+					if (file) {
+						char buf[256];
+						size_t len = sizeof(edit->Text) - edit->Length -1;
+						len = fread (buf, 1, min (len, sizeof (buf)), file);
+						fclose (file);
+						if (len > 0) {
+							char * crs = edit->Text + edit->Cursor;
+							char * src = edit->Text + edit->Length;
+							char * dst = src + len;
+							do {
+								*(dst--) = *(src--);
+							} while (src >= crs);
+							memcpy (crs, buf, len);
+							edit->Length += len;
+							edit->Cursor += len;
+							if (edit->Shift < edit->Cursor - edit->Visible) {
+								 edit->Shift = edit->Cursor - edit->Visible;
+							}
+							clip.g_w = wind->TbarElem[TBAR_EDIT].Width -5;
+						}
+					}
+				}
+				break;
+			
+			default:
+				chng_toolbar (wind, 0, 0, -1);
+				return wind;
 			
 		} else if (asc > ' ' && asc < 127) {
 			if (edit->Length < sizeof(edit->Text) -1) {
@@ -1547,7 +1607,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					edit->Cursor  = 0;
 					edit->Shift   = 0;
 					edit->Text[0] = '\0';
-					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -6;
+					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -5;
 				}
 				break;
 			
