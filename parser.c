@@ -24,20 +24,19 @@
 #include "fontbase.h"
 
 
-#define TEXT_LENGTH 500 /* 500 is enough for 124 UTF-8 characters,
-	                      * if the encoding is unrecognized, parsed
-	                      * as single byte characters in PRE mode. */
-
-
 typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 	HTMLKEY      Key :16;
 	unsigned     Len :16;
 	const char * Value;
 } KEYVALUE;
 
-#define ValueNum(p)              p->_priv[0]
-#define ValueTab(p) (((KEYVALUE*)p->_priv) +1)
-#define ValueMax(p) (sizeof(p->_priv) / sizeof(KEYVALUE) -1)
+typedef struct s_parser_priv {
+	UWORD    KeyNum;
+	KEYVALUE KeyValTab[25];
+	WCHAR    Buffer[505]; /* 500 is enough for 124 UTF-8 characters, */
+} * PARSPRIV;            /* if the encoding is unrecognized, parsed */
+                         /* as single byte characters in PRE mode.  */
+#define ParserPriv(p) ((PARSPRIV)(p +1))
 
 
 /*============================================================================*/
@@ -45,16 +44,18 @@ PARSER
 new_parser (LOADER loader)
 {
 	PARSER parser = malloc (sizeof (struct s_parser) +
-	                        sizeof (WCHAR) * TEXT_LENGTH);
+	                        sizeof (struct s_parser_priv));
+	PARSPRIV prsdata = ParserPriv(parser);
 	TEXTBUFF current = &parser->Current;
 	parser->Loader   = loader;
 	parser->Target   = loader->Target;
-	ValueNum(parser) = 0;
+	parser->hasStyle = FALSE;
+	prsdata->KeyNum  = 0;
 	
 	memset (current, 0, sizeof (parser->Current));
 	current->font     = fontstack_setup (&current->fnt_stack, -1);
-	current->text     = current->buffer = parser->TextBuffer;
-	parser->Watermark = parser->TextBuffer + TEXT_LENGTH -1;
+	current->text     = current->buffer = prsdata->Buffer;
+	parser->Watermark = current->buffer + numberof(prsdata->Buffer) -6;
 	
 	parser->Frame  = new_frame (loader->Location, current,
 	                            loader->Encoding, loader->MimeType,
@@ -111,8 +112,9 @@ delete_parser (PARSER parser)
 static KEYVALUE *
 find_key (PARSER parser, HTMLKEY key)
 {
-	KEYVALUE * ent = ValueTab (parser);
-	UWORD      num = ValueNum (parser);
+	PARSPRIV prsdata = ParserPriv(parser);
+	KEYVALUE   * ent = prsdata->KeyValTab;
+	UWORD        num = prsdata->KeyNum;
 	while (num) {
 		if (ent->Key == key) {
 			return ent;
@@ -260,6 +262,58 @@ get_value_color (PARSER parser, HTMLKEY key)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static KEYVALUE *
+css_values (PARSER parser, const char * line, size_t len)
+{
+	PARSPRIV   prsdata = ParserPriv(parser);
+	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
+	while (len) {
+		const char * ptr = line;
+		short        css = scan_css (&line, len);
+		const char * val = (*line == ':' ? ++line : NULL);
+		KEYVALUE   * ent = NULL;
+		len -= line - ptr;
+		
+		if (val) {
+			while (len && isspace(*val)) {
+				len--;
+				val++;
+			}
+			line = val;
+		}
+		while (len && *line != ';') {
+			len--;
+			line++;
+		}
+		if (   (  (css < CSS_Unknown && (ent = find_key (parser, css)) == NULL)
+		        || css != CSS_Unknown)
+		    && (prsdata->KeyNum < numberof(prsdata->KeyValTab))) {
+			ent = entry++;
+			prsdata->KeyNum++;
+		}
+		if (ent) {
+			ent->Key = css;
+			if (val  &&  val < line) {
+				ent->Value = val;
+				ent->Len   = (unsigned)(line - val);
+			} else {
+				ent->Value = NULL;
+				ent->Len   = 0;
+			}
+		}
+		if (*line == ';') {
+			len--;
+			line++;
+		}
+		while (len && isspace(*line)) {
+			len--;
+			line++;
+		}
+	}
+	return entry;
+}
+
 /*==============================================================================
  * Parses a html TAG expression of the forms
  *    <TAG>  |  <TAG KEY ...>  |  <TAG KEY=VALUE ...>
@@ -276,18 +330,20 @@ HTMLTAG
 parse_tag (PARSER parser, const char ** pptr)
 {
 	const char * line  = *pptr;
-	KEYVALUE   * style = NULL;
+	PARSPRIV   prsdata = ParserPriv(parser);
 	KEYVALUE   * entry;
 	HTMLTAG      tag;
 	BOOL         lookup;
 	
 	if (parser) {
-		lookup = TRUE;
-		entry  = ValueTab(parser);
-		ValueNum(parser) = 0;
+		prsdata = ParserPriv(parser);
+		parser->hasStyle = FALSE;
+		prsdata->KeyNum  = 0;
+		entry   = prsdata->KeyValTab;
+		lookup  = TRUE;
 	} else {
-		lookup = FALSE;
 		entry  = NULL;
+		lookup = FALSE;
 	}
 	
 	/* first check for comment
@@ -311,9 +367,9 @@ parse_tag (PARSER parser, const char ** pptr)
 		lookup = FALSE;
 	}
 
-	/*** if the tag is known or not, in every case we have to go through the list
-	 *   of variabls to avoid the parser to become confused   */
-
+	/*** if the tag is known or not, in every case we have to go through
+	 *   the list of variables to avoid the parser from becoming confused
+	*/
 	while (isspace(*line)) line++;
 
 	while (*line  &&  *line != '>') {
@@ -336,20 +392,24 @@ parse_tag (PARSER parser, const char ** pptr)
 		} else {
 			val = NULL;
 		}
-		if (lookup  &&  ValueNum(parser) < ValueMax(parser)) {
-			entry->Key = key;
-			if (val  &&  val < line) {
-				entry->Value = val;
-				entry->Len   = (unsigned)(line - val);
-			} else {
-				entry->Value = NULL;
-				entry->Len   = 0;
-			}
+		if (lookup) {
 			if (key == KEY_STYLE) {
-				style = entry;
+				if (val  &&  val < line) {
+					parser->hasStyle = TRUE;
+					entry = css_values (parser, val, (unsigned)(line - val));
+				}
+			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
+				entry->Key = key;
+				if (val  &&  val < line) {
+					entry->Value = val;
+					entry->Len   = (unsigned)(line - val);
+				} else {
+					entry->Value = NULL;
+					entry->Len   = 0;
+				}
+				entry++;
+				prsdata->KeyNum++;
 			}
-			entry++;
-			ValueNum(parser)++;
 		}
 		if (delim && delim == *line) line++;
 		while (isspace(*line)) line++;
@@ -357,52 +417,5 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	*pptr = (*line ? ++line : line);
 	
-	if (style) {
-		size_t len = style->Len;
-		line       = style->Value;
-		while (len) {
-			const char * ptr = line;
-			short        css = scan_css (&line, len);
-			const char * val = (*line == ':' ? ++line : NULL);
-			KEYVALUE   * ent = NULL;
-			len -= line - ptr;
-			
-			if (val) {
-				while (len && isspace(*val)) {
-					len--;
-					val++;
-				}
-				line = val;
-			}
-			while (len && *line != ';') {
-				len--;
-				line++;
-			}
-			if (((css < CSS_Unknown && (ent = find_key (parser, css)) == NULL) ||
-			      css != CSS_Unknown) && (ValueNum(parser) < ValueMax(parser))) {
-				ent = entry++;
-				ValueNum(parser)++;
-			}
-			if (ent) {
-				ent->Key = css;
-				if (val  &&  val < line) {
-					ent->Value = val;
-					ent->Len   = (unsigned)(line - val);
-				} else {
-					ent->Value = NULL;
-					ent->Len   = 0;
-				}
-			}
-			if (*line == ';') {
-				len--;
-				line++;
-			}
-			while (len && isspace(*line)) {
-				len--;
-				line++;
-			}
-		}
-	}
-
 	return tag;
 }

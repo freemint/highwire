@@ -16,11 +16,10 @@ struct s_parser {
 	LOADER   Loader;
 	CONTAINR Target;
 	FRAME    Frame;
-	UWORD    _priv[102];
+	BOOL     hasStyle;
 	PARSESUB Current;
-	WCHAR  * Watermark;     /* points to the last position that can be written */
-	WCHAR    TextBuffer[5]; /* 10 bytes reserve behind the high watermark */
-};
+	WCHAR  * Watermark; /* points to the last position that can be written, */
+};                     /* 10 bytes reserve behind the high watermark       */
 
 
 PARSER new_parser    (LOADER);

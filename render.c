@@ -1035,7 +1035,7 @@ render_BIG_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step +1);
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
 	} else {
@@ -1117,7 +1117,7 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		fontstack_push (current, step);
 		
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		
 		} else {
@@ -1205,7 +1205,7 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
 	} else {
@@ -1244,7 +1244,7 @@ render_SUB_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_BELOW;
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
 	} else {
@@ -1267,7 +1267,7 @@ render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_ABOVE;
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
 	} else {
@@ -1743,7 +1743,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		fontstack_setType (current, header_font);
 		fontstack_setBold (current);
 
-		if (get_value_exists (parser, KEY_STYLE)) {
+		if (parser->hasStyle) {
 			css_block_styles (parser, current->font);
 		
 		} else {
