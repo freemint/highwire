@@ -41,8 +41,10 @@ typedef enum {
 } PARAGRAPH_CODE;
 
 typedef enum {
-	ALN_LEFT = 0, ALN_JUSTIFY, ALN_CENTER, ALN_RIGHT
+	ALN_LEFT = 0, ALN_JUSTIFY = 1, ALN_CENTER = 2, ALN_RIGHT = 3,
 	#define ALN_NO_FLT ALN_JUSTIFY /* justify is impossible for floating */
+	FLT_LEFT = 0x100, FLT_RIGHT = 0x103
+	#define FLT_MASK 0x100
 } H_ALIGN;
 
 typedef enum {
