@@ -69,7 +69,7 @@ decPng_start (const char * name, IMGINFO info)
 	info->quit       = decPng_quit;
 	info->ImgWidth   = info_ptr->width;
 	info->ImgHeight  = info_ptr->height;
-	info->NumComps   = info_ptr->channels;
+	info->NumComps   = (info_ptr->channels >= 3 ? 3 : 1);
 	info->BitDepth   = info_ptr->bit_depth;
 	info->NumColors  = info_ptr->num_palette;
 	if ((info->Palette = (char*)info_ptr->palette) != NULL) {
