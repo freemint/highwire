@@ -19,12 +19,27 @@ struct s_parser {
 	BOOL     hasStyle;
 	PARSESUB Current;
 	WCHAR  * Watermark; /* points to the last position that can be written, */
-};                     /* 10 bytes reserve behind the high watermark       */
+	                    /* 10 bytes reserve behind the high watermark       */
+	void       * ResumeFnc; /* fields to store data for the case that a parser */
+	const char * ResumePtr; /* function needs to get a break (eg. for loading  */
+	const char * ResumeSub; /* additional files)                               */
+	short        ResumeErr;
+};
 
 
 PARSER new_parser    (LOADER);
 void   delete_parser (PARSER);
 
+int     parser_resume (PARSER, void * func, const char * ptr_or_sub, LOCATION);
+				/* Prepares the parser for getting interupted and stores the data
+				 * needed for the later resume.  If the location is not NULL it will
+				 * be used to start a loader job.  If the function pointer 'func' is
+				 * not NULL then 'ptr_or_sub' will be taken as its own data pointer,
+				 * else 'ptr_or_sub' will be taken as owned by some subfunction.
+				*/
+#define parser_resumed(parser) parser_resume (parser, NULL,NULL,NULL);
+				/* Shortcut, resets the resume data fields.
+				*/
 
 HTMLTAG parse_tag (PARSER, const char ** pptr);
 				/* Parses a html TAG expression of the forms

@@ -62,6 +62,10 @@ new_parser (LOADER loader)
 	parser->Loader   = loader;
 	parser->Target   = loader->Target;
 	parser->hasStyle = FALSE;
+	parser->ResumePtr = loader->Data;
+	parser->ResumeSub = NULL;
+	parser->ResumeFnc = NULL;
+	parser->ResumeErr = E_OK;
 	prsdata->Styles  = NULL;
 	prsdata->KeyNum  = 0;
 	prsdata->OwnMem.Next = NULL;
@@ -142,6 +146,57 @@ delete_parser (PARSER parser)
 		} while ((style = next) != NULL);
 	}
 	free (parser);
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static int
+resume_job (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	PARSER parser = loader->FreeArg;
+	if (loader->Error) {
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		printf ("not found: '%s'\n", buf);
+		if (!invalidated) {
+			if (!parser->ResumeSub) {
+				parser->ResumeFnc = NULL;
+			}
+			parser->ResumeErr = loader->Error;
+		}
+	} else {
+		parser->ResumeErr = E_OK;
+	}
+	delete_loader (&loader);
+	return FALSE;
+}
+
+/*============================================================================*/
+int
+parser_resume (PARSER parser, void * func, const char * ptr_sub, LOCATION loc)
+{
+	if (func) {
+		parser->ResumeFnc = func;
+		parser->ResumePtr = ptr_sub;
+		if (loc) {
+			parser->ResumeSub = NULL;
+		}
+	} else {
+		parser->ResumeFnc = NULL;
+		parser->ResumePtr = NULL;
+		parser->ResumeSub = ptr_sub;
+	}
+	if (!loc || !ptr_sub) {
+		parser->ResumeErr = E_OK;
+	} else if (parser->ResumeErr == 2/*EBUSY*/) {
+		puts ("parser_resume(): busy");
+	} else {
+		start_objc_load (parser->Target, NULL, loc, resume_job, parser);
+		parser->ResumeErr = 2/*EBUSY*/;
+	}
+	
+	return -2; /*JOB_NOOP */
 }
 
 
