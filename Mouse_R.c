@@ -8,6 +8,7 @@
 #include "global.h"
 #include "Containr.h"
 #include "Loader.h"
+#include "Location.h"
 #include "Form.h"
 #include "hwWind.h"
 
@@ -204,6 +205,19 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			WORD dmy;
 			struct url_link * link = hash;
 			const char      * addr = link->address;
+			CONTAINR target = (link->u.target &&
+			                   stricmp (link->u.target, "_blank") != 0
+			                   ? containr_byName (cont, link->u.target) : NULL);
+			if (target) {
+				char * p = strchr (addr, '#');
+				if (p && containr_Frame (target)) {
+					const char * file = containr_Frame (target)->Location->File;
+					if (strncmp (file, addr, (p - addr)) == 0 && !file[p - addr]) {
+						addr = p;
+						cont = target;   /* content matches */
+					}
+				}
+			}
 			if (*addr == '#') {
 				long dx, dy;
 				if (containr_Anchor (cont, addr, &dx, &dy)) {
@@ -214,8 +228,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				if (state & K_ALT) {
 					cont = NULL;
 				} else if (link->u.target) {
-					cont = (stricmp (link->u.target, "_blank") == 0
-					        ? NULL : containr_byName (cont, link->u.target));
+					cont = target;
 				}
 				if (!cont) {
 					cont = new_hwWind (addr, NULL, NULL)->Pane;
