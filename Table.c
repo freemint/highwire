@@ -312,13 +312,11 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		short span = 2 - colspan;
 		cell->ColSpan = colspan;
 		do {
-			if (!stack->WorkCell->RightCell) {
-				TAB_CELL next = new_cell (stack->WorkCell, table->Padding);
-				next->RowSpan = stack->WorkCell->RowSpan;
-				stack->WorkCell = next;
-			} else {
-				stack->WorkCell = stack->WorkCell->RightCell;
-			}
+			TAB_CELL next = (stack->WorkCell->RightCell
+			                 ? stack->WorkCell->RightCell
+			                 : new_cell (stack->WorkCell, table->Padding));
+			next->RowSpan = stack->WorkCell->RowSpan;
+			stack->WorkCell = next;
 			if (!stack->WorkCell->DummyFor) {
 				stack->WorkCell->DummyFor = cell;
 				stack->WorkCell->ColSpan  = span;
