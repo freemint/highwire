@@ -26,4 +26,4 @@ BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 
 void window_redraw (WINDOW, const GRECT *);
 
-void window_raise (WINDOW, BOOL topNbot);
+void window_raise (WINDOW, BOOL topNbot, const GRECT *);

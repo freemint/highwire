@@ -253,7 +253,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
-	wind_open_grect (This->Base.Handle, &This->Curr);
+	window_raise (&This->Base, TRUE, &This->Curr);
 	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {

@@ -28,13 +28,8 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr)
 	}
 	if (This) {
 		This->Widgets = widgets;
-		if ((This->Next = window_Top) != NULL) {
-			window_Top->Prev = This;
-		}
-		This->Prev = NULL;
-		window_Top = This;
-		
-		This->isIcon = FALSE;
+		This->isIcon  = FALSE;
+		This->Next = This->Prev = NULL;
 		
 		This->evMessage = vTab_evMessage;
 		This->drawWork  = vTab_draw;
@@ -48,7 +43,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr)
 			wind_set_str (This->Handle, WF_INFO, "");
 		}
 		if (curr) {
-			wind_open_grect (This->Handle, curr);
+			window_raise (This, TRUE, curr);
 		}
 	}
 	return This;
@@ -94,8 +89,8 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 	}
 	switch (msg[0]) {
 		case WM_REDRAW:   window_redraw (wind, (GRECT*)(msg + 4)); break;
-		case WM_TOPPED:   window_raise  (wind, TRUE);              break;
-		case WM_BOTTOMED: window_raise  (wind, FALSE);             break;
+		case WM_TOPPED:   window_raise  (wind, TRUE,  NULL);       break;
+		case WM_BOTTOMED: window_raise  (wind, FALSE, NULL);       break;
 		default: return (*wind->evMessage)(wind, msg, mouse, kstate);
 	}
 	return TRUE;
@@ -151,7 +146,7 @@ vTab_raised (WINDOW This, BOOL topNbot)
 }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void
-window_raise (WINDOW This, BOOL topNbot)
+window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 {
 	BOOL done = FALSE;
 	
@@ -161,6 +156,15 @@ window_raise (WINDOW This, BOOL topNbot)
 		if (topNbot) {
 			while (This->Next) This = This->Next;
 		}
+	
+	} else if (curr && !This->Next && !This->Prev) {
+		if ((This->Next = window_Top) != NULL) {
+			window_Top->Prev = This;
+		}
+		window_Top = This;
+		topNbot = TRUE;
+		done    = TRUE;
+		wind_open_grect (This->Handle, curr);
 	}
 	
 	if (topNbot) {
