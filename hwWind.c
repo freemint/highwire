@@ -198,7 +198,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		}
 	}
 	
-	window_ctor (This, wind_kind, NULL);
+	window_ctor (This, wind_kind, NULL, FALSE);
 	This->Base.evMessage = vTab_evMessage;
 	This->Base.drawWork  = vTab_drawWork;
 	This->Base.drawIcon  = vTab_drawIcon;
@@ -1202,29 +1202,29 @@ vTab_drawWork (HwWIND This, const GRECT * clip)
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static UWORD logo_data[] = {
+	0x000c,0x0000, 0x0003,0xef00, 0x001f,0x7600, 0x0031,0xfb80,
+	0x0031,0xf080, 0x0006,0x70c0, 0x00ff,0xec00, 0x0087,0x7fc0,
+	0x0181,0xe0e0, 0x0001,0xf020, 0x005f,0xd860, 0x00ef,0x7f00,
+	0x00c3,0xff80, 0x00c7,0xf080, 0x0007,0xf180, 0x0007,0xf800,
+	0x000f,0xf000, 0x001f,0x7800, 0x001e,0xf800, 0x001d,0xec00,
+	0x003e,0x7c00, 0x003d,0x7c00, 0x0078,0x2400, 0x00f8,0xfc00,
+	0x00d8,0x2600, 0x00d0,0x7600, 0x01b1,0x2600, 0x01ff,0xfe00,
+	0x0362,0x3200, 0x0260,0x3300, 0x0660,0x3300, 0x0460,0x3300
+};
+MFDB logo_icon = { logo_data, 32,32, 2, 0, 1, 0,0,0 };
+/* - - - - - - - - - - - - - - - - - - - - - - - */
 static void
 vTab_drawIcon (HwWIND This, const GRECT * clip)
 {
-	static UWORD data[] = {
-		0x000c,0x0000, 0x0003,0xef00, 0x001f,0x7600, 0x0031,0xfb80,
-		0x0031,0xf080, 0x0006,0x70c0, 0x00ff,0xec00, 0x0087,0x7fc0,
-		0x0181,0xe0e0, 0x0001,0xf020, 0x005f,0xd860, 0x00ef,0x7f00,
-		0x00c3,0xff80, 0x00c7,0xf080, 0x0007,0xf180, 0x0007,0xf800,
-		0x000f,0xf000, 0x001f,0x7800, 0x001e,0xf800, 0x001d,0xec00,
-		0x003e,0x7c00, 0x003d,0x7c00, 0x0078,0x2400, 0x00f8,0xfc00,
-		0x00d8,0x2600, 0x00d0,0x7600, 0x01b1,0x2600, 0x01ff,0xfe00,
-		0x0362,0x3200, 0x0260,0x3300, 0x0660,0x3300, 0x0460,0x3300
-	};
-	static MFDB icon = { data, 32,32, 2, 0, 1, 0,0,0 };
-	
 	MFDB  scrn = { NULL, };
 	short color[2];
 	PXY   lu ,p[4];
 	GRECT work;
 	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &work);
-	lu.p_x = work.g_x + (work.g_w - icon.fd_w) /2;
-	lu.p_y = work.g_y + (work.g_h - icon.fd_h) /2;
+	lu.p_x = work.g_x + (work.g_w - logo_icon.fd_w) /2;
+	lu.p_y = work.g_y + (work.g_h - logo_icon.fd_h) /2;
 	color[0] = (This->isBusy ? G_WHITE : G_BLACK);
 	vsf_color (vdi_handle, G_LWHITE);
 	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
@@ -1232,13 +1232,13 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 	v_hide_c (vdi_handle);
 	v_bar (vdi_handle, (short*)p);
 	p[2] = lu;
-	p[3] = *(PXY*)&icon.fd_w;
+	p[3] = *(PXY*)&logo_icon.fd_w;
 	if (rc_intersect (clip, (GRECT*)(p +2))) {
 		p[1].p_x = (p[0].p_x = p[2].p_x - lu.p_x) + p[3].p_x -1;
 		p[1].p_y = (p[0].p_y = p[2].p_y - lu.p_y) + p[3].p_y -1;
 		p[3].p_x += p[2].p_x -1;
 		p[3].p_y += p[2].p_y -1;
-		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, color);
+		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
 	}
 	v_show_c (vdi_handle, 1);
 }
