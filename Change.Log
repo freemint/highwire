@@ -1,3 +1,12 @@
+(non-released of Jun. 08, 2003)
+
+- implemented ID keyword as anchor for <P> and
+  <Hx> tags, blanks in anchor names are filtered
+  out now in general.
+
+- Bugs *0114 resolved.
+
+__________________________________________________
 Changes in V. 0.1.3 release  of June 05, 2003:
 
 - Implemented handling of shift + left/right
@@ -9,7 +18,7 @@ Changes in V. 0.1.3 release  of June 05, 2003:
 
 - New menu entry (under 'Options') to have frames
   always resizeable and scrollbars if necessary,
-  even if the HTML defines enything else there.
+  even if the HTML defines anything else there.
   The default is off but can be set to on with the
   keyword FORCE_FRAMECTRL = 1 in the config file.
 
