@@ -1000,10 +1000,10 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 			}
 			if (actv) {
 				vs_clip_pxy (vdi_handle, (PXY*)&clip);
-				p[1].p_x =  p[0].p_x += (edit->Cursor - edit->Shift) *8;
+				p[1].p_x = (p[0].p_x += (edit->Cursor - edit->Shift) *8 -1) +1;
 				p[1].p_y = (p[0].p_y -= 1) +17;
 				vswr_mode (vdi_handle, MD_XOR);
-				v_pline   (vdi_handle, 2, (short*)p);
+				v_bar     (vdi_handle, (short*)p);
 				vswr_mode (vdi_handle, MD_TRANS);
 			}
 		}
@@ -1579,7 +1579,7 @@ hwWind_keybrd (WORD key, UWORD state)
 								short crs = edit->Cursor - edit->Shift;
 								clip.g_x = crs *8;
 								clip.g_w = min (edit->Length - edit->Cursor + len,
-								                edit->Visible - crs) *8 +1;
+								                edit->Visible - crs) *8 +2;
 							}
 							shft = +1;
 							edit->Length += len;
@@ -1604,9 +1604,9 @@ hwWind_keybrd (WORD key, UWORD state)
 				*dst = asc;
 				if (edit->Cursor < edit->Length) {
 					short n = min (edit->Visible, edit->Length - edit->Cursor +1);
-					clip.g_w = n *8 +1;
+					clip.g_w = n *8 +2;
 				} else {
-					clip.g_w = 9;
+					clip.g_w = 10;
 				}
 				clip.g_x = (edit->Cursor - edit->Shift -1) *8;
 				shft = +1;
@@ -1629,7 +1629,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					edit->Length--;
 					if (edit->Shift && edit->Length - edit->Shift < edit->Visible) {
 						edit->Shift = edit->Length - edit->Visible;
-						clip.g_w = (c +1) *8 +1;
+						clip.g_w = (c +1) *8 +2;
 					} else {
 						clip.g_x = c *8;
 						clip.g_w = (edit->Visible - c) *8;
@@ -1643,7 +1643,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					edit->Cursor  = 0;
 					edit->Shift   = 0;
 					edit->Text[0] = '\0';
-					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -5;
+					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -4;
 				}
 				break;
 			
@@ -1658,7 +1658,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			
 			case 52: /* shift+left */
 				if (edit->Cursor > edit->Shift) {
-					clip.g_w = (edit->Cursor - edit->Shift) *8 +1;
+					clip.g_w = (edit->Cursor - edit->Shift) *8 +2;
 					edit->Cursor = edit->Shift;
 				}
 				break;
@@ -1668,7 +1668,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					if (edit->Cursor < edit->Shift + edit->Visible) {
 						clip.g_x = (edit->Cursor - edit->Shift) *8;
 						clip.g_w = (edit->Visible
-						            - (edit->Cursor - edit->Shift)) *8 +1;
+						            - (edit->Cursor - edit->Shift)) *8 +2;
 						edit->Cursor = edit->Shift + edit->Visible;
 					}
 					break;
@@ -1676,7 +1676,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 55: /* shift+home */
 				if (edit->Cursor < edit->Length) {
 					clip.g_x = (edit->Cursor - edit->Shift) *8;
-					clip.g_w = (edit->Length - edit->Cursor) *8 +1;
+					clip.g_w = (edit->Length - edit->Cursor) *8 +2;
 					shft = +1;
 					edit->Cursor = edit->Length;
 				}
@@ -1687,7 +1687,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 0x4B: /* left */
 				if (edit->Cursor) {
 					clip.g_x = (--edit->Cursor - edit->Shift) *8;
-					clip.g_w = 9;
+					clip.g_w = 10;
 					shft = -1;
 				}
 				break;
@@ -1695,7 +1695,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 0x4D: /*right */
 				if (edit->Cursor < edit->Length) {
 					clip.g_x = (edit->Cursor++ - edit->Shift) *8;
-					clip.g_w = 9;
+					clip.g_w = 10;
 					shft = +1;
 				}
 				break;
@@ -1703,7 +1703,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 0x47: /* home */
 				if (edit->Cursor) {
 					if (!edit->Shift) {
-						clip.g_w = edit->Cursor *8 +1;
+						clip.g_w = edit->Cursor *8 +2;
 					} else {
 						shft = -1;
 					}
@@ -1721,7 +1721,7 @@ hwWind_keybrd (WORD key, UWORD state)
 							edit->Length = sizeof(edit->Text) -1;
 						}
 						if ((edit->Cursor = edit->Length) <= edit->Visible) {
-							clip.g_w = wind->TbarElem[TBAR_EDIT].Width -5;
+							clip.g_w = wind->TbarElem[TBAR_EDIT].Width -4;
 						} else {
 							shft = +1;
 						}
@@ -1739,17 +1739,17 @@ hwWind_keybrd (WORD key, UWORD state)
 			if (edit->Shift < edit->Cursor - edit->Visible) {
 				edit->Shift = edit->Cursor - edit->Visible;
 				clip.g_x    = 0;
-				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -5;
+				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -4;
 			}
 		} else if (shft) {
 			if (edit->Shift > edit->Cursor) {
 				edit->Shift = edit->Cursor;
 				clip.g_x    = 0;
-				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -5;
+				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -4;
 			}
 		}
 		if (clip.g_w) {
-			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +3;
+			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +2;
 			clip.g_y =  wind->Work.g_y +3;
 			draw_toolbar (wind, &clip, FALSE);
 		}
