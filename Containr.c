@@ -509,18 +509,24 @@ history_update (CONTAINR cont, HISTORY hist)
 		if (b) {
 			if (cont->Mode == CNT_FRAME) {
 				FRAME frame = cont->u.Frame;
-				if (!item->Location) {
-					printf ("history_update(): frame '%s' doesn't match #%i.\n",
-					        (frame && frame->Location ?frame->Location->FullName:""),
-					        hist->Count - num);
+				if (!frame) {
+					if (item->Location) {
+						printf ("history_update(): frame doesn't match '%s'"
+						        " #%i/%i.\n", item->Location->FullName,
+						        hist->Count - num, hist->Count);
+						return;
+					}
+				} else if (!item->Location) {
+					printf ("history_update(): frame '%s' doesn't match #%i/%i.\n",
+					        (!frame->Location ? "*" : frame->Location->FullName),
+					        hist->Count - num, hist->Count);
 					return;
-				} else if (frame && frame->Location != item->Location) {
-					printf ("history_update(): frame '%s' doesn't match '%s' #%i.\n",
+				} else if (frame->Location != item->Location) {
+					printf ("history_update(): frame '%s' doesn't match '%s' #%i/%i.\n",
 					        frame->Location->FullName, item->Location->FullName,
-					        hist->Count - num);
+					        hist->Count - num, hist->Count);
 					return;
-				}
-				if (cont->u.Frame) {
+				} else {
 					if (frame->v_bar.on && frame->v_bar.scroll > 0) {
 						long height = frame->Page.Height - frame->clip.g_h;
 						item->ScrollV = (frame->v_bar.scroll * 1024 + height /2)
@@ -538,16 +544,21 @@ history_update (CONTAINR cont, HISTORY hist)
 				}
 				item++;
 				num--;
+			
 			} else if (cont->Mode && cont->u.Child) {
 				if (item->Location) {
-					printf ("history_update(): node doesn't match '%s' #%i.\n",
-					        item->Location->FullName, hist->Count - num);
+					printf ("history_update(): node doesn't match '%s' #%i/%i!\n",
+					        item->Location->FullName, hist->Count - num, hist->Count);
 					return;
 				}
 				cont = cont->u.Child;
 				item++;
 				num--;
 				continue;
+			
+			} else {
+				item++;
+				num--;
 			}
 		}
 		if (cont->Sibling) {
@@ -558,7 +569,10 @@ history_update (CONTAINR cont, HISTORY hist)
 		cont = cont->Parent;
 		b    = FALSE;
 	}
-	if (num) printf ("history_update(): too few containers #%i.\n", num);
+	if (num) {
+		printf ("history_update(): too few containers (%i).\n", num);
+		printf ("'%s'\n", (item->Location ? item->Location->FullName : "*"));
+	}
 }
 
 
