@@ -1,13 +1,274 @@
 Ok here are the new supports and changes
 
-January 21, 2004:
+February 13, 2004
+
+  AltF4's patches
+
+  DomBox.c:
+    - line 474..483 (vTab_format) + 491 (dombox_format):  height
+      calculation corrected.
+
+  defs.h:
+    - line 40 (enum PARAGRAPH_CODE):  PAR_HR removed.
+
+  Paragrph.c:
+    - line 13 + 15 + 119..164 + 321..322 + 325 + 331 + 340:  merged
+      paragraph_calc() into vTab_format().
+    - line 44..48 + 77 (vTab_MinWidth) + 113..115 + 117 (vTab_draw):
+      outdated code removed.
+
+  render.c:
+    - line 3064 (render_hrule):  top/bot margins of <hr> reduced.
+
+  February 12, 2004
+
+  AltF4's patches
+
+  parser.c:
+    - line 104 (new_parser):  removed invalid pointer initialization,
+      was causing double freeing of memory in some cases.
+
+  ovl_sys.c:
+    - line 12 + 18 + 24 + 137 + 184 + 194 (load_ovl): avoid Lattice and
+      Pure C compiler warnigs.
+
+  http.c:      line 380 (http_header):
+  W_Struct.c:  line 29 (_alloc):
+  Loader.c:    line 10 + 19 + 27 + 909 (load_file):
+  hwWind.c:    line 1325 (wnd_hdlr) + 1732 (hwWind_button):
+    - avoid Lattice compiler warning.
+
+  February 11, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 371:  new function dombox_reorder().
+
+  DomBox.c
+    - line 347:  new function dombox_reorder().
+    - line 359 + 372 + 375..384 + 386..387 + 390 (vTab_format):  added
+      handling for geometry calculation of different box types.
+    - line 405..410 (vTab_format):  disabled possibly useless code.
+
+  global.h:   line 130:
+  p_about.c:  line 46 (about_modules) + 142 (about_cache)
+              + 232 (about_highwire) + 309 (parse_about):
+  p_dir.c:    line 196 (parse_dir):
+    - declaration of render_hrule() extended.
+
+  render.c:
+    - line 2009..2050 (render_HR_tag) + 3068..3081 (render_hrule):
+      horizontal rulers completely reworked.
+
+February 9, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 356 (struct s_dombox):  new attribute TextAlign.
+    - line 544 (struct paragraph_item):  alignment removed, is in
+      DOMBOX now.
+    - line 548..553:  struct CONTENT removed.
+    - line 555 (struct frame_item):  type of Page changed to DOMBOX.
+
+  global.h:
+    - line 160..161:  content_setup() removed.
+
+  list.c:     line 34:
+  p_about.c:  line 271 + 311 (parse_about):
+    - paragraph alignment attribute removed, is in DOMBOX now.
+
+  Table.h:
+    - line 49 (struct s_table_cell):  attribute Content replaced by
+      DOMBOX.
+
+  Table.c
+    - line 30..34 + 63 (delete_table) + 229..230 (new_cell) + 320..321
+      + 323 (table_cell) + 538 + 549 + 586 + 615 (table_finish) + 946
+      + 1028 (vTab_format) + 1109 (vTab_ChildAt) + 1130 (vTab_draw):
+      attribute Content is replaced by DOMBOX.
+    - line 228 (new_cell):  content_setup() replaced by dombox_ctor().
+    - line 531 + 585 + 688 (table_finish) + 943 + 966 (vTab_format)
+      + 1129 (vTab_draw):  for checking wether a table cell has content
+      the box children are checked now.
+
+  Paragrph.c:
+    - line 144 + 148 (vTab_format) + 189 (new_paragraph) + 259
+      + 269 (add_paragraph) + 341 (paragraph_calc):  paragraph
+      alignment attribute removed, is in DOMBOX now.
+    - line 707..728:  content_setup() removed.
+
+  parser.c:
+    - line 89 + 94 (new_parser):  type of frame->Page changed to DOMBOX.
+    - line 387 (css_values):  avoid Lattice compiler warning.
+
+  render.c:
+    - line 68 + 75 (get_align) 1003 + 1014 + 1022..1023 + 1028
+      + 1032 (render_BODY_tag) + 2123 + 2126 (render_CENTER_tag)
+      + 2530..2537 (render_TABLE_tag):  type of frame->Page changed to
+      DOMBOX.
+    - line 69 (get_align) + 319 (css_block_styles) + 1914
+      + 1931 (render_H_tag) + 2021 (render_HR_tag) + 2081
+      + 2097 (render_P_tag) + 2124 + 2127 (render_CENTER_tag)
+      + 2158 (render_BLOCKQUOTE_tag) + 2229 (render_PRE_tag)
+      + 2274 (render_LISTING_tag) + 2467 (render_DT_tag)
+      + 2491 (render_DD_tag) + 3078 (render_hrule):  paragraph
+      alignment attribute removed, is in DOMBOX now.
+    - line 73 (get_align):  cell->Content replaced by DOMBOX
+
+  image.c:     line 475 (image_job):
+  Frame.c:     line 25 + 50..59 (new_frame) + 81 (delete_frame)
+               + 99 (frame_finish) + 113 + 115 + 122 + 124 + 129
+               + 132..134 + 141..148 + 160..166 + 174 + 189 + 200 + 202
+               + 223 + 227 (frame_calculate):
+  Redraws.c:   line 72 + 90 (frame_draw):
+  Containr.c:  line 565 + 572 (history_update)
+               + 813..814 (containr_Anchor) + 946 (containr_Element)
+               + 1223 + 1236 (containr_shift):
+  keyinput.c:  line 94 + 100 (key_pressed):
+  Mouse_R.c:   line 61 + 75 + 100 + 129 + 143 + 168 + 287
+               + 291 (button_clicked):
+  AEI.c:       line 410..411 (menu_reload):
+    - type of frame->Page changed to DOMBOX.
+
+February 8, 2004
+
+  AltF4's patches
+
+  defs.h:    line 371:
+  DomBox.c:  line 420:
+  Table.c:   line 1028 (vTab_format):
+    - new function dombox_stretch() replaces old content_stretch().
+
+  global.h:
+    - line 155:  destroy_paragraph_structure() removed.
+    - line 163:  content_stretch() removed.
+
+  Paragrph.c:
+    - line 168..179 + 320 (paragrph_finish):
+      destroy_paragraph_structure() removed, use of DOMBOX method
+      Delete() instead.
+    - line 776..795:  content_stretch() removed.
+
+February 7, 2004
+
+  AltF4's patches
+
+  defs.h:    line 340:
+  DomBox.c:  line 13 + 18 (struct DomBox_vTab) + 196 (vTab_ChildAt)
+             + 208..217 + 226 + 229 + 231..280 (dombox_byCoord):
+    - new DOMBOX method ChildAt().
+
+  Table.h:  line 71:
+  Table.c:  line 46 + 102 (table_start) + 1051 + 1080..1181:
+    - function table_content() changed to DOMBOX method ChildAt().
+
+February 6, 2004
+
+  AltF4's patches
+
+  defs.h:      line 368:
+  DomBox.c:    line 195:
+  Containr.c:  line 912..913 + 918 +920..922 + 947..948 + 958..959 + 961
+                 + 963 + 966 + 969..970 + 972 + 974
+                 + 977 (containr_Element):
+  Frame.c:   line 266..305:
+    - new function dombox_byCoord() to replace old frame_paragraph().
+
+  global.h:  line 113 + 165:
+    - new function dombox_byCoord() replaces old frame_paragraph() and
+      content_paragraph().
+
+  Paragrph.c:
+    - line 796..970:  content_paragraph() replaced by dombox_byCoord().
+
+February 5, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 75 (enum BULLET):  avoid Lattice compiler warning.
+
+February 3, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 2533 (render_TABLE_tag):  workaround for <center> tag.
+
+February 2, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 333 + 367:  struct blocking_area moved over from Paragrph.c.
+    - line 339 + 366:  new DOMBOX methods format().
+
+  global.h:    line 164:
+  DomBox.c:    line 13 + 18 + 216:
+  Paragrph.c:  line 13..20 + 125 + 738..852:
+  Frame.c:     line 124 + 129 + 146 + 161 + 163 (frame_calculate):
+    - new DOMBOX methods format() to replace the content_calc().
+
+  Table.h:  line 71:
+  Table.c:  line 47 + 103 (table_start) + 709..710 + 711 + 715 + 719
+            + 935 + 1025..1026 (table_calc):
+    - function table_calc() changed to DOMBOX method format().
+
+  render.c:
+    - line 2525..2526 (render_TABLE_tag):  inherit floating from the
+      parentbox's alignment attribute if this is a <div>.
+
+February 1, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 2174..2178 (render_BLOCKQUOTE_tag):  avoid indention
+      underflow.
+
+January 28, 2004
+
+  AltF4's patches
+
+  Mouse_R.c:
+    - line 221..222 (button_clicked):  make Lattice C happy.
+
+January 23, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 1794 + 1804 + 1806 (render_BR_tag):  extended handling for
+      CSS styles (spacer behaviour).
+
+  Markus' patches
+
+  scanner.c:
+    - line 282:  corrected order of NAMEDCHAR to correctly display
+      &Ocirc; and &Oacute.
+
+January 22, 2004
+
+  AltF4's patches
+
+  AEI.c:
+    - line 425..427 + 430..431 + 449 (menu_info):  check for NULL
+      pointers when window is empty.
+
+    scanner.c:
+    - line 559 (scan_color):  additional recognition of CSS three digit
+      #RGB format.
+
+January 21, 2004
 
   AltF4's patches
 
   purewire.prj, highwire.prj:
     - dependencies updated.
 
-January 20, 2004:
+January 20, 2004
 
   AltF4's patches
 
@@ -19,7 +280,7 @@ January 20, 2004:
       + 927 (table_calc):  corrected calculation of table MinHeight/
       MaxHeight/resulting height.
 
-January 19, 2004:
+January 19, 2004
 
   AltF4's patches
 
@@ -32,7 +293,7 @@ January 19, 2004:
   render.c:    line 1729 (render_IMG_tag):
     - attribute Floating added to DOMBOX, removed from Paragraph.
 
-January 18, 2004:
+January 18, 2004
 
   AltF4's patches
 
@@ -40,7 +301,7 @@ January 18, 2004:
     - line 2972..2979 (parse_plain):  corrected handling of empty
       lines.
 
-January 17, 2004:
+January 17, 2004
 
   AltF4's patches
 
@@ -57,14 +318,14 @@ January 17, 2004:
              + 2578 (render_TH_tag):
     - new DOMBOX attribute HtmlCode.
 
-January 15, 2004:
+January 15, 2004
 
   AltF4's patches
 
   DomBox.c:
     - line 65..72 (dombox_dtor):  corrected unlinking from boxes tree.
 
-January 14, 2004:
+January 14, 2004
 
   AltF4's patches
 
@@ -77,7 +338,7 @@ January 14, 2004:
       redraw areas for images of unknown size, reduces flickering due
       to redraws a lot.
 
-January 13, 2004:
+January 13, 2004
 
   AltF4's patches
 
@@ -115,7 +376,7 @@ January 13, 2004:
     - line 99 (frame_finish):  content_minimum() replaced by
       dombox_MinWidth().
 
-January 12, 2004:
+January 12, 2004
 
   AltF4's patches
 
@@ -142,7 +403,7 @@ January 12, 2004:
     - line 2959 (parse_plain):  eop_space removed, instead
       Box.Margin.Bot will be used now.
 
-January 11, 2004:
+January 11, 2004
 
   AltF4's patches
 
@@ -162,7 +423,7 @@ January 11, 2004:
     - line 466..470 + 485 + 489 + 497 + 581..583 (draw_paragraph):
       simplified calculation of y coordinate.
 
-January 08, 2004:
+January 08, 2004
 
   AltF4's patches
 
@@ -185,7 +446,7 @@ January 08, 2004:
   Frame.c:  line 75..76 + 84 (delete_frame):
     - adapted to DOMBOX method Delete().
 
-January 07, 2004:
+January 07, 2004
 
   AltF4's patches
 
@@ -230,7 +491,7 @@ January 07, 2004:
     - line 1002..1005 + 1011..1012 + 1019..1020 + 1030..1031:
       table_draw() changed to DOMBOX method vTab_draw().
 
-January 06, 2004:
+January 06, 2004
 
   AltF4's patches
 
@@ -259,7 +520,7 @@ January 06, 2004:
     - line 1002..1019 + 1022..1025 + 1031..1039 + 1041 (table_draw):
       drawing of background and border are done by draw_contents() now.
 
-January 05, 2004:
+January 05, 2004
 
   AltF4's patches
 
@@ -284,7 +545,7 @@ January 05, 2004:
     - line 210 (new_cell):  additional box class argument for
       content_setup().
 
-January 04, 2004:
+January 04, 2004
 
   AltF4's patches
 
@@ -319,7 +580,7 @@ January 04, 2004:
   Redraws.c:   line 622 + 628..629 (draw_contents):
     - OFFSET removed, use DOMBOX coordinates instead.
 
-January 03, 2004:
+January 03, 2004
 
   AltF4's patches
 
@@ -386,7 +647,7 @@ January 03, 2004:
     - line 198 (new_cell) + 231 + 250  + 254 + 286 + 320 + 343
       + 345 (table_cell):  additional DOMBOX argument for new_cell().
 
-January 03, 2004:
+January 03, 2004
 
   AltF4's patches
 
