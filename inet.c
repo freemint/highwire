@@ -187,8 +187,8 @@ inet_recv (int fh, char * buf, size_t len)
 			ret += n;
 			buf += n;
 			len -= n;
-		} else {
-			if (ret) break;
+		} else { /* no data available yet */
+			break;
 		}
 	}
 
@@ -201,7 +201,7 @@ inet_recv (int fh, char * buf, size_t len)
 		if (n < E_NODATA) {
 			if (!ret) ret = -1;
 			break;
-		} else if (n) {
+		} else if (n > 0) {
 			if (n > len) n = len;
 			if ((n = CNget_block (fh, buf, n)) < 0) {
 				if (!ret) ret = -1;
@@ -211,9 +211,8 @@ inet_recv (int fh, char * buf, size_t len)
 				buf += n;
 				len -= n;
 			}
-
-		} else {
-			if (ret) break;
+		} else { /* no data available yet */
+			break;
 		}
 	}
 
