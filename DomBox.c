@@ -11,11 +11,13 @@ static void vTab_delete (DOMBOX *);
 static LONG vTab_MinWidth (DOMBOX *);
 static LONG vTab_MaxWidth (DOMBOX *);
 static void vTab_draw   (DOMBOX *, long x, long y, const GRECT * clip, void *);
+static void vTab_format (DOMBOX *, long width, BLOCKER);
 struct s_dombox_vtab DomBox_vTab = {
 	vTab_delete,
 	vTab_MinWidth,
 	vTab_MaxWidth,
-	vTab_draw
+	vTab_draw,
+	vTab_format
 };
 
 
@@ -213,4 +215,79 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 		
 		box = box->Sibling;
 	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+vTab_format (DOMBOX * This, long width, BLOCKER blocker)
+{
+	DOMBOX * box    = This->ChildBeg;
+	long     height = dombox_TopDist (This);
+	
+	This->Rect.W = width;
+	width -= dombox_LftDist (This) + dombox_RgtDist (This);
+	
+	while (box) {
+		long blk_width = width - blocker->L.width - blocker->R.width;
+		box->Rect.X = dombox_LftDist (This);
+		box->Rect.Y = height;
+
+		if (box->MinWidth > blk_width) {
+			if (height < blocker->L.bottom) height = blocker->L.bottom;
+			if (height < blocker->R.bottom) height = blocker->R.bottom;
+			box->Rect.Y = height;
+			blocker->L.bottom = blocker->L.width =
+			blocker->R.bottom = blocker->R.width = 0;
+			blk_width = width;
+		}
+		
+		box->_vtab->format (box, width, blocker);
+		
+		switch (box->Floating) {
+			case ALN_LEFT: {
+				long new_bottom = height + box->Rect.H;
+				if (blocker->L.bottom < new_bottom)
+					 blocker->L.bottom = new_bottom;
+				blocker->L.width += box->Rect.W;
+			}	break;
+			case ALN_RIGHT: {
+				long new_bottom = height + box->Rect.H;
+				if (blocker->R.bottom < new_bottom)
+					 blocker->R.bottom = new_bottom;
+				box->Rect.X += blk_width - box->Rect.W; 
+				blocker->R.width += box->Rect.W;
+			}	break;
+			case ALN_CENTER:
+				box->Rect.X += (blk_width - box->Rect.W) /2;
+			case ALN_NO_FLT:
+				height += box->Rect.H;
+				if (blocker->L.bottom && blocker->L.bottom < height) {
+					blocker->L.bottom = blocker->L.width = 0;
+				}
+				if (blocker->R.bottom && blocker->R.bottom < height) {
+					blocker->R.bottom = blocker->R.width = 0;
+				}
+		}
+		
+		box = box->Sibling;
+	}
+
+	height += dombox_BotDist (This);
+	
+	if (height < blocker->L.bottom) {
+		 height = blocker->L.bottom;
+	}
+	if (height < blocker->R.bottom) {
+		 height = blocker->R.bottom;
+	}
+	This->Rect.H = height;
+}
+
+/*============================================================================*/
+void
+dombox_format (DOMBOX * This, long width)
+{
+	struct blocking_area blocker = { {0, 0}, {0, 0} };
+	This->_vtab->format (This, width, &blocker);
 }

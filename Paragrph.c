@@ -10,14 +10,7 @@
 
 
 static WORDITEM paragraph_filter (PARAGRPH);
-
-
-struct blocking_area {
-	struct {
-		long width;
-		long bottom;
-	} L, R;
-};
+static void     paragraph_calc   (PARAGRPH, long, struct blocking_area *);
 
 
 static struct s_dombox_vtab paragraph_vTab = { 0, };
@@ -41,6 +34,7 @@ vTab_delete (DOMBOX * This)
 	}
 	DomBox_vTab.delete (This);
 }
+
 
 /*----------------------------------------------------------------------------*/
 static LONG
@@ -123,6 +117,53 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 	}
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+vTab_format (DOMBOX * This, long width, BLOCKER blocker)
+{
+	PARAGRPH par = (PARAGRPH)This;
+	
+	This->Rect.X += par->Indent;
+	width        -= par->Indent + par->Rindent;
+	
+	if (par->paragraph_code == PAR_HR) {
+		struct word_item * word = par->item;
+		long blk_width = width - (blocker->L.width + blocker->R.width);
+		if (word->space_width < 0) {
+			word->word_width = (blk_width * -word->space_width + 512) / 1024;
+		} else {
+			word->word_width = word->space_width;
+		}
+		if (word->word_width >= blk_width) {
+			word->word_width = blk_width;
+			word->h_offset   = 0;
+		} else {
+			if (word->word_width < 2) {
+				word->word_width = 2;
+			}
+			if (par->alignment <= ALN_JUSTIFY) {
+				word->h_offset   = 0;
+			} else {
+				word->h_offset   = blk_width - word->word_width;
+				if (par->alignment == ALN_CENTER) {
+					word->h_offset /= 2;
+				}
+			}
+		}
+		This->Rect.X += blocker->L.width;
+		This->Rect.W = width;
+		This->Rect.H = word->word_height *2
+		             + (word->word_tail_drop > 0
+		                ? +word->word_tail_drop : -word->word_tail_drop);
+	
+	} else {   /* normal text or image */
+		if (par->paragraph_code == PAR_IMG) {
+			par->Box.Rect.X += blocker->L.width;
+		}
+		paragraph_calc (par, width, blocker);
+	}
+}
+
 
 /*============================================================================*/
 void
@@ -166,6 +207,7 @@ new_paragraph (TEXTBUFF current)
 		paragraph_vTab.MinWidth = vTab_MinWidth;
 		paragraph_vTab.MaxWidth = vTab_MaxWidth;
 		paragraph_vTab.draw     = vTab_draw;
+		paragraph_vTab.format   = vTab_format;
 	}
 	paragraph->Box._vtab = &paragraph_vTab;
 
@@ -188,8 +230,7 @@ new_paragraph (TEXTBUFF current)
  *
  * AltF4 - Jan. 20, 2002:  replaced malloc of struct word_item by new_word().
  *
- */
-
+*/
 PARAGRPH
 add_paragraph (TEXTBUFF current, short vspace)
 {
@@ -234,6 +275,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 			paragraph_vTab.delete   = vTab_delete;
 			paragraph_vTab.MinWidth = vTab_MinWidth;
 			paragraph_vTab.MaxWidth = vTab_MaxWidth;
+			paragraph_vTab.format   = vTab_format;
 			paragraph_vTab.draw     = vTab_draw;
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
@@ -730,125 +772,6 @@ paragraph_filter (PARAGRPH par)
 		word = word->next_word;
 	}
 	return par->item;
-}
-
-
-/*==============================================================================
- */
-long
-content_calc (CONTENT * content, long set_width)
-{
-	PARAGRPH paragraph = content->Item;
-	long     height    = dombox_TopDist (&content->Box);
-	struct blocking_area blocker = { {0, 0}, {0, 0} };
-	
-	content->Box.Rect.W = set_width;
-	set_width -= dombox_LftDist (&content->Box) + dombox_RgtDist (&content->Box);
-	
-	while (paragraph) {
-		long par_width = set_width - paragraph->Indent - paragraph->Rindent;
-		long blk_width = set_width - blocker.L.width - blocker.R.width;
-		paragraph->Box.Rect.X = paragraph->Indent
-		                      + dombox_LftDist (&content->Box);
-		paragraph->Box.Rect.Y = height;
-
-		if (paragraph->Box.MinWidth > blk_width) {
-			if (height < blocker.L.bottom) height = blocker.L.bottom;
-			if (height < blocker.R.bottom) height = blocker.R.bottom;
-			paragraph->Box.Rect.Y = height;
-			blocker.L.bottom = blocker.L.width =
-			blocker.R.bottom = blocker.R.width = 0;
-			blk_width = par_width;
-		} else {
-			blk_width -= paragraph->Indent + paragraph->Rindent;
-		}
-		
-		if (paragraph->paragraph_code == PAR_HR) {
-			struct word_item * word = paragraph->item;
-			if (word->space_width < 0) {
-				word->word_width = (blk_width * -word->space_width + 512) / 1024;
-			} else {
-				word->word_width = word->space_width;
-			}
-			if (word->word_width >= blk_width) {
-				word->word_width = blk_width;
-				word->h_offset   = 0;
-			} else {
-				if (word->word_width < 2) {
-					word->word_width = 2;
-				}
-				if (paragraph->alignment <= ALN_JUSTIFY) {
-					word->h_offset   = 0;
-				} else {
-					word->h_offset   =  blk_width - word->word_width;
-					if (paragraph->alignment == ALN_CENTER) {
-						word->h_offset /= 2;
-					}
-				}
-			}
-			paragraph->Box.Rect.X += blocker.L.width;
-			paragraph->Box.Rect.W = par_width;
-			paragraph->Box.Rect.H = word->word_height *2
-			                  + (word->word_tail_drop > 0
-			                     ? +word->word_tail_drop : -word->word_tail_drop);
-/*			paragraph->eop_space = 0;*/
-			
-		} else if (paragraph->paragraph_code == PAR_TABLE) {
-			paragraph->Box.Rect.X += blocker.L.width;
-			table_calc (paragraph->Table, blk_width);
-		
-		} else {   /* normal text or image */
-			if (paragraph->paragraph_code == PAR_IMG) {
-				paragraph->Box.Rect.X += blocker.L.width;
-			}
-			paragraph_calc (paragraph, par_width, &blocker);
-		}
-		
-		switch (paragraph->Box.Floating) {
-			case ALN_LEFT: {
-				long new_bottom = height + paragraph->Box.Rect.H;
-				if (blocker.L.bottom < new_bottom)
-					 blocker.L.bottom = new_bottom;
-				blocker.L.width += paragraph->Box.Rect.W;
-			}	break;
-			case ALN_RIGHT: {
-				long new_bottom = height + paragraph->Box.Rect.H;
-				if (blocker.R.bottom < new_bottom)
-					 blocker.R.bottom = new_bottom;
-				paragraph->Box.Rect.X += blk_width - paragraph->Box.Rect.W; 
-				blocker.R.width += paragraph->Box.Rect.W;
-			}	break;
-			case ALN_CENTER:
-				paragraph->Box.Rect.X += (blk_width - paragraph->Box.Rect.W) /2;
-				blk_width = 0; /* avoid double centering */
-			case ALN_NO_FLT:
-				if (paragraph->Box.Rect.W < blk_width
-				    && paragraph->alignment > ALN_JUSTIFY) {
-					short indent = blk_width - paragraph->Box.Rect.W;
-					if (paragraph->alignment == ALN_CENTER) indent /= 2;
-					paragraph->Box.Rect.X += indent;
-				}
-				height += paragraph->Box.Rect.H;
-				if (blocker.L.bottom && blocker.L.bottom < height) {
-					blocker.L.bottom = blocker.L.width = 0;
-				}
-				if (blocker.R.bottom && blocker.R.bottom < height) {
-					blocker.R.bottom = blocker.R.width = 0;
-				}
-		}
-		
-		paragraph = paragraph->next_paragraph;
-	}
-
-	height += dombox_BotDist (&content->Box);
-	
-	if (height < blocker.L.bottom) {
-		 height = blocker.L.bottom;
-	}
-	if (height < blocker.R.bottom) {
-		 height = blocker.R.bottom;
-	}
-	return (content->Box.Rect.H = height);
 }
 
 

@@ -16,7 +16,7 @@
 /*==============================================================================
  *
  * creates a new frame structure and initializes it's values
- */
+*/
 FRAME
 new_frame (LOCATION loc, TEXTBUFF current,
            ENCODING encoding, UWORD mime_type, short margin_w, short margin_h)
@@ -105,7 +105,7 @@ frame_finish (FRAME frame, PARSER parser, TEXTBUFF current)
  * to calculate +(...) as a first step and prevent it from arithmetic
  * transformation.
  * Pure C, Apendix F, p. 247
- */
+*/
 void
 frame_calculate (FRAME frame, const GRECT * clip)
 {
@@ -121,12 +121,12 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		
 		if (frame->Page.Box.MinWidth <= frame->clip.g_w) {
 			frame->h_bar.on = FALSE;
-			content_calc (&frame->Page, frame->clip.g_w);
+			dombox_format (&frame->Page.Box, frame->clip.g_w);
 		
 		} else {
 			frame->h_bar.on = TRUE;
 			frame->clip.g_h -= scrollbar_size;
-			content_calc (&frame->Page, frame->Page.Box.MinWidth);
+			dombox_format (&frame->Page.Box, frame->Page.Box.MinWidth);
 		}
 		
 		if (frame->Page.Box.Rect.H <= frame->clip.g_h) {
@@ -143,7 +143,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 					frame->h_bar.on        = TRUE;
 					frame->clip.g_h       -= scrollbar_size;
 				} else {
-				   content_calc (&frame->Page, frame->clip.g_w);
+				   dombox_format (&frame->Page.Box, frame->clip.g_w);
 					if (frame->Page.Box.Rect.H < frame->clip.g_h) {
 						 frame->Page.Box.Rect.H = frame->clip.g_h;
 					}
@@ -158,9 +158,9 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->clip.g_h -= scrollbar_size;
 		}
 		if (frame->clip.g_w > frame->Page.Box.MinWidth) {
-			content_calc (&frame->Page, frame->clip.g_w);
+			dombox_format (&frame->Page.Box, frame->clip.g_w);
 		} else {
-			content_calc (&frame->Page, frame->Page.Box.MinWidth);
+			dombox_format (&frame->Page.Box, frame->Page.Box.MinWidth);
 		}
 		if (frame->Page.Box.Rect.H < frame->clip.g_h) {
 			 frame->Page.Box.Rect.H = frame->clip.g_h;
