@@ -77,7 +77,8 @@ vTab_MaxWidth (DOMBOX * This)
 	PARAGRPH paragraph = (PARAGRPH)This;
 	
 	struct word_item * word = paragraph->item;
-	long width = 0;
+	long width   = (This->TextIndent > 0 ? +This->TextIndent : 0);
+	long hanging = (This->TextIndent < 0 ? -This->TextIndent : 0);
 	This->MaxWidth = 0;
 	while (word) {
 		BOOL ln_brk = word->line_brk;
@@ -87,7 +88,7 @@ vTab_MaxWidth (DOMBOX * This)
 			if (This->MaxWidth < width) {
 				 This->MaxWidth = width;
 			}
-			width = 0;
+			width = hanging;
 		}
 	}
 	
