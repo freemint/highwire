@@ -437,8 +437,10 @@ image_job (void * arg, long invalidated)
 				} else {
 					LOADER ldr = start_objc_load (frame->Container,
 					                              NULL, loc, image_ldr, img);
-					if (PROTO_isRemote (frame->Location->Proto)) {
-						ldr->Referer = location_share (frame->Location);
+					if (ldr) {
+						if (PROTO_isRemote (frame->Location->Proto)) {
+							ldr->Referer = location_share (frame->Location);
+						}
 					}
 					_ldr_limit--;
 					return FALSE;

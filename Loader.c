@@ -255,7 +255,11 @@ start_page_load (CONTAINR target, const char * url, LOCATION base,
 	
 	} else {
 		loader = start_cont_load (target, NULL, loc, u_act, (post_buff == NULL));
-		loader->PostBuf = post_buff;
+		if (loader) {
+			loader->PostBuf = post_buff;
+		} else {
+			free (post_buff);
+		}
 	}
 	free_location (&loc);
 	
