@@ -545,6 +545,7 @@ struct list_stack_item {
 	short    Indent;  /* horizontal offset to the left side */
 	short    Hanging; /* left shift value for <li> bullet/number */
 	WORDITEM Spacer;  /* item just befor the bullet/number of actual <li> line */
+	FNTSTACK FontStk;
 	LSTSTACK next_stack_item;
 };
 

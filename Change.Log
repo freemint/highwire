@@ -1,4 +1,4 @@
-(non-public of Oct.31, 2003)
+(non-public of Nov. 03, 2003)
 
 - Implementation of parsing of <STYLE> areas.
 
@@ -7,7 +7,7 @@
 
 - Extended set of recognized CSS attributes,
   implemented basic CSS support for BIG, SMALL,
-  FONT, SUB, SUP, H1..6 and P tags.
+  FONT, SUB, SUP, H1..6, P, DD, DT and DD tags.
 
 - Bugs #0138 resolved.
 

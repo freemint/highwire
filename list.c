@@ -13,6 +13,7 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 	LSTSTACK list = malloc (sizeof (struct list_stack_item));
 	PARAGRPH par  = current->paragraph;
 	
+	list->FontStk = fontstack_push (current, -1);
 	list->Hanging = current->word->font->SpaceWidth *5;
 	
 	if (!current->lst_stack) {
@@ -52,6 +53,11 @@ list_finish (TEXTBUFF current)
 	PARAGRPH par   = current->paragraph;
 	LSTSTACK list  = current->lst_stack;
 	current->lst_stack = list->next_stack_item;
+	
+	if (list->FontStk !=  current->font) {
+		fontstack_pop (current);
+	}
+	fontstack_pop (current);
 	
 	if (!current->lst_stack) {
 		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {

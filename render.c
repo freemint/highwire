@@ -2275,6 +2275,9 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		list_start (current, LT_NONE, 0);
+		if (parser->hasStyle) {
+			css_block_styles (parser, current->font);
+		}
 	
 	} else if (current->lst_stack) {
 		list_finish (current);
@@ -2289,13 +2292,20 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 
-	if (flags & PF_START && parser->Current.lst_stack){
-		PARAGRPH paragraph = add_paragraph (&parser->Current, 0);
+	if (flags & PF_START && current->lst_stack){
+		PARAGRPH paragraph = add_paragraph (current, 0);
 		paragraph->alignment = ALN_LEFT;
-		paragraph->Indent    = parser->Current.lst_stack->Indent;
+		paragraph->Indent    = current->lst_stack->Indent;
 		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
+		if (current->lst_stack->FontStk !=  current->font) {
+			fontstack_pop (current);
+		}
+		if (parser->hasStyle) {
+			css_block_styles (parser, fontstack_push (current, -1));
+		}
 	}
 	return (flags|PF_SPACE);
 }
@@ -2306,14 +2316,21 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 
-	if (flags & PF_START && parser->Current.lst_stack){
-		PARAGRPH paragraph = add_paragraph (&parser->Current, 0);
+	if (flags & PF_START && current->lst_stack){
+		PARAGRPH paragraph = add_paragraph (current, 0);
 		paragraph->alignment = ALN_LEFT;
-		paragraph->Indent    = parser->Current.lst_stack->Indent
-		                     + parser->Current.lst_stack->Hanging;
+		paragraph->Indent    = current->lst_stack->Indent
+		                     + current->lst_stack->Hanging;
 		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
+		if (current->lst_stack->FontStk !=  current->font) {
+			fontstack_pop (current);
+		}
+		if (parser->hasStyle) {
+			css_block_styles (parser, fontstack_push (current, -1));
+		}
 	}
 	return (flags|PF_SPACE);
 }
