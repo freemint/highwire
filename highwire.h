@@ -38,8 +38,10 @@
 #define RPOP_BACK              1 /* STRING in tree RPOPUP */
 #define RPOP_FORWARD           2 /* STRING in tree RPOPUP */
 #define RPOP_RELOAD            3 /* STRING in tree RPOPUP */
-#define RPOP_VIEWSRC           5 /* STRING in tree RPOPUP */
-#define RPOP_INFO              7 /* STRING in tree RPOPUP */
+#define RPOP_COPY              5 /* STRING in tree RPOPUP */
+#define RPOP_SAVE              6 /* STRING in tree RPOPUP */
+#define RPOP_VIEWSRC           8 /* STRING in tree RPOPUP */
+#define RPOP_INFO             10 /* STRING in tree RPOPUP */
 
 #define RLINKPOP               4 /* form/dialog */
 #define RLINK_OPEN             1 /* STRING in tree RLINKPOP */
