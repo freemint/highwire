@@ -27,6 +27,9 @@ static void vTab_evKeybrd  (HwWIND, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_drawWork  (HwWIND, const GRECT *);
 static void vTab_drawIcon  (HwWIND, const GRECT *);
 static void vTab_raised    (HwWIND, BOOL topNbot);
+static void vTab_moved     (HwWIND);
+static BOOL vTab_sized     (HwWIND);
+static void vTab_iconified (HwWIND);
 
 #define Curr   Base.Curr
 
@@ -54,7 +57,6 @@ HwWIND hwWind_Focus  = NULL;
 static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
 static void draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all);
 static BOOL chng_toolbar (HwWIND, UWORD, UWORD, WORD);
-static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
 
@@ -209,8 +211,10 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->Base.drawWork  = vTab_drawWork;
 	This->Base.drawIcon  = vTab_drawIcon;
 	This->Base.raised    = vTab_raised;
+	This->Base.moved     = vTab_moved;
+	This->Base.sized     = vTab_sized;
+	This->Base.iconified = vTab_iconified;
 	
-	This->isFull  = FALSE;
 	This->shaded  = FALSE;
 	This->isBusy  = 0;
 	This->loading = 0;
@@ -250,7 +254,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	edit->Length  = 0;
 	edit->Shift   = 0;
 	edit->Cursor  = 0;
-	set_size (This, &curr_area);
 
 	if (bevent) {
 		wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
@@ -259,7 +262,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
-	window_raise (&This->Base, TRUE, &This->Curr);
+	window_raise (&This->Base, TRUE, &curr_area);
 	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {
@@ -571,129 +574,6 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 }
 
 
-/*----------------------------------------------------------------------------*/
-static
-void set_size (HwWIND This, const GRECT * curr)
-{
-	TBAREDIT * edit = TbarEdit (This);
-	GRECT work = This->Work;
-	
-	wind_set_grect (This->Base.Handle, WF_CURRXYWH, curr);
-	if (!wind_get_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr)
-	    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
-		This->Curr = *curr;    /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
-	}                         /* if the window was created but not opend       */
-	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
-	work = This->Work;
-	work.g_y += This->TbarH;
-	work.g_h -= This->TbarH + This->IbarH;
-	containr_calculate (This->Pane, &work);
-	
-	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6;
-	if ((edit->Visible = work.g_w /8 -1) < 7) {
-		edit->Visible = 7;
-	}
-	This->TbarElem[TBAR_EDIT].Width = edit->Visible *8 +6;
-	if (edit->Length <= edit->Visible) {
-		edit->Shift = 0;
-	} else if (edit->Shift > edit->Length - edit->Visible) {
-		edit->Shift = edit->Length - edit->Visible;
-	} else if (edit->Shift < edit->Cursor - edit->Visible) {
-		edit->Shift = edit->Cursor - edit->Visible;
-	}
-}
-
-/*============================================================================*/
-void
-hwWind_move (HwWIND This, PXY pos)
-{
-	if (This->Base.isIcon) {
-		GRECT curr;
-		wind_get_grect (This->Base.Handle, WF_CURRXYWH, &curr);
-		*(PXY*)&curr = pos;
-		wind_set_grect (This->Base.Handle, WF_CURRXYWH, &curr);
-	} else {
-		*(PXY*)&This->Curr = pos;
-		wind_set_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr);
-		wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
-		This->isFull = FALSE;
-		containr_relocate (This->Pane,
-		                   This->Work.g_x, This->Work.g_y + This->TbarH);
-	}
-}
-
-/*============================================================================*/
-void
-hwWind_resize (HwWIND This, const GRECT * curr)
-{
-	if (!This->Base.isIcon) {
-		GRECT prev = This->Curr;
-		set_size (This, curr);
-		curr_area.g_w = This->Curr.g_w;
-		curr_area.g_h = This->Curr.g_h;
-		This->isFull = FALSE;
-		hwWind_redraw (This, &prev);
-	}
-}
-
-/*============================================================================*/
-void
-hwWind_full (HwWIND This)
-{
-	if (!This->Base.isIcon) {
-		WORD  mode = (This->isFull ? WF_PREVXYWH : WF_FULLXYWH);
-		GRECT prev = This->Curr;
-		GRECT curr;
-		wind_get_grect (This->Base.Handle, mode, &curr);
-		set_size (This, &curr);
-		This->isFull = (mode == WF_FULLXYWH);
-		if (sys_XAAES()) {
-			WORD msg[8];
-			msg[0] = WM_REDRAW;
-			msg[1] = gl_apid;
-			msg[2] = 0;
-			msg[3] = This->Base.Handle;
-			msg[4] = This->Work.g_x;
-			msg[5] = This->Work.g_y;
-			msg[6] = This->Work.g_w;
-			msg[7] = This->Work.g_h;
-			appl_write (gl_apid, 16, msg);
-		} else if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
-			hwWind_redraw (This, &prev);
-		}
-		if (wind_kind & (LFARROW|HSLIDE)) {
-			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
-		}
-	}
-}
-
-/*============================================================================*/
-void
-hwWind_iconify (HwWIND This, const GRECT * icon)
-{
-	if (icon) {
-		if (!This->Base.isIcon) {
-			if (This->isFull) {
-				wind_get_grect (This->Base.Handle, WF_PREVXYWH, &This->Curr);
-			}
-			wind_set_grect (This->Base.Handle, WF_ICONIFY, icon);
-			This->Base.isIcon = TRUE;
-		}
-	} else {
-		if (This->Base.isIcon) {
-			wind_set_grect (This->Base.Handle, WF_UNICONIFY, &This->Curr);
-			if (This->isFull) {
-				wind_get_grect (This->Base.Handle, WF_FULLXYWH, &This->Curr);
-				wind_set_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr);
-			}
-			if (wind_kind & (LFARROW|HSLIDE)) {
-				hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
-			}
-			This->Base.isIcon = FALSE;
-		}
-	}
-}
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static void
 vTab_raised (HwWIND This, BOOL topNbot)
@@ -714,6 +594,71 @@ vTab_raised (HwWIND This, BOOL topNbot)
 	}
 #endif
 }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_moved (HwWIND This)
+{
+	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
+	containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y + This->TbarH);
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+vTab_sized (HwWIND This)
+{
+	TBAREDIT * edit = TbarEdit (This);
+	GRECT work;
+	
+	if (!This->Base.isFull) {
+		curr_area.g_w = This->Curr.g_w;
+		curr_area.g_h = This->Curr.g_h;
+	}
+	
+	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
+	work = This->Work;
+	work.g_y += This->TbarH;
+	work.g_h -= This->TbarH + This->IbarH;
+	containr_calculate (This->Pane, &work);
+	
+	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6;
+	if ((edit->Visible = work.g_w /8 -1) < 7) {
+		edit->Visible = 7;
+	}
+	This->TbarElem[TBAR_EDIT].Width = edit->Visible *8 +6;
+	if (edit->Length <= edit->Visible) {
+		edit->Shift = 0;
+	} else if (edit->Shift > edit->Length - edit->Visible) {
+		edit->Shift = edit->Length - edit->Visible;
+	} else if (edit->Shift < edit->Cursor - edit->Visible) {
+		edit->Shift = edit->Cursor - edit->Visible;
+	}
+	
+	return TRUE;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_iconified (HwWIND This)
+{
+	short mx, my, u;
+	
+	if (This->Base.isIcon) {
+		if (This->TbarActv == TBAR_EDIT) {
+			TBAREDIT * edit = TbarEdit (This);
+			edit->Cursor = 0;
+			edit->Shift  = 0;
+			chng_toolbar (This, 0, 0, -1);
+		}
+	} else {
+		if (wind_kind & (LFARROW|HSLIDE)) {
+			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+		}
+	}
+	graf_mkstate (&mx, &my, &u,&u);
+	check_mouse_position (mx, my);
+}
+
 
 /*============================================================================*/
 void
@@ -1425,23 +1370,6 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 	BOOL found = TRUE;
 	BOOL check = FALSE;
 	switch (msg[0]) {
-		case WM_MOVED:     hwWind_move    (This,  *(PXY*)(msg + 4)); break;
-		case WM_SIZED:     hwWind_resize  (This, (GRECT*)(msg + 4)); break;
-		case WM_FULLED:    hwWind_full    (This);                    break;
-		case WM_ICONIFY:
-			hwWind_iconify (This, (GRECT*)(msg + 4));
-			if (This->TbarActv == TBAR_EDIT) {
-				TBAREDIT * edit = TbarEdit (This);
-				edit->Cursor = 0;
-				edit->Shift  = 0;
-				chng_toolbar (This, 0, 0, -1);
-			}
-			check = TRUE;
-			break;
-		case WM_UNICONIFY:
-			hwWind_iconify (This, NULL);
-			check = TRUE;
-			break;
 		case WM_ARROWED:
 			switch (msg[4]) {
 				case WA_LFLINE:
@@ -1768,7 +1696,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		wind_update (END_MCTRL);
 		c[1].p_x = c[2].p_x - c[0].p_x +1;
 		c[1].p_y = c[2].p_y - c[0].p_y +1;
-		hwWind_resize (This, (GRECT*)c);
+		window_resize (&This->Base, (GRECT*)c, FALSE);
 		This = NULL;
 	
 	} else if (This->TbarActv == TBAR_EDIT) {

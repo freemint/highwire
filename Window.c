@@ -2,15 +2,20 @@
 #include <stdlib.h>
 #include <gem.h>
 
-#include "hw-types.h"
+#include "global.h"
 
 #define WINDOW_t WINDOW
 #include "Window.h"
+static void dummy_Void (void) {}
+static BOOL dummy_False(void) { return FALSE; }
 static BOOL vTab_evMessage (WINDOW, WORD msg[], PXY, UWORD);
 static void vTab_evButton  (WINDOW, WORD bmask, PXY, UWORD, WORD clicks);
 static void vTab_evKeybrd  (WINDOW, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_draw      (WINDOW, const GRECT *);
 static void vTab_raised    (WINDOW, BOOL topNbot);
+#define     vTab_moved     ((void(*)(WINDOW))dummy_Void)
+#define     vTab_sized     ((BOOL(*)(WINDOW))dummy_False)
+#define     vTab_iconified ((void(*)(WINDOW))dummy_Void)
 
 
 WINDOW window_Top = NULL;
@@ -33,6 +38,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->Widgets = widgets;
 		This->isModal = modal;
 		This->isIcon  = FALSE;
+		This->isFull  = FALSE;
 		This->Next = This->Prev = NULL;
 		
 		This->evMessage = vTab_evMessage;
@@ -41,6 +47,9 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->drawWork  = vTab_draw;
 		This->drawIcon  = vTab_draw;
 		This->raised    = vTab_raised;
+		This->moved     = vTab_moved;
+		This->sized     = vTab_sized;
+		This->iconified = vTab_iconified;
 		
 		if (widgets & NAME) {
 			wind_set_str (This->Handle, WF_NAME, "");
@@ -50,7 +59,6 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		}
 		if (curr) {
 			window_raise (This, TRUE, curr);
-			This->Curr = *curr;
 		} else {
 			This->Curr = desk_area;
 		}
@@ -100,6 +108,54 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 		case WM_REDRAW:   window_redraw (wind, (GRECT*)(msg + 4)); break;
 		case WM_TOPPED:   window_raise  (wind, TRUE,  NULL);       break;
 		case WM_BOTTOMED: window_raise  (wind, FALSE, NULL);       break;
+		
+		case WM_MOVED:
+			if (wind->isIcon) {
+				GRECT curr;
+				wind_get_grect (wind->Handle, WF_CURRXYWH, &curr);
+				curr.g_x = msg[4];
+				curr.g_y = msg[5];
+				wind_set_grect (wind->Handle, WF_CURRXYWH, &curr);
+			} else {
+				wind->Curr.g_x = msg[4];
+				wind->Curr.g_y = msg[5];
+				wind_set_grect (wind->Handle, WF_CURRXYWH, &wind->Curr);
+				wind->isFull = FALSE;
+				(*wind->moved)(wind);
+			}
+			break;
+		
+		case WM_FULLED:
+			if (wind->isFull) {
+				wind_get_grect (wind->Handle, WF_PREVXYWH, (GRECT*)(msg +4));
+			} else {
+				wind_get_grect (wind->Handle, WF_FULLXYWH, (GRECT*)(msg +4));
+				msg[0] = 0;
+			}
+		case WM_SIZED:
+			if (!wind->isIcon) {
+				window_resize (wind, (GRECT*)(msg +4), (msg[0] == 0));
+			}
+			break;
+		
+		case WM_ICONIFY:
+			if (wind->isFull) {
+				wind_get_grect (wind->Handle, WF_PREVXYWH, &wind->Curr);
+			}
+			wind_set_grect (wind->Handle, WF_ICONIFY, (GRECT*)(msg + 4));
+			wind->isIcon = TRUE;
+			(*wind->iconified)(wind);
+			break;
+		case WM_UNICONIFY:
+			wind_set_grect (wind->Handle, WF_UNICONIFY, &wind->Curr);
+			if (wind->isFull) {
+				wind_get_grect (wind->Handle, WF_FULLXYWH, &wind->Curr);
+				wind_set_grect (wind->Handle, WF_CURRXYWH, &wind->Curr);
+			}
+			wind->isIcon = FALSE;
+			(*wind->iconified)(wind);
+			break;
+		
 		default: return (*wind->evMessage)(wind, msg, mouse, kstate);
 	}
 	return TRUE;
@@ -220,7 +276,12 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	} else if (curr && !This->Next && !This->Prev) {
 		topNbot    = TRUE;
 		done       = TRUE;
-		This->Curr = *curr;
+		wind_set_grect (This->Handle, WF_CURRXYWH, curr);
+		if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
+		    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
+			This->Curr = *curr; /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
+		}                      /* if the window was created but not opend       */
+		(*This->sized)(This);
 		wind_open_grect (This->Handle, curr);
 	}
 	
@@ -278,5 +339,28 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	
 	if (done) {
 		(*This->raised)(This, topNbot);
+	}
+}
+
+/*============================================================================*/
+void
+window_resize (WINDOW This, const GRECT * curr, BOOL fulled)
+{
+	GRECT prev = This->Curr;
+	wind_set_grect (This->Handle, WF_CURRXYWH, curr);
+	wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr);
+	This->isFull = fulled;
+	if ((*This->sized)(This)) {
+		if (sys_XAAES()) {
+			WORD msg[8];
+			msg[0] = WM_REDRAW;
+			msg[1] = gl_apid;
+			msg[2] = 0;
+			msg[3] = This->Handle;
+			*(GRECT*)(msg +4) = prev;
+			appl_write (gl_apid, 16, msg);
+		} else if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
+			window_redraw (This, &prev);
+		}
 	}
 }

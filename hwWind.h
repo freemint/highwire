@@ -11,7 +11,6 @@ typedef struct hw_window * HwWIND;
 
 struct hw_window {
 	WINDOWBASE Base;
-	BOOL    isFull;
 	BOOL    shaded;
 	UWORD   isBusy;
 	UWORD   loading;
@@ -41,10 +40,6 @@ void   delete_hwWind (HwWIND);
 
 void hwWind_setName (HwWIND, const char *);
 void hwWind_setInfo (HwWIND, const char *, BOOL statNinfo);
-void hwWind_move    (HwWIND, PXY);
-void hwWind_resize  (HwWIND, const GRECT *);
-void hwWind_full    (HwWIND);
-void hwWind_iconify (HwWIND, const GRECT *);
 #define hwWind_raise(HwWIND, BOOL)      window_raise (&HwWIND->Base, BOOL, NULL)
 void hwWind_close   (HwWIND, UWORD state);
 void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);

@@ -13,6 +13,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	WINDOW Prev, Next; /* still private, keep away */
 	BOOL   isModal;
 	BOOL   isIcon;
+	BOOL   isFull;
 	GRECT  Curr;       /* outer extents of the window */
 	/***/
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
@@ -20,7 +21,10 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	void (*evKeybrd) (WINDOW_t, WORD scan, WORD ascii, UWORD kstate);
 	void (*drawWork)(WINDOW_t, const GRECT *);
 	void (*drawIcon)(WINDOW_t, const GRECT *);
-	void (*raised)(WINDOW_t, BOOL topNbot);
+	void (*raised)   (WINDOW_t, BOOL topNbot);
+	void (*moved)    (WINDOW_t);
+	BOOL (*sized)    (WINDOW_t);
+	void (*iconified)(WINDOW_t);
 } WINDOWBASE;
 
 #undef WINDOW_t
@@ -32,4 +36,5 @@ void window_evKeybrd  (UWORD key, UWORD kstate);
 
 void window_redraw (WINDOW, const GRECT *);
 
-void window_raise (WINDOW, BOOL topNbot, const GRECT *);
+void window_raise  (WINDOW, BOOL topNbot, const GRECT *);
+void window_resize (WINDOW, const GRECT *, BOOL fulled);
