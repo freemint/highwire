@@ -31,9 +31,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 		size_t count  = num;
 		while (count--) {
 			WORDITEM w = current->word;
-			int iw = (int)(info->Hash >>12) & 0x0FFF;
-			int ih = (int) info->Hash       & 0x0FFF;
-			sprintf (buf, "%s (%i*%i)", info->File, iw, ih);
+			int ic = (int)(info->Hash >>24) & 0x00FF; /* bgnd colour */
+			int iw = (int)(info->Hash >>12) & 0x0FFF; /* width       */
+			int ih = (int) info->Hash       & 0x0FFF; /* height      */
+			sprintf (buf, "%s (%i*%i,%02X)", info->File, iw, ih, ic);
 			render_text (current, buf);
 			line->word = current->prev_wrd;
 			line->len  = w->word_width;
