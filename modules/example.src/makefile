@@ -15,7 +15,7 @@ CPU = 68030
 #CPU = 68040
 #CPU = 68020-60
 
-DEFS = #-DLIBGIF -DUSE_INET
+DEFS = 
 
 OPTS = $(CPU:%=-m%) -fomit-frame-pointer -funsigned-char \
        -O2 -fstrength-reduce
@@ -32,7 +32,7 @@ INCLUDE = #-I/usr/GEM/include
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = 
-LIBS = -L/usr/GEM/lib -lgem -liio #-lungif -lsocket
+LIBS = -liio
 
 OBJDIR = obj$(CPU:68%=.%)
 

@@ -8,11 +8,10 @@
 
 PCSTART.O          ; startup code
 
-SAMPLE.C (ovl_sys.h, ..\..\ovl_sys.h)
+SAMPLE.C (..\..\ovl_sys.h)
 
 PCSTDLIB.LIB       ; standard library
 PCEXTLIB.LIB       ; extended library
 PCTOSLIB.LIB       ; TOS library
-PCGEMLIB.LIB       ; AES and VDI library
 
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
