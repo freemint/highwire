@@ -339,19 +339,16 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 						container = container->u.Child;
 						depth++;
 					}
-
+				
 				} else if (tag == TAG_FRAME) {
 					char output[100];
 					char frame_file[HW_PATH_MAX];
 
-					container->Mode   = CNT_FRAME;
-					container->Name   = get_value_str (parser, KEY_NAME);
-					container->Border = container->Parent->Border;
+					container->Mode = CNT_FRAME;
+					container->Name = get_value_str (parser, KEY_NAME);
 
 					if (get_value (parser, KEY_NORESIZE, NULL,0)) {
 						container->Resize = FALSE;
-					} else {
-						container->Resize = TRUE;
 					}
 
 					if (get_value (parser, KEY_SCROLLING, output, sizeof(output))) {
@@ -392,6 +389,20 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 				break;
 			}
 			if (container->Sibling) {
+				if (container->Border_Size) {
+					GRECT area;
+					containr_notify (container, HW_PageStarted, "");
+					containr_calculate (container, NULL);
+					area = container->Area;
+					if (container->Mode == CNT_CLD_H) {
+						area.g_y += area.g_h - container->Border_Size;
+						area.g_h =  container->Border_Size;
+					} else {         /* == CNT_CLD_V */
+						area.g_x += area.g_w - container->Border_Size;
+						area.g_w =  container->Border_Size;
+					}
+					containr_notify (container, HW_PageFinished, &area);
+				}
 				container = container->Sibling;
 			}
 		}
