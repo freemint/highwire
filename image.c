@@ -2158,6 +2158,12 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 				size_t scale = (size_t)y * y_mul + (info->IncYfx +1) /2;
 				short  y_beg =  scale          >>16;
 				short  y_end = (scale + y_mul) >>16;
+				if (y_end > img->disp_h) {
+					y_end = img->disp_h;
+					if (y_end > 0 && y_end <= y_beg) {
+						y_beg = y_end -1;
+					}
+				}
 				if (!(*img_rd)(info, buf)) {
 					img_rd = skip_corrupted;
 				}
