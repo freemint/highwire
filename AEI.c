@@ -798,6 +798,14 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 					hwWind_raise (wind, FALSE);
 					check = TRUE;
 					break;
+				case WM_ARROWED:
+					switch(msg[4])
+					{
+						case WA_LFLINE:
+							hwWind_undo (wind, FALSE);
+							break;
+					}
+					break;
 				case WM_CLOSED:
 					delete_hwWind (wind);
 					check = TRUE;
