@@ -333,8 +333,9 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					
 					WORD border = get_value_unum (parser, KEY_BORDER, -1);
 					if (border >= 0) {
-						container->BorderSize = border;
-					
+						if (border || !force_frame_controls) {
+							container->BorderSize = border;
+						}
 					} else {
 						char out[4];
 						if (get_value (parser, KEY_FRAMEBORDER, out, sizeof(out))) {
@@ -348,7 +349,9 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 							border = get_value_unum (parser, KEY_FRAMESPACING,
 							                         container->BorderSize);
 						}
-						container->BorderSize = border;
+						if (border || !force_frame_controls) {
+							container->BorderSize = border;
+						}
 					}
 					
 					if (!ignore_colours) {
@@ -393,7 +396,8 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 						container->Resize = FALSE;
 					}
 
-					if (get_value (parser, KEY_SCROLLING, output, sizeof(output))) {
+					if (!force_frame_controls &&
+					    get_value (parser, KEY_SCROLLING, output, sizeof(output))) {
 						if (stricmp (output, "yes") == 0) {
 							container->Scroll = SCROLL_ALWAYS;
 						} else if (stricmp (output, "no")  == 0) {
