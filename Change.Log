@@ -1,4 +1,4 @@
-(non-public of Aug. 20, 2004)
+Changes in V. 0.2.1 release  of August 22, 2004:
 
 - Cookie support implemented.  Non-session cookies
   are stored to disk to allow persistent user
@@ -17,25 +17,27 @@
 - Corrected calculation of UTC date/time values as
   needed for cache expiration.
 
+- The cache.idx file header structure got changed
+  to allow version checking for possibly changed
+  cache structure.  In this case the cache will be
+  emptied to avoid messed up data.
+  Some bugfixes to avoid orphaned cache files.
+
 - Bugfix for anchors inside of tables which got
   lost when more than one was defined.
 
 - Added handling for wrong opend/closed formulars
   regarding table structures.
 
-- Checking for proper font settings added to avoid
-  bad formatted text input fields.
+- Checking for proper font settings in the cfg
+  file added to avoid bad formatted text input
+  fields.
 
 - Crashing bug fixed which occured with interlaced
   24bit PNGs.
 
 - Support for 1/2/4bit grayscale PNGs added along
   with speed improvement for interlaced images.
-
-- The cache.idx file header structure got changed
-  to allow version checking for possibly changed
-  cache structure.  In this case the cache will be
-  emptied to avoid messed up data.
 
 - Workaround for the Lattice compiler bitfield
   bug.
