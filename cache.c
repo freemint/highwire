@@ -539,6 +539,26 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 }
 
 /*----------------------------------------------------------------------------*/
+static void
+exit_flush (void)
+{
+	CACHEITEM citem = __cache_beg;
+	BOOL      flush = FALSE;
+	time_t    locl  = time (NULL);
+	while (citem && citem->Object) {
+		CACHEITEM next = citem->NextItem;
+		if (!item_isMem(citem) && citem->Expires && citem->Expires < locl) {
+			destroy_item (citem);
+			flush = TRUE;
+		}
+		citem = next;
+	}
+	if (flush) {
+		cache_flush (NULL, __cache_dir);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
 static long
 read_hex (char ** ptr)
 {
@@ -660,6 +680,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 			if (ndel) {
 				cache_flush (NULL, __cache_dir);
 			}
+			atexit (exit_flush);
 		}
 	}
 	
