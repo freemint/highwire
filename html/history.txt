@@ -1,5 +1,123 @@
 Ok here are the new supports and changes
 
+February 19, 2003
+
+  Baldrick's patches
+  
+  HWWIND.C
+    - lines 42 & 44 added HSLIDE to kind
+    - line 101 set HSLSIZE to 1000 (or full)
+    
+February 18, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 110 + 127 (new_image) + 856 + 882:  new rasterizer functions
+      raster_24r() and raster_32r() to support screen graphic formats
+      with reversed byte order (intel's illness).
+
+  modules\example.src\makefile:  line 67:
+  modules\network.src\makefile:  line 67:
+    - decreased stack size setting to 8kB, this saves more than 100kB
+      at runtime.
+
+February 16, 2003
+
+  AltF4's patches
+
+  inet.h:
+    - line 5:  struct INET_FTAB is declared here now.
+    - line 15:  added defines for funtion table calls.
+
+  inet.c:
+    - line 3:  undef USE_OVL to get the right declarations from inet.h.
+    - line 22..36:  moved struct INET_FTAB declaration to inet.h,
+      inet_ftab is now a structure rather than a pointer.
+    - line 41..43 (ovl_invalid):  copy back default functions when the
+      OVL got removed.
+    - line 54 (ovl_load):  additional check for the correct ftab type.
+    - line 63:  new default functions for loading the OVL on demand.
+    - line 143 + 183 + 212 + 276 + 306 + 324:  removed all of the
+      #elif defined(USE_OVL)  because OVL calls are done now directly
+      through the function table.
+
+  ovl_sys.c:
+    - line 16 + 21:  corrected include path.
+
+  modules\network.src\network.c:
+    - line 22..30:  moved struct INET_FTAB declaration to inet.h.
+
+February 14, 2003
+
+  AltF4's patches
+
+  inet.c:
+    - line 55 (ovl_load):  overworked handling of failed OVL
+      initialization
+
+  ovl_sys.h:                     line 35 + 57
+  modules/example.src/sample.c:  line 30 + 79 + 83:
+  modules/example.src/network.c: line 35 + 75 + 86:
+    - moved declaration of base OVL functions to ovl_sys.h, changed the
+      return type of ovl_getftab() to void*.
+
+  p_about.c:
+    - line 120 + 190 (about_highwire):  added ifdefs.
+
+  render.c:
+    - line 250..271 (render_FRAMESET_tag):  overworked handling of
+      <frameset> tags that has both COLS and ROWS set.
+
+February 8, 2003
+
+  AltF4's patches
+
+  ovl_sys.h:
+    - line 23 + 54 + 55:  in struct ovl_methods_t, reverted attribute
+      magic back to a simple long instead of union, due to OVL_MAGIC
+      being a number now.
+
+  ovl_sys.c:
+    - line 141 + 144 (load_ovl):  compare *ptr directly with OVL_MAGIC.
+    - line 151 + 153:  magic is a long now.
+    - line 200:  also Mfree() the OVL's env if detection failed.
+
+  http.c:
+    - line 164 (content_length):  corrected starting point of number to
+      be interpreted.
+    - line 260 + 264 + 269 (http_header):  get the stack type from
+      inet_info() instead of a constant string.
+
+February 7, 2003
+
+  AltF4's patches
+
+  global.h:
+    - line 169:  destroy_word_structure() renamed to destroy_word_list
+      and added a second attribute.
+
+  list.c:
+    - 59 (list_finish):  destroy_word_structure() renamed to
+      destroy_word_list().
+
+  Paragrph.c:
+    - line 28 (destroy_paragraph_structure) + 598 (content_destroy):
+      destroy_word_structure() renamed to destroy_word_list().
+    - line 610:  punch() removed.
+    - line 632..636 + 662..664 + 690..692 + 711..713 + 721..723
+      + 743..745 + 755..776 (content_minimum):  removed old no more
+      working debug stuff.
+    - line 631 + 661 + 688 + 710 + 720 + 747:  removed variable trash,
+     replaced calls of punch() by destroy_word_list().
+
+  W_Struct.c:
+    - line 58..61 + 77 (destroy_word_list):  additional argument to
+      determine the last word_item of a list to be deleted, a NULL
+      means all from start on.
+    - line 67:  additional check to avoid link structures from getting
+      deleted if they are still in use by other word_items.
+
 February 7, 2003
 
   Baldrick's patches
