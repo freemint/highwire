@@ -217,20 +217,24 @@ font_step2size (struct font_step * fontstep, WORD step)
 		WORD s = font_size;
 
 #if 1
-		size[0] = s - s / 3;    /*  7  8  8  9 10 10 11 12 */
-		size[1] = s - s / 5;    /*  8  9 10 11 12 12 13 15 */
-		size[2] = s - s / 8;    /*  9 10 11 12 13 14 14 16 */
-		size[3] = s;            /* 10 11 12 13 14 15 16 18 */
-		for (i = 4; i <= 7; i++)
-			size[i] = s += s / 6;  /* < 18: 2-point step, ò 18: 3-point step */
+		size[0] = max (s - s / 3, font_minsize);    /*  7  8  8  9 10 10 11 12 */
+		size[1] = max (s - s / 5, font_minsize);    /*  8  9 10 11 12 12 13 15 */
+		size[2] = max (s - s / 8, font_minsize);    /*  9 10 11 12 13 14 14 16 */
+		size[3] = max (s,         font_minsize);    /* 10 11 12 13 14 15 16 18 */
+		for (i = 4; i <= 7; i++) {
+			s += s / 6;  /* < 18: 2-point step, ò 18: 3-point step */
+			size[i] = max (s, font_minsize);
+		}
 #else
-		size[0] = s - (s / 2);  /*  5  6  7  7  7  8  8  9 */
-		size[1] = s - (s / 3);  /*  7  8  8  9 10 10 11 12 */
-	/*	size[2] = s - (s / 6);*//*  9 10 10 11 12 13 14 15 */
-		size[2] = (s+size[1]) /2;/* 8  9 10 11 12 12 13 15 */
-		size[3] = s;            /* 10 11 12 13 14 15 16 18 */
+		size[0] = max (s - (s / 2), font_minsize);  /*  5  6  7  7  7  8  8  9 */
+		size[1] = max (s - (s / 3), font_minsize);  /*  7  8  8  9 10 10 11 12 */
+	/*	size[2] = max (s - (s / 6), font_minsize);*//*  9 10 10 11 12 13 14 15 */
+		size[2] = max ((s+size[1]) /2, font_minsize);/* 8  9 10 11 12 12 13 15 */
+		size[3] = max (s,           font_minsize);  /* 10 11 12 13 14 15 16 18 */
 		for (i = 4; i <= 7; i++)
-			size[i] = (s += 2);  /* 2-point step */
+			s += 2;  /* 2-point step */
+			size[i] = max (s, font_minsize);
+		}
 #endif
 	}
 
