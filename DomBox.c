@@ -401,6 +401,33 @@ dombox_reorder (DOMBOX * This, DOMBOX * behind)
 	}
 }
 
+/*============================================================================*/
+void
+dombox_adopt (DOMBOX * This, DOMBOX * stepchild)
+{
+	DOMBOX * parent = stepchild->Parent;
+	if (stepchild == parent->ChildBeg) {
+		if ((parent->ChildBeg = stepchild->Sibling) == NULL) {
+			parent->ChildEnd = NULL;
+		}
+	} else {
+		DOMBOX * before = parent->ChildBeg;
+		while (before->Sibling != stepchild) {
+			if ((before = before->Sibling) == NULL) {
+				puts ("dombox_adopt(): not in chain!");
+				return;
+			}
+		}
+		if ((before->Sibling = stepchild->Sibling) == NULL) {
+			parent->ChildEnd = before;
+		}
+	}
+	if (This->ChildEnd) This->ChildEnd->Sibling = stepchild;
+	else                This->ChildBeg          = stepchild;
+	This->ChildEnd    = stepchild;
+	stepchild->Parent = This;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static void
