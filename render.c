@@ -2966,17 +2966,24 @@ parse_plain (void * arg, long invalidated)
 				symbol++;
 			line_break:
 				if (current->text > current->buffer) {
+					/* new text line for the current paragraph */
 					current->word->line_brk = BRK_LN;
 					new_word (current, TRUE);
 				
-				} else if (!current->prev_par) {
-					current->paragraph->Box.Margin.Top += linefeed;
+				} else if (current->prev_wrd) {
+					/* empty line after some text, creates a new paragraph */
+					add_paragraph(current, 0);
+					current->prev_par->Box.Margin.Bot += linefeed;
+				
+				} else if (current->prev_par) {
+					/* subsequent empty lines spread the gap between the previous *
+					 * paragraph with text and the actual empty paragraphp        */
+					current->prev_par->Box.Margin.Bot += linefeed;
 				
 				} else {
-					if (current->prev_wrd) {
-						add_paragraph(current, 0);
-					}
-					current->prev_par->Box.Margin.Bot += linefeed;
+					/* empty lines at the very beginning of the text increase the *
+					 * top margin of the yet still empty only paragraph           */
+					current->paragraph->Box.Margin.Top += linefeed;
 				}
 		}
 	}
