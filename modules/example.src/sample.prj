@@ -2,7 +2,7 @@
 
 ..\SAMPLE.OVL
 .C [ -P -M]			;  ... -Y was in for debug info
-.L [ -L -V]			; -Y was in for debug info
+.L [ -L -V -S=1024]	; -Y was in for debug info
 .S [ -V ]			; -Y was in for debug info
 =                  ; list of modules follows...
 
