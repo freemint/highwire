@@ -23,8 +23,9 @@ static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
 
-HwWIND hwWind_Top   = NULL;
-HwWIND hwWind_Focus = NULL;
+WORD   hwWind_Mshape = ARROW;
+HwWIND hwWind_Top    = NULL;
+HwWIND hwWind_Focus  = NULL;
 
 
 static void set_size (HwWIND, const GRECT *);
@@ -561,7 +562,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				if (wind->isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
-					graf_mouse (BUSYBEE, NULL);
+					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
 			}
 		case HW_SetTitle:
@@ -580,7 +581,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				if (wind->isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
-					graf_mouse (BUSYBEE, NULL);
+					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
 			}
 #if (_HIGHWIRE_INFOLINE_==TRUE)

@@ -40,6 +40,7 @@ void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);
 void hwWind_history (HwWIND, UWORD menu);
 void hwWind_undo    (HwWIND, BOOL redo);
 
+extern WORD   hwWind_Mshape;
 extern HwWIND hwWind_Top;
 extern HwWIND hwWind_Focus;
 HwWIND  hwWind_byValue  (long);
