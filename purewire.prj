@@ -10,13 +10,14 @@
 HIGHWIRE.PRG
 ;
 
-.C [-K -P -DLIBGIF -DUSE_INET]
+.C [-K -P -DLIBGIF -DUSE_INET -DUSE_OVL]
 .S [] ; -Y]
 .L [-S=16384]
 =
 PCSTART.O
 ;
-modules\example.src\sample.prj
+;modules\network.src\purec.prj
+;modules\example.src\sample.prj
 ;
 HighWire.c (global.h,defs.h,hw-types.h,highwire.h, Logging.h,schedule.h,hwWind.h)
 AEI.c      (global.h,defs.h,hw-types.h,highwire.h, Containr.h,Loader.h,Location.h,Logging.h,hwWind.h,av_comm.h)
