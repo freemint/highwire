@@ -119,12 +119,14 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 				         tm->tm_hour, tm->tm_min, tm->tm_sec);
 				render_text (current, buf);
-				if (info->Expires) {
+				if (info->Expires > 0) {
 					tm = localtime ((time_t*)&info->Expires);
 					sprintf (buf, "expires:%04i-%02i-%02i %02i:%02i:%02i",
 					         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 					         tm->tm_hour, tm->tm_min, tm->tm_sec);
 					render_text (current, buf);
+				} else if (info->Expires) { /* < 0 */
+					render_text (current, "(no-cache)");
 				}
 			}
 			current->prev_wrd->line_brk = BRK_LN;
