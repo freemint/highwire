@@ -24,11 +24,6 @@ static DECODER _decoder_png = {
 #define DECODER_CHAIN &_decoder_png
 
 
-BOOL   first_pass;
-ULONG  rowbytes;	
-CHAR * png_image, * png_image_ptr;
-
-
 /*----------------------------------------------------------------------------*/
 static BOOL
 decPng_start (const char * name, IMGINFO info)
@@ -37,8 +32,6 @@ decPng_start (const char * name, IMGINFO info)
 	png_infop   info_ptr = NULL;
 	char header[8];
 	FILE * file = fopen (name, "rb");
-
-	png_image = NULL;
 	
 	if (!file) {
 	/*	puts ("decPng_start(): file not found.");*/
@@ -99,8 +92,8 @@ decPng_start (const char * name, IMGINFO info)
 	info->Interlace  = 0;
 	
 	if (info_ptr->interlace_type == PNG_INTERLACE_ADAM7) {
-		info->read = decPng_readi;
-		first_pass = TRUE;
+		info->RowBytes = png_get_rowbytes (png_ptr, info_ptr);
+		info->read     = decPng_readi;
 	}
 	return TRUE;
 }
@@ -122,39 +115,33 @@ static BOOL
 decPng_readi (IMGINFO info, char * buffer)
 {
 	png_structp png_ptr  = info->_priv_data;
-	png_infop   info_ptr = info->_priv_more;
+	
+	(void)buffer;
 
 	if (setjmp (png_jmpbuf (png_ptr))) {
 		return FALSE;
 	}
 	
-	/* We make the first pass here and not before to avoid memory fragmentation */
-	if (first_pass == TRUE) {
-		int pass, number_passes = png_set_interlace_handling (png_ptr);
-
+	if (!png_ptr->row_number) {
+		png_infop   info_ptr      = info->_priv_more;
+		ULONG       rowbytes      = info->RowBytes;	
+		png_bytep * rowptrs       = info->RowMem;
+		png_bytep   row           = info->RowBuf;
+		int         number_passes = png_set_interlace_handling (png_ptr), pass, y;
+		
 		png_read_update_info (png_ptr, info_ptr);
-
-		rowbytes  = png_get_rowbytes (png_ptr, info_ptr);
-		png_image = malloc (rowbytes * info->ImgHeight);
-        
-		if ((png_image_ptr = png_image) == NULL)
-			return FALSE;
-
-		for (pass = 0; pass < number_passes - 1; pass++) {
-			int y;
-			for (y = 0; y < info->ImgHeight; y++) {
-				png_bytep row = png_image + y * rowbytes;
-				png_read_rows (png_ptr, &row, NULL, 1);
-			}
+		
+		/* setup row pinter array */
+		for (y = 0; y < info->ImgHeight; rowptrs[y++] = row, row += rowbytes);
+		
+		for (pass = 0; pass < number_passes -1; pass++) {
+			png_read_rows (png_ptr, rowptrs, NULL, info->ImgHeight);
 		}
-		first_pass = FALSE;
-	}
 	
-	(void)buffer;
-	info->RowBuf = png_image_ptr;
-
-	png_read_rows (png_ptr, &png_image_ptr, NULL, 1);
-	png_image_ptr += rowbytes;		
+	} else {
+		info->RowBuf += info->RowBytes;
+	}
+	png_read_rows (png_ptr, (png_bytep*)&info->RowBuf, NULL, 1);
 
 	return TRUE;
 }
@@ -166,9 +153,6 @@ decPng_quit  (IMGINFO info)
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
 	if (png_ptr) {
-		if (png_image) {
-			free (png_image);
-		}
 		if (!setjmp (png_jmpbuf (png_ptr))) {
 			png_read_end         (png_ptr,  info_ptr);
 		}
