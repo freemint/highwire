@@ -1832,7 +1832,11 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			current->paragraph->paragraph_code = PAR_IMG;
 			current->paragraph->Box.BoxClass   = BC_SINGLE;
 			current->paragraph->Box.HtmlCode   = TAG_IMG;
-			current->paragraph->Box.Floating   = floating;
+			if (floating == ALN_CENTER) {
+				current->paragraph->Box.Floating = floating;
+			} else {
+				current->paragraph->Box.Floating = floating|FLT_MASK;
+			}
 			box_frame (parser, &current->paragraph->Box.Margin, CSS_MARGIN);
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
@@ -1935,7 +1939,17 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 					current->prev_wrd->word_tail_drop = 0;
 					current->prev_wrd->line_brk = clear;
 				} else {
-					current->paragraph->Box.Padding.Top += size;
+					DOMBOX * box = &current->prev_par->Box;
+					while (box) {
+						if (box->Sibling == &current->paragraph->Box) {
+							box->Margin.Bot += size;
+							break;
+						}
+						box = box->Sibling;
+					}
+					if (!box) {
+						current->paragraph->Box.Margin.Top += size;
+					}
 				}
 			}
 		}
@@ -2280,13 +2294,12 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	} else {
 		DOMBOX * box = leave_box (parser, TAG_DIV);
-		if (box           && box->Floating           == ALN_NO_FLT &&
-		    box->ChildBeg && box->ChildBeg->Floating != ALN_NO_FLT &&
-		    box->ChildBeg == box->ChildEnd) {
-			/* If there is only one child object the parent needs to inherit *
-			 * the child's float attribute to get proper formatted.          */
-			box->Floating = box->ChildBeg->Floating;
-			dombox_MaxWidth (box);
+		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
+		                box->ChildBeg == box->ChildEnd ? box->ChildBeg : NULL);
+		if (cld && (cld->Floating == (FLT_LEFT) || cld->Floating == (FLT_RIGHT))
+		        && dombox_MinWidth (cld) == dombox_MaxWidth (cld)) {
+			box->SetWidth = dombox_MinWidth (box);
+			box->Floating = cld->Floating;
 		}
 	}
 	
@@ -2604,13 +2617,15 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (padding < 0) {
 			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
-		if (floating == ALN_NO_FLT) {
-			if (get_v_align (parser, -1) == ALN_MIDDLE) {
-				floating = ALN_CENTER; /* patch for invalid key value */
-			} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
-				        parser->Current.parentbox->TextAlign == ALN_CENTER) {
-				floating = parser->Current.parentbox->TextAlign;
-			}
+		if (floating != ALN_NO_FLT) {
+			if (floating != ALN_CENTER) floating |= FLT_MASK;
+		} else if (get_v_align (parser, -1) == ALN_MIDDLE) {
+			floating = ALN_CENTER; /* patch for invalid key value */
+		} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
+			        parser->Current.parentbox->TextAlign == ALN_CENTER) {
+			floating = parser->Current.parentbox->TextAlign;
+		} else {
+			floating = ALN_LEFT;
 		}
 		table_start (parser,
 		             get_value_color (parser, KEY_BGCOLOR), floating,
