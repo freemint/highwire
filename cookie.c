@@ -26,6 +26,28 @@ static COOKIEJAR jar_list = NULL;
 
 
 /*----------------------------------------------------------------------------*/
+static COOKIEJAR
+create_jar (const char * hst_ptr, size_t hst_len,
+            const char * dmn_ptr, size_t dmn_len)
+{
+	COOKIEJAR jar = malloc (sizeof (struct s_cookie_jar) + dmn_len);
+	if (jar) {
+		int i;
+		for (i = 0; i < dmn_len; i++) {
+			jar->DomainStr[i] = tolower (dmn_ptr[i]);
+		}
+		jar->DomainStr[dmn_len] = '\0';
+		jar->DomainLen          = dmn_len;
+		jar->HostStr            = hst_ptr;
+		jar->HostLen            = hst_len;
+		memset (jar->Cookie, 0, sizeof (jar->Cookie));
+		jar->Next = NULL;
+	}
+	return jar;
+}
+
+
+/*----------------------------------------------------------------------------*/
 static long
 parse (const char * str, long len,
        const char ** key_p, long * k_len, const char ** val_p, long * v_len)
@@ -230,24 +252,13 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 				jar = jar->Next;
 			}
 		}
-		if (!jar && !ck_remv) {
-			jar = malloc (sizeof (struct s_cookie_jar) + dmn_len);
-			if (jar) {
-				int i;
-				for (i = 0; i < dmn_len; i++) {
-					jar->DomainStr[i] = tolower (dmn_ptr[i]);
-				}
-				jar->DomainStr[dmn_len] = '\0';
-				jar->DomainLen          = dmn_len;
-				jar->HostStr = host_ptr;
-				jar->HostLen = host_len;
-				memset (jar->Cookie, 0, sizeof (jar->Cookie));
-				jar->Next = jar_list;
-				jar_list  = jar;
-			#ifdef DEBUG
-				_dbg_new  = TRUE;
-			#endif
-			}
+		if (!jar && !ck_remv &&
+		    (jar = create_jar (host_ptr, host_len, dmn_ptr, dmn_len)) != NULL) {
+			jar->Next = jar_list;
+			jar_list  = jar;
+	#ifdef DEBUG
+			_dbg_new  = TRUE;
+	#endif
 		}
 	}
 	if (jar) {
