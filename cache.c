@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <time.h>
 
 #ifdef __PUREC__
 # include <tos.h>
@@ -21,6 +23,11 @@
 
 typedef struct s_cache_item * CACHEITEM;
 typedef struct s_cache_node * CACHENODE;
+
+static void file_dtor    (void *);
+static BOOL cache_flush  (CACHEITEM, LOCATION);
+static BOOL cache_remove (long num, long use);
+
 
 struct s_cache_item {
 	CACHENODE Node;
@@ -48,8 +55,10 @@ static size_t    __cache_mem_num = 0;
 static size_t    __cache_dsk_use = 0;
 static size_t    __cache_dsk_max = 5L*1024*1024;
 static size_t    __cache_dsk_num = 0;
-static size_t    __cache_dsk_lim = 300;
+static size_t    __cache_dsk_lim = 500;
 static LOCATION  __cache_dir = NULL;
+static long      __cache_fid = 1;
+static BOOL      __cache_idx = TRUE;
 
 struct s_cache_node {
 	CACHENODE BackNode;
@@ -429,6 +438,9 @@ cache_release (CACHED * p_object, BOOL erase)
 							return NULL;
 						}
 /*<<<<<<<<<< DEBUG */
+						if (!citem->inMem) {
+							cache_flush (NULL, __cache_dir);
+						}
 						(*citem->dtor)(citem->Object);
 					} else {
 						object = citem->Object;
@@ -453,6 +465,7 @@ size_t
 cache_clear (CACHED this_n_all)
 {
 	size_t    num   = 0;
+	size_t    dsk   = 0;
 	CACHEITEM citem = __cache_beg;
 
 	while (citem) {
@@ -465,12 +478,18 @@ cache_clear (CACHED this_n_all)
 				return 0uL;
 			}
 /*<<<<<<<<<< DEBUG */
+			if (!citem->inMem) {
+				dsk++;
+			}
 			(*citem->dtor)(citem->Object);
 			destroy_item (citem);
 			num++;
 			if (this_n_all) break;
 		}
 		citem = next;
+	}
+	if (dsk) {
+		cache_flush (NULL, __cache_dir);
 	}
 	return num;
 }
@@ -508,10 +527,71 @@ cache_info (size_t * size, CACHEINF * p_info)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+cache_flush (CACHEITEM citem, LOCATION loc)
+{
+	FILE * file;
+	BOOL   single;
+	
+	if (citem) {
+		file   = fopen (loc->FullName, "rb+");
+		single = TRUE;
+	} else {
+		citem  = __cache_end;
+		file   = fopen (loc->FullName, "wb");
+		single = FALSE;
+	}
+	if (!file) {
+		puts ("cache_flush(): open failed.");
+		return FALSE;
+	}
+	if (!__cache_dsk_num) {
+		__cache_fid = 1;
+	}
+	fprintf (file, "%08lX\n", __cache_fid);
+	if (single) {
+		fseek (file, 0, SEEK_END);
+	} else {
+		location_wrIdx (NULL, NULL); /* reset location database */
+	}
+	while (citem) {
+		if (!citem->inMem && citem->Cached[0] && citem->dtor) {
+			if (location_wrIdx (file, citem->Location)) {
+				fprintf (file, "$%08lX$%08lX$%08lX$/%s\n",
+				         citem->Size, citem->Date, citem->Expires, citem->Cached);
+				if (single) break;
+			}
+		} else if (single) {
+			puts ("cache_flush(): invalid item.");
+			break;
+		}
+		citem = citem->PrevItem;
+	}
+	fclose (file);
+	
+	if (!single) {
+		__cache_idx = FALSE;
+	}
+	return TRUE;
+}
+
+/*----------------------------------------------------------------------------*/
+static long
+read_hex (char ** ptr)
+{
+	char * p = (**ptr == '$' ? *ptr + 1 : NULL);
+	long   n = (p ? strtol (p, &p, 16) : -2);
+	if (p > *ptr +1 && *p == '$') *ptr = p;
+	return n;
+}
+
 /*============================================================================*/
 void
 cache_setup (const char * dir, size_t mem_max)
 {
+	FILE * file = NULL;
+	
 	if (!__cache_mem_max && !mem_max) {
 		mem_max = CACHE_MAX;
 	}
@@ -532,13 +612,80 @@ cache_setup (const char * dir, size_t mem_max)
 		}
 		strcpy (p, "cache.idx");
 		if ((loc = new_location (buf, NULL)) != NULL) {
-			int fh;
+			char hdr[16];
 			location_FullName (loc, buf, sizeof(buf));
-			if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
-				close (fh);
+			if ((file = fopen (buf, "rb")) != NULL
+			    && fgets (hdr, (int)sizeof(hdr) -1, file)) {
+				long num = strtol (hdr, &p, 16);
+				if ((num > 0) && (p == hdr +8) && ((*p == '\n') || (*p == '\r'))) {
+					__cache_fid = num;
+					__cache_dir = loc;
+				} else {
+					fclose (file);
+					file = NULL;
+				}
+			} else if (cache_flush (NULL, loc)) {
 				__cache_dir = loc;
 			} else {
 				free_location (&loc);
+			}
+		}
+		if (file) {
+			time_t locl = time (NULL);
+			long   ndel = 0;
+			while (!feof (file)) {
+				loc = location_rdIdx (file);
+				if (!fgets (buf, (int)sizeof(buf) -1, file)) {
+					if (loc) {
+						puts ("cache_setup(): idx truncated.");
+						free_location (&loc);
+					}
+				} else {
+					char * ptr  = buf;
+					long   size = read_hex (&ptr);
+					long   date = read_hex (&ptr);
+					long   expr = read_hex (&ptr);
+					size_t len  = strlen   (++ptr);
+					while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
+					if (size < 0 || date < 0 || expr < -1) {
+						puts ("cache_setup(): idx corrupted.");
+						free_location (&loc);
+						break;
+					} else if (!loc) { /* outdated or invalid */
+						loc = new_location (ptr +1, __cache_dir);
+						unlink (loc->FullName);
+						free_location (&loc);
+						ndel++;
+					} else if (expr && expr <= locl) { /* Expired */
+						unlink (loc->FullName);
+						loc = new_location (ptr +1, __cache_dir);
+						unlink (loc->FullName);
+						free_location (&loc);
+						ndel++;
+					} else {
+						CACHEITEM item = create_item (loc, NULL, size, file_dtor);
+						if (!item) {
+							puts ("cache_setup(): create failed.");
+							free_location (&loc);
+							break;
+						} else {
+							strcpy (item->Cached, ptr +1);
+							item->Date    = date;
+							item->Expires = expr;
+							item->Reffs--;
+						}
+					}
+				}
+			}
+			fclose (file);
+			if (ndel) {
+				printf ("%li expired.\n", ndel);
+				cache_flush (NULL, __cache_dir);
+			}
+			if (__cache_dsk_num > __cache_dsk_lim ||
+			    __cache_dsk_use > __cache_dsk_max) {
+				cache_remove (__cache_dsk_num - __cache_dsk_lim,
+				              __cache_dsk_use - __cache_dsk_max);
 			}
 		}
 	}
@@ -630,8 +777,6 @@ LOCATION
 cache_assign (LOCATION src, void * data, size_t size,
               const char * type, long date, long expires)
 {
-	static long _file_id = 0;
-	
 	LOCATION  loc   = NULL;
 	CACHEITEM citem = tree_item (src);
 	
@@ -649,7 +794,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 			short  n = 15; /* 5bit * (4 -1) = one million possible files, */
 			do {           /* should be enough                            */
 				static const char * base32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-				*(p++) = base32[(_file_id >>n) & 0x1F];
+				*(p++) = base32[(__cache_fid >>n) & 0x1F];
 			} while ((n -= 5) >= 0);
 			if (type && *type) {
 				*(p++) = '.';
@@ -661,13 +806,16 @@ cache_assign (LOCATION src, void * data, size_t size,
 			    __cache_dsk_use + size > __cache_dsk_max) {
 				cache_remove (__cache_dsk_num +1 - __cache_dsk_lim,
 				              __cache_dsk_use + size - __cache_dsk_max);
+				n = TRUE;
+			} else {
+				n = FALSE;
 			}
 			loc = new_location (citem->Cached, __cache_dir);
 			location_FullName (loc, buf, sizeof(buf));
 			if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
 				write (fh, data, size);
 				close (fh);
-				_file_id++;
+				__cache_fid++;
 				citem->Object  = location_share (loc);
 				citem->dtor    = file_dtor;
 				citem->Size    = size;
@@ -675,6 +823,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				citem->Expires = expires;
 				citem->Reffs--;
 				__cache_dsk_use += size;
+				cache_flush ((n ? NULL : citem), __cache_dir);
 			} else {
 				free_location (&loc);
 			}
