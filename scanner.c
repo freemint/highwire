@@ -181,10 +181,9 @@ scan_css (const char ** pptr, size_t length)
 		char c = *line;
 		if (c == '-' && len) {
 			buf[len++] = '_';
-		} else if (isalpha (c = *line)) {
+		} else if (isalpha (c)) {
 			buf[len++] = toupper(c);
 		} else {
-			length -= len;
 			break;
 		}
 		if (len >= sizeof(buf)) {
@@ -195,6 +194,7 @@ scan_css (const char ** pptr, size_t length)
 		}
 		line++;
 	}
+	length -= len;
 	
 	if (len) {
 		int beg = 0;
