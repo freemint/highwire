@@ -146,6 +146,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 	word->wrap        = FALSE;
 	word->image       = NULL;
 	word->input       = NULL;
+	word->line        = NULL;
 	word->next_word   = NULL;
 	
 	current->prev_wrd = copy_from;
