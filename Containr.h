@@ -71,6 +71,7 @@ struct s_containr {
 	                         * of -1024                                        */
 	void      * HighLight;
 	BOOL        Border; /* as given from the <.. BORDER=".." tag   */
+	BOOL 		Resize; /* as given from the <.. RESIZE tag        */
 	SCROLL_CODE Scroll; /* as given from the <.. SCROLLING=".."tag */
 		
 	CNTR_HDLR Handler;

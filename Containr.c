@@ -221,6 +221,7 @@ containr_setup (CONTAINR cont, FRAME frame, const char * anchor)
 		cont->u.Frame = frame;
 		frame->Container = cont;
 		frame->border    = cont->Border;
+		frame->resize    = cont->Resize;
 		frame->scroll    = cont->Scroll;
 		frame_calculate (frame, &cont->Area);
 		if (anchor) {
