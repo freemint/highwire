@@ -540,7 +540,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	while (box) {
 		long set_width = width;
-		BOOL floating  = FALSE;
+		BOOL floating  = (box->Floating != ALN_NO_FLT);
+		
+		box->Rect.X = dombox_LftDist (This);
+		box->Rect.Y = height;
 		
 		if (box->ClearFlt) {
 			L_BRK clear = box->ClearFlt & ~BRK_LN;
@@ -556,33 +559,30 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				}
 				blocker->R.bottom = blocker->R.width = 0;
 			}
+			box->Rect.Y = height;
 		}
-		box->Rect.X = dombox_LftDist (This);
-		box->Rect.Y = height;
 		
-		if (box->Floating != ALN_NO_FLT) {
+		if (floating) {
 			long blk_width = width - blocker->L.width - blocker->R.width;
-			if (box->BoxClass != BC_SINGLE
-			    && !box->SetWidth && (box->Floating & FLT_MASK)) {
-				long max_width = dombox_MaxWidth (box);
-				if (blk_width > max_width) {
-					blk_width = max_width;
-				}
-			}
 			if (box->MinWidth > blk_width) {
 				if (height < blocker->L.bottom) height = blocker->L.bottom;
 				if (height < blocker->R.bottom) height = blocker->R.bottom;
-				box->Rect.Y = height;
 				blocker->L.bottom = blocker->L.width =
 				blocker->R.bottom = blocker->R.width = 0;
+				box->Rect.Y = height;
 			} else {
-				if ((box->Floating & ~FLT_MASK) == ALN_LEFT) {
-					box->Rect.X += blocker->L.width;
-				}
 				set_width = blk_width;
-				floating  = TRUE;
 			}
 		}
+		
+		if ((box->Floating & FLT_MASK) && !box->SetWidth &&
+		    (box->BoxClass >= BC_GROUP && box->BoxClass != BC_SINGLE)) {
+			long max_width = dombox_MaxWidth (box);
+			if (set_width > max_width) {
+				set_width = max_width;
+			}
+		}
+		
 		if (floating) {
 			struct blocking_area empty = { {0, 0}, {0, 0} };
 			box->_vtab->format (box, set_width, &empty);
@@ -591,36 +591,42 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		}
 		
 		switch (box->Floating) {
-			case FLT_LEFT: {
-				long new_bottom = height + box->Rect.H;
-				if (blocker->L.bottom < new_bottom)
-					 blocker->L.bottom = new_bottom;
-				blocker->L.width += box->Rect.W;
-			}	break;
-			case FLT_RIGHT: {
-				long new_bottom = height + box->Rect.H;
-				if (blocker->R.bottom < new_bottom)
-					 blocker->R.bottom = new_bottom;
-				blocker->R.width += box->Rect.W;
-			}
-			case ALN_RIGHT:
+			case FLT_RIGHT:
 				box->Rect.X += width - box->Rect.W;
+				if (blocker->R.bottom < height + box->Rect.H)
+					 blocker->R.bottom = height + box->Rect.H;
+				blocker->R.width += box->Rect.W;
+				goto case_FLT_MASK;
+			case FLT_LEFT:
+				box->Rect.X += blocker->L.width;
+				if (blocker->L.bottom < height + box->Rect.H)
+					 blocker->L.bottom = height + box->Rect.H;
+				blocker->L.width += box->Rect.W;
+				goto case_FLT_MASK;
+			case_FLT_MASK:
+				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
+					 This->Rect.H = box->Rect.Y + box->Rect.H;
+				}
 				break;
+			
 			case ALN_CENTER:
-				box->Rect.X += (width - box->Rect.W) /2;
-				break;
+				box->Rect.X += blocker->L.width + (set_width - box->Rect.W) /2;
+				goto case_ALN_NO_FLT;
+			case ALN_RIGHT:
+				box->Rect.X += blocker->L.width + set_width - box->Rect.W;
+				goto case_ALN_NO_FLT;
+			case ALN_LEFT:
+				box->Rect.X += blocker->L.width;
+				goto case_ALN_NO_FLT;
 			default: ;
-		}
-		if (!(box->Floating & FLT_MASK)) {
-			height += box->Rect.H;
-			if (blocker->L.bottom && blocker->L.bottom <= height) {
-				blocker->L.bottom = blocker->L.width = 0;
-			}
-			if (blocker->R.bottom && blocker->R.bottom <= height) {
-				blocker->R.bottom = blocker->R.width = 0;
-			}
-		} else if (This->Rect.H < box->Rect.Y + box->Rect.H) {
-			This->Rect.H = box->Rect.Y + box->Rect.H;
+			case_ALN_NO_FLT:
+				height += box->Rect.H;
+				if (blocker->L.bottom && blocker->L.bottom <= height) {
+					blocker->L.bottom = blocker->L.width = 0;
+				}
+				if (blocker->R.bottom && blocker->R.bottom <= height) {
+					blocker->R.bottom = blocker->R.width = 0;
+				}
 		}
 		
 		box = box->Sibling;
