@@ -174,6 +174,7 @@ void paragrph_finish (TEXTBUFF current)
 			}
 		} else if (current->prev_par) {
 			current->prev_par->next_paragraph = NULL;
+			current->prev_par->eop_space      = 0;
 			destroy_paragraph_structure (current->paragraph);
 		}
 	}
