@@ -23,15 +23,16 @@
 #define t_MinWidth   Box.MinWidth
 #define t_MaxWidth   Box.MaxWidth
 #define t_SetWidth   Box.SetWidth
+#define t_SetHeight  Box.SetHeight
 #define t_Backgnd    Box.Backgnd
 #define t_BorderW    Box.BorderWidth
 #define t_BorderC    Box.BorderColor
 
-#define c_OffsetX Box.Rect.X
-#define c_OffsetY Box.Rect.Y
-#define c_Width   Box.Rect.W
-#define c_Height  Box.Rect.H
-#define c_Backgnd Box.Backgnd
+#define c_OffsetX  Box.Rect.X
+#define c_OffsetY  Box.Rect.Y
+#define c_Width    Box.Rect.W
+#define c_Height   Box.Rect.H
+#define c_Backgnd  Box.Backgnd
 #define c_SetWidth Box.SetWidth
 
 #ifdef DEBUG
@@ -134,8 +135,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->t_BorderC = -1; /* 3D outset */
 	table->Spacing   = spacing;
 	table->Padding   = padding + (border ? 1 : 0);
-	table->t_SetWidth = width;
-	table->SetHeight = height;
+	table->t_SetWidth  = width;
+	table->t_SetHeight = height;
 }
 
 
@@ -1034,8 +1035,8 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	 * in case of a given table hight we need to spread the calculated row
 	 * hights.
 	 */
-	if (table->SetHeight > table->t_Height) {
-		short height = table->SetHeight - table->t_Height;
+	if (table->t_SetHeight > table->t_Height) {
+		short height = table->t_SetHeight - table->t_Height;
 		short num    = table->NumRows;
 		row = table->Rows;
 		do {
@@ -1043,7 +1044,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 			row->Height += h;
 			height      -= h;
 		} while ((row = row->NextRow) != NULL);
-		table->t_Height = table->SetHeight;
+		table->t_Height = table->t_SetHeight;
 	}
 	
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -534,6 +534,13 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->SetWidth = width;
 		}
 	}
+	if (get_value (parser, KEY_HEIGHT, out, sizeof(out))) {
+		short height = numerical (out, NULL, parser->Current.font->Size,
+		                          parser->Current.word->font->SpaceWidth);
+		if (height > 0) {
+			box->SetHeight = height;
+		}
+	}
 	if (get_value (parser, CSS_FLOAT, out, sizeof(out))) {
 		if      (stricmp (out, "right") == 0) box->Floating = FLT_RIGHT;
 		else if (stricmp (out, "left")  == 0) box->Floating = FLT_LEFT;

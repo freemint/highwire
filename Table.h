@@ -25,7 +25,6 @@ struct s_table {
 	DOMBOX   Box;
 	short    Spacing;
 	short    Padding;
-	short    SetHeight;
 	TAB_ROW  Rows;
 	unsigned NumCols;
 	unsigned FixCols;

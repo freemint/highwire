@@ -305,6 +305,7 @@ struct s_dombox {
 	LONG     MaxWidth;
 	LONG     MinWidth; /* smallest width where the content fits in          */
 	LONG     SetWidth; /* set Value, must not be smaller than Minimum       */
+	LONG     SetHeight;
 	char   * IdName;   /* from id="<ID>" attribute, refferenced by ".ID"    */
 	char   * ClName;   /* from class="<CL>" attribute, refferenced by "#CL" */
 	BOXCLASS BoxClass;
