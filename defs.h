@@ -334,7 +334,9 @@ typedef struct s_dombox DOMBOX;
 struct s_dombox {
 	struct s_dombox_vtab {
 		void (*delete)(DOMBOX *);
-		void (*draw)  (DOMBOX *, long x, long y, const GRECT * clip, void *);
+		LONG (*MinWidth)(DOMBOX *);
+		LONG (*MaxWidth)(DOMBOX *);
+		void (*draw)(DOMBOX *, long x, long y, const GRECT * clip, void *);
 	}      * _vtab;
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;
@@ -357,6 +359,8 @@ DOMBOX * dombox_dtor (DOMBOX *);
 #define dombox_BotDist(this)       (dombox_Dist(this,Bot) + (this)->BorderWidth)
 #define dombox_LftDist(this)       (dombox_Dist(this,Lft) + (this)->BorderWidth)
 #define dombox_RgtDist(this)       (dombox_Dist(this,Rgt) + (this)->BorderWidth)
+#define dombox_MinWidth(this)   ((this)->_vtab->MinWidth(this))
+#define dombox_MaxWidth(this)   ((this)->_vtab->MaxWidth(this))
 void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);
 
 
