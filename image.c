@@ -821,6 +821,134 @@ dither_D2 (IMGINFO info, void * _dst)
 	} while (width);
 }
 
+#if defined(__GNUC__)
+/*------------------------------------------------------------------------------
+ * Converts 'num'=[1..16] pixel bytes into 4 word chunks of the the I4
+ * interleaved words formats.
+ */
+static void
+raster_chunk4 (CHAR * src, UWORD * dst, size_t num)
+{
+	__asm__ volatile ("
+		clr.l		d4
+		move.b	(%0)+, d4
+		move.l	d4, d5
+		andi.b	#0x03, d4 |chunks 0/1
+		ror.l 	#1, d4
+		ror.w		#1, d4
+		andi.b	#0x0C, d5 |chunks 2/3
+		ror.l 	#3, d5
+		ror.w		#1, d5
+		
+		subq.l	#2, %2
+		bmi		9f
+		
+		moveq.l	#1, d1
+		
+		1: | chunk loop
+		move.b	(%0)+, d2
+		
+		moveq.l	#0x03, d3 |chunks 0/1
+		and.b		d2, d3
+		ror.l 	#1, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d4
+		moveq.l	#0x0C, d3 |chunks 2/3
+		and.b		d2, d3
+		ror.l 	#3, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d5
+		
+		addq.w	#1, d1
+		dbra		%2, 1b | chunk loop
+		9:
+		movem.l	d4-d5, (%1)
+		"
+		: /* no return value */
+		: "a"(src),"a"(dst), "d"(num)
+		/*    %0       %1        %2 */
+		: "d1","d2","d3","d4","d5"
+	);
+}
+
+/*------------------------------------------------------------------------------
+ * Converts 'num'=[1..16] pixel bytes into 8 word chunks.
+ * Used for the I8 interleaved words formats.
+ */
+static void
+raster_chunk8 (CHAR * src, UWORD * dst, size_t num)
+{
+	__asm__ volatile ("
+		clr.l		d4
+		move.b	(%0)+, d4
+		move.l	d4, d5
+		move.l	d4, d6
+		move.l	d4, d7
+		andi.b	#0x03, d4 |chunks 0/1
+		ror.l 	#1, d4
+		ror.w		#1, d4
+		andi.b	#0x0C, d5 |chunks 2/3
+		ror.l 	#3, d5
+		ror.w		#1, d5
+		andi.b	#0x30, d6 |chunks 4/5
+		ror.l 	#5, d6
+		ror.w		#1, d6
+		andi.b	#0xC0, d7 |chunks 6/7
+		ror.l 	#7, d7
+		ror.w		#1, d7
+		
+		subq.l	#2, %2
+		bmi		9f
+		
+		moveq.l	#1, d1
+		
+		1: | chunk loop
+		move.b	(%0)+, d2
+		
+		moveq.l	#0x03, d3 |chunks 0/1
+		and.b		d2, d3
+		ror.l 	#1, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d4
+		moveq.l	#0x0C, d3 |chunks 2/3
+		and.b		d2, d3
+		ror.l 	#3, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d5
+		moveq.l	#0x30, d3 |chunks 4/5
+		and.b		d2, d3
+		ror.l 	#5, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d6
+		move.l	#0xC0, d3 |chunks 6/7
+		and.b		d2, d3
+		ror.l 	#7, d3
+		ror.w		#1, d3
+		lsr.l		d1, d3
+		or.l		d3, d7
+		
+		addq.w	#1, d1
+		dbra		%2, 1b | chunk loop
+		9:
+		movem.l	d4-d7, (%1)
+		"
+		: /* no return value */
+		: "a"(src),"a"(dst), "d"(num)
+		/*    %0       %1        %2 */
+		: "d1","d2","d3","d4","d5","d6","d7"
+	);
+}
+
+#elif defined(__PUREC__)
+void raster_chunk4 (CHAR * src, UWORD * dst, size_t num);
+void raster_chunk8 (CHAR * src, UWORD * dst, size_t num);
+
+#else
 /*------------------------------------------------------------------------------
  * Converts 'num'=[1..16] pixel bytes into 'depth'=[1..8] word chunks.
  * Used for the I4 and I8 interleaved words formats.
@@ -852,6 +980,8 @@ raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
 }
 #define raster_chunk4(s,d,n)   raster_chunks (s, d, n, 4)
 #define raster_chunk8(s,d,n)   raster_chunks (s, d, n, 8)
+#endif
+
 
 /*----------------------------------------------------------------------------*/
 static CHAR
@@ -1941,6 +2071,7 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 	char  * buf   = info->RowBuf;
 	UWORD * dst   = data->fd_addr;
 	short   y     = 0;
+clock_t clk = clock();
 	
 	if (info->Interlace <= 0) {
 		size_t scale = (info->IncYfx +1) /2;
@@ -1981,6 +2112,8 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 			y = interlace /2;
 		} while (interlace > 1);
 	}
+clk = clock() - clk;
+printf ("%li \n", (long)clk);
 }
 
 
@@ -2020,4 +2153,3 @@ get_decoder (const char * file)
 	}
 	return info;
 }
-

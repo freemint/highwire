@@ -51,6 +51,134 @@ pc_raster_mono:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+;; Converts 'num'=[1..16] pixel bytes into 4 word chunks of the the I4
+;; interleaved words formats.
+
+	.TEXT
+	.EXPORT raster_chunk4 ;(A0:src, A1:dst, D0:num)
+	
+	src = A0
+	dst = A1
+	num = D0
+
+raster_chunk4:
+
+	movem.l	D3-D5, -(a7)
+	clr.l		d4
+	move.b	(src)+, d4
+	move.l	d4, d5
+	andi.b	#0x03, d4 ; chunks 0/1
+	ror.l 	#1, d4
+	ror.w		#1, d4
+	andi.b	#0x0C, d5 ; chunks 2/3
+	ror.l 	#3, d5
+	ror.w		#1, d5
+	
+	subq.l	#2, num
+	bmi		.store
+	
+	moveq.l	#1, d1
+	
+.loop:
+	move.b	(src)+, d2
+	
+	moveq.l	#0x03, d3 ; chunks 0/1
+	and.b		d2, d3
+	ror.l 	#1, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d4
+	moveq.l	#0x0C, d3 ; chunks 2/3
+	and.b		d2, d3
+	ror.l 	#3, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d5
+	
+	addq.w	#1, d1
+	dbra		num, .loop
+.store:
+	movem.l	d4-d5, (dst)
+	movem.l	(a7)+, D3-D5
+	rts
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Converts 'num'=[1..16] pixel bytes into 4 word chunks of the the I8
+;; interleaved words formats.
+
+	.TEXT
+	.EXPORT raster_chunk8 ;(A0:src, A1:dst, D0:num)
+	
+	src = A0
+	dst = A1
+	num = D0
+
+raster_chunk8:
+
+	movem.l	D3-D7, -(a7)
+	clr.l		d4
+	move.b	(src)+, d4
+	move.l	d4, d5
+	move.l	d4, d6
+	move.l	d4, d7
+	andi.b	#0x03, d4 ; chunks 0/1
+	ror.l 	#1, d4
+	ror.w		#1, d4
+	andi.b	#0x0C, d5 ; chunks 2/3
+	ror.l 	#3, d5
+	ror.w		#1, d5
+	andi.b	#0x30, d6 ; chunks 4/5
+	ror.l 	#5, d6
+	ror.w		#1, d6
+	andi.b	#0xC0, d7 ; chunks 6/7
+	ror.l 	#7, d7
+	ror.w		#1, d7
+	
+	subq.l	#2, num
+	bmi		.store
+	
+	moveq.l	#1, d1
+	
+.loop:
+	move.b	(src)+, d2
+	
+	moveq.l	#0x03, d3 ; chunks 0/1
+	and.b		d2, d3
+	ror.l 	#1, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d4
+	moveq.l	#0x0C, d3 ; chunks 2/3
+	and.b		d2, d3
+	ror.l 	#3, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d5
+	moveq.l	#0x30, d3 ; chunks 4/5
+	and.b		d2, d3
+	ror.l 	#5, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d6
+	move.l	#0xC0, d3 ; chunks 6/7
+	and.b		d2, d3
+	ror.l 	#7, d3
+	ror.w		#1, d3
+	lsr.l		d1, d3
+	or.l		d3, d7
+	
+	addq.w	#1, d1
+	dbra		num, .loop
+.store:
+	movem.l	d4-d5, (dst)
+	movem.l	(a7)+, D3-D7
+	rts
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; 8 planes interleaved words format
 
 	.TEXT
