@@ -303,5 +303,5 @@ long
 word_offset (WORDITEM word)
 {
 	WORDLINE line = word->line;
-	return (line->OffsetY + line->Paragraph->Offset.Y - word->word_height);
+	return (line->OffsetY + line->Paragraph->Box.Rect.Y - word->word_height);
 }

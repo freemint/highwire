@@ -796,12 +796,19 @@ containr_Anchor (CONTAINR cont, const char * anchor, long * dx, long * dy)
 	
 	if (frame) {
 		OFFSET * offs = frame_anchor (frame, anchor);
-		long     x    = 0;
-		long     y    = 0;
-		while (offs) {
-			x += offs->X;
-			y += offs->Y;
-			offs = offs->Origin;
+		long     x, y;
+		if (!offs) {
+			x = 0;
+			y = 0;
+		} else {
+			DOMBOX * box = offs->Origin;
+			x = offs->X;
+			y = offs->Y;
+			while (box) {
+				x  += box->Rect.X;
+				y  += box->Rect.Y;
+				box = box->Parent;
+			}
 		}
 		if (y && frame->Page.Box.Margin.Top > 0) {
 			 y -= frame->Page.Box.Margin.Top;

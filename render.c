@@ -379,7 +379,7 @@ insert_anchor (TEXTBUFF current, char * name, struct url_link * presave)
 			
 	if ((word->link = new_url_link (word, name, FALSE, NULL)) != NULL) {
 		ANCHOR anchor = new_named_location (word->link->address,
-		                                    &current->paragraph->Offset);
+		                                    &current->paragraph->Box);
 		if (!anchor) {  /* memory exhausted! */
 			free (word->link);
 			word->link = NULL;

@@ -139,7 +139,7 @@ void list_marker (TEXTBUFF, BULLET, short counter);
 
 /* in O_Struct.c */
 
-ANCHOR new_named_location (const char * address, OFFSET *);
+ANCHOR new_named_location (const char * address, DOMBOX *);
 void   destroy_named_location_structure (ANCHOR);
 struct url_link * new_url_link (WORDITEM start,
                                 char * address, BOOL is_href, char * target);

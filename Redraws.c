@@ -619,14 +619,15 @@ draw_contents (CONTENT * content,
 		}
 	}
 	
-	while (paragraph && paragraph->Offset.Y + paragraph->Box.Rect.H <= clip_y) {
+	while (paragraph
+	       && paragraph->Box.Rect.Y + paragraph->Box.Rect.H <= clip_y) {
 		paragraph = paragraph->next_paragraph;
 	}
 	clip_y = clip->g_y + clip->g_h -1;
 
 	while (paragraph) {
-		long x = x_abs + paragraph->Offset.X;
-		long y = y_abs + paragraph->Offset.Y;
+		long x = x_abs + paragraph->Box.Rect.X;
+		long y = y_abs + paragraph->Box.Rect.Y;
 
 		if (y > clip_y) break;
 		

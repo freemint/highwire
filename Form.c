@@ -652,19 +652,19 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 						radio->g_w = c_w->word_width;
 						radio->g_h = c_w->word_height + c_w->word_tail_drop;
 						if (check->Paragraph != input->Paragraph) {
-							OFFSET * offset = &check->Paragraph->Offset;
-							long     x      = offset->X + check->Paragraph->Indent;
-							long     y      = offset->Y;
-							while ((offset = offset->Origin) != NULL) {
-								x += offset->X;
-								y += offset->Y;
+							DOMBOX * box = &check->Paragraph->Box;
+							long     x   = box->Rect.X + check->Paragraph->Indent;
+							long     y   = box->Rect.Y;
+							while ((box = box->Parent) != NULL) {
+								x += box->Rect.X;
+								y += box->Rect.Y;
 							}
-							offset = &input->Paragraph->Offset;
-							x     -= offset->X + input->Paragraph->Indent;
-							y     -= offset->Y;
-							while ((offset = offset->Origin) != NULL) {
-								x -= offset->X;
-								y -= offset->Y;
+							box = &input->Paragraph->Box;
+							x  -= box->Rect.X + input->Paragraph->Indent;
+							y  -= box->Rect.Y;
+							while ((box = box->Parent) != NULL) {
+								x -= box->Rect.X;
+								y -= box->Rect.Y;
 							}
 							radio->g_x += x;
 							radio->g_y += y;
@@ -690,13 +690,13 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 			SELECT sel = input->u.Select;
 			if (sel && sel->NumItems > 0) {
 				WORDITEM word   = input->Word;
-				OFFSET * offset = &input->Paragraph->Offset;
-				long     x      = word->h_offset + input->Paragraph->Indent;
-				long     y      = word->line->OffsetY;
+				DOMBOX * box = &input->Paragraph->Box;
+				long     x   = word->h_offset + input->Paragraph->Indent;
+				long     y   = word->line->OffsetY;
 				do {
-					x += offset->X;
-					y += offset->Y;
-				} while ((offset = offset->Origin) != NULL);
+					x += box->Rect.X;
+					y += box->Rect.Y;
+				} while ((box = box->Parent) != NULL);
 				((long*)radio)[0] = x;
 				((long*)radio)[1] = y + word->word_tail_drop -1;
 				*popup = sel->Array;

@@ -142,7 +142,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->backgnd   = current->backgnd;
 	img->alt_w     = 0;
 	img->alt_h     = img->word->word_height;
-	img->offset.Origin = &img->paragraph->Offset;
+	img->offset.Origin = &img->paragraph->Box;
 	img->word->image = img;
 	
 	hash   = img_hash ((w > 0 ? w : 0), (h > 0 ? h : 0), -1);
@@ -463,8 +463,8 @@ image_job (void * arg, long invalidated)
 	
 	if ((img->set_w >= 0 && par->Box.MinWidth < img->word->word_width)
 	    || img->disp_w != old_w || img->disp_h != old_h) {
-		long par_x = par->Offset.X;
-		long par_y = par->Offset.Y;
+		long par_x = par->Box.Rect.X;
+		long par_y = par->Box.Rect.Y;
 		long par_w = par->Box.Rect.W;
 		long par_h = par->Box.Rect.H;
 		if (par->Box.MinWidth < img->disp_w) {
@@ -479,7 +479,7 @@ image_job (void * arg, long invalidated)
 			calc_xy = 1;
 			rec.g_w = par_w;
 			rec.g_h = par_h;
-		} else if (par_x == par->Offset.X && par_y == par->Offset.Y) {
+		} else if (par_x == par->Box.Rect.X && par_y == par->Box.Rect.Y) {
 			calc_xy = -1;
 		}
 	
@@ -490,13 +490,13 @@ image_job (void * arg, long invalidated)
 	}
 
 	if (calc_xy) {
-		OFFSET * origin = img->offset.Origin;
+		DOMBOX * box = img->offset.Origin;
 		short x = img->offset.X + frame->clip.g_x - frame->h_bar.scroll;
 		short y = img->offset.Y + frame->clip.g_y - frame->v_bar.scroll;
-		while (origin) {
-			x += origin->X;
-			y += origin->Y;
-			origin  =  origin->Origin;
+		while (box) {
+			x  += box->Rect.X;
+			y  += box->Rect.Y;
+			box = box->Parent;
 		}
 		if (calc_xy > 0) {
 			rec.g_x = x;

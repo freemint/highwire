@@ -6,7 +6,7 @@
 
 /*============================================================================*/
 ANCHOR
-new_named_location (const char * address, OFFSET * origin)
+new_named_location (const char * address, DOMBOX * origin)
 {
 	ANCHOR temp = malloc (sizeof (struct named_location));
 	if (temp) {

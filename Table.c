@@ -23,8 +23,10 @@
 #define t_MinWidth   Paragraph->Box.MinWidth
 #define t_MaxWidth   Paragraph->Box.MaxWidth
 
-#define c_Width  Content.Box.Rect.W
-#define c_Height Content.Box.Rect.H
+#define c_OffsetX Content.Box.Rect.X
+#define c_OffsetY Content.Box.Rect.Y
+#define c_Width   Content.Box.Rect.W
+#define c_Height  Content.Box.Rect.H
 
 #ifdef DEBUG
 	#define _DEBUG
@@ -88,9 +90,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
-	par->Offset.Origin  = (current->tbl_stack && current->tbl_stack->WorkCell
-	                       ? &current->tbl_stack->WorkCell->Offset : NULL);
-	par->floating = floating;
+	par->floating       = floating;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
@@ -213,7 +213,6 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 	cell->DummyFor  = NULL;
 	cell->RightCell = NULL;
 	cell->BelowCell = NULL;
-	cell->Offset.Origin = NULL;
 
 	cell->_debug = '.';
 
@@ -300,8 +299,6 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	
 	parser->Current.parentbox = &cell->Content.Box;
 	cell->Content.Item = new_paragraph (&parser->Current);
-	cell->Offset.Origin               = &table->Paragraph->Offset;
-	cell->Content.Item->Offset.Origin = &cell->Offset;
 	
 	cell->Content.Alignment  = cell->Content.Item->alignment = h_align;
 	cell->AlignV             = v_align;
@@ -980,8 +977,8 @@ table_calc (TABLE table, long max_width)
 			if (height != cell->c_Height) {
 				content_stretch (&cell->Content, height, cell->AlignV);
 			}
-			cell->Offset.X = x;
-			cell->Offset.Y = y;
+			cell->c_OffsetX = x;
+			cell->c_OffsetY = y;
 			x += *(col_width++) + table->Spacing;
 		} while ((cell = cell->RightCell) != NULL);
 		y += row->Height + table->Spacing;
@@ -1028,8 +1025,8 @@ table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
 
 		while (cell) {
 			if (cell->Content.Item && (cell->c_Height > clip_top)) {
-				draw_contents (&cell->Content, x + cell->Offset.X,
-				               y + cell->Offset.Y, clip, highlight);
+				draw_contents (&cell->Content, x + cell->c_OffsetX,
+				               y + cell->c_OffsetY, clip, highlight);
 				if (table->Border) {
 					GRECT b;
 					b.g_x = col_x;
@@ -1123,8 +1120,8 @@ table_content (TABLE table, long x, long y, long area[4])
 			area[0] += c_x;
 			area[2] =  table->Spacing;
 			if (cell) {
-				area[1] += cell->Offset.Y - table->Spacing;
-				area[3] =  cell->c_Height + table->Spacing *2;
+				area[1] += cell->c_OffsetY - table->Spacing;
+				area[3] =  cell->c_Height  + table->Spacing *2;
 			} else {
 				area[1] += c_y - table->Spacing;
 				area[3] =  r_h + table->Spacing *2;
@@ -1133,15 +1130,15 @@ table_content (TABLE table, long x, long y, long area[4])
 			area[1] += c_y + r_h;
 			area[3] =  table->Spacing;
 			if (cell) {
-				area[0] += cell->Offset.X - table->Spacing;
-				area[2] =  cell->c_Width  + table->Spacing *2;
+				area[0] += cell->c_OffsetX - table->Spacing;
+				area[2] =  cell->c_Width   + table->Spacing *2;
 			} else {
 				area[0] += c_x;
 				area[2] =  table->Spacing;
 			}
 		} else {
-			area[0] += cell->Offset.X;
-			area[1] += cell->Offset.Y;
+			area[0] += cell->c_OffsetX;
+			area[1] += cell->c_OffsetY;
 			if (!cell->Content.Item) {
 				area[0] -= table->Spacing;
 				area[1] -= table->Spacing;

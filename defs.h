@@ -342,8 +342,8 @@ DOMBOX * dombox_dtor (DOMBOX *);
 /* ************ Parsing Constructs ************************ */
 
 typedef struct long_offset {
-	struct long_offset * Origin;
-	long                 X, Y;
+	DOMBOX * Origin;
+	long     X, Y;
 } OFFSET;
 
 struct s_img_data {
@@ -501,7 +501,7 @@ struct paragraph_item {
 	WORD     Rindent; /* indent of the right side */
 	WORD     Hanging; /* <0: left, >0: right hanging */
 /*	short    Backgnd; / * colour or -1 */
-	OFFSET   Offset;
+/*	OFFSET   Offset;*/
 /*	long     Width;*/
 /*	long     Height;*/
 	PARAGRAPH_CODE paragraph_code;

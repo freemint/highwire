@@ -290,8 +290,8 @@ frame_paragraph (FRAME frame, long x, long y, long area[4])
 	while ((par = content_paragraph (content, x, y, area)) != NULL
 	       && par->Table) {
 		long save_x = area[0], save_y = area[1];
-		x -= par->Offset.X;
-		y -= par->Offset.Y;
+		x -= par->Box.Rect.X;
+		y -= par->Box.Rect.Y;
 		if ((content = table_content (par->Table, x, y, area)) != NULL) {
 			x -= area[0] - save_x;
 			y -= area[1] - save_y;
