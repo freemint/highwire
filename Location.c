@@ -630,7 +630,7 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 			*p_dir    = dir;
 		}
 	
-	} else if (base) {
+	} else if (!n_len && base) {
 		dir = base;
 	}
 	
