@@ -18,10 +18,13 @@
 #include "fontbase.h"
 #include "Table.h"
 
-#define t_Width      Paragraph->Width
-#define t_Height     Paragraph->Height
-#define t_MinWidth   Paragraph->min_width
-#define t_MaxWidth   Paragraph->max_width
+#define t_Width      Paragraph->Box.Rect.W
+#define t_Height     Paragraph->Box.Rect.H
+#define t_MinWidth   Paragraph->Box.MinWidth
+#define t_MaxWidth   Paragraph->Box.MaxWidth
+
+#define c_Width  Content.Box.Rect.W
+#define c_Height Content.Box.Rect.H
 
 #ifdef DEBUG
 	#define _DEBUG
@@ -44,6 +47,8 @@ delete_table (TABLE * _table)
 				TAB_CELL next_cell = cell->RightCell;
 				if (!cell->DummyFor) {
 					content_destroy (&cell->Content);
+				} else {
+					dombox_dtor (&cell->Content.Box);
 				}
 				free (cell);
 				cell = next_cell;
@@ -195,14 +200,14 @@ table_row (TEXTBUFF current, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 
 /*----------------------------------------------------------------------------*/
 static TAB_CELL
-new_cell (TAB_CELL left_side, short padding)
+new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 {
 	TAB_CELL cell = malloc (sizeof (struct s_table_cell));
 
 	if (left_side) {
 		left_side->RightCell = cell;
 	}
-	content_setup (&cell->Content, NULL, padding, -1);
+	content_setup (&cell->Content, NULL, parent, padding, -1);
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;
@@ -223,6 +228,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 {
 	TBLSTACK stack = parser->Current.tbl_stack;
 	TABLE    table = stack->Table;
+	DOMBOX * box   = &table->Paragraph->Box;
 	TAB_ROW  row;
 	TAB_CELL cell;
 
@@ -247,11 +253,11 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		if (stack->PrevRow) {
 			TAB_CELL prev = stack->PrevRow->Cells;
 			if (!prev) {
-				prev = stack->PrevRow->Cells = new_cell (NULL, table->Padding);
+				prev = stack->PrevRow->Cells = new_cell (box, NULL, table->Padding);
 			}
 			cell = NULL;
 			do {
-				prev->BelowCell = cell = new_cell (cell, table->Padding);
+				prev->BelowCell = cell = new_cell (box, cell, table->Padding);
 				if (prev->RowSpan > 1) {
 					cell->DummyFor = prev;
 					cell->RowSpan  = 2 - prev->RowSpan;
@@ -283,7 +289,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	/* if we haven't a cell here we need to create a new one
 	 */
 	if (!cell) {
-		cell = new_cell (stack->WorkCell, table->Padding);
+		cell = new_cell (box, stack->WorkCell, table->Padding);
 		if (!row->Cells) {
 			row->Cells = cell;
 		}
@@ -292,21 +298,22 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 
 	cell->_debug = stack->_debug++;
 	
+	parser->Current.parentbox = &cell->Content.Box;
 	cell->Content.Item = new_paragraph (&parser->Current);
 	cell->Offset.Origin               = &table->Paragraph->Offset;
 	cell->Content.Item->Offset.Origin = &cell->Offset;
 	
-	cell->Content.Alignment = cell->Content.Item->alignment = h_align;
-	cell->AlignV            = v_align;
-	cell->Content.Height    = (height <= 1024 ? height : 1024);
-	cell->Content.Width     = (width  <= 1024 ? width  : 0);
+	cell->Content.Alignment  = cell->Content.Item->alignment = h_align;
+	cell->AlignV             = v_align;
+	cell->Content.Box.Rect.H = (height <= 1024 ? height : 1024);
+	cell->Content.Box.Rect.W = (width  <= 1024 ? width  : 0);
 	
-	if ((cell->Content.Backgnd = color) < 0) {
-		if      (row->Color   >= 0) cell->Content.Backgnd = row->Color;
-		else if (table->Color >= 0) cell->Content.Backgnd = table->Color;
-		else                        cell->Content.Backgnd = stack->Backgnd;
+	if ((cell->Content.Box.Backgnd = color) < 0) {
+		if      (row->Color   >= 0) cell->Content.Box.Backgnd = row->Color;
+		else if (table->Color >= 0) cell->Content.Box.Backgnd = table->Color;
+		else                        cell->Content.Box.Backgnd = stack->Backgnd;
 	}
-	parser->Current.backgnd = cell->Content.Backgnd;
+	parser->Current.backgnd = cell->Content.Box.Backgnd;
 	
 	if (rowspan > 1) {
 		cell->RowSpan = rowspan;
@@ -317,7 +324,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		do {
 			TAB_CELL next = (stack->WorkCell->RightCell
 			                 ? stack->WorkCell->RightCell
-			                 : new_cell (stack->WorkCell, table->Padding));
+			                 : new_cell (box, stack->WorkCell, table->Padding));
 			next->RowSpan = stack->WorkCell->RowSpan;
 			stack->WorkCell = next;
 			if (!stack->WorkCell->DummyFor) {
@@ -340,9 +347,9 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		while (last->RightCell) last = last->RightCell;
 		do {
 			TAB_CELL prev = last->BelowCell;
-			TAB_CELL next = new_cell (last, table->Padding);
+			TAB_CELL next = new_cell (box, last, table->Padding);
 			while (!prev->RightCell) {
-				next = next->BelowCell = new_cell (prev, table->Padding);
+				next = next->BelowCell = new_cell (box, prev, table->Padding);
 				prev = prev->BelowCell;
 			}
 			next->BelowCell = prev->RightCell;
@@ -498,18 +505,18 @@ table_finish (PARSER parser)
 		adjust_rowspans (cell, i--);
 		do {
 			if (cell->Content.Item) {
-				if (cell->Content.Width < 0 && table->SetWidth > 0) {
+				if (cell->c_Width < 0 && table->SetWidth > 0) {
 					short width = table->SetWidth - table->t_MinWidth;
-					cell->Content.Width = (-cell->Content.Width * width +512) /1024;
-					if (cell->Content.Width <= 0) cell->Content.Width = 1;
+					cell->c_Width = (-cell->c_Width * width +512) /1024;
+					if (cell->c_Width <= 0) cell->c_Width = 1;
 				}
 				if (cell->ColSpan == 1) {
 					long width = content_minimum (&cell->Content);
 					if (width <= padding) {
-						cell->Content.Width = 0;
+						cell->c_Width = 0;
 					}
-					if (cell->Content.Width > 0) {
-						if (width < cell->Content.Width) width = cell->Content.Width;
+					if (cell->c_Width > 0) {
+						if (width < cell->c_Width) width = cell->c_Width;
 						if (width < *minimum)    width = *minimum;
 						if (width < *fixed)      width = *fixed;
 						*minimum = *fixed = width;
@@ -517,18 +524,18 @@ table_finish (PARSER parser)
 						if (*minimum < width) *minimum = width;
 						width = content_maximum (&cell->Content);
 						if (*maximum < width) *maximum = width;
-						if (cell->Content.Width < 0) {
+						if (cell->c_Width < 0) {
 							if (table->NumCols > 1) {
-								*percent = -cell->Content.Width;
+								*percent = -cell->c_Width;
 							} else {
-								cell->Content.Width = 0;
+								cell->c_Width = 0;
 							}
 						}
 					}
 				}
 				if (cell->RowSpan == 1) {
-					if (row->MinHeight < cell->Content.Height) {
-						row->MinHeight = cell->Content.Height;
+					if (row->MinHeight < cell->c_Height) {
+						row->MinHeight = cell->c_Height;
 					}
 				}
 			}
@@ -554,9 +561,9 @@ table_finish (PARSER parser)
 			if (cell->Content.Item && cell->ColSpan > 1) {
 				long width = content_minimum (&cell->Content);
 				spread_width (minimum, cell->ColSpan, table->Spacing, width);
-				if (cell->Content.Width > 0) {
+				if (cell->c_Width > 0) {
 					short empty = 0;
-					if (width < cell->Content.Width) width = cell->Content.Width;
+					if (width < cell->c_Width) width = cell->c_Width;
 					for (i = 0; i < cell->ColSpan; i++) {
 						if (!fixed[i]) {
 							empty++;
@@ -582,10 +589,10 @@ table_finish (PARSER parser)
 				} else {
 					spread_width (maximum, cell->ColSpan, table->Spacing,
 					              content_maximum (&cell->Content));
-					if (cell->Content.Width < 0 && cell->ColSpan < table->NumCols) {
+					if (cell->c_Width < 0 && cell->ColSpan < table->NumCols) {
 						short empty = 0;
 						percent = table->Percent + (fixed - table->ColWidth);
-						width   = -cell->Content.Width;
+						width   = -cell->c_Width;
 						for (i = 0; i < cell->ColSpan; i++) {
 							if (!percent[i]) {
 								empty++;
@@ -652,7 +659,7 @@ table_finish (PARSER parser)
 		do {
 			if (cell->Content.Item && cell->RowSpan > 1) {
 				short span   = cell->RowSpan -1;
-				short height = cell->Content.Height - row->MinHeight;
+				short height = cell->c_Height - row->MinHeight;
 				TAB_ROW r    = row->NextRow;
 				while ((height -= r->MinHeight + table->Spacing) > 0 && --span) {
 					r = r->NextRow;
@@ -901,11 +908,11 @@ table_calc (TABLE table, long max_width)
 				short span = cell->ColSpan -1;
 				while (span--) width += col_width[span] + table->Spacing;
 				content_calc (&cell->Content, width);
-				if (cell->RowSpan == 1 && row->Height < cell->Content.Height) {
-					row->Height = cell->Content.Height;
+				if (cell->RowSpan == 1 && row->Height < cell->c_Height) {
+					row->Height = cell->c_Height;
 				}
 			} else {
-				cell->Content.Width = width;
+				cell->c_Width = width;
 			}
 			cell = cell->RightCell;
 		}
@@ -919,7 +926,7 @@ table_calc (TABLE table, long max_width)
 		while (cell) {
 			if (cell->Content.Item && cell->RowSpan > 1) {
 				short span   = cell->RowSpan -1;
-				short height = cell->Content.Height - row->Height;
+				short height = cell->c_Height - row->Height;
 				TAB_ROW r    = row->NextRow;
 				while ((height -= r->Height + table->Spacing) > 0 && --span) {
 					r = r->NextRow;
@@ -970,7 +977,7 @@ table_calc (TABLE table, long max_width)
 					height += r->Height + table->Spacing;
 				} while (--i);
 			}
-			if (height != cell->Content.Height) {
+			if (height != cell->c_Height) {
 				content_stretch (&cell->Content, height, cell->AlignV);
 			}
 			cell->Offset.X = x;
@@ -1020,15 +1027,15 @@ table_draw (TABLE table, short x, long y, const GRECT * clip, void * highlight)
 		long clip_top  = (long)clip->g_y - row_y;
 
 		while (cell) {
-			if (cell->Content.Item && (cell->Content.Height > clip_top)) {
+			if (cell->Content.Item && (cell->c_Height > clip_top)) {
 				draw_contents (&cell->Content, x + cell->Offset.X,
 				               y + cell->Offset.Y, clip, highlight);
 				if (table->Border) {
 					GRECT b;
 					b.g_x = col_x;
 					b.g_y = row_y;
-					b.g_w = cell->Content.Width;
-					b.g_h = cell->Content.Height;
+					b.g_w = cell->c_Width;
+					b.g_h = cell->c_Height;
 					draw_border (&b, G_LBLACK, G_WHITE, 1);
 					vsl_color (vdi_handle, G_BLACK);
 				}
@@ -1116,8 +1123,8 @@ table_content (TABLE table, long x, long y, long area[4])
 			area[0] += c_x;
 			area[2] =  table->Spacing;
 			if (cell) {
-				area[1] += cell->Offset.Y       - table->Spacing;
-				area[3] =  cell->Content.Height + table->Spacing *2;
+				area[1] += cell->Offset.Y - table->Spacing;
+				area[3] =  cell->c_Height + table->Spacing *2;
 			} else {
 				area[1] += c_y - table->Spacing;
 				area[3] =  r_h + table->Spacing *2;
@@ -1126,8 +1133,8 @@ table_content (TABLE table, long x, long y, long area[4])
 			area[1] += c_y + r_h;
 			area[3] =  table->Spacing;
 			if (cell) {
-				area[0] += cell->Offset.X      - table->Spacing;
-				area[2] =  cell->Content.Width + table->Spacing *2;
+				area[0] += cell->Offset.X - table->Spacing;
+				area[2] =  cell->c_Width  + table->Spacing *2;
 			} else {
 				area[0] += c_x;
 				area[2] =  table->Spacing;
@@ -1138,8 +1145,8 @@ table_content (TABLE table, long x, long y, long area[4])
 			if (!cell->Content.Item) {
 				area[0] -= table->Spacing;
 				area[1] -= table->Spacing;
-				area[2] =  cell->Content.Width  + table->Spacing *2;
-				area[3] =  cell->Content.Height + table->Spacing *2;
+				area[2] =  cell->c_Width  + table->Spacing *2;
+				area[3] =  cell->c_Height + table->Spacing *2;
 			} else {
 				cont = &cell->Content;
 			}
