@@ -54,6 +54,7 @@ delete_table (TABLE * _table)
 		if (table->Maximum)  free (table->Maximum);
 		if (table->Percent)  free (table->Percent);
 		if (table->ColWidth) free (table->ColWidth);
+		free (table);
 		*_table = NULL;
 	}
 }
