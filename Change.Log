@@ -1,4 +1,4 @@
-(non-released of Jul. 10, 2003)
+(non-released of Jul. 18, 2003)
 
 - Implemented disk caching of text/html files from
   remote (only per session yet).  To enable this
@@ -8,8 +8,14 @@
   where <path> must be a valid and writeable
   directory.
 
-- Improved history functionality, stores also
-  slider positions now.
+- The toolbar got a stop button now to allow page
+  loading to be stopped.  The same function is
+  implemented for the escape key now as well.
+
+- Improved history functionality to not messed up
+  due to frames that are loaded from a different
+  server than the frameset.  Furthermore slider
+  positions of frames are stored also now.
 
 - Implemented ID keyword as anchor for <P> and
   <Hx> tags, blanks in anchor names are filtered
@@ -24,7 +30,7 @@
 - Fixed a bug that was messing up the scheduler's
   job queue.
 
-- Bugs #0114 resolved.
+- Bugs #0092, #0114 resolved.
 
 __________________________________________________
 Changes in V. 0.1.3 release  of June 05, 2003:
