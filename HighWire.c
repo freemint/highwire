@@ -68,6 +68,7 @@ main (int argc, char **argv)
 	}
 
 	if (V_Opnvwk (&vdi_dev) <= 0) {
+		appl_exit ();
 		exit (EXIT_FAILURE);
 	}
 	atexit (highwire_ex);
@@ -137,7 +138,10 @@ main (int argc, char **argv)
 	rsrc_gaddr(R_TREE, RPOPUP, &rpopup);
 	rsrc_gaddr(R_TREE, RLINKPOP, &rpoplink);
 
-	menu_bar(menutree, MENU_INSTALL);
+	menu_bar (menutree, MENU_INSTALL);
+	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
+	menu_icheck (menutree, M_IMAGES,  cfg_ViewImages);
+	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);
 #endif
 
 	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8)) {
