@@ -1,6 +1,6 @@
 ;>>>>>>> DEFAULT.PRJ for use with single module programs <<<<<<<<
 
-SAMPLE.OVL
+..\SAMPLE.OVL
 .C [ -P -M]			;  ... -Y was in for debug info
 .L [ -L -V]			; -Y was in for debug info
 .S [ -V ]			; -Y was in for debug info
@@ -8,7 +8,7 @@ SAMPLE.OVL
 
 PCSTART.O          ; startup code
 
-SAMPLE.C             ; compile topmost window
+SAMPLE.C (ovl_sys.h, ..\..\ovl_sys.h)
 
 PCSTDLIB.LIB       ; standard library
 PCEXTLIB.LIB       ; extended library
