@@ -19,7 +19,6 @@
 #include "global.h"
 #include "Containr.h"
 
-#include "Loader.h"
 #include "Location.h"
 #include "Containr.h"
 #include "Logging.h"
