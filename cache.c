@@ -12,18 +12,22 @@
 #include "cache.h"
 
 
-typedef struct s_cache_item {
-	struct s_cache_item * Next;
-	size_t                Reffs;
-	LOCATION Location;
-	long     Ident;
-	CACHEOBJ Object;
-	size_t   Size;
-	long     Date;
-	long     Expires;
-	void   (*dtor)(void*);
-} * CACHEITEM;
-static CACHEITEM __cache     = NULL;
+typedef struct s_cache_item * CACHEITEM;
+
+struct s_cache_item {
+	LOCATION  Location;
+	CACHEITEM NextItem;
+	CACHEITEM PrevItem;
+	size_t    Reffs;
+	long      Ident;
+	CACHEOBJ  Object;
+	size_t    Size;
+	long      Date;
+	long      Expires;
+	void    (*dtor)(void*);
+};
+static CACHEITEM __cache_beg = NULL;
+static CACHEITEM __cache_end = NULL;
 static size_t    __cache_num = 0;
 static size_t    __cache_mem = 0;
 static LOCATION  __cache_dir = NULL;
@@ -42,12 +46,30 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 	citem->Expires  = 0;
 	citem->dtor     = dtor;
 	citem->Reffs    = 1;
-	citem->Next     = __cache;
-	__cache          = citem;
+	
+	if (__cache_beg) __cache_beg->PrevItem = citem;
+	else             __cache_end           = citem;
+	citem->PrevItem = NULL;
+	citem->NextItem = __cache_beg;
+	__cache_beg     = citem;
 	__cache_num++;
 	__cache_mem += size;
 	
 	return citem;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+destroy_item (CACHEITEM citem)
+{
+	if (citem->PrevItem) citem->PrevItem->NextItem = citem->NextItem;
+	else                 __cache_beg               = citem->NextItem;
+	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
+	else                 __cache_end               = citem->PrevItem;
+	__cache_num--;
+	__cache_mem -= citem->Size;
+	free_location (&citem->Location);
+	free (citem);
 }
 
 
@@ -57,7 +79,7 @@ cache_insert (LOCATION loc, long ident,
               CACHEOBJ * object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem = create_item (loc, *object, size, dtor);
-	citem->Ident     = ident;
+	citem->Ident    = ident;
 	
 	*object = NULL;
 	
@@ -69,32 +91,34 @@ cache_insert (LOCATION loc, long ident,
 CACHED
 cache_lookup (LOCATION loc, long ident, long * opt_found)
 {
-	CACHEITEM * p_cache = &__cache;
-	CACHEITEM * p_found = NULL;
-	CACHEITEM   citem;
+	CACHEITEM found = NULL;
+	CACHEITEM citem = __cache_beg;
 	
-	while ((citem = *p_cache) != NULL) {
+	while (citem) {
 		if (location_equal (loc, citem->Location)) {
 			if (ident == citem->Ident) {
-				p_found = p_cache;
+				found = citem;
 				break;
 			} else if (opt_found && citem->Ident) {
-				p_found = p_cache;
+				found = citem;
 			}
 		}
-		p_cache = &citem->Next;
+		citem = citem->NextItem;
 	}
-	if (p_found) {
-		citem = *p_found;
-		if (p_found != &__cache) {
-			*p_found    = citem->Next;
-			citem->Next = __cache;
-			__cache     = citem;
+	if (found) {
+		if (found->PrevItem) {
+			found->PrevItem->NextItem = found->NextItem;
+			if (found->NextItem) found->NextItem->PrevItem = found->PrevItem;
+			else                 __cache_end               = found->PrevItem;
+			__cache_beg->PrevItem = found;
+			found->PrevItem       = NULL;
+			found->NextItem       = __cache_beg;
+			__cache_beg           = found;
 		}
 		if (opt_found) {
-			*opt_found = citem->Ident;
+			*opt_found = found->Ident;
 		}
-		return citem->Object;
+		return found->Object;
 	}
 	
 	if (opt_found) {
@@ -108,7 +132,7 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 CACHED
 cache_bound (CACHED cached, LOCATION * exchange)
 {
-	CACHEITEM citem = __cache;
+	CACHEITEM citem = __cache_beg;
 	
 	while (citem) {
 		if (cached == citem->Object) {
@@ -119,7 +143,7 @@ cache_bound (CACHED cached, LOCATION * exchange)
 			}
 			return citem->Object;
 		}
-		citem = citem->Next;
+		citem = citem->NextItem;
 	}
 	return NULL;
 }
@@ -131,11 +155,10 @@ cache_release (CACHED * p_object, BOOL erase)
 {
 	CACHEOBJ object = NULL;
 	CACHED   cached = *p_object;
+	
 	if (cached) {
-		CACHEITEM * p_cache = &__cache;
-		CACHEITEM   citem;
-		
-		while ((citem = *p_cache) != NULL) {
+		CACHEITEM citem = __cache_beg;
+		while (citem) {
 			if (citem->Object == cached) {
 				if ((!citem->Reffs || !--citem->Reffs) && erase) {
 					if (citem->dtor) {
@@ -143,16 +166,12 @@ cache_release (CACHED * p_object, BOOL erase)
 					} else {
 						object = citem->Object;
 					}
-					free_location (&citem->Location);
-					__cache_num--;
-					__cache_mem -= citem->Size;
-					*p_cache = citem->Next;
-					free (citem);
+					destroy_item (citem);
 				}
 				*p_object = NULL;
 				break;
 			}
-			p_cache = &citem->Next;
+			citem = citem->NextItem;
 		}
 	}
 	return object;
@@ -163,27 +182,20 @@ cache_release (CACHED * p_object, BOOL erase)
 size_t
 cache_clear (CACHED this_n_all)
 {
-	size_t num = 0;
-	CACHEITEM * p_cache = &__cache;
-	CACHEITEM   citem;
+	size_t    num   = 0;
+	CACHEITEM citem = __cache_beg;
 	
-	while ((citem = *p_cache) != NULL) {
+	while (citem) {
+		CACHEITEM next = citem->NextItem;
 		if (!citem->Reffs && citem->dtor
 		    && (!this_n_all || this_n_all == citem->Object)) {
 			(*citem->dtor)(citem->Object);
-			free_location (&citem->Location);
-			__cache_num--;
-			__cache_mem -= citem->Size;
-			*p_cache = citem->Next;
-			free (citem);
+			destroy_item (citem);
 			num++;
 			if (this_n_all) break;
-		} else {
-			p_cache = &citem->Next;
 		}
+		citem = next;
 	}
-	
-	
 	return num;
 }
 
@@ -196,21 +208,20 @@ cache_info (size_t * size, CACHEINF * p_info)
 		CACHEINF info = (__cache_num
 		                 ? malloc (sizeof (struct s_cache_info) * __cache_num)
 		                 : NULL);
-		*p_info = info;
-		if (info) {
+		if ((*p_info = info) != NULL) {
 			size_t    num   = __cache_num;
-			CACHEITEM citem = __cache;
+			CACHEITEM citem = __cache_beg;
 			do {
 				LOCATION local = (citem->Ident ? citem->Location : citem->Object);
 				info->Size    = citem->Size;
 				info->Used    = citem->Reffs;
-				info->Ident    = citem->Ident;
+				info->Ident   = citem->Ident;
 				info->Source  = citem->Location;
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
 				info->File    = local->File;
 				info->Object  = citem->Object;
-				citem = citem->Next;
+				citem = citem->NextItem;
 				info++;
 			} while (--num);
 		}
