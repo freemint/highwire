@@ -91,12 +91,10 @@ http_date (const char * beg)
 	/* read time as hh:mm:ss */
 	sscanf (beg, "%2u:%2u:%2u", &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
 	
-/*printf ("%04i-%02i-%02i %02i:%02i:%02i\n",
-        tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-*/
-	/* convert to unix calendar time (UTC) */
-	date = mktime (&tm);
-	
+	/* convert to Coordinated Universal Time (UTC) */
+	date =  mktime (&tm);     /* here tm is wrongly asumed to be local time... */
+	date += (tm.tm_isdst > 0 ? 60l*60 : 0) - timezone; /* ... but now it       *
+	                                                    * becomes UTC, again   */
 	return (date > 0 ? date : 0);
 }
 
