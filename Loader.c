@@ -864,6 +864,7 @@ saveas_job (void * arg, long invalidated)
 				
 	if (!invalidated && !loader->Error) {
 		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
+		LOCATION remote = loader->Location;
 
 		if (PROTO_isRemote (loc->Proto)) {
 			printf("saveas_job(): not in cache!\n");
@@ -882,7 +883,7 @@ saveas_job (void * arg, long invalidated)
  			 * I couldn't determine how to pull it out of the cache
  			 * It should be an easy task
  			 */
-			strcpy (fsel_file,loc->File);
+			strcpy (fsel_file,remote->File);
 
 			/* get our new filename */
 			
