@@ -95,7 +95,7 @@ key_pressed (WORD key, UWORD state)
 	case 0x4700:  /* home */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
 			sx = -active->Page.Rect.W;
-			sy = +active->Page.Rect.H;
+			sy = -active->Page.Rect.H;
 			break;
 		} /* else fall through */
 	case 0x4F00:  /* end */
