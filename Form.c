@@ -87,9 +87,9 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	FORM form = malloc (sizeof (struct s_form));
 	
 	if (!action) {
-		char * q = strchr (frame->BaseHref->FullName, '?');
-		size_t n = (q ? q - frame->BaseHref->FullName
-		              : strlen (frame->BaseHref->FullName));
+		const char * q = strchr (frame->BaseHref->FullName, '?');
+		size_t       n = (q ? q - frame->BaseHref->FullName
+		                    : strlen (frame->BaseHref->FullName));
 		if ((action = malloc (n +1)) != NULL) {
 			strncpy (action, frame->BaseHref->FullName, n);
 			action[n] = '\0';
