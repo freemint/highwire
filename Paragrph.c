@@ -17,6 +17,7 @@ struct blocking_area {
 };
 
 
+/*============================================================================*/
 void
 destroy_paragraph_structure (PARAGRPH current_paragraph)
 {
@@ -31,7 +32,7 @@ destroy_paragraph_structure (PARAGRPH current_paragraph)
 			destroy_table_structure (current_paragraph->table);
 #endif
 		temp = current_paragraph->next_paragraph;
-		free (current_paragraph);
+		free (dombox_dtor (&current_paragraph->Box));
 		current_paragraph = temp;
 	}
 }
@@ -57,8 +58,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Indent  = 0;
 	paragraph->Rindent = 0;
 	paragraph->Hanging = 0;
-	paragraph->Backgnd = -1;
-	paragraph->Height  = 0;
 	paragraph->Offset.Origin = NULL;
 	paragraph->Offset.X      = 0;
 	paragraph->Offset.Y      = 0;
@@ -66,8 +65,8 @@ new_paragraph (TEXTBUFF current)
 	paragraph->alignment      = ALN_LEFT;
 	paragraph->floating       = ALN_NO_FLT;
 	paragraph->eop_space      = 0;
-	paragraph->min_width      = 0;
-	paragraph->max_width      = 0;
+	
+	dombox_ctor (&paragraph->Box, current->parentbox);
 
 	paragraph->next_paragraph = NULL;
 	
@@ -127,15 +126,12 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Line    = NULL;
 		paragraph->Indent  = indent;
 		paragraph->Rindent = copy_from->Rindent;
-		paragraph->Backgnd = -1;
-		paragraph->Height  = 0;
 		paragraph->Offset.Origin = copy_from->Offset.Origin;
 		paragraph->Offset.X      = 0;
 		paragraph->Offset.Y      = 0;
 		paragraph->alignment = copy_from->alignment;
 		paragraph->eop_space = 0;
-		paragraph->min_width = 0;
-		paragraph->max_width = 0;
+		dombox_ctor (&paragraph->Box, current->parentbox);
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->floating       = ALN_NO_FLT;
@@ -225,7 +221,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			blocked   |= (BRK_RIGHT & ~BRK_LN);
 		}
 	}
-	par->Height = 0;
+	par->Box.Rect.H = 0;
 	do {
 		short count = 1;
 		short img_h = 0;
@@ -326,7 +322,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			if (word->image) {
 				/* Origin already set in new_image() */
 				word->image->offset.X = offset;
-				word->image->offset.Y = par->Height;
+				word->image->offset.Y = par->Box.Rect.H;
 				if (word->vertical_align != ALN_TOP) {
 					word->image->offset.Y += line->Ascend - word->word_height;
 				} else {
@@ -337,7 +333,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			if (word->link && !word->link->isHref) {
 				/* Origin already set in new_named_location() */
 				word->link->u.anchor->offset.X = -par->Offset.X;
-				word->link->u.anchor->offset.Y = par->Height;
+				word->link->u.anchor->offset.Y = par->Box.Rect.H;
 			}
 			word->h_offset = offset;
 
@@ -353,19 +349,19 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 		}
 		line->Word->h_offset += line->Word->space_width;
 		
-		par->Height  += line->Ascend;
-		line->OffsetY = par->Height;
-		par->Height  += line->Descend;
+		par->Box.Rect.H += line->Ascend;
+		line->OffsetY   =  par->Box.Rect.H;
+		par->Box.Rect.H += line->Descend;
 		
 		if (blocked) {
 			if (blocked & (BRK_LEFT & ~BRK_LN)) {
 				if (ln_brk & (BRK_LEFT & ~BRK_LN)) {
-					if (par->Height < l_height) {
-						line->Descend += l_height - par->Height;
-						par->Height = l_height;
+					if (par->Box.Rect.H < l_height) {
+						line->Descend += l_height - par->Box.Rect.H;
+						par->Box.Rect.H = l_height;
 					}
 				}
-				if (par->Height >= l_height) {
+				if (par->Box.Rect.H >= l_height) {
 					blocked   &= ~(BRK_LEFT & ~BRK_LN);
 					int_width += blocker->L.width;
 					blocker->L.bottom = blocker->L.width = l_height = 0;
@@ -373,12 +369,12 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			}
 			if (blocked & (BRK_RIGHT & ~BRK_LN)) {
 				if (ln_brk & (BRK_RIGHT & ~BRK_LN)) {
-					if (par->Height < r_height) {
-						line->Descend += r_height - par->Height;
-						par->Height = r_height;
+					if (par->Box.Rect.H < r_height) {
+						line->Descend += r_height - par->Box.Rect.H;
+						par->Box.Rect.H = r_height;
 					}
 				}
-				if (par->Height >= r_height) {
+				if (par->Box.Rect.H >= r_height) {
 					blocked   &= ~(BRK_RIGHT & ~BRK_LN);
 					int_width += blocker->R.width;
 					blocker->R.bottom = blocker->R.width = r_height = 0;
@@ -400,9 +396,9 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 	}
 
 	if (par->paragraph_code == PAR_IMG) {
-		par->Width = par->item->word_width;
+		par->Box.Rect.W = par->item->word_width;
 	} else {
-		par->Width = width;
+		par->Box.Rect.W = width;
 	}
 }
 
@@ -436,7 +432,7 @@ paragrph_word (PARAGRPH par, long x, long y, long area[4])
 	
 	if (!word) {
 		area[1] += bot;
-		area[3] =  par->Height - bot;
+		area[3] =  par->Box.Rect.H - bot;
 	
 	} else if (x < word->h_offset) {
 		area[2] = word->h_offset;
@@ -444,7 +440,7 @@ paragrph_word (PARAGRPH par, long x, long y, long area[4])
 	
 	} else if (x >= line->Width) {
 		area[0] += line->Width;
-		area[2] =  par->Width - line->Width;
+		area[2] =  par->Box.Rect.W - line->Width;
 		word = NULL;
 	
 	} else {
@@ -578,21 +574,23 @@ paragraph_extend (WORDITEM word)
 
 /*============================================================================*/
 void
-content_setup (CONTENT * content, TEXTBUFF current, short margns, short backgnd)
+content_setup (CONTENT * content,
+               TEXTBUFF current, DOMBOX * parent, short margns, short backgnd)
 {
+	dombox_ctor (&content->Box, parent);
+	content->Box.Backgnd = backgnd;
+	content->Alignment   = ALN_LEFT;
+	if (margns) {
+		content->Box.Margin.Top = content->Box.Margin.Bot =
+		content->Box.Margin.Lft = content->Box.Margin.Rgt = margns;
+	}
 	if (current) {
-		content->Item   = new_paragraph (current);
+		current->parentbox = &content->Box;
+		content->Item    = new_paragraph (current);
 		current->backgnd = backgnd;
 	} else {
-		content->Item   = NULL;
+		content->Item    = NULL;
 	}
-	content->Minimum   = 0;
-	content->Width     = 0;
-	content->Height    = 0;
-	content->Backgnd   = backgnd;
-	content->Alignment = ALN_LEFT;
-	content->MarginTop = content->MarginBot =
-	content->MarginLft = content->MarginRgt = margns;
 }
 
 
@@ -616,10 +614,11 @@ content_destroy (CONTENT * content)
 		if (par->Table) {
 			delete_table (&par->Table);
 		}
-		free (par);
+		free (dombox_dtor (&par->Box));
 		par = next;
 	}
 	content->Item = NULL;
+	dombox_dtor (&content->Box);
 }
 
 
@@ -673,7 +672,7 @@ content_minimum (CONTENT * content)
 		if (paragraph->paragraph_code == PAR_HR ||
 		    paragraph->paragraph_code == PAR_TABLE) {
 			
-			par_width = paragraph->min_width
+			par_width = paragraph->Box.MinWidth
 		             + paragraph->Indent + paragraph->Rindent;
 		
 		} else {
@@ -705,7 +704,7 @@ content_minimum (CONTENT * content)
 			if (par_width < wrd_width) {
 				 par_width = wrd_width;
 			}
-			paragraph->min_width = par_width;
+			paragraph->Box.MinWidth = par_width;
 			par_width += paragraph->Indent + paragraph->Rindent;
 		}
 		if (min_width < par_width) {
@@ -714,9 +713,9 @@ content_minimum (CONTENT * content)
 		paragraph = paragraph->next_paragraph;
 	}
 	
-	min_width += content->MarginLft + content->MarginRgt;
+	min_width += content->Box.Margin.Lft + content->Box.Margin.Rgt;
 	
-	return (content->Minimum = min_width);
+	return (content->Box.MinWidth = min_width);
 }
 
 
@@ -732,7 +731,7 @@ content_maximum (CONTENT * content)
 	long     max_width = 0;
 	
 	while (paragraph) {
-		if (!paragraph->max_width) {
+		if (!paragraph->Box.MaxWidth) {
 			struct word_item * word = paragraph->item;
 			long width = paragraph->Indent + paragraph->Rindent;
 			while (word) {
@@ -740,19 +739,19 @@ content_maximum (CONTENT * content)
 				width += word->word_width;
 				word = word->next_word;
 				if (ln_brk || !word) {
-					if (paragraph->max_width < width) {
-						 paragraph->max_width = width;
+					if (paragraph->Box.MaxWidth < width) {
+						 paragraph->Box.MaxWidth = width;
 					}
 					width = paragraph->Indent;
 				}
 			}
 		}
-		if (max_width < paragraph->max_width) {
-			 max_width = paragraph->max_width;
+		if (max_width < paragraph->Box.MaxWidth) {
+			 max_width = paragraph->Box.MaxWidth;
 		}
 		paragraph = paragraph->next_paragraph;
 	}
-	return (max_width + content->MarginLft + content->MarginRgt);
+	return (max_width + content->Box.Margin.Lft + content->Box.Margin.Rgt);
 }
 
 
@@ -762,22 +761,25 @@ long
 content_calc (CONTENT * content, long set_width)
 {
 	PARAGRPH paragraph = content->Item;
-	long     height    = content->MarginTop;
+	long     height    = content->Box.Margin.Top;
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 	
-	content->Width = set_width;
-	set_width     -= content->MarginLft + content->MarginRgt;
+	content->Box.Rect.W = set_width;
+	set_width     -= content->Box.Margin.Lft + content->Box.Margin.Rgt;
 	
 	while (paragraph) {
 		long par_width = set_width - paragraph->Indent - paragraph->Rindent;
 		long blk_width = set_width - blocker.L.width - blocker.R.width;
-		paragraph->Offset.X = content->MarginLft + paragraph->Indent;
+		paragraph->Offset.X = content->Box.Margin.Lft + paragraph->Indent;
 		paragraph->Offset.Y = height;
+		paragraph->Box.Rect.X = paragraph->Offset.X;
+		paragraph->Box.Rect.Y = paragraph->Offset.Y;
 
-		if (paragraph->min_width > blk_width) {
+		if (paragraph->Box.MinWidth > blk_width) {
 			height = (blocker.L.bottom >= blocker.R.bottom
 			          ? blocker.L.bottom : blocker.R.bottom);
 			paragraph->Offset.Y = height;
+			paragraph->Box.Rect.Y = paragraph->Offset.Y;
 			blocker.L.bottom = blocker.L.width =
 			blocker.R.bottom = blocker.R.width = 0;
 			blk_width = par_width;
@@ -809,48 +811,54 @@ content_calc (CONTENT * content, long set_width)
 				}
 			}
 			paragraph->Offset.X += blocker.L.width;
-			paragraph->Width  = par_width;
-			paragraph->Height = word->word_height *2
+			paragraph->Box.Rect.X = paragraph->Offset.X;
+			paragraph->Box.Rect.W = par_width;
+			paragraph->Box.Rect.H = word->word_height *2
 			                  + (word->word_tail_drop > 0
 			                     ? +word->word_tail_drop : -word->word_tail_drop);
 			paragraph->eop_space = 0;
 			
 		} else if (paragraph->paragraph_code == PAR_TABLE) {
 			paragraph->Offset.X += blocker.L.width;
+			paragraph->Box.Rect.X = paragraph->Offset.X;
 			table_calc (paragraph->Table, blk_width);
 		
 		} else {   /* normal text or image */
 			if (paragraph->paragraph_code == PAR_IMG) {
 				paragraph->Offset.X += blocker.L.width;
+				paragraph->Box.Rect.X = paragraph->Offset.X;
 			}
 			paragraph_calc (paragraph, par_width, &blocker);
 		}
 		
 		switch (paragraph->floating) {
 			case ALN_LEFT: {
-				long new_bottom = height + paragraph->Height;
+				long new_bottom = height + paragraph->Box.Rect.H;
 				if (blocker.L.bottom < new_bottom)
 					 blocker.L.bottom = new_bottom;
-				blocker.L.width += paragraph->Width;
+				blocker.L.width += paragraph->Box.Rect.W;
 			}	break;
 			case ALN_RIGHT: {
-				long new_bottom = height + paragraph->Height;
+				long new_bottom = height + paragraph->Box.Rect.H;
 				if (blocker.R.bottom < new_bottom)
 					 blocker.R.bottom = new_bottom;
-				paragraph->Offset.X += blk_width - paragraph->Width; 
-				blocker.R.width += paragraph->Width;
+				paragraph->Offset.X += blk_width - paragraph->Box.Rect.W; 
+				paragraph->Box.Rect.X = paragraph->Offset.X;
+				blocker.R.width += paragraph->Box.Rect.W;
 			}	break;
 			case ALN_CENTER:
-				paragraph->Offset.X += (blk_width - paragraph->Width) /2;
+				paragraph->Offset.X += (blk_width - paragraph->Box.Rect.W) /2;
+				paragraph->Box.Rect.X = paragraph->Offset.X;
 				blk_width = 0; /* avoid double centering */
 			case ALN_NO_FLT:
-				if (paragraph->Width < blk_width
+				if (paragraph->Box.Rect.W < blk_width
 				    && paragraph->alignment > ALN_JUSTIFY) {
-					short indent = blk_width - paragraph->Width;
+					short indent = blk_width - paragraph->Box.Rect.W;
 					if (paragraph->alignment == ALN_CENTER) indent /= 2;
 					paragraph->Offset.X += indent;
+					paragraph->Box.Rect.X = paragraph->Offset.X;
 				}
-				height += paragraph->Height + paragraph->eop_space;
+				height += paragraph->Box.Rect.H + paragraph->eop_space;
 				if (blocker.L.bottom && blocker.L.bottom < height) {
 					blocker.L.bottom = blocker.L.width = 0;
 				}
@@ -868,7 +876,7 @@ content_calc (CONTENT * content, long set_width)
 	if (height < blocker.R.bottom) {
 		 height = blocker.R.bottom;
 	}
-	return (content->Height = height + content->MarginBot);
+	return (content->Box.Rect.H = height + content->Box.Margin.Bot);
 }
 
 
@@ -877,15 +885,16 @@ content_calc (CONTENT * content, long set_width)
 void
 content_stretch (CONTENT * content, long height, V_ALIGN valign)
 {
-	long offset = height - content->Height;
+	long offset = height - content->Box.Rect.H;
 	
-	content->Height = height;
+	content->Box.Rect.H = height;
 	
 	if (valign && offset) {
 		PARAGRPH par = content->Item;
 		if (valign == ALN_MIDDLE) offset /= 2;
 		while (par) {
 			par->Offset.Y += offset;
+			par->Box.Rect.Y = par->Offset.Y;
 			par = par->next_paragraph;
 		}
 	}
@@ -899,11 +908,11 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 	PARAGRPH par = content->Item;
 	
 	if (!par) {                     /* nothing in it at all */
-		area[2] = content->Width;
-		area[3] = content->Height;
+		area[2] = content->Box.Rect.W;
+		area[3] = content->Box.Rect.H;
 	
 	} else if (par->Offset.Y > y) { /* above all paragraphs */
-		area[2] = content->Width;
+		area[2] = content->Box.Rect.W;
 		area[3] = par->Offset.Y;
 		par = NULL;
 	
@@ -915,7 +924,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 		long l_bot = 0, r_bot = 0;
 		long top = par->Offset.Y, bot;
 		do {
-			bot = top + par->Height;
+			bot = top + par->Box.Rect.H;
 			if (par->floating == ALN_RIGHT) {
 				if (r_bot <= top) r_par = flt = par;
 				if (r_bot <  bot) r_bot = bot;
@@ -928,7 +937,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 			}
 			if ((par = par->next_paragraph) == NULL) { /* below the last */
 				top = bot;                              /* paragraph      */
-				bot = content->Height;
+				bot = content->Box.Rect.H;
 			
 			} else if ((top = par->Offset.Y) > y) { /* between paragraphs */
 				top = bot;
@@ -939,7 +948,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 		
 		if (!par) {       /* below all paragraphs */
 			area[1] += top;
-			area[2] =  content->Width;
+			area[2] =  content->Box.Rect.W;
 			area[3] =  bot - top;
 		
 		} else {
@@ -948,7 +957,7 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 			if (l_bot <= top) { flt = r_par; l_par = NULL; l_bot = 0; }
 			if (r_par && l_par) flt = (flt == r_par ? l_par : r_par);
 			if (flt) {
-				long lft = 0, rgt = content->Width;
+				long lft = 0, rgt = content->Box.Rect.W;
 				
 				while (par->next_paragraph) {
 					PARAGRPH next = par->next_paragraph;
@@ -957,12 +966,12 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 					}
 					par = next;
 					if (par->floating == ALN_RIGHT) {
-						if (r_bot < par->Offset.Y + par->Height) {
-							r_bot = par->Offset.Y + par->Height;
+						if (r_bot < par->Offset.Y + par->Box.Rect.H) {
+							 r_bot = par->Offset.Y + par->Box.Rect.H;
 						}
 					} else if (par->floating == ALN_LEFT) {
-						if (l_bot < par->Offset.Y + par->Height) {
-							l_bot = par->Offset.Y + par->Height;
+						if (l_bot < par->Offset.Y + par->Box.Rect.H) {
+							 l_bot = par->Offset.Y + par->Box.Rect.H;
 						}
 					}
 				}
@@ -977,9 +986,9 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 							top = l_bot;
 						}
 					
-					} else if (x >= flt->Offset.X + flt->Width) {
+					} else if (x >= flt->Offset.X + flt->Box.Rect.W) {
 						if (flt->floating == ALN_LEFT) {
-							lft = flt->Offset.X + flt->Width;
+							lft = flt->Offset.X + flt->Box.Rect.W;
 						} else if (y < r_bot) {
 							bot = r_bot;
 							par = flt; /* break condition */
@@ -988,14 +997,14 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 							rgt = flt->Offset.X;
 						}
 					
-					} else if (y < flt->Offset.Y + flt->Height) {
+					} else if (y < flt->Offset.Y + flt->Box.Rect.H) {
 						if (top < flt->Offset.Y) top = flt->Offset.Y;
-						bot = flt->Offset.Y + flt->Height;
+						bot = flt->Offset.Y + flt->Box.Rect.H;
 						par = flt;
 						break;
 				
 					} else if (flt == par) { /* between two paragraphs */
-						top = par->Offset.Y + par->Height;
+						top = par->Offset.Y + par->Box.Rect.H;
 						area[0] += lft;
 						area[1] += top;
 						area[2] =  rgt - lft;
@@ -1004,18 +1013,18 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 						
 					} else if (flt->floating == ALN_LEFT) {
 						if (y < l_bot) {
-							top = flt->Offset.Y + flt->Height;
+							top = flt->Offset.Y + flt->Box.Rect.H;
 							bot = l_bot;
 							par = NULL;
 							break;
 					/*	} else {
 							top = l_bot;
 					*/	}
-						lft = flt->Offset.X + flt->Width;
+						lft = flt->Offset.X + flt->Box.Rect.W;
 					
 					} else if (flt->floating == ALN_RIGHT) {
 						if (y < r_bot) {
-							top = flt->Offset.Y + flt->Height;
+							top = flt->Offset.Y + flt->Box.Rect.H;
 							bot = r_bot;
 							par = NULL;
 							break;
@@ -1029,17 +1038,17 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 				if (flt) {
 					area[0] += flt->Offset.X;
 					area[1] += top;
-					area[2] =  flt->Width;
+					area[2] =  flt->Box.Rect.W;
 					area[3] =  bot - top;
 					return par;
 				}
 			}
 		
 			if (top < par->Offset.Y) {
-				top = par->Offset.Y;
+				 top = par->Offset.Y;
 			}
-			if (bot < par->Offset.Y + par->Height) {
-				bot = par->Offset.Y + par->Height;
+			if (bot < par->Offset.Y + par->Box.Rect.H) {
+				 bot = par->Offset.Y + par->Box.Rect.H;
 			}
 
 			if (x < par->Offset.X) {
@@ -1048,18 +1057,18 @@ content_paragraph (CONTENT * content, long x, long y, long area[4])
 				area[3] =  bot - top;
 				par = NULL;
 			
-			} else if (x >= par->Offset.X + par->Width) {
-				area[0] += par->Offset.X + par->Width;
+			} else if (x >= par->Offset.X + par->Box.Rect.W) {
+				area[0] += par->Offset.X + par->Box.Rect.W;
 				area[1] += top;
-				area[2] =  content->Width - (par->Offset.X + par->Width);
+				area[2] =  content->Box.Rect.W - (par->Offset.X + par->Box.Rect.W);
 				area[3] =  bot - top;
 				par = NULL;
 			
 			} else {
 				area[0] += par->Offset.X;
 				area[1] += par->Offset.Y;
-				area[2] =  par->Width;
-				area[3] =  par->Height;
+				area[2] =  par->Box.Rect.W;
+				area[3] =  par->Box.Rect.H;
 			}
 		}
 	}
