@@ -1,4 +1,11 @@
-(non-public of Feb. 17, 2005)
+(non-public of Mar. 09, 2005)
+
+- Link handling overworked and improved.  Works
+  much better now for local anchors with blanks
+  and/or umlauts (#0127).
+
+- Several changes in Table handling where made
+  for better layout.
 
 - CSS size values enabled for tables.
 
@@ -7,6 +14,10 @@
 - Bug fixed which was causing an infinite loop
   when a link contained a dot file (name with a
   leading dot).
+
+- Now null characters in HTML code get filtered
+  out.  This could lead to crashes or infinite
+  loops in the past.
 
 - Render improved for better layout of floating
   block elements (eg. DIV, TABLE, P, ..).
@@ -19,6 +30,8 @@
 
 - Colour logo added for start window and icons as
   well as a separate RSC for the desktop.
+
+- Bug #0127 resolved.
 
 __________________________________________________
 Changes in V. 0.2.4 release  of December 25, 2004:
