@@ -12,7 +12,7 @@ void input_draw   (INPUT, WORD x, WORD y);
 
 void     input_disable  (INPUT, BOOL onNoff);
 WORD     input_handle   (INPUT, GRECT *, char ***);
-BOOL     input_activate (INPUT, WORD slct);
+WORDITEM input_activate (INPUT, WORD slct);
 WORDITEM input_keybrd   (INPUT, WORD key, UWORD state, GRECT *);
 
 INPUT form_check (TEXTBUFF, const char * name, char * value, BOOL checkd);
