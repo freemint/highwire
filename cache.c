@@ -667,6 +667,17 @@ cache_assign (LOCATION src, void * data, size_t size,
 	return loc;
 }
 
+/*============================================================================*/
+void
+cache_expires (LOCATION loc, long date)
+{
+	CACHEITEM citem = tree_item (loc);
+	if (!citem) {
+		printf ("cache_expires(%s): not found!\n", loc->FullName);
+	} else {
+		citem->Expires = date;
+	}
+}
 
 /*============================================================================*/
 CRESULT

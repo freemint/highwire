@@ -26,6 +26,7 @@ CRESULT  cache_exclusive (LOCATION);
 void     cache_abort     (LOCATION);
 LOCATION cache_assign    (LOCATION, void *, size_t,
                           const char * type, long date, long expires);
+void     cache_expires   (LOCATION, long date);
 
 typedef struct s_cache_info {
 	LOCATION     Source;
