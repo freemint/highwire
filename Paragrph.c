@@ -167,7 +167,12 @@ void paragrph_finish (TEXTBUFF current)
 		    || current->paragraph->paragraph_code >= PAR_TABLE) {
 			word_store (current);
 		
-		} else if (!current->prev_wrd && current->prev_par) {
+		} else if (current->prev_wrd) {
+			if (current->prev_wrd->length == 1 && current->prev_wrd->space_width) {
+				/* mark trailing space to be deleteable */
+				current->prev_wrd->wrap = TRUE;
+			}
+		} else if (current->prev_par) {
 			current->prev_par->next_paragraph = NULL;
 			destroy_paragraph_structure (current->paragraph);
 		}
@@ -262,7 +267,7 @@ paragraph_calc (PARAGRPH par, long width, struct blocking_area *blocker)
 			if (word->image) {
 				image_calculate (word->image, int_width);
 			}
-			if (word->space_width) {
+			if (word->wrap) {
 				w_beg = word;
 				w_cnt = count;
 				w_len = offset;
@@ -645,7 +650,7 @@ content_minimum (CONTENT * content)
 					continue;
 				}
 				
-				if (!word->space_width) {
+				if (!word->wrap) {
 					if (word->image && word->image->set_w < 0) {
 						wrd_width += 1 + word->image->hspace *2;
 					} else {
