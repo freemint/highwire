@@ -402,11 +402,11 @@ selct_option (TEXTBUFF current, const char * text,
 	if (*text && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
 		size_t tlen = strlen (text);
 		WORD  pts[8];
-		item->Value    = (value ? value : item->Strng +1);
 		if ((text[0] == '-' && (!text[1] || (text[1] == '-' && (!text[2] ||
 		    (text[2] == '-' && (!text[3] || (text[3] == '-'))))))) ||
 		    (tlen > 3 && strncmp (text + tlen -3, "---", 3) == 0)) {
 			item->Strng[0] = '-';
+			disabled = TRUE;
 		} else if (disabled) {
 			item->Strng[0] = '!';
 		} else {
@@ -433,10 +433,12 @@ selct_option (TEXTBUFF current, const char * text,
 		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
 		item->Width = pts[2] - pts[0];
 		
+		item->Value = (disabled ? NULL : value ? value : item->Strng +1);
+		
 		if (!sel->ItemList || selected) {
 			input->Word->item   = item->Text;
 			input->Word->length = item->Length;
-			input->Value        = (item->Strng[0] == ' ' ? value : NULL);
+			input->Value        = item->Value;
 		}
 		item->Next    = sel->ItemList;
 		sel->ItemList = item;
@@ -712,15 +714,16 @@ input_activate (INPUT input, WORD slct)
 	FORM form = input->Form;
 	
 	if (input->Type == IT_SELECT) {
-		SELECT   sel  = input->u.Select;
-		SLCTITEM item = sel->ItemList;
-		while (++slct < sel->NumItems && item->Next) {
-			item = item->Next;
+		if (slct >= 0) {
+			SELECT   sel  = input->u.Select;
+			SLCTITEM item = sel->ItemList;
+			while (++slct < sel->NumItems && item->Next) {
+				item = item->Next;
+			}
+			input->Word->item   = item->Text;
+			input->Word->length = item->Length;
+			input->Value        = item->Value;
 		}
-		input->Word->item   = item->Text;
-		input->Word->length = item->Length;
-		input->Value        = item->Value;
-		
 		return TRUE;
 	}
 	

@@ -2058,18 +2058,11 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		ENCODING encoding = parser->Frame->Encoding;
 		BOOL     disabled = get_value     (parser, KEY_DISABLED, NULL,0);
+		BOOL     selected = get_value     (parser, KEY_SELECTED, NULL,0);
 		char   * value    = get_value_str (parser, KEY_VALUE);
 		char     out[90];
-		if (value && !*value) {
-			free (value);
-			value = NULL;
-		}
-		if (!value && !disabled) {
-			disabled = get_value (parser, KEY_VALUE, NULL,0);
-		}
 		*text = enc_to_sys (out, sizeof(out), *text, encoding, TAG_OPTION, FALSE);
-		selct_option (&parser->Current, out, disabled, encoding,
-		              value, get_value (parser, KEY_SELECTED, NULL,0));
+		selct_option (&parser->Current, out, disabled, encoding, value, selected);
 	}
 	return (flags|PF_SPACE);
 }
