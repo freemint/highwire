@@ -835,15 +835,19 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		/* should be positioned just before the next tag now */
 		do {
-			BOOL slash;
 			while (*line && *(line++) != '<');
-			slash = (*line == '/');
-			if (slash) line++;
-			if (parse_tag (parser, &line) == TAG_STYLE && slash) {
+			if (isalpha (*line)) {
+				line--; /* faulty HTML, the </style> tag is missing */
 				break;
+			} else {
+				BOOL slash = (*line == '/');
+				if (slash) line++;
+				if (parse_tag (parser, &line) == TAG_STYLE && slash) {
+					break;
+				}
 			}
 		} while (*line);
-	
+		
 		*text = line;
 	}
 	return flags;
