@@ -1,4 +1,4 @@
-(non-public of Jan. 08, 2005)
+(non-public of Jan. 13, 2005)
 
 - Render improved for better layout of floating
   block elements (eg. DIV, TABLE, P, ..).
@@ -7,7 +7,8 @@
   New keywords implemented: float, clear, border
   and font.
 
-- Colour logo added for start window and icons.
+- Colour logo added for start window and icons as
+  well as a separate RSC for the desktop.
 
 __________________________________________________
 Changes in V. 0.2.4 release  of December 25, 2004:
