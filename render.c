@@ -1724,11 +1724,10 @@ render_NOBR_tag (PARSER parser, const char ** text, UWORD flags)
  * Headings
 */
 static UWORD
-render_H_tag (PARSER parser, const char ** text, UWORD flags)
+render_H_tag (PARSER parser, short step, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	PARAGRPH par     = current->paragraph;
-	UNUSED  (text);
 	
 	if (flags & PF_START) {
 		char * name;
@@ -1740,7 +1739,7 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 			par = add_paragraph (current, 2);
 		}
 		
-		fontstack_push (current, 7 -(get_value_char (parser, KEY_H_HEIGHT) -'0'));
+		fontstack_push (current, step);
 		fontstack_setType (current, header_font);
 		fontstack_setBold (current);
 
@@ -1774,6 +1773,48 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 	}
 	
 	return (flags|PF_SPACE);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H1_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 7, flags);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H2_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 6, flags);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H3_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 5, flags);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H4_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 4, flags);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H5_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 3, flags);
+}
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+static UWORD
+render_H6_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED  (text);
+	return render_H_tag (parser, 2, flags);
 }
 
 /*------------------------------------------------------------------------------

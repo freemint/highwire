@@ -25,10 +25,6 @@
  * At start time the input stream pointer must be positioned to the first
  * character to be read (behind some leading '<' or '/').  After processing it
  * is set to first character behind the expression.
- * The expressions of the form <TAG(n) ...> (that is <H1>..<H6>) are a special
- * case and result in returning the TAG_H symbol.  In this case the input stream
- * pointer is set to the number (n) and the caller function have to interprete
- * the number itself.
  * If not successful the symbol TAG_Unknown is returned.
  *
  * The tag name lookup table is built by including the token.h header file with
@@ -56,11 +52,18 @@ scan_tag (const char ** pptr)
 	int beg = 0;
 	int end = (int)numberof(tag_table) -1;
 
-	while (isalpha (c = *line)) {
+	while ((c = *line) > ' ') {
 		if (len < sizeof(buf)) {
-			buf[len++] = toupper(c);
-			line++;
-
+			if (isalpha (c)) {
+				buf[len++] = toupper(c);
+				line++;
+			} else {
+				if (c >= '1' && c <= '6') {
+					buf[len++] = c;
+					line++;
+				}
+				break;
+			}
 		} else { /* expression is longer than the longest known tag */
 			while (isalpha (*(++line)));
 			len = 0;   /* reset, don't perform a search */

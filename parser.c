@@ -307,18 +307,9 @@ parse_tag (PARSER parser, const char ** pptr)
 		return TAG_Unknown;
 	}
 
-	if ((tag = scan_tag (&line)) == TAG_H) {
-		if (*line < '1' || *line > '6') {
-			tag = TAG_Unknown;
-		} else if (entry) {
-			entry->Key   = KEY_H_HEIGHT;
-			entry->Value = line++;
-			entry->Len   = 1;
-			entry++;
-			ValueNum(parser) = 1;
-		}
+	if ((tag = scan_tag (&line)) == TAG_Unknown) {
+		lookup = FALSE;
 	}
-	lookup &= (tag != TAG_Unknown);
 
 	/*** if the tag is known or not, in every case we have to go through the list
 	 *   of variabls to avoid the parser to become confused   */

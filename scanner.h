@@ -15,10 +15,6 @@ HTMLTAG scan_tag (const char ** pptr);
 				 * The 'pptr' content must point to the first character to be read
 				 * (behind some leading '<' or '/'). After processing it is set to
 				 * first character behind the expression.
-				 * The expressions of the form <TAG(n) ...> (that is <H1>..<H6>) are
-				 * special cases and will result in returning the TAG_H symbol.  In
-				 * this case the 'pptr' content is set to the number (n) and the
-				 * caller function have to interprete the number itself.
 				 * If not successful the symbol TAG_Unknown is returned.
 				*/
 HTMLKEY scan_key (const char ** pptr, BOOL lookup);
