@@ -310,6 +310,40 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static DOMBOX *
+group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
+{
+	TEXTBUFF current = &parser->Current;
+	DOMBOX * box     = dombox_ctor (malloc (sizeof (DOMBOX)),
+	                                current->parentbox, BC_GROUP);
+	box->HtmlCode = tag;
+	
+	if (!ignore_colours) {
+		WORD color = get_value_color (parser, KEY_BGCOLOR);
+		if (color >= 0 && color != current->backgnd) {
+			box->Backgnd = color;
+		}
+		if ((color = get_value_color (parser, CSS_BORDER_COLOR)) >= 0) {
+			box->BorderColor = color;
+		}
+	}
+	box->BorderWidth = get_value_unum (parser, KEY_BORDER, 0);
+	box->TextAlign   = get_h_align    (parser, align);
+	
+	add_paragraph(current, 0);
+	dombox_adopt (current->parentbox = box, &current->paragraph->Box);
+	current->paragraph->Box.TextAlign = box->TextAlign;
+	
+	if (box->Margin.Top < current->paragraph->Box.Margin.Top) {
+		 box->Margin.Top = current->paragraph->Box.Margin.Top;
+	}
+	current->paragraph->Box.Margin.Top = 0;
+	
+	return box;
+}
+
+
 /*------------------------------------------------------------------------------
  * get rid of html entities in an url
 */
@@ -2079,22 +2113,18 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	DOMBOX * box     = current->parentbox;
-	PARAGRPH par     = add_paragraph (current, 0);
 	(void)text;
 	
 	if (flags & PF_START) {
-		box = dombox_ctor (malloc (sizeof (DOMBOX)), box, BC_GROUP);
-		box->HtmlCode  = TAG_CENTER;
-		box->TextAlign = ALN_CENTER;
-		current->parentbox = box;
-		dombox_adopt (box, &par->Box);
+		box = group_box (parser, TAG_CENTER, ALN_CENTER);
 	
 	} else if (box->HtmlCode == TAG_CENTER) {
+		PARAGRPH par = add_paragraph (current, 0);
 		box = box->Parent;
 		current->parentbox = box;
 		dombox_adopt (box, &par->Box);
+		par->Box.TextAlign = box->TextAlign;
 	}
-	par->Box.TextAlign = box->TextAlign;
 	
 	return (flags|PF_SPACE);
 }
@@ -2111,40 +2141,34 @@ static UWORD
 render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
+	PARAGRPH par     = add_paragraph (current, 2);
 	UNUSED  (text);
 	
-	add_paragraph (current, 2);
-
 	if (flags & PF_START) {
-		#if 1
+		char output[100];
+		DOMBOX * box = group_box (parser, TAG_BLOCKQUOTE, ALN_LEFT);
+		box->Margin.Lft = box->Margin.Rgt = list_indent (2);
+
 		/* BUG: TITLE support not ready.  This try leads to another problem:
 		 * We need the entity and encoding conversion as a separate function.
 		 * Or we do it complete before parsing.  But then PLAINTEXT is not
-		 * possible.  It seems, this is this the reason, why it's deprecated. */
-		char output[100];
-		#endif
-
-		current->paragraph->Box.TextAlign = ALN_LEFT;
-		current->paragraph->Indent += list_indent (2);
-		current->paragraph->Rindent += list_indent (2);
-
-		#if 1
+		 * possible.  It seems, this is this the reason, why it's deprecated.
+		*/
 		if (get_value (parser, KEY_TITLE, output, sizeof(output))) {
 			word_set_bold (current, TRUE);
 			font_byType (-1, -1, -1, current->word);
 			scan_string_to_16bit (output, parser->Frame->Encoding, &current->text, 
 				                   current->word->font->Base->Mapping);
-			add_paragraph(current, 2);
+			add_paragraph(current, 1);
 			word_set_bold (current, FALSE);
 			flags |= PF_FONT;
 		}
-		#endif
 	
-	} else {
-		short    indent = list_indent(2);
-		PARAGRPH par    = current->paragraph;
-		if (par->Indent  >= indent) par->Indent  -= indent;
-		if (par->Rindent >= indent) par->Rindent -= indent;
+	} else if (current->parentbox->HtmlCode == TAG_BLOCKQUOTE) {
+		DOMBOX * box = current->parentbox->Parent;
+		current->parentbox = box;
+		dombox_adopt (box, &par->Box);
+		par->Box.TextAlign = box->TextAlign;
 	}
 	
 	return (flags|PF_SPACE);
