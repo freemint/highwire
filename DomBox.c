@@ -184,7 +184,7 @@ vTab_MinWidth (DOMBOX * This)
 	}
 	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
 	
-	if (This->SetWidth && This->SetWidth < This->MinWidth) {
+	if (This->SetWidth > 0 && This->SetWidth < This->MinWidth) {
 		This->SetWidth = This->MinWidth;
 	}
 	return This->MinWidth;
