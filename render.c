@@ -369,6 +369,7 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 static DOMBOX *
 group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 {
+	char     out[100];
 	TEXTBUFF current = &parser->Current;
 	DOMBOX * box     = dombox_ctor (malloc (sizeof (DOMBOX)),
 	                                current->parentbox, BC_GROUP);
@@ -397,6 +398,16 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 		 box->Margin.Top = current->paragraph->Box.Margin.Top;
 	}
 	current->paragraph->Box.Margin.Top = 0;
+	
+	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
+		char * tail   = out;
+		short  indent = numerical (out, &tail, current->font->Size,
+		                           current->word->font->SpaceWidth);
+		if (tail > out) {
+			box->TextIndent = indent;
+		}
+	}
+	current->paragraph->Box.TextIndent = box->TextIndent;
 	
 	return box;
 }
