@@ -796,6 +796,133 @@ rpopup_open (WORD mx, WORD my)
 			break;
 	}
 }
+
+/*============================================================================*/
+/* rpoplink_open
+ * 
+ * baldrick April 28, 2004
+ */
+void
+rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
+{
+	extern int saveas_job (void * arg, long invalidated);
+	extern OBJECT *rpoplink;
+	CONTAINR cont = NULL;
+	CONTAINR target;
+	struct url_link * link = hash;
+	const char      * addr = link->address;
+	
+	HwWIND wind  = hwWind_byCoord (mx, my);
+	FRAME  frame = hwWind_ActiveFrame (wind);
+	short x, y, w, h, which_obj;
+	GRECT desk;
+	
+	form_center (rpoplink, &x, &y, &w, &h);
+	x -= rpoplink->ob_x;
+	x += rpoplink->ob_x = mx -2;
+	y -= rpoplink->ob_y;
+	y += rpoplink->ob_y = my -2;
+	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
+		rpoplink->ob_x += desk.g_w;
+		x            += desk.g_w;
+	}
+	if ((desk.g_x -= x) > 0) {
+		rpoplink->ob_x += desk.g_x;
+		x            += desk.g_x;
+	}
+	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
+		rpoplink->ob_y += desk.g_h;
+		y            += desk.g_h;
+	}
+	if ((desk.g_y -= y) > 0) {
+		rpoplink->ob_y += desk.g_y;
+		y              += desk.g_y;
+	}
+	
+	wind_update (BEG_MCTRL);
+	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
+	objc_draw   (rpoplink, ROOT, MAX_DEPTH, x, y, w, h);
+
+	which_obj = HW_form_do (rpoplink, 0);
+/*	which_obj = form_do (rpoplink, 0);*/
+/*	which_obj = form_popup (rpoplink, 0,0);*/
+	
+	if (which_obj > 0) {
+		objc_change (rpoplink, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
+	wind_update (END_MCTRL);
+	
+	switch(which_obj)
+	{
+		case RLINK_OPEN: 
+			target = (link->u.target &&
+			                   stricmp (link->u.target, "_blank") != 0
+			                   ? containr_byName (current, link->u.target) : NULL);
+			if (target) {
+				const char * p = strchr (addr, '#');
+				FRAME  t_frame = containr_Frame (target);
+				if (p && t_frame) {
+					const char * file = t_frame->Location->File;
+					if (strncmp (file, addr, (p - addr)) == 0 && !file[p - addr]) {
+						addr = p;
+						cont = target;   /* content matches */
+					}
+				}
+			}
+			if (*addr == '#') {
+				long dx, dy;
+				if (containr_Anchor (current, addr, &dx, &dy)) {
+					hwWind_scroll (wind, current, dx, dy);
+					check_mouse_position (mx, my);
+				}
+			} else {
+				if (link->u.target) {
+					cont = target;
+				}
+				if (!cont) {
+					cont = new_hwWind (addr, NULL, NULL)->Pane;
+				}
+				if (cont) {
+					LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
+					                              TRUE, NULL);
+					if (ldr) {
+						ldr->Encoding = link->encoding;
+					}
+				}
+			}
+			break;
+			
+		case RLINK_NEW:
+			cont = new_hwWind (addr, NULL, NULL)->Pane;
+
+			if (cont) {
+				LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
+				                              TRUE, NULL);
+				if (ldr) {
+					ldr->Encoding = link->encoding;
+				}
+			}
+			break;
+		
+		case RLINK_SAVE:
+			cont = new_hwWind (addr, NULL, NULL)->Pane;
+
+			if (cont) {
+				LOADER ldr = start_objc_load (cont, addr, frame->BaseHref, saveas_job, NULL);
+
+				if (ldr) {
+					ldr->Encoding = link->encoding;
+				}
+			}
+			break;
+
+		case RLINK_INFO:
+			menu_info();
+			break;
+	}
+}
 #endif
 
 /*==============================================================================
