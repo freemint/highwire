@@ -26,7 +26,7 @@
 - Checking for proper font settings added to avoid
   bad formatted text input fields.
 
-- Bugs #0160 resolved.
+- Bugs #0160, #0163 resolved.
 
 __________________________________________________
 Changes in V. 0.2.0 release  of June 10, 2004:

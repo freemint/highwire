@@ -1853,17 +1853,19 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	
 		if (floating != ALN_NO_FLT) {
-			add_paragraph (current, 0);
-			current->paragraph->paragraph_code = PAR_IMG;
-			current->paragraph->Box.BoxClass   = BC_SINGLE;
-			current->paragraph->Box.HtmlCode   = TAG_IMG;
+			H_ALIGN  align = current->paragraph->Box.TextAlign;
+			PARAGRPH par   = add_paragraph (current, 0);
+			par->Box.TextAlign  = align;
+			par->paragraph_code = PAR_IMG;
+			par->Box.BoxClass   = BC_SINGLE;
+			par->Box.HtmlCode   = TAG_IMG;
 			if (floating == ALN_CENTER) {
-				current->paragraph->Box.Floating = floating;
+				par->Box.Floating = floating;
 			} else {
-				current->paragraph->Box.Floating = floating|FLT_MASK;
+				par->Box.Floating = floating|FLT_MASK;
 			}
-			box_frame  (parser, &current->paragraph->Box.Margin, CSS_MARGIN);
-			box_anchor (parser, &current->paragraph->Box, TRUE);
+			box_frame  (parser, &par->Box.Margin, CSS_MARGIN);
+			box_anchor (parser, &par->Box, TRUE);
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
 			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
@@ -1910,6 +1912,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			flags &= ~PF_SPACE;
 		} else {
 			add_paragraph (current, 0);
+			current->paragraph->Box.TextAlign = current->prev_par->Box.TextAlign;
 			flags |= PF_SPACE;
 		}
 	}
