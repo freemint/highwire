@@ -41,7 +41,13 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	}
 #endif
 	
-	switch (PE_Type (elem)) {
+	if ((button & RIGHT_BUTTON) &&
+	    (elem >= PE_PARAGRPH || elem == PE_EMPTY || elem == PE_FRAME)) {
+#if (_HIGHWIRE_RPOP_ == 1)
+		rpopup_open (mx, my);
+#endif
+	
+	} else switch (PE_Type (elem)) {
 		
 		case PE_VBAR: {
 			BOOL drag = FALSE;
@@ -269,11 +275,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 		}	break;
 		
 		default:
-			if (elem >= PE_FRAME && (button & RIGHT_BUTTON)) {
-#if (_HIGHWIRE_RPOP_ == 1)
-				rpopup_open (mx, my);
-#endif
-			} else if (wind) {
+			if (wind) {
 				hwWind_raise (wind, TRUE);
 			}
 	}
