@@ -1,4 +1,4 @@
-(non-public of Jun 26, 2004)
+(non-public of Jun 28, 2004)
 
 - Basic cookie support implemented.
 
@@ -20,6 +20,8 @@
 
 - Added handling for wrong opend/closed formulars
   regarding table structures.
+
+- Bugs #0160 resolved.
 
 __________________________________________________
 Changes in V. 0.2.0 release  of June 10, 2004:
