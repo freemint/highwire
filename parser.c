@@ -321,23 +321,23 @@ css_values (PARSER parser, const char * line, size_t len)
 			len--;
 			line++;
 		}
-		if (   (  (css < CSS_Unknown && (ent = find_key (parser, css)) == NULL)
-		        || css != CSS_Unknown)
-		    && (prsdata->KeyNum < numberof(prsdata->KeyValTab))) {
+		if (val) {
+			ptr = line;
+			while (--ptr >= val && isspace(*ptr));
+			if (ptr < val) val = NULL;
+		}
+		if (val && ((css < CSS_Unknown && (ent = find_key (parser, css)) == NULL)
+		            || css != CSS_Unknown)
+		        && (prsdata->KeyNum < numberof(prsdata->KeyValTab))) {
 			ent = entry++;
 			prsdata->KeyNum++;
 		}
 		if (ent) {
-			ent->Key = css;
-			if (val  &&  val < line) {
-				ent->Value = val;
-				ent->Len   = (unsigned)(line - val);
-			} else {
-				ent->Value = NULL;
-				ent->Len   = 0;
-			}
+			ent->Key   = css;
+			ent->Value = val;
+			ent->Len   = (unsigned)(ptr - val +1);
 		}
-		if (*line == ';') {
+		if (len && *line == ';') {
 			len--;
 			line++;
 		}
@@ -530,9 +530,14 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			char cid = '\0';
 			
 			if (next(&p) == '/') { /*........................ comment */
-				const char * q = p +1;
-				if ((err = (*(q++) != '*')) == TRUE) break;
-				while (((q = strchr (q, '*')) != NULL) && *(++q) != '/');
+				const char * q = p;
+				if (*(++q) == '/') {        /* C++ style */
+					q = strchr (q +1, '\n');
+				} else if (*(q++) == '*') { /* C style */
+					while (((q = strchr (q, '*')) != NULL) && *(++q) != '/');
+				} else {
+					q = NULL; /* syntax */
+				}
 				if ((err = (q == NULL)) == TRUE) break;
 				p = q +1;
 				continue;
@@ -633,6 +638,9 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			if (!end) {
 				end = p;
 			}
+			if (end[-1] == ';') {
+				end--; /* cut off trailing semicolon to detect empty rules */
+			}
 			if (*p) while (isspace (*(++p)));
 		}
 		
@@ -654,7 +662,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 	} while (*p && !err);
 	
 	if (*p && *p != '-' && *p != '<') {
-		printf("parse_css(): stopped at '%.10s'\n", p);
+		printf("parse_css(): stopped at '%.20s'\n", p);
 	}
 	return p;
 }
