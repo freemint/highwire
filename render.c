@@ -99,6 +99,101 @@ get_v_align (PARSER parser, V_ALIGN dflt)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static short
+font_face (char * buf, short dflt)
+{
+	char * beg = buf, * nxt = NULL;
+	short  fnt = dflt;
+	do {
+		if (*beg == '\'') {
+			while (isspace(*(++beg)));
+			if ((nxt = strchr (beg, '\'')) != NULL) {
+				char * end = nxt++;
+				while (isspace(*(--end)));
+				end[1] = '\0';
+			}
+		} else if ((nxt = strchr (beg, ',')) != NULL) {
+			char * end = nxt++;
+			while (isspace(*(--end)));
+			end[1] = '\0';
+		}
+		if (stricmp (beg, "sans-serif") == 0 ||
+		    stricmp (beg, "verdana")    == 0 ||
+		    stricmp (beg, "arial")      == 0) {
+			fnt = header_font;
+			break;
+		} else if (stricmp  (beg, "serif")    == 0 ||
+		           strnicmp (beg, "times", 5) == 0) {
+			fnt = normal_font;
+			break;
+		} else if (stricmp  (beg, "monospace")  == 0 ||
+		           strnicmp (beg, "courier", 7) == 0) {
+			fnt = pre_font;
+			break;
+		} else if ((beg = nxt) == NULL) {
+			break;
+		}
+		while (isspace(*beg)) beg++;
+	} while (*beg);
+	
+	return fnt;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static short
+numerical (char * buf, short em, short ex)
+{
+	UWORD  mean;
+	long   size = strtol (buf, &buf, 10);
+	if (*buf == '.' && isdigit(*(++buf))) {
+		size = size * 10 + (*buf - '0');
+		if (!isdigit(*(++buf))) {
+			size = ((size <<8) +5) /10;
+		} else {
+			size = (((size * 10 + (*buf - '0')) <<8) +5) /100;
+			while (isdigit(*(++buf)));
+		}
+	} else {
+		size <<= 8;
+	}
+	if ((mean = *buf) != '\0' && mean != '%') {
+		mean = (toupper(mean) <<8) | toupper(*(++buf));
+	}
+	switch (mean) {
+		case 0x4558: /* EX */
+			size *= ex;
+			goto case_PT; /* approximated */
+		
+		case 0x434D: /* MM */
+			size *= 10;
+		case 0x4D4D: /* CM */
+			size *= 10;
+			size = (size +127) /254;
+		case 0x494E: /* IN, inch */
+			size *= 6;
+		case 0x5043: /* PC, pica */
+			size *= 12;
+		case 0x5058: /* PX, pixel */
+			/* assume 72 dpi */
+			goto case_PT;
+		
+		case '%':
+			size = (size +50) /100;
+		case 0x454D: /* EM */
+			size *= em;
+		case_PT:
+		case 0x5054: /* PT, point */
+			size = (size + 128) >> 8;
+			break;
+		default:
+			size = 0;
+	}
+	return (short)size;
+}
+
+
 /*------------------------------------------------------------------------------
  * get rid of html entities in an url
 */
@@ -867,7 +962,7 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		char output[10];
+		char output[100];
 		WORD step = current->font->Step;
 
 		if (get_value (parser, KEY_SIZE, output, sizeof(output))) {
@@ -888,7 +983,15 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		fontstack_push (current, step);
-
+		
+		if (get_value (parser, KEY_FACE, output, sizeof(output))) {
+			short fnt = font_face (output, TAgetFont (current->word->attr));
+			if (fnt != TAgetFont (current->word->attr)) {
+				fontstack_setType (current, fnt);
+			}
+		}
+		
+		/*________________________HW_proprietary___*/
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
@@ -919,52 +1022,8 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 		
 		if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
 			if (isdigit (output[0])) {
-				short  mean;
-				char * p;
-				long   size = strtol (output, &p, 10);
-				if (*p == '.' && isdigit(*(++p))) {
-					size = size * 10 + (*p - '0');
-					if (!isdigit(*(++p))) {
-						size = ((size <<8) +5) /10;
-					} else {
-						size = (((size * 10 + (*p - '0')) <<8) +5) /100;
-						while (isdigit(*(++p)));
-					}
-				} else {
-					size <<= 8;
-				}
-				if ((mean = toupper(*p)) != '\0' && mean != '%') {
-					mean = (mean <<8) | toupper(*(++p));
-				}
-				switch (mean) {
-					case 0x4558: /* EX */
-						size *= current->word->font->SpaceWidth;
-						goto case_PT; /* approximated */
-					
-					case 0x434D: /* MM */
-						size *= 10;
-					case 0x4D4D: /* CM */
-						size *= 10;
-						size = (size +127) /254;
-					case 0x494E: /* IN, inch */
-						size *= 6;
-					case 0x5043: /* PC, pica */
-						size *= 12;
-					case 0x5058: /* PX, pixel */
-						/* assume 72 dpi */
-						goto case_PT;
-					
-					case '%':
-						size = (size +50) /100;
-					case 0x454D: /* EM */
-						size *= current->font->Size;
-					case_PT:
-					case 0x5054: /* PT, point */
-						size = (size + 128) >> 8;
-						break;
-					default:
-						size = 0;
-				}
+			short size = numerical (output, current->font->Size,
+			                        current->word->font->SpaceWidth);
 				if (size > 0) {
 					fstp = fontstack_push (current, -1);
 					fontstack_setSize (current, size);
@@ -989,36 +1048,8 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 			fstp = fontstack_push (&parser->Current, step);
 		}
 
-		if (get_value (parser, CSS_FONT_FAMILY, output, sizeof(output))) {
-			char * beg = output, * nxt = NULL;
-			short  fnt = TAgetFont (current->word->attr);
-			do {
-				if (*beg == '\'') {
-					while (isspace(*(++beg)));
-					if ((nxt = strchr (beg, '\'')) != NULL) {
-						char * end = nxt++;
-						while (isspace(*(--end)));
-						end[1] = '\0';
-					}
-				} else if ((nxt = strchr (beg, ',')) != NULL) {
-					char * end = nxt++;
-					while (isspace(*(--end)));
-					end[1] = '\0';
-				}
-				if (stricmp (beg, "sans-serif") == 0) {
-					fnt = header_font;
-					break;
-				} else if (stricmp (beg, "serif") == 0) {
-					fnt = normal_font;
-					break;
-				} else if (stricmp (beg, "monospace") == 0) {
-					fnt = pre_font;
-					break;
-				} else if ((beg = nxt) == NULL) {
-					break;
-				}
-				while (isspace(*beg)) beg++;
-			} while (*beg);
+	if (get_value (parser, KEY_FACE, output, sizeof(output))) {
+		short fnt = font_face (output, TAgetFont (current->word->attr));
 			/* n/i: cursive, fantasy */
 			if (fnt != TAgetFont (current->word->attr)) {
 				fontstack_setType (current, fnt);
@@ -1047,11 +1078,19 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 		
 		if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
 			if (stricmp (output, "line-through") == 0) {
-				fontstack_setUndrln (current);
-			} else if (stricmp (output, "underline") == 0) {
 				fontstack_setStrike (current);
+			} else if (stricmp (output, "underline") == 0) {
+				fontstack_setUndrln (current);
 			}
 		}
+		
+		if (get_value (parser, CSS_WHITE_SPACE, output, sizeof(output))) {
+			if (stricmp (output, "nowrap") == 0) {
+				fontstack_setNoWrap (current);
+			}
+			/* n/i: normal, pre */
+		}
+		
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
