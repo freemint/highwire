@@ -149,8 +149,9 @@ decPng_readi (IMGINFO info, char * buffer)
 	if (setjmp (png_jmpbuf (png_ptr))) {
 		return FALSE;
 	}
+	(void)buffer;
+	info->RowBuf = row_ptr[n];
 	png_read_rows (png_ptr, &row_ptr[n], NULL, 1);
-	memcpy (buffer, row_ptr[n], info_ptr->width * info->NumComps);
 	return TRUE;
 }
 

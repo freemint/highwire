@@ -41,7 +41,8 @@ struct s_img_info {
 	WORD     Interlace;
 	/* */
 	void   (*raster)(IMGINFO, void * dst);
-	char   * RowBuf;
+	char   * RowMem;
+	char   * RowBuf; /* initially RowMem but might be changed for interlaced */
 	void   * DthBuf;
 	UWORD    DthWidth; /* calculated width of the image */
 	UWORD    PixMask;
@@ -450,7 +451,7 @@ image_job (void * arg, long invalidated)
 				read_img (img, info, data);
 			}
 			(*info->quit)(info);
-			if (info->RowBuf) free (info->RowBuf);
+			if (info->RowMem) free (info->RowMem);
 			if (info->DthBuf) free (info->DthBuf);
 			free (info);
 		}
@@ -566,7 +567,8 @@ setup (IMAGE img, IMGINFO info)
 	
 	img_scale (img, info->ImgWidth, info->ImgHeight, info);
 	
-	if ((info->RowBuf = malloc ((info->ImgWidth +1) * info->NumComps)) == NULL) {
+	info->RowMem = malloc ((info->ImgWidth +1) * info->NumComps);
+	if ((info->RowBuf = info->RowMem) == NULL) {
 		return NULL;
 	}
 	if (info->BitDepth > 1 && planes <= 8) {
