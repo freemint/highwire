@@ -422,25 +422,13 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 		offs = 1;
 	}
 
-	if (!mfdb || mfdb->fd_w < img->disp_w || mfdb->fd_h < img->disp_h) {
+	if (img->disp_w > 1 && img->disp_h > 1 &&
+	    (!mfdb || mfdb->fd_w < img->disp_w || mfdb->fd_h < img->disp_h)) {
 		p[3].p_x = p[4].p_x = (p[5].p_x = x) + img->disp_w -1;
 		p[5].p_y = p[4].p_y = (p[3].p_y = y) + img->disp_h -1;
 		p[6] = p[2];
 		vsl_color (vdi_handle, G_BLACK);
 		v_pline   (vdi_handle, 5, (short*)(p +2));
-		
-		if (img->u.Data && !img->u.Data->fd_addr) {
-			/*
-			 *  data corrupted, workaround
-			 */
-		/*	printf("   %i/%i %i/%i %i %p %p \n",
-			        img->data->fd_w, img->disp_w,
-			        img->data->fd_h, img->disp_h,
-			        img->data->fd_wdwidth,
-			        img->data->fd_addr, img->data);
-		*/
-			mfdb = NULL;
-		}
 	}
 	if (mfdb) {
 		p[1].p_x = (mfdb->fd_w < img->disp_w ? mfdb->fd_w : img->disp_w) -1;
