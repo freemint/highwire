@@ -253,6 +253,24 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					container->Border
 					        = (get_value_unum (parser, KEY_FRAMEBORDER, border) > 0);
 
+					container->Border_Size  = get_value_unum  (parser, KEY_BORDER, -1);
+
+					if (container->Border_Size < 0) {
+						container->Border_Size = (get_value (parser, KEY_BORDER, NULL, 0) ? 1 : 0);
+					}
+
+					if (container->Border_Size == 0)
+						container->Border_Size = (container->Parent
+					               ? container->Parent->Border_Size : 3);
+
+					if (!ignore_colours)
+					{
+						WORD color;
+
+						if ((color = get_value_color (parser, KEY_BORDERCOLOR)) >= 0)
+							container->Border_Colour = color;
+					}
+					
 					/* ok the first thing we do is look for ROWS or COLS
 					 * since when we are dumped here we are looking at a
 					 * beginning of a FRAMESET tag
