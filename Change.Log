@@ -1,10 +1,21 @@
-(non-released of Jun. 08, 2003)
+(non-released of Jun. 25, 2003)
 
-- implemented ID keyword as anchor for <P> and
+- Implemented disk caching of text/html files from
+  remote (only per session yet).  To enable this
+  feature the highwire.cfg file needs to include
+  the line
+  CACHEDIR = <path>
+  where <path> must be a valid and writeable
+  directory.
+
+- Implemented ID keyword as anchor for <P> and
   <Hx> tags, blanks in anchor names are filtered
   out now in general.
 
-- Bugs *0114 resolved.
+- Reworked config parser for faster program start
+  on slow machines.
+
+- Bugs #0114 resolved.
 
 __________________________________________________
 Changes in V. 0.1.3 release  of June 05, 2003:
