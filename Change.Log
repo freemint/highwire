@@ -1,7 +1,13 @@
+(non-public of Jun 11, 2004)
+
+- Http request-header field 'Referer:'
+  iplemented.
+
+__________________________________________________
 Changes in V. 0.2.0 release  of June 10, 2004:
 
 - Save As... and Copy URL added to normal right
-  mouse click popup
+  mouse click popup.
 
 - Popup added for right mouse click to links to
   allow storing of downloaded file to a local
