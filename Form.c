@@ -92,11 +92,16 @@ struct s_slctitem {
 
 static void finish_selct (INPUT);
 
-static WCHAR * edit_init (INPUT, TEXTBUFF, UWORD cols, size_t size);
+static WCHAR * edit_init (INPUT, TEXTBUFF, UWORD cols, UWORD rows, size_t size);
 static BOOL    edit_zero (INPUT);
 static void    edit_feed (INPUT, ENCODING, const char * beg, const char * end);
-static BOOL    edit_char (INPUT, WORD chr, WORD col);
-static BOOL    edit_delc (INPUT, WORD col);
+static BOOL    edit_char (INPUT, WORD col, WORD row, WORD chr);
+static BOOL    edit_delc (INPUT, WORD col, WORD row);
+#define        __edit_len(inp,a,b)   ((inp)->TextArray[b]-(inp)->TextArray[a]-1)
+#define        edit_rowln(inp,row)   __edit_len (inp, row, row +1)
+#define        __edit_r_0(inp)       ((inp)->TextArray[0])
+#define        __edit_r_r(inp)       ((inp)->TextArray[(inp)->TextRows])
+#define        edit_space(inp)       ((WCHAR*)&__edit_r_0(inp)-__edit_r_r(inp))
 
 
 /*============================================================================*/
@@ -299,7 +304,7 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 	
 	input->TextMax  = maxlen;
 	input->readonly = readonly;
-	if (edit_init (input, current, cols, maxlen)) {
+	if (edit_init (input, current, cols, 1, maxlen)) {
 		if (is_pwd) { /* == "PASSWORD" */
 			input->Value    = value;
 			input->HideChar = '*';
@@ -635,25 +640,38 @@ input_draw (INPUT input, WORD x, WORD y)
 		v_pline (vdi_handle, 3, (short*)p);
 	}
 	if (input->Type >= IT_TEXT) {
-		BOOL fmap = (word->font->Base->Mapping != MAP_UNICODE);
-		FORM form = input->Form;
-		WORD len  = min (input->TextLen, input->VisibleX);
-		PXY  pos;
-		pos.p_x = x +3;
-		pos.p_y = y;
+		BOOL     fmap = (word->font->Base->Mapping != MAP_UNICODE);
+		FORM     form = input->Form;
+		WCHAR ** wptr = input->TextArray;
+		short    rows = min (input->TextRows, input->VisibleY);
+		WORD     shft;
+		PXY      pos;
+		pos.p_x = x + 3;
+		pos.p_y = y - input->CursorH * input->VisibleY;
+		if (input == form->TextActive) {
+			shft =  form->TextShiftX;
+			wptr += form->TextShiftY;
+		} else {
+			shft = 0;
+		}
 		if (fmap) {
 			vst_map_mode (vdi_handle, MAP_UNICODE);
 		}
-		if (input != form->TextActive) {
-			v_ftext16n (vdi_handle, pos, word->item, len);
-		} else {
-			v_ftext16n (vdi_handle, pos, word->item + form->TextShiftX, len);
-			vqt_f_extent16n (vdi_handle, word->item + form->TextShiftX,
-			                 form->TextCursrX - form->TextShiftX, (short*)p);
+		while (rows--) {
+			WCHAR * ptr = wptr[0] + shft;
+			WORD    len = min (wptr[1] -1 - ptr, input->VisibleX);
+			pos.p_y += input->CursorH;
+			if (len > 0) v_ftext16n (vdi_handle, pos, ptr, len);
+			wptr++;
+		}
+		if (input == form->TextActive) {
+			WCHAR * ptr = input->TextArray[form->TextShiftY]   + shft;
+			vqt_f_extent16n (vdi_handle, ptr, form->TextCursrX - shft, (short*)p);
 			p[0].p_x = x +2 + p[1].p_x - p[0].p_x;
 			p[1].p_x = p[0].p_x +1;
-			p[0].p_y = y - word->word_height    +2;
-			p[1].p_y = y + word->word_tail_drop -2;
+			p[0].p_y = y - word->word_height +2
+			         + (form->TextCursrY - form->TextShiftY) * input->CursorH;
+			p[1].p_y = p[0].p_y                              + input->CursorH;
 			vsf_color (vdi_handle, G_WHITE);
 			vswr_mode (vdi_handle, MD_XOR);
 			v_bar     (vdi_handle, (short*)p);
@@ -988,7 +1006,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 /*printf ("%04X %04X\n", key, state);*/
 	if (asc >= ' ' && asc != 127 &&
 	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
-		if (!input->readonly && edit_char (input, asc, form->TextCursrX)) {
+		if (!input->readonly
+		    && edit_char (input, form->TextCursrX, form->TextCursrY, asc)) {
 			input->TextLen++;
 			scrl = +1;
 		} else {
@@ -1009,7 +1028,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 55: /* shift+home */
-			if ((scrl = input->TextLen - form->TextCursrX) == 0) {
+			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+			if (!scrl) {
 				word = NULL;
 			}
 			break;
@@ -1045,8 +1065,9 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 8: /* backspace */
 			if (input->readonly) {
 				word = NULL;
-			} else if (form->TextCursrX && edit_delc (input, form->TextCursrX-1)) {
-				input->TextLen--;
+			} else if (form->TextCursrX) {
+				edit_delc (input, form->TextCursrX -1, form->TextCursrY);
+				input->TextLen = edit_rowln (input, form->TextCursrY);
 				scrl = -1;
 			} else {
 				word = NULL;
@@ -1056,8 +1077,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 127: /* delete */
 			if (input->readonly) {
 				word = NULL;
-			} else if (edit_delc (input, form->TextCursrX)) {
-				input->TextLen--;
+			} else if (edit_delc (input, form->TextCursrX, form->TextCursrY)) {
+				input->TextLen = edit_rowln (input, form->TextCursrY);
 			} else {
 				word = NULL;
 			}
@@ -1076,7 +1097,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			}
 			break;
 		
-		case 0x4D: /*right */
+		case 0x4D: /* right */
 			if (form->TextCursrX < input->TextLen) {
 				scrl = +1;
 			} else {
@@ -1093,7 +1114,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 0x4F: /* end */
-			if ((scrl = input->TextLen - form->TextCursrX) == 0) {
+			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+			if (!scrl) {
 				word = NULL;
 			}
 			break;
@@ -1135,7 +1157,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 
 /*----------------------------------------------------------------------------*/
 static WCHAR *
-edit_init (INPUT input, TEXTBUFF current, UWORD cols, size_t size)
+edit_init (INPUT input, TEXTBUFF current, UWORD cols, UWORD rows, size_t size)
 {
 	WORDITEM word = current->word;
 	TEXTATTR attr = word->attr;
@@ -1170,8 +1192,12 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, size_t size)
 	edit_zero (input);
 	
 	input->VisibleX = cols;
-	input->VisibleY = 1;
+	input->VisibleY = rows;
 	input->CursorH  = p[7] + p[1] -1;
+	
+	if (rows > 1) {
+		word->word_height += (rows-1) * input->CursorH;
+	}
 	
 	return buff;
 }
@@ -1233,14 +1259,14 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-edit_char (INPUT input, WORD chr, WORD col)
+edit_char (INPUT input, WORD col, WORD row, WORD chr)
 {
 	ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 	const char  * ptr = &((char*)&chr)[1];
 	BOOL ok;
 	
-	if ((WCHAR*)&input->TextArray[0] > input->TextArray[input->TextRows]) {
-		WCHAR ** text = input->TextArray;
+	if (edit_space (input) > 0) {
+		WCHAR ** line = input->TextArray;
 		WORD  n;
 		WCHAR uni[5];
 		(*encoder)(&ptr, uni);
@@ -1256,14 +1282,14 @@ edit_char (INPUT input, WORD chr, WORD col)
 			input->Word->item[input->TextLen +1] = '\0';
 		
 		} else {
-			WCHAR * end = text[input->TextRows];
-			WCHAR * dst = text[0] + col;
-			do {
-				*(end +1) = *(end);
-			} while (--end >= dst);
+			WCHAR * end = line[input->TextRows];
+			WCHAR * dst = line[row] + col;
+			while (--end >= dst) {
+				end[1] = end[0];
+			}
 			*dst = *uni;
 		}
-		for (n = 0; n < input->TextRows; text[++n]++);
+		for (n = row +1; n <= input->TextRows; line[n++]++);
 		ok = TRUE;
 	
 	} else { /* buffer full */
@@ -1274,14 +1300,14 @@ edit_char (INPUT input, WORD chr, WORD col)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-edit_delc (INPUT input, WORD col)
+edit_delc (INPUT input, WORD col, WORD row)
 {
 	WCHAR ** text = input->TextArray;
-	WCHAR * w_beg = text[0];
-	WCHAR * w_end = text[input->TextRows];
+	WCHAR  * beg  = text[row] + col;
+	WCHAR  * end  = text[input->TextRows];
 	BOOL ok;
 	
-	if (col < w_end - w_beg) {
+	if (beg < end -1) {
 		WORD n;
 		
 		if (input->Value) { /*password */
@@ -1289,15 +1315,14 @@ edit_delc (INPUT input, WORD col)
 			do {
 				*(ptr) = *(ptr +1);
 			} while (*(ptr++));
-			*(--w_end) = '\0';
+			*(--end) = '\0';
 		
 		} else {
-			WCHAR * ptr = w_beg + col;
 			do {
-				*(ptr) = *(ptr +1);
-			} while (*(ptr++));
+				*(beg) = *(beg +1);
+			} while (*(beg++));
 		}
-		for (n = 0; n < input->TextRows; text[++n]--);
+		for (n = row; n < input->TextRows; text[++n]--);
 		ok = TRUE;
 	
 	} else {
