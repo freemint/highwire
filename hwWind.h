@@ -22,7 +22,7 @@ struct hw_window {
 	struct {
 		WORD Offset;
 		WORD Width;    
-	}       TbarElem[7];
+	}       TbarElem[8];
 	void  * Pane;
 	void  * Active;
 	void  * Input;
@@ -73,9 +73,11 @@ typedef enum {
 	                     * <0: enabled but invisible by default */
 } HWWIND_SET;
 
-void hwWind_setup (HWWIND_SET, long arg);
+void hwWind_setup   (HWWIND_SET, long arg);
+void hwWind_urlhist (HwWIND, const char *);
 
 void init_icons(void);
+
 
 /* service function, not really releated here */
 FILE * open_scrap (BOOL rdNwr);

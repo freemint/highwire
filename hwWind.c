@@ -38,6 +38,16 @@ static void vTab_iconified (HwWIND);
 
 #define HISTORY_LAST 20
 
+typedef struct s_url_hist * URLHIST;
+struct s_url_hist {
+	URLHIST Next;
+	char    Menu[40];
+	char    Link[1];
+};
+static URLHIST url_hist = NULL;
+#define        URL_HIST_MAX 10
+
+
 
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
 static WORD  inc_xy = 0;
@@ -103,8 +113,26 @@ static TOOLBTN hw_buttons[] = {
 		{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
 			0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
 		{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
-			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
+			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } },
 #define	TBAR_EDIT 6
+#define	TBAR_HIST 7
+/*	{150, G_BLACK, G_GREEN,
+		{	0x0000, 0x7FFC, 0x4004, 0x2008, 0x2008, 0x1010, 0x1010, 0x0820,
+			0x0820, 0x0440, 0x0440, 0x0280, 0x0280, 0x0100, 0x0100 },
+		{	0x0000, 0x0000, 0x3FF8, 0x1FF0, 0x1FF0, 0x0FE0, 0x0FE0, 0x07C0,
+			0x07C0, 0x0380, 0x0380, 0x0100, 0x0100, 0x0000, 0x0000 } }
+*/
+/*	{150, G_LBLACK, G_WHITE,
+		{	0x0000, 0x7FFC, 0x4004, 0x2008, 0x2008, 0x1010, 0x1010, 0x0820,
+			0x0820, 0x0440, 0x0440, 0x0280, 0x0280, 0x0100, 0x0100 },
+		{	0x0000, 0x0001, 0x0004, 0x0008, 0x0008, 0x0010, 0x0010, 0x0020,
+			0x0020, 0x0040, 0x0040, 0x0080, 0x0080, 0x0100, 0x0100 } }
+*/
+	{150, G_LBLACK, G_WHITE,
+		{	0x0000, 0x7FFC, 0x4004, 0x27C8, 0x2448, 0x1290, 0x1290, 0x0920,
+			0x0920, 0x0440, 0x0440, 0x0280, 0x0280, 0x0100, 0x0100 },
+		{	0x0000, 0x0001, 0x0004, 0x07C8, 0x0408, 0x0210, 0x0210, 0x0120,
+			0x0120, 0x0040, 0x0040, 0x0080, 0x0080, 0x0100, 0x0100 } }
 };
 #define TBAR_LEFT_MASK (1 << TBAR_LEFT)
 #define TBAR_RGHT_MASK (1 << TBAR_RGHT)
@@ -112,6 +140,7 @@ static TOOLBTN hw_buttons[] = {
 #define TBAR_REDO_MASK (1 << TBAR_REDO)
 #define TBAR_OPEN_MASK (1 << TBAR_OPEN)
 #define TBAR_STOP_MASK (1 << TBAR_STOP)
+#define TBAR_HIST_MASK (1 << TBAR_HIST)
 
 typedef struct {
 	WORD Visible;
@@ -244,14 +273,15 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		This->IbarH = widget_h - widget_b -1;
 	}
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
-	This->TbarMask = 0;
+	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0);
 	This->TbarActv = (This->TbarH && !url && !loc ? TBAR_EDIT : -1);
-	for (i = 0; i < numberof(hw_buttons); i++) {
+	for (i = 0; i < numberof(hw_buttons)-1; i++) {
 		This->TbarElem[i].Offset = hw_buttons[i].Offset;
 		This->TbarElem[i].Width  = 21;
 	}
 	This->TbarElem[TBAR_EDIT].Offset = This->TbarElem[TBAR_EDIT -1].Offset
 	                                 + This->TbarElem[TBAR_EDIT -1].Width *3 /2;
+	This->TbarElem[TBAR_HIST].Width  = 21;
 	edit = TbarEdit (This);
 	edit->Text[0] = '\0';
 	edit->Length  = 0;
@@ -630,11 +660,14 @@ vTab_sized (HwWIND This)
 	work.g_h -= This->TbarH + This->IbarH;
 	containr_calculate (This->Pane, &work);
 	
-	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6;
-	if ((edit->Visible = work.g_w /8 -1) < 7) {
+	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6
+	          + This->TbarElem[TBAR_HIST].Width;
+	if ((edit->Visible = work.g_w /8) < 7) {
 		edit->Visible = 7;
 	}
-	This->TbarElem[TBAR_EDIT].Width = edit->Visible *8 +6;
+	This->TbarElem[TBAR_EDIT].Width  = edit->Visible *8 +6;
+	This->TbarElem[TBAR_HIST].Offset = This->TbarElem[TBAR_EDIT].Offset
+	                                 + This->TbarElem[TBAR_EDIT].Width -1;
 	if (edit->Length <= edit->Visible) {
 		edit->Shift = 0;
 	} else if (edit->Shift > edit->Length - edit->Visible) {
@@ -939,7 +972,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 			WORD off[] = { G_LBLACK, 0 };
 			TOOLBTN * btn = hw_buttons;
 			int i;
-			for (i = 0; i < numberof(hw_buttons); i++, btn++) {
+			for (i = 0; i < numberof(hw_buttons)+1; i++) if (i != TBAR_EDIT) {
 				p[2].p_x = area.g_x + This->TbarElem[i].Offset +3;
 				p[3].p_x = p[2].p_x + This->TbarElem[i].Width  -7;
 				icon.fd_addr = btn->Data;
@@ -997,6 +1030,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 						vsf_interior (vdi_handle, FIS_SOLID);
 					}
 				}
+				btn++;
 			}
 		}
 		p[1].p_x = area.g_x + This->TbarElem[TBAR_EDIT].Offset;
@@ -1100,7 +1134,7 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 	} else {
 		chng = FALSE;
 	}
-	if (on | off) for (i = 0; i < numberof(hw_buttons); i++, mask <<= 1) {
+	if (on | off) for (i = 0; i < numberof(This->TbarElem); i++, mask <<= 1) {
 		if (This->TbarMask & mask) {
 			if (off & mask) {
 				This->TbarMask &= ~mask;
@@ -1150,6 +1184,109 @@ updt_toolbar (HwWIND This, const char * text)
 	This->TbarActv = TBAR_EDIT;
 	chng_toolbar (This, 0, 0, -1);
 }
+
+
+/*----------------------------------------------------------------------------*/
+static void
+update_urlhist (void)
+{
+	char    k[] = "URL_00";
+	URLHIST ent = url_hist;
+	short   i   = 0;
+	while (ent && ++i <= URL_HIST_MAX) {
+		if (++k[5] > '9') {
+			k[5] = 0;
+			k[4]++;
+		}
+		save_config (k, ent->Link);
+		ent = ent->Next;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+select_urlhist (HwWIND This)
+{
+	char  * array[URL_HIST_MAX +1];
+	URLHIST ent = url_hist;
+	short   n   = 0;
+	WORD    x   = This->Work.g_x + This->TbarElem[TBAR_HIST].Offset
+	                             + This->TbarElem[TBAR_HIST].Width +1;
+	WORD    y   = This->Work.g_y + This->TbarElem[TBAR_HIST].Width -1;
+	while (ent) {
+		array[n] = ent->Menu;
+		if (++n == URL_HIST_MAX) break;
+		ent = ent->Next;
+	}
+	array[n] = NULL;
+	if ((n = HW_form_popup (array, -x, y, FALSE)) >= 0) {
+		ent = url_hist;
+		if (n) {
+			URLHIST * pptr = &ent->Next;
+			while (--n) pptr = &(*pptr)->Next;
+			ent       = *pptr;
+			*pptr     = ent->Next;
+			ent->Next = url_hist;
+			url_hist  = ent;
+			update_urlhist();
+		}
+		start_page_load (This->Pane, ent->Link, NULL, TRUE, NULL);
+	} else {
+		chng_toolbar (This, 0, 0, -1);
+	}
+}
+
+/*============================================================================*/
+void
+hwWind_urlhist (HwWIND This, const char * link)
+{
+	size_t  len = strlen (link);
+	URLHIST ent = (This ? url_hist : NULL);
+	
+	if (ent && strcmp (ent->Link, link) != 0) {
+		URLHIST * pptr = &ent->Next;
+		while ((ent = *pptr) != NULL) {
+			if (strcmp (ent->Link, link) == 0) {
+				*pptr = ent->Next;
+				break;
+			}
+			pptr = &ent->Next;
+		}
+	}
+	if (!ent && (ent = malloc (sizeof (struct s_url_hist) + len)) != NULL) {
+		ent->Menu[0] = ' ';
+		if (len <= sizeof(ent->Menu) -3) {
+			strcpy (ent->Menu +1, link);
+		} else {
+			memcpy (ent->Menu +1, link, sizeof(ent->Menu) -3);
+			ent->Menu[sizeof(ent->Menu) -2] = '¯';
+			ent->Menu[sizeof(ent->Menu) -1] = '\0';
+		}
+		memcpy (ent->Link, link, len +1);
+	}
+	if (ent) {
+		if (!This) {
+			URLHIST * pptr = &url_hist;
+			while (*pptr) pptr = &(*pptr)->Next;
+			*pptr     = ent;
+			ent->Next = NULL;
+			return;
+		}
+		if (!url_hist) {
+			HwWIND wind = hwWind_Top;
+			while (wind) {
+				chng_toolbar (wind, TBAR_HIST_MASK, 0, -1);
+				wind = hwWind_Next (wind);
+			}
+		}
+		if (ent != url_hist) {
+			ent->Next = url_hist;
+			url_hist  = ent;
+			update_urlhist();
+		}
+	}
+}
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static void
@@ -1574,7 +1711,8 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageFinished: {
-			WORD bttn_on = TBAR_REDO_MASK|TBAR_OPEN_MASK;
+			WORD bttn_on = TBAR_REDO_MASK|TBAR_OPEN_MASK
+			             | (url_hist ? TBAR_HIST_MASK :0);
 			if (wind->loading && !--wind->loading) {
 				char flag = (!wind->HistUsed
 				             ? ' ' : wind->History[wind->HistMenu]->Text[0]);
@@ -1866,7 +2004,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
 		EVMULT_OUT out;
 		short     hist  = This->HistMenu;
-		short     shift;
+		short     shift = 0;
 		chng_toolbar (This, 0, 0, tb_n);
 		if (tb_n <= TBAR_RGHT) {
 			m_in.emi_flags |= MU_TIMER;
@@ -1876,8 +2014,8 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		m_in.emi_m1.g_x = This->Work.g_x + This->TbarElem[tb_n].Offset;
 		m_in.emi_m1.g_y = This->Work.g_y;
 		m_in.emi_m1.g_w = m_in.emi_m1.g_h = This->TbarElem[tb_n].Width;
-		do {
-			WORD       msg[8];
+		if (tb_n != TBAR_HIST) do {
+			WORD msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
 			shift = out.emo_kmeta & (K_RSHIFT|K_LSHIFT);
 			if (event & MU_TIMER) {
@@ -1914,7 +2052,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			}
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
-		if (out.emo_kmeta & K_ALT) {
+		if (tb_n == TBAR_REDO && (out.emo_kmeta & K_ALT)) {
 			cache_clear (NULL);
 			if (shift) tb_n = -1;
 		}
@@ -1924,6 +2062,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			case TBAR_HOME: hwWind_history  (This, 0,    FALSE);  break;
 			case TBAR_REDO: hwWind_history  (This, hist, !shift); break;
 			case TBAR_STOP: containr_escape (This->Pane);         break;
+			case TBAR_HIST: select_urlhist  (This);               break;
 			case TBAR_OPEN: menu_open       (TRUE);
 			default:        chng_toolbar (This, 0, 0, -1);
 		}
@@ -2280,6 +2419,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			
 			case 13: /* enter/return */
 				if (edit->Length) {
+					LOADER ldr;
 					if (edit->Text[0] != '/' && strchr (edit->Text, ':') == NULL) {
 						/*
 						 * if no protocol, drive letter or local path is given
@@ -2292,7 +2432,12 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 							memcpy  (edit->Text,       http,       gap);
 						}
 					}
-					start_page_load (This->Pane, edit->Text, NULL, TRUE, NULL);
+					ldr = start_page_load (This->Pane, edit->Text, NULL, TRUE, NULL);
+					if (ldr) {
+						char link[1024];
+						location_FullName (ldr->Location, link, sizeof(link));
+						hwWind_urlhist (This, link);
+					}
 					chng_toolbar (This, 0, 0, -1);
 					break;
 				}
