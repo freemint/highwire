@@ -889,11 +889,15 @@ saveas_job (void * arg, long invalidated)
 	
 			p = strrchr (remote->File, '?');
 
-			nsize = strlen(p);
+			nsize = (p ? strlen(p) : 0);
 			ssize = strlen(remote->File);
+			ssize -= nsize;
+			if (ssize >= sizeof (fsel_file)) {
+				ssize = sizeof (fsel_file) -1;
+			}
+			memcpy (fsel_file, remote->File, ssize);
+			fsel_file[ssize] = '\0';
 			
-			strncpy (fsel_file, remote->File, (ssize - nsize));
-
 			/* get our new filename */
 			
 			if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
