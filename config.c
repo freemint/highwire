@@ -116,7 +116,7 @@ static void
 cfg_cachedir (char * param, long arg)
 {
 	(void)arg;
-	cache_setup (param, 0);
+	cache_setup (param, 0, 0, 0);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -126,7 +126,19 @@ cfg_cachemem (char * param, long arg)
 	long n = atol (param);
 	(void)arg;
 	if (n > 0) {
-		cache_setup (NULL, (ULONG)n * 1024);
+		cache_setup (NULL, (ULONG)n * 1024, 0, 0);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_cachedsk (char * param, long arg)
+{
+	long n = strtoul (param, &param, 10);
+	long m = strtoul (param, &param, 10);
+	(void)arg;
+	if (n > 0 || m > 0) {
+		cache_setup (NULL, 0, (ULONG)n * 1024, m);
 	}
 }
 
@@ -193,6 +205,7 @@ read_config(char *fn)
 				{ "BOLD_NORMAL",          cfg_font,    FA(normal_font, 1, 0) },
 				{ "BOLD_TELETYPE",        cfg_font,    FA(pre_font,    1, 0) },
 				{ "CACHEDIR",             cfg_cachedir,0 },
+				{ "CACHEDSK",             cfg_cachedsk,0 },
 				{ "CACHEMEM",             cfg_cachemem,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd, 0 },
 				{ "FONT_MINSIZE",         cfg_minsize, 0 },

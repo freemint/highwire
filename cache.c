@@ -53,9 +53,9 @@ static size_t    __cache_mem_use = 0;
 static size_t    __cache_mem_max = 0;
 static size_t    __cache_mem_num = 0;
 static size_t    __cache_dsk_use = 0;
-static size_t    __cache_dsk_max = 5L*1024*1024;
+static size_t    __cache_dsk_max = 0;
 static size_t    __cache_dsk_num = 0;
-static size_t    __cache_dsk_lim = 500;
+static size_t    __cache_dsk_lim = 0;
 static LOCATION  __cache_dir = NULL;
 static long      __cache_fid = 1;
 static BOOL      __cache_idx = TRUE;
@@ -320,7 +320,7 @@ cache_insert (LOCATION loc, long ident,
 	CACHEITEM citem;
 	
 	if (!__cache_mem_max) {
-		cache_setup (NULL, 0);
+		cache_setup (NULL,0,0,0);
 	}
 	if (__cache_mem_use + size > __cache_mem_max) {
 		cache_throw (__cache_mem_use + size - __cache_mem_max);
@@ -588,13 +588,23 @@ read_hex (char ** ptr)
 
 /*============================================================================*/
 void
-cache_setup (const char * dir, size_t mem_max)
+cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 {
-	FILE * file = NULL;
-	
-	if (!__cache_mem_max && !mem_max) {
-		mem_max = CACHE_MAX;
+	if (!dir && !mem_max && !dsk_max && !dsk_lim) {
+		puts ("Setting cache defaults:");
+		if (!__cache_mem_max) {
+			mem_max = CACHE_MAX;
+			printf ("  Memory: %lu bytes\n", mem_max);
+		}
+		if (!__cache_dir) {
+			puts (" Disk: (diabled)");
+		} else if (!__cache_dsk_max) {
+			dsk_max = 2L*1024*1024;
+			dsk_lim = 200;
+			printf ("  Disk: %lu bytes, %lu files.\n", dsk_max, dsk_lim);
+		}
 	}
+	
 	if (mem_max) {
 		if ((long)(__cache_mem_max = (long)Malloc (-1) /2) < 0) {
 			__cache_mem_max = 0;
@@ -604,7 +614,13 @@ cache_setup (const char * dir, size_t mem_max)
 /*		printf ("cache mem %lu\n", __cache_mem_max);*/
 	}
 	
-	if (dir && *dir) {
+	if (dsk_max) {
+		__cache_dsk_max = dsk_max;
+		__cache_dsk_lim = (dsk_lim ? dsk_lim : 500);
+	}
+	
+	if (dir && *dir && !__cache_dir) {
+		FILE * file = NULL;
 		char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
 		LOCATION loc;
 		if (p[-1] != '/' && p[-1] != '\\') {
@@ -679,14 +695,17 @@ cache_setup (const char * dir, size_t mem_max)
 			}
 			fclose (file);
 			if (ndel) {
-				printf ("%li expired.\n", ndel);
 				cache_flush (NULL, __cache_dir);
 			}
-			if (__cache_dsk_num > __cache_dsk_lim ||
-			    __cache_dsk_use > __cache_dsk_max) {
-				cache_remove (__cache_dsk_num - __cache_dsk_lim,
-				              __cache_dsk_use - __cache_dsk_max);
-			}
+		}
+	}
+	
+	if (__cache_dir && __cache_dsk_max) {
+		if ((__cache_dsk_num > __cache_dsk_lim ||
+		     __cache_dsk_use > __cache_dsk_max) 
+		    && cache_remove (__cache_dsk_num - __cache_dsk_lim,
+			                  __cache_dsk_use - __cache_dsk_max)) {
+			cache_flush (NULL, __cache_dir);
 		}
 	}
 }
@@ -801,6 +820,9 @@ cache_assign (LOCATION src, void * data, size_t size,
 				strcpy (p, type);
 			} else {
 				*p = '\0';
+			}
+			if (!__cache_dsk_max) {
+				cache_setup (NULL,0,0,0);
 			}
 			if (__cache_dsk_num >= __cache_dsk_lim ||
 			    __cache_dsk_use + size > __cache_dsk_max) {
