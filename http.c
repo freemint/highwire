@@ -225,12 +225,11 @@ transfer_enc (const char * beg, long len, HTTP_HDR * hdr)
 /*============================================================================*/
 #ifdef USE_INET
 short
-http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive)
+http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
 	int    reply = 0;
-	char * chunk = NULL;
 	
 	char * ln_beg = buffer, * ln_end = ln_beg, * ln_brk = NULL;
 	
@@ -246,6 +245,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive)
 	hdr->Rdir     = NULL;
 	hdr->Head     = buffer;
 	hdr->Tail     = buffer + sizeof(buffer) -1;
+	hdr->Tlen     = 0;
 	buffer[sizeof(buffer) -1] = '\0';
 	
 	if (sock < 0) {
@@ -283,7 +283,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive)
 	}
 	
 	do {
-		long n = inet_recv (sock, ln_end, (left > R_BLK ? R_BLK : left));
+		long n = inet_recv (sock, ln_end, (left <= blk_size ? left : blk_size));
 		
 		if (n < 0) { /* connection broken */
 			if (reply) {
@@ -331,26 +331,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive)
 			if (ln_beg == ln_brk || (ln_beg[0] == '\r' && ln_beg[1] == '\n')) {
 				*ln_brk = '\0';
 				ln_beg = ln_brk +1;
-				if (!hdr->Chunked) {
-					hdr->Tail = ln_beg;
-					left = 0;
-					break;
-				
-				} else {
-					chunk  = ln_beg;
-					ln_brk = strchr (ln_beg, '\n');
-					continue;
-				}
-			}
-			if (chunk) {
-				char * tail = chunk;
-				long   size = strtoul (chunk, &tail, 16);
-				if (size >= 0 && tail > chunk && tail <= ln_brk) {
-					hdr->Size = size;
-					hdr->Tail = ln_brk +1;
-				} else {
-					reply = -1;
-				}
+				hdr->Tail = ln_beg;
+				hdr->Tlen = (ln_end > ln_beg ? ln_end - ln_beg : 0);
 				left = 0;
 				break;
 			}
