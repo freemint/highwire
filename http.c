@@ -350,17 +350,25 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		return sock;
 	
 	} else {
-		const char * stack = inet_info();
-		size_t len = sprintf (buffer,
-		     "%s %s%s HTTP/1.1\r\n"
-		     "HOST: %s\r\n"
-		     "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n"
-		     "\r\n",
-		     (keep_alive ? "GET" : "HEAD"), location_Path (loc, NULL), loc->File,
-		     name,
-		     _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
-		     _HIGHWIRE_REVISION_, (stack ? stack : ""));
-		if ((len = inet_send (sock, buffer, len)) < 0) {
+		const char * head = (keep_alive ? "GET " : "HEAD ");
+		size_t       len;
+		if ((len = inet_send (sock, head, strlen (head))) > 0 &&
+		    (len = inet_send (sock, loc->FullName, strlen (loc->FullName))) > 0) {
+			const char rest[] = " HTTP/1.1\r\n";
+			len = inet_send (sock, rest, sizeof(rest) -1);
+		}
+		if (len > 0) {
+			const char * stack = inet_info();
+			len = sprintf (buffer,
+			       "HOST: %s\r\n"
+			       "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n"
+			       "\r\n",
+			       name,
+			       _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
+			       _HIGHWIRE_REVISION_, (stack ? stack : ""));
+			len = inet_send (sock, buffer, len);
+		}
+		if (len < 0) {
 			if (len < -1) {
 				sprintf (buffer, "Error: %s\n", strerror((int)-len));
 			} else {
