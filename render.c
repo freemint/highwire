@@ -611,7 +611,7 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 			                = ((UWORD)toupper(output[0]) <<8) | toupper(output[1]);
 		}
 	
-	} else {
+	} else if (!strstr (*text, "</html>") && !strstr (*text, "</HTML>")) {
 		*text = strchr (*text, '\0');
 	}
 	return flags;
@@ -1103,7 +1103,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	
-	if (flags & PF_START) {
+	if (flags & PF_START && !parser->Frame->Page.HtmlCode) {
 		FRAME frame = parser->Frame;
 		WORD  margin;
 		
