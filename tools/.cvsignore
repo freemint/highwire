@@ -3,5 +3,4 @@ obj.*
 *.o
 *[~%]
 *.bak
-*.app
-*.prg
+*.tos
