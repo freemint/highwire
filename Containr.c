@@ -553,7 +553,13 @@ containr_byName (CONTAINR cont, const char * name)
 		return cont;
 	
 	} else if (stricmp (name, "_parent") == 0) {
-		return (cont->Parent ? cont->Parent : cont);
+		/*return (cont->Parent ? cont->Parent : cont);*/
+		/*
+		 * '_parent' means the parent of a whole frameset and not of this
+		 * particular one.  this will fail if a frameset includes a file with
+		 * another frameset -- but who cares...
+		*/
+		return cont->Base;
 	}
 	
 	cont = cont->Base;
