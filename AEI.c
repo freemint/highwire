@@ -427,18 +427,23 @@ void
 menu_fontsize (char plus_minus)
 {
 	if (plus_minus == '+') {
-		if (font_size < 18)
+		if (font_size < 18) {
 			font_size++;
-		else
+		} else {
 			font_size += 3;
+		}
 		logprintf(LOG_BLACK, "+font_size %d\n", (int)font_size);
 		menu_reload (ENCODING_Unknown);
 		
 	} else if (font_size > 2) {
-		if (font_size < 20)
+		if (font_size < 20) {
 			font_size--;
-		else
+		} else {
 			font_size -= 3;
+		}
+		if (font_minsize > font_size) {
+			font_minsize = font_size; /* override setting */
+		}
 		logprintf(LOG_BLACK, "-font_size %d\n", (int)font_size);
 		menu_reload (ENCODING_Unknown);
 	}
@@ -451,7 +456,7 @@ menu_logging (void)
 {
 	logging_is_on = !logging_is_on;
 #ifdef GEM_MENU
-	menu_icheck(menutree, M_LOGGING, logging_is_on);
+	menu_icheck (menutree, M_LOGGING, logging_is_on);
 #endif
 }
 
@@ -462,7 +467,18 @@ menu_alt_text (void)
 {
 	alternative_text_is_on = !alternative_text_is_on;
 #ifdef GEM_MENU
-	menu_icheck(menutree, M_ALT_TEXT, alternative_text_is_on);
+	menu_icheck (menutree, M_ALT_TEXT, alternative_text_is_on);
+#endif
+}
+
+
+/*============================================================================*/
+void
+menu_frm_ctrl (void)
+{
+	force_frame_controls = !force_frame_controls;
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_FRM_CTRL, force_frame_controls);
 #endif
 }
 
@@ -584,6 +600,7 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_FONT_DEC:  menu_fontsize ('-'); break;
 		case M_ALT_TEXT:  menu_alt_text();     break;
 		case M_LOGGING:   menu_logging();      break;
+		case M_FRM_CTRL:  menu_frm_ctrl();     break;
 	}
 	if (title > 0) {
 		menu_tnormal (menutree, title, UNHIGHLIGHT);
