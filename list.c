@@ -69,7 +69,9 @@ list_finish (TEXTBUFF current)
 		} else {
 			par = add_paragraph (current, 0);
 		}
+/* This one seems to be wrong:
 		par->Hanging = -current->lst_stack->Hanging;
+*/
 	}
 	par->Indent = list->Indent;
 	
