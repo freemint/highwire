@@ -83,7 +83,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
 				render_text (current, buf);
 			} else if (!info->Local) {
-				render_text (current, "(busy)");
+				TA_Color (render_text (current, "(busy)")->attr) = G_RED;
 			} else {
 				sprintf (buf, "Disk:%s", info->Local->File);
 				render_text (current, buf);
