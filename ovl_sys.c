@@ -182,7 +182,7 @@ printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 				pid = Pexec (104, ovl_name, ovl_basepage, NULL);
 				if (pid > 0) {
 					Psignal (20/*SIGCHLD*/, (long)sig_chld);
-				} else if (pid == EINVFN) {
+				} else if (pid == -EINVFN) {
 					pid = 0;
 				} else {
 					ovl_methods = NULL;

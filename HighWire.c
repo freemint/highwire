@@ -90,7 +90,7 @@ main (int argc, char **argv)
      * here is the old routine in case the new one is problematic
 	 *	if (can_extended_mxalloc()) gslongname = (char *)Mxalloc(128 + HW_PATH_MAX, ALLOCMODE);
 	 */
-	if (Sysconf(-1) != EINVFN)
+	if (Sysconf(-1) != -EINVFN)
 		gslongname = (char *)Mxalloc(32 + 16 + 2 * HW_PATH_MAX, ALLOCMODE);
 	else
 		gslongname = (char *)Malloc(32 + 16 + 2 * HW_PATH_MAX);

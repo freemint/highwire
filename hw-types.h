@@ -98,10 +98,16 @@ typedef enum {
 #define E_OK 0
 #endif
 #ifndef EINVFN
-#define EINVFN -32 /* Function not implemented. */
+#define EINVFN 32 /* Function not implemented. */
 #endif
 #ifndef EINVAL
-#define EINVAL -25 /* Invalid argument. */
+#define EINVAL 25 /* Invalid argument. */
+#endif
+#ifndef EINTR
+#define EINTR 128 /* Interrupted function call. */
+#endif
+#ifndef ETIMEDOUT
+#define ETIMEDOUT 320 /* Connection timed out. */
 #endif
 
 

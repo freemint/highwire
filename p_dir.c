@@ -89,7 +89,7 @@ parse_dir (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	if ((dh = Dopendir (loc->FullName, 0)) == EINVFN) {
+	if ((dh = Dopendir (loc->FullName, 0)) == -EINVFN) {
 		LOCATION tmp = new_location ("*.*", loc);
 		DTA    * old = Fgetdta();
 		DTA      dta;

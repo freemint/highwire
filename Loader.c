@@ -674,7 +674,7 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	if (xret == E_OK) {  /* Fxattr() exists */
 		size = file_info.st_size;
 	
-	} else if (xret == EINVFN) {  /* here for TOS filenames */
+	} else if (xret == -EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();
 		Fsetdta(&new);
 
