@@ -4,7 +4,9 @@
 
 typedef struct {
 	short    Version;  /* which HTTP */
-	long     Date;     /* -1 or from 'Last-Modified'  */
+	long     SrvrDate;
+	long     Modified; /* -1 or from 'Last-Modified'  */
+	long     Expires;
 	long     Size;     /* -1 or from 'Content-Length' */
 	MIMETYPE MimeType; /* -1 or from 'Content-Type'   */
 	ENCODING Encoding; /* 'ENCODING_Unknown' or from 'Content-Type; charset' */

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 
 #include "defs.h"
 #include "Location.h"
@@ -15,7 +16,89 @@
 #include "scanner.h"
 
 
-#define R_BLK 16
+static long
+http_date (const char * beg)
+{
+	/* RFC 2616 grammar:
+	HTTP-date    = rfc1123-date | rfc850-date | asctime-date
+	rfc1123-date = wkday "," SP date1 SP time SP "GMT"
+	rfc850-date  = weekday "," SP date2 SP time SP "GMT"
+	asctime-date = wkday SP date3 SP time SP 4DIGIT
+	date1        = 2DIGIT SP month SP 4DIGIT
+	               ; day month year (e.g., 02 Jun 1982)
+	date2        = 2DIGIT "-" month "-" 2DIGIT
+	               ; day-month-year (e.g., 02-Jun-82)
+	date3        = month SP ( 2DIGIT | ( SP 1DIGIT ))
+	               ; month day (e.g., Jun  2)
+	time         = 2DIGIT ":" 2DIGIT ":" 2DIGIT
+	               ; 00:00:00 - 23:59:59
+	wkday        = "Mon" | "Tue" | "Wed"
+	             | "Thu" | "Fri" | "Sat" | "Sun"
+	weekday      = "Monday" | "Tuesday" | "Wednesday"
+	             | "Thursday" | "Friday" | "Saturday" | "Sunday"
+	month        = "Jan" | "Feb" | "Mar" | "Apr"
+	             | "May" | "Jun" | "Jul" | "Aug"
+	             | "Sep" | "Oct" | "Nov" | "Dec"
+	*/
+	const char mon[][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+	                       "Aug", "Sep", "Oct", "Nov", "Dec" };
+	struct tm  tm = { 0, 0, 0, -1, -1, -1, 0,0,0 };
+	char     * end;
+	BOOL       asc;
+	short      i;
+	long       date;
+	
+	/* skip weekdays */
+	while (isalpha (*beg)) beg++;
+	while (isspace (*beg)) beg++;
+	
+	if (*beg != ',')  { /* asctime-date */
+		asc = TRUE;
+		
+	} else { /* rfc1123-date or rfc850-date */
+		asc = FALSE;
+		tm.tm_mday = (int)strtol (++beg, &end, 10);
+		beg = end;
+		if (*beg == '-') beg++;
+	}
+	
+	/* read month */
+	while (isspace (*beg)) beg++;
+	for (i = 0; i < (short)numberof(mon); i++) {
+		if (strnicmp (beg, mon[i], 3) == 0) {
+			tm.tm_mon = i;
+			beg += 3;
+			break;
+		}
+	}
+	
+	if (asc) {
+		tm.tm_mday = (int)strtol (++beg, &end, 10);
+		beg = end;
+		if (*beg == ',') beg++;
+	
+	} else {
+		if (*beg == '-') beg++;
+	}
+	
+	/* read year */
+	if ((tm.tm_year = (int)strtol (beg, &end, 10)) >= 0) {
+		if      (tm.tm_year <    70) tm.tm_year += 100;
+		else if (tm.tm_year >= 1900) tm.tm_year -= 1900;
+	}
+	beg = end;
+	
+	/* read time as hh:mm:ss */
+	sscanf (beg, "%2u:%2u:%2u", &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+	
+/*printf ("%04i-%02i-%02i %02i:%02i:%02i\n",
+        tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+*/
+	/* convert to unix calendar time (UTC) */
+	date = mktime (&tm);
+	
+	return (date > 0 ? date : 0);
+}
 
 
 /*============================================================================*/
@@ -162,6 +245,69 @@ transfer_enc (const char * beg, long len, HTTP_HDR * hdr)
 	return found;
 }
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+server_date (const char * beg, long len, HTTP_HDR * hdr)
+{
+	const char token[] = "Date:";
+	BOOL       found;
+	
+	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
+		beg += sizeof(token)-1;
+		len -= sizeof(token)-1;
+		while (isspace (*beg) && len-- > 0) beg++;
+		if (len > 0) {
+			hdr->SrvrDate = http_date (beg);
+		}
+		found = TRUE;
+	} else {
+		found = FALSE;
+	}
+	return found;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+last_modified (const char * beg, long len, HTTP_HDR * hdr)
+{
+	const char token[] = "Last-Modified:";
+	BOOL       found;
+	
+	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
+		beg += sizeof(token)-1;
+		len -= sizeof(token)-1;
+		while (isspace (*beg) && len-- > 0) beg++;
+		if (len > 0) {
+			hdr->Modified = http_date (beg);
+		}
+		found = TRUE;
+	} else {
+		found = FALSE;
+	}
+	return found;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+expires (const char * beg, long len, HTTP_HDR * hdr)
+{
+	const char token[] = "Expires:";
+	BOOL       found;
+	
+	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
+		beg += sizeof(token)-1;
+		len -= sizeof(token)-1;
+		while (isspace (*beg) && len-- > 0) beg++;
+		if (len > 0) {
+			hdr->Expires = http_date (beg);
+		}
+		found = TRUE;
+	} else {
+		found = FALSE;
+	}
+	return found;
+}
+
 /*============================================================================*/
 #ifdef USE_INET
 short
@@ -177,7 +323,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 	int sock = location_open (loc, &name);
 	
 	hdr->Version  = 0x0000;
-	hdr->Date     = -1;
+	hdr->SrvrDate = -1;
+	hdr->Modified = -1;
+	hdr->Expires  = -1;
 	hdr->Size     = -1;
 	hdr->MimeType = -1;
 	hdr->Encoding = ENCODING_Unknown;
@@ -267,8 +415,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 			}
 		}
 		while (ln_brk) {
-			if (ln_beg == ln_brk || (ln_beg[0] == '\r' && ln_beg[1] == '\n')) {
-				*ln_brk = '\0';
+			*ln_brk = '\0';
+			if (ln_beg == ln_brk || (ln_beg[0] == '\r' && !ln_beg[1])) {
 				ln_beg = ln_brk +1;
 				hdr->Tail = ln_beg;
 				hdr->Tlen = (ln_end > ln_beg ? ln_end - ln_beg : 0);
@@ -281,9 +429,13 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 				 && !content_type   (ln_beg, n, hdr)
 				 && !redirect       (ln_beg, n, hdr)
 				 && !transfer_enc   (ln_beg, n, hdr)
+				 && !server_date    (ln_beg, n, hdr)
+				 && !last_modified  (ln_beg, n, hdr)
+				 && !expires        (ln_beg, n, hdr)
 				) {
 				/* something else? */
 			}
+			*ln_brk = '\n';
 			ln_beg = ln_brk +1;
 			n      = ln_end - ln_beg +1;
 			ln_brk = (n ? memchr (ln_beg, '\n', n) : NULL);
