@@ -1794,6 +1794,10 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 			par = add_paragraph (current, 2);
 		}
 		
+		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
+			insert_anchor (current, name, NULL);
+		}
+		
 		fontstack_push (current, step);
 		fontstack_setType (current, header_font);
 		fontstack_setBold (current);
@@ -1814,9 +1818,6 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 					fontstack_setColor (current, color);
 				}
 			}*/
-		}
-		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
-			insert_anchor (current, name, NULL);
 		}
 		
 	} else {
