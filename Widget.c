@@ -289,7 +289,7 @@ hwUi_box (WORD icon, const char * bttn,
 		buf[sizeof(buf)-1] = '\0';
 		if (left <= vsprintf (p, text, valist) || buf[sizeof(buf)-1] != '\0') {
 			buf[1] = '3'; /*Stop icon */
-			strcpy (buf + fill -1, "][ | -- Stack destroyed! -- ][EXIT]");
+			strcpy (buf + fill, " | -- Stack destroyed! -- | ][ABORT]");
 			form_alert (1, buf);
 			abort();
 		}
@@ -302,33 +302,52 @@ hwUi_box (WORD icon, const char * bttn,
 		BOOL  done = FALSE;
 		do switch (*p) {
 			case '\0': done = TRUE; break;
-			case '[':  *(p++) = '{'; break;
-			case '|':  *(p++) = '/'; break;
-			case ']':  *(p++) = '}'; break;
+			
+			/* special characters */
+			case '[':  *p = '{'; goto case_dflt;
+			case '|':  *p = '/'; goto case_dflt;
+			case ']':  *p = '}'; goto case_dflt;
+			
+			case '\r':
+				if (p[1] == '\n') {
+					memmove (p +1, p +2, (sizeof(buf) - (p - buf)) -2);
+					goto case_crlf;
+				}
+			default:
+			case_dflt:
+				if (p - beg >= 40) {
+					if (cnt == 1) { /* last line */
+						p[-1] = '¯';
+						goto case_crlf;
+					}
+					if (!spc) { /* line too long */
+						memmove (p +1, p, (sizeof(buf) - (p - buf)) -2);
+						goto case_crlf;
+					}
+					*spc = '|';
+					beg  = spc +1;
+					spc  = NULL;
+					done = !--cnt;
+				
+				} else {
+					if (*p <= ' ') {
+						if (p > beg) {
+							spc = p;
+						}
+						*p  = ' ';
+					}
+					p++;
+				}
+				break;
+			
 			case '\n':
-				if (!(done = (--cnt == 0))) {
+			case_crlf:
+				if ((done = !--cnt) == FALSE) {
 					*(p++) = '|';
 					spc    = NULL;
 					beg    = p;
 				}
 				break;
-			default: if (p - beg >= 40) {
-				if (spc) {
-					*spc = '|';
-					beg  = spc +1;
-					spc = NULL;
-				} else {
-					size_t len = sizeof(buf) - (p - buf);
-					memmove (p +1, p, len -2);
-					*(p++) = '|';
-					beg    = p;
-					spc    = NULL;
-				}
-			} else if (isspace (*p)) {
-				spc = p++;
-			} else {
-				p++;
-			}
 		} while (!done);
 		*(p++) = ']';
 	}
