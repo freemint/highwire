@@ -96,7 +96,7 @@ frame_finish (FRAME frame, PARSER parser, TEXTBUFF current)
 	}
 	paragrph_finish (current);
 	
-	content_minimum (&frame->Page);
+	dombox_MinWidth (&frame->Page.Box);
 }
 
 
