@@ -92,6 +92,19 @@ typedef enum {
 #endif
 
 
+/*--- Some Error Codes ---*/
+
+#ifndef E_OK
+#define E_OK 0
+#endif
+#ifndef EINVFN
+#define EINVFN -32 /* Function not implemented. */
+#endif
+#ifndef EINVAL
+#define EINVAL -25 /* Invalid argument. */
+#endif
+
+
 /*--- Macro for prototyping ---*/
 
 #ifndef __CDECL
