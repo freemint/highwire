@@ -40,6 +40,7 @@
 #include <gem.h>
 
 #include "global.h"
+#include "hwWind.h"
 #include "av_comm.h"
 #include "schedule.h"
 #include "Containr.h"
@@ -862,6 +863,9 @@ saveas_job (void * arg, long invalidated)
 	long fsize, bsize, rsize, csize = 0, nsize, ssize;
 	char *buffer;
 	char *p;
+	WORD   mx, my, u;
+	HwWIND   wind; 
+	GRECT    watch;
 				
 	if (!invalidated && !loader->Error) {
 		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -966,9 +970,11 @@ saveas_bottom:
 	
 	delete_loader (&loader);
 
-	/* We should close the window here
-	 * I didn't have time to figure that one out today
-	 */
+	/* We should close the window here	 */
+	graf_mkstate (&mx, &my, &u,&u);
+	wind = hwWind_mouse  (mx, my, &watch);
+
+	hwWind_close (wind, 0);
 
 	return JOB_DONE;
 }
