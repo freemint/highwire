@@ -1,6 +1,25 @@
 Ok here are the new supports and changes
 
-March 23, 2004   [V. 0.1.7 release]
+March 30, 2004   [V. 0.1.7 release]
+
+  AltF4's patches
+
+  parser.c:
+    - line 558 (parse_tag):  avoid illegal pointer access.
+
+March 29, 2004
+
+  AltF4's patches
+
+  parser.c:
+    - line 787..794 + 797..809 + 839 + 842 + 845 (parse_css):
+      improvements for better stability on parsing faulty CSS code.
+
+  Form.c:
+    - line 18 + 86 (new_form):  for forms without any action defined
+      use the document location.
+
+March 23, 2004
 
   AltF4's patches
 

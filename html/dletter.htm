@@ -1,30 +1,51 @@
 <html>
-<title>HighWire Developers Letter</title>
+<head><title>HighWire Developers Letter</title></head>
 <body>
 <h2>A Message from the HighWire Development Team</h2>
 <hr>
-<p><b><i>Welcome to the latest release of HighWire, 0.1.6!</i></b></p>
-<p>&nbsp;&nbsp;&nbsp; As I write this Developer letter it struck me that this is
-our 3rd Christmas release!&nbsp; In the past three years much has happened with
-the HighWire code.&nbsp; Countless hours have been spent working on this
-project, not to mention all the coffee, soda and oyster cookies.&nbsp;
-<p>&nbsp;I'd like to take a moment to thank one person behind a lot of those
-hours of coding, AltF4. Without his dedication, HighWire would NOT be what it is
-today.
-<p>&nbsp;&nbsp;Now that the cheering for AltF4 has gone down a few decibels.
-Besides the normal bug fixes, what's new with HighWire?&nbsp;
+<p><b><i>Welcome to the latest release of HighWire, 0.1.7!</i></b></p>
+<p>&nbsp;&nbsp;&nbsp; After 3 months and countless hours of working, here is the
+latest HighWire release. Much of the work has been done recoding the internal
+structures of HighWire to create better compatibility to the 'Document Object
+Model', mainly needed for CSS support.
+  <p>Other changes:
 <blockquote>
-  <p>The cache system has been reworked, cached files will now be used over subsequent sessions.
-  The reload button performs a&nbsp; reload of online pages, not only a reparse
-  from the cache. Implemented basic CSS support for BIG, SMALL,  FONT, SUB, SUP, H1..6, P, DD, DT,
-  DD and SPAN tags. Parsing of &lt;STYLE> areas. Pop-ups are now aligned always to the screen
-  extents. Meta tag 'http-equiv=expires' implemented.</p>
-  <p>See the <a href="../Change.Log">Change.Log</a> file for more details of updates
-  and the <a href="../example.cfg/highwire.cfg"><b>example file</b></a> for
-  explanations of new configuration keywords!
+  <p>- Support added for interlaced PNG image format.<br>
+  <br>
+  - Fixed a bug in the CSS parser which caused sometimes hangings on the
+    <code>@import</code> command.<br>
+  <br>
+  - Implemented handling of cascading selectors, for CSS 1.0 as well as for 2.0
+    specification.<br>
+  <br>
+  - For lists and the tags <code>CENTER</code>, <code>BLOCKQUOTE</code> and
+    <code>DIV</code> the CSS styles background-color, border-width/-color,
+     margin, padding and text-indent are supported now.<br>
+  <br>
+  - Block level elements store <code>id='..'</code> attributes now and can be
+    used for <code>&lt;a href="#id"&gt;</code> .<br>
+  <br>
+  - Improved handling of floating text around tables<br>
+  <br>
+  - Reworked re-calculation of tables for handling of images inside tables
+    without width specification.<br>
+  <br>
+  - Improved calculation of redraw areas for images of unknown size, reduces
+    flickering caused by redraws.<br>
+  <br>
+  - Background color setting changed to avoid multiple drawings of identical
+    backgrounds.<br>
+  <br>
+  - Workaround to catch malformed HTML (missing <code>&lt;tr&gt;</code> as in
+    CAB hotlists).<br>
 </blockquote>
+  <p>See the <a href="../Change.Log">Change.Log</a> file for more details of
+   updates.
+  <p>As a reminder, don't forget to check the
+  <a href="../example.cfg/highwire.cfg"><b>example file</b></a> for explanations
+  of new configuration keywords from the last release!
 <p>&nbsp;</p>
-<p>&nbsp;&nbsp;Now for another repeat, Baldrick's call for volunteers. 
+<p>&nbsp;&nbsp; Baldrick's call for volunteers. 
 <blockquote>
   <p>&nbsp;&nbsp;If you are interested in helping with the HighWire project,
   don't hesitate to get in touch with any member of the development team and let
