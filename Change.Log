@@ -4,7 +4,7 @@
   remote (only per session yet).  To enable this
   feature the highwire.cfg file needs to include
   the line
-  CACHEDIR = <path>
+    CACHEDIR = <path>
   where <path> must be a valid and writeable
   directory.
 
@@ -14,6 +14,9 @@
 
 - Reworked config parser for faster program start
   on slow machines.
+
+- Fixed a bug that was messing up the scheduler's
+  job queue.
 
 - Bugs #0114 resolved.
 
