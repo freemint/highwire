@@ -14,6 +14,7 @@ typedef struct s_loader {
 	MIMETYPE MimeType;
 	short    MarginW, MarginH;
 	/* */
+	LOCATION Cached;
 	size_t   DataSize; /* expected data size                   */
 	size_t   DataFill; /* real number of loaded/received bytes */
 	char   * Data;

@@ -1,5 +1,11 @@
-#include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#if defined (__GNUC__)
+# include <fcntl.h>
+# include <unistd.h>
+#endif
 
 #include "defs.h"
 #include "Location.h"
@@ -18,6 +24,7 @@ typedef struct s_cache_item {
 static CACHEITEM __cache     = NULL;
 static size_t    __cache_num = 0;
 static size_t    __cache_mem = 0;
+static LOCATION  __cache_dir = NULL;
 
 
 /*============================================================================*/
@@ -56,7 +63,7 @@ cache_lookup (LOCATION loc, long hash, long * opt_found)
 			if (hash == citem->Hash) {
 				p_found = p_cache;
 				break;
-			} else if (opt_found) {
+			} else if (opt_found && citem->Hash) {
 				p_found = p_cache;
 			}
 		}
@@ -179,10 +186,12 @@ cache_info (size_t * size, CACHEINF * p_info)
 			size_t    num   = __cache_num;
 			CACHEITEM citem = __cache;
 			do {
+				LOCATION local = (citem->Hash ? citem->Location : citem->Object);
 				info->Size   = citem->Size;
 				info->Used   = citem->Reffs;
 				info->Hash   = citem->Hash;
-				info->File   = citem->Location->File;
+				info->Source = citem->Location;
+				info->File   = local->File;
 				info->Object = citem->Object;
 				citem = citem->Next;
 				info++;
@@ -193,4 +202,74 @@ cache_info (size_t * size, CACHEINF * p_info)
 		*size = __cache_mem;
 	}
 	return __cache_num;
+}
+
+
+/*============================================================================*/
+BOOL
+cache_setup (const char * dir)
+{
+	char buf[1024], * p = strchr (strcpy (buf, dir), '\0');
+	LOCATION loc;
+	if (p[-1] != '/' && p[-1] != '\\') {
+		*(p++) = (strchr (buf, '/') ? '/' : '\\');
+	}
+	strcpy (p, "cache.idx");
+	if ((loc = new_location (buf, NULL)) != NULL) {
+		int fh;
+		location_FullName (loc, buf, sizeof(buf));
+		if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
+			close (fh);
+			__cache_dir = loc;
+		} else {
+			free_location (&loc);
+		}
+	}
+	return (__cache_dir != NULL);
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+file_dtor (void * arg)
+{
+	LOCATION loc = arg;
+	char buf[1024];
+	location_FullName (loc, buf, sizeof(buf));
+	unlink (buf);
+	free_location (&loc);
+}
+
+/*============================================================================*/
+LOCATION
+cache_assign (LOCATION src, void * data, size_t size, const char * type)
+{
+	static long num = 0;
+	LOCATION    loc = NULL;
+	if (__cache_dir) {
+		const char * dot;
+		char buf[1024];
+		int  fh;
+		if (!type || !*type) {
+			type = "";
+			dot  = "";
+		} else {
+			dot  = ".";
+		}
+		sprintf (buf, "%08lX%s%s", num, dot, type);
+		loc = new_location (buf, __cache_dir);
+		location_FullName (loc, buf, sizeof(buf));
+		if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
+			CACHED   cached;
+			CACHEOBJ obj = location_share (loc);
+			write (fh, data, size);
+			close (fh);
+			num++;
+			cached = cache_insert (src, 0, &obj, size, file_dtor);
+			cache_release (&cached, FALSE);
+		} else {
+			free_location (&loc);
+		}
+	}
+	return loc;
 }

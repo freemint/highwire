@@ -142,6 +142,7 @@ new_loader (LOCATION loc)
 	loader->MarginW  = -1;
 	loader->MarginH  = -1;
 	/* */
+	loader->Cached   = NULL;
 	loader->DataSize = 0;
 	loader->DataFill = 0;
 	loader->Data     = NULL;
@@ -158,6 +159,20 @@ new_loader (LOCATION loc)
 		const char * appl = NULL;
 		loader->MimeType = mime_byExtension (loc->File, &appl);
 		if (appl) loader->Data = strdup (appl);
+	}
+	
+	if (loc->Proto == PROT_HTTP) {
+		CACHED cached = cache_lookup (loc, 0, NULL);
+		if (cached) {
+			union { CACHED c; LOCATION l; } u;
+			u.c            = cache_bound (cached, &loader->Location);
+			loader->Cached = u.l;
+			if (!loader->MimeType) {
+				const char * appl = NULL;
+				loader->MimeType = mime_byExtension (loader->Cached->File, &appl);
+				if (appl) loader->Data = strdup (appl);
+			}
+		}
 	}
 	
 	if (!loader->MimeType) {
@@ -191,6 +206,9 @@ delete_loader (LOADER * p_loader)
 		}
 		if (loader->Data) {
 			free (loader->Data);
+		}
+		if (loader->Cached) {
+			cache_release ((CACHED*)&loader->Cached, FALSE);
 		}
 		free_location (&loader->Location);
 		free (loader);
@@ -373,6 +391,9 @@ receive_job (void * arg, long invalidated)
 		*(p++) = '\0';
 		*(p++) = '\0';
 		*(p)   = '\0';
+		
+		cache_assign (loader->Location, loader->Data, loader->DataSize,
+		              mime_toExtension (loader->MimeType));
 	}
 	sched_insert (parser_job, loader, (long)loader->Target);
 	
@@ -385,7 +406,8 @@ receive_job (void * arg, long invalidated)
 static BOOL
 loader_job (void * arg, long invalidated)
 {
-	LOADER loader = arg;
+	LOADER   loader = arg;
+	LOCATION loc    = (loader->Cached ? loader->Cached : loader->Location);
 	
 	if (invalidated) {
 		delete_loader (&loader);
@@ -398,9 +420,9 @@ loader_job (void * arg, long invalidated)
 		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 	}
 	
-	if (loader->Location->Proto == PROT_HTTP) {
+	if (loc->Proto == PROT_HTTP) {
 #ifdef USE_INET
-		const char * host = location_Host (loader->Location);
+		const char * host = location_Host (loc);
 		HTTP_HDR     hdr;
 		short        sock = -1;
 		short        reply;
@@ -412,8 +434,7 @@ loader_job (void * arg, long invalidated)
 			containr_notify (loader->Target, HW_SetInfo, buf);
 		}
 		do {
-			reply = http_header (loader->Location,
-			                     &hdr, &sock, sizeof (loader->rdTemp) -2);
+			reply = http_header (loc, &hdr, &sock, sizeof (loader->rdTemp) -2);
 		} while (reply == -ECONNRESET && retry++ < 1);
 		
 		if (hdr.MimeType) {
@@ -423,7 +444,7 @@ loader_job (void * arg, long invalidated)
 			}
 		}
 		if ((reply == 301 || reply == 302) && hdr.Rdir) {
-			LOCATION loc = new_location (hdr.Rdir, loader->Location);
+			loc = new_location (hdr.Rdir, loader->Location);
 			free_location (&loader->Location);
 			loader->Location = loc;
 			inet_close (sock);
@@ -481,8 +502,7 @@ loader_job (void * arg, long invalidated)
 		}
 #endif /* USE_INET */
 	} else {
-		loader->Data = load_file (loader->Location,
-		                          &loader->DataSize, &loader->DataFill);
+		loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
 	}
 	if (!loader->Data) {
 		loader->Data     = strdup ("<html><head><title>Error</title></head>"
@@ -552,8 +572,11 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 	LOCATION loc    = new_location (address, base);
 	LOADER   loader = new_loader (loc);
 	
-	loader->Target   = target;
+	loader->Target  = target;
 
+	free_location (&loc);
+	loc = (loader->Cached ? loader->Cached : loader->Location);
+	
 	if (loc->Proto == PROT_DIR) {
 		loader->MimeType = MIME_TXT_HTML;
 		sched_insert (parse_dir, new_parser (loader), (long)loader->Target);
@@ -623,8 +646,6 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 		sched_insert (loader_job, loader, (long)loader->Target);
 	}
-	
-	free_location (&loc);
 	
 	return loader;
 }
