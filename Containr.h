@@ -27,6 +27,9 @@ typedef struct s_history  * HISTORY;
 /*--- Events propagated by the library to registered handlers ---*/
 
 typedef enum {
+	HW_ActivityBeg,  /* Some unspecified background job started/stoped its    */
+	HW_ActivityEnd,  /* activity (generic event).                             */
+	
 	HW_PageCleared,  /* A part of or the pane itsels lost it contents.  Any   *
 	                  * pointer into the tree structure should be invalidated *
 	                  * immediately                                           */
