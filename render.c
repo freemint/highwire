@@ -1792,6 +1792,7 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 		char output[10];
 		TEXTBUFF current = &parser->Current;
 		L_BRK    clear   = BRK_LN;
+		BOOL     css_ext = FALSE;
 	
 		if (get_value (parser, KEY_CLEAR, output, sizeof(output))) {
 			if      (stricmp (output, "right") == 0) clear = BRK_RIGHT;
@@ -1802,8 +1803,34 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if (current->prev_wrd) {
+			if (current->prev_wrd->line_brk) {
+				css_ext = parser->hasStyle;
+			}
 			current->prev_wrd->line_brk = clear;
 			current->word->vertical_align = ALN_BOTTOM;
+		
+		} else if (current->prev_par) {
+			css_ext = parser->hasStyle;
+		}
+		
+		if (css_ext) {     /* with CSS styles a <br> can be used as a spacer */
+			short size = 0; /* instead of an ordinary line break              */
+			if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))
+			    && isdigit (output[0])) {
+				size = numerical (output, current->font->Size,
+			                     current->word->font->SpaceWidth);
+			}
+			if (current->prev_wrd) {
+				*(current->text++) = font_Nobrk (current->word->font);
+				new_word (current, TRUE);
+				if (size > 0) {
+					current->prev_wrd->word_height    = size;
+					current->prev_wrd->word_tail_drop = 0;
+				}
+				current->prev_wrd->line_brk = clear;
+			} else {
+				current->paragraph->Box.Padding.Top += size;
+			}
 		}
 	}
 	return (flags|PF_SPACE);
