@@ -1051,6 +1051,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
 	WORD     lift = 0;
+	WORD     line = 0;
 	
 	if (input != (*next = form->TextActive)) {
 		return NULL;   /* shouldn't happen but who knows... */
@@ -1062,6 +1063,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		if (!input->readonly
 		    && edit_char (input, form->TextCursrX, form->TextCursrY, asc)) {
 			scrl = +1;
+			line = 1;
 		} else {
 			word = NULL;
 		}
@@ -1083,6 +1085,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			scrl = -form->TextCursrX;
 			if (scrl >= 0) {
 				word = NULL;
+			} else {
+				line = 1;
 			}
 			break;
 		
@@ -1090,6 +1094,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
 			if (scrl <= 0) {
 				word = NULL;
+			} else {
+				line = 1;
 			}
 			break;
 		
@@ -1142,6 +1148,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			} else if (form->TextCursrX) {
 				edit_delc (input, form->TextCursrX -1, form->TextCursrY);
 				scrl = -1;
+				line = 1;
 			} else if (form->TextCursrY) {
 				WORD col = edit_rowln (input, form->TextCursrY -1);
 				edit_delc (input, col, form->TextCursrY -1);
@@ -1156,6 +1163,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			if (input->readonly
 			    || !edit_delc (input, form->TextCursrX, form->TextCursrY)) {
 				word = NULL;
+			} else {
+				line = 1;
 			}
 			break;
 		
@@ -1167,9 +1176,11 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 0x4B: /* left */
 			if (form->TextCursrX) {
 				scrl = -1;
+				line = 1;
 			} else if (form->TextCursrY) {
 				scrl = +edit_rowln (input, form->TextCursrY -1);
 				lift = -1;
+				line = +2;
 			} else {
 				word = NULL;
 			}
@@ -1178,6 +1189,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 0x48: /* up */
 			if (form->TextCursrY) {
 				lift = -1;
+				line = +2;
 			} else {
 				word = NULL;
 			}
@@ -1186,9 +1198,11 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 0x4D: /* right */
 			if (form->TextCursrX < edit_rowln (input, form->TextCursrY)) {
 				scrl = +1;
+				line = 1;
 			} else if (form->TextCursrY < input->TextRows -1) {
 				scrl = -form->TextCursrX;
 				lift = +1;
+				line = -2;
 			} else {
 				word = NULL;
 			}
@@ -1197,6 +1211,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		case 0x50: /* down */
 			if (form->TextCursrY < input->TextRows -1) {
 				lift = +1;
+				line = -2;
 			} else {
 				word = NULL;
 			}
@@ -1223,47 +1238,58 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			word = NULL;
 	}
 	if (word) {
+		form->TextCursrY += lift;
+		if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX) {
+			scrl = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+		}
 		if (lift > 0) {
-			form->TextCursrY += lift;
-			if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX) {
-				scrl = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
-			}
 			if (form->TextShiftY < form->TextCursrY - (WORD)(input->VisibleY -1)) {
 				form->TextShiftY = form->TextCursrY - (WORD)(input->VisibleY -1);
+				line = 0;
 			}
 		} else {
-			form->TextCursrY += lift;
-			if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX) {
-				scrl = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
-			}
 			if (form->TextShiftY > form->TextCursrY) {
 				form->TextShiftY = form->TextCursrY;
-			} else if (input->TextRows < form->TextShiftY + input->VisibleY) {
-				WORD n = input->TextRows - (WORD)input->VisibleY;
-				form->TextShiftY = max (0, n);
+				line = 0;
+			} else if (form->TextShiftY &&
+			           input->TextRows < form->TextShiftY + input->VisibleY) {
+				form->TextShiftY = input->TextRows - (WORD)input->VisibleY;
+				line = 0;
 			}
 		}
+		form->TextCursrX += scrl;
 		if (scrl > 0) {
-			form->TextCursrX += scrl;
 			if (form->TextShiftX < form->TextCursrX - (WORD)input->VisibleX) {
 				form->TextShiftX = form->TextCursrX - (WORD)input->VisibleX;
+				line = 0;
 			}
 		} else {
-			form->TextCursrX += scrl;
 			if (form->TextShiftX > form->TextCursrX) {
 				form->TextShiftX = form->TextCursrX;
-			} else if (edit_rowln (input, form->TextCursrY)
-			                                < form->TextShiftX + input->VisibleX) {
-				WORD n = edit_rowln (input, form->TextCursrY)
-				       - (WORD)input->VisibleX;
-				form->TextShiftX = max (0, n);
+				line = 0;
+			} else if (form->TextShiftX) {
+				WORD n = edit_rowln (input, form->TextCursrY);
+				if (n < form->TextShiftX + input->VisibleX) {
+					form->TextShiftX = n - (WORD)input->VisibleX;
+					line = 0;
+				}
 			}
 		}
 /*printf ("%i %i %i\n", form->TextShiftX, form->TextCursrX, input->VisibleX);*/
 		rect->g_x = 2;
 		rect->g_y = 2 - word->word_height;
-		rect->g_w = word->word_width                         -4;
-		rect->g_h = word->word_height + word->word_tail_drop -4;
+		rect->g_w = word->word_width -4;
+		if (!line) {
+			rect->g_h = word->word_height + word->word_tail_drop -4;
+		} else { 
+			WORD row = form->TextCursrY - form->TextShiftY;
+			if (line < 0) {
+				row -= 1;
+				line = 2;
+			}
+			rect->g_y += input->CursorH * row;
+			rect->g_h =  input->CursorH * line +1;
+		}
 	}
 	return word;
 }
