@@ -830,13 +830,13 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 			form->TextActive = input;
 			form->TextShiftX = 0;
 			form->TextShiftY = 0;
-			if (mxy.p_y > 0 && input->TextRows > 0) {
+			if (mxy.p_y > 0 && input->TextRows > 1) {
 				form->TextCursrY = mxy.p_y / input->CursorH;
 				if (form->TextCursrY > input->VisibleY) {
 					 form->TextCursrY = input->VisibleY;
 				}
-				if (form->TextCursrY > input->TextRows) {
-					 form->TextCursrY = input->TextRows;
+				if (form->TextCursrY > input->TextRows -1) {
+					 form->TextCursrY = input->TextRows -1;
 				}
 			} else {
 				form->TextCursrY = 0;
