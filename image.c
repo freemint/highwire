@@ -143,6 +143,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->frame     = frame;
 	img->paragraph = current->paragraph;
 	img->word      = current->word;
+	img->map       = NULL;
 	img->backgnd   = current->backgnd;
 	img->alt_w     = 0;
 	img->alt_h     = img->word->word_height;

@@ -56,9 +56,11 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->clip.g_w = 0;
 	frame->clip.g_h = 0;
 	frame->first_named_location = NULL;
+	frame->MapList              = NULL;
 	frame->FormList             = NULL;
 	
 	current->anchor    = &frame->first_named_location;
+	current->maparea   = NULL;
 	current->quot_lang = frame->Language;
 	current->backgnd   = background_colour;
 	new_paragraph (current);
@@ -77,6 +79,19 @@ delete_frame (FRAME * p_frame)
 {
 	FRAME frame = *p_frame;
 	if (frame) {
+		while (frame->MapList) {
+			IMAGEMAP map   = frame->MapList;
+			frame->MapList = map->Next;
+			while (map->Areas) {
+				MAPAREA area = map->Areas;
+				map->Areas   = area->Next;
+				if (area->Address) free (area->Address);
+				if (area->Target)  free (area->Target);
+				if (area->AltText) free (area->AltText);
+				free (area);
+			}
+			free (map);
+		}
 		if (frame->first_named_location)
 			destroy_named_location_structure (frame->first_named_location);
 		free_location (&frame->Location);

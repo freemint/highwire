@@ -130,6 +130,8 @@ typedef enum {
 typedef struct s_table_stack  * TBLSTACK;   /* in Table.c */
 typedef struct s_table        * TABLE;      /* in Table.c */
 typedef struct named_location * ANCHOR;
+typedef struct s_map_area     * MAPAREA;
+typedef struct s_img_map      * IMAGEMAP;
 typedef struct frame_item     * FRAME;
 typedef struct paragraph_item * PARAGRPH;
 typedef struct word_item      * WORDITEM;
@@ -381,6 +383,7 @@ typedef struct s_image {
 	PARAGRPH paragraph;
 	FRAME    frame;
 	LOCATION source;
+	IMAGEMAP map;
 	OFFSET offset;
 	short  backgnd;
 	short  set_w,  set_h;
@@ -527,12 +530,13 @@ struct frame_item {
 		WORD size;   /* slider size     */
 	}    v_bar, h_bar;
 	SCROLL_CODE scroll;
-	WORD   text_color;
-	WORD   link_color;
-	char * base_target;
-	GRECT  clip;
-	ANCHOR first_named_location;
-	FORM   FormList;        /* FORM list for user interaction */
+	WORD     text_color;
+	WORD     link_color;
+	char   * base_target;
+	GRECT    clip;
+	ANCHOR   first_named_location;
+	IMAGEMAP MapList;
+	FORM     FormList;        /* FORM list for user interaction */
 };
 
 typedef struct list_stack_item * LSTSTACK;
@@ -553,6 +557,7 @@ typedef struct parse_sub {
 	WORDITEM           word;      /* the item actually to process */
 	WORDITEM           prev_wrd;  /* <br> tags affect this        */
 	ANCHOR           * anchor;
+	MAPAREA          * maparea;
 	WCHAR            * text;  /* points behind the last stored character */
 	WCHAR            * buffer;
 } PARSESUB;
@@ -585,6 +590,27 @@ struct url_link {
 		char * target; /* if isHref == TRUE  */
 	} u;
 	ENCODING encoding;
+};
+
+struct s_map_area {
+	MAPAREA Next;
+	char  * Address;
+	char  * Target;
+	char  * AltText;
+	WORD    Type;   /* 'R'ect, 'C'ircle, 'P'oly */
+	union {
+		/* all */ GRECT Extent;
+		struct  { GRECT Extent;                           } Rect;
+		struct  { GRECT Extent; WORD  Radius; PXY Centre; } Circ;
+		struct  { GRECT Extent; WORD  Count;  PXY P[1];   } Poly;
+	} u;
+};
+
+struct s_img_map {
+	IMAGEMAP        Next;
+	MAPAREA         Areas;
+	struct url_link Link;
+	char            Name[1];
 };
 
 
