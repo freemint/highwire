@@ -1,6 +1,174 @@
 Ok here are the new supports and changes
 
+January 28, 2003
+
+  AltF4's patches
+
+  hw-types.h:
+    - line 94:  added defines for the mostly used error codes.
+
+  global.h:
+    - line 9..11:  removed duplicate error defines.
+
+  p_dir.c:
+    - line 92 + 98 + 117 + 129 + 133 (parse_dir):  replaced error
+      numbers by defined names.
+
+  Loader.c:
+    - line 671 + 678 (load_file):  replaced error numbers by defined
+      names.
+
+  Location.c:
+    - line 277 (location_open):  added a cast to avoid a warning in
+      Pure C.
+
+  modules\example.src\sample.c:   line 98 + 101 (main):
+  modules\network.src\network.c:  line 93 + 96 (main):
+    - replaced error numbers by defined names.
+
+  ovl_sys.c:
+    - line 29:  removed error code define.
+    - line 132 + 140 (load_ovl):  prepend modules directory name to the
+      OVL name.
+    - line 191:  replaced error number by defined name.
+    - line 304 (load_sampleovl):  removed modules directory name.
+
+  inet.c:
+    - line 52 (ovl_load):  removed modules directory name.
+    - line 128 + 136 (inet_host_addr):  replaced error numbers by
+      defined names.
+
+January 25, 2003
+
+  AltF4's patches
+
+  ovl_sys.h:
+    - line 66:  new function and structure for module_info().
+
+  ovl_sys.c:
+    - line 43..46:  extended struct OVL_SLOT;  added function
+      module_info() to return information about loaded OVLs.
+    - line 64 (clear_slot):  free OVL name, decrement slot counter.
+    - line 102 (load_ovl):  initial clear of the slot array.
+    - line 168:  deleting of basepage must be done by Mfree().
+    - line 170..178:  save OVL file name, increment slot counter.
+    - line 205..229 (kill_ovl):  overworked to speedup clearing
+      procedure, depending on num_slot.
+
+  p_about.c:
+    - line 19:  new function about_modules() to display information
+      about loaded OVLs.
+    - line 72 (about_cache):  corrected array pointer for free().
+    - line 85 + 156 (about_highwire):  added info about number of
+      loaded OVLs.
+    - line 186 + 218 (parse_about):  added stuff for "about:modules".
+
+January 22, 2003
+
+  AltF4's patches
+
+  ovl_sys.c:
+    - line 48:  new function clear_slot().  fixed: the basepage and the
+      environment must be freed by Mfree(), not by free()!
+    - line 57 (sig_chld) + 200 (kill_ovl):  make use of clear_slot().
+    - line 91 + 106 (load_ovl):  fixed search for OVL_MAGIC.
+    - line 151..160 (load_ovl) + 178..188 + 190..196 + 208 (kill_ovl):
+      make use of pointer instead of array index (faster method).
+
+  inet.c:
+    - line 16..25:  added functions and stuff for OVL usage.
+    - line 100 (inet_host_addr) + 135 (inet_connect) + 159 (inet_send)
+      + 218 (inet_recv) + 242 (inet_close) + 256 (inet_info):  added
+      calls of OVL functions.
+
+  Makefile, purewire.prj:
+    - added compiler option -DUSE_INET.
+
+  modules\network.src:
+    - new files Makefile, purec.prj, network.c to create network OVLs.
+
+January 21, 2003
+
+  AltF4's patches
+
+  inet.c:
+    - line 16..25:  added functions and stuff for OVL usage.
+    - line 100 (inet_host_addr) + 135 (inet_connect) + 159 (inet_send)
+      + 218 (inet_recv) + 242 (inet_close) + 256 (inet_info):  added
+      calls of OVL functions.
+
+  ovl_sys.c:
+    - line 48:  new function clear_slot().  fixed: the basepage and the
+      environment ust be freed by Mfree(), not free()!
+    - line 57 (sig_chld) + 200 (kill_ovl):  make use of clear_slot().
+    - line 91 + 106 (load_ovl):  fixed search for OVL_MAGIC.
+    - line 151..160 (load_ovl) + 178..188 + 190..196 + 208 (kill_ovl):
+      make use of pointer instead of array index (faster method).
+
+  Makefile, purewire.prj:
+    - added compiler option -DUSE_INET.
+
+  modules\network.src:
+    - new files Makefile, purec.prj, network.c to create network OVLs.
+
+January 21, 2003
+
+  AltF4's patches
+
+  defs.h:
+    - line 6:  bumped to 0.1.2.
+
+  HighWire.c:
+    - line 21:  include ovl_sys.h.
+    - line 229 (highwire_ex):  added kill_ovl().
+
+  hw-types.h:
+    - line 94:  added macros for cdecl prototypes.
+
+  inet.c:
+    - line 80 + 83 (inet_host_addr) + 110 + 113 (inet_connect)
+      + 146 (inet_send) + 170 (inet_recv) + 230 (inet_close):  changed
+      argument and return types in preparation for coming OVL support.
+
+  inet.h:
+    - line 7 + 9..12:
+
+  ovl_sys.c:
+    - line 30:  added struct array to hold data of loaded OVLs.
+    - line 32:  signal handler to receive disappeared OVL processes.
+    - line 39 (load_ovl):  overworked to handle more than one loaded
+      OVL ata a time.
+    - line 84:  new kill_ovl() to remove one particular or all OVLs.
+    - line 89 (display_ovl_infos) + 105 + 115 (load_sampleovl):
+      changed to avoid global variables.
+
+  ovl_sys.h:
+    - line 10:  removed cdecl macros.
+    - line 28:  extended OVL_METH declaration.  also the filemagic is
+      part of this struct now because it is dangerous not to do so (the
+      compiler could re-arange these symbols in an OVL).
+    - line 47:  added shorthand for OVL function tables.
+    - line 48:  additional argument for load_ovl() is a function that
+      will be called when an OVL disappeares.
+    - line 49:  new function kill_ovl().
+
+  modules\example.src\sample.prj, modules\example.src\Makefile:
+    - corrected dependencies and defines.
+
+  modules\example.src\sample.c:
+    - line 18..32:  corrected includes.
+    - line 42:  adapted OVL function table, removed unused globals.
+    - line 98 (main):  overworked for different types of OVLs.
+
 January 13, 2003
+
+  AltF4's patches
+
+  Loader.c:
+    - line 243..305 (chunked_job):  changed to avoid unexpected states
+      of variables.
+
+January 12, 2003
 
   AltF4's patches
 
@@ -16,29 +184,29 @@ January 12, 2003
     - line 190 + 214 (inet_recv):  changed break condition to avoid
       blocking if  no data available.
     - line 204:  changed if(), probably not necessary but more save.
-    
+
   Makefile:
     - added file ovl_sys.c.
-    
+
   purewire.prj, highwire.prj:
     - corrected dependencies for ovl_sys.c.
-    
+
   ovl_sys.c:
     - line 10..13:  corrected includes.
     - line 33 (load_ovl):  added check for Pexec() failed.
     - line 45..47:  adapted Mshrink() call for Lattice and Gcc.
     - line 54:  corrected cast type.
-    
+
   modules\example.src\sample.prj:
     - added dependencies for sample.c.
-    
+
   modules\example.src\Makefile:
     - new file for Gcc.
-    
+
   modules\example.src\ovl_sys.h:
     - made this a wrapper to load the header file from thwe main folder
       to avoid differnet declarations in both files.
-    
+
   modules\example.src\sample.c:
     - line 10..14:  corrected includes.
 
