@@ -105,30 +105,36 @@ void     delete_containr (CONTAINR *);
 
 /*--- Modification of the tree structure ---*/
 
-void   containr_fillup    (CONTAINR, const char * text, BOOL colsNrows);
+void     containr_fillup    (CONTAINR, const char * text, BOOL colsNrows);
 					/* Fill an empty container with a number of children according
 					 * to the comma separated list of 'text'.  If 'colsNrows' is TRUE
 					 * the container's mode will be set to CNT_CLD_H and the children
-					 * ColSizes will be calculated from the parameters in 'list'.
+					 * ColSizes will be set from the parameters in the list.
 					 * Else the mode will be set to CNT_CLD_V and RowSizes are
 					 * calculated.
 					*/
-void   containr_setup     (CONTAINR, FRAME, const char * anchor);
+CONTAINR containr_resume    (CONTAINR);
+               /* Calculates percentage and fractional sizes of children and
+                * removes undefined childrens.  The container argument is the
+                * last defined or the first undefined of the list of siblings.
+                * The return value is the parent of the sibling list.
+               */
+void     containr_setup     (CONTAINR, FRAME, const char * anchor);
 					/* Attache a frame to an empty container and change the
 					 * container's mode to CNT_FRAME.  If anchor is not NULL the
 					 * content will be shifted to this location.
 					*/
-void   containr_clear     (CONTAINR);
+void     containr_clear     (CONTAINR);
 					/* Destroy all children and substructures of the container and
 					 * reset it to the state CNT_EMPTY.  Only the structure pointers
 					 * and the attributes Area and Name are preserved.
 					*/
-void   containr_register  (CONTAINR, CNTR_HDLR, long arg);
+void     containr_register  (CONTAINR, CNTR_HDLR, long arg);
 					/* Registers a handler function with a container.  Parents aren't
 					 * affected but every later created children will inherit this
 					 * values.
 					*/
-void * containr_highlight (CONTAINR, void * highlight);
+void   * containr_highlight (CONTAINR, void * highlight);
 
 
 /*--- History stuff ---*/

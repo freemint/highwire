@@ -306,9 +306,10 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 	CONTAINR     container = parser->Target;
 	FRAME        frame     = parser->Frame;
 	LOCATION     base      = frame->Location;
-	HTMLTAG tag   = TAG_FRAMESET;
-	BOOL    slash = FALSE;
-	int     depth = 0;
+	BOOL    update = FALSE;
+	HTMLTAG tag    = TAG_FRAMESET;
+	BOOL    slash  = FALSE;
+	int     depth  = 0;
 
 	if (!container) {
 		errprintf ("render_frameset(): NO CONTAINER in '%s'!\n", base->File);
@@ -353,6 +354,9 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 							container->BorderSize = border;
 						}
 					}
+					if (!update && container->BorderSize && container->Sibling) {
+						update = TRUE;
+					}
 					
 					if (!ignore_colours) {
 						WORD color;
@@ -386,22 +390,24 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					}
 				
 				} else if (tag == TAG_FRAME) {
-					char output[100];
 					char frame_file[HW_PATH_MAX];
 
 					container->Mode = CNT_FRAME;
 					container->Name = get_value_str (parser, KEY_NAME);
 
-					if (get_value (parser, KEY_NORESIZE, NULL,0)) {
-						container->Resize = FALSE;
-					}
-
-					if (!force_frame_controls &&
-					    get_value (parser, KEY_SCROLLING, output, sizeof(output))) {
-						if (stricmp (output, "yes") == 0) {
-							container->Scroll = SCROLL_ALWAYS;
-						} else if (stricmp (output, "no")  == 0) {
-							container->Scroll = SCROLL_NEVER;
+					if (!force_frame_controls) {
+						char out[100];
+						
+						if (get_value (parser, KEY_NORESIZE, NULL,0)) {
+							container->Resize = FALSE;
+						}
+						
+						if (get_value (parser, KEY_SCROLLING, out, sizeof(out))) {
+							if (stricmp (out, "yes") == 0) {
+								container->Scroll = SCROLL_ALWAYS;
+							} else if (stricmp (out, "no")  == 0) {
+								container->Scroll = SCROLL_NEVER;
+							}
 						}
 					}
 
@@ -414,10 +420,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 							loader_setParams (loader, 0, margn_w, margn_h);
 						}
 					} else {
-						containr_notify (container, HW_PageStarted, "");
-						containr_calculate (container, NULL);
-						containr_notify (container,
-						                 HW_PageFinished, &container->Area);
+						update = TRUE;
 					}
 
 					if (container->Sibling) {
@@ -428,26 +431,13 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 
 		} else if (tag == TAG_FRAMESET) { /* && slash */
 
-			container = container->Parent;
+			container = containr_resume (container);
 
 			if (--depth <= 0) {
 				symbol = strchr (symbol, '\0');
 				break;
 			}
 			if (container->Sibling) {
-				if (container->BorderSize) {
-					GRECT area;
-					containr_calculate (container, NULL);
-					area = container->Area;
-					if (container->Mode == CNT_CLD_H) {
-						area.g_y += area.g_h - container->BorderSize;
-						area.g_h =  container->BorderSize;
-					} else {         /* == CNT_CLD_V */
-						area.g_x += area.g_w - container->BorderSize;
-						area.g_w =  container->BorderSize;
-					}
-					containr_notify (container, HW_PageUpdated, &area);
-				}
 				container = container->Sibling;
 			}
 		}
@@ -463,14 +453,15 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	}
 	while (*symbol);
-
-	#if 0
-	{
-		extern void containr_debug (CONTAINR);
-		containr_debug (container);
+	
+	while (container) {
+		container = containr_resume (container);
 	}
-	#endif
-
+	if (update) {
+		containr_calculate (parser->Target, NULL);
+		containr_notify    (parser->Target, HW_PageUpdated, NULL);
+	}
+	
 	*text = symbol;
 	
 	return flags;

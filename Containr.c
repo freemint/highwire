@@ -110,118 +110,126 @@ void
 containr_fillup (CONTAINR parent, const char * text, BOOL colsNrows)
 {
 	CONTAINR * ptr = &parent->u.Child;
-	CONTAINR * last = &parent->u.Child;
-	int 	   abs_val = 0;
-	int        num = 0;
-	
-	short perc_cnt = 0; /* number of percent values */
-	long  perc_sum = 0; /* sum of all percents */
-	short rest_cnt = 0; /* number of all '*','2*',.. and invalid values */
-	long  rest_sum = 0; /* sum of fractionals */
 
 	/* go through the text list and create children
 	 */
 	while (*text) {
-		short val = 0;
+		short val = -10001; /* for either a '*', '1*' or an inalid value */
 		while (isspace(*text)) text++;
 		if (*text != '*') {
 			char * tail = "";
 			long   tmp  = strtol (text, &tail, 10);
 			if (tmp > 0 && tmp < 10000) {
 				if (*tail == '%') {
-					perc_cnt++;
-					perc_sum += tmp;
-					val      = -tmp -10000;
+					val = -tmp;
 				} else if (*tail == '*') {
-					rest_cnt++;
-					rest_sum += tmp;
-					val      = -tmp +1;
+					val -= tmp -1;
 				} else { /* absolute value */
-					val = tmp;
-					abs_val = 1;
+					val = tmp + parent->BorderSize;
 				}
 			}
 			text = tail;
 		}
-		if (!val) { /* either a '*', '1*' or an inalid value */
-			rest_cnt++;
-			rest_sum++;
-		}
 		*ptr = new_containr (parent);
 		if (colsNrows) {
-			if (abs_val)
-			{
-				val = val + (*ptr)->BorderSize;
-				abs_val = 0;
-			}
 			(*ptr)->ColSize = val;
 			(*ptr)->RowSize = (parent->RowSize > 0 ? parent->RowSize : -1024);
 		} else {
-			if (abs_val)
-			{
-				val = val + (*ptr)->BorderSize;
-				abs_val = 0;
-			}
 			(*ptr)->ColSize = (parent->ColSize > 0 ? parent->ColSize : -1024);
 			(*ptr)->RowSize = val;
 		}
-		last = ptr;
 		ptr = &(*ptr)->Sibling;
-		num++;
 		while (*text && *(text++) != ',');
 	}
-
-	/* post process the percent sizes
-	 */
-	if (num) {
-		
-		short perc = 1024;
-		short rest = 1024;
-		
-		if (rest_cnt) {
-			long  sum;
-			short both = perc_cnt + rest_cnt;
-			if (perc_sum >= 100) {
-				sum = (perc_sum * both + (perc_cnt /2)) / perc_cnt;
-			} else {
-				sum = 100;
-			}
-			if (perc_sum) {
-				rest = (1024L * (sum - perc_sum) + (sum /2)) / sum;
-			}
-			perc_sum = sum;
-			perc_cnt = both;
-		}
-		
-		if (perc_cnt) {
-			
-			long p_half = (perc_sum /*-1*/) /2;
-			long r_half = (rest_cnt /*-1*/) /2;
-			
-			CONTAINR cont = parent->u.Child;
-			do {
-				short * var = (colsNrows ? &cont->ColSize : &cont->RowSize);
-				short   val = -*var;
-
-				if (val >= 0) {
-					if (!--perc_cnt) {
-						val = perc;
-					
-					} else if (val > 10000) {
-						val -= 10000;
-						val = ((long)val * 1024 + p_half) / perc_sum;
-						
-					} else { /* 0 <= val <= 10000 */
-						val += 1;
-						val = ((long)val * rest + r_half) / rest_sum;
-					}
-					perc += *var = -val;
-				}
-			} while ((cont = cont->Sibling) != NULL);
-		}
-		
+	
+	if (parent->u.Child) {
 		parent->Mode = (colsNrows ? CNT_CLD_H : CNT_CLD_V);
 	}
+}
+
+/*==============================================================================
+ */
+CONTAINR
+containr_resume (CONTAINR last)
+{
+	CONTAINR parent = last->Parent;
+	CONTAINR cont;
+	BOOL     colsNrows;
+	
+	short perc_cnt = 0; /* number of percent values */
+	long  perc_sum = 0; /* sum of all percents */
+	short frac_cnt = 0; /* number of all '*','2*',.. and invalid values */
+	long  frac_sum = 0; /* sum of fractionals */
+	
+	if (!parent) {
+		return NULL;
+	
+	} else if (last->Mode) {             /* find the first empty child, if any */
+		while ((last = last->Sibling) != NULL && last->Mode);
+	
+	} else if (last == parent->u.Child) { /* all childs are empty */
+		parent->Mode    = CNT_EMPTY;
+		parent->u.Child = NULL;
+	}
+	
+	colsNrows = (parent->Mode == CNT_CLD_H);
+	cont      =  parent->u.Child;
+	while (cont) {
+		short val = -(colsNrows ? cont->ColSize : cont->RowSize);
+		if (val > 0) {
+			if (val >= 10000) {
+				frac_sum += val - 10000;
+				frac_cnt++;
+			} else {
+				perc_sum += val;
+				perc_cnt++;
+			}
+		}
+		if (cont->Sibling == last) {
+			cont->Sibling = NULL;
+		}
+		cont = cont->Sibling;
+	}
+	while (last) {
+		CONTAINR next = last->Sibling;
+		delete_containr (&last);
+		last = next;
+	}
+	
+	/* post process the percent and fractional sizes */
+	if (frac_cnt) {
+		short frac;
+		if (perc_sum <= 100/*%*/) {
+			frac = 100 - perc_sum;
+		} else {
+			frac = (perc_sum * frac_cnt) / perc_cnt;
+		}
+		frac = (frac > frac_sum ? frac / frac_sum : 1);
+		perc_sum += frac_sum * frac;
+		perc_cnt += frac_cnt;
+		frac_sum =  frac; /* is now multiplicator for fractionals */
+	}
+	if (perc_cnt) {
+		long  half = (perc_sum /*-1*/) /2;
+		short perc = 1024;
+		cont = parent->u.Child;
+		do {
+			short * var = (colsNrows ? &cont->ColSize : &cont->RowSize);
+			short   val = -*var;
+			if (val >= 0) {
+				if (!--perc_cnt) {
+					*var = -perc;
+					break;
+				}
+				if (val > 10000) {
+					val = (val - 10000) * frac_sum;
+				}
+				perc += *var = -(((long)val * 1024 + half) / perc_sum);
+			}
+		} while ((cont = cont->Sibling) != NULL);
+	}
+	
+	return parent;
 }
 
 /*==============================================================================
