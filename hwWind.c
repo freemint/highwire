@@ -1272,7 +1272,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			if (wind->loading && !--wind->loading) {
 				char flag = (!wind->HistUsed
 				             ? ' ' : wind->History[wind->HistMenu]->Text[0]);
-				if (flag != '*') {
+				if (flag != '*' && gen_ptr) {
 					hist_append (wind, (flag == ' ' ? NULL : cont));
 				} else {
 					wind->History[wind->HistMenu]->Text[0] = ' ';
