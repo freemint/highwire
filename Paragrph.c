@@ -304,14 +304,14 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		align = ALN_LEFT;
 	} else {
 		align = This->TextAlign;
-		if (blocker->L.bottom) {
+		if (blocker->L.bottom && blocker->L.width > This->Padding.Lft) {
 			l_height   = blocker->L.bottom - This->Rect.Y;
-			int_width -= blocker->L.width;
+			int_width -= blocker->L.width  - This->Padding.Lft;
 			blocked   |= (BRK_LEFT & ~BRK_LN);
 		}
-		if (blocker->R.bottom) {
+		if (blocker->R.bottom && blocker->R.width > This->Padding.Rgt) {
 			r_height   = blocker->R.bottom - This->Rect.Y;
-			int_width -= blocker->R.width;
+			int_width -= blocker->R.width  - This->Padding.Rgt;
 			blocked   |= (BRK_RIGHT & ~BRK_LN);
 		}
 	}
