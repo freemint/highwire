@@ -338,8 +338,12 @@ image_ldr (void * arg, long invalidated)
 	LOADER loader = arg;
 	IMAGE  img    = loader->FreeArg;
 	
-	if (!invalidated && !loader->Cached && !loader->Error) {
-		printf ("image_ldr(%s): load error.\n", loader->Location->FullName);
+	if (!invalidated && (!loader->Cached || loader->Error)) {
+		if (!loader->Cached || loader->Error <= 0) {
+			char buf[1024];
+			location_FullName (loader->Location, buf, sizeof(buf));
+			printf ("image_ldr(%s): load error %i.\n", buf, loader->Error);
+		}
 		invalidated = TRUE;
 	
 	} else if (loader->Location != img->source) {
