@@ -105,13 +105,14 @@ mime_byString (const char * str, const char ** tail)
 		{ NULL, }
 	},
 	img_types[] = {
-		{ "gif",  MIME_IMG_GIF  },
 		{ "jpeg", MIME_IMG_JPEG },
+		{ "gif",  MIME_IMG_GIF  },
 		{ "png",  MIME_IMG_PNG  },
 		{ NULL, }
 	},
 	aud_types[] = {
 		{ "basic", MIME_AUD_BASIC },
+		{ "x-wav", MIME_AUD_X_WAV },
 		{ NULL, }
 	},
 	vid_types[] = {
