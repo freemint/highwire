@@ -19,15 +19,6 @@
 #include "../../hw-types.h"
 #include "../../ovl_sys.h"
 
-
-#ifdef __PUREC__
-# define inet_host_addr(h,a) __CDECL inet_host_addr(h,a)
-# define inet_connect(a,p)   __CDECL inet_connect(a,p)
-# define inet_send(f,b,l)    __CDECL inet_send(f,b,l)
-# define inet_recv(f,b,l)    __CDECL inet_recv(f,b,l)
-# define inet_close(f)       __CDECL inet_close(f)
-# define inet_info(_)        __CDECL inet_info(_)
-#endif
 #include "../../inet.h"
 #include "../../inet.c"
 
