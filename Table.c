@@ -444,117 +444,35 @@ spread_width (long * list, short span, short spacing, long width)
 
 /*----------------------------------------------------------------------------*/
 static void
-free_stack (TEXTBUFF current)
+calc_minmax (TABLE table)
 {
-	TBLSTACK stack = current->tbl_stack;
-	
-	fontstack_clear (&current->fnt_stack);
-	*current = stack->SavedCurr;
-	
-	add_paragraph (current, 0);
-	dombox_reorder (&current->paragraph->Box, &stack->Table->Box);
-	
-	free (stack);
-}
-
-/*============================================================================*/
-void
-table_finish (PARSER parser)
-{
-	TBLSTACK stack = parser->Current.tbl_stack;
-	TABLE    table = stack->Table;
-	TAB_ROW  row;
+	short    padding = table->Padding *2;
+	TAB_ROW  row     = table->Rows;
 	TAB_CELL column;
-	short    padding;
 	long   * minimum, * maximum, * percent, * fixed;
 	int      i;
-	
-/*	printf ("table_finish() %i * %i \n", table->NumCols, table->NumRows);*/
-	
-	if (stack->WorkCell) {
-		paragrph_finish (&parser->Current);
-	}
-	
-	if (stack->WorkRow) {
-		table_row (&parser->Current, -1,0,0,0, FALSE);
-	}
-	
-	if (!table->Rows) {
-		#ifdef _DEBUG
-			printf ("table_finish(): no rows!\n");
-		#endif
-		free_stack (&parser->Current);
-		return;
-	} else if (!table->NumCols) {
-		#ifdef _DEBUG
-			printf ("table_finish(): no columns!\n");
-		#endif
-		free_stack (&parser->Current);
-		return;
-	}
 	
 	table->t_MinWidth = table->t_MaxWidth
 	                  = dombox_LftDist (&table->Box)
 	                  + dombox_RgtDist (&table->Box);
-	
-	padding = table->Padding *2;
-	table->Minimum = malloc (sizeof (*table->Minimum) * table->NumCols);
+	table->FixCols    = 0;
 	for (i = 0; i < table->NumCols; table->Minimum[i++] = padding);
-	table->Maximum = malloc (sizeof (*table->Maximum) * table->NumCols);
 	for (i = 0; i < table->NumCols; table->Maximum[i++] = 0);
-	table->Percent = malloc (sizeof (*table->Percent) * table->NumCols);
 	for (i = 0; i < table->NumCols; table->Percent[i++] = 0);
-	table->ColWidth = malloc (sizeof (*table->ColWidth) * table->NumCols);
 	for (i = 0; i < table->NumCols; table->ColWidth[i++] = 0);
 
-#if 0
-{
-	int y = table->NumRows;
-	row = table->Rows;
-	puts("---------------------");
-	do {
-		TAB_CELL cell = row->Cells;
-		int x = table->NumCols;
-		y--;
-		do {
-			printf ("%c", (cell->DummyFor ? tolower (cell->DummyFor->_debug) : cell->_debug));
-			printf ("%+i%+i ", cell->ColSpan, cell->RowSpan);
-			if ((!--x && cell->RightCell) || (x && !cell->RightCell)) {
-				printf ("BOINK %i -> %p \n", x, cell->RightCell);
-				exit(EXIT_FAILURE);
-			}
-			if ((!y && cell->BelowCell) || (y && !cell->BelowCell)) {
-				printf ("PLONK %i -> %p \n", y, cell->BelowCell);
-				exit(EXIT_FAILURE);
-			}
-		} while ((cell = cell->RightCell) != NULL);
-		puts("");
-	} while ((row = row->NextRow) != NULL);
-}
-#endif
-	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 1:  walk over all table cells and set the column's minimum/maximum/
-	 *          percentage width for cells with single colspan and the row's
-	 *          minimum height for cells with single rowspan.
+	 *          percentage width for cells with single colspan.
 	 */
-	row = table->Rows;
-	i   = table->NumRows;
 	do {
 		TAB_CELL cell = row->Cells;
 		fixed   = table->ColWidth;
 		percent = table->Percent;
 		minimum = table->Minimum;
 		maximum = table->Maximum;
-
-		adjust_rowspans (cell, i--);
 		do {
 			if (cell->Box.ChildBeg) {
-				if (cell->c_SetWidth < 0 && table->t_SetWidth > 0) {
-					short width = table->t_SetWidth - table->t_MinWidth;
-					cell->c_SetWidth = (-cell->c_SetWidth * width +512) /1024;
-					if (cell->c_SetWidth <= 0) cell->c_SetWidth = 1;
-				}
 				if (cell->ColSpan == 1) {
 					long width = dombox_MinWidth (&cell->Box);
 					if (width <= padding) {
@@ -578,11 +496,6 @@ table_finish (PARSER parser)
 						}
 					}
 				}
-				if (cell->RowSpan == 1) {
-					if (row->MinHeight < cell->c_Height) {
-						row->MinHeight = cell->c_Height;
-					}
-				}
 			}
 			fixed++;
 			percent++;
@@ -590,7 +503,7 @@ table_finish (PARSER parser)
 			maximum++;
 		} while ((cell = cell->RightCell) != NULL);
 	} while ((row = row->NextRow) != NULL);
-
+	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 2:  walk over all table columns and spread the minimum/maximum width
 	 *          of cells with multiple colspan.
@@ -681,7 +594,118 @@ table_finish (PARSER parser)
 	} while ((column = column->RightCell) != NULL);
 	table->t_MinWidth -= table->Spacing;
 	table->t_MaxWidth -= table->Spacing;
+}
 
+/*----------------------------------------------------------------------------*/
+static void
+free_stack (TEXTBUFF current)
+{
+	TBLSTACK stack = current->tbl_stack;
+	
+	fontstack_clear (&current->fnt_stack);
+	*current = stack->SavedCurr;
+	
+	add_paragraph (current, 0);
+	dombox_reorder (&current->paragraph->Box, &stack->Table->Box);
+	
+	free (stack);
+}
+
+/*============================================================================*/
+void
+table_finish (PARSER parser)
+{
+	TBLSTACK stack = parser->Current.tbl_stack;
+	TABLE    table = stack->Table;
+	TAB_ROW  row;
+	int      i;
+	
+/*	printf ("table_finish() %i * %i \n", table->NumCols, table->NumRows);*/
+	
+	if (stack->WorkCell) {
+		paragrph_finish (&parser->Current);
+	}
+	
+	if (stack->WorkRow) {
+		table_row (&parser->Current, -1,0,0,0, FALSE);
+	}
+	
+	if (!table->Rows) {
+		#ifdef _DEBUG
+			printf ("table_finish(): no rows!\n");
+		#endif
+		free_stack (&parser->Current);
+		return;
+	} else if (!table->NumCols) {
+		#ifdef _DEBUG
+			printf ("table_finish(): no columns!\n");
+		#endif
+		free_stack (&parser->Current);
+		return;
+	}
+	
+	table->Minimum  = malloc (sizeof (*table->Minimum)  * table->NumCols);
+	table->Maximum  = malloc (sizeof (*table->Maximum)  * table->NumCols);
+	table->Percent  = malloc (sizeof (*table->Percent)  * table->NumCols);
+	table->ColWidth = malloc (sizeof (*table->ColWidth) * table->NumCols);
+
+#if 0
+{
+	int y = table->NumRows;
+	row = table->Rows;
+	puts("---------------------");
+	do {
+		TAB_CELL cell = row->Cells;
+		int x = table->NumCols;
+		y--;
+		do {
+			printf ("%c", (cell->DummyFor ? tolower (cell->DummyFor->_debug) : cell->_debug));
+			printf ("%+i%+i ", cell->ColSpan, cell->RowSpan);
+			if ((!--x && cell->RightCell) || (x && !cell->RightCell)) {
+				printf ("BOINK %i -> %p \n", x, cell->RightCell);
+				exit(EXIT_FAILURE);
+			}
+			if ((!y && cell->BelowCell) || (y && !cell->BelowCell)) {
+				printf ("PLONK %i -> %p \n", y, cell->BelowCell);
+				exit(EXIT_FAILURE);
+			}
+		} while ((cell = cell->RightCell) != NULL);
+		puts("");
+	} while ((row = row->NextRow) != NULL);
+}
+#endif
+	
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 * Step 1:  walk over all table rows and set the row's minimum height for
+	 *          cells with single rowspan.
+	 */
+	row = table->Rows;
+	i   = table->NumRows;
+	do {
+		TAB_CELL cell = row->Cells;
+		adjust_rowspans (cell, i--);
+		do {
+			if (cell->c_SetWidth < 0) {
+				if (table->NumCols <= 1) {
+					cell->c_SetWidth = 0;
+				} else if (table->t_SetWidth > 0) {
+					short width = table->t_SetWidth - table->t_MinWidth;
+					cell->c_SetWidth = (-cell->c_SetWidth * width +512) /1024;
+					if (cell->c_SetWidth <= 0) cell->c_SetWidth = 1;
+				}
+			}
+			if (cell->RowSpan == 1) {
+				if (row->MinHeight < cell->c_Height) {
+					row->MinHeight = cell->c_Height;
+				}
+			}
+		} while ((cell = cell->RightCell) != NULL);
+	} while ((row = row->NextRow) != NULL);
+	
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 * Step 2:  set all column's minimum/maximum/percentage width of cells
+	 */
+	calc_minmax (table);
 	if (table->FixCols == table->NumCols) {
 		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 
@@ -1056,6 +1080,10 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 static LONG
 vTab_MinWidth (DOMBOX * This)
 {
+	TABLE table = (TABLE)This;
+	if (table->Minimum) {
+		calc_minmax (table);
+	}
 	return (This->SetWidth > 0 ? This->SetWidth : This->MinWidth);
 }
 
