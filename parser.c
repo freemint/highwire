@@ -386,7 +386,7 @@ parse_tag (PARSER parser, const char ** pptr)
 				line++;
 			}
 			if (((css < CSS_Unknown && (ent = find_key (parser, css)) == NULL) ||
-			      css < CSS_Unknown) && (ValueNum(parser) < ValueMax(parser))) {
+			      css != CSS_Unknown) && (ValueNum(parser) < ValueMax(parser))) {
 				ent = entry++;
 				ValueNum(parser)++;
 			}
