@@ -226,9 +226,17 @@
 		/*          MIN_HEIGHT        */
 		/*          MIN_WIDTH         */
 		__CSS_ITEM (MARGIN,           0),
+		__CSS_ITEM (MARGIN_BOTTOM,    0),
+		__CSS_ITEM (MARGIN_LEFT,      0),
+		__CSS_ITEM (MARGIN_RIGHT,     0),
+		__CSS_ITEM (MARGIN_TOP,       0),
 		/*          MAX_HEIGHT        */
 		/*          MAX_WIDTH         */
 		__CSS_ITEM (PADDING,          0),
+		__CSS_ITEM (PADDING_BOTTOM,   0),
+		__CSS_ITEM (PADDING_LEFT,     0),
+		__CSS_ITEM (PADDING_RIGHT,    0),
+		__CSS_ITEM (PADDING_TOP,      0),
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (TEXT_INDENT,      0),
