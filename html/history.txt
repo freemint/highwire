@@ -1,5 +1,25 @@
 Ok here are the new supports and changes
 
+May 26, 2003:
+
+  AltF4's patches
+
+  Table.h:  line 18 + 67:
+  Table.c:  line 66 + 77 (table_start):
+    - new attribute/argument to mark if a table was produced by a DIV
+      tag.
+    
+  render.c:
+    - line 1648 + 1651 + 1654 + 1657 + 1660 (render_DIV_tag) + 1939
+      + 1941..1943 (render_TABLE_tag) + 1953 + 1956 + 1958 + 1964
+      (render_TR_tag) + 1975 + 1978 + 1981 + 1987 (render_TD_tag)
+      + 1998 + 2001 + 2005 +2010..2011 (render_TH_tag):  handle invalid
+      placed DIV tags inside of tables correctly.
+    
+  hwWind.c:
+    - line 161 + 171 (new_hwWind):  corrected infobar background colour
+      to light gray for MagiC.
+
 May 24, 2003
 
   AltF4's patches
