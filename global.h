@@ -54,8 +54,8 @@ void set_mouse_watch (WORD leaveNenter, const GRECT * watch);
 
 /* in Mouse_R.c */
 
-void button_clicked (WORD , WORD , WORD );
-void check_mouse_position (WORD , WORD );
+void button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my);
+void check_mouse_position (WORD mx, WORD my);
 
 /* in AEI.c */
 

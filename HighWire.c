@@ -189,7 +189,8 @@ load_sampleovl();
 			quit = process_messages (msg, out.emo_mouse, out.emo_kmeta);
 		}
 		if (event & MU_BUTTON) {
-			button_clicked (out.emo_mbutton, out.emo_mouse.p_x, out.emo_mouse.p_y);
+			button_clicked (out.emo_mbutton, out.emo_mclicks, out.emo_kmeta,
+			                out.emo_mouse.p_x, out.emo_mouse.p_y);
 		}
 		if (event & MU_KEYBD) {
 			key_pressed (out.emo_kreturn, out.emo_kmeta);
