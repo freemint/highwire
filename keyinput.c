@@ -86,7 +86,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_logging (-1);
 		break;
 	case 0x42:  /* F8: toggle pictures or alternative text */
-		menu_alt_text (-1);
+		alternative_text_is_on = !alternative_text_is_on;
 		break;
 	case 0x47:  /* home */
 		if (active && !(state & (K_RSHIFT|K_LSHIFT))) {
