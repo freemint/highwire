@@ -1,5 +1,243 @@
 Ok here are the new supports and changes
 
+April 16, 2003
+
+  AltF4's patches
+
+  Form.h:
+    - line 14..15:  extended argument list for input_handle() and
+      input_activate().
+
+  Form.c:
+    - line 625 + 682..693 (input_handle):  additional argument to store
+      the array point for the popup which have tobe handled by the
+      caller function now.
+    - line 627 + 629 + 632 + 694 + 702..705:  simplified the code a
+      bit.
+    - line 713 (input_activate):  additional argument slct that hold
+      the value for processing a changed formular's selection list.
+
+  Mouse_R.c:
+    - line 178..181 + 185..193 (button_clicked):  opening of a popup
+      for a formular selection list ist performed here now, since the
+      Form.c functions shouldn't do any GUI stuff.
+
+April 15, 2003
+
+  AltF4's patches
+
+  Form.h:
+    - line 5:  new function form_finish().
+
+  Form.c:
+    - line 66 + 357 (form_selct) + 447..453 (selct_finish)
+      + 657..682 (input_handle):  in struct s_select, new attribute
+      Array to store strings for popup.
+    - line 77 + 97 + 445:  new function finish_selct(), form_finish()
+      to catch faulty HTML code.
+
+  Frame.c:
+    - line 92 (frame_finish):  call form_finish() to catch faulty coded
+      formulars.
+
+  render.c:
+    - line 1973 + 1981..1983 (render_FORM_tag):  used form_finish()
+      instead of selct_finish().
+
+April 14, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 62 + 68 + 74 + 80:  spread overlapping buttons a bit.
+    - line 199 (new_hwWind):  added missing string '0'.
+
+  Table.c:
+    - line 555 + 613 (table_finish) + 769 +782 + 787 (table_calc):
+      fixed an array overflow in table cell calculation (when both a
+      percent width as well as colspan are given).
+
+  global.h:  line 35 + 58 + 107:
+  Loader.c:  line 45 + 673..674 + 729..768:
+  AEI.c:     line 30:
+    - moved page_load() over to AEI.c since it belongs to GUI stuff,
+      fsel_path[] is global now.
+
+  Makefile, purewire.prj, highwire.prj:
+    - re-sorted the source files in ascending order according to their
+      data struture complexity, updated dependencies.
+
+April 9, 2003
+
+  AltF4's patches
+
+  defs.h:    line 73:
+  Widget.c:  line 107:
+    - new function HW_form_popup() to create and handle a popup menu
+      out of a char* array.
+
+  render.c:
+    - line 2037..2045 (render_OPTION_tag):  improved handling of VALUE
+      keys, are seen as disabled now.
+
+  Form.c
+    - line 69:  new attribute Value for list items.
+    - line 389..396 (selct_option):  added a check if a list item is a
+      seperator.
+    - line 408..413:  added handling of disabled list items.
+    - line 635:  implemented popup menus for formular selection lists.
+    - line 684..686 (input_activate):  replace all blanks by '+'s.
+
+April 7, 2003
+
+  AltF4's patches
+
+  Form.h:
+    - line 22:  new functions form_selct(), selct_option() and
+      selct_finish().
+
+  Form.c:
+    - line 28 + 71 (new_form) + 109..115 (_alloc):  new attribute Last
+      for easier handling of the element list of struct s_input.
+    - line 22 + 37 + 55:  new element type for selection lists.
+    - line 42..43 + 85 (_alloc) + 175..177 (form_radio) + 448
+      + 451 (input_handle):  in struct s_input, Group and Selection are
+      inside an union now.
+    - line 263..268 (new_input):  when no SIZE is given the text input
+      width will be set to a default value rather than to MAXLENGTH.
+    - line 321:  new functions form_selct(), selct_option() and
+      selct_finish() to create selection lists.
+    - line 390 (input_draw):  drawings for the selection lists button.
+
+  token.h:
+    - line 152: new keyword SELECTED.
+
+  render.c:
+    - line 2007:  new  functions render_SELECT_tag() and
+      render_OPTION_tag() for formular selection lists.
+
+April 5, 2003
+
+  AltF4's patches
+
+  Containr.c:
+    - line 556 (containr_byName):  changed interpretation of the
+      _parent target.
+
+April 4, 2003
+
+  AltF4's patches
+
+  hw-types.h:  line 108:
+  inet.c:      line 280 + 301 (inet_recv):
+  http.c:      line 354 (http_header):
+    - added error code ECONNRESET.
+
+  http.c:
+    - line 295 + 298 (http_header):  corrected placing of the break.
+
+  Location.c:
+    - line 82..83 + 160..166 (new_location):  added parsing of port
+      numbers in urls.
+    - line 196..197:  corrected debug output.
+    - line 242 + 265 (location_FullName):  made save against null
+      pointers.
+    - line 410 + 428..429 (dir_entry):  fixed wrong handling of
+      relative src pathes.
+
+  Loader.c:
+    - line 433 + 440 (loader_job):  if a http request results in an
+      immediate connection reset retry a second time.
+
+  hwWind.c:
+    - line 111..113 (hwWind_setup):  corrected settings of flags.
+    - line 944..1006 (draw_toolbar):  made the edit field cursor two
+      pixels wide, better to see.
+    - line 1410 + 1450 + 1453 + 1458 (hwWind_button):  corrected
+      coordinates for redrawing.
+    - line 1541..1753 (hwWind_keybrd):  simplified the code and added
+      some more functionality for the cursor keys.
+
+March 30, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 42 + 844..980 (draw_toolbar) + 232 (new_hwWind)
+      + 1038 (chng_toolbar) + 1088 (hwWind_redraw)
+      + 1388 (hwWind_button) + 1593 (hwWind_keybrd):  additional
+      argument for draw_toolbar() to reduce flickering while editing.
+    - line 216 + 221 (new_hwWind): moved setting of sizes below the
+      toolbar init.
+    - line 529 (set_size):  adapt edit field cursor to change width.
+    - line 558..559 (hwWind_resize):  corrected stored extent after
+      resize.
+    - line 1377..1379 (hwWind_button):  corrected calculation of cursor
+      position after mouse click.
+    - line 1484:  new function open_scrap() for clipboard read/write.
+    - line 1497 + 1515..1521 + 1538 (hwWind_keybrd):
+      simplified adjustment after cursor changed.
+    - line 1499..1502:  new keys for clipboard handling.
+    - line 1506 + 1560..1589:  several new keys added.
+
+March 27, 2003
+
+  AltF4's patches
+
+  Location.h:  line 38:
+  Location.c:  line 227:
+  parser.c:    line 66..67 (new_parser):
+  Loader.c:    line 423..424 (loader_job) + 627..628
+               + 644..645 (new_loader_job):
+    - new funtion location_FullName() to get the full quallified URL
+      from a location.
+
+  hwWind.h:
+    - line 21:  new attribute TbarElem.
+    - line 58:  new function hwWind_keybrd().
+
+  hwWind.c:
+    - line 50 + 769..811:  moved struct hw_buttons to top of the file.
+    - line 157..158 (new_hwWind) + 447..461 (set_size)
+      + 606 (hwWind_close) + 1230..1234 + 1251 + 1336 (hwWind_button):
+      handle edit field.
+    - line 835 + 838 + 86 + 892 (draw_toolbar):  draw edit field.
+    - line 907..910 (chng_toolbar):  corrected set/reset of active
+      element.
+    - 932..933:  improved calculation of element clipping.
+    - line 946 + 1065 (wnd_hdlr):  new function updt_toolbar() to
+      update the edit field text.
+    - line 1341: new function hwWind_keybrd().
+
+  keyinput.c:
+    - line 64 (key_pressed):  key events are now propagated to
+      hwWind_keybrd() first.
+
+March 26, 2003
+
+  AltF4's patches
+
+  hwWind.h:
+    - line 18:  new attributes TbarMask and TbarActv.
+    - line 40:  new function hwWind_close().
+    - line 66:  new setup type HWWS_TOOLBAR.
+
+  hwWind.c:
+    - line 28 + 57 (hwWind_setup):  new setup type HWWS_TOOLBAR.
+    - line 139 + 142 + 144 + 154 (new_hwWind) + 462 (hwWind_move)
+      + 950 (hwWind_mouse) + 972..973 + 983 (hwWind_button):  handle
+      TbarH.
+    - line 582:  new function hwWind_close().
+    - line 725:  new functions draw_toolbar() and chng_toolbar().
+    - line 731 + 747 (hwWind_redraw):  make use of draw_toolbar().
+    - line 841 + 858 + 900 (wnd_hdlr):  make use of chng_toolbar().
+    - line 987 + 1000 + 1003 (hwWind_button):  invert sizer button when
+      pressed.
+
+  AEI.c:
+    - line 804 (process_messages):  call hwWind_close() instead of
+      direct deleting the window.
+
 March 23, 2003
 
   AltF4's patches
@@ -29,7 +267,7 @@ March 23, 2003
                + 2322 (parse_image):
     - code cleaned up, removed unused attributes/defines and renamed
       others to have common naming scheme.
-    
+
   Containr.h:  line 263:
   Containr.c:  line 75 (new_containr) + 304..305 (containr_clear)
     - new defines for frame border default values.
@@ -48,13 +286,13 @@ March 22, 2003
   Containr.h:  line 38:
   hwWind.c:    line 822 (wnd_hdlr):
     - new notify type HW_PageUpdated.
-    
+
   Containr.c:
     - line 31 + 354 (create_r) + 501 (process_r):  save/restore border
       size and colour to/from history
     - line 552 (containr_process):  notify about frame borderss to
       redraw.
-    
+
   Mouse_R.c:
     - line 216 (button_clicked):  new case PE_BORDER for frame resize.
 
@@ -72,11 +310,11 @@ March 21, 2003
       detection of borders.
     - line 1040 + 1062 (containr_redraw):  added drawing of border
       (moved over from Frame.c).
-    
+
   render.c:
     - line 349 + 353 (render_FRAMESET_tag):  removed useless settings.
     - line 394:  redraw notification for border of a parent container.
-    
+
   Frame.c:    line 123..138 (frame_calculate):
   Redraws.c:  line 35..118 (frame_draw):
     - outcommented code that is located now in Containr.c
@@ -91,7 +329,7 @@ March 19, 2003
     - line 333 (render_FRAMESET_tag) + 961 + 969..982 (render_A_tag)
       + 1245 (render_IMG_tag):  make use of url_correct() to get proper
       formatted urls.
-    
+
   image.c:
     - line 203 (new_image):  avoid useles tries to decode directly
       remote images.
@@ -103,12 +341,12 @@ March 14, 2003
   render.c:
     - line 251..264 (render_FRAMESET_tag):  corrected value settings of
       borders.
-    
+
   Frame.c:
     - line 129 + 133 + 138 (frame_calculate):  removed false decrement
       of scrollbar_size.
     - line 208 + 244:  removed slider arrow adaption to frame border.
-    
+
   Redraws.c:
     - line 41 + 45 + 62 + 66 + 83 + 86 + 93 + 103 + 107 (frame_draw):
       corrected calculation of border extents.
@@ -134,33 +372,33 @@ March 7, 2003
     - line 81 get Border Colour from parent
     - line 255 set frame border colour from container
     - line 294 set Border Colour from parent or LWHITE
-    - lines 668-710 reworked Border detection and watch areas 
-    
+    - lines 668-710 reworked Border detection and watch areas
+
   containr.h:
     - line 77 added bad html key Border_Colour to s_containr
       struct
-    
+
   defs.h:
     - line 500 added bad html key border_color to frame struct
-    
+
   frame.c:
     - init frame->border_colour to G_LWHITE
-    
+
   redraws.c:
     - lines 47,68,89,109 set fill colour to border_colour
-    
+
   render.c:
     - lines 266-272 get BORDERCOLOR value if not ignore_colours
-    
+
   token.h:
     - line 121 added key item BORDERCOLOR
-    
+
 March 6, 2003
 
   Baldrick's patches
-  
+
   - a few more cleanups on this file to cut long lines down
-  
+
   containr.c:
     - lines 72-73,78-79 added inits for Borders and Border_Size
        in new_containr()
@@ -176,31 +414,31 @@ March 6, 2003
     - line 169 set last to ptr
     - lines 175-180 remove BRD_RIGHT and BRD_BOTTOM from last
        frame
-    - lines 251-252 set frame borders and border_size from the 
+    - lines 251-252 set frame borders and border_size from the
        containr values
-           
+
   containr.h:
     - lines 75-76 added Borders and Border_Size to s_containr
       struct
-      
+
   defs.h:
     - lines 66-70 added defines for Frame Borders
     - lines 498-499 added borders and border_size to frame struct
-  
+
   frame.c:
     - lines 36-37 init values for borders and border_size
     - lines 124-139 added switch for real frame borders adjusting
        frame clip values
-         
+
   redraws.c:
-    - lines 37-120 large switch statement to draw the actual 
+    - lines 37-120 large switch statement to draw the actual
        borders of our frameset if they exist
     - lines 181-183,193,301-303,313 all rem'd out, may not be
        needed anymore
-  
+
   render.c:
     - lines 256-264 Now parse BORDER attribute of Frameset's
-  
+
   AltF4's patches
 
   example.cfg/highwire.cfg:
@@ -240,9 +478,9 @@ March 6, 2003
 March 5, 2003
 
   Baldrick's patches
-  
+
   - a few cleanups on this file to cut long lines down
-  
+
 March 1, 2003
 
   AltF4's patches
@@ -301,7 +539,7 @@ February 26, 2003
   AEI.c:
     - line 87 + 93 (vastart):  corrected opening for qoted file names.
     - line 231 (doGSCommand):  adapted to changed new_hwWind().
-    - line 295 (menu_open) + 313 + 318 (menu_reload) + 379 (menu_info):  
+    - line 295 (menu_open) + 313 + 318 (menu_reload) + 379 (menu_info):
       adapted to changed new_loader_job() parameter list.
 
   Form.c:
@@ -348,13 +586,13 @@ February 26, 2003
 February 26, 2003
 
   Baldrick's patches
-  
+
   defs.h: (experimental change)
     - line 22 Added _HIGHWIRE_REALINFO_ controls whether the window
       has a REAL GEM info gadget
     - line 29 same as above set to FALSE to suppress the REAL GEM
       info gadget
-      
+
   HWwind.c:
     - line 29-30 added temp_area1 and temp_area2 GRECTs
 	- lines 48-52 added experimental use for suppresing REAL GEM
@@ -365,12 +603,12 @@ February 26, 2003
     - lines 222-220 reworked PXY settings
     - lines 293 and 295 Wrapper to suppress use of REAL GEM info
       gadget
-      
+
 February 24, 2003
 
   AltF4's patches
 
-  HighWire.c: 
+  HighWire.c:
     - line 93 (main): corrected comparsion of error code to negative
       values
 
@@ -385,7 +623,7 @@ February 24, 2003
     - line 176:  new signal handler for timeouts.
     - line 190..192 + 198..200 (inet_connect):  set timer to detect not
       responding servers.
-      
+
   Loader.c:
     - line 677 (load_file) corrected comparsion of error code to
       negative values
@@ -399,12 +637,12 @@ February 24, 2003
       negative values
 
   p_dir.c:
-    - line 92 (parse_dir): corrected comparsion of error code to 
-      negative values  
-  
+    - line 92 (parse_dir): corrected comparsion of error code to
+      negative values
+
   modules/example.src/sample.c:
-    - line 101 (main): corrected comparsion of error code to 
-      negative values  
+    - line 101 (main): corrected comparsion of error code to
+      negative values
 
   modules/network.src/network.c:
     - line 90 (main): corrected comparsion of error code to negative
@@ -412,7 +650,7 @@ February 24, 2003
 
   modules/example.src/sample.prj:
     - line 5: decreased stack size to 1k.
-    
+
   modules/network.src/purec.prj:
     - line 3: decreased stack size to 1k.
 
@@ -462,34 +700,34 @@ February 21, 2003
 
   containr.c:
     - line 224 set frame->resisize based on container->Resize
-    
+
   containr.h:
     - line 74 added BOOL Resize to struct s_containr
-    
+
   defs.h:
     - line 490 added BOOL resize to struct frame_item
-  
+
   frame.c:
     - line 36 init frame->resize to TRUE (default from w3)
-  
+
   mouse_r.c:
     - lines 387-390 added test to change mouse pointer if pointer
       is over frame border and the frame is resizeable
-          
+
   render.c:
     - lines 289 - 293 set container->Resize based on Key noresize
-    
+
   token.h:
     - line 146 added NORESIZE token
-    
+
 February 20, 2003
 
   AltF4's patches
-  
+
   aei.c:
     - line 805 modified to detect shift keys. If shifted then
       'Forward' through the page history instead of 'back'
-  
+
   hwwind.c:
     - lines 180-185 added test to detect if we are top window
       by AES
@@ -497,16 +735,16 @@ February 20, 2003
 February 20, 2003
 
   Baldrick's patches
-  
+
   aei.c:
     - lines 801-808
        added handling of Left Arrow to 'Back' function
        possibly add other functions here later for shift click?
-       
+
   highwire.c:
     - line 175 changed 1 to 0 since we don't need the test atm
       but will possibly need again later
-      
+
   hwwind.c:
     - line 6 added include for gemx.h for ftext() call
     - lines 44 & 46 changed HSLIDE to LFARROW
@@ -515,15 +753,15 @@ February 20, 2003
        displays text in unused H scroller area
       **** Needs some more work *****
     - line 232 added call to hwWind_setHSInfo() for testing
-    
+
 February 19, 2003
 
   Baldrick's patches
-  
+
   HWWIND.C
     - lines 42 & 44 added HSLIDE to kind
     - line 101 set HSLSIZE to 1000 (or full)
-    
+
 February 18, 2003
 
   AltF4's patches
@@ -642,12 +880,12 @@ February 7, 2003
     - lines 56 - 59 reworked code to use ovl_getftab()
        ovl_init() left as some OVL's might need to malloc
        etc.
-       
+
   ovl_sys.h:
     - lines 31-33 added long ftabtype and info to ovl_methods_t
       struct
     - line 55 modified OVL_DECL define to pass ftabtype
-    
+
   paragraph.c:
     - lines 771-773 out commented as per mailing list
 
@@ -657,7 +895,7 @@ February 7, 2003
   modules\network.c
     - lines 42 and 44 added FTAB_NETWORK to OVL_DECL
     - reworked ovl_init() it's functionality is in ovl_getftab now
-    
+
 
 February 6, 2003
 
@@ -665,8 +903,8 @@ February 6, 2003
 
   ovl_sys.h:
     - modified OVL_REVISION
-    - modified OVL_MAGIC to a numeric value 
-    
+    - modified OVL_MAGIC to a numeric value
+
 February 3, 2003
 
   AltF4's patches
@@ -679,7 +917,7 @@ February 3, 2003
     - line 377 (hist_append):  history entry is take now from Stat[].
 
   hwWind.h:
-    - line 21:  in struct hw_window, additional buffer for alternate  
+    - line 21:  in struct hw_window, additional buffer for alternate
       infobar text.
     - line 33:  additional argument for hwWind_setInfo().
 
@@ -709,20 +947,20 @@ January 30, 2003
 January 29, 2003
 
   Baldrick's patches
-  
+
   ovl_sys.c:
     - trimmed some junk off the header
-    
+
   ovl_sys.h:
     - line 34: added new routine ovl_getftab()
     - lines 85-89 added ovl_getftab() define and info
-    
+
   modules\sample.c
     - added ovl_getftab() routine
 
   modules\network.c
     - added ovl_getftab() routine
-    
+
 January 28, 2003
 
   AltF4's patches
@@ -936,19 +1174,19 @@ January 12, 2003
 January 10, 2003
 
   Baldricks patches
-  
+
   Highwire.c:
     - line 174 added line to test OVL layer.  NOT PERMANENT
       DELETE before any release
-      
+
   Inet.c:
-    - 201 changed 0 to E_NODATA 
-    
+    - 201 changed 0 to E_NODATA
+
   Verified that I had the correct Docs in archive and fixed lt
   error in dletter.htm
-  
+
   AltF4's patches
-  
+
   hwWind.c:
     - line 187 (set_size):  added a workaround for Geneva because this
       returns here wrongly a CURRXYWH of 0,0,0,0 when the window is
@@ -965,19 +1203,19 @@ January 10, 2003
 January 09, 2003
 
   Baldrick's patches
-  
+
   ovl_sys.c: ovl_sys.h:
     - new routines for handling OVL files
       (probably buggy)
-      
-  purewire.prj 
+
+  purewire.prj
     - updated for ovl_sys.c and ovl_sys.h
-    
+
   Modules folder added
   Modules\example folder added
   Sample OVL src code added in Modules\example
   sample.ovl added to modules folder
-  
+
 January 08, 2003
 
   AltF4's patches
@@ -1168,61 +1406,61 @@ December 18, 2002
   defs.h:
     - line 20..22:  added #ifdef _HW_NO_GUI to have compiling more
       comfortable (but will need some more work later).
-    
+
   global.h:
     - line 6:  removed #define GEM_MENU, set in defs.h.
     - line 77:  added declaration for HW_form_do.
-    
+
   hwWind.c:
     - line 107 (new_hwWind) + 119 + 127 (delete_hwWind)
       + 302 (hwWind_raise) + 377 (hist_append) + 395 (hwWind_history)
       + 587 (wnd_hdlr):  added #ifdef GEM_MENU.
-    
+
   AEI.c:
     - line 264 + 296 (menu_open) + 428 + 513 (menu_history) + 596
       + 653 (rpopup_open):  added #ifdef GEM_MENU.
-    
+
   Makefile:
     - line 18:  removed -DGEM_MENU, set in defs.h.
 
   Mathias's patches (of December 15, 2002)
-    
+
   defs.h:
     - line 11:  severall new defines to make the creation of other
       applications based on HW easier.
-    
+
   config.c:
     - line 22 + 25 (read_config):  replaced "highwire.cfg" with
       _HIGHWIRE_CFG_.
-    
+
   http.c:
     - line 268 + 272 (http_header):  _HIGHWIRE_FULLNAME_.
-    
+
   Loader.c:
     - line 631 (init_paths):  replaced "highwire.cfg" with
       _HIGHWIRE_CFG_.
-    
+
   hwWind.c:
     - line 39 + 90 (new_hwWind) + 156 + 167 (hwWind_setInfo) + 553 +564
       + 588 (wnd_hdlr):  added #if ... #endif [_HIGHWIRE_INFOLINE_].
     - line 583 (wnd_hdlr):  added #if ... #endif [_HIGHWIRE_ENCMENU_].
-    
+
   keyinput.c:
     - line 70 (key_pressed):  #if/#endif [_HIGHWIRE_ENCMENU_].
-    
+
   Mouse_R.c:
     - line 34 (button_clicked):  #if/#endif [_HIGHWIRE_ENCMENU_].
     - line 213:  added #if ... #endif [_HIGHWIRE_RPOP_].
     - line 331 + 338 + 350 (check_mouse_position):  added
       #if ... #endif [_HIGHWIRE_INFOLINE_].
-    
+
   AEI.c:
     - line 198 + 236 (doGSCommand) + 253 (menu_about):  replaced
       "HighWire" with _HIGHWIRE_FULLNAME_.
     - line 530 + 539 (handle_menu) + 551 + 577 (update_menu):  put
       encoding-case's in #if...#endif.
     - line 593 + 650 (rpopup_open):  put rpop_open in #if...#endif.
-    
+
   HighWire.c:
     - line 79 + 97 (main):  _ERROR_SPEEDO_/_ERROR_NOMEM_ instead of
       alert text.
@@ -1231,17 +1469,17 @@ December 18, 2002
 December 17, 2002
 
   AltF4's patches
-    
+
   Location.h:
     - line 38:  new function location_Host().
-    
+
   Location.c:
     - line 237:  new function location_Host() to return the host name.
-    
+
   Containr.h:
     - line 139 + 153:  extended argument list.
     - line 253:  changed return type.
-    
+
   Containr.c:
     - line 39 + 41 + 329:  save frame title in a shared memory object.
     - line 332 + 343 + 376 + 411 (history_create):  additional argument
@@ -1249,11 +1487,11 @@ December 17, 2002
     - line 462 + 468 (containr_process):  additional history argument
       to dedide what needs to be processed.
     - line 1099 + 1103 (containr_notify):  returns TRUE on success.
-    
+
   Loader.h:
     - line 43:  in struct LOADER, new attribute notified to save the
       notification state of a loading process.
-    
+
   Loader.c:
     - line 190 (delete_loader) + 281 (loader_job):  send notifications
       if necessary.
@@ -1261,12 +1499,12 @@ December 17, 2002
       host connecting since this might need some time.
     - line 298 (loader_job) + 450 + 466 (new_loader_job):  set notified
       flag.
-    
+
   parser.c:
     - line 64 (new_parser) + 81 (delete_parser):  set notified flag.
     - line 88 (delete_parser):  notification reoved, will be done by
       delete_loader().
-    
+
   hwWind.c:
     - line 358..360 (hist_append):  extended arguments for
       history_create().
@@ -1276,24 +1514,24 @@ December 17, 2002
 December 16, 2002
 
   AltF4's patches
-    
+
   Containr.h:
     - line 133:  new attribute for struct s_history to determine the
       entry name length of a history item.
-    
+
   Containr.c:
     - line 334 + 375..386 (history_create):  modified to mark entries
       of subframes.  this is detected by the container argument, if it
       has a parent it must be a subframe.
-    
+
   render.c:
     - line 287 (render_FRAMESET_tag):  added a missing call to
       containr_notify() for empty frames.
-    
+
   hwWind.c:
     - line 330 + 356 (hist_append) + 567 (wnd_hdlr):  modified handling
       of history creating to decide between main and subframes.
-    
+
   AEI.c:
     - line 432..479 (menu_history:  overworked for subframe marking and
       menu box width change.
@@ -1301,48 +1539,48 @@ December 16, 2002
 December 15, 2002
 
   AltF4's patches
-    
+
   defs.h:
     - line 455:  in struct frame_item, new attribute MimeType.
-    
+
   global.h:
     - line 68 + 93:  extended argument lists.
-    
+
   W_Struct.c:
     - line 99 (new_word):  set word attributes fro current font_step
       and set the font.
-    
+
   Frame.c:
     - line 18 + 27 (new_frame):  new argument mime type.
     - line 46:  set initial font size and step correctly.
     - line 55: for raw text reset the initial font.
-    
+
   parser.c:
     - line 58 (new_parser):  additional mime type argument for
       new_frame().
-    
+
   p_about.c:
     - line 182 (parse_about):  removed setting of initial font and
       font_step.
-    
+
   render.c:
     - line 1177 + 1185 (render_IMG_tag):  changed creating of word_item
       to avoid lost following text.
     - line 1908 (parse_html) + 2091 (parse_plain):  removed setting of
       initial font and font_step.
-    
+
   hwWind.c:   line 574 (wnd_hdlr):
   keyinput.c: line 71 (key_pressed):
   Mouse_R.c:  line 35 (button_clicked):
     - additional raw_text argument for update_menu().
-    
+
   AEI.c
     - line 524 (update_menu):  additional raw_text argument to enable
       UTF16 menu entries.
-    
+
   Form.c:
     - line 453 (input_handle):  corrected calculation of redraw area.
-    
+
   Loader.c:
     - line 52 + 328 + 483:  removed useless encoding argument of
       load_file().
@@ -1355,33 +1593,33 @@ December 15, 2002
 December 13, 2002
 
   AltF4's patches
-    
+
   defs.h:
     - line 100..114:  fixed defines for Pure C.
-    
+
   global.h:
     - line 76:  new function menu_history().
-    
+
   Containr.h:
     - line 138:  additional argument for history_create().
-    
+
   Containr.c:
     - line 11 + 18:  fixed defines for Pure C.
     - line 325..332 + 363 (history_create):  additional text argument
       to display in the menu.
-    
+
   hwWind.c:
     - line 96 (new_hwWind) + 106 (delete_hwWind) + 239 + 242 + 257
       + 272 (hwWind_raise):  update history entries in menu.
     - line 305..331 (hist_append) + 342..349 (hwWind_history) + 489
       + 520 (wnd_hdlr):  modified to have the state of a history entry
       in load process stored properly.
-    
+
   AEI.c:
     - line 422: new function menu_history() to handle history entries
       of the menu.
     - line 429 (handle_menu):  handle menu events of history entries.
-    
+
   highwire.rsc, highwire.h, highwire.hrd, highwire.rsd, highwire.rso:
     - updated
 
@@ -1402,48 +1640,48 @@ December 10, 2002
     - line 23 (about_cache):  overworked to have the cache objects
       listing row aligned.
     - line 186 (parse_about):  removed a left over  else if().
-    
+
   defs.h
      - line 89:  forward declaration for HISTORY.
-    
+
   image.c:  line 7:
   parser.c: line 12:
      - added defines to make forward declarations also working for
        Pure C.
-    
+
   render.c:
     - line 274 (render_FRAMESET_tag):  removed useless if's to avoid
       setting again the already set default value.
     - line 1948 (parse_html):  removed handling of last_encoding.
-    
+
   Loader.c:
     - line 476:  removed last_location, last_encoding, prev_location,
       prev_encoding, get_fpath(), none of them are used anymore.
     - line 517.. (load_file) +  799 (init_paths):  removed last.. and
       prev_.. variable handling.
     - line 683:  removed outcommented stuff.
-    
+
   Containr.h
     - line 16 + 119:  new history stuff.
-    
+
   Containr.c:
     - line 7.. + 259..:  new functions history_create(),
       history_destroy(), containr_process() for history management.
-    
+
   hwWind.h:
     - line 10 + 17:  in struct hwWind, new attributes loading,
       HistUsed, HistMenu, History.
     - line 31:  new functions hwWind_history() and hwWind_undo().
-    
+
   hwWind.c:
     - line 30..75 (new_hwWind):  updated initialization of hwWind.
     - line 288:  new functions hwWind_history() and hwWind_undo().
     - line 411 + 439 (wnd_hdlr):  added code for history update.
-    
+
   AEI.c:
     - line 300 (menu_reload) +  501..533 (rpopup_open):  modified to
       make use of history;  removed prev_location/prev_encoding.
-    
+
   keyinput.c:
     - line 63 + 133 (key_pressed):  modified to make use of history;
       removed prev_location/prev_encoding.
@@ -1455,38 +1693,38 @@ December 2, 2002
   scanner.c
     - line 607..637 (scan_string_to_16bit):  modified to also remove
       trailing spaces, not only leadings.
-    
+
   render.c
     - line 376 (render_META_tag):  additional code to remove invalid
       quotation of the link of a refresh argument.
-    
+
   defs.h:
     - line 98:  more forward declarations, for INPUT and FORM.
     - line 390:  in struct word_item, input got a named pointer type
       (not void*), also reordered the other attributes a bit.
     - line 449:  in struct frame_item,  FormList got also a named
       pointer type now.
-    
+
   token.h:
     - line 41 + 49:  added #undef's to avoid preprocessor missinterpre-
       titions of Pure C.
     - line 125:  new key DISABLED for <input> tags.
-    
+
   parser.h:
     - line 10:  added defines to make forward declarations also working
       for Pure C.
-    
+
   parser.c:
     - line 120 (get_value):  if a value isn't found the value buffer
       needs to be set to an empty string to avoid undefined states.
-    
+
   Table.c:
     - line 11:  added defines to make forward declarations also working
       for Pure C.
-    
+
   Form.h:
     - line 11..:  several new functions for producing input elements.
-    
+
   Form.c:
     - line 7:  added defines to make forward declarations also working
       for Pure C.
@@ -1503,12 +1741,12 @@ December 2, 2002
     - line 308.. (input_handle):  overworked to not handle disabled
       elements, adapted to changed storing method of radio buttons.
     - line 346:  new function input_activate() to handle button events.
-    
+
   p_about.c:
     - splitted off parse_about() code to two functions, one for the
       main contents and one for cache listing;  also integrated button
       elements for cache clear requests.
-    
+
   Mouse_R.c:
     - line 179 (button_clicked):  added handling of forms buttons
       pressed.
@@ -1528,11 +1766,11 @@ November 20, 2002
 
   defs.h:
     - line 461:  in struct parse_sub, new attribute prev_par.
-    
+
   global.h:
     - line 93 + 149:  new functions frame_finish(), paragrph_finish().
     - line 148:  extended arfument list for add_paragrph().
-    
+
   W_Struct.c:
     - line 34 (_alloc):  modified to avoid usage of a literal number.
     - line 38 (_alloc):  mark word as used if taken from a existing
@@ -1540,7 +1778,7 @@ November 20, 2002
       this didn't already result in crashes in the previous version!
     - line 98 + 119 + 129 (new_word):  moved down setting of
       current->prev_wrd to have it correctly zeroed when necessary.
-    
+
   Paragrph.c:
     - line 73 (new_paragraph):  preset prev_par.
     - line 93 + 121 (add_paragraph):  additionl argument vspace to set
@@ -1550,7 +1788,7 @@ November 20, 2002
     - line 130:  new function paragrph_finish() to finalize the batch
       of paragraphs (of a content) and to filter out a possible empty
       paragraph at the end.
-    
+
   list.c
     - line 24 (list_start) + 59 (list_finish):  removed setting of
       eop_space since this is now an argument for add_paragraph().
@@ -1558,11 +1796,11 @@ November 20, 2002
       argument for add_paragraph() calls.
     - line 277 + 380 (list_marker):  modified to haver numbered lists
       looking a bit better.
-    
+
   Table.h:
     - line 19..22:  new attribute SavedCurr replaces SavedStyles,
       SavedFntStp and Previous.
-    
+
   Table.c:
     - line 64 (table_start) + 442 (free_stack):  additional zero
       argument for add_paragraph() calls.
@@ -1575,19 +1813,19 @@ November 20, 2002
       need it for paragraph_finish().
     - line 248 (table_cell):  changed test of WorkCell to NumCells
       since the first ay always be non-zero.
-    
+
   Frame.c:
     - line 80:  new function frame_finish() to finalize the content of
       a frame.
-    
+
   parser.c:
     - line 75 (delete_parser):  content_minimum() replaced by
       frame_finish().
-    
+
   p_about.c: line 198 (parse_about):
   p_dir.c:   line 293 (parse_dir):
     - word_store() removed, will be handled by paragrph_finish().
-    
+
   render.c:
     - line 1141 + 1175 (render_IMG_tag) + 1276 (render_H_tag) +1312
       + 1316 (render_HR_tag) + 1428 (render_CENTER_tag)
@@ -1612,15 +1850,15 @@ November 15, 2002
   p_dir.c:
     - line 127 (parse_dir):  added a wrapper for bindings that don't
       have Dxreaddir().
-    
+
   defs.h:
     - line 477:  in struct list_stack_item, changed type of attribute
       Spacer.
-    
+
   Paragrph.c:
     - line 96 (add_paragraph):  if the actual paragraph covers a <li>
       inherite the hanging to the new paragraph's left indent.
-    
+
   render.c:
     - line 1365 + 1378 + 1392 + 1400 + 1405 + 1410 (render_P_tag):
       replaced access to par->Current by local current variable.
@@ -1629,7 +1867,7 @@ November 15, 2002
       bullet/number ite over to list_marker().
     - line 1780 (render_DT_tag) + 1797 (render_DD_tag):  corrected
       calculation of paragraph indent.
-    
+
   list.c:
     - line 20..35 (list_start):  overworked to have the bullet/number
       of a <li> not in a own paragraph but as the first word item of a
@@ -1640,14 +1878,14 @@ November 15, 2002
     - line 423:  added code for creating the bullet/number word_item.
 
 November 13, 2002
-    
+
   Baldrick's hacks ;)
-  
+
   p_dir.c
     - line 121-145 put #ifndef PUREC around DXreaddir() code
       that I don't have PureC support for atm.  It does't work
       but it at least links :/
-      
+
   AltF4's patches
 
   defs.h:
@@ -1720,9 +1958,9 @@ November 13, 2002
 
   Table.h:
     - line 72:  changed declaration of table_calc().
-      
+
 November 12, 2002
-    
+
   AltF4's patches
 
   Containr.c:
@@ -1788,7 +2026,7 @@ November 12, 2002
       string really starts with a space.
 
 November 11, 2002
-    
+
   AltF4's patches
 
   AEI.c:
@@ -1877,7 +2115,7 @@ November 11, 2002
       structures considerably.
 
 November 8, 2002
-    
+
   AltF4's patches
 
   defs.h:
@@ -1962,7 +2200,7 @@ November 8, 2002
       content_minimum() replaced by delete_parser().
     - line 3085 (parse_dir):  more defines of DTA attributes for
       Lattice C.
-    
+
   Table.c:
     - line 59 + 112 + 228 + 238 + 428 + 448 + 459 + 466 + 472 + 661:
       changed argument list for all table functions.
@@ -1975,9 +2213,9 @@ November 8, 2002
 
   Table.h:
     - line 67..:  changed argument list for all table_..() functions.
-      
+
 November 6, 2002
-    
+
   AltF4's patches
 
   Loader.c:
@@ -1999,7 +2237,7 @@ November 6, 2002
     - line 6 + 9:  new enum for protocol types.
 
 November 5, 2002
-    
+
   AltF4's patches
 
   AEI.c:
@@ -2040,7 +2278,7 @@ November 5, 2002
       listing page.
 
 November 1, 2002
-    
+
   AltF4's patches
 
   AEI.c:
@@ -2142,94 +2380,94 @@ November 1, 2002
       loading obe single image.
 
 October 29, 2002
-    
+
   AltF4's patches
 
   purewireprj, highwire.prj:
     - dependencies updated.
 
 October 27, 2002
-    
+
   AltF4's patches
 
   highwire.h,
   highwire.rsc, highwire.hrd, highwire.rso, highwire.rsm, highwire.rsd
     - updated for new encoder entries.
-    
+
   global.h:
     - line 45:  new global variable for debugging purpose.
-    
+
   config.c:
     - line 95.. (read_config):  new keywords:
       - LOCAL_WEB: directory for offline reading (see Location.c),
       - LOGGING:   =1 enables console logging,
       - NO_IMAGE:  =1 suppresses image loading.
-    
+
   Location.c:
     - line 24:  replaced define LOCAL_WEB by a char* which can be
       modified with an entry in the highwire.cfg file.
     - line 162 + 172 + 208 (new_location):  adapted to new local_web
       variable.
-    
+
   encoding.c
     - line 204 (utf16_to_bics):  overworked to avoid useless checks.
     - line 357 (utf16_to_atari) + 420 (encoder_word)
       + 550 (utf16_to_8bit) + 589 (encoder_char):  new encoders.
-    
+
   Rainer patches (of October 9, 2002)
-    
+
   global.h:
     - line 71:  new functions menu_logging(), menu_alt_text().
-    
+
   encoding.c
     - line 204 (utf16_to_bics) + 408 (encoder_word):  new encoder.
-    
+
   keyinput:
     - line 79 + 82 (key_pressed):  make use of functions instead of
       direct variable access.
     - line 154:  new shortcuts ^F vor ISO Latin-15 and ^M for Macintosh
       Roman.
-    
+
   AEI.c:
     - line 395:  new functions menu_logging(), menu_alt_text().
     - line 411 (handle_menu) + 429 (update_menu):  new cases for
       ENCODING_ISO8859_15, _UTF16, _UTF16LE, _MACINTOSH, _ATARINVDI.
-    
+
 October 26, 2002
-    
+
   AltF4's patches
 
   defs.h:
     - line 132:  changed definition to also allow nobreak space for the
       system font.
-    
+
   fontbase.h:
     - line 19:  removed attribute ChrShft, was never used.
-    
+
   fontbase.c
     - line 16 (font_base):  added check for zero font id.
     - line 32:  removed ChrShft.
     - line 140 (font_byType):  corrected calculation of ascend/descend
       for system/bitmap fonts.
-    
+
   scanner.h:
     - line 36 + 59 + 79:  extended argument lists of scan_namedchar(),
       scan_string_to_16bit() and encoder_word().
     - line 92:  changed unicode_to_bics() to unicode_to_wchar() and
       unicode_to_atari() to unicode_to_8bit().
-    
+
   scanner.c:
     - line 366 + 382 + 410 + 412 + 425 (scan_namedchar) + 596 + 598
       + 618 (scan_string_to_16bit):  additional argument mapping for the
       encoder function and to avoid hard coded character codes.
-    
+
   en_atari.h:
     - line 29:  replaced literal space by defined symbol for 0x00A0.
     - line 121:  added missing entries for 0x301D, 0x301E, 0x301F.
-    
+
   en_bics.h:
     - line 287:  added missing entries for 0x301D, 0x301E, 0x301F.
-    
+
   encoding.c:
     - line 273..: all functions renamed from the scheme .._to_atari()
       to .._to_8bit().
@@ -2237,12 +2475,12 @@ October 26, 2002
       16-bit system/bitmap font.
     - 248.. (encoder_word):  overworked to handle system/bitmap font.
     - 263:  new function unicode_to_wchar() replaces unicode_to_bics().
-    
+
   Form.c:
     - line 93 (form_radio) + 134 + 147 +164 (new_input):  modified to
       replace hard coded space characters.
     - line 148 (new_input):  use encoder instead of simple copying.
-   
+
   render.c:
     - line 183 (render_TITLE_tag):  additional argument for
       scan_namedchar() call.
@@ -2263,42 +2501,42 @@ October 25, 2002
       ENCODING_UTF16LE (by Rainer).
     - line 77:  moved ofer definition for min()/max() from defs.h,
       looks more logical if this is located here.
-    
+
   defs.h:
     - line 126:  replaced definition of Space_Code by definitions for
       every font type that will be supported in future.
     - line 135:  removed declaration of min()/max(), is in hw-types.h()
       now.
-    
+
   Loader.c:
     - line 24:  removed include of macros.h, the necessary definitions
       are in hw-types.h now.
-    
+
   global.h:
     - line 104:  added declaration of launch_viewer().
-    
+
   AEI.c:
     - line 471: removed declaration of launch_viewer(), this is in
       hw-types.h now.
-    
+
   fontbase.h:
     - line 39:  added two short hands for accessing of a font's space
       and figure/nobrake space codes.
-    
+
   fontbase.c:
     - line 10:  removed defines for font type dependent space and
       nobreak codes, this is in defs.h now.
-    
+
   en_bics.h, en_atari.h, en_uni.h:
     - new file to take over the translation tables of encoding.c which
       will grow rapidly soon.  Rainer started this idea already by
       introducing the uni_bics.h file but this way the scheme is more
       logical.
-    
+
   encoding.c:
     - all arrays are located now in the en_bics/_atari/_uni.h files.
     - all occurences of Space_Code replaced by SPACE_BICS.
-    
+
   W_Struct.c:
     - line 10:  extended struct fixed to have it working for different
       font types.
@@ -2306,22 +2544,22 @@ October 25, 2002
       deleting to extended struct fixed.
     - line 101 (word_store):  modified to take care for different font
       types.
-    
+
   Paragrph.c:
     - line 594 (content_minimum):  modified to take care for different
       font types.
-    
+
   render.c:
     - line 933 (render_A_tag) + 1113 + 1142 (render_IMG_tag)
       + 1457 (render_BLOCKQUOTE_tag) + 2133 (list_marker)
       + 2527 + 2542 + 2563 + 2575 (parse_html) + 2650 + 2672
       + 2684 (parse_text):  modified to take care for different font
       types.
-    
+
   Redraws.c:
     - line 512 + 589 (draw_paragraph):  modified to take care for
       different font types.
-    
+
   purewire.prj:
     - line 35:  added option 'no string merging' to entry of scanner.c
       to avoid a possible compiler bug.
@@ -2333,32 +2571,32 @@ October 23, 2002
   hw-types.h:
     - line 31:  copied the MAP_.. definitions from gem.h, will be
       needed for font stuff soon.
-    
+
   defs.h:
     - line 95:  new forward declaration.
     - line 382:  in struct word_item, new attribute font.
-    
+
   global.h:
     - line 10:  removed include of highwire.h, this should only be done
       by the files which really need it.
-    
+
   schedule.c:
     - line 10 replaced include of defs.h by hw-types.h, makes compiling
       a little bit faster.
-    
+
   AEI.c:
     - line 22:  added include of highwire.h.
-    
+
   W_Struct.c:
     - line 56 + 66 (new_word):  preset font attribute.
-    
+
   fontbase.h, fontbase.c:
     - new files to take over VDI font attribute aspects.
-    
+
   Form.c:
     - line 176 + 189 (new_input):  adapted to new font_byType()
       function.
-    
+
   render.c:
     - line 79:  removed map(), not longer needed.
     - line 1803 (long2decimal) + 1815 (long2alpha)
@@ -2367,21 +2605,21 @@ October 23, 2002
     - line 1154 (render_IMG_tag) + 1467 (render_BLOCKQUOTE_tag) + 2468
       + 2480 + 2451 (parse_html) + 2682 + 2690 (parse_text):  adapted
       to new font_byType() function.
-    
+
   Redraws.c
     - line 405 (draw_image):  marked argument as unused to keep PureC
       quiet.
     - line 473 + 526.. (draw_paragraph):  adapted to new font_switch()
       function.
-    
+
   HighWire.c:
     - line 18:  added include of highwire.h.
     - line 156 (main):  removed VDI font setting calls, will be done in
       fontbase.c.
-    
+
   Makefile, purewireprj, highwire.prj:
     - updated, special the dependencies should be complete now.
-    
+
 October 18, 2002
 
   AltF4's patches
@@ -2728,7 +2966,7 @@ October 8, 2002
   AltF4's patches
 
   AEI.c:
-    - line 52 + 99 + 313:  removed old code. 
+    - line 52 + 99 + 313:  removed old code.
    	- line 139 + 151 + 157 (wind_handler):  replaced
       number_of_frames_left_to_load by wind->isBusy.
     - line 211 (vastart):  added mouse position and shift key states.
@@ -2988,7 +3226,7 @@ September 29, 2002
       struct.
 
   Loader.c:
-    - line 786 (init_load):  activate mouse pointer watching after 
+    - line 786 (init_load):  activate mouse pointer watching after
    	  window opend.
 
   Mouse_R.c:
@@ -3200,7 +3438,7 @@ September 11, 2002
 September 10, 2002
 
   AltF4's patches
-  
+
   color.c:
     - line 9:  new struct SRGB to also store the saturation of colours.
     - line 12:  new function to calculate the saturation.  this is
@@ -3221,18 +3459,18 @@ September 10, 2002
   parser.c:
     - line 252..284 (parse_tag):  overworked to avoid double checking
       of quotation marks.
-    
+
 August 30, 2002
-  
+
   Baldrick's patches (actually a few patches after a week of bug hunt)
-    
+
   Parser.c
     These are some modifications I'm not 100% happy about.  They deal
     with some sites using a ' instead of " in the key area of tags
-    
+
     - line 260-263 added if else pair to intercept ' and parse it
     - line 283 catch ' at end and handle advance
-    
+
   Render.c
     - line 116 added a check for page and para being centered in get_align
       this gets rid of one of the remaining problems with centering
@@ -3245,19 +3483,19 @@ August 30, 2002
     - line 580 parse_header_tag() extract the current color
     - line 592 parse_header_tag() if color is -1 use the cur_color value
     - parse_p_tag() removed excess indents no code change
-    
+
   Table.c
     - line 309,311,313 added setting of cell->Content.Backgnd to line
-    
+
 August 21, 2002
 
   Baldrick's patches
-  
+
   Form.c, Form.h
     - New files for FORM functions
 
   Highwire.PRJ, PureWire.PRJ and Makefile updated
-  
+
   defs.h
     - added defines for FRMSTACK and FORM
     - added FRMSTACK FormStack to frame_item struct
@@ -3265,54 +3503,54 @@ August 21, 2002
     - added FORM_METHOD enum
     - updated HIGHWIRE_VERSION to 0.09
     - added FORM Form to paragraph_item struct
-    
+
   Render.c
     - line 1996: call form_start() and form_finish() as appropriate
-    
+
 August 20, 2002
 
   Baldrick's patches
-  
+
   AEI.C
     - reworked process_messages again to eliminate the possibility
       of scroll by line operating by page
-  
+
   Defs.H
     - line 20: added PAR_FORM to PARAGRAPH_CODE enum
-    
+
   Render.C
     - line 1995: grab out FORM tag, do nothing with it yet
     - line 2028: grab out INPUT tag, do nothing with it yet
     - line 2097: grab out SELECT tag, do nothing with it yet
-        
+
   Token.h
     - line 41 new tag FORM
     - line 49 new tag INPUT
     - line 58 new tag OPTION
     - line 66 new tag SELECT
-    
+
 August 19, 2002
 
   Baldrick's patches
-  
+
   AEI.C
     - reworked process_messages to handle all WM_ARROWED message types
       this allows realtime scrolling with programs like MWheel.  I put
       in full support even though MWheel doesn't seem to send them all
-      but that could be a limitation of my IBM scroll point mouse. 
+      but that could be a limitation of my IBM scroll point mouse.
       Scrolling is based on frame under Mouse pointer.
 
 August 15, 2002
 
   Baldrick's patches
-  
+
   AEI.C
     - line 699 initial support for WM_ARROWED message
-    
+
 August 14, 2002  (HW 0.0.8a released code)
 
   AltF4's patches
-  
+
   cache.c:
     - line 24 + 39 (cache_insert):  changed argument to take over the
       new cache object (to avoid further use of non-const pointer).
@@ -3368,39 +3606,39 @@ August 14, 2002  (HW 0.0.8a released code)
 August 13, 2002
 
   Baldrick's patches
-  
+
   Containr.c
     - line 164 set frame->scroll from cont->scroll
-    
+
   Containr.h
     - line 55 added SCROLL_CODE scroll to s_containr struct
-    
+
   Defs.h
     - line 37 new enum SCROLL_CODE - handles Frame scrolling value
     - line 417 added SCROLL_CODE scroll to frame item struct
-  
+
   Frame.c
     - line 30 init frame->scroll to SCROLL_AUTO
     - frame_calculate() over worked to handle new SCROLL_CODE values
-    
+
   Redraws.c
     - line 45 put scroller drawing inside if not SCROLL_NEVER test
-    
+
   Render.c
     - line 1741 added output
     - line 1748-54 handle key SCROLLING
-    
+
   Token.h
     - line 133 added new key item SCROLLING
-    
+
 August 12, 2002
 
   Baldrick's patches
-  
+
   Redraws.c
     - 152 changed + 1 to +2 to get rid of ghost line
     - many notes added to draw_vbar() for reference
-    
+
 August 11, 2002
 
   AltF4's patches
@@ -3412,7 +3650,7 @@ August 11, 2002
       to catsh it with the mouse.
     - line 610 + 620:  placed wind_update() calls to get exvlousive
       access of mouse clicks.
-  
+
   cache.c:
     - line 15:  added anonymous destructor function attribute.
     - line 24 + 30 (cache_insert):  added anonymous destructor argument
@@ -3461,16 +3699,16 @@ August 9, 2002
 
   Makefile, purewire.prj, highwire.prj:
     - updated.
-  
+
   AEI.C
     - line 584 added routine rpopup_open()
-    
+
   Global.h
     - line 74 added proto for rpopup_open()
-    
-  Highwire.rsc 
+
+  Highwire.rsc
     - updated for right popup
-  
+
   Highwire.C
     - line 34 added OBJECT *rpopup
     - line 150 added rsrc_gaddr for RPOPUP
@@ -3479,19 +3717,19 @@ August 9, 2002
     - line 347 new routine launch_viewer()  - launches "viewer"
       on system if one defined, shows the src code for the current
       file.  For comparisons and to help identify problems.
-      
+
   Location.c
     - line 184 added test for loc_proto == 1 (about:) otherwise
       we had the proto overwritten and could not display about:
-      
+
   Widget.c
     - new file for handling HighWires Widgets and their operation
-      not much there yet.  
-      
+      not much there yet.
+
 August 8, 2002
 
   AltF4's patches
-  
+
   Makefile, purewire.prj, highwire.prj:
     - updated.
 
@@ -3527,27 +3765,27 @@ August 8, 2002
 August 7, 2002
 
   Baldrick's patches
-  
+
   Global.h
     - line 69 changed prototype for button_clicked()
-    
+
   Highwire.c
     - line 42 modified mouse entries in EVMULTI_IN struct
        I left the old values in a rem since I'm not certain
        about what I've added and if everything is there that's
        needed.
     - line 199 added out.emo_mbutton to button_clicked() call
-    
+
   Mouse_R.c
     - line 17 added WORD button parameter to button_clicked() routine
     - reworked button_clicked() routine to handle left and
       right mouse button operation
-      
+
   AltF4's patches
 
   color.c:
     - line 3:  inserted #include <stddef.h> for size_t declaration.
-  
+
   defs.h:
     - line 68:  new forward declaration for struct word_item.
     - line 247:  new structure IMGDATA that can be shared by different
@@ -3581,7 +3819,7 @@ August 6, 2002
     - line 120 (wind_handler):  changed pointer argument type to const.
     - line 437 + 472 (menu_info):  changed pointer types to const,
       avoid usage of location->FullName.
-  
+
   Containr.c:
     - line 717 (containr_notify):  changed pointer argument type to
       const.
@@ -3676,11 +3914,11 @@ August 5, 2002
 August 2, 2002
 
   AltF4's patches
-  
+
   AEI.C
     - line 491 (menu_reload):  set bit 7 of the encoding to force the
       parser to use it.
-  
+
   http.c:
     - line 113 (http_charset):  fixed start of scanning, else it tryed
       to interprete the ';'.
@@ -3720,12 +3958,12 @@ August 2, 2002
     - line 82 (word_store):  removed setting of paragraph minimum, this
       will be done in content_minimum() instead.
 
-July 26, 2002 
+July 26, 2002
 
   AltF4's patches
 
   AEI.c:
-    - line 375... new/renamed functions: 
+    - line 375... new/renamed functions:
       - menu_about() was previous do_info_dialog() from HighWire.c.
       - new menu_open() for entering an URL and/or opening the file
         selector.
@@ -3750,7 +3988,7 @@ July 26, 2002
       AEI.c.
     - line 101:  removed do_info_dialog() declaration, is now static
       function menu_about() in AEI.c.
-  
+
   HighWire.c:
     - line 193 (main):  extended process_messages() argument list.
     - line 224...:  moved do_info_dialog() and handle_menu() over to
@@ -3790,7 +4028,7 @@ July 24, 2002 (v0.0.7 alpha)
 
   Paragrph.c:
     - line 576 + 580 (content_calc):  added left margin width.
-  
+
   Redraws.c:
      - line 604 (draw_contents):  added a check if the background needs
        to be drawn at all.
@@ -3806,40 +4044,40 @@ July 24, 2002 (v0.0.7 alpha)
 July 23, 2002
 
   Baldrick's patches
-  
+
   Defs.h
     - added H_ALIGN ALN_FLEFT for forced left alignments on floating
       objects (starting with tables)
-      
+
   Paragrph.c
     - line 518 removed line
     - line 531 removed line
     - reworked table section of content_calc() initial table wrapping
       work in place
-  
+
   Table.c
     - line 57 added parsing and setting of align left = ALN_FLEFT
 
   New HTML file TEXTWRAP.HTM to test text wrapping and br clear=x
-        
+
   Matthias Jaap's patches
-  
+
   Render.C
     - line 670 new routine parse_iod4_tag()
        - only supported attribute is SHOUT
     - line 2006 added parsing of TAG_IOD
     - line 2021 added code for TAG_LISTING
     - line 2153 added code for TAG_XMP
-    
+
   token.h
     - line 48 added new tag <IOD4> - supported by the browser of the
       same name
     - line 51: added tag <LISTING>
     - line 79: added tag <XMP>
     - line 133 added key SHOUT attribute (for IOD4)
-    
+
   AltF4's patches
-  
+
   Containr.c
     - line 28 (new_containr):  set the base container's name to '_top'.
     - line 249 (containr_byName):  recognizes special target names.
@@ -3862,7 +4100,7 @@ July 23, 2002
 
   Highwire.htm
     - updated to illustrate margins
-    
+
   http.c
     - line 18 (http_charset):  corrected return type.
     - line 148 (content_type):  corrected checking of type and cset.
@@ -3913,7 +4151,7 @@ July 23, 2002
 July 22, 2002
 
   Baldrick's patches
-  
+
   Defs.h
     - line 32 added new enum L_BRK - for handling BR clear codes
     - modified line_brk to L_BRK
@@ -3921,7 +4159,7 @@ July 22, 2002
   Paragrph.c
     - line 310 -inserted code to handle clear code line breaks
        (I'm not 100% happy with it's output - baldrick)
-           
+
   Render.c
     - line 736 new routine parse_BR_tag() handles BR parsing
     - line 1919 changed code to call parse_BR_tag() routine
@@ -3937,7 +4175,7 @@ July 21, 2002
 
   purewire.prj, highwire.prj:
     - corrected dependency for Table.c
-  
+
   Containr.c:
     - line 493 + 506 (containr_shift):  adapted to changed struct
       frame_item.
@@ -3951,7 +4189,7 @@ July 21, 2002
   encoding.c:
     - line 656 (windows1252_to_atari):  fixed forgotten pointer
       increment.
- 
+
   Frame.c:
     - line 24 (new_frame):  makes use of content_setup() now instead of
       own presetting.
@@ -3973,7 +4211,7 @@ July 21, 2002
 
   HWDOC.HTM
     - updated to demonstrate CSS parsing
-    
+
   image.c:
    	- line 166 (new_image) + 257 (image_job):  removed page_margin,
       already handled by content_minimum().
@@ -4062,14 +4300,14 @@ July 21, 2002
 July 18, 2002
 
   Baldrick's patches
-  
+
   Defs.h
     - line 263 added short hspace
-    
+
   global.h
     - line 49 added extern for page_margin
     - line 147 added hspace param to new_image() prototype
-    
+
   Image.c
     - line 85 added hspace to img->word->word_width
     - line 91 added hspace param to new_image()
@@ -4080,28 +4318,28 @@ July 18, 2002
 
   loader.c
     - line 416 added 0 (hspace) to call of new_image()
-  
+
   Paragrph.c
     - line 399 removed rem'd out tests
-    
+
   Redraws.c
     - line 353 replaced 5 with page_margin
     - line 544 modify x by img->hspace
-      
-  Render.c 
+
+  Render.c
     - line 1501 added get_value_size(KEY_HSPACE) to call of new_image()
     - line 2209 replaced 5 with page_margin
     - line 2329 replaced 5 with page_margin
-      
+
   Token.h
     - line 117 added KEY HSPACE
-    
+
   variable.c
     - line 42  new variable page_margin (replaces all those 5's in code)
        eventually should be user configureable
-    
+
   AltF4's patches
-  
+
   Makefile, purewire.prj, highwire.prj
     - updated for encoding.c
 
@@ -4111,7 +4349,7 @@ July 18, 2002
   parser.c:
     - line 278 (parse_key):  new code to store CSS keys/values of
       <.. style="..">.
-  
+
   render.c:
     - line 549 (parse_header_tag):  added color that can be given by
       style="color:...;".
@@ -4155,7 +4393,7 @@ July 18, 2002
 July 15, 2002
 
   Baldrick's patches
-  
+
   Paragrph.c
     - line 368 - added test to check if new paragraph can occupy any
        portion of the current line
@@ -4163,16 +4401,16 @@ July 15, 2002
        old code left for the moment until further testing can be done
     - line 454 - added check for the paragraph not being text, since
        modifying the text here completely messes it up later
-  
+
 July 14, 2002
 
   Baldrick's patches
-  
+
   paragrph.c
     - line 208 reworked section removing test for blocker->bottom
-    
+
   AltF4's patches
-  
+
   AEI.c:
     - line 22:  placed #ifdef around the appl_xgetinfo() function, the
       coming gemlib revision will have this implemented.
@@ -4196,12 +4434,12 @@ July 14, 2002
 July 12, 2002
 
   Baldrick's patches
-  
+
   Paragraph.c
     - line 427 changed test to  < 0 from <= 1
-    
+
   AltF4's patches
-  
+
   defs.h:
     - line 276:  in struct font_style, removed font and font_size.
     - line 280:  replaced struct word_changed by union TEXTATTR plus
@@ -4251,7 +4489,7 @@ July 12, 2002
 July 7, 2002
 
   AltF4's patches
-  
+
   defs.h:
    - line 6:  added define for BETATAG.
 
@@ -4263,11 +4501,11 @@ July 7, 2002
 
   inet.c:
    - updated some gcc related stuff.
-  
+
 July 2, 2002
 
   AltF4's patches
-  
+
   image.c:
     - line 902 (read_gif):  corrected the start value of the Y scale
       counter to the half of a scaling step.  else the loop performs
@@ -4276,7 +4514,7 @@ July 2, 2002
 July 1, 2002
 
   AltF4's patches
-  
+
   Containr.c:
     - line 254 (containr_byName):  assigned the target name "_top" to
       the base container of a tree to make links with a target of this
@@ -4297,7 +4535,7 @@ July 1, 2002
 June 30, 2002
 
   AltF4's patches
-  
+
   Table.c:
     - line 72 (table_start):  add space for cell border to the padding.
     - line 273ff (table_cell):  rearanged to make it more logical.
@@ -4310,10 +4548,10 @@ June 30, 2002
 June 28, 2002
 
   Baldrick's patches
-  
+
   Purewire.prj
-    - modified stack setting to 16384 
-    
+    - modified stack setting to 16384
+
   Paragraph.c
     - line 267 modified test to exclude PAR_IMG paragraphs
     - line 388 - 392 and 396  truely ugly test to avoid resetting
@@ -4327,7 +4565,7 @@ June 28, 2002
 June 27, 2002
 
   Baldrick's patches
-  
+
   defs.h
     - line 385 new struct blocking_area definition
         (this handles an object area left/right align)
@@ -4352,13 +4590,13 @@ June 27, 2002
     - line 384 - 421 supporting code for PAR_IMG paragraph handling
     - line 429 skip some adjustments if this is a PAR_IMG paragraph
     - line 443 check if we have a blocking area and if the new height
-         is past the blocking area if so clear blocking area    
+         is past the blocking area if so clear blocking area
     - lines  393 & 426 modified calls to paragraph_calc() to support
          blocking struct passing
 
   render.c
     - line 135 (get_align) rem'd out first test, do we need it?
-    - line 426 (parse_div) modified add_paragraph line 
+    - line 426 (parse_div) modified add_paragraph line
     - line 428 (parse_div) set alignment via get_align() could be put
         back on line 426 possibly
     - line 1465 (parse_img) added code to set PAR_IMG on left|right
@@ -4367,7 +4605,7 @@ June 27, 2002
 June 23, 2002
 
   AltF4's patches
-  
+
   Makefile, purewire.prj, highwire.prj:
     - updated.
 
@@ -4385,7 +4623,7 @@ June 23, 2002
     - line 362:  typo fixed.
     - line 181 (delete_loader) + 260 (loader_job) + 192:  added
       experimental stuff.
-  
+
   Location.h, Location.c:
     - line 272:  experimental function, not used yet.
 
@@ -4399,31 +4637,31 @@ June 23, 2002
 June 21, 2002
 
   Baldrick's patches
-  
+
   defs.h
     - line 261 (s_image struct) added short vspace
-    
+
   global.h
     - line 147 modified prototype for new_image
-    
+
   image.c
     - set_word() additions to calculations for img->vspace
     - new_image() added parameter short vspace
     - line 107 (new_image) set img->vspace
     - line 270 (image_job) modify rec.g_h by img->vspace
-  
+
   loader.c
     - line 284 adjusted call to new_image() for 0 vspace
-      
+
   redraws.c
     - line 534 adjust y by word->image->vspace
-  
+
   render.c
     - line 1479 adjusted call to new_image() for vspace token
-    
+
   token.h
     - line 130 added VSPACE key
-    
+
   AltF4's patches
 
   global.h:
@@ -4475,25 +4713,25 @@ June 21, 2002
 June 20, 2002
 
   Rainer's patches
-  
+
   Location.c
     - line 172 moved ')' to before \n
 
   MOUSE_R.C
     - line 37 (button_clicked) removed wind_set() call
     - line 163 (button_clicked) expanded else with wind_set() call
-      
+
 June 20, 2002 (HighWire 0.05 released)
-  
+
   Rainer's patches
-  
+
   - Some cleanups in the HTML folder
 
 June 17, 2002
 (HighWire 0.5 release candidate 2)
 
   Baldrick's patches
-  
+
   Render.c
     - new routine static H_ALIGN get_align() sets alignment for
       an object if it was not explicitly aligned.
@@ -4501,18 +4739,18 @@ June 17, 2002
       appears to be unneeded
     - replaced tests for alignment based on table alignment with get_align
       at lines 166 (set_center_text) + 574 (parse_header_tag) + 704 +
-      713 (parse_p_tag)   
-     
+      713 (parse_p_tag)
+
   AltF4's patches
- 
+
   Table.c:
     - line 103 + 105 (table_row):  added forgotten row count decrement.
     - line 97:  inserted adjustment for rowspans over empty rows.
- 
+
 June 17, 2002
 
   AltF4's patches
-  
+
   Render.c
     - line 149 (set_center_text) + 560 (parse_header_tag) + 693 + 705
       (parse_p_tag) + 1466 (parse_img_tag):  additional check for
@@ -4521,24 +4759,24 @@ June 17, 2002
 June 13, 2002
 
   Gamer's patches
-  
+
   Documentation additions
-  
+
   Baldrick's patches
-  
+
   Documentation editing and additions
-  
+
   Render.c
-    - line 1468 (parse_img_tag) removed else for alignment from 
+    - line 1468 (parse_img_tag) removed else for alignment from
        frame->alignment
-  
+
 June 12, 2002
 
   AltF4's patches
-  
+
   defs.h:
     - line 3:  added defines to make version setting more handy.
-  
+
   HighWire.c:
     - line 240 (do_info_dialog):  make use of version define.
 
@@ -4546,15 +4784,15 @@ June 12, 2002
     - line 719 (raster_24) + 743 (raster_32):  fixed #ifdef.
     - line 858 (read_gif):  added transparency for 16bit.
     - line 878:  fixed colour map entry access.
-  
+
   Baldrick's patches
-  
+
   Defs.h
     - added H_ALIGN alignment to struct frame_item
-  
+
   Frame.c
     - line 35 (new_frame) set default alignment to ALN_LEFT
-    
+
   Render.c
     - set_center_text() reworked to modify frame->alignment
     - line 412 (parse_div_tag) set paragraph->alignment to
@@ -4564,15 +4802,15 @@ June 12, 2002
     - line 696 (parse_p_tag) alignment set to frame->alignment
     - line 708 (parse_p_tag) alignment set to frame->alignment
     - line 2468 (parse_img_tag) added else to set to frame->alignment
-    
+
 June 11, 2002
 
   AltF4's patches
-  
+
   global.h:
     - line 118 + 160:  extended argument lists of new_step() and
       new_word().
-  
+
   image.c
     - line 720 (raster_24) + 746 (raster_32):  fixed typos.
 
@@ -4604,15 +4842,15 @@ June 11, 2002
 June 10, 2002
 
   Baldrick's patches
-  
+
   redraws.c
     - line 687 (parse_p_tag) added test for table stack and set alignment
        to workcell if we are in table and have no forced alignment
     - line 699 (parse_p_tag) added test for table stack and set alignment
-       to workcell if we are in table 
+       to workcell if we are in table
     - line 1460 (parse_img_tag) if we have no align and are in a table
        set paragraph alignment to current table cell alignment
-       
+
   AltF4's patches
 
   image.c:
@@ -4623,7 +4861,7 @@ June 10, 2002
     - line 832 (read_gif):  precalculate intensities for monochrome
       screen.
     - line 851:  added transparency for >= 24 planes.
-  
+
   Paragrph.c:
     - line 132 (paragraph_calc):  check for invalid word_item added.
 
@@ -4638,7 +4876,7 @@ June 10, 2002
 June 9, 2002
 
   AltF4's patches
-  
+
   global.h:
     - line 154:  new function image_calculate().
 
@@ -4673,25 +4911,25 @@ June 9, 2002
 June 7, 2002
 
   Baldrick's patches
-  
+
   Image.c
     - line 220 changed contanr_calc() to a test with a contanr_redraw()
       if it returns TRUE (fixes imgtest.htm of dillo test suite)
-    
+
   Redraws.c
     - line 605 (draw_paragraph) added case for ALN_TOP now display
       behaviour equivalent of IE
-    
+
   IMGTEST.HTM just to test IMG alignments
-  
+
 June 6, 2002
 
   AltF4's patches
     - reworking object alignment
-    
+
   Paragrph.c, Redraws.c
     - reverted to previos version
-    
+
   image.c:
     - line 62: new function image_calculate() to set the image word's
       ascend and descend (word_height and word_tail_drop) according to
@@ -4711,15 +4949,15 @@ June 6, 2002
 June 5, 2002
 
   Baldrick's patches
-  
+
   Paragraph.c
     - paragraph_calc reworked to support vertical alignment
     - line 145 catch first word in paragraph to get proper initial values
     - line 169 added switch statement for vertical alingment
-  
+
   Redraws.c
     - line 605 (draw_paragraph) added case ALN_TOP and ALN_MIDDLE
-  
+
   Render.c
     - line 1445  added cases for center, bottom and top ALIGN
     - line 1494  added current->word->vertical_align = next
@@ -4729,9 +4967,9 @@ June 5, 2002
     - line 1956 modified parse_p_tag() call
     - line 2015 changed ALN_MIDDLE to ALN_BOTTOM fix for SUB
     - line 2026 changed ALN_MIDDLE to ALN_BOTTOM fix for SUP
-    
+
   AltF4's patches
-  
+
   defs.h:
     - line 215:  removed obolete attr_list.
     - line 355 (struct frame_item):  moved current_font_step into
@@ -4743,7 +4981,7 @@ June 5, 2002
 
   Frame.c:
     - line 44 (new_frame):  removed unused current_attr.
-  
+
   O_Struct.c
     - reworked declaration and malloc of temp
     - line 112 (new_stack_list_item):  removed line_start.
@@ -4767,7 +5005,7 @@ June 5, 2002
     - parse_html():  cases TAG_BASEFONT uses parse_basefont() now.
     - parse_html():  cases TAG_BIG, TAG_SMALL, TAG_SUB, TAG_SUP changed
       to make use of step_push()/step_pop().
-	  
+
   Table.c:
     - line 42 + 48 (table_start) + 376 (free_stack):  renamed
       current_font_step
@@ -4775,11 +5013,11 @@ June 5, 2002
 June 4, 2002
 
   Baldrick's patches
-  
+
   Redraws.c
     - line 605 added case ALN_TOP
     - line 606 added case ALN_MIDDLE
-    
+
   RENDER.C
     - line 1447 (parse_img_tag) added V_ALIGN next (next paragraph
        vertical alignment)
@@ -4789,16 +5027,16 @@ June 4, 2002
     - line 1517 (parse_img_tag) set current word v align to next
 
 June 3, 2002
-  
+
   Baldrick's patches
-  
+
   Render.c
     - reworked step2size() routine to make sizes dynamic and
       modified whenever font_size is changed
     - line 410 changed "- '0'" to "+ '0'"
-    
+
   AltF4's patches
-  
+
   Frame.c:
     - new_frame(): corrected setting of frame->item.
 
@@ -4816,7 +5054,7 @@ June 3, 2002
 
   Paragraph.c:
     - new_paragraph() + add_paragraph(): adapted to changed new_word().
-  
+
   render.c:
     - line 68:  removed obj_font_step().
     - line 2057 (parse_html, case TAG_TABLE):  removed modification of
@@ -4859,11 +5097,11 @@ June 3, 2002
 May 31, 2002
 
   Baldrick's patches
-  
+
   Defs.h
     - added Indent to list_stack_item - this tracks the current indentation
       for the list
-  
+
   Render.c
     - line 457 (parse_d_tag) added check for paragraph->Indent>0 otherwise
        2 subsequent DT tags would cause the second to be to the left of the
@@ -4885,11 +5123,11 @@ May 31, 2002
     - new routine obj_font_step() used for storing font attributes
       when entering and exiting objs (like tables)  NOTE this routine
       only partially working.
-    
+
 May 29, 2002
 
   Baldrick's patches
-  
+
   Aei.c
     - line 425 (process_messages) don't containr_relocate() if iconified
     - line 432 (process_messages) added win_status = 0 when window
@@ -4900,21 +5138,21 @@ May 29, 2002
     - line 443 (process_messages) get work area to old
     - line 447 (process_messages) redraw window at old
     - line 450 (process_messages) replaced window_handle with msg[3]
-    
+
   Mouse_r.c
     - button_clicked()
       - do we need the first test now? I added a note about it
-      - line 37 - added wind_set(window_handle,WF_TOP...) this tops the 
+      - line 37 - added wind_set(window_handle,WF_TOP...) this tops the
         window whenever we click inside of it
       - line 42 - rem'd out else in this test so that I could put
          the WF_TOP in for all occurences easily
-         
+
   Render.c
-    - line 384 (parse_body) added set p_frame->current.word->colour to 
+    - line 384 (parse_body) added set p_frame->current.word->colour to
         current_font_step->colour if TEXT color tag exists (fixes excerpt.htm)
-        
+
   AltF4's patches
-  
+
   color.c:
     - remap_color():  reworked to get more excact results.
 
@@ -4969,13 +5207,13 @@ May 29, 2002
 May 24, 2002
 
   Baldrick's patches
-  
+
   Render.c
     - parse_header_tag()
       - line 612 removed old comment, added test for current_list.  if
         a H tag occurs in a list we suppress new paragraph and alignment
       - line 668 modified line so that alignment comes from table cell
-        
+
     - parse_html()
       - line 2113 added code to reset font size on entering and exiting tables
         I'm not certain this is correct, but does produce output much closer
@@ -4985,21 +5223,21 @@ May 24, 2002
 May 23, 2002
 
   Baldrick's patches
-  
+
   Render.c
     - set_center_text()
       - added check on close to see if we are in a table, if we are
         then we set the alignment based on the table cell alignment
-        
+
   AltF4's patches
-  
+
   Image.c
     - line 565 add & before pal
 
 May 21, 2002 (evening)
 
   AltF4's patches
-  
+
   paragraph.c
     - line 140 add initialisation for last
 
@@ -5007,15 +5245,15 @@ May 21, 2002
 
   Baldrick's patches
     - not really patches just minor changes for testing here
-    
+
   Image.c
     - disabled printf (just wanted to see how much time the print took)
-    
+
   Highwire.PRJ
     - enabled image support (wanted to compare times vs gcc compile)
-    
+
   AltF4's patches
-  
+
   AEI.c:
     - line 139 (wind_handler):  added handling of image notification,
       needs to be overworked soon.
@@ -5032,7 +5270,7 @@ May 21, 2002
 
   global.h:
     - line 153:  extended parameter list of new_image().
-    
+
   image.c:
     - first iplementation to make use of libungif decoder functions.
 
@@ -5078,17 +5316,17 @@ May 21, 2002
       the current frame background color.
 
   David Leavers patches
-  
+
   Global.h
     - line 22 EINVFN 32 changed to EINVFN -32
-  
+
   Loader.c
     - line 700 modified line to be a strcat (old line kept below for moment)
 
 May 20, 2002
 
   Baldrick's patches
-  
+
   Highwire.c
     - main()
        - added variable long gdostype
@@ -5097,7 +5335,7 @@ May 20, 2002
          - either test to see if gdostype is -2 or Fontgdos
          - or test if gdosttype is not FSM_GDOS or -65532L
        - test number 2 used at the moment
-  
+
   Paragraph.c
     - paragraph_calc()
       - line 114 added TEXTWORD last;
@@ -5105,43 +5343,43 @@ May 20, 2002
       - line 169 added if last->line_brk justify = 0 test
       - line 171 added if line->NextLine!=Null control on justify
       - line 173 added else justify = 0
-  
+
   Render.C
     - parse_header_tag()
       - modification in close header tag.  Now takes alignment from tablestack
          if a current tablestack exists for the frame
-  
+
   David Leaver's patches
-  
+
   Highwire.PRJ  (lattice PRJ file)
     - source character set to 8 bit ASCII
     - default char unsigned
     - TTLOAD & TTMALLOC flags set
-  
+
   Scanner.C
     - removed ifdef LATTICE code
 
 May 17, 2002  (version 0.04 released)
 
   Baldrick's patches
-  
+
     - More last minute changes to dletter.htm hwdoc.htm and highwire.doc
        inclusion of URL's for mailing list and project homepage
-       
+
   AltF4's patches
-  
+
   Loader.c
     - line 222 : base changed to : location_share(base)
 
 May 16, 2002
 
   David Leaver's patches
-  
+
   defs.h
     - line 49 - remove final comma in definition of LANGUAGE
     - line 405 - #endif /* __PUREC */
     - line 400 - "seems" - spelling correction
-  
+
   container.h
     - line 28 - remove final comma in definition of HW_EVENT
 
@@ -5162,16 +5400,16 @@ May 16, 2002
     - For some reason Lattice doesn't like the '€' in line 563, so I changed
       this to 128. The pre-processor seems to remove the €, leaving just ''
       (baldrick - I put this in an #ifdef #endif pair)
-  
+
   GokMase's patches
-  
+
     - some suggestions on changes to documentation and developer letter
     - standardisation of 'color' over 'colour' in developer letter.
 
 May 14, 2002
 
   AltF4's patches
-  
+
   Table.c:
     - line 108 (table_row):  overworked to filter out empty rows.
     - line 386:  new function free_stack().
@@ -5183,13 +5421,13 @@ May 14, 2002
 May 13, 2002
 
   Baldrick's patches
-  
+
   Edited the documentation
-  
+
   Rainer's patches
-  
+
   Documentation and html cleanups
-  
+
   AltF4's patches
 
   defs.h:
@@ -5238,14 +5476,14 @@ May 13, 2002
     - updated.
 
 May 10, 2002
-  
+
   Baldrick's patches
-  
+
   global.h
     - added ifndef EINVFN - define EINVFN for PureC (at least my copy)
-  
+
   Rainer's patches
-  
+
   global.h
     - Added aes_window_title_length, appl_xgetinfo().
     - removed prototype blit_block() - unused
@@ -5263,7 +5501,7 @@ May 10, 2002
   Loader.c
     - page_load()
       - Checks if fsel_exinput() is allowed.
-      - Replaced init_load() by new_loader_job().  The original AES doesn't 
+      - Replaced init_load() by new_loader_job().  The original AES doesn't
         like the second wind_open() in init_load().
     - can_extended_mxalloc() is a candidate for deletion (baldrick - I don't want
          to remove it before we know we won't need it for some developer)
@@ -5294,7 +5532,7 @@ May 10, 2002
     - scan_string_to_16bit()
       - New, for string parameters of HTML keys.
     - modified some of the conversion tables
-    
+
   uni_bics.c
     - Updated.
 
@@ -5305,16 +5543,16 @@ May 9, 2002
 
   Baldrick's Patches
 
-   - a few english translations added to some german 
+   - a few english translations added to some german
      descriptions of routines
-  
+
   Highwire.c
     - changed GEM Menu version to .2 (I think there has been enough
       expansion to justify at least that)
     - changed Core version to .4 (getting ready for release )
-  
+
   Rainer's Patches
-  
+
   AEI.C
     - added loader.h and logging.h
     - new routine WORD appl_xgetinfo()
@@ -5323,14 +5561,14 @@ May 9, 2002
     - vastart() rewrote routine to handle dequoting of filename
     - doGSCommand() changed return value to BOOL, simplified routine
     - process_messages() changed return value to BOOL, simplified routine
-  
+
   av_prot.c
     - Receive_AV()
       - Changed return value to BOOL.
     - Send_AV()
       - Changed return value to BOOL.
       - Simplified;
-  
+
   defs.h
     - Moved macro numberof() from scanner.c.
     - Deleted POINT_SIZE.
@@ -5340,21 +5578,21 @@ May 9, 2002
     - new_frame()
       - removed encoding initialization
       - Changed POINT_SIZE to variable font_size.
-  
+
   Global.h
     - added externs for active_keyboard_frame, font_size, alternate_text_on
        help_file
     - ignore_colours now BOOL
     - page_load() now BOOL
     - removed get_decoder_type and load_file prototypes
-    
+
   Highwire.c
     - externs added for xaccname,gslongname,gsi,va_helpbuf
     - init_netlayer() failure now returns EXIT_FAILURE
     - Moved and merged all allocating of GLOBAL memory.  Added check for NULL.
     - Activated scrolling in background, only for AES >= 4.00.( WF_BEVENT )
     - many replacements of numerals with Defines
-    
+
   keyinput.c
     - added include for logging.h
     - added routine frame_next()
@@ -5363,11 +5601,11 @@ May 9, 2002
       - Added F7 to toggle logging.
       - Added F8 to toggle pictures or alternative text.
       - Added F1, Help to load help_file.
-      - Added keyboard scrolling for first_frame: left, right, (page) up, 
+      - Added keyboard scrolling for first_frame: left, right, (page) up,
         (page) down, home, end.
       - Added + to increase and - to decrease font_size.
       - Using global active_keyboard_frame.  Added Tab to cycle frames.
-  
+
   Loader.c
     - added prototype for static load_file()
     - parser_job()
@@ -5403,20 +5641,20 @@ May 9, 2002
 
   Location.c
     - added include Logging.h
-    - _alloc 
+    - _alloc
       - added encoding and Anchor init
     - new_location()
       - IF NOT LIBWWW section added
-        - Added a conversion of "http://" or "ftp://" to "C:\WWW\".  This is my 
+        - Added a conversion of "http://" or "ftp://" to "C:\WWW\".  This is my
           personal web collection. HighWire should read the path from config file.
           ( We may need to modify this when writing online sections - baldrick)
       - line 69 path modification added
       - line 87 modification of path testing
       - logprintf call added at bottom of routine
-       
+
   Location.h
     - ENCODING encoding added to s_location struct
-  
+
   Logging.c, Logging.h
     - New files.  errprintf() prints always, logprintf() if switched on with F7.
 
@@ -5428,17 +5666,17 @@ May 9, 2002
     - removed numberof define.  it's elsewhere now
     - parse_tag()
       - Corrected comment parsing.
-  
+
   PC_START.S
     - New startup code for PureC compiles
-  
+
   render.c
     - added Logging.h and time.h includes
     - removed stdio.h include
     - Created a macro EOP() for global adjustment of eop_space.
     - list_indent() replaced POINT_SIZE with font_size
     - set_blockquote_text()
-      - Renamed to parse_blockquote_tag().  Corrected description.  I tried to 
+      - Renamed to parse_blockquote_tag().  Corrected description.  I tried to
         implement the TITLE attribute.  This leads to a need for the future.
     - parse_anchor() addition of test for KEY_ID
     - parse_d_tag()
@@ -5465,13 +5703,13 @@ May 9, 2002
 
   scanner.c
     - numberof() moved out of file
-    - FIGURE SPACE 560 instead of Space_Code for the NO-BREAK SPACE, since the 
+    - FIGURE SPACE 560 instead of Space_Code for the NO-BREAK SPACE, since the
       latter is ignored when drawing at line start.
     - Corrected Unicode_to_BICS[].
-  
+
   Token.H
     - added TAG_TITLE, TAG_TEXTAREA
-    
+
   Variable.c
     - regrouped items in file
     - Added font_size.
@@ -5479,51 +5717,51 @@ May 9, 2002
 
   gem.h (placed in 'includes' folder)
     - Added "#define MAP_UNICODE 2".
-    
+
   uni_bics.c, uni_bics.prj (placed in 'tools' folder)
     - New files.
       Creates a HTML file with the Unicode characters supported by HighWire.
 
-    
+
 May 3, 2002
 
   Gamer's patches
-  
+
   HwDOC.htm & highwire.doc updated
 
   AltF4 patches
-  
+
   global.h:
     - changed declaration of new_image().
 
   W_Struct.c:
     - line 108 (word_store):  corrected calculation of minimum width
       for image items.
-  
+
   Paragraph.c:
     - line 86 (add_paragraph):  'origin' must be inherited from current
       paragraph.
-  
+
   image.c:
     - changed declaration of new_image().
-  
+
   Table.h:
     - extended declaration for table_row().
-  
+
   Table.c:
     - line 105 (table_row):  better support for missing <tr> tags.
-  
+
   render.c:
     - parse_img_tag():  small improvements, removed obsolete comment.
-  
+
   Redraws.c:
     - line 549 (draw_image):  make use of vrt_cpyfm() for images with
       color depth > 1.
-  
+
 May 2, 2002
 
   AltF4 patches (these are from the end of april)
-  
+
   defs.h:
     - line 246:  new struct s_image.  the leading members are full
       compatible to a MFDB of the VDI for easy casting.
@@ -5575,7 +5813,7 @@ May 2, 2002
 
   Makefile, purewire.prj, highwire.prj:
     - Updated.
-  
+
   O_Struct.c:
     - new_url_link():  strings are now taken over without duplication
       to avoid needless mallocs.
@@ -5583,21 +5821,21 @@ May 2, 2002
   Table.h, Table.c:
     - table_calc():  removed handling of named_location structs, no
       longer necessary here.
-  
+
   Frame.c:
     - new_frame():  setting of struct named_location ** in 'current'
       substructure.
     - frame_calculate():  removed handling of named_location structs,
       no longer necessary here.
     - frame_anchor():  adapted to changed struct url_link.
-  
+
   Mouse_R.c:
     - line 146 (button_clicked):  adapted to changed struct url_link.
 
 April 25, 2002
 
   AltF4 Patches
-  
+
   AEI.c:
     - new function wind_handler() to recive messages generated by
       containers.
@@ -5628,7 +5866,7 @@ April 25, 2002
 April 24, 2002
 
   AltF4 Patches
-  
+
   global.h:
     - removed global variables event_messages and the_first_frame.
     - changed declaration of process_messages(), button_clicked(),
@@ -5637,7 +5875,7 @@ April 24, 2002
   Variable.c:
     - removed global variables event_messages and the_first_frame.
     - initialize current_highlighted_link_area and ..._frame.
-  
+
   Table.h, Table.c:
     - new attribute for TableStack to save alignment outside of the
       table.
@@ -5645,14 +5883,14 @@ April 24, 2002
   Frame.c:
     - delete_frame():  added a check against NULL pointers.
     - frame_calculate():  corrected if condition for horizontal slider.
-  
+
   Containr.c:
     - containr_clear():  removed handling of the_first_frame.
-  
+
   render.c:
     - parse_html():  cases TAG_TABLE, TAG_TD, TAG_TH adapted to changed
       table functions.
-  
+
   Loader.c:
     - parser_job():  removed handling of the_first_frame.
 
@@ -5666,21 +5904,21 @@ April 24, 2002
   AEI.c:
     - process_messages():  the function argument is the message array
       now, instead of using a global.
-  
+
   HighWire.c:
     - adapted the event loop to changed function declarastions.
 
 April 23, 2002
 
   AltF4 Patch via mailing list
-  
+
   frame.c
     - line 130 changed >= to > in test line
 
 April 16, 2002
 
   AltF4's Patches
-  
+
   global.h, AEI.c:
     - new functions wind_redraw() and wind_scroll().
     - line 300 (process_messages):  case WM_REDRAW now results in a
@@ -5784,9 +6022,9 @@ April 13, 2002
 April 10, 2002
 
   Baldrick's patches
-  
+
   - updated HIGHWIRE.DOC, HWDOC.HTM & DLETTER.HTM
-  
+
 April 8, 2002
 
   AltF4's patches
@@ -5957,24 +6195,24 @@ April 01, 2002
 March 30, 2002
 
   Rainer Seitel's patches (these may appear elsewhere as well)
-  
-  - For compiling with Pure C 1.1 (file size 226538, file date 1992-10-25), I had 
-    to move the declarations from Table__N.c to Table.h, then including Table.h 
+
+  - For compiling with Pure C 1.1 (file size 226538, file date 1992-10-25), I had
+    to move the declarations from Table__N.c to Table.h, then including Table.h
     and Containr.h at the end of defs.h.
 
-  - I marked places with bugs or to do's with a comment beginning with the 
+  - I marked places with bugs or to do's with a comment beginning with the
     searchable "BUG: ".
- 
-  - I hope I replaced all path and file name sizes by HW_PATH_MAX. In defs.h it 
+
+  - I hope I replaced all path and file name sizes by HW_PATH_MAX. In defs.h it
     is defined as 260, which is the VFAT standard. This should done dynamically.
 
-  - Added "/* @(#)highwire/filename.ext" as first line to all files changed by 
+  - Added "/* @(#)highwire/filename.ext" as first line to all files changed by
     me. Exact two empty lines before every function.
 
   purewire.prj
     - Default char is explicitely unsigned char.
     - Stack size is explicitely set (open source!).
- 
+
   render.c
     - scan_html(), scan_text()
       - Corrected control character interpretation.
@@ -5991,7 +6229,7 @@ March 30, 2002
       - Check also for CHARSET and ID.
     - New: parse_meta_tag(), checks for Content-Type ... charset.
     - New: parse_q_tag(), prints language dependent qoutation marks.
-    - Replaced all "int flag" by "BOOL start_tag" and deleted several 
+    - Replaced all "int flag" by "BOOL start_tag" and deleted several
       explanations, only stating that flag means start tag. Using FALSE, TRUE.
 
   token.h:
@@ -5999,13 +6237,13 @@ March 30, 2002
       ID, LANG.
 
   scanner.c, scanner.h, render.c
-    - Added support for HTML files with ISO-8859-1 or windows-1252 (default), 
-      ISO-8859-2, UTF-8, atarist 8-bit encoding. Text files must be loaded from 
+    - Added support for HTML files with ISO-8859-1 or windows-1252 (default),
+      ISO-8859-2, UTF-8, atarist 8-bit encoding. Text files must be loaded from
       an HTML file with <A CHARSET="..." HREF="...">...</A>.
     - Added all with BICS possible named character entities from HTML 4.
-    - Added Unicode entities. Added conversion table Unicode to BICS (Bitstream 
-      International Character Set). (Better than the one in NVDI.) Added 
-      conversion table Unicode to Atari ST system font. Both are one character 
+    - Added Unicode entities. Added conversion table Unicode to BICS (Bitstream
+      International Character Set). (Better than the one in NVDI.) Added
+      conversion table Unicode to Atari ST system font. Both are one character
       to multiple glyph conversions.
     - Added many const and static.
 
@@ -6013,15 +6251,15 @@ March 30, 2002
     - scan_key()
       - Converts '-' to '_'.
     - Added all possible named character entities from HTML 4.
-    - Added Unicode entities. Added conversion table Unicode to BICS (Bitstream 
-      International Character Set). (Better than the one in NVDI.) Added 
-      conversion table Unicode to Atari ST system font. Both are one character 
+    - Added Unicode entities. Added conversion table Unicode to BICS (Bitstream
+      International Character Set). (Better than the one in NVDI.) Added
+      conversion table Unicode to Atari ST system font. Both are one character
       to multiple glyph conversions.
     - scan_color()
       - Use isxdigit() for hexadecimal colors.
 
   Loader.c
-    - Removed mint_flag, since the existence of Fxattr() ist checked by calling 
+    - Removed mint_flag, since the existence of Fxattr() ist checked by calling
       it!
     - page_load(), build_fname()
       - Moved from keyinput.c.
@@ -6103,16 +6341,16 @@ March 28, 2002 (post release version)
 
   Table__N.c:
     - inserted #ifdef .. #endif around debug outputs.
-	
+
 March 28, 2002
 
   Baldrick's patches
-  
+
   highwire.c
     - updated core version number in alert box to 0.3
-    
+
   AltF4's patches
-  
+
   Redraws.c:
     - line 24 ff:  new functions frame_draw(), draw_hbar(), draw_vbar()
       to replace the previous draw functions.
@@ -6142,7 +6380,7 @@ March 28, 2002
 March 25, 2002
 
   AltF4's patches
-  
+
   defs.h:
     - new enum types for horizontal and vertical alignments.
     - removed obsolete enum 'possible_message_types'.
@@ -6198,7 +6436,7 @@ March 25, 2002
       cell offset relative to their table are stored in a 'offset'
       structure.
     - table_draw():  make use of table cells offsets.
-	
+
     These both functions should be located somewhere else:
     - content_calc():  moved over text related calculations to a own
       funtion.
@@ -6239,7 +6477,7 @@ March 25, 2002
 March 21, 2002
 
   AltF4's patches
-  
+
   defs.h:
     - line 398:  added line_start to struct list_stack_item which is
       intended to point to the first word just behind the last <li> tag
@@ -6272,11 +6510,11 @@ March 21, 2002
   Redraws.c:
     - line 196 (redraw_frame):  moved the vsf_color() call into the
       innermost loop scope to avoid misscolored frame backgrounds.
-  
+
 March 20, 2002
 
   Baldricks patches
-  
+
   Table__n.c + Table.h
     - changed def for table_draw to take y as long instead of short
     - added short frame_h parameter to table_draw()
@@ -6284,13 +6522,13 @@ March 20, 2002
     - line 968 - added test for y > frameh if so break
     - line 938 - test (y + row->height > top) wrapper around while(cell)
       avoids drawing things that we can't see anyway
-    
+
   Redraws.c
     - line 1246 - added frame_h parameter to call of table_draw()
-                - added top_of page parameter to call of table_draw()    
+                - added top_of page parameter to call of table_draw()
 
   AltF4's patches
-  
+
   TABLE__N.C
     - line 147 - replace with calls allowing 'border' to work for older
       pages
@@ -6298,7 +6536,7 @@ March 20, 2002
 March 19, 2002
 
   AltF4's Patches (several days patches at once )
-  
+
   Redraws.c:
     - line 736 + 796 + 839 + 866 (draw_paragraph):  corrected word
       width of first word items of a line that has leading Space_Code.
@@ -6416,7 +6654,7 @@ March 19, 2002
 March 15, 2002
 
   Baldrick's patches
-  
+
   Scanner.c
     - replaced 'power n' mapping in atari_char[]
     - created ISO88592[] maps ISO-8859-2 to Speedo index
@@ -6424,7 +6662,7 @@ March 15, 2002
 March 13, 2002
 
   Baldrick's last minute notes
-  
+
   TABLE.C
     - I had to move the #ifndef _NEW_TABLES to get it to compile
       properly under PureC on my machine
@@ -6435,30 +6673,30 @@ March 13, 2002
     - Lattice HIGHWIRE.PRJ updated
 
   AltF4's Patches
-  
+
   defs.h:
     - line 367:  new attribute TableStack in struct frame_item.
     - line 284:  struct table_step, table_child, table_row, table_item
       surrounded by  #ifndef _NEW_TABLES.
     - line 272:  new attribute Table in struct paragraph_item.
-  
+
   global.h:
     - line 142 - 154:  surrounded by  #ifndef _NEW_TABLES.
-  
+
   P_Struct.c
     - line 125 (content_maximum):  added check for NULL in word_item.
     - line 76 (add_paragraph):  setting of attribute Table.
     - line 35 (new_paragraph):  setting of attribute Table.
     - line 18 (destroy_paragraph_structure):  #ifndef  around
       destroy_table_structure().
-  
+
   F_Struct.c:
     - line 50 (new_frame):  setting of attribute TableStack.
-  
+
   F_Calc.c:
     - line 183 (calculate_frame_height):  call of table_calc().
     - line 8:  #include "Table.h"
-  
+
   render.c:
     - line 1951 (parse_html):  in cases TAG_TABLE, TAG_TD, TAG_TH,
       TAG_TR new table function calls.
@@ -6470,44 +6708,44 @@ March 13, 2002
     - line 1222 (draw_contents):  call of table_draw().
     - line 889:  draw_table() surrounded by  #ifndef _NEW_TABLES.
     - line 8:    #include "Table.h".
-  
+
   table.c:
     - the complete file is surrounded by  #ifndef _NEW_TABLES.
-  
+
   Table__N.c, Table.h:
     - temporary files updated.
-  
+
   Makefile, purewire.prj:
 	adapted for temporary files.
-  
+
   Baldrick's patches
-  
+
   Scanner.h
     - added prototype for scan_upperchar()
 
   Scanner.c
     - new routine scan_upperchar()
     - added static WORD atari_char[]
-    
+
   Render.C
     - line 2146  added case for handline *symbol < 0 or = 127
        we are handling symbol as a signed char so there really
        is no case where symbol > 127 (at least on compilers where
        signed chars are default).  So upper chars come in below
        0 (except 127)
-       
+
   Char.txt
     - a text file with (hopefully) all of the upper range characters
       from the atari asci set.
-       
+
 March 12, 2002
 
   AltF4's Patches
-  
+
   Redraws.c:
     - new function draw_border() to make 3D borders around tables,
       buttons, etc.
-  
+
   Table__N.c, Table.h:
     -temporary files for new table functions.
 
@@ -6520,7 +6758,7 @@ March 12, 2002
     - line 79:  removed setting of frame's page_width and table childs'
       min_width.  this is handled now by word_store() in combination
       with the renderer functions.
-  
+
   P_Struct.c:
     - in all functions I changed the argument list for better
       readability.
@@ -6553,18 +6791,18 @@ March 12, 2002
       page_width, isn't necessary at this point.
     - line 2107 (parse_html) + 2196 (parse_text):  set the frame's
       page_width by using content_minimum().
-  
+
 March 7, 2002
 
   Baldrick's Patches
-  
+
   Render.C
     - parse_font_tag()
       - line 478 - modifications to font size setting
          to make output more closely match other browsers
-         
+
   AltF4's Patches
-  
+
    defs.h
      - line 11:   removed enum word_codes, isn't needed anymore.
      - line 257:  in struct word_item, replaced word_code by BOOL
@@ -6615,15 +6853,15 @@ March 7, 2002
 March 6, 2002
 
   Baldrick's Patches
-  
+
   SCANNER.C
     - scan_color()
       - added char *old - tracks initial value in 3rd case
       - in third case if col < 0, then attempt to convert
-         the original text to a long.  
+         the original text to a long.
     - scan_namedchar()
       - line 297 - subtract 32 if less than BEG_NUM
-  
+
   RENDER.C
     - parse_anchor()
       - in closing anchor current_word->colour = font_step->color
@@ -6631,32 +6869,32 @@ March 6, 2002
 March 5, 2002
 
   Baldrick's Patches
-  
+
   SCANNER.C
     - scan_color()
       - scan for some color indexs that are just numbers
         no " or # involved.  Slashdot has one of these
         lines 450 - 453
-  
+
 March 4, 2002
 
   Baldrick's Patches
-  
+
    F_STRUCT.C
      - new_frame()
        - moved frame->current_font_size = POINT_SIZE; to
          before new_paragraph() call
-   
+
    Render.C
      - parse_font_tag()
-       - added support for font_step->colour in lines 504 & 514     
+       - added support for font_step->colour in lines 504 & 514
      - parse_html()
        - set current_font_step->colour to frame->text_color after
           line calling new_step(3)
 
    Defs.H
      - added WORD colour; to font_step struct
-    
+
   AltF4's Patches
 
    token.h:
@@ -6687,18 +6925,18 @@ history between Feb 15 and March 4, 2002>
 <recovery point missing data in here covering addition of
 p_frame * to alot of routines and their prototypes  also covers
 some work in render.c covering always creating a fontstep in
-parse_font > 
+parse_font >
    P_Struct.c
      - add_paragraph()
        - added p_frame to call of new_word()
      - new_paragraph()
        - added frame_item * parameter
        - added p_frame to call of new_word()
-   
+
    F_struct.c
      - new_frame()
        - added frame parameter to call of new_paragraph()
-   
+
    Table.C
      - new_table_row()
        - added frame_item * parameter
@@ -6710,31 +6948,31 @@ parse_font >
 February 25, 2002
 
    AltF4's Patches
-   
+
    HighWire.c:
      - line 228 (handle_menu):  replaced highwire_ex() by exit().
-   
+
    P_Struct.c:
      line 37 (new_paragraph) + 92 (add_paragraph):  replaced enum none
      by PAR_NONE.
-   
+
    F_Calc:c:
      in calculate_frame_height(), replaced in all  paragraph_code =
      lines the right hand side by the new enums, eg. hr -> PAR_HR.
-   
+
    table.c, Redraw.c:
      replaced huge number of accessing of structure members and also
      pointer-pointer-pointer-... addressing by the usage of local
      variables.  this makes the code better readable and also allows the
      compiler to make better optimazions.
-    
+
    defs.h:
      - replaced  enum paragraph_codes  by  typedef enum PARAGRAPH_CODE
        with upper cased members to avoid confusion with lower case
        variables of the same names.
      - in struct table_item, removed temp_val and temp_long.  this is
        now handled by local variables.
-   
+
    Render.C
      - line 923  replaced enum table by PAR_TABLE.
      - line 1248  replaced enum hr by PAR_HR.
@@ -6743,7 +6981,7 @@ February 25, 2002
 February 22, 2002
 
    Baldrick's Patches
-   
+
    RENDER.C
      - line 1697 renamed font_step to fontstep to avoid confusion with
         the struct name
@@ -6756,35 +6994,35 @@ February 22, 2002
 February 19, 2002
 
    Baldrick's Patches
-   
+
    Defs.h
      - new struct table_row()... start of a major overhaul of the
        table code.  Once more into the breach!
      - addition of table_row *row to table_item struct
-     
+
    Table.C
      - new routine struct table_row *new_table_row (void) - creates
        new row containers
 
    AltF4's Patches
-   
+
    Loader.c:
      -line 230 (new_loader_job):  replaced app_id by gl_apid.
 
    keyinput.c:
      - line 82 (key_pressed):  replaced highwire_ex() by exit().
-   
+
    av_prot.c:
      - line 62 + 83 (Send_AV):  replaced app_id by gl_apid.
-   
+
    AEI.c:
      - line 91 (doGSCommand) + 231 (process_messages):  replaced app_id
        by gl_apid.
      - line 141 (doGSCommand):  replaced highwire_ex() by exit().
-   
+
    Variable.c:
      - line 24:  removed global variable app_id.
-   
+
    HighWire.c:
      - line 63:  this was a serious bug, moved the Init_AV_Protocol()
        call behind the initialisation of the va_helpbuf variable in
@@ -6797,7 +7035,7 @@ February 19, 2002
      - line 174 ff (highwire_ex):  is declared static now.  also
        reordered sequence of program shutdown and added forgotten
        v_clsvwk().
-   
+
    global.h:
      - line 25:  removed global variable app_id because this value is
        already stored in the gemlib's gl_apid variable.
@@ -6810,13 +7048,13 @@ February 19, 2002
     (This is a Baldrick patch from some date )
      - new routine can_mxalloc() just looks for Mint or Magic flags
        and reports 1 if found 0 if not found
-       
+
    Highwire.c
      - modifications of method used to determine if we can Mxalloc()
        using new routine and seperated from older Mint flag test
-       
+
    AltF4's patches
-   
+
    Container.h:
      added a lot of explanations of mechanisms and about how to use
      containers.
@@ -6886,76 +7124,76 @@ February 19, 2002
 February 15, 2002
 
    Baldrick's patches
-   
+
    AV_PROT.C
     - rewrote most of the functions based on routines from GEMagnetic
     NOTE I'm not certain what needs to be done exactly for PDF_AV_OPEN_FILE
     I've left the original code in with a modification while putting
     some potential example code that doesn't work.
-    
+
    Highwire.C
    	- ~line 91.  In test for Aes_type malloc va buffer based on
    	   return.
-   
+
    GLOBAL.H
     - added extern for char	*va_helpbuf; /* GLOBAL memory buffer for AV */
-    
+
    DEFS.H
-    - added def's for GLOBAL & ALLOCMODE 
-    
+    - added def's for GLOBAL & ALLOCMODE
+
    TABLE.C
     - ~ line 739 - in calculate_table_width();  insertion of walk_table
         _children into fixed width tables
 
    AltF4's patches
-   
+
    - Containr.c
       line 275 - added frame.x and frame.y modification
 
 February 14, 2002
-   
+
    Baldrick's Patches
-   
+
    TABLE.C
     - line 279 applied temp_height = 0 outside of end of row test in
      empty children
-     
+
    AV_PROT.C
    	- added MAGXDESK and STRNGSRV to Av server search id's
    	- Send_AV () changed msg to short, set all msg[2] to 0
-   
+
    AltF4's Patches
-   
+
    purewire.prj, highwire.prj and makefile completed dependencies
-   
+
    Highwire.c
      - line 218 (handle_menu):  removed the  return 0;  from this void function.
 
 February 13, 2002
 
    Baldrick's patches
-   
+
    Loader.c
      - cleaned up load_file() by changing the 2 #ifdef's to one
         #ifndef LATTICE
-        
+
    Rafal Kaweki's patches
-   
+
    AV_COMM.H & AV_PROT.C new files
-   
+
    Highwire.c
      - line 63 added Init_AV_Protocol()
      - line 168 added Exit_AV_Protocol()
-     
+
    LOADER.C
      - line 44 added #include "av_comm.h"
      - line 275 added static const char *pdf_ident=".pdf";
      - line 302 added else case for my_pdf handling
-     
+
    purewire.prj, highwire.prj and makefile added av_prot.c file
-     
+
    AltF4's patches
-   
+
    defs.h:
      in struct frame_item, removed attributes frame_height, frame_left,
      frame_top, next_frame, frame_name.  their meanings are handled now
@@ -6995,7 +7233,7 @@ February 13, 2002
      - in parser_job(), removed debug output, inserted delete_frame()
        calls.  also adapted new_frame() argument list.
      - in init_load(), adapted new_frame() argument list.
-	
+
    Containr.h:
      - new function containr_byName() to find a named container in the
        tree.
@@ -7020,16 +7258,16 @@ February 13, 2002
 February 12, 2002
 
    Baldrick's Patches
-   
+
    TABLE.C
      - moved temp_height = 0; out of end of row test to a location
         after row height check.
 
-   
+
 February 11, 2002
 
    AltF4's Patches
-   
+
    defs.h:
      - line 15:  added forward declaration for CONTAINR and a #pragma
        to keep off PureC from complaining about a unknown structure.
@@ -7073,7 +7311,7 @@ February 11, 2002
 February 09, 2002
 
    AltF4's Patches
-   
+
    global.h:
      - removed global variable declarations add_to_do and read_to_do,
        no longer in use.
@@ -7148,7 +7386,7 @@ February 09, 2002
 February 8, 2002
 
    AltF4's Patches
-   
+
    Containr.c, Containr.h:
      new module for struct CONTAINR to take over structural aspects of
      frame_item.  there are nearly no comments in it, I will make up for
@@ -7159,25 +7397,25 @@ February 8, 2002
      - added temporary anonymous pointer attribute Container.
      - outcommented atrribute next_frame.  declared temporary function
        frame_next() to be used instead (just behind the struct).
-   
+
    render.c:
      - line 941 (parse_table_tag) + 1135 (parse_td_tag):
        set color to -1 if not defined as tag attribute to allow
        transparency for table items.
      - function parse_html() completely reworked to make use of the new
        container structure/functions.
-   
+
    Redraws.c:
     - line 987 + 940 (draw_table):
       added if(color >= 0) to allow transparency for table items.
     - line 164 (redraw):
       replace acces to next_frame attribute by frame_next() call.
-   
+
    Loader.c
      made a lot of changes to make use of the new container structure/
      functions.  sensless to write them down because most of the  will
      be changed again in the very near future.
-	
+
    F_Calc.c:
      - line 45 + 200 (calculate_frame_locations):
        replace acces to next_frame attribute by frame_next() call.
@@ -7210,9 +7448,9 @@ February 8, 2002
    Makefile, purewire.prj, highwire.prj: updated
 
 February 7, 2002
-  
+
    Baldrick's Patches
-   
+
    TABLE.C
      - calculate_subtable_height() no longer called.  Possibly will
        be removed shortly
@@ -7231,11 +7469,11 @@ February 7, 2002
 February 6, 2002
 
    Baldrick's Patches
-   
+
    TABLE.C
      - new routine set_p_area() - sets a paragraphs area coordinates
      - modificaitons of calculate_table_height to use set_p_area.
-     
+
 February 5, 2002
 
    Baldrick's Patches
@@ -7244,29 +7482,29 @@ February 5, 2002
     - added	struct table_item *parent; to table_step struct
     - renamed paragraph * in table_step to entry
       modifications in table.c, render.c and redraws.c
-    
+
    TABLE.C
     - added table_item *parent parameter to new_table_step() and
       add_table_step()
     - patched empty_child routines
     - modification of colspan handling in all routines that
        modified based on colspan
-             
+
    GLOBAL.H
     - new definitions for new_table_step() and add_table_step()
-   
+
    RENDER.C
     - modifications for new table step routines and struct
     - modifications for insertion of empty children to make
        space for colspan rowspan
-    
+
    REDRAWS.C
     - modifications for new table step routines and struct
     - modification of colspan handling in draw_table routine
     - removed draw_subtable() it was no longer used
 
    AltF4's Patches
-   
+
    render.c
     - line 1862: renamed calculate_frame() to parse_html().
     - line 1571: removed #else .. #endif part, wasn't used anymore
@@ -7275,7 +7513,7 @@ February 5, 2002
                new_loader_job(). parse_frameset()
     - line 1556: the 't_frame->frame_name' gets its value from
                get_value_str() now to avoid useless copies. parse_frameset()
-    - line 1538: removed the  #if 1  and the following 
+    - line 1538: removed the  #if 1  and the following
              if (!get_value...)  block, not longer used. parse_frameset()
     - line 1393: removed frame_name[], no longer in use. parse_frameset()
     - line 12:   added  #include "Loader.h".
@@ -7289,21 +7527,21 @@ February 5, 2002
     - line 312 + 329: replaced add_load_item_to_to_do_list() by
            new_loader_job()
     - line 8:  added  #include "Loader.h".
-    
+
    keyinput.c:
     - line 73: replaced add_load_item_to_to_do_list() by
                new_loader_job()
     - line 15: added  #include "Loader.h".
-    
+
    Makefile, purewire.prj, highwire.prj:
      updated: inserted schedule.c, removed To_do.c
-   
+
    schedule.c, shedule.h:
     - new module for general purpose job control.  the functions here
       don't know anything about internal structures like frame_item
       but are handeling all arguments as anonymous pointers.  This way
       it can also be used later for eg. decoding images.
-   
+
    Loader.c:
     - new functions new_loader(), loader_job(), new_loader_job() to
       take over some functionalities from To_do.c and make use of
@@ -7318,11 +7556,11 @@ February 5, 2002
    Loader.h
     - I placed here some declarations which I will need to change soon
       again.  this way at least gcc compiles much faster after changes.
-      
+
    To_do.c
      all of its functionality is now splitted off into schedule.c and
      Loader.c, so it becomes obsolete now.
-   
+
    global.h
     - renamed calculate_frame() to parse_html() because that matches
       more its functionality, corresponding to parse_text().  Also
@@ -7331,46 +7569,46 @@ February 5, 2002
 February 4, 2002
 
    Baldrick's Patches
-   
+
    TO_DO.C
      changed include aes.h to gemx.h
-     
+
    REDRAWS.C
-     experiments walking paragraphs around table draws 
+     experiments walking paragraphs around table draws
      recall draw_table() instead of draw_subtable()
-     
+
      draw_table() replaced left_border, right_b.. and bottom_b...
        with current_table->current_borders.
-     
+
    DEFS.H
      new struct BORDERS tracks left, right bottom
      added sturct borders current_borders to table item
 
    P_STRUCT.C
      added init to 0 in new_paragraph() for paragraph.area values
-     
+
    TABLE.C
      uncovered the fact that paragraph.area values weren't being
        set for tables.  This was a problem since the redraw routines
        needed these values
- 
+
 Alot of undocumented changes :< all in table routines though.  Drawing
-calculating and parsing.   
-   
+calculating and parsing.
+
 February 1, 2002
 
    Baldrick's Patches
      #if 0'd out the empty child insertion routines for the moment
-     going to sync the updates and can't finish it in time. 
+     going to sync the updates and can't finish it in time.
 
    TO_DO.C
       included aes.h for PureC for graf_mkstate
-        
+
    AltF4's patches
 
    O_Struct.c:
      - removed the unnecessary #include <gemx.h>.
-     
+
    AEI.c:
      - resorted the #include lines for better readability.
 
@@ -7393,13 +7631,13 @@ February 1, 2002
    	  only three pointers instead of a LOT and saves this way some cpu
    	  time.  the apropriated EVMULT_IN struct just before the main()
    	  function.
-   	 
+
    To_do.c:
      - line 104:  added check_mouse_position(), else the changes above
       dosn't work properly with links in frames.
-     
+
      - line 112:
-       removed an old #ifdef, was only used for speed meassurment in 
+       removed an old #ifdef, was only used for speed meassurment in
        the past.
 
      - removed the unnecessary #include <gemx.h> and resorted the other
@@ -7416,53 +7654,53 @@ February 1, 2002
 January 31, 2002
 
    Baldrick's Patches
-   
+
    TABLE.C
      current_height replaced with current_table->temp_long in calculate
        table height routines
-       
+
      removed test for table->num_cols > 1 in advacing table height
        in calculate table height and subtable height routines
-     
+
      new routine struct table_child *insert_empty_child (struct table_child *prev)
        this inserts our empty holders into table structures to fill
        the spaces left by colspan and rowspan
-     
+
    REDRAWS.C
      removed test for table->num_cols == 1 in righ border setting in
        draw_table routine
-     
+
      WORD pts[4] use in draw_table() and draw_subtable() replaced with
        current_table->screen_pts
-       
+
      variable WORD u removed from draw_frame_contents()
-     
+
      variable WORD junk removed from draw_subtable()
-     
+
      #if 0 rem'd out hopefully not needed test in draw_table() and draw_subtable()
        if we still need it make certain to remove line after #endif
-     
+
    RENDER.C
      created table child walking routine in parse_table_tag() close to
        insert empty children into table child structure.  This is to help
        with the support for colspan and rowspan
-      
+
    DEFS.H
      addition of WORD screen_pts[4]; /* on screen rectangle of table */
        to struct table_item
-   
+
    Global.h
      insert prototype for insert_empty_child
-   
+
 January 30, 2002
 
    Baldrick's Patches
-   
+
    REDRAWS.C
    	bottom border now long
-   	
+
    	y_offsets in many routines converted back to longs
-   	
+
 
    Render.c
      changed tests in parse td tags to be num_rows == 1 instead of <= 1
@@ -7472,7 +7710,7 @@ January 30, 2002
        the default value for number of rows is 1 now, this is to cope with
        some sites with bad html, missing the initial tr tag before the first
        row.
-	  
+
    TABLE.C
      num_rows default 1 now in new_table().  The logic behind this
        is a bit odd, but it works.  The reason is that there are
@@ -7480,18 +7718,18 @@ January 30, 2002
        row, but do later on.  So if it is 0 then we end up with a
        table with one row instead of 2.  See note in render regarding
        tr tag
-	  
+
 January 29, 2002
 
    Baldrick's Patches
-   
+
    DEFS.H
      added long temp_long;	/* a temp long used mainly for height tracking */
        to table_item struct
 
    TABLE.C
      temporarily removed table walking in height calculations
-     
+
    REDRAWS.C
      removed current_line_width in draw_table routines, now use
        direct value since it wasn't being modified
@@ -7507,7 +7745,7 @@ January 29, 2002
        drawing routines
      table_item->temp_long replaces current_height in table drawing
        routines
-       
+
    Note once we get this sorted out we can see about reducing some of
      these struct entries again
 
@@ -7521,12 +7759,12 @@ We need to set pts array in table drawing closer to calling sub routines
 January 28, 2002
 
    Baldrick's Patches
-   
+
    TABLE.C
      experiments with walking table paragraphs in height calculations
 
    AltF4's Patches
-   
+
    Loader.c:
      in get_decoder_type():
      - line 103:  replaced strchr() by strrchr(), else a file named
@@ -7552,28 +7790,28 @@ January 28, 2002
 January 25, 2002
 
    Baldrick's patches
-   
+
    TABLE.C
-     - current_table->temp_val used to replace temp_cols in 
+     - current_table->temp_val used to replace temp_cols in
         calculate_table_height() and calculate_subtable_height()
      - almost all routines in TABLE.C drop current_paragraph variable
         in favour of using the pointer in the table_item
-     - word_item *current_word replace with frame->current_word in 
+     - word_item *current_word replace with frame->current_word in
         calculate_table_height() and calculate_subtable_height()
      - current_child replaced with table->current_child in
        calculate_subtable_height() and calculate_table_height()
      - table_w in calc subtable_height() and calc table_height()
        replaced with current_table->actual_width
      - modifications to increase current_height in one column tables
-     
-     
+
+
    DEFS.H
      - added current_paragraph * to table_item struct, this lets
         us track paragraphs inside seperate tables
      - removed container value from frame_item struct
-   
+
    REDRAWS.C
-     - removed table_paragraph * from draw_table() replaced with 
+     - removed table_paragraph * from draw_table() replaced with
        table->current_paragarph
      - a test routine, draw_subtable() this isn't permanent, I'm
        using it for some testing
@@ -7581,7 +7819,7 @@ January 25, 2002
 January 24, 2002
 
    Baldrick's patches
-   
+
    TABLE.C
      - put width test back into calculate_table_height() when walking
         words.
@@ -7590,18 +7828,18 @@ January 24, 2002
         calculate_table_width(),calculate_subtable_width(),calculate_subtable_height()
      NOTE there is the potential of rewritting how col_span is handled
        which would eliminate the need for these tests
-     
+
 January 23, 2002
-   
+
    Baldrick's patches
-   
+
    LOADER.C
     - short test forcing PureC to use stat() call.  It works here
       I sent a message out to the list to clarify if we really
       need all these tests in load_file()
 
    AltF4's patches
-   
+
    LOADER.C
     - line 155:
       removed unused definition of file_info (is also defined in the
@@ -7635,14 +7873,14 @@ January 23, 2002
 January 22, 2002
 
    AltF4's patches
-   
+
    GLOBAL.H
     - changed parameter list of new_word()
     - corrected comments with respect of renamed files.
     - removed some obsolete function declarations:
       line 103: variable()
       line 106: special_char_map_str()
-      
+
     W_Struct.c:
     - expanded the argument list of new_word().  if the parameter
       copy_from is non-zero it is taken as a source to copy some
@@ -7656,7 +7894,7 @@ January 22, 2002
       because this is a very common source of errors.
     - removed #include <string.h>, was only used for memset().
     - removed #include <gemx.h>, was nowhere used.
-    
+
     F_Struct.c:
     - new function init_frame() used by new_frame(), reset_frame()
       and temp_frame().  this makes the code a bit shorter and
@@ -7664,98 +7902,98 @@ January 22, 2002
       attribute initializing.
     - removed #include <string.h>, was only used for memset().
     - removed #include <gemx.h>, was nowhere used.
-    
+
     defs.h:
     - expanded the enum bool to a typedef BOOL.  this makes code a bit
       better readable.  there are also two defines to have earlier code
       still working.
-    
+
     parser.h, parser.c:
     - return value of get_value() changed to BOOL.
-    
+
     parser.c:
     - reworked the parse() function to get it more stable with faulty
       html code.  it now uses the scan_tag() and scan_key() functions
       which are already defined in scanner.c (was forgotten in some
       previous patch).
-      
+
     scanner.h, scanner.c:
     - changed parameter 'lookup' of function scan_key to BOOL.
-    
+
     render.c:
     - removed a lot of duplicate code in parse_th_tag().  Instead it
       calls now the function parse_td_tag() and does only the few
       things which are different for TH tags in comparsion to TD tags.
     - moved the function word_store() over to W_Struct.c where it
       belongs to more.
-    
+
     AEI.c:
     - changed full_window(), iconify_window(), uniconify_window() to
       static function type to make gcc happy.
     - outcommented unused GRECT r in uniconify_window().
-    
+
 January 21, 2002
 
    David Leaver's patches
-   
+
    addition of #include <dos.h> in loader.c
-   
+
    version 0.2 finally released
 
 January 18, 2002
 
    Baldrick's patches
-   
+
    AEI.C
-   
+
    new routine full_window(WORD win);  Handles growing\shrinking
      window when the FULLER is clicked
-     
+
    WM_FULLED case calls full_window();
-   
+
    new routine iconify_window(WORD win, GRECT *new); handles
      iconifying a window (NO ICON ATM)
-     
+
    new routine uniconify_window(WORD win, GRECT *new); handles
      uniconifying a window
-     
+
    WM_ICONIFY and WM_UNICONIFY now supported
-   
+
    F_STRUCT.C
-   
+
    added current_table = 0 init's to new_frame(), reset_frame()
      and temp_frame() - fixes random crash after loading a table
      page
-   
+
    global.h
-   
+
    added externs for win_status and pre_status
- 
+
    Loader.C
-   
+
    set win_status = 0 in init_load()
- 
+
    modified read_config() line.  It's no longer a test.  I had
      changed it to be an Alert, but found it too annoying atm.
- 
+
    Highwire.C
-   
+
    Commented out wind_set(...WF_BEVENT..).  I don't know why it
      was there and no one ever answered the question on the list.
      It also get's rid of not being able to easily retop the Highwire
      window.
-   
+
    variable.c
-   
+
    new variable WORD win_status; determines what state our window is
      currently in 0 normal, 1 fulled, 2 iconified
-   
-   new variable WORD pre_status; tracks status before iconfication;  
+
+   new variable WORD pre_status; tracks status before iconfication;
 
 January 17, 2002
 
    John Kromylos Patches
-   
+
      modifications of load_file() to make TOS happy
 
      MiNT_Flag moved to top of loader.c
@@ -7763,27 +8001,27 @@ January 17, 2002
 January 16, 2002
 
    Baldrick's patches
-   
+
    Applying patches so we can compile a menu version on the fly
-   
+
    Most notably the inclusion of #ifdef GEM_MENU and Matthias Jaap's
      menu code and RSC file.
    modified files.  Global.h, Highwire.c,AEI.C and Keyinput.c
-   
+
    AltF4's January 12 patches
-   
+
    Highwire.c - unused variable numSets commented out
-   
+
    keyinput.c - variable 'i' commented out, we might want to track
             the return on page_load() at some point in time
-   
+
    aei.c - moved WM_CLOSED and AP_TERM cases in switch to end of
            switch statement
-           
+
    scanner.h
      removed the #include, it was only meant for testing.
      scan_color() prototype updated
-     
+
    scanner.c -
      added #include "token.h" before include "scanner.h"
 
@@ -7791,56 +8029,56 @@ January 16, 2002
      expression needn't a trailing '\0' anymore.
 
      removed the #ifndef NULL ... lines, useless.
-     
+
    values.c
      added #includes for global.h and scanner.h
-     
+
      removed the #ifndef NULL ... lines, useless.
 
      added new function Variable_color() which returns directly the
        remapped VDI color value of a given attribute.  this has the
        advantage that we can save some useless copy actions and also
        makes some parse_...() functions a little bit more lean.
-  
+
    parse.c
      #include section at the begining resorted or a better overview.
-     
+
      removed a lot of obsolete debug macros (the DBG(..) lines).
-     
+
      parse_body(), parse_table_tag(), parse_td_tag(), parse_th_tag(),
 	  parse_font_tag():
 	     modified to use the new Variable_color() function.
-  
+
      line 1821 - split if statement to keep PureC quiet
-     
+
      line 1987 - improved recognition of comments, <!--..--> and <!-..->
-       are now also working if going over more than one line and if a 
+       are now also working if going over more than one line and if a
        html tag is inside
 
    AltF4's January 14 patches
-     
-     NETLAYER.C 
+
+     NETLAYER.C
        - added a dummy line to avoid PureC warning 'unused variable'.
-     
+
      values.c:
        is now renamed to  parser.c  because this matches its meaning
 	   much better.
-	   
+
 	   the Variable..() functions are renamed now to more descriptive
 	   names get_value(), get_value_str(), get_value_color().
-	   
+
 	   the function declarations are now placed in the header file
 	   parser.h where they belongs.
-	   
+
 	   added some explanation comments.
-	
+
      Parse.c:
        is now renamed to  render.c  because this matches its meaning
        much better.
-       
+
        removed obsolete Variable..() declarations, is now placed in
        parser.h.  #include "parser.h" added.
-       
+
        in all functions, replaced the obsolete Variable..() calls by
        the appropriate get_value..() calls (51 times).
 
@@ -7849,47 +8087,47 @@ January 16, 2002
 January 11, 2002
 
    Baldricks patches
-  
+
    current_width lines deleted in walk_table_children()
-  
+
    WORD temp_val added to table_item structure
   	 just a temporary word for use in table calculations I'm using
   	 it for replacing temp_cols at the moment, but made a generic
   	 name in case we find other uses for it.
-   
+
   walk_chilren and table_width routines adapted to use table_item->temp_val
-  
+
   current_width determination in percentage width tables moved to
   after walk_children in case sub tables have been processed
-  
+
   draw_table() adapted to use table->temp_val
-  
+
   draw_frame_contents() added new parameter frame_item *current_frame
-  
+
   draw_table() added new parameter frame_item *current_frame
-  
+
   current_word in draw_table() changed to frame->current_word
-  
+
   draw_table() parameter 2 now table_item * instead of paragraph_item *
-  
+
   current_child in draw_table() now refrences current_table->current_child
-  
+
   draw_table() changed to long return - subtable heights were being lost
-  
-  
+
+
 
 January 10, 2002
 
    AltF4's patches
-   
+
    PARSE.C  line 15 #include "scanner.h" lower case
-   
+
    HIGHWIRE.C line 37 \\HTML\\ now lower case \\html\\
-   
+
    Edited .HTM files for lower case file names
-   
+
    Baldricks patches
-   
+
    current_child * moved from frame_item to table_item this will let
     us track multiple children for subtables
 
@@ -7898,74 +8136,74 @@ January 10, 2002
 
    walk_table_children() modified to use table->current_child instead
    of local variable (this is an intermediary step)
-   
+
    WORD min_width; added to struct table_child should track the size
     of the largest word in the child (ie child can be no narrower than this value)
-   
+
    word_store() routine tracks child->min_width if inside of a table
-   
+
    cleaned out come current_paragraph tracking that did nothing in
      calculation of table_width
-   
+
    ok trying to reuse frame->current_word in walk_table_children()
-   
+
    current_width commented out in walk_table_children() it wasn't really
    	used and I'm not certain why it was in there
-   
+
    sub tables are now parsing partially.  This isn't finished yet.
     however they are at least not crashing.
-   
+
 January 9, 2002
 
    David Leavers update Lattice Highwire.prj included
-   
+
    AltF4's patches from the 8th included.  These replace baldricks
      changes for Var_len() and in parse_anchor()
-     
+
    Baldricks patches
-   
-   patches in draw_table() for visual representation of colspan 
+
+   patches in draw_table() for visual representation of colspan
      finally first and second tables in table1.htm display approximately
-     correctly.  
+     correctly.
 
 January 8, 2002
 
    AltF4's patches from the 5th
-   
+
    New Purewire.prj (purec prj file)
-   
+
    New Makefile
-   
+
    Patched scanner.c and scanner.h
-   
+
    new values.c
 
    Rafal Kawecki patches
-   
+
    string.h added to F_STRUCT.C, P_STRUCT.C
-   
+
    baldricks patches
-   
+
    experimental Var_len() routine in values.c gets the length of
    the value of an attribute to a tag
-   
+
    patches to parse_anchor() to use Var_len routine
-   
+
    %width tables now set relative to clip width
-   
+
    %width table width now checked against the minimum size of
    the table if it's smaller than the minimum size it becomes the
    minimum size.
-   
+
    in redraws.c in draw_table()  in paragraph code. left_border now
    set to 0 instead of paragraph->left_border. I'm not sure why I did
    that.
-   
+
    added WORD min_width to table_item
-   
+
    if table->actual_width > frame_page_width  and table is a percentage
      of the clip area.  frame_page_width is set to table->min_width
-   
+
 January 7, 2002
 
    Cleaned out lattice #ifdefs since we have all 3 main compilers
@@ -7975,9 +8213,9 @@ January 7, 2002
 January 4, 2002
 
     Moved *.HTM sample files into HTML folder
-    
+
     Changed default page in Highwire to point to HTML folder files
-    
+
     Changed version number to 0.2
 
 January 3, 2002
@@ -7987,309 +8225,309 @@ January 3, 2002
     there are way too many for me to try and detail while
     still having time to get any programming done.
     Basically it's easiest to say, it's alot faster now.
-    
+
     Baldrick  Updated PRJ files for Lattice and PureC.
 
 Dec 28, 2001
 
     AltF4's patches
-    
+
     PARSE.C
-    
+
     in parse_th_tag() test for table rows put back in for num_cols modification
-    
+
     GLOBAL.H
-    
+
     line 111 remap_color(long value) not remap_color(long *value)
-    
+
     COLOR.C
-    
+
     line 68 remap_color(long value) not remap_color(long *value)
-    
+
     SCANNER.C and SCANNER.H updated
-    
+
     Baldrick's patches
-    
+
     These are experiments that might be dumped
-    
+
     attr_step() struct added to defs.h
-    
+
     attr_step *current_attr added to frame_item struct
-    
+
     new_attr() and add_attr() added to parse.c
-    
+
     attr_list() added to parse.c
-    
+
     Idea is to break the input area for a tag into a linked
      list of attr_step's to speed parsing
-     
+
     current_attr init'd to 0 in routines in F_STRUCT.C
-    
+
     Modified parse_p_tag() and parse_td_tag() to use attr_list routine
       old code kept in #ifdef incase new routines are dropped
-    
+
 Dec 26, 2001
 
     Modifications to handle compiling with GEM.LIB.
-    
+
     Removal of GEMParBlk code, it was basically to test
       if the program was running under AES 4.x (atari Multitos)
-      
+
     added cyan and magenta to the COLORNAME array color
       probably not exact, I just guessed something close
-      
+
     AltF4's patches
-    
+
     VARIABLE.C   fonts{} modified
-    
+
     TO_DO.C line 126 first_frame changed to the_first_frame
-    
+
     TABLE.C
-    
+
     line 135 param top changed to tab_top
-    
+
     line 136 param top changed to tab_top
-    
+
     line 140 param top changed to tab_top
-    
+
     line 144 line_end rem'd out as unused atm
-    
+
     line 147  height_spacer rem'd out as unused atm
-    
+
     line 149 previous_word_height rem'd out as unused atm
-    
+
     line 157 temp_rows rem'd out as unused atm
 
     line 169 bottom_border & right_border rem'd out as unused atm
-    
+
     line 331 href changed to lnk_href
-    
+
     walk_table_children() param top changed to tab_top
       also now a static routine
-      
+
     line 519 current_line_width now init'd at 0
-    
+
     calculate_table_width() param top now tab_top
-    
+
     calculate_subtable_width() param top now tab_top
-    
+
     calculate_subtable_height() param top now tab_top
-    
+
     line 810 temp_rows rem'd out as unused atm
-    
+
     line 975 href changed to lnk_href
-    
+
     SCANNER.C
-    
+
     added include ctype.h
-    
+
     struct NAMEDCHAR reworked
-    
+
     scan_color() routine modified and moved
-    
+
     Color index array moved here
-    
+
     REDRAWS.C
-    
+
     draw_box() routine now static void
-    
+
     draw_hr() routine now static void
-    
+
     draw_img() routine now static void
-    
+
     draw_paragraph() routine now static WORD
-    
-    { and } added to if (current_word->changed.colour == TRUE) test in 
+
+    { and } added to if (current_word->changed.colour == TRUE) test in
       draw_paragraph()
-      
+
     draw_table() routine now static void
-    
+
     P_STRUCT.C
-    
+
     add_paragraph() new_paragraph and new_word variables now paragraph and word
       dropped 'new_'  this modifies most of the lines in some small way
-    
+
     PARSE.C
-    
+
     removed color_array it's now in SCANNER.C
-    
+
     kill_to_end() routine now static char *
-    
+
     set_pre_font() now static void
-    
+
     set_font_bold() now static void
-    
+
     set_font_italic() now static void
-    
+
     set_font_strike() now static void
-    
+
     set_font_underline() now static void
-    
+
     set_center_text() now static void
-    
+
     set_blockquote_text() now static void
-    
+
     parse_color() routine removed now scan_color() is used
-    
+
     parse_anchor() now static void
-    
+
     href changed to lnk_href in new_url_link() calls in parse_anchor()
-    
+
     name changed to lnk_name in new_url_link() call in parse_anchor
-    
+
     parse_body() routine rewritten
-    
+
     parse_d_tags() now static void
-    
+
     parse_div_tags() now static void
-    
+
     parse_font_tag() now static void
       variable WORD temp removed
       color handling modfied
-      
+
     parse_header_tag() now static void
-    
+
     parse_menu_tag() now static void
-    
+
     parse_p_tag() now static void
-    
+
     parse_li_tag() now static void
-    
+
     parse_ol_tag() now static void
-    
+
     parse_ul_tag() now static void
-    
+
     parse_table_tag() now static void
       variable WORD temp removed
       color handling modified
-      
+
     parse_th_tag() now static void
       color handling modified
-      
+
     parse_td_tag() now static void
       color handling modified
-      
+
     parse_hr_tag() now static void
-    
+
     parse_img_tag() now static void
-    
+
     parse_title() now static char *
-    
+
     parse_frameset() now static char *
-    
+
     list_marker() routine variable new_word changed to n_word
       - modifications to handle this
-    
+
     NETLAYER.C
-    
+
     in request_uri() #ifdef USE_LIBWWW moved to before char *url
-    
+
     MOUSE_R.C
-    
+
     in check_mouse_position()  href changed to lnk_href in last test
-    
+
     LOADER.C
-    
+
     get_fname() now static void
-    
+
     get_fpath() now static void
-    
-    init_load()  first_frame changed to the_first_frame 
-    
+
+    init_load()  first_frame changed to the_first_frame
+
     KEYINPUT.C
-    
+
     in key_pressed() char test; rem'd out as unused atm
-    
+
     in page_load()
        n[80] added = ""
        variable int b; removed
        WORD butt added
        variable int result removed
        *n = EOS removed
-       
+
     HIGHWIRE.C
-    
+
     in main()
       enum bool quit renamed to exit
       variable id rem'd out as unused atm
       while loop now tracks exit
       MU_ handling routines now use the_first_frame instead of first_frame
-      
+
     in highwire_ex()
       the_first_frame used instead of first_frame in destroy_frame...
-      
+
     F_CALC.C
-    
+
     in calculate_frame_locations()
       the_first_frame used instead of first_frame
-      
+
     in calculate_frame_height()
       current_line_width added = 0
       href now addressed as lnk_href
-    
+
     CONFIG.C
-    
+
     equ_txtn() now static WORD
-    
+
     COLOR.C
-    
+
     remap_color now WORD remap_color(long value)
        best_no now init'd to 0
        unsigned char *rgb added
        RGB1000 color added as variable
        new routines for modifications of color values
        changes to remap to color from * color
-       
+
     parse_convert_hex() and parse_convert_colour() routines removed unused now
-    
+
     AEI.C
-    
+
     vastart() now static void
-    
+
     nextToken() now static char *
-    
+
     doGSCommand() now static WORD
-    
+
     DEFS.H
-    
+
     enum link_mode settings now lnk_href and lnk_name
-    
+
     GLOBAL.H
-    
+
     line 10 dev renamed to vdi_dev
-    
+
     line 26 first_frame renamed to the_first_frame
-    
+
     line 111 parse_convert_colour() replaced with remap_color()
-    
+
     line 134 param top changed to tab_top
-    
+
     line 135 param top changed to tab_top
-    
+
     SCANNER.H
-    
+
     long scan_color() protoype added
-    
+
 Dec 22, 2001
 
     AltF4's patches
-    
+
     New makefile
-    
+
     include osbind.h in AEI.C
-    
+
     wind_set_str() modification for WF_INFO call in main()
-    
+
     modfications for identify_AES for GNUC
-    
+
     Baldrick's patches
-    
+
     Line 290 in MOUSE_R.C  modified first_frame to current_highlighted_link_frame
       hopefully avoids one of the extraneous redraws
-      
+
     modified vs_clip()'s in blit_block.  They now turn off old window
       level clipping and then localize it to redraw area
-      
+
     modified current_height > h test near bottom of draw_table()
       it now checks to see if you are in the last column of a table
       This probably isn't perfect.  But it works for the example
@@ -8298,113 +8536,113 @@ Dec 22, 2001
 Dec 21, 2001
 
     Matthias Jaap's patches for Gemscript
-    
+
     baldrick - modified int's in Gemscript support to WORD's
-    
+
     David Leavers patches
-    
+
     WORD pts2[2] now WORD pts2[4] in draw_box() routine.
-    
+
     Line 187 in TO_DO.C  +1 added to malloc(strlen())
-    
+
     Line 184 in TO_DO.C +1 added to malloc(strlen())
-    
+
     #ifdef LATTICE wrapper for wind_set(WFNAME) added in init_load()
-    
+
     #ifdef LATTICE wrapper for wind_set(WF_INFO) added in main()
-    
+
     Header modifications in COLOR.C
-    
+
     Baldricks patches
-    
+
     WORD identify_AES(void) added to LOADER.C  this searches the cookie
       jar for the AES.  Hopefully compiles with all of our compilers
-      
+
     A number of defines to support identify_AES() added to DEFS.H
-    
+
     WORD AES_type added to main().  This tracks AES type used.  Mostly
       used to detect AES_single atm.
-      
+
     identify_AES() called to issue appropriate Pdomain().  This is code
       scavenged out of Qdialer.  Hopefully it works appropriately allowing
       single TOS to load files AND compiles under all compilers.
-      
+
     void walk_table_children() routine created.  It handles the walking
       of a tables children and it's paragraphs to get the table actual_width
 
 	if a td or th has a colspan adjust the table->num_cols by colspan - 1
       to adjust for 1 already added at start of tag processing
-      
+
 Dec 20, 2001
 
     AltF4's patches
-    
+
     Parse.c  special_char_map() routine removed (unused code)
-    
+
     Color.c   int coltab[3]; now WORD coltab[3]; line 42
-    
+
     Highwire.c  int vwork_out...  changed to WORD vwork_out... line 38
-    
+
     /* */ put around line in IFDEF 0 - I disabled ...
-    
+
     Baldricks patches
-    
+
     Added 'v. 0.1' to About Highwire dialog in key_pressed() routine
-    
+
     WORD ignore_colours added to variable.c
        ignore_colours determines whether color settings in tags
        are parsed or ignored.
-    
+
     ignore_colours = 1; added to planes < 2 test in main().
-    
+
     parse_body() checks ignore_colours before parsing color attributes
-    
+
     parse_font_tag() checks ignore_colours before parsing color attribute
-    
+
     parse_table_tag() checks ignore_colours before parsing bgcolor attribute
        if ignore colours is 1, then it sets the table backaground to frame background
-       
+
     parse_th_tag() checks ignore_colours before parsing bgcolor attribute
-    
+
     parse_td_tag() checks ignore_colours before parsing bgcolor attribute
-    
+
     output[100] removed from parse_title() routine
-    
+
     WORD actual_width added to table_item struct.  Tracks real width
 	    of table
-      
+
     Several instances of table_width replaced with actual_width.
-    
+
     WORD actual_width and WORD actual_height added to table_child
        structure.  Tracks what the real dimensions of the child are.
-       
+
 	tag variable height now parsed in th and td tags
-	
+
 	tag variable width now parsed in th and td tags
 
 	Test made in calculate table height and calculate sub table height to
 	   see if the html specified a larger height than the data warrants
-	   
+
 	Test made in calculate table width and calculate sub table width to
 	   see if the html specified a larger height than the data warrants
 
     WORD forced_width; removed from table_item structure.  It wasn't needed
        anymore
-       
+
     cell_spacing and cell_padding reversed.  They had been used backwards previously.
-    
+
 Dec 19, 2001
 
     AltF4's patches
-    
+
     New Purewire.PRJ
-    
+
     Inlude SCANNER.C and SCANNER.H
-    
+
     Moved ISO array out of PARSE.C
-    
+
     parse_title() modified to use new scanning routines
-    
+
     '&' parsing modified to use new scanning routines
 
 Dec 18, 2001 (afternoon - after morning code release)
@@ -8415,143 +8653,143 @@ Dec 18, 2001 (morning)
 
     Alot of experimentation with new table_step routines
       to get them functioning correctly
-    
+
     minimum_width removed from parse_text and calculate frame
 
 Dec 17, 2001
 
     rem'd out a test in redraw_frame.  frame->frame.h isn't being properly
       initialized so the test is bad.
-      
+
     prev_alignment added to parse_p_tag().  This tracks the previous paragraphs
       alignment and sets the new paragraph to this if it is not specifically
       defined.
-      
-    ALTF4's patches from Dec 16th applied 
+
+    ALTF4's patches from Dec 16th applied
       PARSE.C ( wind set patch)
       LOADER.C
       HIGHWIRE.C
       COLOR.C
-      
+
     AltF4's patches to parse.c Dec 17th applied
       amp lookup modified in htmlchars
-      
+
       modifications of special_char_map_str()
-      
+
     modifications to parse_menu_tag() for flag variable so that it
       handles closing tags as well
-      
+
     WORD current_font_size added to frame item structure
-    
+
     WORD current_font_size removed from calc_frame... modifications
       to use frame item *
-      
-    WORD current_font_size parameter removed from parse_d_tags() 
+
+    WORD current_font_size parameter removed from parse_d_tags()
        modifications to use frame item *
-       
+
     WORD current_font_size parameter removed from parse_font_tag()
        modifications to use frame item *
-       
+
     WORD current_font_size parameter removed from parse_header_tag()
        modifications to use frame item *
-       
+
     WORD current_font_size parameter removed from parse_p_tag()
        modifications to use frame item *
-       
+
     modifications to parse_font_tag() for flag variable so that it
       handles closing tags
-    
+
     modifications to parse_header_tag() for flag variable so that it
       handles closing tags
-      
+
     modifications to parse_ol_tag() for flag variable so that it handles
       closing tags
-      
+
     modifications to parse_div_tag() for flag variable so that it
       handles closing tags
-      
-    modifications to parse_ul_tag() for flag variable so that it 
+
+    modifications to parse_ul_tag() for flag variable so that it
       handles closing tags
-      
+
     modifications to parse_anchor() for flag variable so that it
       handles closing tags
-      
+
     parse_th_tag() routine created.   Handles Table Header Cells
-    
+
     table_item *current_table & table_child *current_child added
        to frame_item structure
-       
+
     parse_td_tag() routine created.  Handles Table Data Cells
 
     parse_table_tag() routine created.  Handles Table tags ;)
-    
+
    	struct table_step created. (defs.h)
-   	
+
     struct table_step *parent_table; added to frame_item struct
-    
+
     struct table_step *new_table_step (struct table_item *p_table);
      routine added to table.c
-     
+
     struct table_step *add_table_step (struct table_step *old)
      routine added to table.c
-   	
+
 Dec 14, 2001
 
      frame_item *p_frame added to add_paragraph() routine
 
      word_item *current_word param removed from add paragraph()
-     
+
      * current_paragraph param removed from add_paragraph()
-     
+
      WORD indent param removed from add_paragraph()
-     
+
      WORD *minimum_width param removed from add_paragraph()
-     
+
      add_paragraph() now directly modifies frame->current_paragraph
         no longer returns a value
-     
+
      modified all instances of add_paragraph() for new params
-     
+
      set frame->current_word at end of add_paragraph() since
        it was always set after add_paragraph anyway
-       
+
      WORD *active_word added to frame structure
-     
+
      WORD *active_word param removed from add_paragraph()
-     
+
      Removed active_word param from most of the recent tag parsing routines
 
      word_store() now takes struct frame_item *p_frame
-     
+
      removed struct word_item *current_word from word_store()
-     
+
      modifications across code to support this
-     
+
      add frame_item* p_frame to add_word() routine
-     
+
      WORD indent param removed from add_word() routine
-     
+
      WORD *minimum_word param removed from add_word() routine
-     
+
      moved word_store() call in add_paragraph() after empty paragraph test
-     
+
      temporarily removed empty paragraph test in add_paragraph() I think the
        problem it was trying to cure may be gone now.  I'm not really happy
        with some of the vertical spacing now, but if we use the old test
-       we now loose some paragraphs 
-     
+       we now loose some paragraphs
+
      parse_div_tag() routine created.  handles DIV tags...
-     
+
      parse_font_tag() routine created.  handles FONT tags...
-     
+
      parse_p_tag() routine created.  handles P tags...
-     
+
 Dec 13, 2001
 
      kill_to_end() replaces some code in closing of Title tag
-     
+
      struct word_item *current_word moved to frame structure
-     
+
      parse_hr_tag() reworked again
      parse_ol_tag() reworked...
      parse_li_tag() reworked...
@@ -8560,19 +8798,19 @@ Dec 13, 2001
      parse_header_tag() reworked...
      parse_anchor() reworked...
      list_marker() reworked using expanded frame structure
-     
+
      parse_menu_tag() routine created.  parse MENU tags.  Possibly
      could be eliminated and mapped onto parse_ul_tag() routine.
-     
+
      DIR parsing now just mapped to parse_menu_tag() since they are
      functionally the same and both are deprecated officially
-     
+
      set_center_text() routine created.  If flag is on new paragraph is centered
        if flag != 1 new paragarph is left justified
 
      set_blockquote_text() routine created.  If flag is on new paragraph is indented
        if flag != 1 new paragarphs indentation is reduced
-       
+
      parse_d_tags() routine created.  This handles all of the Dx tags
        DL, DT, DD.  Flag determines operation mode 1 is start != 1 is end of tag
        type determines type of D tag we are parsing  0 DL 1 DT 2 DD
@@ -8584,34 +8822,34 @@ Dec 12, 2001
      parse_ol_tag() routine created.  Just parses OL tags
 
      parse_li_tag() routine created.  Just parses LI tags
-     
+
      list_stack_item *current_list moved to frame structure.
 
      paragraph_item *current_paragraph moved to frame structure.
-     
+
      current_indent_distance moved to frame structure.
-     
+
      current_font_step * moved to frame structure.
-     
+
      simplifying many of the recently added routines to handle
      a frame item * instead of all the seperate variables
-     
+
      parse_hr_tag() reworked
      parse_header_tag() reworked
      parse_img_tag() reworked
-     
+
 Dec 11, 2001
 
      slider_bkg variable added.  Controls color of background of frame
      sliders
-     
+
      slider_col variable added.  Controls color of slider widgets in frame
      controls
-     
+
      These were both added to variable.c as a set value.  They are
      modified in highwire.c for monochrome displays.  They should
      either be matched to the system settings or user configurable.
-     
+
 Dec 07, 2001
 
      modified the y coordinate test in frame location detection in
@@ -8619,10 +8857,10 @@ Dec 07, 2001
       scroller for the frame the coordinates for the frame clip were
       too large.  So the test could find the frame above or to the
       left of the frame you were trying to manipulate.
-      
+
      Also modified the tests for the x coordinate in the same location
       in a similar manner.
-      
+
      Note it's very possible that these tests could be rewritten into
       something that would process faster if we think it's necessary.
 
@@ -8631,7 +8869,7 @@ Dec 07, 2001
        framesets and images should probably be modified to avoid
        overflow.  Especially if we are looking at URI's since these
        can exceed 1000 characters.
-      
+
 Dec 06, 2001
 
 	parse_title() now it place.  Handles parsing and conversion
@@ -8639,7 +8877,7 @@ Dec 06, 2001
       sets the window title.
 
 	some modifications in IMG location in table height and redraws
-	
+
 	Setting of col_widths for tables done now when a column is
 	of a fixed width.
 
@@ -8647,10 +8885,10 @@ Dec 05, 2001
 
     parse_img_tag() routine in place.  Handles the parsing of IMG
       tags to the extant of the current code.
-      
+
     parse_hr_tag() routine in place.  parse hr tags.
-    
-    
+
+
 Dec 04, 2001
 
     modification to set_pre_font() to enable one routine to set and turn off
@@ -8660,25 +8898,25 @@ Dec 04, 2001
      Strike on and off
     set_font_underlined() routine created.  Modifies current word styles Underlined
      on and off
-    
+
     That's all of the simple text manipulations for reuse elsewhere.
-    
+
 Dec 03, 2001
 
     Put handling for closing td, th and tr tags into parse.c
-    
+
     TH cells are now bold and centered by default
-    
+
     parse_body() routine created.  Simply handles the processing
      of body tags.
-     
+
     Documented more of the supported tags in parse.c
-    
+
     parse_anchor() routine created.  Parses <A ...> tags.
-    
+
     set_pre_font() routine created.  Basically 2 lines of common
     code use in a number of locations.
-    
+
     Why all the new routines?
        Well I'm trying to strip down the reuseable code as much
        as possible so that I can expand the table parsing code.
@@ -8690,31 +8928,31 @@ Dec 01, 2001
 
 	Found a bug in calculate table height where I had current_paragraph
 	instead of current_table
-	
+
 	moved current_paragraph assignment to top of while loops in calc height
 	and width of tables. ooops.
-	
+
 	Some cleanup and moving of stuff around in the table calculation
 	routines.
-	
+
 	added some word_stores in the child creation.
-	
+
 	modified highwire to load highwire.htm by default
-	
+
 Nov 30, 2001
 
 	Fixed a bug in border watching that basically forced tables
-	not to print.  
-	
+	not to print.
+
 	Ok.  Simple tables are mostly working.  There are problems
 	and limitations still.  However I did promise to give everyone
 	a look.
-	
+
 	Clickable areas in tables aren't working properly.  Lookups
-	in tables are failing as well.  
-	
+	in tables are failing as well.
+
 	Some table cells have improper sizes.
-	
+
 	ie.  This isn't finished, it's just for show and to get other
 	people who might be looking at the code a look at the table
 	code.
@@ -8736,7 +8974,7 @@ Nov. 13, 2001
 
 	Patches patches everywhere.
 	Finally partial success on simple tables without defined widths
-   
+
 
 October 31, 2001
 
@@ -8748,7 +8986,7 @@ October 30, 2001
 
 	more experimentation involving the mislocation of clickable areas in
 	tables.
-	
+
 October 29, 2001
 
 	getting back into the code after a forced break... sorry about that
@@ -8757,48 +8995,48 @@ October 29, 2001
 October 17, 2001
 
    numerous modifications to fix clickable_area's inside of tables
-   
+
    fixed default alignment in table data cells
 
 October 11, 2001
 
 	Several patches by Mathias Japp
-	
+
 	parse_colour() rewritten using an array
-	
+
 	special_char_map_str() rewritten using array
-   
+
    	parse_header_tag() modified with strupr
-   	
+
    	keyinput.c - new defines at top
-   	
+
    	New Hot Keys
-   	
+
    	Control O - Open file selector
-   	
+
    	Contorl I - About Highwire alert
-   	
+
    	Control Q - Quit Highwire
-   	
+
    	New routines
-   	
+
    	page_load() support for Fileselector
-   	
+
    	build_fname()  build filename - support for Fileselector
 
 September 27, 2001
 
    restart of implementation of table support
-   
+
    table_item() and table_child() structs placed back
      into defs.h (table_item * put back into paragraph)
 
    Table parsing in parse.c reimplemented (it still needs work)
-   
+
    Start of reimplementation of table rendering
 
 September 26, 2001
-	
+
    some experiments in the redraw code, nothing really
 
 Took a few days off.
@@ -8807,7 +9045,7 @@ September 21, 2001
 
    fixed lockup problem on resizing window. Missed the equal to in
      the tests.
-     
+
 September 20, 2001
 
    added clipping_area struct to the paragraph structure.  This
@@ -8818,13 +9056,13 @@ September 20, 2001
    experiments with a new draw_frame_contents routine using the
      paragraph areas.  It's mostly working.  However many advantages
      from the old system are currently missing.
-     
-   alot of modification to calculate_frame_height() to get the 
+
+   alot of modification to calculate_frame_height() to get the
      objects area's correct.
-     
+
 September 19, 2001
 
-	draw_hr() routine created.  First fully functional part of a 
+	draw_hr() routine created.  First fully functional part of a
 	  modular redraw system.
 	draw_img() routine created. Second functional part of modular
 	  redraw.  Note IMG routines do not handle images yet, they
@@ -8832,31 +9070,31 @@ September 19, 2001
     added an extra test to compare the height to the frame height
       this was to help exit the routine when it had drawn everything
       that it had to draw.
-    modified d_up etc. in blit_block to use pts[3] for the 
+    modified d_up etc. in blit_block to use pts[3] for the
       frame_h on the redraw.  This simplifies some things and
       apparently breaks nothing.  I did this since draw_frame_contents
       was drawing past the end of the window (I turned clip off and
       discovered this). No sense in wasted processing.
 	draw_paragraph() routine created. Third functional part of modular
 	  redraw :)
-	  
+
 September 17, 2001
 
     More digging in the guts of the redraw code.  Something
     dreadfully wrong going on somewhere.
-    
+
     Ok I did a reset of the code back to the sept 7 version
     with some additions made on September 10th.  Hopefully
     from here I'll be able to see the way forward again.
-    
+
     variable() and HR patches reimplemented
-    
+
 September 14 & 13, 2001
 
 	Very litle time either day for programming.
 	Mostly experimentations for a new method of drawing
 	the frame contents.
-	
+
 September 12, 2001
 
 	current_table pointer addition to parse html
@@ -8868,7 +9106,7 @@ September 12, 2001
 September 11, 2001
 
    more modifications to handle new table structures
-	
+
    first parsing of data to new table structures
 
 September 10, 2001
@@ -8876,17 +9114,17 @@ September 10, 2001
    variable() patched again.  We need to parse out LF and CR.  It
    appears that MS considers it legal to place them inside of a
    tag.
-   
+
    modification to HR parsing, if there is no width the width
    is set to -100 (or 100%)
-   
+
    modification in redraw to handle new HR parsing.  Basically its
    back to the original with some care to avoid overflows
 
    table_item() structure work started
    table_child() structure work started
    table.c  file added to project
-   
+
 September 7, 2001
 
    frame_name added to frame structure and load_to_do item
@@ -8894,9 +9132,9 @@ September 7, 2001
    NAME parsed in frameset parsing code in PARSE.C
 
    target added to url_link structure.
-   
+
    new_url_link() added target parameter
-   
+
 September 6, 2001
 
    fixed two more integer overflow bugs in f_calc.c
@@ -8904,7 +9142,7 @@ September 6, 2001
    implemented suggestion by Deun for handling integer overflow problem.
 
    implemented a method for adding 1 to frames to fill space
-   Probably could be done better, but I don't have any manuals here. 
+   Probably could be done better, but I don't have any manuals here.
 
    Also NOTE we really need to think about how to inform later frames
    that their x has moved by one.
@@ -8991,7 +9229,7 @@ August 23, 2001
 
 New file CONFIG.C
    reads and parses a config file
-   
+
 Hopefully config file is self explanatory for the moment
 
 Slight Warning...  Somethings are a bit strange since I
@@ -9018,10 +9256,10 @@ August 20, 2001
 
 New routine to parse header tags.  Just cleans up alot of duplicated
 	code in the main parse routine.
-	
+
 New routine parse_colour()
 	used to map "white" etc to appropriate VDI index
-	
+
 Support for parse_colour in a few places
 
 Moved background_colour from a define to a WORD /* probably should dump it? */
@@ -9040,19 +9278,19 @@ August 14, 2001
    had to modify calculate frame again
    Success finally
    removed container value from frame structure
-   added init_paths() to preload last_location for 
+   added init_paths() to preload last_location for
    filename searching.
-   
+
    Warning, there is probably junk I've inserted into the code
    while working out framesets to this point, that do not really
-   get used.  Sorry about that, we will just have to watch and 
+   get used.  Sorry about that, we will just have to watch and
    play cleanup.
 
    ALSO there are some serious redraw problems with multiple
    frames.  I haven't sorted these out yet.  I don't think it
    has anything to do with the frameset parsing.  I think there
    are just some bad tests somewhere in the code.
-   
+
 August 10, 2001
 
     Frameset parsing moving along.
@@ -9078,17 +9316,17 @@ August 3, 2001
 	history file lost stuff, did alot of things that went no where.
 	Into the code and back out again.  Howver the following have
 	been done recently.
-	
+
 	init_load() routine modified.  Basically alot didn't need to
 	be there.
-	
-	some code cleanups.  However Lattice compiles now not working 
+
+	some code cleanups.  However Lattice compiles now not working
 	100% :<
 
 July 31, 2001
 
 	experiments with cur_frame and frame_list to no end
-	
+
 July 30, 2001
 
 JUNKED ... started the construction of page_item() to handle all the frame_items
@@ -9100,7 +9338,7 @@ modifications to  <font size = 2> code and <\font> code
 	The problem we have is that sometimes fonts become way!!!! too small.
 	Really the code works probably about the way it should except we end
 	up with font sizes of 4 and smaller.  Too small for most to read.
-	
+
 modified variable() routine again.  stptok() in one instance, replaced
 	by strchr()
 
@@ -9108,7 +9346,7 @@ July 20, 2001
 
 changed 'noshade' check to != '!' instead of '*' since if there is another
 	variable after the NOSHADE there will be a value in out
-	
+
 heavy modifications to variable() routine.  I discovered it had some
 	bleeding values creeping in.  Also replaced all strrchr() with stptok()
 
