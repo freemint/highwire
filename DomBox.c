@@ -471,16 +471,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		box = box->Sibling;
 	}
 
-	height += dombox_BotDist (This);
-	
-/*	if (height < blocker->L.bottom) {
-		 height = blocker->L.bottom;
-	}
-	if (height < blocker->R.bottom) {
-		 height = blocker->R.bottom;
-	}
-*/
-	This->Rect.H = height;
+	This->Rect.H = height + dombox_BotDist (This);
 }
 
 /*============================================================================*/
@@ -489,6 +480,12 @@ dombox_format (DOMBOX * This, long width)
 {
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 	This->_vtab->format (This, width, &blocker);
+	if (This->Rect.H < blocker.L.bottom) {
+		 This->Rect.H = blocker.L.bottom;
+	}
+	if (This->Rect.H < blocker.R.bottom) {
+		 This->Rect.H = blocker.R.bottom;
+	}
 }
 
 
