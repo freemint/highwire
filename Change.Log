@@ -23,13 +23,17 @@
   reparse only shift must be held in addition and
   the alt key causes clearing the whole cache.
 
+- Popups are now aligned always to the screen
+  extents (#0100).
+
 - Meta tag 'http-equiv=expires' implemented.
 
 - Fixed a bug that occured when an image couldn't
   be received and led to endless reloads of that
   image.
 
-- Bugs #0132, #0134, #0138 resolved.
+- Bugs #0100, #0132, #0134, #0136, #0138, #0141
+  resolved.
 
 __________________________________________________
 Changes in V. 0.1.5 release  of October 24, 2003:
