@@ -397,9 +397,13 @@ receive_job (void * arg, long invalidated)
 		*(p++) = '\0';
 		*(p)   = '\0';
 		
-		cache_assign (loader->Location, loader->Data, loader->DataSize,
-		              mime_toExtension (loader->MimeType),
-		              loader->Date, loader->Expires);
+		loader->Cached = cache_assign (loader->Location, loader->Data,
+		                               loader->DataSize,
+	 	                               mime_toExtension (loader->MimeType),
+		                               loader->Date, loader->Expires);
+		if (loader->Cached) {
+			cache_bound (loader->Location, NULL);
+		}
 	}
 	sched_insert (parser_job, loader, (long)loader->Target);
 	
@@ -444,12 +448,26 @@ loader_job (void * arg, long invalidated)
 		} while (reply == -ECONNRESET && retry++ < 1);
 		
 		if ((reply == 301 || reply == 302) && hdr.Rdir) {
-			if (!loader->MimeType && hdr.MimeType) {
+			LOCATION redir  = new_location (hdr.Rdir, loader->Location);
+			CACHED   cached = cache_lookup (redir, 0, NULL);
+			if (!loader->MimeType) {
 				loader->MimeType = hdr.MimeType;
 			}
-			loc = new_location (hdr.Rdir, loader->Location);
-			free_location (&loader->Location);
-			loader->Location = loc;
+			if (cached) {
+				union { CACHED c; LOCATION l; } u;
+		 		if (loader->Cached) {
+ 					cache_release ((CACHED*)&loader->Cached, FALSE);
+ 				}
+				u.c = cache_bound (cached, &loader->Location);
+				loader->Cached = loc = u.l;
+				free_location (&redir);
+			} else {
+				free_location (&loader->Location);
+				loader->Location = loc = redir;
+			}
+			if (!loader->MimeType) {
+				loader->MimeType = mime_byExtension (loc->File, NULL);
+			}
 			inet_close (sock);
 			
 			return TRUE; /* re-schedule with the new location */
