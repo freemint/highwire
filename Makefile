@@ -109,11 +109,12 @@ $(TARGET): $(OBJS)
 040: ; $(MAKE) CPU=68040
 
 clean:
-	$(RM) $(OBJS)
+	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
+	rm -Rf obj.* */obj.* */*/obj.* .deps */.deps */*/.deps *.o */*/*.o
+	rm -Rf *.app *.[gt]tp *.prg *.ovl */*.ovl
 
-distclean:
-	$(MAKE) clean;
-	$(RM) *~
+distclean: clean
+	rm -Rf .cvsignore */.cvsignore */*/.cvsignore CVS */CVS */*/CVS
 
 
 #
