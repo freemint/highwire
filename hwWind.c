@@ -1605,6 +1605,9 @@ hwWind_button (WORD mx, WORD my)
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
 		PXY c[5], w[5];
+		c[1].p_x = (c[0].p_x = desk_area.g_x) + desk_area.g_w -1;
+		c[1].p_y = (c[0].p_y = desk_area.g_y) + desk_area.g_h -1;
+		vs_clip_pxy (vdi_handle, c);
 		c[0].p_x            = ib_x +1;
 		c[0].p_y            = ib_y +1;
 		c[1].p_x = c[1].p_y = wind->IbarH;
@@ -1665,6 +1668,7 @@ hwWind_button (WORD mx, WORD my)
 				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
 			}
 		} while (!(event & MU_BUTTON));
+		vs_clip_off (vdi_handle);
 		v_show_c  (vdi_handle, 1);
 		vsl_type  (vdi_handle, SOLID);
 		vswr_mode (vdi_handle, MD_TRANS);
