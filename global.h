@@ -128,6 +128,8 @@ void draw_border    (const GRECT *, short lu, short rd, short width);
 extern WORD         cfg_UptoDate;
 extern const char * cfg_StartPage;
 extern BOOL         cfg_AllowCookies;
+extern BOOL         cfg_ViewImages;
+extern BOOL         cfg_UseCSS;
 
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
