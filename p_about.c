@@ -118,7 +118,9 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 static void
 about_highwire (TEXTBUFF current, WORD link_color)
 {
+#ifndef USE_OVL
 	const char * i_net = inet_info();
+#endif
 	char     buf[100];
 	WORDITEM list[10], * w = &list[-1];
 	WORD     tab   = 0;
@@ -188,10 +190,12 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	} while (--w >= list);
 	
 	font_byType (-1, -1, font_step2size (NULL, 3), current->word);
+	#ifndef USE_OVL
 	if (i_net) {
 		sprintf (buf, "(%s support enabled)", i_net);
 		render_text (current, buf);
 	}
+	#endif
 	render_hrule (current, ALN_LEFT, -512, 2);
 	
 	render_link (current, "modules: ", "about:modules", link_color);
