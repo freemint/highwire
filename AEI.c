@@ -801,7 +801,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 					}
 					break;
 				case WM_CLOSED:
-					delete_hwWind (wind);
+					hwWind_close (wind, state);
 					check = TRUE;
 					if (!hwWind_Top) return TRUE;
 			}
