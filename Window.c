@@ -241,6 +241,7 @@ window_evKeybrd (UWORD key, UWORD kstate)
 				prev         = wind->Curr;
 				wind->isFull = TRUE;
 			}
+			wind_set_grect (wind->Handle, WF_CURRXYWH, &curr);
 			wind->Curr   = curr;
 			wind->isScrn = TRUE;
 			(*wind->sized)(wind);
