@@ -89,13 +89,13 @@ parse_dir (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	if ((dh = Dopendir (loc->FullName, 0)) == -32L) {
+	if ((dh = Dopendir (loc->FullName, 0)) == EINVFN) {
 		LOCATION tmp = new_location ("*.*", loc);
 		DTA    * old = Fgetdta();
 		DTA      dta;
 		char *   name = dta.d_fname;
 		Fsetdta (&dta);
-		if (Fsfirst (tmp->FullName, 0x10) == 0) do {
+		if (Fsfirst (tmp->FullName, 0x10) == E_OK) do {
 			if (name[0] != '.' || (name[1] && (name[1] != '.' || name[2]))) {
 				size_t           len = strlen (name);
 				struct dir_ent * ent = malloc (sizeof(struct dir_ent) + len);
@@ -114,7 +114,7 @@ parse_dir (void * arg, long invalidated)
 				ent->next = list;
 				list = ent;
 			}
-		} while (Fsnext() == 0);
+		} while (Fsnext() == E_OK);
 		Fsetdta (old);
 		free_location (&tmp);
 	
@@ -126,11 +126,11 @@ parse_dir (void * arg, long invalidated)
 #if defined (__PUREC__) && !defined (__MINT_EXT__)
 		char   path[HW_PATH_MAX];
 		char * p_nm = strchr (strcpy (path, loc->FullName), '\0');
-		while (Dreaddir (sizeof(buf), dh, buf) == 0) {
+		while (Dreaddir (sizeof(buf), dh, buf) == E_OK) {
 			strcpy (p_nm, name);
 			xret = Fxattr (0, path, &xattr);
 #else
-		while (Dxreaddir (sizeof(buf), dh, buf, &xattr, &xret) == 0) {
+		while (Dxreaddir (sizeof(buf), dh, buf, &xattr, &xret) == E_OK) {
 #endif
 			if (name[0] != '.' || (name[1] && (name[1] != '.' || name[2]))) {
 				size_t           len = strlen (name);

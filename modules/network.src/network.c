@@ -11,6 +11,8 @@
 # include <mintbind.h>
 #endif
 
+#include <errno.h>
+
 
 #define OVL_MODULE
 
@@ -90,10 +92,10 @@ int main(void)
 		exit (1); /* this shouldn't happen, but not fatal */
 	
 	} else if (ovl_methods.flags >= OF_THREAD) {
-		exit (-25); /* EINVAL, mode yet not supported */
+		exit (EINVAL); /* mode yet not supported */
 	
 	} else if (ovl_methods.flags == OF_CHLDPRC) {
-		if (Psigsetmask (0) == -32/*EINVFN*/) {
+		if (Psigsetmask (0) == EINVFN) {
 			exit (1); /* no signal handling, notify about that */
 		}
 		Pause(); /* else suspend */

@@ -668,14 +668,14 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	struct xattr file_info;
 	long         xret = Fxattr(0, filename, &file_info);
 	
-	if (xret == 0) {  /* Fxattr() exists */
+	if (xret == E_OK) {  /* Fxattr() exists */
 		size = file_info.st_size;
 	
 	} else if (xret == EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();
 		Fsetdta(&new);
 
-		if (Fsfirst(filename, 0) == 0) {
+		if (Fsfirst(filename, 0) == E_OK) {
 			size = new.d_length;
 		}
 		Fsetdta(old);
