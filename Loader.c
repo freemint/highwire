@@ -423,14 +423,14 @@ loader_job (void * arg, long invalidated)
 	
 	if (loader->Location->Proto == PROT_HTTP) {
 #ifdef USE_INET
-		HTTP_HDR hdr;
-		short    sock  = -1;
-		short    reply;
+		const char * host = location_Host (loader->Location);
+		HTTP_HDR     hdr;
+		short        sock = -1;
+		short        reply;
 		
-		{ /*  */
+		if (host) {
 			char buf[300];
-			sprintf (buf, "Connecting: %.*s",
-			         (int)(sizeof(buf) -13), location_Host (loader->Location));
+			sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
 			containr_notify (loader->Target, HW_SetInfo, buf);
 		}
 		
@@ -454,6 +454,9 @@ loader_job (void * arg, long invalidated)
 			return TRUE; /* re-schedule with the new location */
 			
 		} else if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
+			char buf[300];
+			sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
+			containr_notify (loader->Target, HW_SetInfo, buf);
 			
 			if (hdr.Size >= 0 && !hdr.Chunked) {
 				loader->Data     = loader->rdDest = malloc (hdr.Size +3);
