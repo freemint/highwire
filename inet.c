@@ -9,7 +9,9 @@
 #  define USE_MINT
 
 # elif defined(__PUREC__)
-#  define USE_STIK
+#  ifndef USE_ICNN
+#   define USE_STIK
+#  endif
 # endif
 #endif /* USE_INET */
 
@@ -99,6 +101,25 @@ static long  __CDECL demand_connect (long addr, long port, long tout_sec)
 # include <mintbind.h>
 
 
+#elif defined(USE_ICNN) /******************************************************/
+# include <time.h>
+# include <iconnect/sockinit.h>
+# include <iconnect/netdb.h>
+# include <iconnect/socket.h>
+# include <iconnect/in.h>
+# include <iconnect/sfcntl.h>
+
+/*----------------------------------------------------------------------------*/
+static BOOL init_iconnect (void)
+{
+	static int flag = -1;
+	if (flag < 0) {
+		flag = (sock_init() == E_OK ? 1 : 0);
+	}
+	return (flag > 0);
+}
+
+
 #elif defined(USE_STIK) /******************************************************/
 # include <stdio.h> /*printf/puts */
 # include <string.h>
@@ -150,6 +171,15 @@ inet_host_addr (const char * name, long * addr)
 		ret   = E_OK;
 	} else {
 		ret   = -errno;
+	}
+
+#elif defined(USE_ICNN)
+	if (init_iconnect()) {
+		hostent * host = gethostbyname ((char*)name);
+		if (host) {
+			*addr = *(long*)host->h_addr;
+			ret   = E_OK;
+		}
 	}
 
 #elif defined(USE_STIK)
@@ -207,6 +237,32 @@ inet_connect (long addr, long port, long tout_sec)
 		}
 	}
 
+#elif defined(USE_ICNN)
+	clock_t timeout =0;
+	sockaddr_in s_in;
+	s_in.sin_family = AF_INET;
+	s_in.sin_port   = htons ((short)port);
+	s_in.sin_addr   = *(unsigned long *)&addr;
+	do {
+		if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+			fh = -1;
+			break;
+		} else {
+			int n = connect ((int)fh, &s_in, (int)sizeof(s_in));
+			if (n == E_OK) {
+				sfcntl ((int)fh, F_SETFL, O_NDELAY);
+				break;
+			}
+			sclose ((int)fh);
+			fh = -1;
+			if (!timeout) {
+				timeout = clock() + tout_sec * CLK_TCK;
+			} else if (n != -ETIMEDOUT || clock() < timeout) {
+				break;
+			}
+		}
+	} while (1);
+
 #elif defined(USE_STIK)
 	if (!init_stick()) {
 		puts ("No STiK");
@@ -242,6 +298,9 @@ inet_send (long fh, const char * buf, size_t len)
 #if defined(USE_MINT)
 	ret = Fwrite (fh, len, buf);
 
+#elif defined(USE_ICNN)
+	ret = swrite ((int)fh, buf, (int)len);
+
 #elif defined(USE_STIK)
 	if (!tpl) {
 		puts ("No STiK");
@@ -274,6 +333,21 @@ inet_recv (long fh, char * buf, size_t len)
 			break;
 		} else if (n && (n = Fread (fh, (n < len ? n : len), buf)) < 0) {
 			if (!ret) ret = -errno;
+			break;
+		} else if (n) {
+			ret += n;
+			buf += n;
+			len -= n;
+		} else { /* no data available yet */
+			break;
+		}
+	}
+
+#elif defined(USE_ICNN)
+	while (len) {
+		long n = sread ((int)fh, buf, len);
+		if (n < 0) {
+			if (!ret) ret = n;
 			break;
 		} else if (n) {
 			ret += n;
@@ -326,6 +400,9 @@ inet_close (long fh)
 	#if defined(USE_MINT)
 		close (fh);
 
+	#elif defined(USE_ICNN)
+		sclose ((int)fh);
+
 	#elif defined(USE_STIK)
 		if (!tpl) {
 			puts ("No STiK");
@@ -344,6 +421,9 @@ inet_info (void)
 {
 #if defined(USE_MINT)
 	return "MiNTnet";
+
+#elif defined(USE_ICNN)
+	return "Iconnect";
 
 #elif defined(USE_STIK)
 	return "STiK2";

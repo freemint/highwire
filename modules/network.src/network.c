@@ -31,6 +31,8 @@ OVL_DECL (OF_SIMPLE,FTAB_NETWORK);
 struct ovl_info_t ovl_data = {
 #if defined(USE_MINT)
 	"MiNTnet.OVL",
+#elif defined(USE_ICNN)
+	"Iconnect.OVL",
 #elif defined(USE_STIK)
 	"STiK2.OVL",
 #else
