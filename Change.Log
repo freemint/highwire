@@ -1,6 +1,8 @@
-(non-public of Jun 28, 2004)
+(non-public of Jul. 25, 2004)
 
-- Basic cookie support implemented.
+- Cookie support implemented.  Non-session cookies
+  are stored to disk to allow persistent user
+  preferences for sites.
 
 - New config keyword RESTRICT_HOST added for
   blocking images and/or cookies from certain
