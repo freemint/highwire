@@ -560,6 +560,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		
 		if (box->Floating != ALN_NO_FLT) {
 			long blk_width = width - blocker->L.width - blocker->R.width;
+			if (box->BoxClass != BC_SINGLE
+			    && !box->SetWidth && (box->Floating & FLT_MASK)) {
+				long max_width = dombox_MaxWidth (box);
+				if (blk_width > max_width) {
+					blk_width = max_width;
+				}
+			}
 			if (box->MinWidth > blk_width) {
 				if (height < blocker->L.bottom) height = blocker->L.bottom;
 				if (height < blocker->R.bottom) height = blocker->R.bottom;
@@ -593,10 +600,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				blocker->R.width += box->Rect.W;
 			}
 			case ALN_RIGHT:
-				box->Rect.X += set_width - box->Rect.W;
+				box->Rect.X += width - box->Rect.W;
 				break;
 			case ALN_CENTER:
-				box->Rect.X += (set_width - box->Rect.W) /2;
+				box->Rect.X += (width - box->Rect.W) /2;
 				break;
 			default: ;
 		}
