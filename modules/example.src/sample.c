@@ -7,11 +7,22 @@
 * This is a bare bones sample OVL skeleton for HighWire Project
 *
 */
-#include <aes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tos.h>
+
+#if defined (__PUREC__)
+# include <tos.h>
+
+#elif defined (LATTICE)
+# include <dos.h>
+
+#elif defined (__GNUC__)
+# include <unistd.h> /* for write() */
+# include <osbind.h>
+
+extern long _PgmSize; /* is this correct ??? */
+#endif
 
 /* we are building a module so we need to define OVL_MODULE
  * to avoid conflicts
