@@ -10,6 +10,10 @@
 #include "hwWind.h"
 #include "cache.h"
 
+#define HTMLTAG int
+#define HTMLKEY int
+#include "scanner.h"
+
 
 /*----------------------------------------------------------------------------*/
 #define FA(f,b,i)   (((long)f <<16) | (b ? 0x10 : 0x00) | (i ? 0x01 : 0x00))
@@ -41,6 +45,37 @@ cfg_minsize (char * param, long arg)
 	(void)arg;
 	if (n >= 1 && n <= 24) {
 		font_minsize = n;
+	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_backgnd (char * param, long arg)
+{
+	(void)arg;
+	if (!ignore_colours) {
+	
+		if (isalpha(*param)) { /* named colour */
+			long n = scan_color (param, strlen(param));
+			if (n >= 0) {
+				background_colour = remap_color (n);
+			}
+		
+		} else if (param[0] != '0' || !param[1]) { /* VDI colour index */
+			char * tail = param;
+			long   n    = strtoul (param, &tail, 10);
+			if (tail > param && n <= 0xFF) {
+				background_colour = n;
+			}
+		
+		} else if (param[1] == 'x') { /* 0xRRGGBB direct colour value */
+			char * tail = param;
+			long   n    = strtoul (param, &tail, 16);
+			if (tail > param && n <= 0xFFFFFFL) {
+				background_colour = remap_color (n);
+			}
+		}
 	}
 }
 
@@ -147,6 +182,7 @@ read_config(char *fn)
 				{ "BOLD_NORMAL",          cfg_font,    FA(normal_font, 1, 0) },
 				{ "BOLD_TELETYPE",        cfg_font,    FA(pre_font,    1, 0) },
 				{ "CACHEDIR",             cfg_cachedir,0 },
+				{ "DFLT_BACKGND",         cfg_backgnd, 0 },
 				{ "FONT_MINSIZE",         cfg_minsize, 0 },
 				{ "FONT_SIZE",            cfg_fntsize, 0 },
 				{ "FORCE_FRAMECTRL",      cfg_func,    (long)menu_frm_ctrl   },
