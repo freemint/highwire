@@ -1221,6 +1221,44 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 	return (flags|PF_SPACE);
 }
 
+/*------------------------------------------------------------------------------
+ * Word BReak
+*/
+static UWORD
+render_WBR_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	TEXTBUFF current = &parser->Current;
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		if (current->text > current->buffer) {
+			new_word (current, TRUE);
+		}
+		current->word->wrap = TRUE;
+	}
+	
+	return flags;
+}
+
+/*------------------------------------------------------------------------------
+ * NO BReaking area
+*/
+static UWORD
+render_NOBR_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	TEXTBUFF current = &parser->Current;
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		current->nowrap++;
+	
+	} else if (current->nowrap) {
+		current->nowrap--;
+	}
+	
+	return flags;
+}
+
 
 /*******************************************************************************
  *
