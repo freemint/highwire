@@ -61,7 +61,11 @@ void
 key_pressed (WORD key, UWORD state)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
-
+	
+	if (!hwWind_keybrd (key, state)) {
+		return;
+	}
+	
 	switch (key & 0xFF00)  /* scan code */
 	{
 	case 0x0F00:  /* Tab: change active frame */

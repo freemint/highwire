@@ -26,11 +26,7 @@ static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
-#ifdef __GNUC__
 static WORD  tbar_set = +21;
-#else
-static WORD  tbar_set = -21;
-#endif
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
 #else
@@ -46,6 +42,60 @@ static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
 static void draw_toolbar (HwWIND This, const GRECT * p_clip);
 static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
+
+
+typedef struct {
+	WORD Offset;
+	WORD Fgnd, Bgnd;
+	WORD Data[15], Fill[15];
+}  TOOLBTN;
+static TOOLBTN hw_buttons[] = {
+#define	TBAR_LEFT 0
+	{	-1, G_BLACK, G_GREEN,
+		{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
+			0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
+		{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
+			0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
+#define	TBAR_RGHT 1
+	{	19, G_BLACK, G_GREEN,
+		{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
+			0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
+		{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
+			0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
+#define	TBAR_HOME 2
+	{	39, G_BLACK, G_WHITE,
+		{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
+			0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
+		{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
+			0x2108, 0x2D68, 0x2D68, 0x2148, 0x3F68, 0x3F68, 0x0000 } },
+#define	TBAR_REDO 3
+	{	69, G_BLACK, G_YELLOW,
+		{	0x03E0, 0x0C10, 0x1F08, 0x2084, 0x0044, 0x10C6, 0x2882, 0x4444,
+			0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
+		{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
+			0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
+#define	TBAR_STOP 4
+	{	89, G_WHITE, G_RED,
+		{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
+			0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
+		{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
+			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
+#define	TBAR_EDIT 5
+};
+#define TBAR_LEFT_MASK (1 << TBAR_LEFT)
+#define TBAR_RGHT_MASK (1 << TBAR_RGHT)
+#define TBAR_HOME_MASK (1 << TBAR_HOME)
+#define TBAR_REDO_MASK (1 << TBAR_REDO)
+#define TBAR_STOP_MASK (1 << TBAR_STOP)
+
+typedef struct {
+	WORD Visible;
+	WORD Shift;
+	WORD Cursor;
+	WORD Length;
+	char Text[1024];
+} TBAREDIT;
+#define TbarEdit(w) ((TBAREDIT*)(w->History + HISTORY_LAST +2))
 
 
 /*============================================================================*/
@@ -76,7 +126,9 @@ HwWIND
 new_hwWind (const char * name, const char * url, LOCATION loc)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
-	                      sizeof (HISTORY) * HISTORY_LAST);
+	                      sizeof (HISTORY) * HISTORY_LAST +
+	                      sizeof (TBAREDIT) +1);
+	TBAREDIT * edit;
 	short  i;
 	
 	This->Next = hwWind_Top;
@@ -155,7 +207,18 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
 	This->TbarMask = 0;
 	This->TbarActv = -1;
+	for (i = 0; i < numberof(hw_buttons); i++) {
+		This->TbarElem[i].Offset = hw_buttons[i].Offset;
+		This->TbarElem[i].Width  = 21;
+	}
+	This->TbarElem[TBAR_EDIT].Offset = This->TbarElem[TBAR_EDIT -1].Offset
+	                                 + This->TbarElem[TBAR_EDIT -1].Width *3 /2;
 	set_size (This, &curr_area);
+	edit = TbarEdit (This);
+	strcpy (edit->Text, "html/highwire.htm");
+	edit->Length = strlen (edit->Text);
+	edit->Shift  = 0;
+	edit->Cursor = 0;
 
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
@@ -445,20 +508,25 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 static
 void set_size (HwWIND This, const GRECT * curr)
 {
+	TBAREDIT * edit = TbarEdit (This);
+	GRECT work = This->Work;
+	
 	wind_set_grect (This->Handle, WF_CURRXYWH, curr);
 	if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
 	    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
 		This->Curr = *curr;    /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
 	}                         /* if the window was created but not opend       */
 	wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
-	if (This->TbarH || This->IbarH) {
-		GRECT work = This->Work;
-		work.g_y += This->TbarH;
-		work.g_h -= This->TbarH + This->IbarH;
-		containr_calculate (This->Pane, &work);
-	} else {
-		containr_calculate (This->Pane, &This->Work);
+	work = This->Work;
+	work.g_y += This->TbarH;
+	work.g_h -= This->TbarH + This->IbarH;
+	containr_calculate (This->Pane, &work);
+	
+	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6;
+	if ((edit->Visible = work.g_w /8 -1) < 7) {
+		edit->Visible = 7;
 	}
+	This->TbarElem[TBAR_EDIT].Width = edit->Visible *8 +6;
 }
 
 /*============================================================================*/
@@ -604,6 +672,12 @@ hwWind_close (HwWIND This, UWORD state)
 	
 	} else if (tbar_set) {
 		GRECT work = This->Work;
+		TBAREDIT * edit = TbarEdit (This);
+		edit->Text[0] = '\0';
+		edit->Length  = 0;
+		edit->Shift   = 0;
+		edit->Cursor  = 0;
+		This->TbarActv = -1;
 		if (This->TbarH) {
 			if (tbar_set > 0) tbar_set = -tbar_set;
 			This->TbarH = 0;
@@ -766,49 +840,6 @@ hwWind_byValue (long val)
 
 
 /*----------------------------------------------------------------------------*/
-typedef struct {
-	WORD Offset;
-	WORD Fgnd, Bgnd;
-	WORD Data[15], Fill[15];
-}  TOOLBTN;
-static TOOLBTN hw_buttons[] = {
-#define	TBAR_LEFT 0
-	{	2, G_BLACK, G_GREEN,
-		{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
-			0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
-		{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
-			0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
-#define	TBAR_RGHT 1
-	{	22, G_BLACK, G_GREEN,
-		{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
-			0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
-		{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
-			0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
-#define	TBAR_HOME 2
-	{	42, G_BLACK, G_WHITE,
-		{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
-			0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
-		{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
-			0x2108, 0x2D68, 0x2D68, 0x2148, 0x3F68, 0x3F68, 0x0000 } },
-#define	TBAR_REDO 3
-	{	72, G_BLACK, G_YELLOW,
-		{	0x03E0, 0x0C10, 0x1F08, 0x2084, 0x0044, 0x10C6, 0x2882, 0x4444,
-			0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
-		{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
-			0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
-#define	TBAR_STOP 4
-	{	92, G_WHITE, G_RED,
-		{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
-			0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
-		{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
-			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
-#define TBAR_LEFT_MASK (1 << TBAR_LEFT)
-#define TBAR_RGHT_MASK (1 << TBAR_RGHT)
-#define TBAR_HOME_MASK (1 << TBAR_HOME)
-#define TBAR_REDO_MASK (1 << TBAR_REDO)
-#define TBAR_STOP_MASK (1 << TBAR_STOP)
-};
-/*- - - - - - - - - - - - - - - - - - - - - - - -*/
 static void
 draw_toolbar (HwWIND This, const GRECT * p_clip)
 {
@@ -833,10 +864,12 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 		v_bar   (vdi_handle, (short*)&clip);
 		v_pline (vdi_handle, 2, (short*)(p +2));
 		
+		vsf_color (vdi_handle, G_WHITE);
+		
 		p[3].p_y = (p[2].p_y = area.g_y +3) +15 -1;
 		for (i = 0; i < numberof(hw_buttons); i++, btn++) {
-			p[2].p_x = area.g_x + btn->Offset;
-			p[3].p_x = p[2].p_x + 15 -1;
+			p[2].p_x = area.g_x + This->TbarElem[i].Offset +3;
+			p[3].p_x = p[2].p_x + This->TbarElem[i].Width  -7;
 			icon.fd_addr = btn->Data;
 			if (This->TbarMask & (1 << i)) {
 				short c_lu, c_rd;
@@ -857,7 +890,6 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 					l[0].p_y = l[2].p_y;
 					l[1].p_x = p[3].p_x +1;
 					l[1].p_y = p[3].p_y +1;
-					vsf_color (vdi_handle, G_WHITE);
 					vswr_mode (vdi_handle, MD_XOR);
 					v_bar     (vdi_handle, (short*)l);
 					vswr_mode (vdi_handle, MD_TRANS);
@@ -890,29 +922,95 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 				vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 			}
 		}
+		
+		p[1].p_x = area.g_x + This->TbarElem[TBAR_EDIT].Offset;
+		p[2].p_x = p[1].p_x + This->TbarElem[TBAR_EDIT].Width -1;
+		if (p[1].p_x <= clip.g_w && p[2].p_x >= clip.g_x) {
+			TBAREDIT * edit = TbarEdit (This);
+			BOOL       cursor;
+			p[0].p_x = p[1].p_x;
+			p[0].p_y = ++p[3].p_y;
+			p[1].p_y = --p[2].p_y;
+			vsl_color (vdi_handle, G_LBLACK);
+			v_pline (vdi_handle, 3, (short*)p);
+			if (This->TbarActv != TBAR_EDIT) {
+				p[1].p_x = p[2].p_x; ++p[0].p_x;
+				p[1].p_y = p[0].p_y; ++p[2].p_y;
+				vsl_color (vdi_handle, G_WHITE);
+				v_pline (vdi_handle, 3, (short*)p);
+				p[1].p_x =  p[0].p_x +1;
+				p[1].p_y =  p[2].p_y;
+				p[2].p_x -= 2;
+				p[2].p_y =  p[0].p_y;
+				cursor   = FALSE;
+			} else {
+				p[1].p_x = --p[0].p_x; p[3].p_x = p[2].p_x += 2;
+				p[1].p_y = --p[2].p_y; p[3].p_y = p[0].p_y += 1;
+				vsl_color (vdi_handle, G_BLACK);
+				v_pline (vdi_handle, 4, (short*)p);
+				p[1].p_x += 2;
+				p[1].p_y += 2;
+				p[2].p_x -= 2;
+				p[2].p_y =  p[0].p_y -1;
+				v_bar (vdi_handle, (short*)(p +1));
+				p[1].p_x++;
+				cursor   = TRUE;;
+			}
+			p[0] = p[1];
+			if (*edit->Text) {
+				p[2].p_x -= p[1].p_x -1;
+				p[2].p_y -= p[1].p_y -1;
+				if (rc_intersect (p_clip, (GRECT*)(p +1))) {
+					short dmy;
+					p[2].p_x += p[1].p_x -1;
+					p[2].p_y += p[1].p_y -1;
+					vs_clip_pxy (vdi_handle, p +1);
+					vst_font      (vdi_handle, 1);
+					vst_point     (vdi_handle, 12, &dmy, &dmy, &dmy, &dmy);
+					vst_effects   (vdi_handle, TXT_NORMAL);
+					vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy, &dmy);
+					vst_color     (vdi_handle, G_BLACK);
+					v_gtext       (vdi_handle, p[0].p_x, p[0].p_y,
+					               edit->Text + edit->Shift);
+					vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
+				}
+			}
+			if (cursor) {
+				p[1].p_x = p[0].p_x += (edit->Cursor - edit->Shift) *8;
+				p[1].p_y = p[0].p_y +15;
+				vswr_mode (vdi_handle, MD_XOR);
+				v_pline   (vdi_handle, 2, (short*)p);
+				vswr_mode (vdi_handle, MD_TRANS);
+			}
+		}
 		v_show_c (vdi_handle, 1);
 		vs_clip_off (vdi_handle);
 	}
 }
 
 /*----------------------------------------------------------------------------*/
-static void
+static BOOL
 chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 {
+	BOOL  chng;
 	UWORD mask = 1;
 	short lft = 0, rgt = -1;
 	short i;
 	
 	if (This->TbarActv != active) {
-		if (active >= 0) {
-			lft = rgt = active;
-			This->TbarActv = active;
-		} else if (This->TbarActv >= 0) {
+		if (This->TbarActv >= 0) {
 			lft = rgt = This->TbarActv;
-			This->TbarActv = -1;
 		}
+		if (active >= 0) {
+			if (lft > active) lft = active;
+			if (rgt < active) rgt = active;
+		}
+		This->TbarActv = active;
+		chng = TRUE;
+	} else {
+		chng = FALSE;
 	}
-	for (i = 0; i < numberof(hw_buttons); i++, mask <<= 1) {
+	if (on | off) for (i = 0; i < numberof(hw_buttons); i++, mask <<= 1) {
 		if (This->TbarMask & mask) {
 			if (off & mask) {
 				This->TbarMask &= ~mask;
@@ -929,8 +1027,9 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 	}
 	if (lft <= rgt && This->TbarH && !This->isIcon) {
 		GRECT clip, area;
-		clip.g_x = This->Work.g_x + hw_buttons[lft].Offset -3;
-		clip.g_w = hw_buttons[rgt].Offset - hw_buttons[lft].Offset +21;
+		clip.g_x = This->Work.g_x + This->TbarElem[lft].Offset -3;
+		clip.g_w = This->TbarElem[rgt].Offset + This->TbarElem[rgt].Width
+		         - This->TbarElem[lft].Offset +21;
 		clip.g_y = This->Work.g_y;
 		clip.g_h = This->TbarH -1;
 		wind_get_grect (This->Handle, WF_FIRSTXYWH, &area);
@@ -941,6 +1040,7 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 			wind_get_grect (This->Handle, WF_NEXTXYWH, &area);
 		}
 	}
+	return chng;
 }
 
 /*============================================================================*/
@@ -1227,11 +1327,11 @@ hwWind_button (WORD mx, WORD my)
 	if (wind) {
 		if (wind->TbarH && my < wind->Work.g_y + wind->TbarH) {
 			short x = mx - wind->Work.g_x;
-			tb_n = numberof(hw_buttons) -1;
-			do if (x >= hw_buttons[tb_n].Offset -2) {
-				if (x >= hw_buttons[tb_n].Offset +19) {
+			tb_n = numberof(wind->TbarElem) -1;
+			do if (x >= wind->TbarElem[tb_n].Offset) {
+				if (x > wind->TbarElem[tb_n].Offset + wind->TbarElem[tb_n].Width) {
 					tb_n = -1;
-				} else if (!(wind->TbarMask & (1 << tb_n))) {
+				} else if (tb_n < TBAR_EDIT && !(wind->TbarMask & (1 << tb_n))) {
 					wind = NULL;
 				}
 				break;
@@ -1248,6 +1348,25 @@ hwWind_button (WORD mx, WORD my)
 		wind_update (BEG_MCTRL);
 		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
 		wind_update (END_MCTRL);
+	
+	} else if (tb_n == TBAR_EDIT) {
+		TBAREDIT * edit = TbarEdit (wind);
+		WORD x = wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset;
+		WORD c = edit->Cursor;
+		edit->Cursor = (mx - x -3) /8;
+		if (edit->Cursor > edit->Length - edit->Shift) {
+			edit->Cursor = edit->Length - edit->Shift;
+		}
+		hwWind_raise (wind, TRUE);
+		if (!chng_toolbar (wind, 0, 0, TBAR_EDIT) && c != edit->Cursor) {
+			GRECT clip;
+			clip.g_x = x;
+			clip.g_w = wind->TbarElem[TBAR_EDIT].Width;
+			clip.g_y = wind->Work.g_y +1;
+			clip.g_h = wind->TbarH    -2;
+			draw_toolbar (wind, &clip);
+		}
+		wind = NULL;
 	
 	} else if (tb_n >= 0) {
 		short dmy;
@@ -1334,8 +1453,119 @@ hwWind_button (WORD mx, WORD my)
 		c[1].p_y = c[2].p_y - c[0].p_y +1;
 		hwWind_resize (wind, (GRECT*)c);
 		wind = NULL;
+	
+	} else if (wind->TbarActv == TBAR_EDIT) {
+		chng_toolbar (wind, 0, 0, -1);
 	}
 	return wind;
+}
+
+
+/*============================================================================*/
+HwWIND
+hwWind_keybrd (WORD key, UWORD state)
+{
+	HwWIND wind = hwWind_Top;
+	
+	if (!wind || wind->TbarActv != TBAR_EDIT) {
+		return wind;
+	
+	} else {
+		TBAREDIT * edit = TbarEdit (wind);
+		WORD       asc  = key & 0xFF;
+		GRECT      clip = { 0,0,0,16 };
+		
+		if (asc > ' ' && asc < 127) {
+			if (edit->Length < sizeof(edit->Text) -1) {
+				short  crs = edit->Cursor - edit->Shift;
+				char * end = edit->Text + ++edit->Length;
+				char * dst = edit->Text + edit->Cursor++;
+				do {
+					*end = *(end -1);
+				} while (--end > dst);
+				*dst = asc;
+				if (crs >= edit->Visible) {
+					edit->Shift++;
+					clip.g_w = edit->Visible *8 +1;
+				} else {
+					clip.g_x = crs *8;
+					clip.g_w = (edit->Visible - crs) *8;
+				}
+			}
+		
+		} else if (asc) switch (asc) {
+			
+			case 8: /* backspace */
+				if (!edit->Cursor) {
+					break;
+				
+				} else if (--edit->Cursor < edit->Shift) {
+					edit->Shift = edit->Cursor;
+				}
+			case 127: /* delete */
+				if (edit->Cursor < edit->Length) {
+					short  c = edit->Cursor - edit->Shift;
+					char * d = edit->Text + edit->Cursor, * s = d;
+					while ((*(d++) = *(++s)) != '\0');
+					edit->Length--;
+					clip.g_x = c *8;
+					clip.g_w = (edit->Visible - c) *8;
+				}
+				break;
+			
+			case 27: /* escape */
+				if (edit->Length) {
+					edit->Length  = 0;
+					edit->Cursor  = 0;
+					edit->Shift   = 0;
+					edit->Text[0] = '\0';
+					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -6;
+				}
+				break;
+			
+			case 13: /* enter/return */
+				if (edit->Length) {
+					new_loader_job (edit->Text, NULL, wind->Pane);
+				}
+				break;
+			
+		} else switch (key >>8) {
+			
+			case 75: /* left */
+				if (edit->Cursor > edit->Shift) {
+					edit->Cursor--;
+					clip.g_x = (edit->Cursor - edit->Shift) *8;
+					clip.g_w = 9;
+				} else if (edit->Cursor) {
+					edit->Shift = --edit->Cursor;
+					clip.g_w = edit->Visible *8;
+				}
+				break;
+			
+			case 77: /*right */
+				if (edit->Cursor < edit->Length) {
+					if (++edit->Cursor > edit->Shift + edit->Visible) {
+						edit->Shift = edit->Cursor - edit->Visible;
+						clip.g_w = edit->Visible *8 +1;
+					} else {
+						clip.g_x = (edit->Cursor - edit->Shift -1) *8;
+						clip.g_w = 9;
+					}
+				}
+				break;
+			
+			case 97: /* undo */
+				chng_toolbar (wind, 0, 0, -1);
+				break;
+		}
+		
+		if (clip.g_w) {
+			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +2;
+			clip.g_y =  wind->Work.g_y +3;
+			draw_toolbar (wind, &clip);
+		}
+	}
+	return NULL;
 }
 
 
