@@ -210,12 +210,10 @@ WORD
 font_step2size (struct font_step * fontstep, WORD step)
 {
 	static WORD size[8] = { 0, 0, 0, 0, };
-
-	if (size[3] != font_size)
-	{
+	
+	if (size[3] != font_size) {
 		WORD i;
 		WORD s = font_size;
-
 #if 1
 		size[0] = max (s - s / 3, font_minsize);    /*  7  8  8  9 10 10 11 12 */
 		size[1] = max (s - s / 5, font_minsize);    /*  8  9 10 11 12 12 13 15 */
@@ -237,9 +235,15 @@ font_step2size (struct font_step * fontstep, WORD step)
 		}
 #endif
 	}
-
-	if      (step < 0) step = 0;
-	else if (step > 7) step = 7;
+	
+	if (step < 0) {
+		WORD s = -step;
+		step   = 7;
+		while (size[step] > s && --step);
+		
+	} else if (step > 7) {
+		step = 7;
+	}
 	if (fontstep) fontstep->step = step;
 
 	return size[step];

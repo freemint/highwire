@@ -48,7 +48,10 @@ BOOL font_switch (FONT actual, FONT previous);
 			*/
 
 WORD font_step2size (struct font_step * fontstep, WORD step);
-			/* maps a font step of [0..7] to a font size.
+			/* step >= 0: maps the font step of [0..7] to a font size in points
+			 *            relative to the global font_size variable.
+			 * step < 0:  interpretes it as a font size and stores the best
+			 *            matching into the fontstep structure.
 			*/
 
 
