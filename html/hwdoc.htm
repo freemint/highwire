@@ -1,25 +1,23 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML LANG="en">
+<HTML LANG="EN">
 <HEAD>
 <META HTTP-EQUIV="Content-Language" CONTENT="en">
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
 <title>HighWire documentation</title>
-<LINK REL="Bookmark" HREF="http://highwire.atari-users.net/index.html">
-<LINK REL="schema.DC" HREF="http://purl.org/DC/elements/1.0/">
-<META NAME="DC.Identifier" CONTENT="http://highwire.atari-users.net/hwdoc.htm">
-<META NAME="date" CONTENT="2002-12-20">
-<META NAME="description" CONTENT="Documentation for the web browser HighWire for Atari TOS computer.">
-<META NAME="keywords" CONTENT="Atari, HighWire, HTML browser, online, TOS, Unicode, web browser, WWW">
+<LINK REL="Bookmark" HREF="http://highwire.atari-users.net/index.htm">
+<META NAME="date" CONTENT="2002-08-14">
 </head>
+
 <body>
 
 
 <h2><u>HighWire documentation</u></h2>
-<p>&nbsp;</p>
+<br>
+
 
 <table cellpadding="5" cellspacing="0" border="1" width="300">
-<tr><td><font size="2">
-<p><b>Table of contents</b></p>
+<tr><td><font face="verdana" size="2">
+<b>Table of contents</B>
 <ol>
   <li><A HREF="#License">HighWire release license</A></li>
   <li><A HREF="#About">What is HighWire?</A></li>
@@ -30,10 +28,14 @@
   <li><A HREF="#Links">Project links</A></li>
 </ol></font>
 </td></tr></table>
+
+
+
+
 <P>&nbsp;</P>
 
-
-<h3><a name="License"><u>1.&nbsp; HighWire release license</u></a><br></h3>
+<h3><a name="License"><u>1.&nbsp; HighWire release license</u></a><br>
+</h3>
 
 <blockquote>
 <p>This software is provided ‘as-is’, without any express or implied warranty. 
@@ -44,15 +46,15 @@ use of this software.</p>
 including commercial applications, and to alter it and redistribute it freely, 
 subject to the following restrictions:</p>
 
-<p>1.&nbsp;  The origin of this software must not be misrepresented; you must 
-not claim that you wrote the original software. If you use this software in a 
+<p>1. The origin of this software must not be misrepresented; you must not 
+claim that you wrote the original software. If you use this software in a 
 product, an acknowledgment in the product documentation would be appreciated 
 but is not required.</P>
 
-<P>2.&nbsp;  Altered source versions must be plainly marked as such, and must 
-not be misrepresented as being the original software.</P>
+<P>2. Altered source versions must be plainly marked as such, and must not be 
+misrepresented as being the original software.</P>
 
-<P>3.&nbsp;  This notice may not be removed or altered from any source 
+<P>3. This notice may not be removed or altered from any source 
 distribution.</p>
 
 <p>Anyone uses bits of the code for other reasons is welcome to, as long as 
@@ -75,10 +77,11 @@ Things did not turn out how I expected...</P>
 <p>I think the big problem with my plan was that, unbeknownst to me at the 
 time, I had had a couple of rather good ideas. The result is HighWire.</p>
 
-<p>Ok, so can I download it? You cannot write a web browser in a month. I know, 
+<p>Ok, so can I download it? You cannot write a web-browser in a month. I know, 
 I tried. :) HighWire is still very much in development.</p>
 
-<p>Originally HighWire could do the following:</p>
+<p> Originally HighWire could do the following:</p>
+
 <ul>
   <li>Load in an HTML 3.2 page hardcoded into the source</li>
   <li>Display this page multiple times in hard coded frames</li>
@@ -89,60 +92,51 @@ I tried. :) HighWire is still very much in development.</p>
 <p>Where we have gone with the project ...</p>
 
 <p>New items since it went open source:</p>
+
 <ul>
   <li>Frameset Support (90%)</li>
   <li>Tables (95%)</li>
-  <li>HTML 4 compliant (90%)</li>
+  <LI>HTML 4 compliant 90%</LI>
   <li>Colour support (mapped to current system palette)</li>
-  <LI>Graphics (20%) - Now loads HTML files with GIFs - colours are perfect in
-      256/mono modes - other modes need adjusting</LI>
-  <LI>GIFs can now be dragged to a HighWire window where it will be displayed</LI>
-  <LI>Implementation of memory caching of images avoids multiple loading of the
-      same image. The pseudo URI "about:cache" now shows detailed information
-      about cached images.</LI>
-  <LI>GEM version with drop-down menues</LI>
-  <LI>Right mouse click now opens a popup menu</LI>
+  <LI>Graphics 90% - Now loads HTML files with Gifs - colors are perfect in 256/mono modes - other modes need adjusting.</LI>
+  <LI>Gifs can now be dragged to a Highwire window where it will be displayed.</LI>
+  <LI>Implementation of memory caching of images avoids multiple loading of same image. The pseudo URI "about:cache" now shows detailed information about cached images.</LI>        
+  <LI>GEM Version with drop-down menues</LI>
   <LI>GemScript support</LI>
   <LI>Iconify/uniconify window</LI>
   <LI>HighWire now loads sample HTML files from a folder named ‘HTML’</LI>
   <LI>Sound support</LI>
-  <LI>International character set support</LI>
+  <LI>International Character Set support</LI>
   <LI>Unicode characters up to U+FFFD with NVDI 4 and TrueType fonts</LI>
-  <LI>Scroll window using arrow keys</LI>
+  <LI>Scroll Window using arrow keys</LI>
   <li>A working implementation of hyperlinks (text and image)</li>
   <LI>File Selector support</LI>
   <LI>Display text files using PRE style font selection</LI>
-  <LI>CSS in HTML tags (<ABBR TITLE="exempli gratia">e. g.</ABBR> converted by 
-      HTMLtidy)</LI>
+  <LI>CSS in HTML tabs (e.g. converted by HTMLtidy)</LI>
   <LI>Number of windows only restricted by operating system</LI>
-  <LI>Frame Scroll controls are implemented now, also support of right mouse
-      button.
+  <LI>Frame Scroll controls are implemented now, also support of right mouse button.</LI>
   <LI>Real time scrolling</LI>
   <LI>Background Scrolling is now working</LI>
   <LI>Highwire now works with scroll mice when the program MWheel is being used.</LI>
-  <LI>The program MyPDF has been added to the HighWire package and is currently
-      under development (PDF support 10%)</LI>
-  <LI>Several hotkeys added</LI>
-  <LI>Extended menu bar, the current charset encoding can be seen and changed at
-      menu title "View". Also de/increasing of the display font is available
-      there.</LI>
-  <LI>Menu entry "Info.." will show now some basic information about the active
-      frame.</LI>
-  <LI>Improved algorithm for line breaking to avoid splitting of text lines at
-      wrong positions.</LI>
-  <LI>Now buttons of forms are reacting to mouse clicks.</LI>      
+  <LI>The program My PDF has been added to the Highwire package and is currently under development (PDF support 10%)</LI>
+  <LI>Several Hotkeys added</LI> 
+  <LI>Extended menu bar, the current charset encoding can be seen and changed at menu title "View". Also de/increasing of the display font is available there.</LI>
+  <LI>Menu entry "info.." will show now some basic information about the active frame.</LI>
+  <LI>Improved algorithm for the line breaking to avoid splitting of text at wrong positions</LI>
+  <LI>Now buttons of forms are reacting to mouse clicks.</LI>   
 </ul>
 
 <p>It is currently missing:</p>
+
 <ul>
   <li>User interface</li>
   <li>Online module</li>
   <li>HTML forms</li>
-  <LI>Java/JavaScript support</LI>
+  <LI>Java/Javascript support</LI>
   <LI>Use of caches</LI>
   <LI>Use of internet clients</LI>
-  <li>Support for JPEG and PNG</li>
-  <li>External viewer support</li>
+  <LI>Support for JPG and PNG</li>
+  <li>External viewer support</LI>
   <li>Lots more...</li>
 </ul>
 
@@ -153,83 +147,83 @@ fonts (for all the ‘strange’ characters such as þ) in about half the time of
 CAB. Furthermore, once a page is pre-rendered (before the first time it is 
 displayed) it does not need further processing, making redraws and window 
 resizes much much faster. On a Hades machine the code was tested on, the page 
-render including font sizes, centering and lists redraw correctly in real time 
+render including font sizes, centering and lists redrew correctly in real time 
 (with a slight flicker...) as the window was resized.</p>
 <P>&nbsp;</P>
 
-
 <h3><a name="Team"><u>3.&nbsp; HighWire development team</u></a></h3>
 
-<ul type="square">
-	<li><b>HighWire code</b><br>
-<ul type="disc">
-   <li><A target="_top" HREF="http://www.netset.com/~baldrick/">Dan Ackerman</A> (aka Baldrick - current maintainer)</li>
-   <li><A target="_top" HREF="http://www.freemint.de/">Ralph Lowinski</A> (aka AltF4)</li>
-   <li><A target="_top" href="http://rainer.seitel.home.pages.de/atari.html">Rainer Seitel</A></li>
-   <li><A target="_top" href="http://www.atariuptodate.de/">Matthias Jaap</A></li>
-   <li><A target="_top" HREF="http://kawecki.atari.org">Rafal Kawecki</A> (MyPDF)</li>
-   <li>David Leaver</li>
-   <li>Mike De.Petris</li>
-   <li><A target="_top" href="http://deunstg.free.fr/sct1/">Denis Huguet</A> (aka Stghost)</li>
-   <li><A target="_top" HREF="http://www.far-blue.co.uk/">Robert Goldsmith</A> (original HighWire author - non active)</li>
-   <li><a target="_top" href="http://wh58-508.st.uni-magdeburg.de/sparemint/">Frank Naumann</A> (original GCC modifications - non active)</li>
-</ul><br><font size=1>&nbsp;</font>
-   <li><b>HighWire documentation</b><br>
-<ul type="disc">
-   <li><A target="_top" HREF="http://www.atari-users.net/">Rob Mahlert</A></li>
-   <li>Edward Baiz Jr.</li>
-   <li><A target="_top" href="http://www.arcadia.crew.free.fr/">ProToS</a></li>
-</ul><br><font size=1>&nbsp;</font>
-   <li><b>FontList project</b><br>
-<ul type="disc">
-   <li><A target="_top" HREF="http://aicq.atari-users.net/">Joakim Högberg</A> (aka GokMasE)</li>
-   <li><A target="_top" HREF="http://www.q1.net/~atari/">Lonny Pursell</A> (aka LP)</li>
-</ul>
-</ul>
-<p>&nbsp;</p>
 
+<p>
+
+<ul type="square">
+	<li><b>HighWire code</b></li>
+<ul type="disc">
+	<li><A target="_top" HREF="http://www.netset.com/~baldrick/">Dan Ackerman</A> (aka Baldrick - current maintainer)</li>
+	<li><A target="_top" HREF="http://www.freemint.de">Ralph Lowinski</A> (aka AltF4)</li>
+	<li><A target="_top" href="http://privat.schlund.de/R/Rainer_Seitel/atari.html">Rainer Seitel</A></li>
+	<li>Mike De.Petris</li>
+	<li><A target="_top" href="http://www.atariuptodate.de/">Matthias Jaap</A></li>
+	<li><A target="_top" href="http://deunstg.free.fr/sct1/">Denis Huguet</A> (aka Stghost)</li>
+	<li>David Leaver</li>
+	<li><A target="_top" HREF="http://kawecki.atari.org">Rafal Kawecki</A> (MyPDF)</li>
+	<li><A target="_top" HREF="http://www.far-blue.co.uk/">Robert Goldsmith</A> (original HighWire author - non active)</li>
+	<li><a target="_top" href="http://wh58-508.st.uni-magdeburg.de/sparemint/">Frank Naumann</A> (original GCC modifications - non active)</li>
+</ul>
+	<p>
+	<li><b>HighWire documentation</b></li>
+<ul type="disc">
+	<li><A target="_top" HREF="http://www.atari-users.net">Rob Mahlert</A></li>
+	<li>Edward Baiz Jr. (aka Gamer)</li>
+	<li><A target="_top" href="http://www.arcadia.crew.free.fr">Jean-Paula Mata </a>(aka ProTOS)</li>
+</ul>
+	<P>
+	<li><b>Fontlist project</b></li>
+<ul type="disc">
+	<li><A target="_top" HREF="http://aicq.atari-users.net">Joakim Högberg</A> (aka GokMasE)</li>
+	<li><A target="_top" HREF="http://www.q1.net/~atari">Lonny Pursell</A> (aka Lp)</li>
+</ul>
+	</p>
+</ul>
+
+
+<p>&nbsp;</p>
 
 <h3><a name="Use"><u>4.&nbsp; Use of HighWire</u></a></h3>
 
 <P>System requirements:</p>
 <ul>
   <li>Multitasking (preemptive multitasking) Atari OS &ndash; MagiC or MiNT</li>
-  <li>NVDI 3 or SpeedoGDOS (NVDI 4 for Unicode mode and TrueType fonts)</li>
+  <li>NVDI 3 or SpeedoGDOS</li>
   <li>Speedo fonts with Bitstream International Character Set (BICS)</li>
 </ul>
 
 <p>Hotkeys:</p>
+
 <ul>
-  <li>Control+I: Info alert about frame</li>
-  <li>Control+O: Open file selector</li>
-  <LI>Control+R: Reload</LI>
-  <li>Control+Q: Quit HighWire</li>
-  <LI>Control+U: Close window</LI>
-  <LI>Control+W: Cycle windows</LI>
-  <LI>Control+Tab: Cycle frames</LI>
+  <LI>Control + I - About HighWire alert</LI>
+  <li>Control + O - Open file selector</li>
+  <LI>Control + R - Reload</LI>
+  <li>Control + Q - Quit HighWire</li>
+  <LI>Control + V - Cycle window</LI>
+  <LI>Control + W - Cycle window</LI>
+  <LI>Control + TAB - Close frames</LI>
   <LI>1: Reload with default character set ISO/IEC 8859-1, Latin-1, Windows 
       codepage 1252 (This is the default character set for a HTML browser.)</LI>
   <LI>2: Reload with default character set ISO/IEC 8859-2, Latin-2</LI>
   <LI>A: Reload with default character set Atari ST system font</LI>
-  <LI>F: Reload with default character set ISO/IEC 8859-15, Latin-8</LI>
-  <LI>M: Reload with default character set Apple Macintosh Roman</LI>
-<!--
-  <LI>N: Reload with default character set Atari NVDI 4 Euro / Style fonts</LI>
--->
   <LI>U: Reload with default encoding UTF-8, Unicode</LI>
-  <LI>Tab: Cycle frames (focus in future)</LI>
+  <LI>Tab: Cycle Frames</LI>
   <LI>+: Reload with increased font size</LI>
-  <LI>-: Reload with decreased font size</LI>
-  <LI>Help, F1: Help</LI>
-  <LI>F5: Reload</LI>
-  <LI>F7: Toggle logging to console</LI>
-  <LI>F8: Toggle pictures or alternative text</LI>
-  <LI>Undo: Go back in file history (+Shift: go forward)</LI>
-  <LI>Arrow keys: Scroll active frame</LI>
+  <LI>&ndash;: Reload with decreased font size</LI>
+  <LI>Help, F1 - Help: Help</LI>
+  <LI>F5 - Reload</LI>
+  <LI>F7 - Toggle logging to console</LI>
+  <LI>F8 - Toggle pictures or alternative text</LI>
+  <LI>Undo - Go back in file history (+Shift: go forward)</LI>
+  <LI>Arrow keys: Scroll frame</LI>
 </ul>
-
-<p>The scroll elements support the right mouse button.</p>
-
+<P>The scroll elements support the right mouse button</P>
 <p>File types supported:</p>
 <ul>
 <li>HTML files (8-bit coded)</li>
@@ -237,19 +231,21 @@ render including font sizes, centering and lists redraw correctly in real time
 <li>Plain text (8-bit and 16-bit coded)</li>
 </ul>
 
-<p>Configuration:</p>
+<p>Configuration</p>
 <ul>
-<li>At present highwire.cfg consists mainly of font information. Change
-    manually, or better with the setup tool <em>FontList</em>.</li>
-</ul>
-<p>&nbsp;</p>
+<li>At present highwire.cfg consists mainly of font information. Change manually, or better with the setup tool <i>FontList.</i></li>
 
+
+</ul>
+
+
+<p>&nbsp;</p>
 
 <h3><a name="FontList"><u>5.&nbsp; Use of FontList</u></a></h3>
 
 <p><b>FontList</b></P>
 
-<P>Coded by Lp and GokMasE for the HighWire Project.</P>
+<P>Coded by Lp and GokMasE for the HighWire Project</P>
 
 <P>FontList is a small utility to change the font settings in the HighWire 
 configuration file.</P>
@@ -268,23 +264,23 @@ present (or not activated) in the old config file, FontList will add
 the new setting to the end of the config.</P>
 
 <P>Select 1 (there can be only one) of the fonts, then use
-menu bar to decide what setting in HighWire should be affected.
+menubar to decide what setting in HighWire should be affected.
 You can also right click on any of the fonts to open up a popup menu 
 and select a text style to link the current font ID to.
 Note that changes are written to HighWire configuration file
 instantly when you select an entry in either menu!</P>
 
 <P>Another thing you can do, is select a number of fonts (hold down 
-CTRL) and later press CTRL + C. Then the program will save a list of all 
+CTRL) and later press CTRL + C. Then the prg will save a list of all 
 currently selected fonts to the clipboard.</P>
 
 <P>CTRL + A selects / deselects all.</P>
 
-<P>NOTE: When NVDI is installed, all non-Speedo fonts are greyed out and 
+<P>NOTE: When NVDI is installed, all non-speedo fonts are greyed out and 
 thus not selectable. The reason for this is that HighWire at this time 
 does not support other format than Speedo. However, if you wish to 
 play around with other fonts you can enable all listed fonts by 
-selecting ‘Allow non-Speedo’ from menu bar.</P>
+selecting ‘Allow non-speedo’ from menubar.</P>
 
 <H4><u>General Advice</u></H4>
 
@@ -292,50 +288,47 @@ selecting ‘Allow non-Speedo’ from menu bar.</P>
 file.</p>
 <p>&nbsp;</p>
 
-<h3><a name="Tags"><u>6.&nbsp; Supported HTML tags</u></a></h3>
+<h3><a name="Tags"><U>6.&nbsp; Supported HTML tags</u></a></h3>
 
-<p>Here are the HTML tags that HighWire supports:</p>
+<p>Here are some of the HTML tags that HighWire supports:<br>
+Hopefully will be updated to list all supported tags.</p>
 
 <ul>
-  <li><b>A</b><br>
+  <li><b>A</b></li>
 	  <ul>
 	  <li>CHARSET</li>
 	  <li>HREF</li>
 	  <li>ID</li>
 	  <li>NAME</li>
 	  <li>TARGET</li>
-	  </ul>
+	  </UL>
   <li><b>B</b> (bold)</li>
-  <li><b>BASE</b><br>
+  <li><b>BASE</b></li>
 	  <ul>
 	  <li>TARGET</li>
 	  </ul>
-  <li><b>BASEFONT</b><br>
+  <li><b>BASEFONT</b></LI>
 	  <ul>
-     <li>COLOR</li>
 	  <li>SIZE</li>
 	  </ul>
-  <li><b>BGSOUND</b> (IE proprietary)<br>
+  <li><b>BGSOUND (IE proprietary)</b></li>
 	  <ul>
 	  <li>SRC</li>
 	  </ul>
   <li><b>BIG</b></li>
-  <li><b>BLOCKQUOTE</b><br>
-     <ul>
-     <li>TITLE</li>
-     </ul>
-  <li><b>BODY</b><br>
-     <ul>
-     <li>ALINK</li>
-     <li>BGCOLOR</li>
-     <li>LEFTMARGIN (IE proprietary)</li>
-     <li>LINK</li>
-     <li>MARGINHEIGHT (NS proprietary)</li>
-     <li>MARGINWIDTH (NS proprietary)</li>
-     <li>TEXT</li>
-     <li>TOPMARGIN (IE proprietary)</li>
-     </ul>
-  <li><b>BR</b><br>
+  <li><b>BLOCKQUOTE</b></li>
+  <UL><LI>TITLE</LI></UL>
+  <li><b>BODY</b></li>
+	  <ul>
+	  <li>ALINK</li>
+	  <li>BGCOLOR</li>
+	  <li>LEFTMARGIN (IE Propietary)</li>
+	  <li>MARGINHEIGHT (NS proprietary)</li>
+	  <li>MARGINWIDTH (NS proprietary)</li>
+	  <li>TEXT</li>
+	  <li>TOPMARGIN (IE proprietary)</li>
+	  </ul>
+  <li><b>BR</b></li>
   	  <ul>
 	  <li>CLEAR</li>
 	  </ul>
@@ -344,67 +337,67 @@ file.</p>
   <li><b>CITE</b></li>
   <li><b>CODE</b></li>
   <li><b>DD</b> (DL definition)</li>
-  <li><b>DEL</b></li>
+  <LI><B>DEL</B></LI>
   <li><b>DFN</b> (instance definition)</li>
   <li><b>DIR</b></li>
-  <li><b>DIV</b><br>
+  <li><b>DIV</b></li>
 	  <ul>
 	  <li>ALIGN</li>
 	  </ul>
   <li><b>DL</b> (definition lists)</li>
   <li><b>DT</b> (DL term)</li>
   <li><b>EM</b></li>
-  <li><b>EMBED</b> (NS proprietary)<br>
+  <li><b>EMBED</b></li>
 	  <ul>
 	  <li>SRC</li>
 	  </ul>
-  <li><b>FONT</b><br>
+  <li><b>FONT</b></li>
 	  <ul>
 	  <li>COLOR</li>
 	  <li>SIZE</li>
 	  </ul>
-  <li><b>FORM</b><br>
-    <ul>
-      <li>ACTION</li>
-      <li>METHOD</li>
-      <li>TARGET</li>
-    </ul>
-  <li><b>FRAME</b><br>
+<LI><B>FORM</B></LI>
 	  <ul>
-     <li>MARGINHEIGHT</li>
-     <li>MARGINWIDTH</li>
+	  <li>ACTION</li>
+	  <li>METHOD</li>
+	  <li>TARGET</li>
+	  </ul>
+<li><b>FRAME</b></li>
+	  <ul>
+	  <li>MARGINHEIGHT</li>
+	  <li>MARGINWIDTH</li>
 	  <li>NAME</li>
 	  <li>SCROLLING</li>
 	  <li>SRC</li>
 	  </ul>
-  <li><b>FRAMESET</b><br>
+  <li><b>FRAMESET</b></li>
 	  <ul>
 	  <li>COLS</li>
-     <li>FRAMEBORDER</li>
+	  <li>FRAMEBORDER</li>
 	  <li>ROWS</li>
 	  </ul>
-  <li><b>H1..6</b><br>
+  <li><b>H</b> (H1 - H6)</li>
 	  <ul>
 	  <li>ALIGN</li>
 	  <li>BGCOLOR (HW proprietary, CSS wrapper)</li>
-     <li>COLOR (HW proprietary, CSS wrapper)</li>
+	  <li>COLOR (HW proprietary, CSS wrapper)</li>
 	  </ul>
-  <li><b>HR</b><br>
+  <li><b>HR</b></li>
 	  <ul>
 	  <li>ALIGN</LI>
-	  <li>BGCOLOR (HW proprietary, CSS wrapper)</li>
-     <li>COLOR</li>
+	  <li>BCOLOR (HW proprietary, CSS wrapper)</LI>
+	  <li>COLOR</LI>
 	  <li>HEIGHT</LI>
 	  <li>NOSHADE</li>
 	  <li>SIZE</li>
 	  <li>WIDTH</li>
 	  </ul>
-  <li><b>HTML</b><br>
-     <ul>
-     <li>LANG</li>
-     </ul>
+  <li><b>HTML</b></li>
+	  <ul>
+	  <li>LANG</LI>
+	  </ul>
   <li><b>I</b> (italics)</li>
-  <li><b>IMG</b><br>
+  <li><b>IMG</b> </ABBR></li>
 	  <ul>
 	  <li>ALIGN</LI>
 	  <li>ALT</LI>
@@ -413,75 +406,60 @@ file.</p>
 	  <li>SRC</LI>
 	  <li>VSPACE</LI>
 	  <li>WIDTH</LI>
-   	  </ul>
-  <li><b>INPUT</b><br>
-     <ul>
-     <li>CHECKED</li>
-     <li>MAXLENGTH</li>
-     <li>SIZE</li>
-     <li>TYPE
-	    (<small><tt>"BUTTON"</tt></small>,
-	     <small><tt>"CHECKBOX"</tt></small>,
-	     <small><tt>"FILE"</tt></small>,
-	     <small><tt>"HIDDEN"</tt></small>,
-	     <small><tt>"PASSWORD"</tt></small>,
-	     <small><tt>"RADIO"</tt></small>,
-	     <small><tt>"RESET"</tt></small>,
-	     <small><tt>"SUBMIT"</tt></small>,
-	     <small><tt>"TEXT"</tt></small>)</li>
-     <li>VALUE</li>
-     </ul>
-  <li><b>INS</b></li>
-  <li><b>IOD</b> (IOD4 proprietary)<br>
+	  </ul>
+  <li><b>INPUT</b></li>
 	  <ul>
-	  <li>SHOUT</li>
+	  <li>CHECKED</LI>
+	  <li>MAXLENGTH</LI>
+	  <li>SIZE</LI>	
+	  <li>TYPE ('BUTTON','CHECKBOX','FILE',HIDDEN','PASSWORD','RADIO',RESET','SUBMIT',TEXT')</LI>
+	  <li>VALUE</LI>
+	  </ul>
+  <li><b>INS</b></li>
+  <li><b>IOD </b>(IOD4 proprietary)</li>
+ 	 <ul>
+ 	 <li>SHOUT</li> 
 	  </ul>
   <li><b>KBD</b></li>
-  <li><b>LI</b> (list item)<br>
+  <li><b>LI</b> (list item)</li>
  	 <ul>
  	 <li>TYPE</li>
  	 <li>VALUE</li>
  	 </ul>
   <li><b>LISTING</b></li>
   <li><b>MENU</b></li>
-  <li><b>META</b><br>
+  <li><b>META</b></li>
 	  <ul>
 	  <li>CONTENT</li>
-	  <li>HTTP-EQUIV
-	    (<small><tt>"CHARSET"</tt></small>,
-	     <small><tt>"REFRESH"</tt></small>)</li>
+	  <li>HTTP_EQUIV ('"CHARSET','REFRESH"')</li>
 	  </ul>
   <li><b>NOSCRIPT</b></li>
-  <li><b>OL</b> (numbered lists)<br>
+  <li><b>OL</b> (numbered lists)</li>
 	  <ul>
 	  <li>START</li>
 	  <li>TYPE</li>
 	  </ul>
-  <li><strike>OPTION</strike></li>
-  <li><b>P</b><br>
+  <li><b>P</b></li>
 	  <ul>
 	  <li>ALIGN</LI>
 	  </ul>
   <li><b>PLAINTEXT</b></li>
-  <li><b>PRE</b><br>
-     <ul>
-     <li>WIDTH</LI>
-     </ul>
-  <li><b>Q</b><br>
+  <li><b>PRE</b></li>
+  <li><b>Q</b></li>
 	  <ul>
 	  <li>LANG</li>
 	  </ul>
   <li><b>S</b> (strike through)</li>
   <li><b>SAMP</b></li>
   <li><b>SCRIPT</b> (unused atm)</li>
-  <li><strike>SELECT</strike></li>
+  <UL><LI>SELECT</LI></UL>
   <li><b>SMALL</b></li>
   <li><b>STRIKE</b></li>
   <li><b>STRONG</b></li>
   <li><b>STYLE</b> (unused atm)</li>
   <li><b>SUB</b></li>
   <li><b>SUP</b></li>
-  <li><b>TABLE</b><br>
+  <li><b>TABLE</b></li>
 	  <ul>
 	  <li>ALIGN</LI>
 	  <li>BGCOLOR</LI>
@@ -491,41 +469,40 @@ file.</p>
 	  <li>HEIGHT</LI>
 	  <li>WIDTH</LI>
 	  </ul>
-  <li><b>TD</b> (table data cell)<br>
+  <li><b>TD (table data cell)</b></li>
 	  <ul>
-	  <li>ALIGN</li>
-	  <li>BGCOLOR</li>
-	  <li>COLSPAN</li>
-	  <li>HEIGHT</li>
-	  <li>ROWSPAN</li>
-	  <li>VALIGN</li>
-	  <li>WIDTH</li>
+	  <li>ALIGN</LI>
+	  <li>BGCOLOR</LI>
+	  <li>COLSPAN</LI>
+	  <li>HEIGHT</LI>
+	  <li>ROWSPAN</LI>
+	  <li>VALIGN</LI>
+	  <li>WIDTH</LI>
 	  </ul>
-  <li><strike>TEXTAREA</strike><br>
-    <!-- ul>
-      <li>WRAP</li>
-    </ul -->
-  <li><b>TH</b> (table header cell)<br>
+  <li><b>(TEXTAREA)</b></li>
+  <li><b>TH</b> (table header cell)</li>
 	  <ul>
-	  <li>ALIGN</li>
-	  <li>BGCOLOR</li>
-	  <li>COLSPAN</li>
-	  <li>HEIGHT</li>
-	  <li>ROWSPAN</li>
-	  <li>VALIGN</li>
-	  <li>WIDTH</li>
+	  <li>ALIGN</LI>
+	  <li>BGCOLOR</LI>
+	  <li>COLSPAN</LI>
+	  <li>HEIGHT</LI>
+	  <li>ROWSPAN</LI>
+	  <li>VALIGN</LI>
+	  <li>WIDTH</LI>
 	  </ul>
   <li><b>TITLE</b></li>
-  <li><b>TR</b> (table row)<br>
 	  <ul>
-	  <li>ALIGN</li>
-	  <li>BGCOLOR</li>
-	  <li>HEIGHT</li>
-	  <li>VALIGN</li>
 	  </ul>
-  <li><b>TT</b> (teletype font)</li>
+  <li><b>TR</b> (table row)</li>
+	  <ul>
+	  <li>ALIGN</LI>
+	  <li>BGCOLOR</LI>
+	  <li>HEIGHT</LI>
+	  <li>VALIGN</LI>
+	  </ul>
+    <li><b>TT</b> (teletype font)</li>
   <li><b>U</b> (underlined)</li>
-  <li><b>UL</b> (bulleted lists)<br>
+  <li><b>UL</b> (bulleted lists)</li>
 	  <ul>
 	  <li>TYPE</li>
 	  </ul>
@@ -533,26 +510,18 @@ file.</p>
   <li><b>XMP</b></li>
 </ul>
 
-
 <h3><a name="Links"><u>7.&nbsp; Project links</u></a></h3>
 
 <P>While HighWire won't directly use these at this point.  Here are some useful
 links for the HighWire project:</p>
-
-<p><a href="http://highwire.atari-users.net">HighWire Project Homepage</a>
-&mdash; Place for the most current downloads and information about the HighWire
-project.</p>
-
-<p><a href="http://www.atari-users.net/mailman/listinfo/highwire-users_atari-users.net"> 
+<p><a href="http://highwire.atari-users.net" > http://highwire.atari-users.net </a>
+- Place for most current downloads and information about the Highwire project.</p>
+<p><a href="http://www.atari-users.net/mailman/listinfo/highwire-users_atari-users.net" > 
 HighWire Users mailing list </a>
-&mdash; A list for users to ask questions and report bugs.</p>
-
-<p><a href="http://www.atari-users.net/mailman/listinfo/highwire-atari-users.net"> 
+- A list for users to ask questions and report bugs.</p>
+<p><a href="http://www.atari-users.net/mailman/listinfo/highwire-atari-users.net" > 
 HighWire Developer Mailing list </a>
-&mdash; A list for people interested in actively working on the project.</p>
-
-<p><object data="thanks.wav" type="audio/x-wav" width="0" height="0">
-<embed src="thanks.wav" type="audio/x-wav"></object></p>
+- A list for people interested in actively working on the project.</p>
 
 
 </body>
