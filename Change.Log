@@ -1,4 +1,4 @@
-(non-released of Jul. 18, 2003)
+(non-released of Jul. 22, 2003)
 
 - Implemented disk caching of text/html files from
   remote (only per session yet).  To enable this
@@ -11,6 +11,8 @@
 - The toolbar got a stop button now to allow page
   loading to be stopped.  The same function is
   implemented for the escape key now as well.
+  Additional there is also a new button for open
+  file now.
 
 - Improved history functionality to not messed up
   due to frames that are loaded from a different

@@ -76,18 +76,25 @@ static TOOLBTN hw_buttons[] = {
 			0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
 		{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
 			0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
-#define	TBAR_STOP 4
-	{	93, G_WHITE, G_RED,
+#define	TBAR_OPEN 4
+	{	93, G_BLACK, G_CYAN,
+		{	0x0780, 0x1fe8, 0x3078, 0x4038, 0x0078, 0x3800, 0x47c0, 0x8020,
+			0x8ffe, 0x9002, 0x9004, 0xa004, 0xa008, 0xc008, 0xfff0 },
+		{	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x3800, 0x7fc0,
+			0x7000, 0x6ffc, 0x6ff8, 0x5ff8, 0x5ff0, 0x3ff0, 0x0000 } },
+#define	TBAR_STOP 5
+	{114, G_WHITE, G_RED,
 		{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
 			0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
 		{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
 			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
-#define	TBAR_EDIT 5
+#define	TBAR_EDIT 6
 };
 #define TBAR_LEFT_MASK (1 << TBAR_LEFT)
 #define TBAR_RGHT_MASK (1 << TBAR_RGHT)
 #define TBAR_HOME_MASK (1 << TBAR_HOME)
 #define TBAR_REDO_MASK (1 << TBAR_REDO)
+#define TBAR_OPEN_MASK (1 << TBAR_OPEN)
 #define TBAR_STOP_MASK (1 << TBAR_STOP)
 
 typedef struct {
@@ -796,7 +803,7 @@ hwWind_history (HwWIND This, UWORD menu)
 		                        entr, numberof(entr));
 		if (!num) {
 			static BOOL chng_toolbar (HwWIND, UWORD, UWORD, WORD);
-			UWORD bttn_on  = TBAR_REDO_MASK;
+			UWORD bttn_on  = TBAR_REDO_MASK|TBAR_OPEN_MASK;
 			UWORD bttn_off = 0;
 			if (This->HistMenu != menu) {
 #ifdef GEM_MENU
@@ -1261,7 +1268,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageFinished: {
-			WORD bttn_on = TBAR_REDO_MASK;
+			WORD bttn_on = TBAR_REDO_MASK|TBAR_OPEN_MASK;
 			if (wind->loading && !--wind->loading) {
 				char flag = (!wind->HistUsed
 				             ? ' ' : wind->History[wind->HistMenu]->Text[0]);
@@ -1418,7 +1425,8 @@ hwWind_button (WORD mx, WORD my)
 			do if (x >= wind->TbarElem[tb_n].Offset) {
 				if (x > wind->TbarElem[tb_n].Offset + wind->TbarElem[tb_n].Width) {
 					tb_n = -1;
-				} else if (tb_n < TBAR_EDIT && !(wind->TbarMask & (1 << tb_n))) {
+				} else if (tb_n == TBAR_EDIT ?  wind->TbarMask & TBAR_STOP_MASK
+				                             : !(wind->TbarMask & (1 << tb_n))) {
 					wind = NULL;
 				}
 				break;
@@ -1511,6 +1519,7 @@ hwWind_button (WORD mx, WORD my)
 			case TBAR_HOME: hist = 0;
 			case TBAR_REDO: hwWind_history  (wind, hist);  break;
 			case TBAR_STOP: containr_escape (wind->Pane);  break;
+			case TBAR_OPEN: menu_open       (TRUE);
 			default:        chng_toolbar (wind, 0, 0, -1);
 		}
 		wind = NULL;

@@ -22,7 +22,7 @@ struct hw_window {
 	struct {
 		WORD Offset;
 		WORD Width;    
-	}       TbarElem[6];
+	}       TbarElem[7];
 	HwWIND  Next;
 	void  * Pane;
 	void  * Active;
