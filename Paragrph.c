@@ -170,7 +170,8 @@ void paragrph_finish (TEXTBUFF current)
 		} else if (current->prev_wrd) {
 			if (current->prev_wrd->length == 1 && current->prev_wrd->space_width) {
 				/* mark trailing space to be deleteable */
-				current->prev_wrd->wrap = TRUE;
+				destroy_word_list (current->word, NULL);
+				current->prev_wrd->next_word = NULL;
 			}
 		} else if (current->prev_par) {
 			current->prev_par->next_paragraph = NULL;
