@@ -218,8 +218,9 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			                   ? containr_byName (cont, link->u.target) : NULL);
 			if (target) {
 				const char * p = strchr (addr, '#');
-				if (p && containr_Frame (target)) {
-					const char * file = containr_Frame (target)->Location->File;
+				FRAME  t_frame = containr_Frame (target);
+				if (p && t_frame) {
+					const char * file = t_frame->Location->File;
 					if (strncmp (file, addr, (p - addr)) == 0 && !file[p - addr]) {
 						addr = p;
 						cont = target;   /* content matches */
