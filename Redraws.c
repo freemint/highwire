@@ -42,7 +42,6 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 			l[4] = l[0];
 			v_pline (vdi_handle, 5, (short*)l);
 		}
-
 		if (frame->scroll != SCROLL_NEVER)
 		{
 			if (frame->v_bar.on && clip.g_x + clip.g_w -1 > bgnd[1].p_x) {
@@ -102,7 +101,7 @@ draw_vbar (FRAME frame, BOOL complete)
 		p[0].p_y            = frame->clip.g_y + frame->clip.g_h -1;
 		p[1].p_y            = frame->clip.g_y;
 		if (frame->border) {
-			n = 2;
+			n = 2; 
 		} else {
 			p[2].p_x = p[3].p_x = rgt +1;
 			p[2].p_y = p[1].p_y;
@@ -607,8 +606,8 @@ draw_contents (CONTENT * content,
 	long     clip_y    = (long)clip->g_y - y_abs;
 
 	if (content->Backgnd >= 0) {
-		long x = x_abs + content->Width  -1;
-		long y = y_abs + content->Height -1;
+		long x = x_abs + content->Width;
+		long y = y_abs + content->Height;
 		PXY  p[2];
 		p[0].p_x = ((long)clip->g_x >= x_abs ? clip->g_x : x_abs);
 		p[0].p_y = ((long)clip->g_y >= y_abs ? clip->g_y : y_abs);
