@@ -343,17 +343,19 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 	const char * symbol    = *text;
 	CONTAINR     container = parser->Target;
 	FRAME        frame     = parser->Frame;
-	LOCATION     base      = frame->Location;
+	LOCATION     base      = frame->BaseHref;
 	BOOL    update = FALSE;
 	HTMLTAG tag    = TAG_FRAMESET;
 	BOOL    slash  = FALSE;
 	int     depth  = 0;
 
 	if (!container) {
-		errprintf ("render_frameset(): NO CONTAINER in '%s'!\n", base->File);
+		errprintf ("render_frameset(): NO CONTAINER in '%s'!\n",
+		           frame->Location->File);
 		exit(EXIT_FAILURE);
 	} else if (container->Mode) {
-		errprintf ("render_frameset(): container not cleared in '%s'!\n", base->File);
+		errprintf ("render_frameset(): container not cleared in '%s'!\n",
+		           frame->Location->File);
 		exit(EXIT_FAILURE);
 	}
 
@@ -516,8 +518,9 @@ render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		char output[HW_PATH_MAX];
-		if (get_value (parser, KEY_HREF, output, sizeof(output))) {
-			LOCATION base = new_location (output, parser->Frame->Location);
+		if (get_value (parser, KEY_HREF, output, sizeof(output)-1)) {
+			LOCATION base = new_location (strcat (output, "/"),
+			                              parser->Frame->Location);
 			if (base) {
 				free_location (&parser->Frame->BaseHref);
 				parser->Frame->BaseHref = base;
