@@ -197,7 +197,7 @@ load_sampleovl();
 			                 out.emo_kmeta,out.emo_mclicks);
 		}
 		if (event & MU_KEYBD) {
-			key_pressed (out.emo_kreturn, out.emo_kmeta);
+			window_evKeybrd (out.emo_kreturn, out.emo_kmeta);
 		}
 		schedule (1);
 	}
@@ -284,6 +284,19 @@ vTab_evButton (WINDOW This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static void
+vTab_evKeybrd (WINDOW This, WORD scan, WORD ascii, UWORD kstate)
+{
+	(void)scan;
+	(void)ascii;
+	(void)kstate;
+	if (splash) {
+		sched_remove (close_splash, splash);
+		close_splash (This, 0l);
+	}
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
 vTab_draw (WINDOW This, const GRECT * clip)
 {
 	MFDB  scrn     = { NULL, };
@@ -327,6 +340,7 @@ open_splash (void)
 	curr.g_h =  h;
 	splash = window_ctor (malloc (sizeof (WINDOWBASE)), 0, &curr, TRUE);
 	splash->evButton = vTab_evButton;
+	splash->evKeybrd = vTab_evKeybrd;
 	splash->drawWork = vTab_draw;
 	window_redraw (splash, NULL);
 	sched_insert (close_splash, splash, 0l, 20);

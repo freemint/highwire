@@ -23,6 +23,7 @@
 #include "hwWind.h"
 static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
 static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
+static void vTab_evKeybrd  (HwWIND, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_drawWork  (HwWIND, const GRECT *);
 static void vTab_drawIcon  (HwWIND, const GRECT *);
 static void vTab_raised    (HwWIND, BOOL topNbot);
@@ -202,6 +203,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	window_ctor (This, wind_kind, NULL, FALSE);
 	This->Base.evMessage = vTab_evMessage;
 	This->Base.evButton  = vTab_evButton;
+	This->Base.evKeybrd  = vTab_evKeybrd;
 	This->Base.drawWork  = vTab_drawWork;
 	This->Base.drawIcon  = vTab_drawIcon;
 	This->Base.raised    = vTab_raised;
@@ -696,8 +698,13 @@ vTab_raised (HwWIND This, BOOL topNbot)
 {
 	HwWIND new_top = hwWind_Top;
 	
-	if (topNbot && (wind_kind & (LFARROW|HSLIDE))) {
-		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+	if (topNbot) {
+		WORD mx, my, u;
+		if (wind_kind & (LFARROW|HSLIDE)) {
+			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
+		}
+		graf_mkstate (&mx, &my, &u,&u);
+		check_mouse_position (mx, my);
 	}
 #ifdef GEM_MENU
 	if (new_top) {
@@ -1783,20 +1790,21 @@ open_scrap (BOOL rdNwr)
 }
 
 /*============================================================================*/
-HwWIND
-hwWind_keybrd (WORD key, UWORD state)
+static void
+vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 {
-	HwWIND wind = hwWind_Top;
+	BOOL more = FALSE;
 	
-	if (!wind || (!wind->TbarH && !wind->Input)) {
-		return wind;
+	if (!This->TbarH && !This->Input) {
+		more = TRUE;
 	
-	} else if (wind->Input) {
+	} else if (This->Input) {
 		GRECT    clip, rect;
 		INPUT    next;
-		WORDITEM word = input_keybrd (wind->Input, key, state, &clip, &next);
+		WORD     key  = (scan << 8) | ascii;
+		WORDITEM word = input_keybrd (This->Input, key, kstate, &clip, &next);
 		if (word) {
-			FRAME frame = containr_Frame ((CONTAINR)wind->Active);
+			FRAME frame = containr_Frame ((CONTAINR)This->Active);
 			long  x, y;
 			dombox_Offset (&word->line->Paragraph->Box, &x, &y);
 			x += (long)clip.g_x + word->h_offset
@@ -1804,18 +1812,18 @@ hwWind_keybrd (WORD key, UWORD state)
 			y += (long)clip.g_y + word->line->OffsetY
 			     + frame->clip.g_y - frame->v_bar.scroll;
 			
-			if (next != wind->Input) {
+			if (next != This->Input) {
 				if (next) {
 					PXY pxy = { 0, 0 };
 					input_handle (next, pxy, &rect, NULL);
 				}
-				wind->Input = next;
+				This->Input = next;
 			} else {
 				next = NULL;
 			}
 			clip.g_x = x;
 			clip.g_y = y;
-			hwWind_redraw (wind, &clip);
+			hwWind_redraw (This, &clip);
 			if (next) {
 				long dx = 0, dy = 0, d;
 				x -= rect.g_x + frame->clip.g_x;
@@ -1830,7 +1838,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					if ((d = y)                              < 0) y -= (dy = d -2);
 				}
 				if (dx || dy) {
-					hwWind_scroll (wind, wind->Active, dx, dy);
+					hwWind_scroll (This, This->Active, dx, dy);
 					d = ((rect.g_w > (dx >= 0 ? dx : -dx)) &&
 					     (rect.g_h > (dx >= 0 ? dx : -dx)));
 				} else {
@@ -1839,32 +1847,31 @@ hwWind_keybrd (WORD key, UWORD state)
 				if (d) {
 					rect.g_x = x + frame->clip.g_x;
 					rect.g_y = y + frame->clip.g_y;
-					hwWind_redraw (wind, &rect);
+					hwWind_redraw (This, &rect);
 				}
 			}
 		}
 	
-	} else if (wind->TbarActv != TBAR_EDIT) {
-		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)
-		    && !wind->Base.isIcon && !wind->shaded) {
-			TBAREDIT * edit = TbarEdit (wind);
+	} else if (This->TbarActv != TBAR_EDIT) {
+		if (ascii == 27 && !containr_escape (This->Pane)
+		    && !This->Base.isIcon && !This->shaded) {
+			TBAREDIT * edit = TbarEdit (This);
 			edit->Cursor = 0;
 			edit->Shift  = 0;
-			chng_toolbar (wind, 0, 0, TBAR_EDIT);
-			wind = NULL;
+			chng_toolbar (This, 0, 0, TBAR_EDIT);
+			This = NULL;
 		}
-		return wind;
+		more = TRUE;
 	
 	} else {
-		TBAREDIT * edit = TbarEdit (wind);
-		WORD       asc  = key & 0xFF;
+		TBAREDIT * edit = TbarEdit (This);
 		GRECT      clip = { 0,0,0, };
 		WORD       scrl = 0;
 		BOOL       chng = FALSE;
 		
-		if (state & K_CTRL) switch (key) {
+		if (kstate & K_CTRL) switch (scan) {
 			
-			case 0x2E03: /* ^C -- copy to clipboard */
+			case 0x2E: /* ^C -- copy to clipboard */
 				if (edit->Length) {
 					FILE * file = open_scrap (FALSE);
 					if (file) {
@@ -1874,7 +1881,7 @@ hwWind_keybrd (WORD key, UWORD state)
 				}
 				break;
 			
-			case 0x2F16: /* ^V -- copy from clipboard */
+			case 0x2F: /* ^V -- copy from clipboard */
 				if (edit->Length < sizeof(edit->Text) -1) {
 					FILE * file = open_scrap (TRUE);
 					if (file) {
@@ -1898,7 +1905,7 @@ hwWind_keybrd (WORD key, UWORD state)
 				}
 				break;
 			
-			case 0x7300: /* ^left */
+			case 0x73: /* ^left */
 				if (edit->Cursor) {
 					short crs = edit->Cursor;
 					while (--crs && isalnum (edit->Text[crs]));
@@ -1906,7 +1913,7 @@ hwWind_keybrd (WORD key, UWORD state)
 				}
 				break;
 			
-			case 0x7400: /* ^right */
+			case 0x74: /* ^right */
 				if (edit->Cursor < edit->Length) {
 					short crs = edit->Cursor;
 					while (++crs < edit->Length && isalnum (edit->Text[crs]));
@@ -1917,30 +1924,30 @@ hwWind_keybrd (WORD key, UWORD state)
 			default:
 				edit->Cursor = 0;
 				edit->Shift  = 0;
-				chng_toolbar (wind, 0, 0, -1);
-				return wind;
+				chng_toolbar (This, 0, 0, -1);
+				more = TRUE;
 			
-		} else if (asc > ' ' && asc < 127 &&
-		           (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
+		} else if (ascii > ' ' && ascii < 127 &&
+		       (ascii < '0' || ascii > '9' || !(kstate & (K_RSHIFT|K_LSHIFT)))) {
 			if (edit->Length < sizeof(edit->Text) -1) {
 				char * end = edit->Text + edit->Length;
 				char * dst = edit->Text + edit->Cursor;
 				do {
 					*(end +1) = *(end);
 				} while (--end >= dst);
-				*dst = asc;
+				*dst = ascii;
 				edit->Length++;
 				scrl = +1;
 				chng = TRUE;
 			}
 		
-		} else if (asc) switch (asc) {
+		} else if (ascii) switch (ascii) {
 			
 			case 8: /* backspace */
 				if (!edit->Cursor) {
 					break;
 				
-				} else if (state & (K_RSHIFT|K_LSHIFT)) {
+				} else if (kstate & (K_RSHIFT|K_LSHIFT)) {
 					char * dst = edit->Text;
 					char * src = edit->Text + edit->Cursor;
 					while ((*(dst++) = *(src++)) != '\0');
@@ -1956,7 +1963,7 @@ hwWind_keybrd (WORD key, UWORD state)
 				if (edit->Cursor < edit->Length) {
 					short  crs = edit->Cursor - edit->Shift;
 					char * dst = edit->Text + edit->Cursor, * src = dst;
-					if (state & (K_RSHIFT|K_LSHIFT)) {
+					if (kstate & (K_RSHIFT|K_LSHIFT)) {
 						*dst = '\0';
 						edit->Length = edit->Cursor;
 					} else {
@@ -1979,7 +1986,7 @@ hwWind_keybrd (WORD key, UWORD state)
 					edit->Cursor  = 0;
 					edit->Shift   = 0;
 					edit->Text[0] = '\0';
-					clip.g_w = wind->TbarElem[TBAR_EDIT].Width -4;
+					clip.g_w = This->TbarElem[TBAR_EDIT].Width -4;
 				}
 				break;
 			
@@ -1997,14 +2004,14 @@ hwWind_keybrd (WORD key, UWORD state)
 							memcpy  (edit->Text,       http,       gap);
 						}
 					}
-					start_page_load (wind->Pane, edit->Text, NULL, TRUE, NULL);
-					chng_toolbar (wind, 0, 0, -1);
+					start_page_load (This->Pane, edit->Text, NULL, TRUE, NULL);
+					chng_toolbar (This, 0, 0, -1);
 					break;
 				}
 			case 9: /* tab */
 				edit->Cursor = 0;
 				edit->Shift  = 0;
-				chng_toolbar (wind, 0, 0, -1);
+				chng_toolbar (This, 0, 0, -1);
 				break;
 			
 			case 52: /* shift+left */
@@ -2020,7 +2027,7 @@ hwWind_keybrd (WORD key, UWORD state)
 				scrl = edit->Length - edit->Cursor;
 				break;
 		
-		} else switch (key >>8) {
+		} else switch (scan) {
 			
 			case 0x4B: /* left */
 				if (edit->Cursor) {
@@ -2043,8 +2050,8 @@ hwWind_keybrd (WORD key, UWORD state)
 				break;
 			
 			case 0x52: /* insert */
-				if (wind->Active) {
-					FRAME frame = containr_Frame ((CONTAINR)wind->Active);
+				if (This->Active) {
+					FRAME frame = containr_Frame ((CONTAINR)This->Active);
 					if (frame) {
 						edit->Length = location_FullName (frame->Location,
 						                              edit->Text, sizeof(edit->Text));
@@ -2056,7 +2063,7 @@ hwWind_keybrd (WORD key, UWORD state)
 						} else {
 							edit->Shift = edit->Length - edit->Visible;
 						}
-						clip.g_w = wind->TbarElem[TBAR_EDIT].Width -4;
+						clip.g_w = This->TbarElem[TBAR_EDIT].Width -4;
 					}
 				}
 				break;
@@ -2064,7 +2071,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			case 97: /* undo */
 				edit->Cursor = 0;
 				edit->Shift  = 0;
-				chng_toolbar (wind, 0, 0, -1);
+				chng_toolbar (This, 0, 0, -1);
 				break;
 		}
 		
@@ -2073,7 +2080,7 @@ hwWind_keybrd (WORD key, UWORD state)
 			edit->Cursor += scrl;
 			if (edit->Shift < edit->Cursor - edit->Visible) {
 				edit->Shift = edit->Cursor - edit->Visible;
-				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -4;
+				clip.g_w    = This->TbarElem[TBAR_EDIT].Width -4;
 			} else {
 				clip.g_x    = old_crs *8;
 				clip.g_w    = (chng && edit->Cursor < edit->Length
@@ -2083,20 +2090,23 @@ hwWind_keybrd (WORD key, UWORD state)
 			edit->Cursor += scrl;
 			if (edit->Shift > edit->Cursor) {
 				edit->Shift = edit->Cursor;
-				clip.g_w    = wind->TbarElem[TBAR_EDIT].Width -4;
+				clip.g_w    = This->TbarElem[TBAR_EDIT].Width -4;
 			} else {
 				clip.g_x    = (edit->Cursor - edit->Shift) *8;
 				clip.g_w    = -scrl *8 +2;
 			}
 		}
 		if (clip.g_w) {
-			clip.g_x += wind->Work.g_x + wind->TbarElem[TBAR_EDIT].Offset +2;
-			clip.g_y =  wind->Work.g_y;
-			clip.g_h =  wind->TbarH;
-			draw_toolbar (wind, &clip, FALSE);
+			clip.g_x += This->Work.g_x + This->TbarElem[TBAR_EDIT].Offset +2;
+			clip.g_y =  This->Work.g_y;
+			clip.g_h =  This->TbarH;
+			draw_toolbar (This, &clip, FALSE);
 		}
 	}
-	return NULL;
+	
+	if (more) {
+		key_pressed (scan, ascii, kstate);
+	}
 }
 
 

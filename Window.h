@@ -16,6 +16,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	/***/
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
 	void (*evButton) (WINDOW_t, WORD bmask, PXY, UWORD kstate, WORD clicks);
+	void (*evKeybrd) (WINDOW_t, WORD scan, WORD ascii, UWORD kstate);
 	void (*drawWork)(WINDOW_t, const GRECT *);
 	void (*drawIcon)(WINDOW_t, const GRECT *);
 	void (*raised)(WINDOW_t, BOOL topNbot);
@@ -26,6 +27,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 
 BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 void window_evButton  (WORD bmask, PXY mouse, UWORD kstate, WORD clicks);
+void window_evKeybrd  (UWORD key, UWORD kstate);
 
 void window_redraw (WINDOW, const GRECT *);
 

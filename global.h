@@ -140,7 +140,7 @@ OFFSET * frame_anchor    (FRAME, const char * name);
 
 /* in keyinput.c */
 
-void key_pressed (WORD key, UWORD state);
+void key_pressed (WORD scan, WORD ascii, UWORD state);
 
 /* in Loader.c */
 

@@ -1000,7 +1000,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			Receive_AV(msg);
 			break;
 		case AV_SENDKEY:
-			key_pressed(msg[4], msg[3]);
+			window_evKeybrd (msg[4], msg[3]);
 			break;
 		case AV_OPENWIND:
 			state |= K_ALT;

@@ -61,18 +61,14 @@ frame_next (FRAME frame)
 
 /*============================================================================*/
 void
-key_pressed (WORD key, UWORD state)
+key_pressed (WORD scan, WORD ascii, UWORD state)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
 	long  sx = 0, sy = 0;
 	
-	if (!hwWind_keybrd (key, state)) {
-		return;
-	}
+	switch (scan) {
 	
-	switch (key & 0xFF00)  /* scan code */
-	{
-	case 0x0F00:  /* Tab: change active frame */
+	case 0x0F:  /* Tab: change active frame */
 		if (active && (active = frame_next (active)) != NULL) {
 			hwWind_setActive (hwWind_Top, active->Container, NULL);
 		#if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
@@ -81,57 +77,57 @@ key_pressed (WORD key, UWORD state)
 		} else {
 			hwWind_setActive (hwWind_Top, NULL, NULL);
 		}
-		key = 0;  /* this key has character HT */
+		ascii = 0;  /* this key has character HT */
 		break;
-	case 0x3F00:  /* F5 (Internet Explorer), CTRL+R: reload */
+	case 0x3F:  /* F5 (Internet Explorer), CTRL+R: reload */
 		menu_reload (ENCODING_Unknown);
 		break;
-	case 0x4100:  /* F7: toggle logging */
+	case 0x41:  /* F7: toggle logging */
 		menu_logging (-1);
 		break;
-	case 0x4200:  /* F8: toggle pictures or alternative text */
+	case 0x42:  /* F8: toggle pictures or alternative text */
 		menu_alt_text (-1);
 		break;
-	case 0x4700:  /* home */
+	case 0x47:  /* home */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
 			sx = -active->Page.Rect.W;
 			sy = -active->Page.Rect.H;
 			break;
 		} /* else fall through */
-	case 0x4F00:  /* end */
+	case 0x4F:  /* end */
 		sx = -active->Page.Rect.W;
 		sy = +active->Page.Rect.H;
 		break;
-	case 0x4800:  /* /|\ */
+	case 0x48:  /* /|\ */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
 			sy = -scroll_step;
 			break;
 		} /* else fall through */
-	case 0x4900:  /* page up */
+	case 0x49:  /* page up */
 		sy = -(active->clip.g_h - scroll_step);
 		break;
-	case 0x5000:  /* \|/ */
-		key = 0;  /* this key has character '2' */
+	case 0x50:  /* \|/ */
+		ascii = 0;  /* this key has character '2' */
 		if (!(state & (K_RSHIFT|K_LSHIFT))) {
 			sy = +scroll_step;
 			break;
 		} /* else fall through */
-	case 0x5100:  /* page down */
+	case 0x51:  /* page down */
 		sy = +(active->clip.g_h - scroll_step);
 		break;
-	case 0x4B00:  /* <- */
+	case 0x4B:  /* <- */
 		sx = -(state & (K_RSHIFT|K_LSHIFT)
 		       ? active->clip.g_w - scroll_step : scroll_step);
 		break;
-	case 0x4D00:  /* -> */
+	case 0x4D:  /* -> */
 		sx = +(state & (K_RSHIFT|K_LSHIFT)
 		       ? active->clip.g_w - scroll_step : scroll_step);
 		break;
-	case 0x6100:  /* Undo */
+	case 0x61:  /* Undo */
 		hwWind_undo (hwWind_Top, (state & (K_RSHIFT|K_LSHIFT)));
 		break;
-	case 0x3B00:  /* F1 (defined in DIN 2137-6, Nr 6.2.4 (ISO/IEC 9995-6?)) */
-	case 0x6200:  /* Help */
+	case 0x3B:  /* F1 (defined in DIN 2137-6, Nr 6.2.4 (ISO/IEC 9995-6?)) */
+	case 0x62:  /* Help */
 		start_cont_load ((active ? containr_Base (active) : hwWind_Top->Pane),
 		                 help_file, NULL, TRUE, TRUE);
 		break;
@@ -140,11 +136,11 @@ key_pressed (WORD key, UWORD state)
 		hwWind_scroll (hwWind_Top, active->Container, sx, sy);
 	}
 
-	switch (toupper(key & 0xFF))  /* character */
-	{
+	switch (toupper (ascii)) {
+	
 	case '+':  /* +: increase font size and reload */
 	case '-':  /* -: decrease font size and reload */
-		menu_fontsize (key & 0xFF);
+		menu_fontsize (ascii);
 		break;
 	case '1':  /* 1: reload with default encoding windows-1252 */
 		menu_reload (ENCODING_WINDOWS1252);
@@ -176,15 +172,6 @@ key_pressed (WORD key, UWORD state)
 	case 0x0009:  /* CTRL+I */
 		menu_info();
 		break;
-	case 0x0011:  /* CTRL+Q */
-		menu_quit();
-		break;
-	case 0x0017:{ /* CTRL+W */
-		WORD   mx, my, u;
-		window_raise (NULL, TRUE, NULL);
-		graf_mkstate (&mx, &my, &u,&u);
-		check_mouse_position (mx, my);
-	}	break;
 	case 0x0015:  /* CTRL+U */
 		delete_hwWind (hwWind_Top);
 		if (hwWind_Top) {

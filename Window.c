@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdlib.h>
 #include <gem.h>
 
 #include "hw-types.h"
@@ -7,6 +8,7 @@
 #include "Window.h"
 static BOOL vTab_evMessage (WINDOW, WORD msg[], PXY, UWORD);
 static void vTab_evButton  (WINDOW, WORD bmask, PXY, UWORD, WORD clicks);
+static void vTab_evKeybrd  (WINDOW, WORD scan, WORD ascii, UWORD kstate);
 static void vTab_draw      (WINDOW, const GRECT *);
 static void vTab_raised    (WINDOW, BOOL topNbot);
 
@@ -35,6 +37,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		
 		This->evMessage = vTab_evMessage;
 		This->evButton  = vTab_evButton;
+		This->evKeybrd  = vTab_evKeybrd;
 		This->drawWork  = vTab_draw;
 		This->drawIcon  = vTab_draw;
 		This->raised    = vTab_raised;
@@ -121,6 +124,32 @@ window_evButton (WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 	}
 	if (wind && (wind == window_Top || !window_Top->isModal)) {
 		(*wind->evButton)(wind, bmask, mouse, kstate, clicks);
+	}
+}
+
+
+/*============================================================================*/
+#include <stdio.h>
+static void
+vTab_evKeybrd (WINDOW This, WORD scan, WORD ascii, UWORD kstate)
+{
+	window_raise (This, TRUE, NULL);
+	(void)scan;
+	(void)ascii;
+	(void)kstate;
+	printf ("window::evKeybrd (0x%02X,0x%02X,0x%04X)\n", scan, ascii, kstate);
+}
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+void
+window_evKeybrd (UWORD key, UWORD kstate)
+{
+	WORD scan  = key >> 8;
+	WORD ascii = key & 0xFF;
+	
+	switch (ascii) {
+		case 0x0017: /* CTRL+W */ window_raise (NULL, TRUE, NULL); break;
+		case 0x0011: /* CTRL+Q */ exit (0);
+		default:     (*window_Top->evKeybrd)(window_Top, scan, ascii, kstate);
 	}
 }
 
