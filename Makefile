@@ -15,7 +15,7 @@ CPU = 68030
 #CPU = 68040
 #CPU = 68020-60
 
-DEFS = -DUSE_OVL -DUSE_INET -DLIBGIF -DLIBPNG -DLIBJPG
+DEFS = -DUSE_OVL -DUSE_INET -DLIBGIF -DLIBPNG -DLIBJPG -DIMG_XMP
 
 OPTS = $(CPU:%=-m%) -fomit-frame-pointer -funsigned-char \
        -O2 -fstrength-reduce
