@@ -191,8 +191,9 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 #else
 	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
-		sched_insert (image_job, img, (long)img->frame->Container);
-		containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+		if (sched_insert (image_job, img, (long)img->frame->Container)) {
+			containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+		}
 	}
 	
 	return img;
@@ -292,8 +293,9 @@ image_calculate (IMAGE img, short par_width)
 					free (img->u.Mfdb);
 					img->u.Mfdb = NULL;
 				}
-				sched_insert (image_job, img, (long)img->frame->Container);
-				containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+				if (sched_insert (image_job, img, (long)img->frame->Container)) {
+					containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+				}
 			}
 		}
 	
@@ -414,10 +416,10 @@ image_job (void * arg, long invalidated)
 		
 		containr_notify (frame->Container, HW_ImgBegLoad, img->source->FullName);
 		
-		if ((info = get_decoder (loc->FullName)) != NULL &&
-		    (data = setup (img, info))           != NULL) {
-			info->RowBuf = malloc ((info->ImgWidth +1) * info->NumComps);
-			read_img (img, info, data);
+		if ((info = get_decoder (loc->FullName)) != NULL) {
+			if ((data = setup (img, info))        != NULL) {
+				read_img (img, info, data);
+			}
 			(*info->quit)(info);
 			if (info->RowBuf) free (info->RowBuf);
 			if (info->DthBuf) free (info->DthBuf);
@@ -516,10 +518,24 @@ setup (IMAGE img, IMGINFO info)
 	
 	img_scale (img, info->ImgWidth, info->ImgHeight, info);
 	
+	if ((info->RowBuf = malloc ((info->ImgWidth +1) * info->NumComps)) == NULL) {
+		return NULL;
+	}
+	if (info->BitDepth > 1 && planes <= 8) {
+		size_t size = (img->disp_w +1) *3;
+		if ((info->DthBuf = malloc (size)) == NULL) {
+			return NULL;
+		} else {
+			memset (info->DthBuf, 0, size);
+		}
+	}
+	
 	wd_width = (img->disp_w + 31) / 16;
 	pg_size  = wd_width * img->disp_h;
 	mem_size = pg_size *2 * n_planes;
-	data     = malloc (sizeof (struct s_img_data) + mem_size);
+	if ((data = malloc (sizeof (struct s_img_data) + mem_size)) == NULL) {
+		return NULL;
+	}
 	data->mem_size   = mem_size;
 	data->img_w      = info->ImgWidth;
 	data->img_h      = info->ImgHeight;
@@ -540,11 +556,6 @@ setup (IMAGE img, IMGINFO info)
 	}
 	
 	if (info->BitDepth > 1) {
-		if (planes <= 8) {
-			size_t size = (img->disp_w +1) *3;
-			info->DthBuf = malloc   (size);
-			memset (info->DthBuf, 0, size);
-		}
 		if (info->Palette) {
 			(*cnvpal_color)(info, transpar);
 			info->raster = raster_cmap;
