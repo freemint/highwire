@@ -27,6 +27,7 @@ struct hw_window {
 	HwWIND  Next;
 	void  * Pane;
 	void  * Active;
+	void  * Input;
 	char    Name[128];
 	char    Stat[128];
 	char    Info[128];
@@ -64,7 +65,7 @@ HwWIND hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
 HwWIND hwWind_button (WORD mx, WORD my);
 HwWIND hwWind_keybrd (WORD key, UWORD state);
 
-FRAME hwWind_setActive   (HwWIND, CONTAINR);
+FRAME hwWind_setActive   (HwWIND, CONTAINR, INPUT);
 FRAME hwWind_ActiveFrame (HwWIND);
 
 

@@ -16,6 +16,7 @@
 #include "hwWind.h"
 #include "Loader.h"
 #include "Location.h"
+#include "Form.h"
 #include "cache.h"
 #include "Logging.h"
 
@@ -203,6 +204,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->loading = 0;
 	This->Pane    = new_containr (NULL);
 	This->Active  = NULL;
+	This->Input   = NULL;
 	containr_register (This->Pane, wnd_hdlr, (long)This);
 	
 	This->HistUsed = 0;
@@ -1297,6 +1299,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		case HW_PageCleared:
 			if (wind->Active == cont) {
 				wind->Active = NULL;
+				wind->Input  = NULL;
 			}
 			break;
 		
@@ -1370,7 +1373,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			chng_toolbar  (wind, bttn_on, 0, -1);
 			hwWind_redraw (wind, gen_ptr);
 			if (gen_ptr) {
-				FRAME active = hwWind_setActive (wind, cont);
+				FRAME active = hwWind_setActive (wind, cont, NULL);
 #if defined(GEM_MENU) && (_HIGHWIRE_ENCMENU_ == 1)
 				update_menu (active->Encoding,
 				             (active->MimeType == MIME_TXT_PLAIN));
@@ -1808,8 +1811,29 @@ hwWind_keybrd (WORD key, UWORD state)
 {
 	HwWIND wind = hwWind_Top;
 	
-	if (!wind || !wind->TbarH) {
+	if (!wind || (!wind->TbarH && !wind->Input)) {
 		return wind;
+	
+	} else if (wind->Input) {
+		GRECT clip;
+		WORDITEM word = input_keybrd (wind->Input, key, state, &clip);
+		if (word) {
+			DOMBOX * box = &word->line->Paragraph->Box;
+			FRAME  frame = containr_Frame ((CONTAINR)wind->Active);
+			long   x     = (long)word->h_offset
+			             + frame->clip.g_x - frame->h_bar.scroll;
+			long   y     = word->line->OffsetY
+			             + frame->clip.g_y - frame->v_bar.scroll;
+			do {
+				x += box->Rect.X;
+				y += box->Rect.Y;
+			} while ((box = box->Parent) != NULL);
+			clip.g_x += x;
+			clip.g_y += y;
+			if (rc_intersect (&frame->clip, &clip)) {
+				hwWind_redraw (wind, &clip);
+			}
+		}
 	
 	} else if (wind->TbarActv != TBAR_EDIT) {
 		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)
@@ -2069,7 +2093,7 @@ hwWind_keybrd (WORD key, UWORD state)
 
 /*============================================================================*/
 FRAME
-hwWind_setActive (HwWIND This, CONTAINR cont)
+hwWind_setActive (HwWIND This, CONTAINR cont, INPUT input)
 {
 	FRAME active = NULL;
 	
@@ -2080,8 +2104,10 @@ hwWind_setActive (HwWIND This, CONTAINR cont)
 		}
 		if (cont && (active = containr_Frame (cont)) != NULL) {
 			This->Active = cont;
+			This->Input  = input;
 		} else {
 			This->Active = NULL;
+			This->Input  = NULL;
 		}
 	}
 	return active;
