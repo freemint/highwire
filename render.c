@@ -387,6 +387,9 @@ box_anchor (PARSER parser, DOMBOX * box, BOOL force)
 			current->anchor  = &anchor->next_location;
 		}
 	}
+	if (get_value (parser, KEY_CLASS, out, sizeof(out))) {
+		dombox_setClass (box, out, force);
+	}
 }
 
 /*----------------------------------------------------------------------------*/
