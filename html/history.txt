@@ -1,5 +1,303 @@
 Ok here are the new supports and changes
 
+October 20, 2003   [V. 0.1.5 release]
+
+  AltF4's patches
+
+  defs.h:
+    - line 6:  bumped to 0.1.5 beta.
+
+  hwWind.c:
+    - line 228 (new_hwWind):  automatically select the URL input field
+      when none was given to load.
+
+  keyinput.c:
+    - line 170 (key_pressed):  new shortcut CTRL+N to open a new empty
+      window.
+
+October 19, 2003
+
+  AltF4's patches
+
+  Containr.c:
+    - line 158 + 178..186 + 190 (containr_resume):  improved handling
+      of incorrect absolute sizes.
+
+  Containr.h:  line 30..32:
+  hwWind.c:    line 1385..1387 + 1395 + 1397..1398 (wnd_hdlr):
+    - extended specification for HW_ActivityBeg and HW_ActivityEnd.
+
+October 18, 2003
+
+  AltF4's patches
+
+  inet.h:  line 16 + 38:
+  inet.c:  line 236 + 246 (inet_send):
+    - changed pointer argument type to const.
+
+  http.c:
+    - line 353..363 (http_header):  bugfix, avoid buffer overflow
+      crashes due to very long URLs.
+
+October 17, 2003
+
+  AltF4's patches
+
+  inet.h:
+    - line 4..36:  comments added.
+
+  inet.c:
+    - line 246..247 (inet_send):  corrected return value for STiK.
+
+October 10, 2003
+
+  AltF4's patches
+
+  scanner.c:
+    - line 385 (scan_namedchar):  validity check and recoding of silly
+      numerical values from the 1252 code page instead of Unicode.
+
+October 09, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 2139 + 2148 (read_img):  check to avoid writing outside of
+      the bitmap memory.
+
+  img_png.c:
+    - line 113 (decPng_quit):  catch invalid date at the file end, to
+      avoid crashes.
+
+  Mouse_R.c:
+    - line 203 + 228 (button_clicked):  trigger mouse button released
+      to avoid multiple calls due to button hold on a link.
+
+  schedule.h:
+    - line 29 + 48..50:  comments about priority setting added.
+
+  schedule.c:
+    - line 28 + 42 + 47 (sort_in) + 88 + 92 (sched_insert) + 155
+      + 157..160 + 163 (schedule):  extended functionality for handling
+      of priorities.
+
+  Loader.c:
+    - line 50 + 76 + 128 (parser_job) + 274 + 278 + 282 + 291 + 301
+      + 308 (start_cont_load) + 339 + 343 (start_objc_load) + 412 + 471
+      + 474 (chunked_job) + 492 + 496 + 506 + 509 + 514  517
+      + 541..544 (receive_job) + 568 + 575 + 587..589 + 591 + 629..631
+      + 636 + 682..683 + 697..698 + 714 + 717 (header_job) + 731 + 747
+      + 749 (loader_job) + 774 (generic_job):  added priority controls
+      for jobs.
+
+October 08, 2003
+
+  AltF4's patches
+
+  http.h:    line 20 (http_header):
+  http.c:    line 314 + 319 + 371 + 389 + 391 (http_header):
+  Loader.c:  line 606 (header_job):
+    - timeout parameter for HTTP header request.
+
+October 07, 2003
+
+  AltF4's patches
+
+  Loader.h:    line 43 (start_page_load) + 44 (start_cont_load):
+  Loader.c:    line line 240 + 249 (start_page_load)
+               + 258 (start_cont_load):
+  Form.c:      line 745 + 780 (input_activate):
+  render.c:    line 456 (render_FRAMESET_tag) + 582 (render_META_tag):
+  hwWind.c:    line 253 (new_hwWind) + 894 (hwWind_history)
+               + 1936 (hwWind_keybrd):
+  keyinput.c:  line 140 (key_pressed):
+  Mouse_R.c:   line 223 (button_clicked):
+  AEI.c:       line 141 (page_load) + 180 (vastart) +384 (menu_open)
+               + 406 (menu_reload):
+  - added an extra parameter to mark job starts initiatet directly by
+    an user action, for higher priorization.
+
+October 06, 2003
+
+  AltF4's patches
+
+  schedule.h:  line 27 + 42 (sched_insert) + 49 (sched_remove):
+  schedule.c:  line 14 + 18 + 27 + 45 + 48..53 (sort_in) + 75
+               + 79..81 (sched_insert):
+  Loader.h:    line 27 (struct s_loader) + 46 (start_objc_load):
+  Loader.c:    line 51..54 + 68 (parser_job) + 274 + 278 + 282 + 291
+               + 301 + 308 (start_cont_load) + 317 + 339
+               + 343 (start_objc_load) + 358 + 412 + 471 (chunked_job)
+               + 480 + 542 (receive_job) + 550 + 588 + 629 + 681 + 696
+               + 713 (header_job) + 722 + 746 (loader_job)
+               + 753 (generic_job):
+  global.h:    line 120..124:
+  render.c:    line 637 (render_BGSOUND_tag) + 1293 (render_EMBED_tag)
+               + 2238 (parse_html) + 2413 (parse_plain)
+               + 2510 (parse_image):
+  p_about.c:   line 250 (parse_about):
+  p_dir.c:     line 45 (parse_dir):
+  image.c:     line 78 (image_job) + 198 (new_image)
+               + 301 (image_calculate) + 335 (image_ldr)
+               + 360 (image_job):
+    - implemented priorities for scheduler jobs (basic integration, not
+      in use yet).
+
+October 05, 2003
+
+  AltF4's patches
+
+  inet.c:
+    - line 111..138:  merged and shortend the stik init functions.
+
+  hwWind.c
+    - line 402 (draw_infobar) + 473..480 (hwWind_setHSInfo):  more
+      corrections of infobar draw clipping.
+
+  schedule.c:
+    - line 17 + 38 (sort_in) + 39 (move_out) + 47
+      + 51..54 (sched_insert) + 69 + 75..86 (sched_remove) + 98
+      + 105..116 (sched_clear) + 136..146 (schedule):  changed storage
+      structure of pending jobs to a double linked list.
+
+October 03, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 2160 (read_img):  avoid writing outside of memory block for
+      scaled interleaved images.
+
+October 01, 2003
+
+  AltF4's patches
+
+  hwWind.h:
+    - line 13:  new flag for window is shaded.
+    - line 60:  new function hwWind_message() to handle window events.
+
+  hwWind.c:
+    - line 199 (new_hwWind) + 353 (draw_infobar)
+      + 467 (hwWind_setHSInfo) + 1154 (chng_toolbar)
+      + 1724 (hwWind_keybrd):  new flag for window is shaded.
+    - line 1427:  new function hwWind_message() to handle window
+      events.
+
+  AEI.c:
+    - line 788..789 + 892..933 (process_messages):  all events which
+      belong directly to windows are handled by hwWind_message() now.
+
+September 30, 2003
+
+  AltF4's patches
+
+  img_gif.c:
+    - line 86 (decGif_start):  avoid trying with other decoders due to
+      a GIF with invalid extents.
+    - line 116..117 (decGif_read):  return if an error occured while
+      reading the current scan line.
+
+  img_jpg.c:
+    - line 57..58 (decJpg_start):  avoid warnings when an image can't
+      be opend.
+
+  img_png.c:
+    - line 36..37 (decPng_start):  avoid warnings when an image can't
+      be opend.
+    - line 52 (decPng_start):  added setjmp to avoid crashes on invalid
+      images.
+    - line 106 (decPng_quit):  added forgotten image load completition.
+
+  image.c:
+    - line 2118 + 2133 + 2151 (read_img):  more checks added to avoid
+      crashes on corrupt images.
+
+  render.c
+    - line 1384 (render_IMG_tag):  reset font setting after <img>,
+      might be changed by the infobar redraw.
+    - line 1392 (render_IMG_tag):   always allow line breaks before and
+      after images.
+
+  hwWind.c:
+    - line 313 (draw_busybar) + 317 + 335 + 343 + 347 + 363..366 + 368
+      + 411 (draw_infobar) + 467 (hwWind_setHSInfo) + 1228 + 1262
+      + 1263 + 1313 + 1314 + 1337 + 1352 (wnd_hdlr):  added a progress
+      bar to indicate loading/rendering activity.
+    - line 429 + 438 + 443 + 461 (hwWind_setHSInfo):  corrected
+      clipping for shaded windows.
+    - line 1536 + 1596 (hwWind_button):  set clipping for resize rubber
+      band.
+
+September 25, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 18:  enabled remote access of images as default.
+    - line 273 + 302 (image_calculate):  decreased a bit flickering of
+      image rendering by improved cache prefetches.
+
+  Table.c:
+    - line 315..321 (table_cell):  fixed problems with colspan and
+      rowspan combined in one cell.
+
+  render.c:
+    - line 346 + 353 + 356 (render_FRAMESET_tag):  corrected url
+      handling for frames when a previous <base href=..> was found.
+    - line 519..520 (render_BASE_tag):  always add an trailing '/' to
+      make sure that the href will be used completele as directory.
+
+  hwWind.c:
+    - line 1787 (hwWind_keybrd):  automatic prepending of 'http://'
+      when no protocol was given in the URL field.
+
+  HighWire.c:
+    - line 7 + 79 (main):  enabled accepting of fVDI as GDOS, only for
+      experimentation yet.
+
+September 20, 2003
+
+  AltF4's patches
+
+  cache.h:
+    - line 15:  extended argument list for cache_setup().
+
+  cache.c:
+    - line 5..10:  #includes extended.
+    - line 40:  new variable __cache_max.
+    - line 240 + 247 (cache_insert) + 354 (cache_release):  new
+      function cache_throw() to release no longer needed memory cache
+      objects (in relation to __cache_max).
+    - line 229 + 231 (destroy_item) + 342 (cache_release)
+      + 369 (cache_clear) + 464 (cache_abort) + 476 (file_dtor):
+      several consistency checks with debug output added.
+
+  config.c:
+    - line 119 (cfg_cachedir):  extended argument list of
+      cache_setup().
+    - line 122 + 184 (read_config):  new keyword CACHEMEM.
+
+  example.cfg/highwire.cfg
+    - explanation added for new keyword CACHEMEM.
+
+September 18, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 44 + 805 (hwWind_history):  changed scope relative function
+      declaration to make Lattice happy.
+
+  p_about.c:
+    - line 86 (about_cache):  coloured entries for easier debugging.
+
+  cache.c:
+    - line 513 (cache_assign):  corrected cache size calculation for
+      disk cached objects.
+    - line 38 + 230 (destroy_item) + 513 (cache_assign):  splitted off
+      cache size into separate variables for memory and disk.
+    - line 241..245 (cache_insert):  added check for malloc() failed.
+
 August 30, 2003
 
   AltF4's patches
