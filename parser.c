@@ -18,6 +18,7 @@
 #include "token.h"
 #include "scanner.h"
 #include "Loader.h"
+#include "cache.h"
 #include "parser.h"
 #include "Containr.h"
 #include "Location.h"
@@ -547,6 +548,90 @@ parse_tag (PARSER parser, const char ** pptr)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static const char *
+css_import (PARSER parser, const char * ptr)
+{
+	PARSPRIV prsdata = ParserPriv(parser);
+	LOCATION     loc = NULL;
+	const char * p   = ptr +7;
+	
+	while (isspace (*p)) p++;
+	if (strnicmp (p, "url", 3) == 0) {
+		p += 3;
+		while (isspace (*p)) p++;
+		if (*p != '(') {
+			p = NULL;
+		} else {
+			while (isspace (*(++p)));
+		}
+	}
+	if (!p) {
+		return ptr;
+		
+	} else {
+		const char * e = (*p == '"'  ? strchr (++p, '"')  :
+		                  *p == '\'' ? strchr (++p, '\'') : NULL);
+		if (e && e > p
+		      && !prsdata->Stack[numberof(prsdata->Stack)-1]) {
+			char   buf[1024];
+			size_t len = min (e - p, sizeof(buf) -1);
+			((char*)memcpy (buf, p, len))[len] = '\0';
+			loc = new_location (buf, parser->Frame->BaseHref);
+		}
+		p = (e ? strchr (++e, ';') : e);
+		p = (p ? ++p : e ? e : strchr (ptr, '\0'));
+	}
+	if (loc) {
+		BOOL   push;
+		size_t size = 0;
+		char * file = NULL;
+		if (PROTO_isLocal (loc->Proto)) {
+			file = load_file (loc, &size, &size);
+			push = TRUE;
+			ptr  = p;
+		} else {
+			struct s_cache_info info;
+			CRESULT res = cache_query (loc, 0, &info);
+			if (res & CR_LOCAL) {
+				file = load_file (info.Local, &size, &size);
+				ptr  = p;
+			} else {
+				parser_resume (parser, NULL, ptr, (res & CR_BUSY ? NULL : loc));
+				ptr  = NULL;
+			}
+			push = (prsdata->Stack[0] != p);
+		}
+		if (file) {
+			struct s_own_mem * own = NULL;
+			if (size > 0) {
+				if (!prsdata->OwnMem.Mem) {
+					own = &prsdata->OwnMem;
+				} else if ((own = malloc (sizeof(struct s_own_mem))) != NULL) {
+					own->Mem  = prsdata->OwnMem.Mem;
+					own->Next = prsdata->OwnMem.Next;
+					prsdata->OwnMem.Next = own;
+				}
+			}
+			if (own) {
+				ptr = prsdata->OwnMem.Mem = file;
+			} else {
+				free (file);
+				push = FALSE;
+			}
+		}
+		if (push) {
+			short i = (short)numberof(prsdata->Stack) -1;
+			do {
+				prsdata->Stack[i] = prsdata->Stack[i -1];
+			} while (--i);
+			prsdata->Stack[0] = p;
+		}
+		free_location (&loc);
+	}
+	return ptr;
+}
+
 /*============================================================================*/
 static char next (const char ** pp) {
 	const char * p = *pp; while (isspace(*p)) p++; return *(*pp = p);
@@ -613,11 +698,18 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			
 			if (*p == '@') { /*............................... special */
 				const char * q = p;
-				while (isalpha (*(++q)));
-				while (isspace (*(++q)));
-				q = (*q == '{' ? strchr (q +1, '}') : strchr (q, ';'));
+				if (strnicmp (q +1, "import", 6) == 0) {
+					if ((q = css_import (parser, q)) == NULL) {
+						return NULL;
+					}
+				} else {
+					while (isalpha (*(++q)));
+					while (isspace (*(++q)));
+					q = (*q == '{' ? strchr (q +1, '}') : strchr (q, ';'));
+					if (q) q++;
+				}
 				if ((err = (q == NULL)) == TRUE) break;
-				p = q +1;
+				p = q;
 				continue;
 			}
 			
