@@ -564,13 +564,13 @@ header_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	switch (CQresultDsk (cache_exclusive (loc))) {
+	switch (CResultDsk (cache_exclusive (loc))) {
 		
-		case CQ_BUSY:
+		case CR_BUSY:
 		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
 			return TRUE;
 		
-		case CQ_LOCAL: {
+		case CR_LOCAL: {
 			CACHED cached = cache_lookup (loc, 0, NULL);
 			if (cached) {
 				union { CACHED c; LOCATION l; } u;
