@@ -578,9 +578,8 @@ css_import (PARSER parser, const char * ptr)
 		
 	} else {
 		const char * e = (*p == '"'  ? strchr (++p, '"')  :
-		                  *p == '\'' ? strchr (++p, '\'') : NULL);
-		if (e && e > p
-		      && !prsdata->Stack[numberof(prsdata->Stack)-1]) {
+		                  *p == '\'' ? strchr (++p, '\'') : strchr (p, ')'));
+		if (e && e > p && !prsdata->Stack[numberof(prsdata->Stack)-1]) {
 			char   buf[1024];
 			size_t len = min (e - p, sizeof(buf) -1);
 			((char*)memcpy (buf, p, len))[len] = '\0';
