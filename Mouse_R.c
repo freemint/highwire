@@ -175,13 +175,22 @@ button_clicked (WORD button, WORD mx, WORD my)
 		} break;
 		
 		case PE_INPUT: {
-			GRECT radio;
-			switch (input_handle (hash, &radio)) {
+			WORD    value = 0;
+			char ** popup = NULL;
+			GRECT   radio;
+			switch (input_handle (hash, &radio, &popup)) {
 				case 2: radio.g_x += watch.g_x;
 				        radio.g_y += watch.g_y;
 				        hwWind_redraw (wind, &radio);
-				case 1: hwWind_redraw (wind, &watch);
-				        if (input_activate (hash)) {
+				case 1: if (popup) {
+				           long * xy = (long*)&radio;
+				           xy[0] += frame->clip.g_x - frame->h_bar.scroll;
+				           xy[1] += frame->clip.g_y - frame->v_bar.scroll;
+				           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
+				        } else {
+				           hwWind_redraw (wind, &watch);
+				        }
+				        if (input_activate (hash, value)) {
 				           hwWind_redraw (wind, &watch);
 				        }
 			}

@@ -622,19 +622,14 @@ input_isEdit (INPUT input)
 
 /*============================================================================*/
 WORD
-input_handle (INPUT input, GRECT * radio)
+input_handle (INPUT input, GRECT * radio, char *** popup)
 {
-	WORD rtn;
+	WORD rtn = 0;
 	
-	if (input->disabled) {
-		rtn = 0;
-	
-	} else switch (input->Type) {
+	if (!input->disabled) switch (input->Type) {
 		
 		case IT_RADIO:
-			if (input->checked) {
-				rtn = 0;
-			} else {
+			if (!input->checked) {
 				INPUT group = input->u.Group;
 				rtn = 1;				
 				if (group->checked) {
@@ -685,39 +680,18 @@ input_handle (INPUT input, GRECT * radio)
 		case IT_SELECT: {
 			SELECT sel = input->u.Select;
 			if (sel && sel->NumItems > 0) {
-				FRAME    frame  = input->Form->Frame;
 				WORDITEM word   = input->Word;
 				OFFSET * offset = &input->Paragraph->Offset;
 				long     x      = word->h_offset + input->Paragraph->Indent;
 				long     y      = word->line->OffsetY;
-				short    n;
 				do {
 					x += offset->X;
 					y += offset->Y;
 				} while ((offset = offset->Origin) != NULL);
-				n = HW_form_popup (sel->Array,
-				                   x - frame->h_bar.scroll + frame->clip.g_x,
-				                   y - frame->v_bar.scroll + frame->clip.g_y
-				                     + word->word_tail_drop -1,
-				                   FALSE);
-				if (n >= 0) {
-					SLCTITEM item = sel->ItemList;
-					while (++n < sel->NumItems && item->Next) {
-						item = item->Next;
-					}
-					input->Word->item   = item->Text;
-					input->Word->length = item->Length;
-					input->Value        = item->Value;
-					radio->g_x = x;
-					radio->g_y = y - word->word_height;
-					radio->g_w = word->word_width;
-					radio->g_h = word->word_height + word->word_tail_drop;
-					rtn = 1;
-				} else {
-					rtn = 0;
-				}
-			} else {
-				rtn = 0;
+				((long*)radio)[0] = x;
+				((long*)radio)[1] = y + word->word_tail_drop -1;
+				*popup = sel->Array;
+				rtn = 1;
 			}
 		}	break;
 			
@@ -725,10 +699,10 @@ input_handle (INPUT input, GRECT * radio)
 			if (!input->checked) {
 				input->checked = TRUE;
 				rtn = 1;
-				break;
 			}
-		default:
-			rtn = 0;
+			break;
+		
+		default: ;
 	}
 	return rtn;
 }
@@ -736,9 +710,22 @@ input_handle (INPUT input, GRECT * radio)
 
 /*============================================================================*/
 BOOL
-input_activate (INPUT input)
+input_activate (INPUT input, WORD slct)
 {
 	FORM form = input->Form;
+	
+	if (input->Type == IT_SELECT) {
+		SELECT   sel  = input->u.Select;
+		SLCTITEM item = sel->ItemList;
+		while (++slct < sel->NumItems && item->Next) {
+			item = item->Next;
+		}
+		input->Word->item   = item->Text;
+		input->Word->length = item->Length;
+		input->Value        = item->Value;
+		
+		return TRUE;
+	}
 	
 	if (input->Type != IT_BUTTN) {
 		return FALSE;
