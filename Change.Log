@@ -1,3 +1,12 @@
+(non-public of Nov. 06, 2004)
+
+- Image formats XBM and XPM (X11 bitmap/pixmap)
+  implemented.  These formats are very rare
+  nowadays but still used by some stone old server
+  (eg. the NCSA one) and all other browsers
+  support at least the first format.
+
+__________________________________________________
 Changes in V. 0.2.2 release  of October 31, 2004:
 
 - Large portions of the cache handling code
