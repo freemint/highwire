@@ -374,6 +374,11 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if      (stricmp (out, "right") == 0) box->Floating = FLT_RIGHT;
 		else if (stricmp (out, "left")  == 0) box->Floating = FLT_LEFT;
 	}
+	if (get_value (parser, CSS_CLEAR, out, sizeof(out))) {
+		if      (stricmp (out, "right") == 0) box->ClearFlt = BRK_RIGHT;
+		else if (stricmp (out, "left")  == 0) box->ClearFlt = BRK_LEFT;
+		else if (stricmp (out, "both")  == 0) box->ClearFlt = BRK_ALL;
+	}
 }
 
 /*----------------------------------------------------------------------------*/
@@ -2044,10 +2049,12 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 		L_BRK    clear   = BRK_LN;
 		BOOL     css_ext = FALSE;
 	
-		if (get_value (parser, KEY_CLEAR, output, sizeof(output))) {
+		if (get_value (parser, KEY_CLEAR, output, sizeof(output)) ||
+		    get_value (parser, CSS_CLEAR, output, sizeof(output))) {
 			if      (stricmp (output, "right") == 0) clear = BRK_RIGHT;
 			else if (stricmp (output, "left")  == 0) clear = BRK_LEFT;
 			else if (stricmp (output, "all")   == 0) clear = BRK_ALL;
+			else if (stricmp (output, "both")  == 0) clear = BRK_ALL; /* CSS */
 		} else if (get_value_exists (parser, KEY_CLEAR)) {
 			clear = BRK_ALL; /* old style */
 		}
