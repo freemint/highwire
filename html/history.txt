@@ -1,5 +1,113 @@
 Ok here are the new supports and changes
 
+March 5, 2003
+
+  Baldrick's patches
+  
+  - a few cleanups on this file to cut long lines down
+  
+March 1, 2003
+
+  AltF4's patches
+
+  defs.h:     line 22..32:
+  keyinput.c: line 70 + 73 (key_pressed):
+  Mouse_R.c:  line 33 + 39 + 217 (button_clicked):
+  AEI.c:      line 533 (handle_menu) + 556 (update_menu)
+            + 599 + 660 (rpopup_open):
+	  - changed all comparsion of #if (...==TRUE/FALSE) to 1/0 because
+	  this didn't work for gcc
+
+  config.c:
+    - line 104 (read_config):  new keyword INFOBAR to allow user
+      configurable infobar appearance.
+
+  hwWind.c:
+    - line 28 + 45..53 + 99 (new_hwWind):  the window widgets are
+      managed in wind_kind now.
+    - line 38:  new function hwWind_setup() to control global window
+      stuff, only infobar implemented yet.
+    - line 116 + 118 (new_hwWind) + 205 (hwWind_setHSInfo)
+      + 281 (hwWind_setInfo) + 724 (wnd_hdlr):  replaced compile-time
+      settings of the infobar appearance to have it controllable now by
+      the new hwWind_setup().
+    - line 130 (new_hwWind) + 251 + 286 (hwWind_setInfo)
+      + 688 + 701 + 732 (wnd_hdlr):  removed useless #ifdef.
+
+  hwWind.h:
+    - line 56:  new hwWind_setup() and accompanying enum HWWIND_SET.
+
+  Mouse_R.c:
+    - line 343 + 351 + 365 + 367 (check_mouse_position):  removed
+      useless #ifdef.
+
+February 28, 2003
+
+  AltF4's patches
+
+  hwWind.c:
+    - line 24 88 + + 92 + 134 (new_hwWind) + 234 (hwWind_setHSInfo):
+      removed hsl_top and hsl_bot, value of info_bgnd will be used
+      instead.
+    - line 25 + 66..74 (new_hwWind):  new variables widget_b, widget_w,
+      widget_h to store extents of window elements and border.
+    - line 222..229 (hwWind_setHSInfo):  improved calculation.
+
+  inet.c:
+    - line 205..224 (inet_connect):  increased timeout value to three
+      seconds.
+
+February 26, 2003
+
+  AltF4's patches
+
+  AEI.c:
+    - line 87 + 93 (vastart):  corrected opening for qoted file names.
+    - line 231 (doGSCommand):  adapted to changed new_hwWind().
+    - line 295 (menu_open) + 313 + 318 (menu_reload) + 379 (menu_info):  
+      adapted to changed new_loader_job() parameter list.
+
+  Form.c:
+    - line 550 (input_activate):  adapted to changed new_loader_job()
+      parameter list.
+
+  HighWire.c:
+    - line 165 + 170 (main):  adapted to changed new_hwWind().
+
+  hwWind.c:
+    - line 43 + 122 + 139 + 142 (new_hwWind):  changed parameter list
+      because info was never used anywhere.
+    - line 143 (new_hwWind) + 540 (hwWind_history):  adapted to changed
+      new_loader_job() parameter list.
+
+  hwWind.h:
+    - line 30:  changed parameter list of new_hwWind().
+
+  keyinput.c:
+    - line 136 (key_pressed):  adapted to changed new_loader_job()
+      parameter list.
+
+  Loader.c:
+    - line 162..165 (new_loader):  set default values.
+    - line 570 + 578..580 (new_loader_job):  reduced parameter list.
+    - line 654:  new function loader_setParams() to set encoding and
+      margins.
+    - line 745 (page_load):  adapted to changed new_loader_job()
+      parameter list.
+
+  Loader.h:
+    - line 63:  reduced parameter list of new_loader_job().
+    - line 64:  new loader_setParams().
+
+  Mouse_R.c:
+    - line 201 + 204 + 210 (button_clicked):  adapted to changed
+      new_loader_job() and new_hwWind().
+
+  render.c:
+    - line 304..308 (render_FRAMESET_tag) + 413 (render_META_tag)
+      + 470 (render_BGSOUND_tag):  adapted to changed new_loader_job()
+      parameter list.
+
 February 26, 2003
 
   Baldrick's patches
@@ -4959,10 +5067,13 @@ May 10, 2002
 May 9, 2002
 
   Baldrick's Patches
-  - a few english translations added to some german descriptions of routines
+
+   - a few english translations added to some german 
+     descriptions of routines
   
   Highwire.c
-    - changed GEM Menu version to .2 (I think there has been enough expansion to justify at least that)
+    - changed GEM Menu version to .2 (I think there has been enough
+      expansion to justify at least that)
     - changed Core version to .4 (getting ready for release )
   
   Rainer's Patches
@@ -5647,7 +5758,8 @@ March 30, 2002
       explanations, only stating that flag means start tag. Using FALSE, TRUE.
 
   token.h:
-    - Added tags META, PLAINTEXT, Q; keys CHARSET, CONTENT, HTTP_EQUIV, ID, LANG.
+    - Added tags META, PLAINTEXT, Q; keys CHARSET, CONTENT, HTTP_EQUIV,
+      ID, LANG.
 
   scanner.c, scanner.h, render.c
     - Added support for HTML files with ISO-8859-1 or windows-1252 (default), 
@@ -7213,7 +7325,8 @@ January 25, 2002
          and calculate_subtable_height()
      - current_child replaced with table->current_child in calculate_subtable_height()
          and calculate_table_height()
-     - table_w in calc subtable_height() and calc table_height() replaced with current_table->actual_width
+     - table_w in calc subtable_height() and calc table_height() replaced
+       with current_table->actual_width
      - modifications to increase current_height in one column tables
      
      
