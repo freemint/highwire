@@ -326,7 +326,16 @@ vTab_draw (WINDOW This, const GRECT * clip)
 	if (logo_icon.fd_nplanes > 1) {
 		WORD color[2] = { G_WHITE, G_LWHITE };
 		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
-		vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, &logo_icon, &scrn);
+/*		vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, &logo_icon, &scrn);*/
+
+		/* I have a standard routine that I call for this in my
+		 * programs
+		 */
+		if (planes > 8)
+			vro_cpyfm(vdi_handle,S_AND_D,(short*)p,&logo_icon,&scrn);
+		else
+			vro_cpyfm(vdi_handle,S_OR_D,(short*)p,&logo_icon,&scrn);
+
 	} else {
 		WORD color[2] = { G_BLACK, G_LWHITE };
 		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);

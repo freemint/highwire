@@ -1315,13 +1315,27 @@ MFDB logo_icon;
 void
 init_icons(void)
 {
-	if (planes == 4) {
-		logo_icon = logo4_icon;
-	} else if (planes == 8) {
-		logo_icon = logo8_icon;
-	} else {
-		logo_icon = logo1_icon;
+	WORD TC_trans(MFDB *src);
+
+	switch (planes)
+	{
+		case 1:
+			logo_icon = logo1_icon;
+			break;
+		case 4:
+			logo_icon = logo4_icon;
+			break;
+		case 8:
+			logo_icon = logo8_icon;
+			break;
+		default:	
+			logo_icon = logo8_icon;
+
+			/* convert it to current bit planes */
+			TC_trans((MFDB *)&logo_icon);
+			break;
 	}
+	
 	if (logo_icon.fd_stand) {
 		WORD color[2] = { G_BLACK, G_WHITE };
 		PXY  p[4];
@@ -1332,6 +1346,123 @@ init_icons(void)
 		vrt_cpyfm(vdi_handle, MD_ERASE, (short*)p, &logo_mask, &logo_icon, color);
 	}
 }
+
+WORD 
+TC_trans(MFDB *src)
+{
+	WORD i, bit, color, mask;
+	WORD first_plane[32], *plane, *idx, *new_addr;
+	WORD *color_table, *bit_location, *temp_addr;
+	WORD tot_colors = (1 << src->fd_nplanes);
+	char used_colors[256];
+	WORD x, y;
+	MFDB tempscreen;
+	MFDB temp;
+	WORD pxy[8], colors[2];
+	LONG temp_size, size;
+
+	size = (LONG)(src->fd_wdwidth * src->fd_h);
+	
+	/* memory for the device raster */
+	if( (new_addr = (short *) malloc( (size << 1) * planes )) == NULL )
+		return( FALSE );
+
+	memset(new_addr,0,((size << 1) * planes));	/*	-> fill with 0-planes */
+
+	/* fill in the descriptions	 */
+	src->fd_nplanes = planes;
+	tempscreen = *src;		/* copy MFDB */
+	src->fd_stand = 1;	/* standard format */
+	tempscreen.fd_addr = new_addr;
+
+	temp = *src;
+	temp.fd_stand = 0;
+	temp.fd_nplanes = 1;
+	temp.fd_h = tot_colors;
+
+	temp_size = tot_colors * temp.fd_wdwidth;
+	temp_size <<= 1;
+
+	if( (temp_addr = (short *) malloc(temp_size)) == NULL )
+		return( FALSE );
+
+	memset(temp_addr,255,(temp_size));	/*	-> fill with 0-planes */
+
+	temp.fd_addr = temp_addr;
+
+	pxy[0] = pxy[4] = 0;
+	pxy[1] = pxy[5] = 0;
+	pxy[2] = pxy[6] = src->fd_w-1;
+	pxy[3] = pxy[7] = src->fd_h-1;
+
+	/* If you don't do the following monochrome srcs are inverted */
+	colors[1] = 0;
+
+	mask = tot_colors - 1;
+
+	idx = (short *)src->fd_addr;
+
+	bit_location = color_table = (short *)temp_addr;
+
+	for (y = 0; y < src->fd_h; y++)
+	{
+		memset(temp_addr,0,temp_size);
+		memset( used_colors, 0, sizeof( used_colors ) );
+	
+		for (x = 0; x < src->fd_wdwidth; x++)
+		{
+			/* go through all bitplanes */
+			plane = first_plane;
+
+			/* get one word from a bitplane */
+			for( i = 0; i < src->fd_nplanes; i ++ )
+				*(plane ++) = *(idx + size * (long)i);
+
+			/* go through one word */
+			for( bit = 15; bit >= 0; bit -- )
+			{
+				color = 0;
+				plane = first_plane;
+
+				/* OR all 'bit' bits from all bitplanes together */
+				for( i = 0; i < src->fd_nplanes; i ++ )
+					color |= ((*(plane ++) >> bit) & 1) << i;
+
+				color &= mask;
+
+				used_colors[color] = 1;
+
+				bit_location =  (short *)(color_table + (temp.fd_wdwidth * (long)color) + x);
+	
+				*bit_location |= 1 << bit;
+			}
+
+			idx++; /* increment idx */
+		}
+
+		/* if we've gone to the end of a row update now */
+
+		pxy[5] = pxy[7] = y;
+
+		for (i=0;i<tot_colors;i++)
+		{
+			if(used_colors[i])
+			{
+				colors[0] = i;
+				pxy[1] = pxy[3] = i;
+				vrt_cpyfm( vdi_handle, MD_TRANS, pxy, &temp, &tempscreen, colors );
+			}
+		}
+	}
+
+	free(temp_addr);
+	free(src->fd_addr);
+	src->fd_stand = 0;	/* standard format */
+
+	src->fd_addr = new_addr;
+	return( TRUE );
+}
+
 
 /* - - - - - - - - - - - - - - - - - - - - - - - */
 static void
@@ -1361,6 +1492,13 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 		if (icon->fd_nplanes > 1) {
 			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
 			vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, icon,       &scrn);
+
+			/* again for me this is a standard call */
+			if (planes > 8)
+				vro_cpyfm(vdi_handle,S_AND_D,(short*)p,icon,&scrn);
+			else
+				vro_cpyfm(vdi_handle,S_OR_D,(short*)p,icon,&scrn);
+
 		} else {
 			if (!This->isBusy) {
 				color[0] = G_BLACK;
