@@ -20,14 +20,12 @@
 #include "scanner.h"
 
 
-const char * start_page = "html\\highwire.htm";
+WORD         cfg_UptoDate  = -1;
+const char * cfg_StartPage = "html\\highwire.htm";
 
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " (" __DATE__ ")";
-static WORD up2date = 0; /* this variable is only necessary because this *
-                          * rotten Pure C understands only 1..2% of real *
-                          * ANSII C                                      */
 
 
 /*----------------------------------------------------------------------------*/
@@ -186,8 +184,8 @@ static void
 cfg_up2date (char * param, long arg)
 {
 	(void)arg;
-	if (!up2date) {
-		up2date = (strcmp (param, cfg_magic) == 0 ? +1 : -1);
+	if (cfg_UptoDate < 0) {
+		cfg_UptoDate = (strcmp (param, cfg_magic) == 0);
 	}
 }
 
@@ -197,8 +195,8 @@ static void
 cfg_startpage (char * param, long arg)
 {
 	(void)arg;
-	if (up2date > 0) {
-		start_page = strdup (param);
+	if (cfg_UptoDate > 0) {
+		cfg_StartPage = strdup (param);
 	}
 }
 
@@ -496,14 +494,14 @@ read_config(void)
 					break;
 				}
 			} while (beg <= end);
-			if (!up2date) {
-				up2date = FALSE;
+			if (cfg_UptoDate < 0) {
+				cfg_UptoDate = FALSE;
 			}
 		}
 	}
 	fclose (fp);
 	
-	if (up2date <= 0) {
+	if (cfg_UptoDate <= 0) {
 		save_config (NULL, NULL);
 	}
 	

@@ -171,7 +171,7 @@ main (int argc, char **argv)
 			}
 		} while (++i < argc);
 	}
-	if (!u && !new_hwWind ("", start_page, NULL)) {
+	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage, NULL)) {
 		hwUi_fatal (NULL, "Can't open main window.");
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);

@@ -126,7 +126,8 @@ void draw_border    (const GRECT *, short lu, short rd, short width);
 
 /* in Config.c */
 
-extern const char * start_page;
+extern WORD         cfg_UptoDate;
+extern const char * cfg_StartPage;
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
 
