@@ -1,4 +1,13 @@
-(non-public changes of Dec. 04, 2004)
+(non-public changes of Dec. 06, 2004)
+
+- New config keyword START_PAGE to define what
+  should be displayed after program start.
+  NOTE:  This option will be ignored at the very
+  first start of a new installed version.
+
+- When the option 'Cookies allowed' in the menu
+  get changed this will be stored in the config
+  file.
 
 - High/TrueColor (24/32bit) screen modes for Hades
   graphic card drivers added.  Now images will
@@ -440,7 +449,7 @@ Changes in V. 0.1.3 release  of June 05, 2003:
 - Corrected wrong setting of hanging indentions in
   and after lists.
 
-- Corrected handling of table cells with both 
+- Corrected handling of table cells with both
   colspan and rowspan set.
 
 - Re-implemented <div> tag rendering to tables
