@@ -383,6 +383,14 @@ scan_namedchar (const char ** pptr, void * dst, BOOL wordNchar, WORD mapping)
 			uni = val;
 			str = next;
 		}
+		/* Check for idiotic web authors who think that M$ is the measure of all
+		 * things and use the code page 1252 numeric encoding instead of a valid
+		 * Unicode value.  So we might be used to recode manually here.
+		*/
+		if (mapping == MAP_UNICODE && uni >= 0x80 && uni <= 0x9F) {
+			const char * src = (const char *)&uni +1;
+			(*encoder_word (ENCODING_WINDOWS1252, MAP_UNICODE))(&src, &uni);
+		}
 	
 	} else {  /* &<name>; */
 		int   beg = 0;

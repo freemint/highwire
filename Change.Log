@@ -60,6 +60,9 @@
   indicate how busy HighWire is with loading and
   rendering.
 
+- Implemented recoding of faulty encoded character
+  entities from code page 1252 (&#128; .. &#159;).
+
 - Added several checks to avoid crashes due to
   memory exhausted.
 
