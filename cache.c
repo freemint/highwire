@@ -24,9 +24,9 @@
 typedef struct s_cache_item * CACHEITEM;
 typedef struct s_cache_node * CACHENODE;
 
-static void file_dtor    (void *);
-static BOOL cache_flush  (CACHEITEM, LOCATION);
-static BOOL cache_remove (long num, long use);
+static BOOL     cache_flush    (CACHEITEM, LOCATION);
+static BOOL     cache_remove   (long num, long use);
+static LOCATION cache_location (CACHEITEM);
 
 
 struct s_cache_item {
@@ -249,15 +249,25 @@ destroy_item (CACHEITEM citem)
 			node->Filled--;
 		}
 	}
-
+	
 	if (citem->PrevItem) citem->PrevItem->NextItem = citem->NextItem;
 	else                 __cache_beg               = citem->NextItem;
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
 	else                 __cache_end               = citem->PrevItem;
+	
 	if (citem->inMem) {
+		if (citem->Object && citem->dtor) {
+			(*citem->dtor)(citem->Object);
+		}
 		__cache_mem_num--;
 		__cache_mem_use -= citem->Size;
-	} else {
+	
+	} else { /* citem is (probably) on disk */
+		if (citem->Cached[0]) {
+			LOCATION loc = cache_location (citem);
+			if (loc) unlink (loc->FullName);
+			free_location (&loc);
+		}
 		__cache_dsk_num--;
 		__cache_dsk_use -= citem->Size;
 	}
@@ -295,7 +305,6 @@ cache_throw (long size)
 				printf ("%7lu '%s'\n", citem->Size, citem->Location->File);
 			}*/
 			size -= citem->Size;
-			(*citem->dtor)(citem->Object);
 			destroy_item (citem);
 			if (size <= 0) return TRUE;
 		}
@@ -436,14 +445,13 @@ cache_release (CACHED * p_object, BOOL erase)
 							return NULL;
 						}
 /*<<<<<<<<<< DEBUG */
-						if (!citem->inMem) {
-							cache_flush (NULL, __cache_dir);
-						}
-						(*citem->dtor)(citem->Object);
 					} else {
 						object = citem->Object;
 					}
 					destroy_item (citem);
+					if (!citem->inMem) {
+						cache_flush (NULL, __cache_dir);
+					}
 				}
 				*p_object = NULL;
 				break;
@@ -468,7 +476,7 @@ cache_clear (CACHED this_n_all)
 
 	while (citem) {
 		CACHEITEM next = citem->NextItem;
-		if (!citem->Reffs && citem->dtor
+		if (!citem->Reffs && (citem->dtor || !citem->inMem)
 		    && (!this_n_all || this_n_all == citem->Object)) {
 /*>>>>>>>>>> DEBUG */
 			if (!cache_location (citem)) {
@@ -479,7 +487,6 @@ cache_clear (CACHED this_n_all)
 			if (!citem->inMem) {
 				dsk++;
 			}
-			(*citem->dtor)(citem->Object);
 			destroy_item (citem);
 			num++;
 			if (this_n_all) break;
@@ -554,7 +561,7 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 		location_wrIdx (NULL, NULL); /* reset location database */
 	}
 	while (citem) {
-		if (!citem->inMem && citem->Cached[0] && citem->dtor) {
+		if (!citem->inMem && citem->Cached[0]) {
 			if (location_wrIdx (file, citem->Location)) {
 				fprintf (file, "$%08lX$%08lX$%08lX$/%s\n",
 				         citem->Size, citem->Date, citem->Expires, citem->Cached);
@@ -674,7 +681,8 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 						free_location (&loc);
 						ndel++;
 					} else {
-						CACHEITEM item = create_item (loc, NULL, size, file_dtor);
+						CACHEITEM item = create_item (loc, NULL, size,
+						                              (void(*)(void*))0);
 						if (!item) {
 							puts ("cache_setup(): create failed.");
 							free_location (&loc);
@@ -735,7 +743,7 @@ cache_abort (LOCATION loc)
 		printf ("cache_abort(%s): not found!\n", loc->FullName);
 	
 /*>>>>>>>>>> DEBUG */
-	} else if (citem->Object) {
+	} else if (citem->Object || citem->Cached[0]) {
 		printf ("cache_abort(%s): not busy!\n", loc->FullName);
 	
 	} else if (citem->Size) {
@@ -756,10 +764,9 @@ cache_remove (long num, long use)
 	CACHEITEM citem = __cache_end;
 	while (citem) {
 		CACHEITEM prev = citem->PrevItem;
-		if (!citem->inMem && !citem->Reffs && cache_location (citem)) {
+		if (!citem->inMem && !citem->Reffs && citem->Cached[0]) {
 			use -= citem->Size;
 			num--;
-			(*citem->dtor)(citem->Object);
 			destroy_item (citem);
 			cnt++;
 			if (num <= 0 && use <= 0) break;
@@ -767,23 +774,6 @@ cache_remove (long num, long use)
 		citem = prev;
 	}
 	return (cnt > 0);
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-file_dtor (void * arg)
-{
-	LOCATION loc = arg;
-	char buf[1024];
-/*>>>>>>>>>> DEBUG */
-	if (!loc) {
-		puts ("file_dtor(): NULL pointer!");
-		return;
-	}
-/*<<<<<<<<<< DEBUG */
-	location_FullName (loc, buf, sizeof(buf));
-	unlink (buf);
-	free_location (&loc);
 }
 
 /*============================================================================*/
@@ -834,7 +824,6 @@ cache_assign (LOCATION src, void * data, size_t size,
 				close (fh);
 				__cache_fid++;
 				citem->Object  = location_share (loc);
-				citem->dtor    = file_dtor;
 				citem->Size    = size;
 				citem->Date    = date;
 				citem->Expires = expires;
@@ -846,6 +835,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 			}
 		}
 		if (!loc) { /* either no cache dir set or file couldn't be written */
+			citem->Cached[0] = '\0';
 			destroy_item (citem);
 		}
 	}
