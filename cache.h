@@ -15,6 +15,9 @@ size_t   cache_clear   (CACHED this_n_all);
 void     cache_setup   (const char * dir, size_t mem_max,
                         size_t dsk_max, size_t dsk_num);
 
+const char * cache_DirInfo(void);
+
+
 typedef enum {
 	CR_NONE  = 0,
 	CR_BUSY  = 0x01, CR_LOCAL = 0x02,

@@ -712,6 +712,13 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 	}
 }
 
+/*============================================================================*/
+const char *
+cache_DirInfo(void)
+{
+	return (__cache_dir ? location_Path (__cache_dir, NULL) : NULL);
+}
+
 
 /*============================================================================*/
 CRESULT
