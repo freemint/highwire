@@ -27,18 +27,18 @@ BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
-                                " (" __DATE__ ")";
+                                " [" __DATE__ "]";
+static char       * cfg_path  = NULL;
 
 
 /*----------------------------------------------------------------------------*/
 static FILE *
 open_cfg (const char * mode)
 {
-	static char * path = NULL;
-	FILE        * file = NULL;
+	FILE * file = NULL;
 	
-	if (path) {
-		file = fopen (path, mode);
+	if (cfg_path) {
+		file = fopen (cfg_path, mode);
 		
 	} else {
 		char buff[1024], * p;
@@ -67,7 +67,7 @@ open_cfg (const char * mode)
 			file = fopen (buff, mode);
 		}
 		if (file) {
-			path = strdup (buff);
+			cfg_path = strdup (buff);
 		}
 	}
 	
@@ -85,6 +85,7 @@ save_config (const char * key, const char * arg)
 	}    * list = NULL, * match = NULL, * nmtch = NULL;
 	size_t klen = (key ? strlen (key) : 0);
 	BOOL   ok   = TRUE;
+	BOOL  fresh = (cfg_path == NULL);
 	FILE * file;
 	
 	if ((file = open_cfg ("r")) != NULL) {
@@ -165,6 +166,10 @@ save_config (const char * key, const char * arg)
 			fprintf (file, "%s = %s\n", key, arg);
 		}
 		fclose (file);
+		
+		if (fresh) {
+			hwUi_info (NULL, "New config file created at\n%.100s", cfg_path);
+		}
 	}
 	
 	while (list) {
@@ -423,6 +428,7 @@ read_config(void)
 	
 	if (!fp) {
 		save_config (NULL, NULL);
+		cfg_UptoDate = FALSE;
 		return FALSE;
 	}
 
