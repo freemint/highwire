@@ -1688,7 +1688,6 @@ render_AREA_tag (PARSER parser, const char ** _text, UWORD flags)
 			char * alt    = get_value_str (parser, KEY_ALT);
 			MAPAREA area = new_maparea (shape, coords, href, target, alt);
 			if (area) {
-				area->Next    = NULL;
 				*parser->Current.maparea = area;
 				parser->Current.maparea  = &area->Next;
 			} else {
@@ -1963,19 +1962,15 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		current->word->vertical_align = word_v_align;
 	
 		if (get_value (parser, KEY_USEMAP, output, sizeof(output))) {
-			IMAGEMAP map = frame->MapList;
-			char   * p   = output;
+			IMAGEMAP map;
+			char   * p = output;
 			while (*p == '#') p++;
-			if (*p) while (map) {
-				if (stricmp (p, map->Name) == 0) {
-					if (word->link && word->link->start == word) {
-						word->link->start = current->word;
-					}
-					word->image->map = map;
-					word->link       = &map->Link;
-					break;
+			if (*p && (map = create_imagemap(&frame->MapList, p, FALSE)) != NULL) {
+				if (word->link && word->link->start == word) {
+					word->link->start = current->word;
 				}
-				map = map->Next;
+				word->link       = &map->Link;
+				word->image->map = map;
 			}
 		}
 		
