@@ -1,4 +1,10 @@
-(non-public changes of Dec. 11, 2004)
+(non-public changes of Dec. 19, 2004)
+
+- When a config file was created because none was
+  found at program start the user gets a
+  notification now.  Furthermore, the path of the
+  loaded file is displayed on the page reachable
+  with the "about:" pseudo-URL now.
 
 - New config keyword START_PAGE to define what
   should be displayed after program start.
@@ -14,12 +20,24 @@
   instead 'View Images' and 'Use CSS' were added.
   Both of the latter are stored in the cfg file.
 
+- Functionality added to handle GEM dialogs inside
+  of windows.
+  Currently only the dialog from SHFT-CTRL-O uses
+  this.
+
 - High/TrueColor (24/32bit) screen modes for Hades
   graphic card drivers added.  Now images will
   appear with correct colours (#0101).
 
 - Initialization order of AES and VDI exchanged at
   program start to avoid problems with some AESs.
+
+- Old bug fixed: avoid reloading pages from remote
+  when the base font size got changed, use files
+  from cache instead.
+
+- Improved palette parsing for XPMs, to get more
+  types of such images decoded.
 
 - Bugs #0101 resolved.
 
