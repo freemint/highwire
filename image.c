@@ -186,7 +186,11 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->disp_h = (h > 0 ? h : 16);
 	set_word (img);
 		
+#if defined(__LOADER_H__)
+	if (!img->u.Data) {
+#else
 	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
+#endif
 		sched_insert (image_job, img, (long)img->frame->Container);
 		containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 	}
@@ -319,6 +323,33 @@ image_calculate (IMAGE img, short par_width)
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+#if defined(__LOADER_H__)
+static short _ldr_limit = 8;
+static BOOL
+image_ldr (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	IMAGE  img    = loader->FreeArg;
+	
+	if (!invalidated && !loader->Cached) {
+		printf ("image_ldr(%s): load error.\n", loader->Location->FullName);
+		invalidated = TRUE;
+	
+	} else if (loader->Location != img->source) {
+		free_location (&img->source);
+		img->source = location_share (loader->Location);
+	}
+	delete_loader (&loader);
+	
+/*	sched_insert (image_job, img, invalidated);*/
+	image_job (img, invalidated);
+	_ldr_limit++;
+	
+	return FALSE;
+}
+#endif
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
 image_job (void * arg, long invalidated)
 {
@@ -355,6 +386,24 @@ image_job (void * arg, long invalidated)
 				cached = info.Object;
 			}
 		}
+#if defined(__LOADER_H__)
+		if (!cached) {
+			if (res & CR_LOCAL) {
+				loc = info.Local;
+			
+			} else if (res & CR_BUSY) {
+				return TRUE;
+			
+			} else if (PROTO_isRemote (loc->Proto)) {
+				if (!_ldr_limit) {
+					return TRUE;
+				}
+				_ldr_limit--;
+				start_objc_load (frame->Container, NULL, loc, image_ldr, img);
+				return FALSE;
+			}
+		}
+#endif
 	}	
 	if (cached) {
 		img->u.Data = cache_bound (cached, &img->source);
@@ -2031,23 +2080,13 @@ init_display (void)
 		for (r = 0x000000uL; r <= 0xFF0000uL; r += 0x330000uL) {
 			for (g = 0x000000uL; g <= 0x00FF00uL; g += 0x003300uL) {
 				for (b = 0x000000uL; b <= 0x0000FFuL; b += 0x000033uL) {
-					short i = remap_color (r | g | b), rgb[3];
-					vq_color (vdi_handle, i, 0, rgb);
-					*(dst++) = ((((((long)pixel_val[i] <<8)
-					         | (((long)rgb[0] * 255 +500) / 1000)) <<8)
-					         | (((long)rgb[1] * 255 +500) / 1000)) <<8)
-					         | (((long)rgb[2] * 255 +500) / 1000);
+					*(dst++) = color_lookup (r | g | b, pixel_val);
 				}
 			}
 		}
 		dst = graymap;
 		for (g = 0x000000uL; g <= 0xF8F8F8uL; g += 0x080808uL) {
-			short i = remap_color (g | ((g >>5) & 0x030303uL)), rgb[3];
-			vq_color (vdi_handle, i, 0, rgb);
-			*(dst++) = ((((((long)pixel_val[i] <<8)
-			         | (((long)rgb[0] * 255 +500) / 1000)) <<8)
-			         | (((long)rgb[1] * 255 +500) / 1000)) <<8)
-			         | (((long)rgb[2] * 255 +500) / 1000);
+			*(dst++) = color_lookup (g | ((g >>5) & 0x030303uL), pixel_val);
 		}
 	}
 }

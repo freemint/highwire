@@ -144,8 +144,9 @@ struct url_link * new_url_link (WORDITEM start,
 
 /* in color.c */
 
-void save_colors(void);
-WORD remap_color (long value);
+void  save_colors(void);
+WORD  remap_color  (long value);
+ULONG color_lookup (ULONG rgb, WORD * trans);
 
 /* in Paragrph.c */
 

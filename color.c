@@ -87,23 +87,6 @@ remap_color (long value)
 			best_fit = i;
 			break;
 		} else {
-		/*	UWORD e_r = (red   > screen_colortab[i].red ?
-			             red   - screen_colortab[i].red :
-			                     screen_colortab[i].red - red);
-			UWORD e_g = (green > screen_colortab[i].green ?
-			             green - screen_colortab[i].green :
-			                     screen_colortab[i].green - green);
-			UWORD e_b = (blue  > screen_colortab[i].blue ?
-			             blue  - screen_colortab[i].blue :
-			                     screen_colortab[i].blue - blue);
-			UWORD e_s = (satur > screen_colortab[i].satur ?
-			             satur - screen_colortab[i].satur :
-			                     screen_colortab[i].satur - satur);
-			UWORD err = (((e_r & 0xC0) <<4) | ((e_r & 0x30) <<2) | (e_r & 0x0F))
-			          + (((e_g & 0xC0) <<4) | ((e_g & 0x30) <<2) | (e_g & 0x0F))
-			          + (((e_b & 0xC0) <<4) | ((e_b & 0x30) <<2) | (e_b & 0x0F))
-			          + (((e_s & 0xC0) <<4) | ((e_s & 0x30) <<2) | (e_s & 0x0F));
-		*/
 			UWORD err = (red   > screen_colortab[i].red ?
 			             red   - screen_colortab[i].red :
 			                     screen_colortab[i].red - red)
@@ -124,4 +107,21 @@ remap_color (long value)
 	} while (++i < max_color);
 	
 	return best_fit;
+}
+
+
+/*==============================================================================
+ * Returns the the VDI color of 'rgb' as a iiRRGGBB value.  If 'trans' is NULL
+ * ii is the VDI palette index of RRGGBB, else it contains the ii-th element of
+ * the array 'trans'.
+ * The argument 'rgb' has normally a value of 00RRGGBB;  if it is 0xFFFFFFnn,
+ * the nn part will be taken directly as a VDI palette index and no color match
+ * search will be performed.
+ */
+ULONG
+color_lookup (ULONG rgb, WORD * trans)
+{
+	CHAR idx = ((rgb & ~0xFFuL) == ~0xFFuL ? rgb : remap_color (rgb));
+	return ( ((long)(trans ? trans[idx] : idx) <<24)
+	       | (*(long*)&screen_colortab[idx] & 0x00FFFFFFuL) );
 }
