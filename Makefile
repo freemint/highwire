@@ -55,11 +55,11 @@ CFILES = \
 	schedule.c \
 	ovl_sys.c \
 	inet.c \
-	fontbase.c \
 	http.c \
 	cache.c \
 	Location.c \
 	O_Struct.c \
+	fontbase.c \
 	W_Struct.c \
 	image.c \
 	Paragrph.c \
@@ -67,6 +67,7 @@ CFILES = \
 	Form.c \
 	Table.c \
 	Frame.c \
+	color.c \
 	encoding.c \
 	scanner.c \
 	parser.c \
@@ -76,12 +77,11 @@ CFILES = \
 	Containr.c \
 	Loader.c \
 	Redraws.c \
+	\
 	Widget.c \
 	hwWind.c \
-	\
 	av_prot.c \
 	config.c \
-	color.c \
 	Variable.c \
 	Nice_VDI.c \
 	keyinput.c \
