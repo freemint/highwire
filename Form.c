@@ -299,8 +299,8 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
           ENCODING encoding, UWORD cols, BOOL readonly, BOOL is_pwd)
 {
 	INPUT  input = _alloc (IT_TEXT, current, name);
-	size_t v_len = (value ? strlen (value) : 0);
-	size_t size  = (maxlen ? maxlen : value ? strlen (value) : 0);
+	size_t v_len = (value  ? strlen (value) : 0);
+	size_t size  = (maxlen ? maxlen : v_len);
 	
 	input->TextMax  = maxlen;
 	input->readonly = readonly;
@@ -311,6 +311,8 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 			if (mem) memcpy (mem, value, v_len +1);
 			free (value);
 			value = mem;
+		} else if (!value && is_pwd) {
+			value = malloc (maxlen +1);
 		}
 		if (is_pwd) { /* == "PASSWORD" */
 			input->Value = value;
