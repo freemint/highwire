@@ -691,20 +691,8 @@ table_finish (PARSER parser)
 		TAB_CELL cell = row->Cells;
 		adjust_rowspans (cell, i--);
 		do {
-			if (cell->c_SetWidth < 0) {
-				if (table->NumCols <= 1) {
-					cell->c_SetWidth = 0;
-				} else if (table->t_SetWidth > 0) {
-					short width = table->t_SetWidth - table->t_MinWidth;
-
-					/* dan */
-					if (width < table->t_SetMinWid) {
-						width = table->t_SetMinWid;
-					}
-					
-					cell->c_SetWidth = (-cell->c_SetWidth * width +512) /1024;
-					if (cell->c_SetWidth <= 0) cell->c_SetWidth = 1;
-				}
+			if (cell->c_SetWidth < 0 && table->NumCols <= 1) {
+				cell->c_SetWidth = 0;
 			}
 			if (cell->RowSpan == 1) {
 				if (row->MinHeight < cell->c_Height) {
