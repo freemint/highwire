@@ -69,19 +69,21 @@ new_containr (CONTAINR parent)
 		cont->ColSize = -1024;
 		cont->RowSize = -1024;
 		cont->Name    = strdup ("_top");
-		cont->Borders  = BRD_NONE;
-		cont->Border_Size = 3;
+		cont->Border        = TRUE;
+		cont->Borders       = BRD_NONE;
+		cont->Border_Size   = 5;
 		cont->Border_Colour = G_LWHITE;
 	} else {
 		cont->Base    = parent->Base;
 		cont->Parent  = parent;
 		cont->Border  = parent->Border;
-		cont->Borders = parent->Borders;
-		cont->Border_Size = parent->Border_Size;
+		cont->Borders       = parent->Borders;
+		cont->Border_Size   = parent->Border_Size;
 		cont->Border_Colour = parent->Border_Colour;
 		cont->Handler = parent->Handler;
 		cont->HdlrArg = parent->HdlrArg;
 	}
+	cont->Resize = TRUE;
 	
 	return cont;
 }
@@ -246,6 +248,7 @@ containr_setup (CONTAINR cont, FRAME frame, const char * anchor)
 		printf ("containr_setup (%p): no frame!\n", cont);
 	
 	} else {
+		GRECT area = cont->Area;
 		cont->Mode    = CNT_FRAME;
 		cont->u.Frame = frame;
 		frame->Container = cont;
@@ -255,7 +258,14 @@ containr_setup (CONTAINR cont, FRAME frame, const char * anchor)
 		frame->border_colour = cont->Border_Colour;
 		frame->resize    = cont->Resize;
 		frame->scroll    = cont->Scroll;
-		frame_calculate (frame, &cont->Area);
+		if (cont->Border_Size && cont->Sibling) {
+			if (cont->Parent->Mode == CNT_CLD_H) {
+				area.g_w -= cont->Border_Size;
+			} else {            /* == CNT_CLD_V */
+				area.g_h -= cont->Border_Size;
+			}
+		}
+		frame_calculate (frame, &area);
 		if (anchor) {
 			long dx, dy;
 			if (containr_Anchor (cont, anchor, &dx, &dy)) {
@@ -598,10 +608,18 @@ containr_byCoord (CONTAINR cont, short x, short y)
 	while (cont->Mode > CNT_FRAME) {
 		CONTAINR child = cont->u.Child;
 		if (cont->Mode == CNT_CLD_H) {
+			if (cont->Border_Size && cont->Sibling) {
+				short bot = cont->Area.g_y + cont->Area.g_h;
+				if (y < bot && y >= bot - cont->Border_Size) break;
+			}
 			while (child && x >= child->Area.g_x + child->Area.g_w) {
 				child = child->Sibling;
 			}
-		} else { /* CNT_CLD_V */
+		} else {   /* == CNT_CLD_V */
+			if (cont->Border_Size && cont->Sibling) {
+				short rgt = cont->Area.g_x + cont->Area.g_w;
+				if (x < rgt && x >= rgt - cont->Border_Size) break;
+			}
 			while (child && y >= child->Area.g_y + child->Area.g_h) {
 				child = child->Sibling;
 			}
@@ -646,6 +664,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	CONTAINR cont = containr_byCoord (*_cont, x, y);
 	UWORD    type = PE_NONE;
 	FRAME    frame;
+	short    area_rgt, area_bot;
 	
 	if (hash) *hash = NULL;
 	
@@ -664,6 +683,32 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	
 	*_cont = cont;
 	
+	area_rgt = cont->Area.g_x + cont->Area.g_w;
+	area_bot = cont->Area.g_y + cont->Area.g_h;
+	
+	if (cont->Border_Size && cont->Sibling) {
+		if (cont->Parent->Mode == CNT_CLD_H) {
+			short rgt = area_rgt;
+			area_rgt -= cont->Border_Size;
+			if (x < rgt && x >= area_rgt) {
+				*watch = cont->Area;
+				watch->g_x = area_rgt;
+				watch->g_w = cont->Border_Size;
+				type = PE_BORDER_RT;
+			}
+		} else {            /* == CNT_CLD_V */
+			short bot = area_bot;
+			area_bot -= cont->Border_Size;
+			if (y < bot && y >= area_bot) {
+				*watch = cont->Area;
+				watch->g_y = area_bot;
+				watch->g_h = cont->Border_Size;
+				type = PE_BORDER_DN;
+			}
+		}
+		if (type) return (cont->Resize ? type : PE_FRAME);
+	}
+#if 0 /***** REPLACED *****/
 	if (cont->Border) {
 		if (cont->Borders != 0)
 		{
@@ -711,25 +756,24 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		
 		if (type) return type;
 	}
-
+#endif /***** REPLACED *****/
+	
 	if ((frame = containr_Frame (cont)) == NULL) {
 		*watch = cont->Area;
-		if (cont->Border) {
-			watch->g_x += 1;
-			watch->g_y += 1;
-			watch->g_w -= 2;
-			watch->g_h -= 2;
+		if (cont->Border_Size && cont->Sibling) {
+			if (cont->Parent->Mode == CNT_CLD_H)  watch->g_w -= cont->Border_Size;
+			else                /* == CNT_CLD_V*/ watch->g_h -= cont->Border_Size;
 		}
 		return PE_EMPTY;
 	}
 	
 	if (x >= (watch->g_x = frame->clip.g_x + frame->clip.g_w)) {
-		watch->g_w = cont->Area.g_x + cont->Area.g_w - watch->g_x;
+		watch->g_w = area_rgt - watch->g_x;
 	} else {
 		watch->g_w = 0;
 	}
 	if (y >= (watch->g_y = frame->clip.g_y + frame->clip.g_h)) {
-		watch->g_h = cont->Area.g_y + cont->Area.g_h - watch->g_y;
+		watch->g_h = area_bot - watch->g_y;
 	} else {
 		watch->g_h = 0;
 	}
@@ -895,7 +939,15 @@ containr_calculate (CONTAINR cont, const GRECT * p_rect)
 		if (b) {
 			if (cont->Mode == CNT_FRAME) {
 				if (cont->u.Frame) {
-					frame_calculate (cont->u.Frame, &cont->Area);
+					GRECT area = cont->Area;
+					if (cont->Border_Size && cont->Sibling) {
+						if (cont->Parent->Mode == CNT_CLD_H) {
+							area.g_w -= cont->Border_Size;
+						} else {            /* == CNT_CLD_V */
+							area.g_h -= cont->Border_Size;
+						}
+					}
+					frame_calculate (cont->u.Frame, &area);
 				}
 			} else if (cont->Mode && cont->u.Child) {
 				CONTAINR cld = cont->u.Child;
@@ -906,12 +958,18 @@ containr_calculate (CONTAINR cont, const GRECT * p_rect)
 				short    n   = 0;
 				short    frc;
 				if (cont->Mode == CNT_CLD_H) {
+					if (cont->Sibling) {
+						h -= cont->Border_Size;
+					}
 					do {
 						if (cld->ColSize > 0) w -= cld->ColSize;
 						else                  n++;
 					} while ((cld = cld->Sibling) != NULL);
 					frc = w;
 				} else {
+					if (cont->Sibling) {
+						w -= cont->Border_Size;
+					}
 					do {
 						if (cld->RowSize > 0) h -= cld->RowSize;
 						else                  n++;
@@ -1037,21 +1095,64 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 		if (b) {
 			GRECT area = cont->Area;
 			if (rc_intersect (&clip, &area)) {
-				PXY p[2];
+				BOOL clipped;
+				PXY  p[4];
+				WORD brd_w = 1, brd_h = 1;
+				
+				if (cont->Border_Size && cont->Sibling) {
+					BOOL h_not_v = (cont->Mode <= CNT_FRAME
+					                ? cont->Parent->Mode == CNT_CLD_V
+					                : cont->Mode         == CNT_CLD_H);
+					p[1].p_x = (p[0].p_x = area.g_x) + area.g_w -1;
+					p[1].p_y = (p[0].p_y = area.g_y) + area.g_h -1;
+					vs_clip_pxy (vdi_handle, p);
+					clipped = TRUE;
+					p[2].p_x = cont->Area.g_x + cont->Area.g_w -1;
+					p[2].p_y = cont->Area.g_y + cont->Area.g_h -1;
+					if (h_not_v) { /* horizontal border */
+						p[3].p_x = p[1].p_x = cont->Area.g_x;
+						p[0].p_y = p[1].p_y = p[2].p_y - cont->Border_Size +1;
+						p[0].p_x = p[2].p_x;
+						p[3].p_y = p[2].p_y;
+						brd_h   += cont->Border_Size;
+					} else {       /* vertical border */
+						p[0].p_x = p[1].p_x = p[2].p_x - cont->Border_Size +1;
+						p[3].p_y = p[1].p_y = cont->Area.g_y;
+						p[3].p_x = p[2].p_x;
+						p[0].p_y = p[2].p_y;
+						brd_w   += cont->Border_Size;
+					}
+					if (!mouse) {
+						v_hide_c (vdi_handle);
+						mouse = TRUE;
+					}
+					vsf_color (vdi_handle, cont->Border_Colour);
+					v_bar (vdi_handle, (short*)(p +1));
+					if (cont->Border_Size > 3) {
+						vsl_color (vdi_handle, G_WHITE);
+						v_pline (vdi_handle, 2, (short*)(p +0));
+						vsl_color (vdi_handle, G_LBLACK);
+						v_pline (vdi_handle, 2, (short*)(p +2));
+					}
+				} else {
+					clipped = FALSE;
+				}
+				
 				if (cont->Mode > CNT_FRAME && cont->u.Child) {
 					cont = cont->u.Child;
 					depth++;
 					continue;
 				}
 				
-				p[1].p_x = (p[0].p_x = area.g_x) + area.g_w -1;
-				p[1].p_y = (p[0].p_y = area.g_y) + area.g_h -1;
-				vs_clip_pxy (vdi_handle, p);
-				if (!mouse) {
-					v_hide_c (vdi_handle);
-					mouse = TRUE;
+				if (!clipped) {
+					p[1].p_x = (p[0].p_x = area.g_x) + area.g_w -1;
+					p[1].p_y = (p[0].p_y = area.g_y) + area.g_h -1;
+					vs_clip_pxy (vdi_handle, p);
+					if (!mouse) {
+						v_hide_c (vdi_handle);
+						mouse = TRUE;
+					}
 				}
-				
 				if (cont->Mode == CNT_FRAME && cont->u.Frame) {
 					
 					frame_draw (cont->u.Frame, &area, highlight);
@@ -1059,8 +1160,8 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 				} else {
 					GRECT r = cont->Area;
 					
-					r.g_w += r.g_x -1;
-					r.g_h += r.g_y -1;
+					r.g_w += r.g_x - brd_w;
+					r.g_h += r.g_y - brd_h;
 					
 					vsf_perimeter (vdi_handle, PERIMETER_ON);
 					vsf_interior  (vdi_handle, FIS_PATTERN);
@@ -1068,9 +1169,7 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 					vsf_color     (vdi_handle, (cont->Parent ? G_LWHITE : G_RED));
 					vswr_mode     (vdi_handle, MD_REPLACE);
 					
-					v_hide_c (vdi_handle);
 					v_bar (vdi_handle, (short*)&r);
-					v_show_c (vdi_handle, 1);
 					
 					vsf_perimeter (vdi_handle, PERIMETER_OFF);
 					vsf_interior  (vdi_handle, FIS_SOLID);
