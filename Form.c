@@ -719,7 +719,7 @@ coord_diff (INPUT check, INPUT input,  GRECT * rect)
 
 /*============================================================================*/
 WORD
-input_handle (INPUT input, GRECT * radio, char *** popup)
+input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 {
 	WORD rtn = 0;
 	
@@ -754,9 +754,19 @@ input_handle (INPUT input, GRECT * radio, char *** popup)
 				rtn = 1;
 			}
 			form->TextActive = input;
-			form->TextCursrX = 0;
 			form->TextCursrY = 0;
 			form->TextShiftX = 0;
+			if (mxy.p_x > 0 && input->TextLen > 0) {
+				form->TextCursrX = mxy.p_x / (input->Word->font->SpaceWidth -1);
+				if (form->TextCursrX > input->VisibleX) {
+					 form->TextCursrX = input->VisibleX;
+				}
+				if (form->TextCursrX > input->TextLen) {
+					 form->TextCursrX = input->TextLen;
+				}
+			} else {
+				form->TextCursrX = 0;
+			}
 		}	break;
 		
 		case IT_CHECK:

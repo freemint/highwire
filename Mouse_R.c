@@ -193,7 +193,10 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			WORD    value = 0;
 			char ** popup = NULL;
 			GRECT   radio;
-			switch (input_handle (hash, &radio, &popup)) {
+			PXY     pxy;
+			pxy.p_x = mx - watch.g_x;
+			pxy.p_y = my - watch.g_y;
+			switch (input_handle (hash, pxy, &radio, &popup)) {
 				case 2: radio.g_x += watch.g_x;
 				        radio.g_y += watch.g_y;
 				        hwWind_redraw (wind, &radio);
