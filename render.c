@@ -1169,8 +1169,7 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		char out[100];
 		const char * line = *text;
 		
-		if (cfg_UseCSS &&
-		    (!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     strstr (out, "all") || strstr (out, "screen"))) {
@@ -1185,7 +1184,11 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 						line--;
 					}
 				}
-				if (*line != '<') {
+				if (!cfg_UseCSS) {
+					char * p = strchr (line, '<');
+					if (p) line = p;
+				
+				} else if (*line != '<') {
 					line = parse_css (parser, line, NULL);
 				}
 			
