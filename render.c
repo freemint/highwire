@@ -248,21 +248,33 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 				if (tag == TAG_FRAMESET) {
 
 					char cols[100], rows[100];
-					BOOL border = (container->Parent
-					               ? container->Parent->Border : TRUE);
-					container->Border
-					        = (get_value_unum (parser, KEY_FRAMEBORDER, border) > 0);
-
-					container->Border_Size  = get_value_unum  (parser, KEY_BORDER, -1);
-
-					if (container->Border_Size < 0) {
-						container->Border_Size = (get_value (parser, KEY_BORDER, NULL, 0) ? 1 : 0);
+					WORD border = get_value_unum (parser, KEY_FRAMEBORDER, -1);
+					
+					if (border >= 0) {
+						if (!border) {
+							container->Border      = FALSE;
+							container->Border_Size = 0;
+						} else if (!container->Border) {
+							container->Border      = TRUE;
+							container->Border_Size = 5;
+						}
 					}
-
-					if (container->Border_Size == 0)
-						container->Border_Size = (container->Parent
-					               ? container->Parent->Border_Size : 3);
-
+					
+					border = get_value_unum (parser, KEY_BORDER, -1);
+					if (border > 0) {
+						container->Border      = TRUE;
+						container->Border_Size = border;
+					
+					} else if (!border) {
+						container->Border      = FALSE;
+						container->Border_Size = 0;
+					
+					} else if (!container->Border && 
+					           get_value (parser, KEY_BORDER, NULL, 0)) {
+						container->Border      = TRUE;
+						container->Border_Size = 5;
+					}
+					
 					if (!ignore_colours)
 					{
 						WORD color;
