@@ -16,6 +16,7 @@ typedef struct s_input * INPUT;
 #include "fontbase.h"
 #include "scanner.h"
 #include "Loader.h"
+#include "Location.h"
 #include "parser.h"
 #include "Form.h"
 
@@ -84,6 +85,13 @@ void *
 new_form (FRAME frame, char * target, char * action, const char * method)
 {
 	FORM form = malloc (sizeof (struct s_form));
+	
+	if (!action) {
+		char tmp[2000], * q;
+		location_FullName (frame->BaseHref, tmp, sizeof(tmp));
+		if ((q = strrchr (tmp, '?')) != NULL) *q = '\0';
+		action = strdup (tmp);
+	}
 	
 	form->Frame     = frame;
 	form->Next      = frame->FormList;
