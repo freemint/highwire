@@ -17,7 +17,7 @@ static GRECT desk_area = { 0,0, 0,0 };
 
 /*============================================================================*/
 WINDOW
-window_ctor (WINDOW This, WORD widgets, GRECT * curr)
+window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 {
 	if (!desk_area.g_w || !desk_area.g_h) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
@@ -28,6 +28,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr)
 	}
 	if (This) {
 		This->Widgets = widgets;
+		This->isModal = modal;
 		This->isIcon  = FALSE;
 		This->Next = This->Prev = NULL;
 		
@@ -152,16 +153,12 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	
 	if (!This) {
 		This = window_Top;
-		if (!This) return;
+		if (!This || This->isModal) return;
 		if (topNbot) {
 			while (This->Next) This = This->Next;
 		}
 	
 	} else if (curr && !This->Next && !This->Prev) {
-		if ((This->Next = window_Top) != NULL) {
-			window_Top->Prev = This;
-		}
-		window_Top = This;
 		topNbot = TRUE;
 		done    = TRUE;
 		wind_open_grect (This->Handle, curr);
@@ -171,14 +168,36 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 		if (This->Prev) {
 			if ((This->Prev->Next = This->Next) != NULL) {
 				This->Next->Prev = This->Prev;
+				This->Next       = NULL;
 			}
-			window_Top->Prev = This;
-			This->Next = window_Top;
 			This->Prev = NULL;
-			window_Top = This;
 			done       = TRUE;
 		}
 		wind_set (This->Handle, WF_TOP, 0,0,0,0);
+		if (done) {
+			if (!window_Top) {
+				window_Top = This;
+			} else if (!window_Top->isModal || This->isModal) {
+				window_Top->Prev = This;
+				This->Next       = window_Top;
+				window_Top       = This;
+			} else {
+				WINDOW wind = window_Top;
+				while (wind->Next) {
+					WINDOW next = wind->Next;
+					if (!next->isModal) break;
+					wind = next;
+				}
+				if ((This->Next = wind->Next) != NULL) {
+					This->Next->Prev = This;
+				}
+				This->Prev = wind;
+				wind->Next = This;
+				do {
+					wind_set (wind->Handle, WF_TOP, 0,0,0,0);
+				} while ((wind = wind->Prev) != NULL);
+			}
+		}
 	
 	} else {
 		if (This->Next) {
@@ -201,18 +220,3 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 		(*This->raised)(This, topNbot);
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

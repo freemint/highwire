@@ -4,13 +4,14 @@ typedef struct s_window * WINDOW;
 #define WINDOW_t WINDOW
 
 #else
-WINDOW_t window_ctor (WINDOW_t, WORD widgets, GRECT *);
+WINDOW_t window_ctor (WINDOW_t, WORD widgets, GRECT *, BOOL modal);
 WINDOW_t window_dtor (WINDOW_t);
 #endif
 typedef struct s_window {   /* all of the following are private attributes, */
 	WORD   Handle;           /* only to be read, by foreign modules          */
 	WORD   Widgets;    /* as in wind_create (kind, ...):  mover,  sizer, etc. */
 	WINDOW Prev, Next; /* still private, keep away */
+	BOOL   isModal;
 	BOOL   isIcon;
 	/***/
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY mouse, UWORD kstate);
