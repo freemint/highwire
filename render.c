@@ -401,6 +401,25 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	return box;
 }
 
+/*----------------------------------------------------------------------------*/
+static DOMBOX *
+leave_box (PARSER parser, HTMLTAG tag)
+{
+	TEXTBUFF current = &parser->Current;
+	DOMBOX * box     = current->parentbox;
+	
+	if (box->HtmlCode != tag) {
+		box = NULL;
+	
+	} else{
+		PARAGRPH par = add_paragraph (current, 0);
+		current->parentbox = box = box->Parent;
+		dombox_adopt (box, &par->Box);
+		par->Box.TextAlign = box->TextAlign;
+	}
+	return box;
+}
+
 
 /*------------------------------------------------------------------------------
  * get rid of html entities in an url
@@ -2170,19 +2189,13 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	TEXTBUFF current = &parser->Current;
-	DOMBOX * box     = current->parentbox;
 	(void)text;
 	
 	if (flags & PF_START) {
-		box = group_box (parser, TAG_CENTER, ALN_CENTER);
+		group_box (parser, TAG_CENTER, ALN_CENTER);
 	
-	} else if (box->HtmlCode == TAG_CENTER) {
-		PARAGRPH par = add_paragraph (current, 0);
-		box = box->Parent;
-		current->parentbox = box;
-		dombox_adopt (box, &par->Box);
-		par->Box.TextAlign = box->TextAlign;
+	} else {
+		leave_box (parser, TAG_CENTER);
 	}
 	
 	return (flags|PF_SPACE);
@@ -2200,8 +2213,9 @@ static UWORD
 render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
-	PARAGRPH par     = add_paragraph (current, 2);
 	UNUSED  (text);
+	
+	add_paragraph (current, 2);
 	
 	if (flags & PF_START) {
 		char output[100];
@@ -2223,11 +2237,8 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 			flags |= PF_FONT;
 		}
 	
-	} else if (current->parentbox->HtmlCode == TAG_BLOCKQUOTE) {
-		DOMBOX * box = current->parentbox->Parent;
-		current->parentbox = box;
-		dombox_adopt (box, &par->Box);
-		par->Box.TextAlign = box->TextAlign;
+	} else {
+		leave_box (parser, TAG_BLOCKQUOTE);
 	}
 	
 	return (flags|PF_SPACE);
