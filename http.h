@@ -4,7 +4,8 @@
 
 typedef struct {
 	short    Version;  /* which HTTP */
-	long     SrvrDate;
+	long     LoclDate; /* local time when the header was received */
+	long     SrvrDate; /* remote time from 'Server-Date'          */
 	long     Modified; /* -1 or from 'Last-Modified'  */
 	long     Expires;
 	long     Size;     /* -1 or from 'Content-Length' */
@@ -20,6 +21,7 @@ typedef struct {
 short http_header (LOCATION, HTTP_HDR *, size_t blk_size,
                    short * keep_alive, long tout_msec);
 
+long     http_date    (const char * buf);
 ENCODING http_charset (const char * buf, size_t len, MIMETYPE *);
 
 

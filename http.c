@@ -16,7 +16,7 @@
 #include "scanner.h"
 
 
-static long
+long
 http_date (const char * beg)
 {
 	/* RFC 2616 grammar:
@@ -300,7 +300,14 @@ expires (const char * beg, long len, HTTP_HDR * hdr)
 		len -= sizeof(token)-1;
 		while (isspace (*beg) && len-- > 0) beg++;
 		if (len > 0) {
-			hdr->Expires = http_date (beg);
+			if (isdigit (*beg)) { /* invalid format but often used */
+				long delta = strtol (beg, NULL, 10);
+				if (delta >= 0) {
+					hdr->Expires = hdr->SrvrDate + delta;
+				}
+			} else {
+				hdr->Expires = http_date (beg);
+			}
 		}
 		found = TRUE;
 	} else {
@@ -429,6 +436,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		
 		if (!reply) {
 			unsigned int major, minor;
+			hdr->LoclDate = time (NULL);
 			if (sscanf (ln_beg, "HTTP/%u.%u %i", &major, &minor, &reply) < 3) {
 				reply = -1;
 				inet_close (sock);
@@ -473,6 +481,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	if (reply <= 0) {
 		strcpy (buffer, (reply == -ECONNRESET
 		                 ? "Connection reset by peer." : "Protocoll Error!\n"));
+	}
+	if (hdr->SrvrDate <= 0) {
+		hdr->SrvrDate = (hdr->Modified > 0 ? hdr->Modified : hdr->LoclDate);
 	}
 	
 	if (keep_alive) { /* keep_alive */

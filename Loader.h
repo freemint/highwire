@@ -18,8 +18,9 @@ typedef struct s_loader {
 	short    ScrollV, ScrollH;
 	/* */
 	LOCATION Cached;
-	long     Date;
-	long     Expires;
+	long     Tdiff;    /* difference between local and remote time */
+	long     Date;     /* remote file date/time      */
+	long     Expires;  /* local expiration date/time */
 	size_t   DataSize; /* expected data size                   */
 	size_t   DataFill; /* real number of loaded/received bytes */
 	char   * Data;

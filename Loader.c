@@ -171,6 +171,7 @@ new_loader (LOCATION loc, CONTAINR target)
 	loader->ScrollH    = 0;
 	/* */
 	loader->Cached   = NULL;
+	loader->Tdiff    = 0;
 	loader->Date     = 0;
 	loader->Expires  = 0;
 	loader->DataSize = 0;
@@ -694,13 +695,10 @@ header_job (void * arg, long invalidated)
 		sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
 		
-		if (hdr.Modified > 0) {
-			loader->Date = hdr.Modified;
-		} else if (hdr.SrvrDate > 0) {
-			loader->Date = hdr.SrvrDate;
-		}
+		loader->Date  = (hdr.Modified > 0 ? hdr.Modified : hdr.SrvrDate);
+		loader->Tdiff = hdr.LoclDate - hdr.SrvrDate;
 		if (loader->Date && hdr.Expires > 0) {
-			loader->Expires = hdr.Expires;
+			loader->Expires = hdr.Expires + loader->Tdiff;
 		}
 		
 		if (hdr.Size >= 0 && !hdr.Chunked) {
