@@ -250,6 +250,8 @@ render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 		                    *text, parser->Frame->Encoding, TAG_TITLE, TRUE);
 		if (title[0]) {
 			containr_notify (parser->Target, HW_SetTitle, title);
+			flags |= PF_FONT;         /* force resetting to the actual fontbase: */
+			parser->Current.word->font = NULL;
 		}
 	}
 	return flags;
