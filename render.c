@@ -409,6 +409,8 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	}
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
+	css_text_styles (parser, NULL);
+	
 	return box;
 }
 
@@ -427,6 +429,8 @@ leave_box (PARSER parser, HTMLTAG tag)
 		current->parentbox = box->Parent;
 		dombox_adopt (box->Parent, &par->Box);
 		par->Box.TextAlign = box->Parent->TextAlign;
+		
+		fontstack_pop (current);
 	}
 	return box;
 }
@@ -1121,19 +1125,16 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		
-		if ((margin = get_value_unum (parser, CSS_MARGIN, -1)) >= 0) {
-			frame->Page.Padding.Top = frame->Page.Padding.Bot =
+		if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
+		    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
+			frame->Page.Padding.Top = frame->Page.Padding.Bot = margin;
+		}
+		if ((margin = get_value_unum (parser, KEY_MARGINWIDTH, -1)) >= 0 ||
+		    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
 			frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
-			
-		} else {
-			if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
-			    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
-				frame->Page.Padding.Top = frame->Page.Padding.Bot = margin;
-			}
-			if ((margin = get_value_unum (parser, KEY_MARGINWIDTH, -1)) >= 0 ||
-			    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
-				frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
-			}
+		}
+		if (parser->hasStyle) {
+			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
 		}
 	}
 	return flags;
@@ -2014,7 +2015,10 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 
 		if (parser->hasStyle) {
 			css_block_styles (parser, current->font);
-		
+			if (!current->lst_stack) {
+				box_frame (parser, &par->Box.Margin,  CSS_MARGIN);
+				box_frame (parser, &par->Box.Padding, CSS_PADDING);
+			}
 		} else {
 			par->Box.TextAlign = get_h_align (parser,
 			                                  current->parentbox->TextAlign);
@@ -2165,7 +2169,10 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		css_block_styles (parser, NULL);
-		
+		if (!current->lst_stack) {
+			box_frame (parser, &par->Box.Margin,  CSS_MARGIN);
+			box_frame (parser, &par->Box.Padding, CSS_PADDING);
+		}
 		par->Box.TextAlign = get_h_align (parser, current->parentbox->TextAlign);
 		
 		if (!ignore_colours) {
