@@ -1391,6 +1391,12 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		current->word->vertical_align = word_v_align;
 	
 		if (floating == ALN_NO_FLT) {
+			if (!current->nowrap) {
+				if (current->prev_wrd) {
+					current->prev_wrd->wrap = TRUE;
+				}
+				current->word->wrap = TRUE;
+			}
 			flags &= ~PF_SPACE;
 		} else {
 			add_paragraph (current, 0);
