@@ -1,4 +1,4 @@
-(non-public of Oct. 20, 2003)
+Changes in V. 0.1.5 release  of October 24, 2003:
 
 - Enabled loading and displaying of image files
   over remote connections.
@@ -66,6 +66,9 @@
 
 - Implemented recoding of faulty encoded character
   entities from code page 1252 (&#128; .. &#159;).
+
+- Added handling of CSS list item marker attribute
+  'list-style-type'.
 
 - New shortcut CTRL+N added to open a new empty
   window:

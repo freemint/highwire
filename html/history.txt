@@ -1,6 +1,54 @@
 Ok here are the new supports and changes
 
-October 20, 2003   [V. 0.1.5 release]
+October 24, 2003   [V. 0.1.5 release]
+
+  AltF4's patches
+
+  parser.c:
+    - line 389 (parse_tag):  fixed wrong handling of recognized CSS
+      tokens, was sometimes dropped before.
+
+  token.h:
+    - line 210:  new CSS token LIST_STYLE_TYPE.
+
+  list.c:
+    - line 370 (list_marker):  added handling for list item type
+      'none'.
+
+  render.c:
+    - line 1188 (render_Q_tag):  too long comment wrapped.
+    - line 1828 (list_bullet) + 1839..1847 (render_OL_tag)
+      + 1868..1873 (render_UL_tag) + 1928..1939 (render_LI_tag):  new
+      function list_bullet() for setting of list marker styles;
+      interpretes now also the CSS keyword 'list-style-type' with the
+      new implemented value 'none'.
+
+October 23, 2003
+
+  AltF4's patches
+
+  defs.h:    line 65..67:
+  list.c:    line 41 (list_start) + 308 + 312 + 316 + 321 + 331 + 344
+             + 354 + 363 (list_marker):
+  render.c:  line 1841..1845 (render_OL_tag) + 1867
+             + 1869..1871 (render_UL_tag) + 1895 (render_MENU_tag)
+             + 1930..1938 (render_LI_tag) + 1957 (render_DL_tag):
+    - extended and reneamed enums for list item bullet types to make it
+      closer to CSS.
+
+October 22, 2003
+
+  AltF4's patches
+
+  Containr.c:
+    - line 805 (containr_Anchor):  small adjustment of the calculated y
+      position for anchors.
+
+  Mouse_R.c:
+    - line 206 + 217..218 (button_clicked):  avoid useless reloads if a
+      link points to an anchor in another frame.
+
+October 20, 2003
 
   AltF4's patches
 
