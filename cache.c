@@ -249,6 +249,24 @@ destroy_item (CACHEITEM citem)
 	free (citem);
 }
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+item_reorder (CACHEITEM citem)
+{
+	if (!citem->PrevItem) {
+		return FALSE; /* already at the begin */
+	}
+	citem->PrevItem->NextItem = citem->NextItem;
+	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
+	else                 __cache_end               = citem->PrevItem;
+	__cache_beg->PrevItem = citem;
+	citem->PrevItem       = NULL;
+	citem->NextItem       = __cache_beg;
+	__cache_beg           = citem;
+	
+	return TRUE;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static BOOL
@@ -349,14 +367,8 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 			citem->NodeNext       = node->Array[idx].Item;
 			node->Array[idx].Item = citem;
 		}
-		if (citem->PrevItem) {
-			citem->PrevItem->NextItem = citem->NextItem;
-			if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
-			else                 __cache_end               = citem->PrevItem;
-			__cache_beg->PrevItem = citem;
-			citem->PrevItem       = NULL;
-			citem->NextItem       = __cache_beg;
-			__cache_beg           = citem;
+		if (item_reorder (citem)) {
+			cache_flush (NULL, __cache_dir);
 		}
 		if (opt_found) {
 			*opt_found = citem->Ident;
@@ -843,6 +855,7 @@ CRESULT
 cache_query (LOCATION loc, long ident, CACHEINF info)
 {
 	CACHEITEM citem = *tree_slot (loc);
+	CACHEITEM found = NULL;
 	CRESULT   res_d = CR_NONE, res_m = CR_NONE;
 	
 	info->Source  = NULL;
@@ -859,6 +872,7 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 		if (location_equal (loc, citem->Location)) {
 			if (!item_isMem (citem)) {
 				if (citem->Cached[0]) {
+					found         = citem;
 					info->Cached  = citem->Cached;
 					info->Local   = cache_location (citem);
 					info->Date    = citem->Date;
@@ -890,6 +904,8 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 		}
 		citem = citem->NodeNext;
 	}
-	
+	if (found && !res_m && item_reorder (found)) {
+		cache_flush (NULL, __cache_dir);
+	}
 	return (res_d | res_m);
 }
