@@ -88,6 +88,38 @@ get_align (PARSER parser)
 }
 
 
+/*------------------------------------------------------------------------------
+ * get rid of html entities in an url
+*/
+static char *
+url_correct (char * url)
+{
+	const char * src;
+	char * dst = (url ? strchr (url, '&') : NULL);
+	if ((src = dst) != NULL) {
+		do {
+			char uni[16];
+			const char * amp = src;
+			char * end = scan_namedchar (&src, uni, TRUE, MAP_UNICODE);
+			if (end != uni +2 || uni[0] || src[-1] != ';') {
+				if (amp > dst) {
+					while ((*(dst++) = *(amp++)) != '\0');
+				}
+				break;
+			
+			} else {
+				*(dst++) = uni[1];
+			}
+			while (*src != '&') {
+				if ((*(dst++) = *src) != '\0') src++;
+				else                           break;
+			}
+		} while (*src);
+	}
+	return url;
+}
+
+
 /*******************************************************************************
  *
  * Head And Structure Elements
@@ -330,8 +362,9 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 						}
 					}
 
-					if (get_value (parser, KEY_SRC, frame_file, sizeof(frame_file))) {
-						LOADER loader = new_loader_job (frame_file, base, container);
+					if (get_value (parser, KEY_SRC, frame_file,sizeof(frame_file))) {
+						LOADER loader = new_loader_job (url_correct (frame_file),
+						                                base, container);
 						short margn_w = get_value_unum (parser, KEY_MARGINWIDTH,  -1);
 						short margn_h = get_value_unum (parser, KEY_MARGINHEIGHT, -1);
 						if (margn_w >= 0 || margn_h >= 0) {
@@ -958,26 +991,12 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
 		{
-			char out2[30], * p = output, * amp = strchr (p, '&');
+			char out2[30], * p = url_correct (output);
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
 			if (!target && frame->base_target) {
 				target = strdup (frame->base_target);
-			}
-			
-			while (amp) { /* get rid of html entities in the url */
-				const char * nxt = amp;
-				char * end = scan_namedchar (&nxt, out2, TRUE, MAP_UNICODE);
-				if (end == out2 +2 && !out2[0] && out2[1] && nxt[-1] == ';') {
-					*(amp++) = out2[1];
-					if (amp < nxt) {
-						strcpy (amp, nxt);
-					}
-				} else {
-					amp++;
-				}
-				amp = strchr (amp, '&');
 			}
 			
 			while (*p > ' ') { /* remove controll characters from the url */
@@ -1242,8 +1261,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		
-		get_value (parser, KEY_SRC, img_file, sizeof(img_file));
-		
+		if (get_value (parser, KEY_SRC, img_file, sizeof(img_file))) {
+			url_correct (img_file);
+		}
 		new_image (frame, current, img_file, frame->Location,
 		           get_value_size (parser, KEY_WIDTH),
 		           get_value_size (parser, KEY_HEIGHT),
