@@ -143,23 +143,23 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 	
 	} else {
 		union { char c[4]; long l; } magic = { { OVL_MAGIC } };
-		long * l   = (long*)ovl_basepage->p_dbase;
-		long * end = l + (ovl_basepage->p_dlen - sizeof(OVL_METH)) / sizeof(long);
-		do if (*l == magic.l) {
-			OVL_METH * p = (OVL_METH*)l;
-			long       r = p->revision & 0x88888888uL;
-			if (p->revision & ((r >>1) | (r >>2))) {        /* check for BCD */
-				printf ("OVL: infalid revision %08lX\n", p->revision);
-			} else if (p->revision < OVL_REVISION) {        /* compare date */
-				printf ("OVL: too old %08lX\n", p->revision);
-			} else if (&p->magic.l != p->magic_l) {         /* additional check */
+		WORD * ptr = (WORD*)ovl_basepage->p_dbase;
+		WORD * end = ptr + (ovl_basepage->p_dlen - sizeof(OVL_METH)) / 2;
+		do if (*(long*)ptr == magic.l) {
+			OVL_METH * m = (OVL_METH*)ptr;
+			long       r = m->revision & 0x88888888uL;
+			if (m->revision & ((r >>1) | (r >>2))) {        /* check for BCD */
+				printf ("OVL: infalid revision %08lX\n", m->revision);
+			} else if (m->revision < OVL_REVISION) {        /* compare date */
+				printf ("OVL: too old %08lX\n", m->revision);
+			} else if (&m->magic.l != m->magic_l) {         /* additional check */
 				printf ("OVL: invalid format (0x%lX/0x%lX)\n",
-				        (long)&p->magic.l, (long)p->magic_l);
+				        (long)&m->magic.l, (long)m->magic_l);
 			} else {
-				ovl_methods = p;
+				ovl_methods = m;
 			}
 			break;
-		} while (++l < end);
+		} while (++ptr < end);
 	}
 printf("ovl: bp=%p ft=%p \n", ovl_basepage, ovl_methods);
 	
