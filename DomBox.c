@@ -8,9 +8,13 @@
 
 
 static void vTab_delete (DOMBOX *);
+static LONG vTab_MinWidth (DOMBOX *);
+static LONG vTab_MaxWidth (DOMBOX *);
 static void vTab_draw   (DOMBOX *, long x, long y, const GRECT * clip, void *);
 struct s_dombox_vtab DomBox_vTab = {
 	vTab_delete,
+	vTab_MinWidth,
+	vTab_MaxWidth,
 	vTab_draw
 };
 
@@ -140,6 +144,44 @@ vTab_delete (DOMBOX * This)
 		Delete (This->ChildBeg);
 	}
 	free (dombox_dtor (This));
+}
+
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MinWidth (DOMBOX * This)
+{
+	DOMBOX * box = This->ChildBeg;
+	
+	This->MinWidth = 0;
+	while (box) {
+		long width = dombox_MinWidth (box);
+		if (This->MinWidth < width) {
+			 This->MinWidth = width;
+		}
+		box = box->Sibling;
+	}
+	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
+	
+	return This->MinWidth;
+}
+
+/*----------------------------------------------------------------------------*/
+static LONG
+vTab_MaxWidth (DOMBOX * This)
+{
+	DOMBOX * box = This->ChildBeg;
+	
+	This->MaxWidth = 0;
+	while (box) {
+		long width = dombox_MaxWidth (box);
+		if (This->MaxWidth < width) {
+			 This->MaxWidth = width;
+		}
+		box = box->Sibling;
+	}
+	This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This);
+	
+	return This->MaxWidth;
 }
 
 /*----------------------------------------------------------------------------*/
