@@ -17,7 +17,7 @@
  * handles mouse interaction with a frame
 */
 void
-button_clicked (WORD button, WORD mx, WORD my)
+button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 {
 	void   * hash = NULL;
 	GRECT    watch;
@@ -51,7 +51,8 @@ button_clicked (WORD button, WORD mx, WORD my)
 			if (y >= frame->v_bar.pos + frame->v_bar.size) {
 				
 				if (y >= frame->v_bar.rd) {                         /* down arrow */
-					step = (button & LEFT_BUTTON ? +scroll_step : -scroll_step);
+					step = (clicks == 1 ? scroll_step : frame->Page.Height);
+					step = (button & LEFT_BUTTON ? +step : -step);
 				
 				} else if (button & LEFT_BUTTON) {                   /* down page */
 					step = +(frame->clip.g_h - scroll_step);
@@ -64,7 +65,8 @@ button_clicked (WORD button, WORD mx, WORD my)
 			} else if (y <= frame->v_bar.pos) {
 				
 				if (y <= frame->v_bar.lu) {                           /* up arrow */
-					step = (button & LEFT_BUTTON ? -scroll_step : +scroll_step);
+					step = (clicks == 1 ? scroll_step : frame->Page.Height);
+					step = (button & LEFT_BUTTON ? -step : +step);
 				
 				} else if (button & LEFT_BUTTON) {                     /* up page */
 					step = -(frame->clip.g_h - scroll_step);
@@ -117,7 +119,8 @@ button_clicked (WORD button, WORD mx, WORD my)
 			if (x >= frame->h_bar.pos + frame->h_bar.size) {
 				
 				if (x >= frame->h_bar.rd) {                        /* right arrow */
-					step = (button & LEFT_BUTTON ? +scroll_step : -scroll_step);
+					step = (clicks == 1 ? scroll_step : frame->Page.Width);
+					step = (button & LEFT_BUTTON ? +step : -step);
 				
 				} else if (button & LEFT_BUTTON) {                  /* right page */
 					step = +(frame->clip.g_w - scroll_step);
@@ -130,7 +133,8 @@ button_clicked (WORD button, WORD mx, WORD my)
 			} else if (x <= frame->h_bar.pos) {
 				
 				if (x <= frame->h_bar.lu) {                         /* left arrow */
-					step = (button & LEFT_BUTTON ? -scroll_step : +scroll_step);
+					step = (clicks == 1 ? scroll_step : frame->Page.Width);
+					step = (button & LEFT_BUTTON ? -step : +step);
 				
 				} else if (button & LEFT_BUTTON) {                   /* left page */
 					step = -(frame->clip.g_w - scroll_step);
@@ -206,9 +210,7 @@ button_clicked (WORD button, WORD mx, WORD my)
 				}
 			} else {
 				LOCATION loc = frame->Location;
-				WORD meta, u;
-				graf_mkstate (&u,&u,&u, &meta);
-				if (meta & K_ALT) {
+				if (state & K_ALT) {
 					cont = new_hwWind (link->address, "", NULL)->Pane;
 				} else if (link->u.target) {
 					if (stricmp (link->u.target, "_blank") == 0) {
