@@ -23,16 +23,16 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 	} else if (par->paragraph_code != PAR_LI ||
 	           current->lst_stack->Spacer->next_word != current->prev_wrd) {
 		par = add_paragraph (current, 0);
-		list->Indent = par->Indent - par->Hanging;
+		list->Indent = par->Indent - par->Box.TextIndent;
 	
 	} else { /* reuse actual (empty) <li> line */
-		list->Indent = par->Indent - par->Hanging;
+		list->Indent = par->Indent - par->Box.TextIndent;
 	}
 	
-	par->Box.BoxClass  = BC_MIXED;
-	par->Box.HtmlCode  = TAG_LI;
-	par->Box.TextAlign = ALN_LEFT;
-	par->Hanging      -= list->Hanging;
+	par->Box.BoxClass   =  BC_MIXED;
+	par->Box.HtmlCode   =  TAG_LI;
+	par->Box.TextAlign  =  ALN_LEFT;
+	par->Box.TextIndent -= list->Hanging;
 
 	list->next_stack_item = current->lst_stack;
 	current->lst_stack    = list;
@@ -73,12 +73,12 @@ list_finish (TEXTBUFF current)
 	} else {
 		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
 			current->lst_stack->Spacer = list->Spacer;
-			list->Indent -= -par->Hanging;
+			list->Indent -= -par->Box.TextIndent;
 		} else {
 			par = add_paragraph (current, 0);
 		}
 /* This one seems to be wrong:
-		par->Hanging = -current->lst_stack->Hanging;
+		par->Box.TextIndent = -current->lst_stack->Hanging;
 */
 	}
 	par->Indent = list->Indent;
@@ -301,10 +301,10 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	      (par->paragraph_code != PAR_LI ||    /* ...first item of the list  */
 	       list->Spacer != par->item))) {      /* ...no nesting bullet befor */
 		par = add_paragraph (current, 0);
-		par->Box.BoxClass = BC_MIXED;
-		par->Box.HtmlCode = TAG_LI;
-		par->Indent  =  list->Indent;
-		par->Hanging = -list->Hanging;
+		par->Box.BoxClass   = BC_MIXED;
+		par->Box.HtmlCode   = TAG_LI;
+		par->Indent         =  list->Indent;
+		par->Box.TextIndent = -list->Hanging;
 		
 		list->Spacer = current->word;
 		*(current->text++) = font_Nobrk (current->word->font);

@@ -43,8 +43,8 @@ vTab_MinWidth (DOMBOX * This)
 	PARAGRPH paragraph = (PARAGRPH)This;
 	WORDITEM word      = paragraph_filter (paragraph);
 	BOOL      lbrk = TRUE;
-	long wrd_width = (paragraph->Hanging > 0 ? +paragraph->Hanging : 0);
-	long hanging   = (paragraph->Hanging < 0 ? -paragraph->Hanging : 0);
+	long wrd_width = (This->TextIndent > 0 ? +This->TextIndent : 0);
+	long hanging   = (This->TextIndent < 0 ? -This->TextIndent : 0);
 	This->MinWidth = 0;
 	while (word) {
 		if (lbrk || !word->wrap) {
@@ -70,7 +70,7 @@ vTab_MinWidth (DOMBOX * This)
 		 This->MinWidth = wrd_width;
 	}
 	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This)
-	                + paragraph->Indent + paragraph->Rindent;
+	                + paragraph->Indent;
 	return This->MinWidth;
 }
 
@@ -95,7 +95,7 @@ vTab_MaxWidth (DOMBOX * This)
 		}
 	}
 	This->MaxWidth += dombox_LftDist (This) + dombox_RgtDist (This)
-	                + paragraph->Indent + paragraph->Rindent;
+	                + paragraph->Indent;
 	return This->MaxWidth;
 }
 
@@ -135,8 +135,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Table   = NULL;
 	paragraph->Line    = NULL;
 	paragraph->Indent  = 0;
-	paragraph->Rindent = 0;
-	paragraph->Hanging = 0;
 	paragraph->paragraph_code = PAR_NONE;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
@@ -194,8 +192,9 @@ add_paragraph (TEXTBUFF current, short vspace)
 		PARAGRPH copy_from = current->paragraph;
 		WORD     indent    = copy_from->Indent;
 		
-		if (copy_from->paragraph_code == PAR_LI && copy_from->Hanging < 0) {
-			indent -= copy_from->Hanging;
+		if (copy_from->paragraph_code == PAR_LI &&
+		    copy_from->Box.TextIndent < 0) {
+			indent -= copy_from->Box.TextIndent;
 		}
 		
 		paragraph = malloc (sizeof (struct paragraph_item));
@@ -209,7 +208,6 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Table   = NULL;
 		paragraph->Line    = NULL;
 		paragraph->Indent  = indent;
-		paragraph->Rindent = copy_from->Rindent;
 		
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
@@ -226,7 +224,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Box.TextAlign = current->parentbox->TextAlign;
 	}
 	paragraph->paragraph_code = PAR_NONE;
-	paragraph->Hanging        = 0;
+	paragraph->Box.TextIndent = 0;
 	
 	if (vspace) {
 		vspace = (vspace * current->word->word_height) /3;
@@ -283,7 +281,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	PARAGRPH   par       = (PARAGRPH)This;
 	WORDLINE * p_line    = &par->Line, line = NULL;
 	WORDITEM   word      = par->item,  next;
-	long       int_width = width -= par->Indent + par->Rindent
+	long       int_width = width -= par->Indent
 	                             + dombox_LftDist (This) + dombox_RgtDist (This);
 	short      blocked   = 0x00;
 	long       l_height  = 0;
@@ -294,11 +292,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	This->Rect.X += par->Indent;
 	This->Rect.H =  dombox_TopDist (This);
 	
-	if (par->Hanging < 0) {
+	if (par->Box.TextIndent < 0) {
 		hanging  = 0;
-		hang_nxt = -par->Hanging;
+		hang_nxt = -par->Box.TextIndent;
 	} else {
-		hanging  = +par->Hanging;
+		hanging  = +par->Box.TextIndent;
 		hang_nxt = 0;
 	}
 	

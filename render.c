@@ -316,7 +316,7 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 		short  indent = numerical (output, &tail, current->font->Size,
 		                           current->word->font->SpaceWidth);
 		if (tail > output) {
-			current->paragraph->Hanging = indent;
+			current->paragraph->Box.TextIndent = indent;
 		}
 	}
 	

@@ -357,6 +357,7 @@ struct s_dombox {
 	WORD     BorderWidth, BorderColor;
 	H_ALIGN  Floating;
 	H_ALIGN  TextAlign;
+	WORD     TextIndent; /* paragraph hanginging, <0: left, >0: right */
 };
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
@@ -544,8 +545,6 @@ struct paragraph_item {
 	TABLE    Table;
 	WORDLINE Line;    /* list of word lines */
 	WORD     Indent;  /* horizontal offset to the left side */
-	WORD     Rindent; /* indent of the right side */
-	WORD     Hanging; /* <0: left, >0: right hanging */
 	PARAGRAPH_CODE paragraph_code;
 	PARAGRPH next_paragraph;
 };
