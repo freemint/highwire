@@ -346,8 +346,9 @@ new_input (PARSER parser)
 	} else if (stricmp (output, "debug") == 0) {
 		FORM  form = current->form;
 		INPUT inp  = form->InputList;
-		printf ("%s: %s?", (form->Method == METH_POST ? "POST" : "GET"),
-		        (form->Action ? form->Action : "<->"));
+		printf ("%s: %s%s", (form->Method == METH_POST ? "POST" : "GET"),
+		        (form->Action ? form->Action : "<->"),
+		        (strchr (form->Action, '?') ? "&" : "?"));
 		while (inp) {
 			if (inp->checked) {
 				printf ("%s=%s&", inp->Name, (inp->Value ? inp->Value : ""));
@@ -771,7 +772,7 @@ input_activate (INPUT input, WORD slct)
 			char * p = url + len;
 			size += len;
 			elem = form->InputList;
-			*(p++) = '?';
+			*(p++) = (strchr (url, '?') ? '&' : '?');
 			do if (elem->checked && *elem->Name) {
 				len = strlen (elem->Name);
 				memcpy (p, elem->Name, len);
