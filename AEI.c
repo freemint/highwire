@@ -332,6 +332,21 @@ menu_about (void)
 }
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+menu_open_handler (OBJECT * form, WORD obj)
+{
+	if (obj == URL_OK) {
+		char * ptext = form[URL_EDIT].ob_spec.tedinfo->te_ptext;
+		if (ptext[0]) {
+			start_page_load (hwWind_Top->Pane, ptext, NULL, TRUE, NULL);
+		}
+	} else if (obj == URL_FILE) {
+		page_load();
+	}
+	return TRUE; /* to be deleted */
+}
+
 /*============================================================================*/
 void
 menu_open (BOOL fsel)
@@ -343,35 +358,40 @@ menu_open (BOOL fsel)
 #else
 	if (!fsel) {
 		static OBJECT * form = NULL;
-		short x, y, w, h, n;
-		char ptext[MAX_LEN] = "", ptmplt[MAX_LEN], pvalid[MAX_LEN];
+/*		short x, y, w, h, n;*/
+		char * ptext;
 		if (!form) {
+			TEDINFO * tedinfo;
+			short     dmy;
 			rsrc_gaddr (R_TREE, URLINPUT, &form);
-			form[URL_EDIT].ob_spec.tedinfo->te_txtlen = MAX_LEN;
-			form[URL_EDIT].ob_width  = form[URL_ED_BG].ob_width
-			                         = (MAX_LEN -1) * 8;
-		} else {
+			if ((ptext = malloc (MAX_LEN *3)) == NULL) {
+				form = NULL;
+				return;
+			}
+			tedinfo = form[URL_EDIT].ob_spec.tedinfo;
+			tedinfo->te_ptext    = ptext;
+			tedinfo->te_ptext[0] = '\0';
+			tedinfo->te_ptmplt   = memset (ptext + MAX_LEN *1, '_', MAX_LEN-1);
+			tedinfo->te_ptmplt[MAX_LEN-1] = '\0';
+			tedinfo->te_pvalid   = memset (ptext + MAX_LEN *2, 'X', MAX_LEN-1);
+			tedinfo->te_pvalid[MAX_LEN-1] = '\0';
+			tedinfo->te_txtlen   = MAX_LEN;
+			form[URL_EDIT].ob_width = form[URL_ED_BG].ob_width
+			                        = (MAX_LEN -1) * 8;
+			form->ob_spec.obspec.framesize = 0;
+			form_center (form, &dmy,&dmy,&dmy,&dmy);
+		} else if (!(form->ob_flags & OF_FLAG15)) {
+			ptext = form[URL_EDIT].ob_spec.tedinfo->te_ptext;
 			form[URL_OK    ].ob_state &= ~OS_SELECTED;
 			form[URL_CANCEL].ob_state &= ~OS_SELECTED;
 			form[URL_FILE  ].ob_state &= ~OS_SELECTED;
+		} else {
+			return; /* already open */
 		}
-		((char*)memset(ptmplt, '_', MAX_LEN-1))[MAX_LEN-1] = '\0';
-		((char*)memset(pvalid, 'X', MAX_LEN-1))[MAX_LEN-1] = '\0';
-		form[URL_EDIT].ob_spec.tedinfo->te_ptext  = ptext;
-		form[URL_EDIT].ob_spec.tedinfo->te_ptmplt = ptmplt;
-		form[URL_EDIT].ob_spec.tedinfo->te_pvalid = pvalid;
-		form_center (form, &x, &y, &w, &h);
-		form_dial   (FMD_START, x, y, w, h, x, y, w, h);
-		objc_draw   (form, ROOT, MAX_DEPTH, x, y, w, h);
-		n = form_do (form, URL_EDIT);
-		form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
-		if (n == URL_OK && ptext[0]) {
-			start_page_load (hwWind_Top->Pane, ptext, NULL, TRUE, NULL);
-		} else if (n == URL_FILE) {
-			fsel = TRUE;
-		}
-	}
-	if (fsel) {
+		ptext[0] = '\0';
+		formwind_do (form, URL_EDIT, NULL, menu_open_handler);
+	
+	} else {
 #endif
 		page_load();
 	}
