@@ -169,6 +169,14 @@ add_paragraph (TEXTBUFF current, short vspace)
 {
 	PARAGRPH paragraph = NULL;
 	
+	if (current->paragraph->Box.Backgnd >= 0) {
+		DOMBOX * box = current->paragraph->Box.Parent;
+		do if (box->Backgnd >= 0) {
+			current->backgnd = box->Backgnd;
+			break;
+		} while ((box = box->Parent) != NULL);
+	}
+	
 	if (current->text > current->buffer) {
 		new_word (current, FALSE);
 	
