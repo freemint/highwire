@@ -124,11 +124,13 @@ key_pressed (WORD key, UWORD state)
 		break;
 	case 0x4B00:  /* <- */
 		hwWind_scroll (hwWind_Top, active->Container,
-		               -scroll_step, 0);
+		               -(state & (K_RSHIFT|K_LSHIFT)
+		                 ? active->clip.g_w - scroll_step : scroll_step), 0);
 		break;
 	case 0x4D00:  /* -> */
 		hwWind_scroll (hwWind_Top, active->Container,
-		               +scroll_step, 0);
+		               +(state & (K_RSHIFT|K_LSHIFT)
+		                 ? active->clip.g_w - scroll_step : scroll_step), 0);
 		break;
 	case 0x6100:  /* Undo */
 		hwWind_undo (hwWind_Top, (state & (K_RSHIFT|K_LSHIFT)));
