@@ -145,6 +145,36 @@ url_correct (char * url)
 	return url;
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+insert_anchor (TEXTBUFF current, char * name, struct url_link * presave)
+{
+	WORDITEM word = current->word;
+	char   * p    = name;
+	
+	while (*p > ' ') { /* remove controll characters from the name */
+		p++;
+	}
+	if (*p) {
+		char * dst = p;
+		do if ((*dst = *(++p)) > ' ') {
+			dst++;
+		} while (*p);
+	}
+			
+	word->link = new_url_link (word, name, FALSE, NULL);
+	word->link->u.anchor = new_named_location (word->link->address,
+	                                           &current->paragraph->Offset);
+	*current->anchor = word->link->u.anchor;
+	current->anchor  = &word->link->u.anchor->next_location;
+	
+	/* prevent from getting deleted if empty */
+	*(current->text++) = font_Nobrk (word->font);
+	new_word (current, TRUE);
+	word->word_width = 0;
+	current->word->link = presave;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static const char *
@@ -1067,23 +1097,11 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				/* ENCODING_WINDOWS1252 as default, which is commen practice. */
 				word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
 			}
-		}
-		else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
-		         (output = get_value_str (parser, KEY_ID))   != NULL)
-		{
-			struct url_link * presave = word->link;
-			word->link = new_url_link (word, output, FALSE, NULL);
-			word->link->u.anchor = new_named_location (word->link->address,
-			                                          &current->paragraph->Offset);
-			*current->anchor = word->link->u.anchor;
-			current->anchor  = &word->link->u.anchor->next_location;
-			
-			/* prevent from getting deleted if empty */
-			*(current->text++) = font_Nobrk (word->font);
-			new_word (current, TRUE);
-			word->word_width = 0;
+		
+		} else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
+		           (output = get_value_str (parser, KEY_ID))   != NULL) {
+			insert_anchor (current, output, word->link);
 			TAsetUndrln (word->attr, FALSE);
-			current->word->link = presave;
 		}	
 	
 	} else if (word->link) {
@@ -1416,7 +1434,8 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-
+		char * name;
+		
 		/* Prevent a heading paragraph just behind a <LI> tag.
 		 */
 		if (!current->lst_stack ||
@@ -1442,6 +1461,10 @@ render_H_tag (PARSER parser, const char ** text, UWORD flags)
 		word_set_font (current, header_font);
 		word_set_bold (current, TRUE);
 	
+		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
+			insert_anchor (current, name, NULL);
+		}
+		
 	} else {
 		par = add_paragraph (current, 0);
 
@@ -1530,7 +1553,8 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-
+		char * name;
+		
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
 		 */
@@ -1548,6 +1572,10 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	
+		if ((name = get_value_str (parser, KEY_ID)) != NULL) {
+			insert_anchor (current, name, NULL);
+		}
+		
 	} else {
 		par = add_paragraph (current, 2);
 
