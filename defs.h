@@ -72,7 +72,7 @@ typedef enum {  /* HTML:          CSS:          */
 	LT_L_ALPHA,  /* 'alpha'        'lower-alpha' */
 	LT_U_ALPHA,  /* 'Alpha'        'upper-alpha' */
 	LT_L_ROMAN,  /* 'roman'        'lower-roman' */
-	LT_U_ROMAN,  /* 'Roman'        'upper-roman' */
+	LT_U_ROMAN/*, * 'Roman'        'upper-roman' */
 /* not yet implemented:
 	LT_L_LATIN,  / * ''           'lower-latin' * /
 	LT_U_LATIN,  / * ''           'upper-latin' * /
