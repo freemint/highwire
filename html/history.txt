@@ -1,5 +1,127 @@
 Ok here are the new supports and changes
 
+December 12, 2003
+    
+  AltF4's patches
+    
+  Mouse_R.c:
+    - line 44 + 272..276 (button_clicked):  right mouse click takes
+      precedence over links and forms now.
+    - line 195 + 196 (button_clicked):  clicking to a form element
+      waits for mouse button release now (#0141).
+    
+  AEI.c:
+    - line 718 + 735 (rpopup_open):  align popups to screen extents
+      (#0100).
+    
+December 11, 2003
+    
+  AltF4's patches
+    
+  Location.h:  line 12 (enum LC_PROTO):
+  Location.c:  line 128 + 153 (new_location) + 295 (location_FullName):
+  Loader.c:    line 304 (start_cont_load):
+    - new protocol identification for 'pop://' added.
+    
+  config.c:
+    - line 99 (cfg_timeout_connect) + 109..112 (cfg_timeout_hdr)
+      + 121 (cfg_retry):  validity checks added/improved.
+    
+December 10, 2003
+    
+  AltF4's patches
+    
+  Location.c:
+    - line 905..906 (location_rdIdx):  reading of protocol and port
+      corrected.
+    
+December 09, 2003
+    
+  Markus' patches:
+    
+  config.c:
+    - line 92 (cfg_timeout_connect) + (cfg_timeout_hdr) + (cfg_retry)
+      + 223 + 225 (read_config):  new keywords RETRY_HEADER,
+      TIMEOUT_CONNECT and TIMEOUT_HEADER (#0136).
+    
+December 08, 2003
+    
+  AltF4's patches
+    
+  modules/network.src/iconnect.prj: (new file)
+  modules/network.src/iconnect.c:   (new file)
+  modules/network.src/network.c:  line 33 (struct ovl_info_t):
+  inet.c:  line 12 + 101 + 154 (inet_host_addr) + 209 (inet_connect)
+           + 244 (inet_send) + 286 (inet_recv) + 328 (inet_close)
+           + 346 (inet_info):
+    - support added for Iconnect.OVL.
+    
+  global.h:    line 17:
+  Variable.c:  line 9:
+  Location.c:  line 19 + 401 (location_open):
+  Loader.c:    line 643..644 (header_job):
+     - additional global variables to control timeout values for remote
+       connections.
+    
+December 07, 2003
+    
+  AltF4's patches
+    
+  inet.h:
+    - line 4:  define version date for checking network OVLs.
+    - line 15 + 25 + 37:  additional timeout parameter for connection
+      functions.
+    
+  inet.c:
+    - line 26 + 63..64 (ovl_load):  check and print out warning for
+      outdated OVLs.
+    - line 31 + 83 + 85..86 (demand_connect) + 181 + 196 + 215
+      + 227 (inet_connect):  additional timeout parameter for
+      connection functions.
+    
+  Location.c:
+    - line 401 (location_open):  additional timeout parameter for
+      inet_connect().
+    
+  modules/network.src/network.c
+    - line 46 (ovl_init):  return version date.
+    
+December 06, 2003
+  
+  AltF4's patches
+    
+  cache.c:
+    - line 58 + 242 (destroy_item) + 267 (item_reorder)
+      + 370..372 (cache_lookup) + 512 (cache_flush) + 556 + 562
+      + 566 (exit_flush) + 584 + 648 + 671 + 676 + 694..695
+      + 701..707 (cache_setup) + 811..813 + 827 (cache_assign)
+      + 849 (cache_expires) + 907..908 (cache_query):  reduce index
+      file rewriting to the necessary amount.
+    
+December 04, 2003
+    
+  AltF4's patches
+    
+  cache.c:
+    - line 251 (item_reorder) + 352..359 (cache_lookup):  reordering of
+      items moved into an own function.
+    - line 845 + 861 + 893 (cache_query):  move item to the list begin.
+    
+December 02, 2003
+    
+  AltF4's patches
+    
+  http.c:
+    - line 361..368 (http_header):  modified method of sending the
+      first line of a request to avoid mysterious connection problems
+      (seems to occure only with Apache 1.3.26).
+    
+  p_about.c:
+    - line 122 + 127 (about_cache):  added display of 'no-cache' mode.
+    
+  render.c:
+    - line 763 (render_META_tag):  buffer extended for extra long URLs.
+
 November 25, 2003
 
   AltF4's patches
