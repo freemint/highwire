@@ -688,12 +688,8 @@ table_finish (PARSER parser)
 	} else if (table->t_SetWidth > 0) {
 		if (table->t_SetWidth < table->t_MinWidth) {
 			 table->t_SetWidth = table->t_MinWidth;
-		} else {
-			short spread = table->t_SetWidth - table->t_MinWidth;
-			table->t_MinWidth =  table->t_SetWidth;
-			table->t_SetWidth += spread;
 		}
-		table->t_MaxWidth = table->t_MinWidth;
+		table->t_MaxWidth = table->t_SetWidth;
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -866,7 +862,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 				*(minimum++) = *(col_width++);
 			} while (--i);
 
-			set_width = table->t_SetWidth = table->t_MinWidth;
+			set_width = table->t_MinWidth = table->t_SetWidth;
 		}
 
 	} else { /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1060,14 +1056,14 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 static LONG
 vTab_MinWidth (DOMBOX * This)
 {
-	return This->MinWidth;
+	return (This->SetWidth > 0 ? This->SetWidth : This->MinWidth);
 }
 
 /*----------------------------------------------------------------------------*/
 static LONG
 vTab_MaxWidth (DOMBOX * This)
 {
-	return This->MaxWidth;
+	return (This->SetWidth > 0 ? This->SetWidth : This->MaxWidth);
 }
 
 
