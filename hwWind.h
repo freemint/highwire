@@ -76,6 +76,7 @@ typedef enum {
 
 void hwWind_setup (HWWIND_SET, long arg);
 
+void init_icons(void);
 
 /* service function, not really releated here */
 FILE * open_scrap (BOOL rdNwr);
