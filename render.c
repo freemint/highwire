@@ -1632,6 +1632,31 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
 				}
 			}
+			
+			/* Since HTML 4.0 links ca also be used for image maps
+			 * (not even supported by IE5, Netscape, CAB)
+			 */
+			if (current->maparea) {
+				char coords[500], * href = NULL;
+				if (get_value (parser, KEY_COORDS, coords, sizeof(coords))
+				    && (href = strdup (output)) != NULL) {
+					MAPAREA area;
+					char    shape[10];
+					if (!get_value (parser, KEY_SHAPE,  shape,  sizeof(shape))) {
+						strcpy (shape, "rect");
+					}
+					target = get_value_str (parser, KEY_TARGET);
+					area   = new_maparea (shape, coords, href, target, NULL);
+					if (area) {
+						*current->maparea = area;
+						current->maparea  = &area->Next;
+					} else {
+						if (target) free (target);
+						if (href)   free (href);
+					}
+				}
+			}
+			
 		} else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
 		           (output = get_value_str (parser, KEY_ID))   != NULL) {
 			insert_anchor (current, output, word->link);
