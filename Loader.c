@@ -42,7 +42,10 @@
 #include "http.h"
 #include "inet.h"
 #include "cache.h"
-#include "hwWind.h"
+
+
+char fsel_path[HW_PATH_MAX];
+char help_file[HW_PATH_MAX];
 
 
 static char *load_file (const LOCATION, size_t * expected, size_t * loaded);
@@ -670,8 +673,6 @@ loader_setParams (LOADER loader,
 
 
 /******************************************************************************/
-static char fsel_path[HW_PATH_MAX];
-char help_file[HW_PATH_MAX];
 
 
 /*==============================================================================
@@ -726,46 +727,6 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	*loaded = size;
 	
 	return file;
-}
-
-
-/*==============================================================================
- * page_load()
- *
- * calls the fileselector and loads the selected file
- *
- * added 10-04-01 mj.
- *
- * simplified AltF4 December 26, 2001
- *
- * return modified Rainer Seitel May 2002
-*/
-BOOL
-page_load(void)
-{
-	char fsel_file[HW_PATH_MAX] = "";
-	WORD r, butt;  /* file selector exit button */
-
-	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-		r = fsel_exinput (fsel_path, fsel_file, &butt,
-		                  "HighWire: Open HTML or text");
-	} else {
-		r = fsel_input(fsel_path, fsel_file, &butt);
-	}
-	if (r && butt != FSEL_CANCEL) {
-		char * slash = strrchr (fsel_path, '\\');
-		if (slash) {
-			char   file[HW_PATH_MAX];
-			size_t len = slash - fsel_path +1;
-			memcpy (file, fsel_path, len);
-			strcpy (file + len, fsel_file);
-			new_loader_job (file, NULL, hwWind_Top->Pane);
-		} else {
-			butt = FALSE;
-		}
-	}
-	return butt;
 }
 
 

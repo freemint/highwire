@@ -33,6 +33,7 @@ extern BOOL alternative_text_is_on;
 
 extern char	*va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
 
+extern char fsel_path[HW_PATH_MAX];
 extern char help_file[HW_PATH_MAX];
 
 extern char * local_web; /* in Location.c */
@@ -56,6 +57,7 @@ void check_mouse_position (WORD , WORD );
 
 /* in AEI.c */
 
+BOOL page_load   (void);
 void rpopup_open (WORD, WORD);
 void update_menu (ENCODING, BOOL raw_text);
 BOOL process_messages (WORD msg[], PXY, UWORD state);
@@ -104,8 +106,6 @@ void key_pressed (WORD key, UWORD state);
 
 /* in Loader.c */
 
-void init_load(const char *file);
-BOOL page_load(void);
 void init_paths(void);
 WORD identify_AES(void);
 BOOL can_extended_mxalloc(void);

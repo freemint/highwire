@@ -24,10 +24,49 @@
 #include "hwWind.h"
 #include "Loader.h"
 #include "Logging.h"
-#include "hwWind.h"
 #ifdef GEM_MENU
 # include "highwire.h"
 #endif
+
+
+/*==============================================================================
+ * page_load()
+ *
+ * calls the fileselector and loads the selected file
+ *
+ * added 10-04-01 mj.
+ *
+ * simplified AltF4 December 26, 2001
+ *
+ * return modified Rainer Seitel May 2002
+*/
+BOOL
+page_load(void)
+{
+	char fsel_file[HW_PATH_MAX] = "";
+	WORD r, butt;  /* file selector exit button */
+
+	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
+	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
+		r = fsel_exinput (fsel_path, fsel_file, &butt,
+		                  "HighWire: Open HTML or text");
+	} else {
+		r = fsel_input(fsel_path, fsel_file, &butt);
+	}
+	if (r && butt != FSEL_CANCEL) {
+		char * slash = strrchr (fsel_path, '\\');
+		if (slash) {
+			char   file[HW_PATH_MAX];
+			size_t len = slash - fsel_path +1;
+			memcpy (file, fsel_path, len);
+			strcpy (file + len, fsel_file);
+			new_loader_job (file, NULL, hwWind_Top->Pane);
+		} else {
+			butt = FALSE;
+		}
+	}
+	return butt;
+}
 
 
 #if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
