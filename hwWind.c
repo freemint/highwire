@@ -1627,6 +1627,7 @@ hwWind_button (WORD mx, WORD my)
 	} else if (tb_n >= 0) {
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
+		EVMULT_OUT out;
 		short     hist  = wind->HistMenu;
 		short     shift;
 		chng_toolbar (wind, 0, 0, tb_n);
@@ -1639,7 +1640,6 @@ hwWind_button (WORD mx, WORD my)
 		m_in.emi_m1.g_y = wind->Work.g_y;
 		m_in.emi_m1.g_w = m_in.emi_m1.g_h = wind->TbarElem[tb_n].Width;
 		do {
-			EVMULT_OUT out;
 			WORD       msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
 			shift = out.emo_kmeta & (K_RSHIFT|K_LSHIFT);
@@ -1677,6 +1677,10 @@ hwWind_button (WORD mx, WORD my)
 			}
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
+		if (out.emo_kmeta & K_ALT) {
+			cache_clear (NULL);
+			if (shift) tb_n = -1;
+		}
 		if (m_in.emi_m1leave) switch (tb_n) {
 			case TBAR_LEFT: hwWind_undo     (wind, FALSE);        break;
 			case TBAR_RGHT: hwWind_undo     (wind, TRUE);         break;
