@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h> 
+#include <setjmp.h> 
 
 #include "token.h" /* must be included before gem/gemx.h */
 #include <gemx.h>
@@ -33,6 +34,8 @@
 #define PF_FONT   0x0008 /* font has changed  */
 #define PF_ENCDNG 0x0010 /* charset encoding has changed   */
 #define PF_SCRIPT 0x0020 /* <noscrip> inside a script area */
+
+static jmp_buf resume_jbuf; /* used for parser interuption */
 
 
 static WORD
@@ -2628,6 +2631,8 @@ render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
 int
 parse_html (void * arg, long invalidated)
 {
+	typedef UWORD (*RENDER)(PARSER, const char **, UWORD);
+	
 	time_t start_clock = clock();
 	
 	PARSER       parser    = arg;
@@ -2635,22 +2640,30 @@ parse_html (void * arg, long invalidated)
 	FRAME        frame     = parser->Frame;
 	TEXTBUFF     current   = &parser->Current;
 	WCHAR      * watermark = parser->Watermark;
-	ENCODER_W    encoder   = encoder_word (frame->Encoding,
-	                                       current->word->font->Base->Mapping);
-	UWORD flags       = PF_SPACE; /* skip leading spaces */
-	BOOL  linetoolong = FALSE;    /* "line too long" error printed? */
+	ENCODER_W    encoder;
+	UWORD        flags;
+	BOOL         linetoolong;
 	
 	if (invalidated || !symbol) {
 		delete_parser (parser);
-			
 		return FALSE;
 	}
-	
+	if (parser->ResumeErr == 2/*EBUSY*/ || setjmp (resume_jbuf)) {
+		return -2; /* JOB_NOOP */
+	}
+	symbol = parser->ResumePtr;
+	if (parser->ResumeFnc) {
+		(*(RENDER)parser->ResumeFnc)(parser, &symbol, PF_START);
+		parser_resumed (parser);
+	}
+	flags       = PF_SPACE; /* skip leading spaces */
+	linetoolong = FALSE;    /* "line too long" error printed? */
+	encoder     = encoder_word (frame->Encoding,
+	                            current->word->font->Base->Mapping);
 	while (*symbol != '\0')
 	{
 		if (*symbol == '<')
 		{
-			typedef UWORD (*RENDER)(PARSER, const char **, UWORD);
 			static RENDER render[] = {
 				NULL,
 				#undef SMALL /* prevent an error because this
