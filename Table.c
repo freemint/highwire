@@ -846,7 +846,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 				if (!*percent && *maximum > *minimum) {
 					short w = spread / i--;
 					if (w >= *maximum - *minimum) {
-						w = *maximum - *minimum -1;
+						w = *maximum - *minimum;
 					} else {
 						resize++;
 					}
