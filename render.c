@@ -1804,9 +1804,9 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			if (*p && *p != '#') {
 				BOOL  skip = FALSE;
 				char * dst = p;
-				do if ((*dst = *(++p)) > ' ' || skip) {
+				do if ((*dst = *(p)) > ' ' || skip) {
 					skip |= (*(dst++) == '#');
-				} while (*p);
+				} while (*(p++));
 			}
 			
 			if (!word->link) {
