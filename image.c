@@ -307,7 +307,7 @@ image_calculate (IMAGE img, short par_width)
 }
 
 
-/*----------------------------------------------------------------------------*/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
 image_job (void * arg, long invalidated)
 {
@@ -1332,15 +1332,12 @@ get_decoder (const char * file)
 	
 	if (info) {
 		memset (info, 0, offsetof (struct s_img_info, Pixel));
-		while (decoder) {
-			if ((*decoder->start)(file, info)) {
-				if (!info->_priv_data) {
-					free (info);
-					info = NULL;
-				}
-				break;
-			}
+		while (decoder && !(*decoder->start)(file, info)) {
 			decoder = decoder->Next;
+		}
+		if (!info->_priv_data) {
+			free (info);
+			info = NULL;
 		}
 	}
 	return info;
