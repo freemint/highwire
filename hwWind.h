@@ -15,6 +15,7 @@ struct hw_window {
 	UWORD   loading;
 	GRECT   Curr;
 	GRECT   Work;
+	WORD    TbarH, IbarH;
 	HwWIND  Next;
 	void  * Pane;
 	void  * Active;
@@ -48,7 +49,9 @@ HwWIND  hwWind_byValue  (long);
 HwWIND  hwWind_byHandle (WORD);
 #define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
 
-void hwWind_redraw (HwWIND, const GRECT *);
+void   hwWind_redraw (HwWIND, const GRECT *);
+HwWIND hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
+HwWIND hwWind_button (WORD mx, WORD my);
 
 FRAME hwWind_setActive   (HwWIND, CONTAINR);
 FRAME hwWind_ActiveFrame (HwWIND);
@@ -56,10 +59,11 @@ FRAME hwWind_ActiveFrame (HwWIND);
 
 typedef enum {
 	HWWS_INFOBAR = 0x6962617AuL /* 'ibar' infobar appearance, arg means:
-	                             * 0: no info output at all
-	                             * 1: only AES infobar (traditional GEM)
-	                             * 2: only output to the hslider area
-	                             * 3: both methods (default setting)   */
+	                     * 0: no info output at all
+	                     * 1: only AES infobar (traditional GEM)
+	                     * 2: only output to the hslider area
+	                     * 3: both methods (default setting)
+	                     * 4: application widget infobar, no realtime resizing */
 } HWWIND_SET;
 
 void hwWind_setup (HWWIND_SET, long arg);
