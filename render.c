@@ -325,6 +325,47 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 
 
 /*----------------------------------------------------------------------------*/
+static void
+box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
+{
+	short em = parser->Current.font->Size;
+	short ex = parser->Current.word->font->SpaceWidth;
+	char  out[100];
+	short val;
+	if (get_value (parser, key, out, sizeof(out))) {
+		char * ptr = out;
+		if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+			bf->Top = bf->Rgt = bf->Bot = bf->Lft = val;
+			if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+				bf->Rgt = bf->Lft = val;
+				if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+					bf->Bot = val;
+					if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+						bf->Lft = val;
+					}
+				}
+			}
+		}
+	}
+	if (get_value (parser, key+1, out, sizeof(out)) &&
+	    (val = numerical (out, NULL, em, ex)) >= 0) {
+		bf->Bot = val;
+	}
+	if (get_value (parser, key+2, out, sizeof(out)) &&
+	    (val = numerical (out, NULL, em, ex)) >= 0) {
+		bf->Lft = val;
+	}
+	if (get_value (parser, key+3, out, sizeof(out)) &&
+	    (val = numerical (out, NULL, em, ex)) >= 0) {
+		bf->Rgt = val;
+	}
+	if (get_value (parser, key+4, out, sizeof(out)) &&
+	    (val = numerical (out, NULL, em, ex)) >= 0) {
+		bf->Top = val;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
 static DOMBOX *
 group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 {
@@ -348,6 +389,9 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	add_paragraph(current, 0);
 	dombox_adopt (current->parentbox = box, &current->paragraph->Box);
 	current->paragraph->Box.TextAlign = box->TextAlign;
+	
+	box_frame (parser, &box->Margin,  CSS_MARGIN);
+	box_frame (parser, &box->Padding, CSS_PADDING);
 	
 	if (box->Margin.Top < current->paragraph->Box.Margin.Top) {
 		 box->Margin.Top = current->paragraph->Box.Margin.Top;
@@ -1758,6 +1802,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			current->paragraph->Box.BoxClass   = BC_SINGLE;
 			current->paragraph->Box.HtmlCode   = TAG_IMG;
 			current->paragraph->Box.Floating   = floating;
+			box_frame (parser, &current->paragraph->Box.Margin, CSS_MARGIN);
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
 			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
@@ -2561,6 +2606,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border, FALSE);
 		parser->Current.paragraph->Box.HtmlCode = TAG_TABLE;
+		box_frame (parser, &parser->Current.paragraph->Box.Margin, CSS_MARGIN);
 	
 	} else {
 		TEXTBUFF current = &parser->Current;
