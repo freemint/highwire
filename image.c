@@ -56,7 +56,7 @@ static void invalid_dither(void) { puts("invalid dither"); exit(1); }
 static void   cnvpal_mono  (IMGINFO, ULONG);
 static void (*cnvpal_color)(IMGINFO, ULONG)  = (void*)invalid_cnvpal;
 static void   raster_mono  (IMGINFO, void *);
-static void (*raster_color)(IMGINFO, void *) = (void*)invalid_raster;
+static void (*raster_cmap) (IMGINFO, void *) = (void*)invalid_raster;
 static void (*raster_gray) (IMGINFO, void *) = (void*)invalid_gscale;
 static void (*raster_true) (IMGINFO, void *) = (void*)invalid_dither;
 static BOOL   stnd_bitmap  = FALSE;
@@ -508,7 +508,7 @@ setup (IMAGE img, IMGINFO info)
 		}
 		if (info->Palette) {
 			(*cnvpal_color)(info, transpar);
-			info->raster = raster_color;
+			info->raster = raster_cmap;
 		} else {
 			info->raster = (info->NumComps == 3 ? raster_true : raster_gray);
 		}
@@ -1559,57 +1559,57 @@ init_display (void)
 
 	if (planes == 1) {                        /* monochrome */
 			cnvpal_color = cnvpal_1_2;
-			raster_color = raster_D1;
+			raster_cmap  = raster_D1;
 			raster_gray  = gscale_D1;
 			raster_true  = dither_D1;
 	} else if (out[0] == 0) switch (planes) { /* interleaved words */
 		case 2:
 			cnvpal_color = cnvpal_1_2;
-			raster_color = raster_D2;
+			raster_cmap  = raster_D2;
 			raster_gray  = gscale_D2;
 			raster_true  = dither_D2;
 			break;
 		case 4:
 			cnvpal_color = cnvpal_4_8;
-			raster_color = raster_I4;
+			raster_cmap  = raster_I4;
 			raster_gray  = gscale_I4;
 			raster_true  = dither_I4;
 			break;
 		case 8:
 			cnvpal_color = cnvpal_4_8;
-			raster_color = raster_I8;
+			raster_cmap  = raster_I8;
 			raster_gray  = gscale_I8;
 			raster_true  = dither_I8;
 			break;
 	} else if (out[0] == 2) switch (planes) { /* packed pixels */
 		case  8:
 			cnvpal_color = cnvpal_4_8;
-			raster_color = raster_P8;
+			raster_cmap  = raster_P8;
 			raster_gray  = gscale_P8;
 			raster_true  = dither_P8;
 			break;
 		case 16:
 			cnvpal_color = cnvpal_high;
-			raster_color = (out[14] & 0x80 ? raster_16r : raster_16);
+			raster_cmap  = (out[14] & 0x80 ? raster_16r : raster_16);
 			raster_gray  = (out[14] & 0x80 ? gscale_16r : gscale_16);
 			raster_true  = (out[14] & 0x80 ? dither_16r : dither_16);
 			break;
 		case 24:
 			cnvpal_color = cnvpal_true;
-			raster_color = (out[14] & 0x80 ? raster_24r : raster_24);
+			raster_cmap  = (out[14] & 0x80 ? raster_24r : raster_24);
 			raster_gray  = (out[14] & 0x80 ? gscale_24r : gscale_24);
 			raster_true  = (out[14] & 0x80 ? dither_24r : dither_24);
 			break;
 		case 32:
 			cnvpal_color = cnvpal_true;
-			raster_color = (out[14] & 0x80 ? raster_32r : raster_32);
+			raster_cmap  = (out[14] & 0x80 ? raster_32r : raster_32);
 			raster_gray  = (out[14] & 0x80 ? gscale_32r : gscale_32);
 			raster_true  = (out[14] & 0x80 ? dither_32r : dither_32);
 			break;
 	}
-	if (!raster_color) {                     /* standard format */
+	if (!raster_cmap) {                     /* standard format */
 		cnvpal_color = cnvpal_4_8;
-		raster_color = raster_stnd;
+		raster_cmap  = raster_stnd;
 		stnd_bitmap  = TRUE;
 	}
 	
@@ -1708,8 +1708,8 @@ typedef struct s_decoder {
 #define DECODER_CHAIN NULL
 
 #include "img_gif.c"
-/*#include "img_jpg.c"*/
-/*#include "img_png.c"*/
+#include "img_jpg.c"
+#include "img_png.c"
 
 /*----------------------------------------------------------------------------*/
 static IMGINFO
