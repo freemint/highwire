@@ -293,7 +293,8 @@ static const struct NAMEDCHAR named_char[] = {
 	/* Z */ {"Zcaron", 381},{"Zeta",    918},
 	/* a */ {"aacute", 225},{"acirc",   226},{"acute",  180},{"aelig",  230},
 	        {"agrave", 224},{"alefsym",8501},{"alpha",  945},{"amp",     38},
-	        {"and",   8869},{"ang",    8736},{"aring",  229},{"asymp", 8776},
+	        {"and",   8869},{"ang",    8736},{"apos",    39},{"aring",  229},
+	        {"asymp", 8776},
 	     /* {"ataril",32,14},{"atarir",32,15}, pseudocodes */
 	        {"atilde", 227},{"auml",    228},
 	/* b */ {"bdquo", 8222},{"beta",    946},{"brvbar", 166},{"bull",  8226},
