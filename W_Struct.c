@@ -55,26 +55,45 @@ _alloc (WORDITEM prev)
 
 
 /*============================================================================*/
-void
-destroy_word_structure (WORDITEM word)
+WORDITEM
+destroy_word_list (WORDITEM word, WORDITEM last)
 {
-	while (word) {
+	if (last) {
+		last = last->next_word;
+	}
+	if (word) do {
 		WORDITEM next  = word->next_word;
 		CHUNK  * chunk = word2chunk (word);
 		if ((char*)word->item < (char*)fixed ||
-		    (char*)word->item > (char*)fixed + sizeof(fixed))
+		    (char*)word->item > (char*)fixed + sizeof(fixed)) {
 			free (word->item);
-		if (word->link)
-			free (word->link);
-		if (word->image)
+		}
+		if (word->link && word->link->start == word) {
+			if (next && next->link == word->link) {
+				word->link->start = next;
+			
+			} else {
+				if (word->link->address) {
+					free (word->link->address);
+				}
+				if (word->link->isHref && word->link->u.target) {
+					free (word->link->u.target);
+				}
+				free (word->link);
+			}
+		}
+		if (word->image) {
 			delete_image (&word->image);
+		}
 	/*	if (word->input)
 			delete_input (&word->input)*/;
 		if ((chunk->used &= ~(1uL << word->_priv)) == 0uL) {
 			free (chunk);
 		}
 		word = next;
-	}
+	} while (word != last);
+	
+	return last;
 }
 
 
