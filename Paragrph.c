@@ -224,7 +224,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Box.TextAlign = current->parentbox->TextAlign;
 	}
 	paragraph->paragraph_code = PAR_NONE;
-	paragraph->Box.TextIndent = 0;
+	paragraph->Box.TextIndent = current->parentbox->TextIndent;
 	
 	if (vspace) {
 		vspace = (vspace * current->word->word_height) /3;
