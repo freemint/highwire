@@ -20,8 +20,7 @@
 /*--- Module functions used by the client ---*/
 typedef struct ovl_methods_t
 {
-	union { char c[4]; long l;
-	}    magic;
+	long magic;    /* must be "WiRe" */
 	long revision; /* interface revision date in ISO yyyymmdd  BCD */
 	long flags;    /* startup basic information: */
 	#define OF_SIMPLE  0x0000uL /* nothing special to do */
@@ -33,7 +32,7 @@ typedef struct ovl_methods_t
 	#define FTAB_NETWORK 0x0001uL /* networking FTAB interface */
 	long               __CDECL (*ovl_init)   (void);
 	struct ovl_info_t *__CDECL (*ovl_version)(void);
-	long               __CDECL (*ovl_getftab)(void);
+	void              *__CDECL (*ovl_getftab)(void);
 	long               __CDECL (*ovl_free)   (void);
 	long * magic_l;
 } OVL_METH;
@@ -51,11 +50,17 @@ struct ovl_info_t
 /* define OVL_MODULE when you are building an OVL */
 #ifdef OVL_MODULE
 
-#define _ovl_head { OVL_MAGIC }, OVL_REVISION
-#define _ovl_tail ovl_init, ovl_version, ovl_getftab, ovl_free, &ovl_methods.magic.l
+#define _ovl_head OVL_MAGIC, OVL_REVISION
+#define _ovl_tail ovl_init, ovl_version, ovl_getftab, ovl_free, &ovl_methods.magic
 
 /* shorthand for the OVL function table definition */
 #define OVL_DECL(flags,ft_type) OVL_METH ovl_methods = { _ovl_head, flags, ft_type, _ovl_tail }
+
+/* set of functions which are always defined in an OVL */
+long               __CDECL ovl_init   (void);
+struct ovl_info_t *__CDECL ovl_version(void);
+void              *__CDECL ovl_getftab(void);
+long               __CDECL ovl_free   (void);
 
 
 #else /* ! OVL_MODULE*/
