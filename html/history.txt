@@ -1,5 +1,47 @@
 Ok here are the new supports and changes
 
+January 13, 2003
+
+  AltF4's patches
+
+  Loader.c:
+    - line 243..305 (chunked_job):  changed to avoid unexpected states
+      of variables.
+
+January 12, 2003
+
+  AltF4's patches
+
+  inet.c:
+    - line 190 + 214 (inet_recv):  changed break condition to avoid
+      blocking if  no data available.
+    - line 204:  changed if(), probably not necessary but more save.
+    
+  Makefile:
+    - added file ovl_sys.c.
+    
+  purewire.prj, highwire.prj:
+    - corrected dependencies for ovl_sys.c.
+    
+  ovl_sys.c:
+    - line 10..13:  corrected includes.
+    - line 33 (load_ovl):  added check for Pexec() failed.
+    - line 45..47:  adapted Mshrink() call for Lattice and Gcc.
+    - line 54:  corrected cast type.
+    
+  modules\example.src\sample.prj:
+    - added dependencies for sample.c.
+    
+  modules\example.src\Makefile:
+    - new file for Gcc.
+    
+  modules\example.src\ovl_sys.h:
+    - made this a wrapper to load the header file from thwe main folder
+      to avoid differnet declarations in both files.
+    
+  modules\example.src\sample.c:
+    - line 10..14:  corrected includes.
+
 January 10, 2003
 
   Baldricks patches

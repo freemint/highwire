@@ -1,3 +1,42 @@
+Changes in V. 0.1.1 release  of January 15, 2003:
+
+- Overworked recognization of link areas, still
+  not perfect yet but much better now.
+
+- HTTP protocol layer reworked, is faster now and
+  works for much more servers now.
+
+- The problem of files with long names not loaded
+  at some Magic versions (eg. *.html) is solved
+  now.
+
+- Added a workaround to have it working under
+  Geneva again.
+
+- Fixed several remaining bugs related to <li>
+  tags.
+
+- Implemented <nobr> and <wbr> tags, also
+  <td nowrap> is working now.
+
+- Table cells with percentage width are working
+  now.
+
+- Images that has not more than 1 pixel width
+  and/or height don't get a place holder anyore.
+  That makes pages looking nicer if some spacer
+  gifs couldn't be loaded.
+
+- Fixed some oddities related to transparent GIFs.
+
+- Reworked code to avoid flickering mouse pionter
+  when moved over window's title or info bar or
+  being exactly over a frame's border.
+
+
+- Bugs #0020, #0022, #0080, #0086, #0087 resolved.
+
+__________________________________________________
 Changes in V. 0.1.0 release  of December 20, 2002:
 
 - Working implementation of history functionality
