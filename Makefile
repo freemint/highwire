@@ -81,6 +81,7 @@ CFILES = \
 	Loader.c \
 	Redraws.c \
 	\
+	Window.c \
 	Widget.c \
 	hwWind.c \
 	av_prot.c \

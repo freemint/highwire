@@ -7,10 +7,11 @@
 #endif
 
 typedef struct hw_window * HwWIND;
+#include "Window.h" /* the base class */
+
 struct hw_window {
-	WORD    Handle;
+	WINDOWBASE Base;
 	BOOL    isFull;
-	BOOL    isIcon;
 	BOOL    shaded;
 	UWORD   isBusy;
 	UWORD   loading;
@@ -24,7 +25,6 @@ struct hw_window {
 		WORD Offset;
 		WORD Width;    
 	}       TbarElem[7];
-	HwWIND  Next;
 	void  * Pane;
 	void  * Active;
 	void  * Input;
@@ -46,25 +46,26 @@ void hwWind_move    (HwWIND, PXY);
 void hwWind_resize  (HwWIND, const GRECT *);
 void hwWind_full    (HwWIND);
 void hwWind_iconify (HwWIND, const GRECT *);
-void hwWind_raise   (HwWIND, BOOL topNbot);
+#define hwWind_raise(HwWIND, BOOL)            window_raise (&HwWIND->Base, BOOL)
 void hwWind_close   (HwWIND, UWORD state);
 void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);
 void hwWind_history (HwWIND, UWORD menu, BOOL renew);
 void hwWind_undo    (HwWIND, BOOL redo);
 
 extern WORD   hwWind_Mshape;
-extern HwWIND hwWind_Top;
 extern HwWIND hwWind_Focus;
+#define hwWind_Top      hwWind_Next(NULL)
+HwWIND  hwWind_Next     (HwWIND);
 HwWIND  hwWind_byValue  (long);
 HwWIND  hwWind_byHandle (WORD);
 #define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
 HwWIND  hwWind_byContainr (CONTAINR);
 
-void   hwWind_redraw (HwWIND, const GRECT *);
-BOOL   hwWind_message(WORD msg[], PXY mouse, UWORD state);
-HwWIND hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
-HwWIND hwWind_button (WORD mx, WORD my);
-HwWIND hwWind_keybrd (WORD key, UWORD state);
+#define hwWind_redraw( HwWIND, GRECT)       window_redraw (&HwWIND->Base, GRECT)
+BOOL    hwWind_message(WORD msg[], PXY mouse, UWORD state);
+HwWIND  hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
+HwWIND  hwWind_button (WORD mx, WORD my);
+HwWIND  hwWind_keybrd (WORD key, UWORD state);
 
 FRAME hwWind_setActive   (HwWIND, CONTAINR, INPUT);
 FRAME hwWind_ActiveFrame (HwWIND);

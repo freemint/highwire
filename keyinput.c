@@ -183,9 +183,7 @@ key_pressed (WORD key, UWORD state)
 		break;
 	case 0x0017:{ /* CTRL+W */
 		WORD   mx, my, u;
-		HwWIND wind = hwWind_Top;
-		while (wind->Next) wind = wind->Next;
-		hwWind_raise (wind, TRUE);
+		window_raise (NULL, TRUE);
 		graf_mkstate (&mx, &my, &u,&u);
 		check_mouse_position (mx, my);
 	}	break;

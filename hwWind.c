@@ -13,12 +13,17 @@
 
 #include "global.h"
 #include "Containr.h"
-#include "hwWind.h"
 #include "Loader.h"
 #include "Location.h"
 #include "Form.h"
 #include "cache.h"
 #include "Logging.h"
+
+#define WINDOW_t HwWIND
+#include "hwWind.h"
+static void vTab_raised   (HwWIND, BOOL topNbot);
+static void vTab_drawWork (HwWIND, const GRECT *);
+static void vTab_drawIcon (HwWIND, const GRECT *);
 
 
 #define HISTORY_LAST 20
@@ -38,7 +43,6 @@ static WORD wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER/*|SIZER|INFO|LFARROW*/;
 #endif
 
 WORD   hwWind_Mshape = ARROW;
-HwWIND hwWind_Top    = NULL;
 HwWIND hwWind_Focus  = NULL;
 
 
@@ -147,9 +151,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	TBAREDIT * edit;
 	short  i;
 	
-	This->Next = hwWind_Top;
-	hwWind_Top = This;
-	
 	if (!inc_xy) {
 		WORD out, u;
 		bevent = (appl_xgetinfo(AES_WINDOW, &out, &u,&u,&u) && (out & 0x20));
@@ -196,9 +197,12 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		}
 	}
 	
-	This->Handle  = wind_create_grect (wind_kind, &desk_area);
+	window_ctor (This, wind_kind, NULL);
+	This->Base.drawWork = vTab_drawWork;
+	This->Base.drawIcon = vTab_drawIcon;
+	This->Base.raised = vTab_raised;
+	
 	This->isFull  = FALSE;
-	This->isIcon  = FALSE;
 	This->shaded  = FALSE;
 	This->isBusy  = 0;
 	This->loading = 0;
@@ -214,13 +218,11 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	hwWind_setName (This, (name && *name ? name : url));
 	This->Stat[0] = '\0';
 	This->Info[0] = '\0';
-	if (wind_kind & INFO) {
-		wind_set_str (This->Handle, WF_INFO, This->Info);
-	}
+	
 	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
 		if (wind_kind & HSLIDE) {
-			wind_set (This->Handle, WF_HSLIDE,   0, 0,0,0);
-			wind_set (This->Handle, WF_HSLSIZE, -1, 0,0,0);
+			wind_set (This->Base.Handle, WF_HSLIDE,   0, 0,0,0);
+			wind_set (This->Base.Handle, WF_HSLSIZE, -1, 0,0,0);
 		}
 		This->IbarH = 0;
 	} else {
@@ -243,13 +245,13 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	set_size (This, &curr_area);
 
 	if (bevent) {
-		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
+		wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
 	}
 	if (info_bgnd & 0x0080) {
-		wind_set (This->Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
-		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
+		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
+		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
-	wind_open_grect (This->Handle, &This->Curr);
+	wind_open_grect (This->Base.Handle, &This->Curr);
 	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {
@@ -267,13 +269,12 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 void
 delete_hwWind (HwWIND This)
 {
-	HwWIND * ptr = &hwWind_Top;
-	short    i;
+	short i;
 	
 #ifdef GEM_MENU
 	if (This == hwWind_Top) {
-		if (This->Next) {
-			HwWIND next = This->Next;
+		HwWIND next = hwWind_Next (This);
+		if (next) {
 			menu_history (next->History, next->HistUsed, next->HistMenu);
 		} else {
 			menu_history (NULL,0,0);
@@ -282,22 +283,13 @@ delete_hwWind (HwWIND This)
 #endif
 	for (i = 0; i < This->HistUsed; history_destroy (&This->History[i++]));
 	
-	while (*ptr) {
-		if (*ptr == This) {
-			*ptr = This->Next;
-			break;
-		}
-		ptr = &(*ptr)->Next;
-	}
 	delete_containr ((CONTAINR*)&This->Pane);
 
-	wind_close  (This->Handle);
-	wind_delete (This->Handle);
-	
 	if (hwWind_Focus == This) {
 		hwWind_Focus = NULL;
 	}
-	free (This);
+	
+	free (window_dtor(This));
 }
 
 
@@ -311,7 +303,7 @@ hwWind_setName (HwWIND This, const char * name)
 	} else {
 		This->Name[0] = '\0';
 	}
-	wind_set_str (This->Handle, WF_NAME, This->Name);
+	wind_set_str (This->Base.Handle, WF_NAME, This->Name);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -354,7 +346,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	GRECT area, clip, rect;
 	short x_btn, dmy, fnt, pnt;
 	
-	if (This->isIcon || This->shaded) return;
+	if (This->Base.isIcon || This->shaded) return;
 	
 	area = This->Work;
 	area.g_y += area.g_h - This->IbarH +1;
@@ -376,7 +368,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			return;
 		}
 		wind_update (BEG_UPDATE);
-		wind_get_grect (This->Handle, WF_FIRSTXYWH, &rect);
+		wind_get_grect (This->Base.Handle, WF_FIRSTXYWH, &rect);
 	}
 	
 	vsf_interior (vdi_handle, FIS_SOLID);
@@ -449,7 +441,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 				break;
 			}
 		}
-		wind_get_grect (This->Handle, WF_NEXTXYWH, &rect);
+		wind_get_grect (This->Base.Handle, WF_NEXTXYWH, &rect);
 	}
 	v_show_c (vdi_handle, 1);
 	
@@ -469,12 +461,12 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	short dmy;
 	PXY   p[2], clip[2];
 
-	if (This != hwWind_Top || This->isIcon || This->shaded) {
+	if (This != hwWind_Top || This->Base.isIcon || This->shaded) {
 		return;
 	} else {
 		short top;
 		wind_get (0, WF_TOP, &top, &dmy, &dmy, &dmy);
-		if (top != This->Handle) {
+		if (top != This->Base.Handle) {
 			return;
 		}
 	}
@@ -560,7 +552,7 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 	
 	if (info) {
 		if (wind_kind & INFO) {
-			wind_set_str (This->Handle, WF_INFO, info);
+			wind_set_str (This->Base.Handle, WF_INFO, info);
 		}
 		if (wind_kind & (LFARROW|HSLIDE)) {
 			hwWind_setHSInfo(This, info);
@@ -578,12 +570,12 @@ void set_size (HwWIND This, const GRECT * curr)
 	TBAREDIT * edit = TbarEdit (This);
 	GRECT work = This->Work;
 	
-	wind_set_grect (This->Handle, WF_CURRXYWH, curr);
-	if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
+	wind_set_grect (This->Base.Handle, WF_CURRXYWH, curr);
+	if (!wind_get_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr)
 	    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
 		This->Curr = *curr;    /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
 	}                         /* if the window was created but not opend       */
-	wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
+	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 	work = This->Work;
 	work.g_y += This->TbarH;
 	work.g_h -= This->TbarH + This->IbarH;
@@ -607,15 +599,15 @@ void set_size (HwWIND This, const GRECT * curr)
 void
 hwWind_move (HwWIND This, PXY pos)
 {
-	if (This->isIcon) {
+	if (This->Base.isIcon) {
 		GRECT curr;
-		wind_get_grect (This->Handle, WF_CURRXYWH, &curr);
+		wind_get_grect (This->Base.Handle, WF_CURRXYWH, &curr);
 		*(PXY*)&curr = pos;
-		wind_set_grect (This->Handle, WF_CURRXYWH, &curr);
+		wind_set_grect (This->Base.Handle, WF_CURRXYWH, &curr);
 	} else {
 		*(PXY*)&This->Curr = pos;
-		wind_set_grect (This->Handle, WF_CURRXYWH, &This->Curr);
-		wind_get_grect (This->Handle, WF_WORKXYWH, &This->Work);
+		wind_set_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr);
+		wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 		This->isFull = FALSE;
 		containr_relocate (This->Pane,
 		                   This->Work.g_x, This->Work.g_y + This->TbarH);
@@ -626,7 +618,7 @@ hwWind_move (HwWIND This, PXY pos)
 void
 hwWind_resize (HwWIND This, const GRECT * curr)
 {
-	if (!This->isIcon) {
+	if (!This->Base.isIcon) {
 		GRECT prev = This->Curr;
 		set_size (This, curr);
 		curr_area.g_w = This->Curr.g_w;
@@ -640,14 +632,25 @@ hwWind_resize (HwWIND This, const GRECT * curr)
 void
 hwWind_full (HwWIND This)
 {
-	if (!This->isIcon) {
+	if (!This->Base.isIcon) {
 		WORD  mode = (This->isFull ? WF_PREVXYWH : WF_FULLXYWH);
 		GRECT prev = This->Curr;
 		GRECT curr;
-		wind_get_grect (This->Handle, mode, &curr);
+		wind_get_grect (This->Base.Handle, mode, &curr);
 		set_size (This, &curr);
 		This->isFull = (mode == WF_FULLXYWH);
-		if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
+		if (sys_XAAES()) {
+			WORD msg[8];
+			msg[0] = WM_REDRAW;
+			msg[1] = gl_apid;
+			msg[2] = 0;
+			msg[3] = This->Base.Handle;
+			msg[4] = This->Work.g_x;
+			msg[5] = This->Work.g_y;
+			msg[6] = This->Work.g_w;
+			msg[7] = This->Work.g_h;
+			appl_write (gl_apid, 16, msg);
+		} else if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
 			hwWind_redraw (This, &prev);
 		}
 		if (wind_kind & (LFARROW|HSLIDE)) {
@@ -661,75 +664,37 @@ void
 hwWind_iconify (HwWIND This, const GRECT * icon)
 {
 	if (icon) {
-		if (!This->isIcon) {
+		if (!This->Base.isIcon) {
 			if (This->isFull) {
-				wind_get_grect (This->Handle, WF_PREVXYWH, &This->Curr);
+				wind_get_grect (This->Base.Handle, WF_PREVXYWH, &This->Curr);
 			}
-			wind_set_grect (This->Handle, WF_ICONIFY, icon);
-			This->isIcon = TRUE;
+			wind_set_grect (This->Base.Handle, WF_ICONIFY, icon);
+			This->Base.isIcon = TRUE;
 		}
 	} else {
-		if (This->isIcon) {
-			wind_set_grect (This->Handle, WF_UNICONIFY, &This->Curr);
+		if (This->Base.isIcon) {
+			wind_set_grect (This->Base.Handle, WF_UNICONIFY, &This->Curr);
 			if (This->isFull) {
-				wind_get_grect (This->Handle, WF_FULLXYWH, &This->Curr);
-				wind_set_grect (This->Handle, WF_CURRXYWH, &This->Curr);
+				wind_get_grect (This->Base.Handle, WF_FULLXYWH, &This->Curr);
+				wind_set_grect (This->Base.Handle, WF_CURRXYWH, &This->Curr);
 			}
 			if (wind_kind & (LFARROW|HSLIDE)) {
 				hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 			}
-			This->isIcon = FALSE;
+			This->Base.isIcon = FALSE;
 		}
 	}
 }
 
-/*============================================================================*/
-void
-hwWind_raise (HwWIND This, BOOL topNbot)
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_raised (HwWIND This, BOOL topNbot)
 {
-	HwWIND new_top = NULL;
+	HwWIND new_top = hwWind_Top;
 	
-	if (topNbot) {
-		if (This != hwWind_Top) {
-			HwWIND * ptr = &hwWind_Top;
-			new_top = This;
-			while (*ptr) {
-				if (*ptr == This) {
-					*ptr       = This->Next;
-					This->Next = hwWind_Top;
-					hwWind_Top = This;
-					break;
-				}
-				ptr = &(*ptr)->Next;
-			}
-		}
-		wind_set (This->Handle, WF_TOP, 0,0,0,0);
-		if (wind_kind & (LFARROW|HSLIDE)) {
-			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
-		}
-	
-	} else {
-		if (This->Next) {
-			HwWIND * ptr = &hwWind_Top;
-			if (This == hwWind_Top) {
-				new_top = This->Next;
-			}
-			while (*ptr) {
-				if (*ptr == This) {
-					*ptr = This->Next;
-					break;
-				}
-				ptr = &(*ptr)->Next;
-			}
-			while (*ptr) {
-				ptr = &(*ptr)->Next;
-			}
-			*ptr       = This;
-			This->Next = NULL;
-		}
-		wind_set (This->Handle, WF_BOTTOM, 0,0,0,0);
+	if (topNbot && (wind_kind & (LFARROW|HSLIDE))) {
+		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 	}
-	
 #ifdef GEM_MENU
 	if (new_top) {
 		menu_history (new_top->History, new_top->HistUsed, new_top->HistMenu);
@@ -784,12 +749,12 @@ hwWind_scroll (HwWIND This, CONTAINR cont, long dx, long dy)
 	    && rc_intersect (&cont->Area, &work)) {
 		GRECT clip;
 		wind_update (BEG_UPDATE);
-		wind_get_grect (This->Handle, WF_FIRSTXYWH, &clip);
+		wind_get_grect (This->Base.Handle, WF_FIRSTXYWH, &clip);
 		while (clip.g_w > 0 && clip.g_h > 0) {
 			if (rc_intersect (&work, &clip)) {
 				containr_scroll (cont, &clip, dx, dy);
 			}
-			wind_get_grect (This->Handle, WF_NEXTXYWH, &clip);
+			wind_get_grect (This->Base.Handle, WF_NEXTXYWH, &clip);
 		}
 		wind_update (END_UPDATE);
 	}
@@ -927,14 +892,31 @@ hwWind_undo (HwWIND This, BOOL redo)
 
 /*============================================================================*/
 HwWIND
+hwWind_Next (HwWIND This)
+{
+	WINDOW next;
+	if (!This) {
+		extern WINDOW window_Top;
+		next = window_Top;
+	} else {
+		next = This->Base.Next;
+	}
+	
+	/* later we need a filter here to not catch wrong window types */
+	
+	return (HwWIND)next;
+}
+
+/*============================================================================*/
+HwWIND
 hwWind_byHandle (WORD hdl)
 {
 	HwWIND wind = hwWind_Top;
 	while (wind) {
-		if (wind->Handle == hdl) {
+		if (wind->Base.Handle == hdl) {
 			break;
 		}
-		wind = wind->Next;
+		wind = (HwWIND)wind->Base.Next;
 	}
 	return wind;
 }
@@ -948,7 +930,7 @@ hwWind_byValue (long val)
 		if (wind == (HwWIND)val) {
 			break;
 		}
-		wind = wind->Next;
+		wind = (HwWIND)wind->Base.Next;
 	}
 	return wind;
 }
@@ -962,7 +944,7 @@ hwWind_byContainr (CONTAINR cont)
 		if (wind->Pane == cont->Base) {
 			break;
 		}
-		wind = wind->Next;
+		wind = (HwWIND)wind->Base.Next;
 	}
 	return wind;
 }
@@ -1174,19 +1156,19 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 			}
 		}
 	}
-	if (lft <= rgt && This->TbarH && !This->isIcon && !This->shaded) {
+	if (lft <= rgt && This->TbarH && !This->Base.isIcon && !This->shaded) {
 		GRECT clip, area;
 		clip.g_x = This->Work.g_x + This->TbarElem[lft].Offset -3;
 		clip.g_w = This->TbarElem[rgt].Offset + This->TbarElem[rgt].Width
 		         - This->TbarElem[lft].Offset +21;
 		clip.g_y = This->Work.g_y;
 		clip.g_h = This->TbarH -1;
-		wind_get_grect (This->Handle, WF_FIRSTXYWH, &area);
+		wind_get_grect (This->Base.Handle, WF_FIRSTXYWH, &area);
 		while (area.g_w > 0 && area.g_h > 0) {
 			if (rc_intersect (&clip, &area)) {
 				draw_toolbar (This, &area, TRUE);
 			}
-			wind_get_grect (This->Handle, WF_NEXTXYWH, &area);
+			wind_get_grect (This->Base.Handle, WF_NEXTXYWH, &area);
 		}
 	}
 	return chng;
@@ -1210,90 +1192,62 @@ updt_toolbar (HwWIND This, const char * text)
 	chng_toolbar (This, 0, 0, -1);
 }
 
-/*============================================================================*/
-void
-hwWind_redraw (HwWIND This, const GRECT * clip)
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_drawWork (HwWIND This, const GRECT * clip)
 {
-	GRECT work, rect = desk_area;
-	char * info = (!This->IbarH ? NULL : *This->Info ? This->Info : This->Stat);
+	char * info = (!This->IbarH ? NULL :*This->Info ? This->Info :This->Stat);
 	short  tbar = (!This->TbarH ? -32000 : This->Work.g_y + This->TbarH -1);
-	
-	wind_update (BEG_UPDATE);
-	
-	if (clip && !rc_intersect (clip, &rect)) {
-		rect.g_w = rect.g_h = 0;
+	if (clip->g_y <= tbar) {
+		draw_toolbar (This, clip, TRUE);
 	}
-	
-	if (!This->isIcon) {
-		work = This->Work;
-		if (!rc_intersect (&rect, &work)) {
-			rect.g_w = rect.g_h = 0;
-		} else {
-			wind_get_grect (This->Handle, WF_FIRSTXYWH, &rect);
-		}
-		while (rect.g_w > 0 && rect.g_h > 0) {
-			if (rc_intersect (&work, &rect)) {
-				if (rect.g_y <= tbar) {
-					draw_toolbar (This, &rect, TRUE);
-				}
-				if (info) {
-					draw_infobar (This, &rect, info);
-				}
-				containr_redraw (This->Pane, &rect);
-			}
-			wind_get_grect (This->Handle, WF_NEXTXYWH, &rect);
-		}
-	
-	} else /* This->isIcon */ {
-		static UWORD data[] = {
-			0x000c,0x0000, 0x0003,0xef00, 0x001f,0x7600, 0x0031,0xfb80,
-			0x0031,0xf080, 0x0006,0x70c0, 0x00ff,0xec00, 0x0087,0x7fc0,
-			0x0181,0xe0e0, 0x0001,0xf020, 0x005f,0xd860, 0x00ef,0x7f00,
-			0x00c3,0xff80, 0x00c7,0xf080, 0x0007,0xf180, 0x0007,0xf800,
-			0x000f,0xf000, 0x001f,0x7800, 0x001e,0xf800, 0x001d,0xec00,
-			0x003e,0x7c00, 0x003d,0x7c00, 0x0078,0x2400, 0x00f8,0xfc00,
-			0x00d8,0x2600, 0x00d0,0x7600, 0x01b1,0x2600, 0x01ff,0xfe00,
-			0x0362,0x3200, 0x0260,0x3300, 0x0660,0x3300, 0x0460,0x3300
-		};
-		static MFDB icon = { data, 32,32, 2, 0, 1, 0,0,0 };
-		
-		MFDB  scrn = { NULL, };
-		short color[2];
-		PXY   lu;
-		
-		wind_get_grect (This->Handle, WF_WORKXYWH, &work);
-		lu.p_x = work.g_x + (work.g_w - icon.fd_w) /2;
-		lu.p_y = work.g_y + (work.g_h - icon.fd_h) /2;
-		color[0] = (This->isBusy ? G_WHITE : G_BLACK);
-		if (!rc_intersect (&rect, &work)) {
-			rect.g_w = rect.g_h = 0;
-		} else {
-			wind_get_grect (This->Handle, WF_FIRSTXYWH, &rect);
-		}
-		vsf_color (vdi_handle, G_LWHITE);
-		while (rect.g_w > 0 && rect.g_h > 0) {
-			if (rc_intersect (&work, &rect)) {
-				PXY p[4];
-				p[1].p_x = (p[0].p_x = rect.g_x) + rect.g_w -1;
-				p[1].p_y = (p[0].p_y = rect.g_y) + rect.g_h -1;
-				v_hide_c (vdi_handle);
-				v_bar (vdi_handle, (short*)p);
-				p[2] = lu;
-				p[3] = *(PXY*)&icon.fd_w;
-				if (rc_intersect (&rect, (GRECT*)(p +2))) {
-					p[1].p_x = (p[0].p_x = p[2].p_x - lu.p_x) + p[3].p_x -1;
-					p[1].p_y = (p[0].p_y = p[2].p_y - lu.p_y) + p[3].p_y -1;
-					p[3].p_x += p[2].p_x -1;
-					p[3].p_y += p[2].p_y -1;
-					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, color);
-				}
-				v_show_c (vdi_handle, 1);
-			}
-			wind_get_grect (This->Handle, WF_NEXTXYWH, &rect);
-		}
+	if (info) {
+		draw_infobar (This, clip, info);
 	}
+	containr_redraw (This->Pane, clip);
+		
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void
+vTab_drawIcon (HwWIND This, const GRECT * clip)
+{
+	static UWORD data[] = {
+		0x000c,0x0000, 0x0003,0xef00, 0x001f,0x7600, 0x0031,0xfb80,
+		0x0031,0xf080, 0x0006,0x70c0, 0x00ff,0xec00, 0x0087,0x7fc0,
+		0x0181,0xe0e0, 0x0001,0xf020, 0x005f,0xd860, 0x00ef,0x7f00,
+		0x00c3,0xff80, 0x00c7,0xf080, 0x0007,0xf180, 0x0007,0xf800,
+		0x000f,0xf000, 0x001f,0x7800, 0x001e,0xf800, 0x001d,0xec00,
+		0x003e,0x7c00, 0x003d,0x7c00, 0x0078,0x2400, 0x00f8,0xfc00,
+		0x00d8,0x2600, 0x00d0,0x7600, 0x01b1,0x2600, 0x01ff,0xfe00,
+		0x0362,0x3200, 0x0260,0x3300, 0x0660,0x3300, 0x0460,0x3300
+	};
+	static MFDB icon = { data, 32,32, 2, 0, 1, 0,0,0 };
 	
-	wind_update (END_UPDATE);
+	MFDB  scrn = { NULL, };
+	short color[2];
+	PXY   lu ,p[4];
+	GRECT work;
+	
+	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &work);
+	lu.p_x = work.g_x + (work.g_w - icon.fd_w) /2;
+	lu.p_y = work.g_y + (work.g_h - icon.fd_h) /2;
+	color[0] = (This->isBusy ? G_WHITE : G_BLACK);
+	vsf_color (vdi_handle, G_LWHITE);
+	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
+	p[1].p_y = (p[0].p_y = clip->g_y) + clip->g_h -1;
+	v_hide_c (vdi_handle);
+	v_bar (vdi_handle, (short*)p);
+	p[2] = lu;
+	p[3] = *(PXY*)&icon.fd_w;
+	if (rc_intersect (clip, (GRECT*)(p +2))) {
+		p[1].p_x = (p[0].p_x = p[2].p_x - lu.p_x) + p[3].p_x -1;
+		p[1].p_y = (p[0].p_y = p[2].p_y - lu.p_y) + p[3].p_y -1;
+		p[3].p_x += p[2].p_x -1;
+		p[3].p_y += p[2].p_y -1;
+		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, color);
+	}
+	v_show_c (vdi_handle, 1);
 }
 
 
@@ -1318,7 +1272,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageUpdated:
-			if (!wind->isIcon) {
+			if (!wind->Base.isIcon) {
 				hwWind_redraw  (wind, gen_ptr);
 			}
 			break;
@@ -1403,7 +1357,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			goto case_HW_ActivityBeg;
 		
 		case HW_ImgEndLoad:
-			if (!wind->isIcon && gen_ptr) {
+			if (!wind->Base.isIcon && gen_ptr) {
 				hwWind_redraw  (wind, gen_ptr);
 			}
 			goto case_HW_ActivityEnd;
@@ -1415,7 +1369,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			wind->isBusy += (gen_ptr && *(const long *)gen_ptr > 0
 			                 ? *(const long *)gen_ptr : 1);
 			if (!was_busy) {
-				if (wind->isIcon) {
+				if (wind->Base.isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
@@ -1439,7 +1393,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					old_busy = wind->isBusy;
 				}
 				hwWind_setInfo (wind, "", TRUE);
-				if (wind->isIcon) {
+				if (wind->Base.isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
 					short mx, my, u;
@@ -1454,7 +1408,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			errprintf ("wind_handler (%i, %p)\n", event, cont);
 	}
 	
-	if (old_busy != wind->isBusy && !wind->isIcon && wind->IbarH) {
+	if (old_busy != wind->isBusy && !wind->Base.isIcon && wind->IbarH) {
 		draw_infobar (wind, NULL, (*wind->Info ? wind->Info : wind->Stat));
 	}
 }
@@ -1533,7 +1487,7 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 	WORD   whdl = wind_find (mx, my);
 	HwWIND wind = hwWind_byHandle (whdl);
 	
-	if (wind && !wind->isIcon) {
+	if (wind && !wind->Base.isIcon) {
 		clip = wind->Work;
 	} else {
 		wind_get_grect (whdl, WF_WORKXYWH, &clip);
@@ -1559,7 +1513,7 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 			wind = NULL;
 		
 		} else if (wind) {
-			if (wind->isIcon) {
+			if (wind->Base.isIcon) {
 				wind = NULL;
 			
 			} else {
@@ -1739,14 +1693,14 @@ hwWind_button (WORD mx, WORD my)
 		vsf_interior (vdi_handle, FIS_SOLID);
 		vswr_mode (vdi_handle, MD_XOR);
 		v_hide_c  (vdi_handle);
-		wind_get_grect (wind->Handle, WF_FIRSTXYWH, (GRECT*)w);
+		wind_get_grect (wind->Base.Handle, WF_FIRSTXYWH, (GRECT*)w);
 		while (w[1].p_x > 0 && w[1].p_y > 0) {
 			if (rc_intersect ((GRECT*)c, (GRECT*)w)) {
 				w[1].p_x += w[0].p_x -1;
 				w[1].p_y += w[0].p_y -1;
 				v_bar (vdi_handle, (short*)w);
 			}
-			wind_get_grect (wind->Handle, WF_NEXTXYWH, (GRECT*)w);
+			wind_get_grect (wind->Base.Handle, WF_NEXTXYWH, (GRECT*)w);
 		}
 		c[0] = *(PXY*)&wind->Curr;
 		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + wind->Curr.g_w -1;
@@ -1900,7 +1854,7 @@ hwWind_keybrd (WORD key, UWORD state)
 	
 	} else if (wind->TbarActv != TBAR_EDIT) {
 		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)
-		    && !wind->isIcon && !wind->shaded) {
+		    && !wind->Base.isIcon && !wind->shaded) {
 			TBAREDIT * edit = TbarEdit (wind);
 			edit->Cursor = 0;
 			edit->Shift  = 0;

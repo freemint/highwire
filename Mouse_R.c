@@ -429,7 +429,7 @@ check_mouse_position (WORD mx, WORD my)
 
 	if (hwWind_Focus
 	    && (hwWind_Focus = hwWind_byValue ((long)hwWind_Focus)) != NULL
-	    && hwWind_Focus->isIcon) {
+	    && hwWind_Focus->Base.isIcon) {
 			containr_highlight (hwWind_Focus->Pane, NULL);
 	    	hwWind_Focus = NULL;
 	
