@@ -92,4 +92,15 @@ typedef enum {
 #endif
 
 
+/*--- Macro for prototyping ---*/
+
+#ifndef __CDECL
+# ifdef __PUREC__
+#  define __CDECL cdecl
+# else
+#  define __CDECL
+# endif
+#endif
+
+
 #endif /*__HW_TYPES_H__*/
