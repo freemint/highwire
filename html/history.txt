@@ -1,5 +1,43 @@
 Ok here are the new supports and changes
 
+February 21, 2003
+
+  Baldrick's patches
+
+  containr.c:
+    - line 224 set frame->resisize based on container->Resize
+    
+  containr.h:
+    - line 74 added BOOL Resize to struct s_containr
+    
+  defs.h:
+    - line 490 added BOOL resize to struct frame_item
+  
+  frame.c:
+    - line 36 init frame->resize to TRUE (default from w3)
+  
+  mouse_r.c:
+    - lines 387-390 added test to change mouse pointer if pointer
+      is over frame border and the frame is resizeable
+          
+  render.c:
+    - lines 289 - 293 set container->Resize based on Key noresize
+    
+  token.h:
+    - line 146 added NORESIZE token
+    
+February 20, 2003
+
+  AltF4's patches
+  
+  aei.c:
+    - line 805 modified to detect shift keys. If shifted then
+      'Forward' through the page history instead of 'back'
+  
+  hwwind.c:
+    - lines 180-185 added test to detect if we are top window
+      by AES
+
 February 20, 2003
 
   Baldrick's patches
