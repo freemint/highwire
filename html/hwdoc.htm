@@ -8,6 +8,8 @@
 <META NAME="date" CONTENT="2002-08-14">
 </head>
 
+<B>Last updated 5/11/03</B>
+
 </FONT>
 <body>
 <FONT FACE="verdana" SIZE="2">
@@ -96,7 +98,7 @@ I tried. :) HighWire is still very much in development.</p>
 
 <ul>
   <li>Frameset Support (90%)</li>
-  <li>Tables (95%)</li>
+  <li>Tables (98%)</li>
   <LI>HTML 4 compliant 90%</LI>
   <li>Colour support (mapped to current system palette)</li>
   <LI>Graphics 90% - Now loads HTML files with Gifs - colors are perfect in 256/mono modes - other modes need adjusting.</LI>
@@ -124,8 +126,19 @@ I tried. :) HighWire is still very much in development.</p>
   <LI>Extended menu bar, the current charset encoding can be seen and changed at menu title "View". Also de/increasing of the display font is available there.</LI>
   <LI>Menu entry "info.." will show now some basic information about the active frame.</LI>
   <LI>Improved algorithm for the line breaking to avoid splitting of text at wrong positions</LI>
-  <LI>Now buttons of forms are reacting to mouse clicks.</LI>   
-</ul>
+  <LI>Now buttons of forms are reacting to mouse clicks.</LI>
+  <LI>HTTP protcol layer reworked, is faster now and works for much more servers.</LI> 
+  <LI>The problem of files with long names no loaded at some Magic versions (eg. *html) is solved now.</LI>
+  <LI>Added a workaround to have it working under Geneva again.</LI>
+  <LI>Reworked code to avoid a flickering mouse pointer when using Highwire.</LI>
+  <LI>Navigation Bar added with the traditional browser buttons: Forward, Back, Home, Reload, Stop and URL Edit Field.</LI> 
+  <LI>When holding down the Forward and Back buttons a bit longer, a popup appears that allows selection of any URL stored in History as well as the Last and Next URLs.</LI>
+  <LI>Using the commands, ^C/^V, copying between the Navigation Bar's edit field and the Clipboard can be done.</LI>
+  <LI>The Navigation Bar can be hidden or shown by holding down the ALT key while clicking the window's Close button.</LI>
+  <LI>Initial implementation of the Ovl's for different TCP/IP stack support has been added.</LI>
+  <LI>Form support has been improved with the support of Selection List.</LI>
+  <LI>Calulation of table width and cells has been improved.</LI>
+  </ul>
 
 <p>It is currently missing:</p>
 
@@ -176,7 +189,7 @@ render including font sizes, centering and lists redrew correctly in real time
 <ul type="disc">
 	<li><A target="_top" HREF="http://www.atari-users.net">Rob Mahlert</A></li>
 	<li>Edward Baiz Jr. (aka Gamer)</li>
-	<li><A target="_top" href="http://www.arcadia.crew.free.fr">Jean-Paula Mata </a>(aka ProTOS)</li>
+	<li><A target="_top" href="http://www.arcadia.crew.free.fr">Jean-Paul Mata </a>(aka ProTOS)</li>
 </ul>
 	<P>
 	<li><b>Fontlist project</b></li>
@@ -446,6 +459,9 @@ Hopefully will be updated to list all supported tags.</p>
 	  </ul>
   <li><b>PLAINTEXT</b></li>
   <li><b>PRE</b></li>
+	  <ul>
+	  <li>WIDTH</li>
+	  </ul>
   <li><b>Q</b></li>
 	  <ul>
 	  <li>LANG</li>

@@ -1,3 +1,5 @@
+Last updated 5/11/03
+
 =====================================
 
       HighWire Documentation
@@ -68,7 +70,7 @@ Where we have gone with the project ...
 New items since it went open source:
 
   ù Frameset Support (90%)
-  ù Tables (95%)
+  ù Tables (98%)
   ù HTML 4 compliant (90%)
   ù Colour support (mapped to current system palette)
   ù Graphics (20%) - Now loads HTML files with Gifs - colours are perfect in
@@ -108,6 +110,25 @@ New items since it went open source:
   ù Improved algorithm for line breaking to avoid splitting of 
     text lines at wrong positions.
   ù Now buttons of forms are reacting to mouse clicks.
+  ù HTTP protocol layer reworked, is much faster now and works for much more 
+    servers.
+ ù The problem of files with long names not loaded at some Magic versions 
+   (eg. *.html) is solved now.
+ ù Added a workaround to have it working under Geneva again.
+ ù Reworked code to avoid a flickering mouse pointer when using Highwire.
+ ù Navigational Bar added with the traditional browser button: Forward, Back,
+   Home, Reload, Stop and URL Edit Field.
+ ù When holding down the Forward and Back buttons a bit longer, a popup 
+   appears allows selection of any URL in History as well as the Last and 
+   Next URLs..
+ ù Using the commands, ^C/^V, copying between the Navigation Bar's edit field 
+   and the Clipboard can be done.
+ ù The Navigation Bar can be hidden or shown by holding down the ALT key while
+   the window's Close Button.
+ ù Initial implementation of the Ovl's for different TCP/IP stack support has
+   been added.
+ ù Form support has been improved with the support of Selection List.
+ ù Calculation of table width and cells have been improved.
 
 It is currently missing:
 
