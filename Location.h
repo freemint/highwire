@@ -15,7 +15,7 @@ typedef enum {
 	PROT_FTP
 } LC_PROTO;
 #define PROTO_isLocal(p)  ((p) >= PROT_FILE  && (p) <= PROT_DIR)
-#define PTOTO_isPseudo(p) ((p) >= PROT_ABOUT && (p) <= PROT_MAILTO)
+#define PROTO_isPseudo(p) ((p) >= PROT_ABOUT && (p) <= PROT_MAILTO)
 #define PROTO_isRemote(p) ((p) >= PROT_HTTP)
 
 struct s_location {
