@@ -20,9 +20,10 @@
 void
 button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 {
-	void   * hash = NULL;
-	GRECT    watch;
-	WORD     decx = 0, decy = 0;
+	void * hash  = NULL;
+	void * txt_i = NULL;
+	GRECT  watch;
+	WORD   decx = 0, decy = 0;
 	
 	EVMULT_IN multi_in = { 0, };
 	
@@ -31,6 +32,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	FRAME   frame = NULL;
 	HwWIND   wind = hwWind_button (mx, my);
 	if (wind) {
+		txt_i = wind->Input;
 		cont  = wind->Pane;
 		elem  = containr_Element (&cont, mx, my, &watch, NULL, &hash);
 		frame = hwWind_setActive (wind, cont, NULL);
@@ -201,6 +203,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				        } else {
 				           WORD dmy;
 				           if (input_isEdit (hash)) {
+				              txt_i = NULL;
 				              hwWind_setActive (wind, cont, hash);
 				           }
 				           hwWind_redraw (wind, &watch);
@@ -253,6 +256,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 					}
 				}
 			}
+			txt_i = NULL;
 			evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
 		} break;
 		
@@ -285,6 +289,7 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			if (wind) {
 				hwWind_raise (wind, TRUE);
 			}
+			txt_i = NULL;
 	}
 	
 	if (multi_in.emi_flags) {
@@ -329,6 +334,10 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 			if (event & MU_BUTTON) break;
 		}
 		wind_update (END_MCTRL);
+	}
+	
+	if (txt_i) {   /* restore previous active text input field */
+		hwWind_setActive (wind, cont, txt_i);
 	}
 }
 
