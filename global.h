@@ -127,6 +127,8 @@ int parse_plain (void*, long);
 int parse_image (void*, long);
 int parse_about (void*, long);
 int parse_dir   (void*, long);
+DOMBOX * create_box (TEXTBUFF, BOXCLASS, WORD par_top);
+DOMBOX * leave_box  (TEXTBUFF, WORD tag);
 DOMBOX * render_hrule (TEXTBUFF, H_ALIGN, short w, short size, BOOL shade);
 WORDITEM render_text  (TEXTBUFF, const char *);
 WORDITEM render_link  (TEXTBUFF, const char *, const char * url, short color);

@@ -377,19 +377,12 @@ static DOMBOX *
 group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 {
 	TEXTBUFF current = &parser->Current;
-	DOMBOX * box     = dombox_ctor (malloc (sizeof (DOMBOX)),
-	                                current->parentbox, BC_GROUP);
+	DOMBOX * box     = create_box (current, BC_GROUP, 0);
+	
 	box->HtmlCode = tag;
 	
 	css_box_styles (parser, box, align);
 	
-	add_paragraph(current, 0);
-	dombox_adopt (current->parentbox = box, &current->paragraph->Box);
-	
-	if (box->Margin.Top < current->paragraph->Box.Margin.Top) {
-		 box->Margin.Top = current->paragraph->Box.Margin.Top;
-	}
-	current->paragraph->Box.Margin.Top = 0;
 	current->paragraph->Box.TextAlign  = box->TextAlign;
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
@@ -398,12 +391,29 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	return box;
 }
 
-/*----------------------------------------------------------------------------*/
-static DOMBOX *
-leave_box (PARSER parser, HTMLTAG tag)
+
+/*============================================================================*/
+DOMBOX *
+create_box (TEXTBUFF current, BOXCLASS bc, WORD par_top)
 {
-	TEXTBUFF current = &parser->Current;
-	DOMBOX * box     = current->parentbox;
+	DOMBOX * box = dombox_ctor (malloc (sizeof(DOMBOX)), current->parentbox, bc);
+	PARAGRPH par = add_paragraph (current, par_top);
+	
+	box->Margin.Top = par->Box.Margin.Top;
+	par->Box.Margin.Top = 0;
+	
+	dombox_adopt (current->parentbox = box, &par->Box);
+	
+	fontstack_push (current, -1);
+	
+	return box;
+}
+
+/*============================================================================*/
+DOMBOX *
+leave_box (TEXTBUFF current, WORD tag)
+{
+	DOMBOX * box = current->parentbox;
 	
 	if (box->HtmlCode != tag) {
 		box = NULL;
@@ -2207,7 +2217,7 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 		group_box (parser, TAG_CENTER, ALN_CENTER);
 	
 	} else {
-		leave_box (parser, TAG_CENTER);
+		leave_box (&parser->Current, TAG_CENTER);
 	}
 	
 	return (flags|PF_SPACE);
@@ -2250,7 +2260,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	
 	} else {
-		leave_box (parser, TAG_BLOCKQUOTE);
+		leave_box (current, TAG_BLOCKQUOTE);
 	}
 	
 	return (flags|PF_SPACE);
@@ -2275,7 +2285,7 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 			if (size > 0) box->SetWidth = size;
 		}
 	} else {
-		DOMBOX * box = leave_box (parser, TAG_DIV);
+		DOMBOX * box = leave_box (&parser->Current, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
 		                box->ChildBeg == box->ChildEnd ? box->ChildBeg : NULL);
 		if (cld && (cld->Floating == (FLT_LEFT) || cld->Floating == (FLT_RIGHT))
