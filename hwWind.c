@@ -1782,7 +1782,7 @@ hwWind_button (WORD mx, WORD my)
 
 
 /*----------------------------------------------------------------------------*/
-static FILE *
+FILE *
 open_scrap (BOOL rdNwr)
 {
 	char path[HW_PATH_MAX] = "";
