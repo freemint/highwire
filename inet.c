@@ -243,8 +243,8 @@ inet_send (long fh, char * buf, size_t len)
 #elif defined(USE_STIK)
 	if (!tpl) {
 		puts ("No STiK");
-	} else {
-		ret = TCP_send ((int)fh, buf, (int)len);
+	} else if ((ret = TCP_send ((int)fh, buf, (int)len)) == 0) {
+		ret = len;
 	}
 
 #else
