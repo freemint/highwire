@@ -1,17 +1,43 @@
-(non-public of Aug. 29, 2003)
+(non-public of Sep. 25, 2003)
+
+- New config keyword added to control how many
+  memory shall be used for caching of image
+  bitmaps in memory (not those on disk):
+    CACHEMEM = <kilo bytes>
+  When not defined 100k will be asumed.
+  (see example.cfg\highwire.cfg for details).
 
 - Added lot of functionality for dithering and
   displaying of images, especially for GrayScale
   and TrueColor.
 
+- Implemented support for 32k colours screen mode.
+
 - Support for jpg and png implemented.
 
-- Implemented support for 32k colours screen mode.
+- Decreased a bit flickering of image rendering,
+  by improved cache prefetches.
+
+- Enabled loading and displaying of image files
+  over remote connections.
+  NOTE:  This will only work when the CACHEDIR is
+  defined properly in HighWire's cfg file!!!
 
 - Fixed the cache screwing up bug which occured
   when storing of files failed for some reason
   (eg. no cache dir defined in config).  This was
   leading to an infinite loop.
+
+- Corrected cache size calculation for disk cached
+  objects (#0126).
+
+- Added automatic prepending of 'http://' when no
+  protocol was given in the URL of the button bar
+  (in fact, when neither a leading '/' nor any ':'
+  was found there) (#0093).
+
+- Fixed a bug occuring with both rowspan and
+  colspan defined in one table cell (#0119).
 
 - Fixed the 'too many open files' bug, resulting
   from forgotten socket close after connection
@@ -20,8 +46,13 @@
 - Fixed the infinite loop caused by too long lines
   in HTML textes.
 
+- Corrected the handling of URLs for <frame> when
+  a previous <base href=..> was found.
+
 - Added several checks to avoid crashes due to
   memory exhausted.
+
+- Bugs #0093, #0119, #0126 resolved.
 
 __________________________________________________
 Changes in V. 0.1.4 release  of August 10, 2003:
