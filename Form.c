@@ -278,16 +278,34 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 	TEXTATTR attr  = word->attr;
 	INPUT    input = _alloc (IT_BUTTN, current, name);
 	
-	input->SubType = sub_type;
-	input->Value   = strdup (value);
-	
-	font_byType (-1, -1, -1, word);
-	scan_string_to_16bit (value, encoding, &current->text,
-	                      word->font->Base->Mapping);
-	if (current->text == current->buffer) {
-		*(current->text++) = font_Nobrk (word->font);
+	if (sub_type == 'I') {
+		FRAME frame          = ((FORM)current->form)->Frame;
+		short word_height    = current->word->word_height;
+		short word_tail_drop = current->word->word_tail_drop;
+		short word_v_align   = current->word->vertical_align;
+		
+		input->SubType = 'S';
+		
+		new_image (frame, current, value, frame->BaseHref, 0,0, 0,0);
+		font_switch (current->word->font, NULL);
+		
+		new_word (current, TRUE);
+		current->word->word_height    = word_height;
+		current->word->word_tail_drop = word_tail_drop;
+		current->word->vertical_align = word_v_align;
+		
+	} else {
+		input->SubType = sub_type;
+		input->Value   = strdup (value);
+		
+		font_byType (-1, -1, -1, word);
+		scan_string_to_16bit (value, encoding, &current->text,
+		                      word->font->Base->Mapping);
+		if (current->text == current->buffer) {
+			*(current->text++) = font_Nobrk (word->font);
+		}
+		set_word (current, word->word_height, word->word_tail_drop +1, -4);
 	}
-	set_word (current, word->word_height, word->word_tail_drop +1, -4);
 	current->word->attr = attr;
 	
 	return input;
@@ -378,9 +396,16 @@ new_input (PARSER parser)
 		
 	} else if (stricmp (output, val = "Submit") == 0 ||
 	           stricmp (output, val = "Reset")  == 0 ||
-	           stricmp (output, val = "Button") == 0) {
+	           stricmp (output, val = "Button") == 0 ||
+	           stricmp (output, val = "Image")  == 0) {
 		char sub_type = (*val == 'B' ? '\0' : *val);
-		if (get_value (parser, KEY_VALUE, output, sizeof(output))) {
+		if (sub_type == 'I') {
+			if (get_value (parser, KEY_SRC, output, sizeof(output))) {
+				val = output;
+			} else {
+				sub_type = 'S';
+			}
+		} else if (get_value (parser, KEY_VALUE, output, sizeof(output))) {
 			char * p = output;
 			while (isspace (*p)) p++;
 			if (*p) {
