@@ -975,7 +975,8 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		char out[100];
 		const char * line = *text;
 		
-		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+		if (cfg_UseCSS &&
+		    (!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     strstr (out, "all") || strstr (out, "screen"))) {
@@ -1042,8 +1043,9 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if ((flags & PF_START) && get_value(parser,KEY_REL,out,sizeof(out))) {
 		if (stricmp (out, "StyleSheet") == 0) {
-			if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
-			     mime_byString (out, NULL) == MIME_TXT_CSS)
+			if (cfg_UseCSS
+			    && (!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+			        mime_byString (out, NULL) == MIME_TXT_CSS)
 		       && (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 			        strstr (out, "all") || strstr (out, "screen"))
 			    && get_value (parser, KEY_HREF, out, sizeof(out))) {
