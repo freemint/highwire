@@ -116,7 +116,18 @@ static void
 cfg_cachedir (char * param, long arg)
 {
 	(void)arg;
-	cache_setup (param);
+	cache_setup (param, 0);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_cachemem (char * param, long arg)
+{
+	long n = atol (param);
+	(void)arg;
+	if (n > 0) {
+		cache_setup (NULL, (ULONG)n * 1024);
+	}
 }
 
 
@@ -182,6 +193,7 @@ read_config(char *fn)
 				{ "BOLD_NORMAL",          cfg_font,    FA(normal_font, 1, 0) },
 				{ "BOLD_TELETYPE",        cfg_font,    FA(pre_font,    1, 0) },
 				{ "CACHEDIR",             cfg_cachedir,0 },
+				{ "CACHEMEM",             cfg_cachemem,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd, 0 },
 				{ "FONT_MINSIZE",         cfg_minsize, 0 },
 				{ "FONT_SIZE",            cfg_fntsize, 0 },

@@ -12,7 +12,7 @@ CACHED   cache_bound   (CACHED, LOCATION * exchange);
 CACHEOBJ cache_release (CACHED *, BOOL erase);
 size_t   cache_clear   (CACHED this_n_all);
 
-BOOL     cache_setup   (const char * dir);
+void     cache_setup   (const char * dir, size_t mem_max);
 
 typedef enum {
 	CR_NONE  = 0,
