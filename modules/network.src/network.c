@@ -32,12 +32,6 @@
 #include "../../inet.c"
 
 
-/*--- Prototypes ---*/
-long               __CDECL ovl_init   (void);
-struct ovl_info_t *__CDECL ovl_version(void);
-long               __CDECL ovl_getftab(void);
-long               __CDECL ovl_free   (void);
-
 #if defined(USE_MINT)
 OVL_DECL (OF_CHLDPRC,FTAB_NETWORK);
 #else
@@ -72,7 +66,7 @@ struct ovl_info_t *__CDECL ovl_version(void)
  * ovl_getftab - Returns function table for OVL                      *
  * ----------------------------------------------------------------- */
 
-long __CDECL ovl_getftab(void)
+void * __CDECL ovl_getftab(void)
 {
 	static INET_FTAB inet = {
 		inet_host_addr,
@@ -83,7 +77,7 @@ long __CDECL ovl_getftab(void)
 		inet_info
 	};
 
-	return (long)&inet;
+	return &inet;
 }
 
 

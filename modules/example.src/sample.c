@@ -27,12 +27,6 @@
 #include "../../ovl_sys.h"
 
 
-/*--- Prototypes ---*/
-long               __CDECL ovl_init   (void);
-struct ovl_info_t *__CDECL ovl_version(void);
-long               __CDECL ovl_getftab(void);
-long               __CDECL ovl_free   (void);
-
 /* structs in use to hold OVL values*/
 
 OVL_DECL (OF_SIMPLE,FTAB_SIMPLE);
@@ -76,11 +70,11 @@ struct ovl_info_t *__CDECL ovl_version(void)
  * ovl_getftab - Returns function table for OVL                      *
  * ----------------------------------------------------------------- */
 
-long __CDECL ovl_getftab(void)
+void * __CDECL ovl_getftab(void)
 {
 	/* This OVL has no functions currently */
 	
-	return(0);
+	return NULL;
 }
 
 
