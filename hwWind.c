@@ -312,6 +312,39 @@ hwWind_setName (HwWIND This, const char * name)
 
 /*----------------------------------------------------------------------------*/
 static void
+draw_busybar (HwWIND This, const GRECT * area, const GRECT * clip)
+{
+	WORD  width = (This->isBusy - This->loading) *2;
+	WORD  style;
+	GRECT rect;
+	PXY   p[2];
+	p[0].p_x = area->g_x +2;
+	p[0].p_y = area->g_y +2;
+	p[1].p_x = area->g_w -4 - This->IbarH;
+	p[1].p_y = area->g_h -4;
+	if (p[1].p_x >= width) {
+		p[0].p_x += p[1].p_x - width;
+		p[1].p_x =  width;
+		style = (ignore_colours ? 1 : 4);
+	} else {
+		style = (ignore_colours ? 4 : 8);
+	}
+	rect = *(GRECT*)p;
+	if (rc_intersect (clip, &rect)) {
+		p[1].p_x += p[0].p_x -1;
+		p[1].p_y += p[0].p_y -1;
+		vsf_perimeter(vdi_handle, PERIMETER_ON);
+		vsf_interior (vdi_handle, FIS_PATTERN);
+		vsf_style    (vdi_handle, style);
+		vsf_color    (vdi_handle, G_RED);
+		v_bar        (vdi_handle, (short*)p);
+		vsf_perimeter(vdi_handle, PERIMETER_OFF);
+		vsf_interior (vdi_handle, FIS_SOLID);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
 draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 {
 	GRECT area, clip, rect;
@@ -366,32 +399,8 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			v_bar (vdi_handle, (short*)p);
 			
 			if (This->isBusy) {
-				WORD width = (This->isBusy - This->loading) *2;
-				WORD style;
-				PXY  r[2];
-				r[0].p_x = area.g_x +2;
-				r[0].p_y = area.g_y +2;
-				r[1].p_x = area.g_w -4 - This->IbarH;
-				r[1].p_y = area.g_h -4;
-				if (r[1].p_x >= width) {
-					r[0].p_x += r[1].p_x - width;
-					r[1].p_x =  width;
-					style = (ignore_colours ? 1 : 4);
-				} else {
-					style = (ignore_colours ? 4 : 8);
-				}
-				if (rc_intersect (&rect, (GRECT*)r)) {
-					r[1].p_x += r[0].p_x -1;
-					r[1].p_y += r[0].p_y -1;
-					vsf_perimeter(vdi_handle, PERIMETER_ON);
-					vsf_interior (vdi_handle, FIS_PATTERN);
-					vsf_style    (vdi_handle, style);
-					vsf_color    (vdi_handle, G_RED);
-					v_bar        (vdi_handle, (short*)r);
-					vsf_perimeter(vdi_handle, PERIMETER_OFF);
-					vsf_interior (vdi_handle, FIS_SOLID);
-					vsf_color    (vdi_handle, info_bgnd & 0x000F);
-				}
+				draw_busybar (This, &area, &rect);
+				vsf_color (vdi_handle, info_bgnd & 0x000F);
 			}
 			if (*info && p[0].p_x < x_btn) {
 				short rgt = p[1].p_x;
@@ -446,9 +455,9 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	}
 }
 
-/*----------------------------------------------------------------------------*/
-/* Set Horizontal scroller space text - only works on top windows */
-
+/*------------------------------------------------------------------------------
+ * Set Horizontal scroller space text - only works on top windows
+*/
 static void
 hwWind_setHSInfo (HwWIND This, const char * info)
 {
@@ -502,6 +511,15 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 
 	vswr_mode (vdi_handle, MD_TRANS);
 
+	if (This->isBusy) {
+		GRECT area = *(GRECT*)p;
+		area.g_w -= area.g_x -1;
+		area.g_h -= area.g_y -1;
+		clip[1].p_x -= clip[0].p_x -1;
+		clip[1].p_y -= clip[0].p_y -1;
+		draw_busybar (This, &area, (GRECT*)clip);
+	}
+	
 	v_ftext  (vdi_handle, p[0].p_x +1, p[1].p_y -1, info);
 	v_show_c (vdi_handle, 1);
 	
