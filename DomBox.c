@@ -508,8 +508,20 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	struct blocking_area t_blocker = *p_blocker;
 	BLOCKER              blocker   = &t_blocker;
-	if (blocker->L.bottom) blocker->L.bottom -= This->Rect.Y;
-	if (blocker->R.bottom) blocker->R.bottom -= This->Rect.Y;
+	if (blocker->L.bottom) {
+		if ((blocker->L.width -= This->Margin.Lft) <= 0) {
+			blocker->L.bottom = blocker->L.width = 0;
+		} else {
+			blocker->L.bottom -= This->Rect.Y;
+		}
+	}
+	if (blocker->R.bottom) {
+		if ((blocker->R.width -= This->Margin.Rgt) <= 0) {
+			blocker->R.bottom = blocker->R.width = 0;
+		} else {
+			blocker->R.bottom -= This->Rect.Y;
+		}
+	}
 	
 	if (This->BoxClass >= BC_GROUP && This->SetWidth) {
 		long gap = width;
