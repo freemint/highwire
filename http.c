@@ -331,7 +331,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	char * ln_beg = buffer, * ln_end = ln_beg, * ln_brk = NULL;
 	
 	const char * name = NULL;
-	int sock = location_open (loc, &name);
+	int sock;
 	
 	hdr->Version  = 0x0000;
 	hdr->SrvrDate = -1;
@@ -343,11 +343,21 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	hdr->Chunked  = FALSE;
 	hdr->Rdir     = NULL;
 	hdr->Head     = buffer;
-	hdr->Tail     = buffer + sizeof(buffer) -1;
-	hdr->Tlen     = 0;
 	buffer[sizeof(buffer) -1] = '\0';
 	
-	if (sock < 0) {
+	if (keep_alive && *keep_alive >= 0) {
+		while (hdr->Tlen > 0 && isspace (*hdr->Tail)) {
+			hdr->Tlen--;
+			hdr->Tail++;
+		}
+		if (hdr->Tlen > 0) {
+			memcpy (buffer, hdr->Tail, hdr->Tlen);
+			ln_beg = ln_end += hdr->Tlen;
+			left            -= hdr->Tlen;
+		}
+		sock = *keep_alive;
+	
+	} else if ((sock = location_open (loc, &name)) < 0) {
 		if (sock == -ETIMEDOUT) {
 			strcpy (buffer, "Connection timeout!\n");
 		} else if (sock < -1) {
@@ -395,6 +405,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			return (short)len;
 		}
 	}
+	hdr->Tail = buffer + sizeof(buffer) -1;
+	hdr->Tlen = 0;
 	
 	tout_msec = (tout_msec * CLK_TCK) /1000; /* align to clock ticks */
 	do {
