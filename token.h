@@ -131,6 +131,7 @@
 		__KEY_ITEM (COLSPAN),      /* TD,TH */
 		__KEY_ITEM (CONTENT),      /* META */
 		__KEY_ITEM (DISABLED),     /* INPUT,SELECT,OPTION */
+		__KEY_ITEM (FACE),         /* FONT, CSS:font-family */
 		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (FRAMESPACING), /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (HEIGHT),       /* HR,IMG,TABLE,TD,TH,TR */
@@ -203,7 +204,7 @@
 		__CSS_ITEM (COLOR,            KEY_COLOR),
 		/*          EMPTY_CELLS       */
 		/*          FLOAT             */
-		__CSS_ITEM (FONT_FAMILY,      0),
+		__CSS_ITEM (FONT_FAMILY,      KEY_FACE),
 		__CSS_ITEM (FONT_SIZE,        0),
 		/*          FONT_STRETCH      */
 		__CSS_ITEM (FONT_STYLE,       0),
@@ -220,6 +221,7 @@
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (VERTICAL_ALIGN,   KEY_VALIGN),
+		__CSS_ITEM (WHITE_SPACE,      0),
 		__CSS_ITEM (WIDTH,            KEY_WIDTH)
 	__END_CSSS
 	
