@@ -250,8 +250,7 @@ render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 		                    *text, parser->Frame->Encoding, TAG_TITLE, TRUE);
 		if (title[0]) {
 			containr_notify (parser->Target, HW_SetTitle, title);
-			flags |= PF_FONT;         /* force resetting to the actual fontbase: */
-			parser->Current.word->font = NULL;
+			font_switch (parser->Current.word->font, NULL);
 		}
 	}
 	return flags;
@@ -1933,6 +1932,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		table_start (parser);
 	} else if (parser->Current.tbl_stack) {
 		table_finish (parser);
+		font_switch (parser->Current.word->font, NULL);
 	}
 	return (flags|PF_SPACE);
 }
