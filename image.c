@@ -151,7 +151,8 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->word->image = img;
 	
 	hash   = img_hash ((w > 0 ? w : 0), (h > 0 ? h : 0), -1);
-	cached = (blocked ? NULL : cache_lookup (loc, hash, &hash));
+	cached = (blocked || !cfg_ViewImages
+	          ? NULL : cache_lookup (loc, hash, &hash));
 	
 	if (cached) {
 		short bgnd = (hash >>24) & 0xFF;
@@ -207,7 +208,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		set_word (img);
 		
 #if defined(__LOADER_H__)
-		if (!img->u.Data) {
+		if (!img->u.Data && cfg_ViewImages) {
 #else
 		if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
