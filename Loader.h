@@ -24,7 +24,7 @@ typedef struct s_loader {
 	char   * Data;
 	BOOL     notified; /* if a start notification was sent     */
 	/* */
-	BOOL   (*SuccJob)(void*, long);
+	int    (*SuccJob)(void*, long);
 	void   * FreeArg;
 	/* */
 	BOOL   rdChunked;  /* whether the data can't be received in one block */
@@ -43,7 +43,7 @@ void   delete_loader (LOADER *);
 LOADER start_page_load (CONTAINR target, const char * url, LOCATION base);
 LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base);
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
-                        BOOL (*successor)(void*, long), void * objc);
+                        int (*successor)(void*, long), void * objc);
 
 
 #endif /* __LOADER_H__ */

@@ -634,7 +634,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
 			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref,
-			                 (BOOL(*)(void*,long))NULL, NULL);
+			                 (int(*)(void*,long))NULL, NULL);
 		}
 	}
 	return flags;
@@ -1290,7 +1290,7 @@ render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 		                 : mime_byExtension (src, NULL));
 			if (MIME_Major(mime) == MIME_AUDIO) {
 				start_objc_load (parser->Target, src, parser->Frame->BaseHref,
-				                 (BOOL(*)(void*,long))NULL, NULL);
+				                 (int(*)(void*,long))NULL, NULL);
 			}
 		}
 	}
@@ -2235,7 +2235,7 @@ render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
  * AltF4 - Feb. 04, 2002: renamed to parse_html() because that matches more its
  *                        functionality, corresponding to parse_text().
  */
-BOOL
+int
 parse_html (void * arg, long invalidated)
 {
 	time_t start_clock = clock();
@@ -2410,7 +2410,7 @@ parse_html (void * arg, long invalidated)
  * Nothing exciting just maps lines to paragraphs
  */
 
-BOOL
+int
 parse_plain (void * arg, long invalidated)
 {
 	time_t start_clock = clock();
@@ -2507,7 +2507,7 @@ parse_plain (void * arg, long invalidated)
  * Create a page for just a single image.
  *
  */
-BOOL
+int
 parse_image (void * arg, long invalidated)
 {
 	PARSER   parser  = arg;

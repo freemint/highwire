@@ -247,7 +247,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
 /*==============================================================================
  * Create 'about' page
 */
-BOOL
+int
 parse_about (void * arg, long invalidated)
 {
 	PARSER   parser  = arg;

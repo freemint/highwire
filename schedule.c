@@ -11,11 +11,10 @@
 #include "schedule.h"
 
 
-typedef BOOL (*SCHED_FUNC) (void *, long);
-
 typedef struct s_SCHED {
 	struct s_SCHED * Next;
 	struct s_SCHED * Prev;
+	long             Priority;
 	SCHED_FUNC       func;
 	void           * Value;
 	long             Hash;
@@ -24,7 +23,7 @@ typedef struct s_SCHED {
 static SCHED __beg = NULL, __end = NULL;
 static ULONG __cnt = 0;
 
-static void (*on_off) (long msec);
+static void (*on_off) (long msec) = (void(*)(long))NULL;
 
 
 /*==============================================================================
@@ -42,15 +41,25 @@ sched_init (void (*func) (long msec))
 static void
 sort_in (SCHED sched)
 {
-	if (!__end) {
+	if (!__beg) {
 		sched->Prev = sched->Next = NULL;
 		__beg       = __end       = sched;
 	
+	} else if (__beg->Priority < sched->Priority) {
+		sched->Next = __beg;
+		sched->Prev = NULL;
+		__beg->Prev = sched;
+		__beg       = sched;
+	
 	} else {
-		sched->Next = NULL;
-		sched->Prev = __end;
-		__end->Next = sched;
-		__end       = sched;
+		SCHED queue = __end;
+		while (queue->Priority < sched->Priority) {
+			queue = queue->Prev;
+		}
+		sched->Prev = queue;
+		if ((sched->Next = queue->Next) != NULL) queue->Next->Prev = sched;
+		else                                     __end             = sched;
+		queue->Next = sched;
 	}
 	__cnt++;
 }
@@ -72,13 +81,14 @@ move_out (SCHED sched)
 /*==============================================================================
  */
 BOOL
-sched_insert (SCHED_FUNC func, void * value, long hash)
+sched_insert (SCHED_FUNC func, void * value, long hash, int prio)
 {
 	SCHED sched = malloc (sizeof (struct s_SCHED));
 	if (sched) {
-		sched->func  = func;
-		sched->Value = value;
-		sched->Hash  = hash;
+		sched->Priority = prio;
+		sched->func     = func;
+		sched->Value    = value;
+		sched->Hash     = hash;
 		sort_in (sched);
 		
 		if (on_off) (*on_off) (1);

@@ -75,7 +75,7 @@ static void init_display (void);
 static IMGINFO  get_decoder (const char * file);
 static pIMGDATA setup       (IMAGE, IMGINFO);
 static void     read_img    (IMAGE, IMGINFO, pIMGDATA);
-static BOOL     image_job   (void *, long);
+static int      image_job   (void *, long);
 
 #define img_hash(w,h,c) (((((long)((char)c)<<12) ^ w)<<12) ^ h)
 
@@ -195,7 +195,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 #else
 	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
-		if (sched_insert (image_job, img, (long)img->frame->Container)) {
+		if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
 			containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 		}
 	}
@@ -298,7 +298,7 @@ image_calculate (IMAGE img, short par_width)
 					free (img->u.Mfdb);
 					img->u.Mfdb = NULL;
 				}
-				if (sched_insert (image_job, img, (long)img->frame->Container)) {
+				if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
 					containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 				}
 			}
@@ -332,7 +332,7 @@ image_calculate (IMAGE img, short par_width)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #if defined(__LOADER_H__)
 static short _ldr_limit = 8;
-static BOOL
+static int
 image_ldr (void * arg, long invalidated)
 {
 	LOADER loader = arg;
@@ -348,7 +348,7 @@ image_ldr (void * arg, long invalidated)
 	}
 	delete_loader (&loader);
 	
-/*	sched_insert (image_job, img, invalidated);*/
+/*	sched_insert (image_job, img, invalidated, 1);*/
 	image_job (img, invalidated);
 	_ldr_limit++;
 	
@@ -357,7 +357,7 @@ image_ldr (void * arg, long invalidated)
 #endif
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-static BOOL
+static int
 image_job (void * arg, long invalidated)
 {
 	IMAGE    img = arg;

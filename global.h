@@ -117,11 +117,11 @@ void launch_viewer(const char *name);
 
 /* in render.c */
 
-BOOL parse_html  (void*, long);
-BOOL parse_plain (void*, long);
-BOOL parse_image (void*, long);
-BOOL parse_about (void*, long);
-BOOL parse_dir   (void*, long);
+int parse_html  (void*, long);
+int parse_plain (void*, long);
+int parse_image (void*, long);
+int parse_about (void*, long);
+int parse_dir   (void*, long);
 void     render_hrule (TEXTBUFF, H_ALIGN align, short w, short h);
 WORDITEM render_text  (TEXTBUFF, const char *);
 WORDITEM render_link  (TEXTBUFF, const char *, const char * url, short color);

@@ -42,7 +42,7 @@
  * Create directory listing
  *
 */
-BOOL
+int
 parse_dir (void * arg, long invalidated)
 {
 	PARSER   parser  = arg;
