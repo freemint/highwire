@@ -716,6 +716,7 @@ rpopup_open (WORD mx, WORD my)
 	HwWIND wind  = hwWind_byCoord (mx, my);
 	FRAME  frame = hwWind_ActiveFrame (wind);
 	short x, y, w, h, which_obj;
+	GRECT desk;
 	
 	if (!wind->HistUsed) {
 		objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0, OS_DISABLED, 0);
@@ -733,6 +734,23 @@ rpopup_open (WORD mx, WORD my)
 	x += rpopup->ob_x = mx -2;
 	y -= rpopup->ob_y;
 	y += rpopup->ob_y = my -2;
+	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
+		rpopup->ob_x += desk.g_w;
+		x            += desk.g_w;
+	}
+	if ((desk.g_x -= x) > 0) {
+		rpopup->ob_x += desk.g_x;
+		x            += desk.g_x;
+	}
+	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
+		rpopup->ob_y += desk.g_h;
+		y            += desk.g_h;
+	}
+	if ((desk.g_y -= y) > 0) {
+		rpopup->ob_y += desk.g_y;
+		y            += desk.g_y;
+	}
 	
 	wind_update (BEG_MCTRL);
 	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
