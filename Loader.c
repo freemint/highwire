@@ -538,9 +538,10 @@ receive_job (void * arg, long invalidated)
 	
 	return FALSE;
 }	
-
+#endif /* USE_INET */
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+#ifdef USE_INET
 static BOOL
 header_job (void * arg, long invalidated)
 {
@@ -579,8 +580,10 @@ header_job (void * arg, long invalidated)
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = cache_lookup (redir, 0, NULL);
 		if (!loader->MimeType) {
-			loader->MimeType = hdr.MimeType;
+			loader->MimeType = mime_byExtension (redir->File, NULL);
 		}
+		inet_close (sock);
+		
 		if (cached) {
 			union { CACHED c; LOCATION l; } u;
 	 		if (loader->Cached) {
@@ -589,16 +592,15 @@ header_job (void * arg, long invalidated)
 			u.c = cache_bound (cached, &loader->Location);
 			loader->Cached = loc = u.l;
 			free_location (&redir);
+			sched_insert ((loader->SuccJob ? loader->SuccJob : loader_job),
+			              loader, (long)loader->Target);
+			return FALSE;
+		
 		} else {
 			free_location (&loader->Location);
 			loader->Location = loc = redir;
+			return TRUE; /* re-schedule with the new location */
 		}
-		if (!loader->MimeType) {
-			loader->MimeType = mime_byExtension (loc->File, NULL);
-		}
-		inet_close (sock);
-		
-		return TRUE; /* re-schedule with the new location */
 	}
 	
 	/* start loading
@@ -791,94 +793,6 @@ launch_viewer(const char *name)
 	}
 }
 
-#if 0
-/*==============================================================================
- * registers a loader job with the scheduler.
- *
- * The parameters 'address', 'base' or 'target' can be NULL.
- * address == NULL: reread the file in base with default_encoding
- */
-static LOADER
-new_loader_job (const char *address, LOCATION base, CONTAINR target)
-{
-	LOCATION loc    = new_location (address, base);
-	LOADER   loader = new_loader (loc, target);
-	
-	free_location (&loc);
-	loc = (loader->Cached ? loader->Cached : loader->Location);
-	
-	if (loc->Proto == PROT_DIR) {
-		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parse_dir, new_parser (loader), (long)loader->Target);
-		
-	} else if (loc->Proto == PROT_ABOUT) {
-		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parse_about, new_parser (loader), (long)loader->Target);
-
-	} else if (loc->Proto == PROT_MAILTO) {
-		short id = id = find_application (NULL);
-		if (id >= 0) {
-			short msg[8] = { VA_START, };
-			msg[1] = gl_apid;
-			msg[2] = msg[5] = msg[6] = msg[7] = 0;
-			*(char**)(msg +3) = strcat (strcpy (va_helpbuf, "mailto:"),
-			                            loc->File);
-			appl_write (id, 16, msg);
-		}
-		delete_loader (&loader);
-	
-	} else if (loader->ExtAppl) {
-		short           id = find_application (loader->ExtAppl);
-		if (id >= 0 || (id = find_application (NULL)) >= 0) {
-			short msg[8];
-			msg[0] = (loader->MimeType == MIME_APP_PDF
-			          ? PDF_AV_OPEN_FILE : VA_START);
-			msg[1] = gl_apid;
-			msg[2] = 0;
-			*(char**)(msg +3) = strcpy (va_helpbuf, loc->FullName);
-			msg[5] = msg[6] = msg[7] = 0;
-			appl_write (id, 16, msg);
-
-			if (target && !target->Mode) {
-				loader->Data     = strdup ("\n\tLoading application...\n");
-				loader->MimeType = MIME_TXT_PLAIN;
-
-				sched_insert (parser_job, loader, (long)loader->Target);
-
-			} else {
-				delete_loader (&loader);
-			}
-		}
-		
-#ifdef USE_INET
-	} else if (loc->Proto == PROT_HTTP) {
-		char buf[1024];
-		location_FullName (loader->Location, buf, sizeof(buf));
-		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
-		sched_insert (loader_job, loader, (long)loader->Target);
-#endif /* USE_INET */
-	
-	} else if (loc->Proto) {
-		loader->Data     = strdup ("<html><head><title>Error</title></head>"
-		                           "<body><h1>Protocol not supported!</h1></body>"
-		                           "</html>");
-		loader->MimeType = MIME_TXT_HTML;
-		sched_insert (parser_job, loader, (long)loader->Target);
-	
-	} else if (MIME_Major(loader->MimeType) == MIME_IMAGE) {
-		loader->MimeType = MIME_IMAGE;
-		sched_insert (parse_image, new_parser (loader), (long)loader->Target);
-		
-	} else {
-		char buf[1024];
-		location_FullName (loader->Location, buf, sizeof(buf));
-		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
-		sched_insert (loader_job, loader, (long)loader->Target);
-	}
-	
-	return loader;
-}
-#endif
 
 /******************************************************************************/
 
