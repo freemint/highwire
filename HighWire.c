@@ -5,6 +5,7 @@
 
 #ifdef __PUREC__
 #include <tos.h>
+#include <string.h> /* for memcmp() */
 
 #else /* LATTICE || __GNUC__ */
 #include <mintbind.h>
@@ -76,7 +77,8 @@ main (int argc, char **argv)
 /*  This next test is a potential candidate if the -65536 test doesn't work */
 /*	if ((gdostype == GDOS_FNT)||(gdostype == -2)) {*/
 
-	if ((gdostype != GDOS_FSM)&&(gdostype != -65536L)) {
+	if ((gdostype != GDOS_FSM) && (gdostype != -65536L)
+	    && (memcmp (&gdostype, "fVDI", 4) != 0)) {
 		form_alert(1, _ERROR_SPEEDO_);
 		exit(EXIT_FAILURE);
 	}
