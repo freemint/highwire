@@ -1,36 +1,38 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML LANG="EN">
-<HEAD>
-<META HTTP-EQUIV="Content-Language" CONTENT="en">
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Language" content="en">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
 <title>HighWire documentation</title>
-<LINK REL="Bookmark" HREF="http://highwire.atari-users.net/index.htm">
-<META NAME="date" CONTENT="2003-12-22">
+<link rel="Bookmark" href="http://highwire.atari-users.net/index.htm">
+<meta name="date" content="2003-12-23">
 </head>
-<body>
+<body bgcolor="white">
 
-<B>Last updated: December 22, 2003</B>
+<font face="Verdana" size="2">
+<b>Last updated: December 23, 2003</b>
+</font>
 
-<h2><u>HighWire documentation</u></h2>
+<h2><font face="Verdana"><u>HighWire documentation</u></font></h2>
 &nbsp;<br>
 
 
 <table cellpadding="5" cellspacing="0" border="1" width="300">
-<tr><td><font face="verdana" size="2">
-<b>Table of contents</B>
+<tr><td><font face="Verdana" size="2">
+<b>Table of contents</b>
 <ol>
-  <li><A HREF="#License">HighWire release license</A></li>
-  <li><A HREF="#About">What is HighWire?</A></li>
-  <li><A HREF="#Team">HighWire development team</A></li>
-  <li><A HREF="#Use">Use of HighWire</A></li>
-  <li><A HREF="#FontList">Use of FontList</A></li>
-  <li><A HREF="#Tags">Supported HTML tags</A></li>
-  <li><A HREF="#Links">Project links</A></li>
+  <li><a href="#License">HighWire release license</a></li>
+  <li><a href="#About">What is HighWire?</a></li>
+  <li><a href="#Team">HighWire development team</a></li>
+  <li><a href="#Use">Use of HighWire</a></li>
+  <li><a href="#FontList">Use of FontList</a></li>
+  <li><a href="#Tags">Supported HTML tags</a></li>
+  <li><a href="#Links">Project links</a></li>
 </ol></font>
 </td></tr></table>
 
 
-<P>&nbsp;</P>
+<p><font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="License"><u>1.&nbsp; HighWire release license</u></a><br>
 </h3>
@@ -47,30 +49,30 @@ subject to the following restrictions:</p>
 <p>1. The origin of this software must not be misrepresented; you must not 
 claim that you wrote the original software. If you use this software in a 
 product, an acknowledgment in the product documentation would be appreciated 
-but is not required.</P>
+but is not required.</p>
 
-<P>2. Altered source versions must be plainly marked as such, and must not be 
-misrepresented as being the original software.</P>
+<p>2. Altered source versions must be plainly marked as such, and must not be 
+misrepresented as being the original software.</p>
 
-<P>3. This notice may not be removed or altered from any source 
+<p>3. This notice may not be removed or altered from any source 
 distribution.</p>
 
 <p>Anyone uses bits of the code for other reasons is welcome to, as long as 
 they specifically state that their work is based, in part, on the Project 
 HighWire source release by Robert Goldsmith.</p>
 </blockquote>
-<P>&nbsp;</P>
+<p><font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="About"><u>2.&nbsp; What is HighWire?</u></a></h3>
 
-<P>This is taken from the HighWire site written by the original author, Robert 
+<p>This is taken from the HighWire site written by the original author, Robert 
 Goldsmith.<br>
 For those of you who have not heard, HighWire is a new web browser. It has been 
 in ‘development’ for over a year. I started HighWire in what I considered a 
 feeble attempt to discourage me from moaning about CAB. I figured that when I 
 proved my code was vastly slower than CAB at parsing and rendering a page I 
 would give up and accept that browsing on my Falcon would always be slow.<br>
-Things did not turn out how I expected...</P>
+Things did not turn out how I expected...</p>
 
 <p>I think the big problem with my plan was that, unbeknownst to me at the 
 time, I had had a couple of rather good ideas. The result is HighWire.</p>
@@ -94,58 +96,58 @@ I tried. :) HighWire is still very much in development.</p>
 <ul>
   <li>Frameset Support (90%)</li>
   <li>Tables (98%)</li>
-  <LI>HTML 4 compliant (90%)</LI>
-  <LI>HTML forms (20%)</LI>
-  <LI>Online OVLs for mintnet, sting and support for iconnect</LI>
+  <li>HTML 4 compliant (90%)</li>
+  <li>HTML forms (20%)</li>
+  <li>Online OVLs for mintnet, sting and support for iconnect</li>
   <li>Colour support (mapped to current system palette)</li>
-  <LI>Graphics (95%) - Now loads HTML files with Gifs, Jpgs and Pngs (50%) -
+  <li>Graphics (95%) - Now loads HTML files with Gifs, Jpgs and Pngs (50%) -
       colors are perfect in mono/256/32k/64k modes - other modes (24/32bit)
-      need adjusting.</LI>
-  <LI>Files (Graphics, HTMLs, Docs etc.) can be dragged to a Highwire window 
-    where they will be displayed.</LI>
-  <LI>Implementation of memory caching of images avoids multiple loading of same image. The pseudo URI "about:cache" now shows detailed information about cached images.</LI>        
-  <LI>GEM Version with drop-down menues</LI>
-  <LI>GemScript support</LI>
-  <LI>Iconify/uniconify window</LI>
-  <LI>HighWire now loads sample HTML files from a folder named ‘HTML’</LI>
-  <LI>Sound support</LI>
-  <LI>International Character Set support</LI>
-  <LI>Unicode characters up to U+FFFD with NVDI 4 and TrueType fonts</LI>
-  <LI>Scroll Window using arrow keys</LI>
+      need adjusting.</li>
+  <li>Files (Graphics, HTMLs, Docs etc.) can be dragged to a Highwire window 
+    where they will be displayed.</li>
+  <li>Implementation of memory caching of images avoids multiple loading of same image. The pseudo URI "about:cache" now shows detailed information about cached images.</li>        
+  <li>GEM Version with drop-down menues</li>
+  <li>GemScript support</li>
+  <li>Iconify/uniconify window</li>
+  <li>HighWire now loads sample HTML files from a folder named ‘HTML’</li>
+  <li>Sound support</li>
+  <li>International Character Set support</li>
+  <li>Unicode characters up to U+FFFD with NVDI 4 and TrueType fonts</li>
+  <li>Scroll Window using arrow keys</li>
   <li>A working implementation of hyperlinks (text and image)</li>
-  <LI>File Selector support</LI>
-  <LI>Display text files using PRE style font selection</LI>
-  <LI>CSS in HTML tabs (e.g. converted by HTMLtidy)</LI>
-  <LI>Number of windows only restricted by operating system</LI>
-  <LI>Frame Scroll controls are implemented now, also support of right mouse button.</LI>
-  <LI>Real time scrolling</LI>
-  <LI>Background Scrolling is now working</LI>
-  <LI>Highwire now works with scroll mice when the program MWheel is being used.</LI>
-  <LI>The program My PDF has been added to the Highwire package and is currently under development (PDF support 10%)</LI>
-  <LI>Several Hotkeys added</LI> 
-  <LI>Extended menu bar, the current charset encoding can be seen and changed at menu title "View". Also de/increasing of the display font is available there.</LI>
-  <LI>Menu entry "info.." will show now some basic information about the active frame.</LI>
-  <LI>Improved algorithm for the line breaking to avoid splitting of text at wrong positions</LI>
-  <LI>Now buttons of forms are reacting to mouse clicks.</LI>
-  <LI>HTTP protcol layer reworked, is faster now and works for much more servers.</LI> 
-  <LI>The problem of files with long names no loaded at some Magic versions (eg. *html) is solved now.</LI>
-  <LI>Added a workaround to have it working under Geneva again.</LI>
-  <LI>Reworked code to avoid a flickering mouse pointer when using Highwire.</LI>
-  <LI>Navigation Bar added with the traditional browser buttons: Forward, Back, Home, Reload, Stop and URL Edit Field.</LI> 
-  <LI>When holding down the Forward and Back buttons a bit longer, a popup appears that allows selection of any URL stored in History as well as the Last and Next URLs.</LI>
-  <LI>Using the commands, ^C/^V, copying between the Navigation Bar's edit field and the Clipboard can be done.</LI>
-  <LI>The Navigation Bar can be hidden or shown by holding down the ALT key while clicking the window's Close button.</LI>
-  <LI>Initial implementation of the Ovl's for different TCP/IP stack support has been added.</LI>
-  <LI>Form support has been improved with the support of Selection List.</LI>
-  <LI>Calulation of table width and cells has been improved.</LI>
-  <LI>New keyword FONT_MINSIZE to define a minimum font height in points, eg. for (font size = 1) (see example.cfg\highwire.cfg for explanation).</LI>
-  <LI>Nw menu entry under "Option" to have frames always resizable and scrollbars if necessary, even if the HTML defines anything else there. The default
-      is off, but can be set with the keyword FORCE_FRAMECTRL = 1.</LI>
-  <LI>The cfg file now supports three new keywords concerning the cache: 1) CACHEDIR which lets the user choose where Highwire will define a directory for the storage of visited pages/images,
+  <li>File Selector support</li>
+  <li>Display text files using PRE style font selection</li>
+  <li>CSS in HTML tabs (e.g. converted by HTMLtidy)</li>
+  <li>Number of windows only restricted by operating system</li>
+  <li>Frame Scroll controls are implemented now, also support of right mouse button.</li>
+  <li>Real time scrolling</li>
+  <li>Background Scrolling is now working</li>
+  <li>Highwire now works with scroll mice when the program MWheel is being used.</li>
+  <li>The program My PDF has been added to the Highwire package and is currently under development (PDF support 10%)</li>
+  <li>Several Hotkeys added</li> 
+  <li>Extended menu bar, the current charset encoding can be seen and changed at menu title "View". Also de/increasing of the display font is available there.</li>
+  <li>Menu entry "info.." will show now some basic information about the active frame.</li>
+  <li>Improved algorithm for the line breaking to avoid splitting of text at wrong positions</li>
+  <li>Now buttons of forms are reacting to mouse clicks.</li>
+  <li>HTTP protcol layer reworked, is faster now and works for much more servers.</li> 
+  <li>The problem of files with long names no loaded at some Magic versions (eg. *html) is solved now.</li>
+  <li>Added a workaround to have it working under Geneva again.</li>
+  <li>Reworked code to avoid a flickering mouse pointer when using Highwire.</li>
+  <li>Navigation Bar added with the traditional browser buttons: Forward, Back, Home, Reload, Stop and URL Edit Field.</li> 
+  <li>When holding down the Forward and Back buttons a bit longer, a popup appears that allows selection of any URL stored in History as well as the Last and Next URLs.</li>
+  <li>Using the commands, ^C/^V, copying between the Navigation Bar's edit field and the Clipboard can be done.</li>
+  <li>The Navigation Bar can be hidden or shown by holding down the ALT key while clicking the window's Close button.</li>
+  <li>Initial implementation of the Ovl's for different TCP/IP stack support has been added.</li>
+  <li>Form support has been improved with the support of Selection List.</li>
+  <li>Calulation of table width and cells has been improved.</li>
+  <li>New keyword FONT_MINSIZE to define a minimum font height in points, eg. for (font size = 1) (see example.cfg\highwire.cfg for explanation).</li>
+  <li>Nw menu entry under "Option" to have frames always resizable and scrollbars if necessary, even if the HTML defines anything else there. The default
+      is off, but can be set with the keyword FORCE_FRAMECTRL = 1.</li>
+  <li>The cfg file now supports three new keywords concerning the cache: 1) CACHEDIR which lets the user choose where Highwire will define a directory for the storage of visited pages/images,
       2) CACHEMEM=(kbytes) to limit the amount of memory cached images (default is now 100k) which should help to prevent Highwire from running out of
       memory due to always storing every image ever loaded and 3) CACHEDSK which sets limits for filling up the cache in order to prevent blowing up hard drives. (eg. CACHEDSK =
-      8192 1000 means to use only 8192 of disk space, but not more than 1000 files).</LI>   
-  <LI>More functionality for the redo button: Holding down the ALT key clears now the whole cache. Additional holding down the SHIFT key will avoid forcing
+      8192 1000 means to use only 8192 of disk space, but not more than 1000 files).</li>   
+  <li>More functionality for the redo button: Holding down the ALT key clears now the whole cache. Additional holding down the SHIFT key will avoid forcing
       a page reload then.
   </ul>
 
@@ -153,13 +155,13 @@ I tried. :) HighWire is still very much in development.</p>
 
 <ul>
   <li>User interface</li>
-  <LI>Java/Javascript support</LI>
-  <LI>Use of internet clients</LI>
-  <li>External viewer support</LI>
+  <li>Java/Javascript support</li>
+  <li>Use of internet clients</li>
+  <li>External viewer support</li>
   <li>Lots more...</li>
 </ul>
 
-<p>So why all the fuss?</p>
+<p><b>So why all the fuss?</b></p>
 
 <p>Well, HighWire can load in, parse and render an HTML page in full 16-bit 
 fonts (for all the ‘strange’ characters such as þ) in about half the time of 
@@ -168,50 +170,49 @@ displayed) it does not need further processing, making redraws and window
 resizes much much faster. On a Hades machine the code was tested on, the page 
 render including font sizes, centering and lists redrew correctly in real time 
 (with a slight flicker...) as the window was resized.</p>
-<P>&nbsp;</P>
+<p>
+
+<font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="Team"><u>3.&nbsp; HighWire development team</u></a></h3>
 
 
-<p>
-
 <ul type="square">
 	<li><b>HighWire code</b></li>
 <ul type="disc">
-	<li><A target="_top" HREF="http://www.netset.com/~baldrick/">Dan Ackerman</A> (aka Baldrick - current maintainer)</li>
-	<li><A target="_top" HREF="http://www.freemint.de">Ralph Lowinski</A> (aka AltF4)</li>
-	<li><A target="_top" href="http://privat.schlund.de/R/Rainer_Seitel/atari.html">Rainer Seitel</A></li>
-	<li><A target="_top" href="http://www.atariuptodate.de/">Matthias Jaap</A></li>
-	<li><A target="_top" HREF="http://kawecki.atari.org">Rafal Kawecki</A> (MyPDF)</li>
+	<li><a target="_top" HREF="http://www.netset.com/~baldrick/">Dan Ackerman</a> (aka Baldrick - current maintainer)</li>
+	<li><a target="_top" HREF="http://www.freemint.de">Ralph Lowinski</a> (aka AltF4)</li>
+	<li><a target="_top" href="http://privat.schlund.de/R/Rainer_Seitel/atari.html">Rainer Seitel</a></li>
+	<li><a target="_top" href="http://www.atariuptodate.de/">Matthias Jaap</a></li>
+	<li><a target="_top" HREF="http://kawecki.atari.org">Rafal Kawecki</a> (MyPDF)</li>
 	<li>David Leaver</li>
 	<li>Markus Lutz</li>
 	<li>Mike De.Petris</li>
-	<li><A target="_top" href="http://deunstg.free.fr/sct1/">Denis Huguet</A> (aka Stghost)</li>
-	<li><A target="_top" HREF="http://www.far-blue.co.uk/">Robert Goldsmith</A> (original HighWire author - non active)</li>
-	<li><a target="_top" href="http://wh58-508.st.uni-magdeburg.de/sparemint/">Frank Naumann</A> (original GCC modifications - non active)</li>
+	<li><a target="_top" href="http://deunstg.free.fr/sct1/">Denis Huguet</a> (aka Stghost)</li>
+	<li><a target="_top" HREF="http://www.far-blue.co.uk/">Robert Goldsmith</a> (original HighWire author - non active)</li>
+	<li><a target="_top" href="http://wh58-508.st.uni-magdeburg.de/sparemint/">Frank Naumann</a> (original GCC modifications - non active)</li>
 </ul>
 	<p>
 	<li><b>HighWire documentation</b></li>
-<ul type="disc">
-	<li><A target="_top" HREF="http://www.atari-users.net">Rob Mahlert</A></li>
+</p><ul type="disc">
+	<li><a target="_top" HREF="http://www.atari-users.net">Rob Mahlert</a></li>
 	<li>Edward Baiz Jr. (aka Gamer)</li>
-	<li><A target="_top" href="http://www.arcadia.crew.free.fr">Jean-Paul Mata </a>(aka ProTOS)</li>
+	<li><a target="_top" href="http://www.arcadia.crew.free.fr">Jean-Paul Mata </a>(aka ProTOS)</li>
 </ul>
-	<P>
+	<p>
 	<li><b>Fontlist project</b></li>
-<ul type="disc">
-	<li><A target="_top" HREF="http://aicq.atari-users.net">Joakim Högberg</A> (aka GokMasE)</li>
-	<li><A target="_top" HREF="http://www.q1.net/~atari">Lonny Pursell</A> (aka Lp)</li>
+</p><ul type="disc">
+	<li><a target="_top" HREF="http://aicq.atari-users.net">Joakim Högberg</a> (aka GokMasE)</li>
+	<li><a target="_top" HREF="http://www.q1.net/~atari">Lonny Pursell</a> (aka Lp)</li>
 </ul>
-	</p>
 </ul>
 
 
-<p>&nbsp;</p>
+<p><font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="Use"><u>4.&nbsp; Use of HighWire</u></a></h3>
 
-<P>System requirements:</p>
+<p>System requirements:</p>
 <ul>
   <li>Multitasking (preemptive multitasking) Atari OS &ndash; MagiC or MiNT</li>
   <li>NVDI 3 or SpeedoGDOS</li>
@@ -221,29 +222,29 @@ render including font sizes, centering and lists redrew correctly in real time
 <p>Hotkeys:</p>
 
 <ul>
-  <LI>Control + I - About HighWire alert</LI>
+  <li>Control + I - About HighWire alert</li>
   <li>Control + O - Open file selector</li>
-  <LI>Control + R - Reload</LI>
+  <li>Control + R - Reload</li>
   <li>Control + Q - Quit HighWire</li>
-  <LI>Control + V - Cycle window</LI>
-  <LI>Control + W - Cycle window</LI>
-  <LI>Control + TAB - Close frames</LI>
-  <LI>1: Reload with default character set ISO/IEC 8859-1, Latin-1, Windows 
-      codepage 1252 (This is the default character set for a HTML browser.)</LI>
-  <LI>2: Reload with default character set ISO/IEC 8859-2, Latin-2</LI>
-  <LI>A: Reload with default character set Atari ST system font</LI>
-  <LI>U: Reload with default encoding UTF-8, Unicode</LI>
-  <LI>Tab: Cycle Frames</LI>
-  <LI>+: Reload with increased font size</LI>
-  <LI>&ndash;: Reload with decreased font size</LI>
-  <LI>Help, F1 - Help: Help</LI>
-  <LI>F5 - Reload</LI>
-  <LI>F7 - Toggle logging to console</LI>
-  <LI>F8 - Toggle pictures or alternative text</LI>
-  <LI>Undo - Go back in file history (+Shift: go forward)</LI>
-  <LI>Arrow keys: Scroll frame</LI>
+  <li>Control + V - Cycle window</li>
+  <li>Control + W - Cycle window</li>
+  <li>Control + TAB - Close frames</li>
+  <li>1: Reload with default character set ISO/IEC 8859-1, Latin-1, Windows 
+      codepage 1252 (This is the default character set for a HTML browser.)</li>
+  <li>2: Reload with default character set ISO/IEC 8859-2, Latin-2</li>
+  <li>A: Reload with default character set Atari ST system font</li>
+  <li>U: Reload with default encoding UTF-8, Unicode</li>
+  <li>Tab: Cycle Frames</li>
+  <li>+: Reload with increased font size</li>
+  <li>&ndash;: Reload with decreased font size</li>
+  <li>Help, F1 - Help: Help</li>
+  <li>F5 - Reload</li>
+  <li>F7 - Toggle logging to console</li>
+  <li>F8 - Toggle pictures or alternative text</li>
+  <li>Undo - Go back in file history (+Shift: go forward)</li>
+  <li>Arrow keys: Scroll frame</li>
 </ul>
-<P>The scroll elements support the right mouse button</P>
+<p>The scroll elements support the right mouse button</p>
 <p>File types supported:</p>
 <ul>
 <li>HTML files (8-bit coded)</li>
@@ -261,54 +262,54 @@ render including font sizes, centering and lists redrew correctly in real time
 </ul>
 
 
-<p>&nbsp;</p>
+<p><font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="FontList"><u>5.&nbsp; Use of FontList</u></a></h3>
 
-<p><b>FontList</b></P>
+<p><b>FontList</b></p>
 
-<P>Coded by Lp and GokMasE for the HighWire Project</P>
+<p>Coded by Lp and GokMasE for the HighWire Project</p>
 
-<P>FontList is a small utility to change the font settings in the HighWire 
-configuration file.</P>
+<p>FontList is a small utility to change the font settings in the HighWire 
+configuration file.</p>
 
-<H4><u>Installation</u></H4>
+<h4><u>Installation</u></h4>
 
-<P>Keep this binary in the HighWire directory. (Same directory as the 
-highwire.cfg file.)</P>
+<p>Keep this binary in the HighWire directory. (Same directory as the 
+highwire.cfg file.)</p>
 
-<H4><u>Usage</u></H4>
+<h4><u>Usage</u></h4>
 
-<P>As of FontList 1.11 a default config file is created at launch time,
+<p>As of FontList 1.11 a default config file is created at launch time,
 unless an existing file is located in FontList's work directory.
 Also note that if the font setting you are seeking to change is not
 present (or not activated) in the old config file, FontList will add
-the new setting to the end of the config.</P>
+the new setting to the end of the config.</p>
 
-<P>Select 1 (there can be only one) of the fonts, then use
+<p>Select 1 (there can be only one) of the fonts, then use
 menubar to decide what setting in HighWire should be affected.
 You can also right click on any of the fonts to open up a popup menu 
 and select a text style to link the current font ID to.
 Note that changes are written to HighWire configuration file
-instantly when you select an entry in either menu!</P>
+instantly when you select an entry in either menu!</p>
 
-<P>Another thing you can do, is select a number of fonts (hold down 
+<p>Another thing you can do, is select a number of fonts (hold down 
 CTRL) and later press CTRL + C. Then the prg will save a list of all 
-currently selected fonts to the clipboard.</P>
+currently selected fonts to the clipboard.</p>
 
-<P>CTRL + A selects / deselects all.</P>
+<p>CTRL + A selects / deselects all.</p>
 
-<P>NOTE: When NVDI is installed, all non-speedo fonts are greyed out and 
+<p>NOTE: When NVDI is installed, all non-speedo fonts are greyed out and 
 thus not selectable. The reason for this is that HighWire at this time 
 does not support other format than Speedo. However, if you wish to 
 play around with other fonts you can enable all listed fonts by 
-selecting ‘Allow non-speedo’ from menubar.</P>
+selecting ‘Allow non-speedo’ from menubar.</p>
 
-<H4><u>General Advice</u></H4>
+<h4><u>General Advice</u></h4>
 
-<P>It might be a good idea to keep a backup of latest working configuration 
+<p>It might be a good idea to keep a backup of latest working configuration 
 file.</p>
-<p>&nbsp;</p>
+<p><font face="Verdana" size="2">&nbsp;</font></p>
 
 <h3><a name="Tags"><U>6.&nbsp; Supported HTML tags</u></a></h3>
 
@@ -323,13 +324,13 @@ Hopefully will be updated to list all supported tags.</p>
 	  <li>ID</li>
 	  <li>NAME</li>
 	  <li>TARGET</li>
-	  </UL>
+	  </ul>
   <li><b>B</b> (bold)</li>
   <li><b>BASE</b></li>
 	  <ul>
 	  <li>TARGET</li>
 	  </ul>
-  <li><b>BASEFONT</b></LI>
+  <li><b>BASEFONT</b></li>
 	  <ul>
 	  <li>SIZE</li>
 	  </ul>
@@ -339,7 +340,7 @@ Hopefully will be updated to list all supported tags.</p>
 	  </ul>
   <li><b>BIG</b></li>
   <li><b>BLOCKQUOTE</b></li>
-  <UL><LI>TITLE</LI></UL>
+  <ul><li>TITLE</li></ul>
   <li><b>BODY</b></li>
 	  <ul>
 	  <li>ALINK</li>
@@ -359,7 +360,7 @@ Hopefully will be updated to list all supported tags.</p>
   <li><b>CITE</b></li>
   <li><b>CODE</b></li>
   <li><b>DD</b> (DL definition)</li>
-  <LI><B>DEL</B></LI>
+  <li><b>DEL</b></li>
   <li><b>DFN</b> (instance definition)</li>
   <li><b>DIR</b></li>
   <li><b>DIV</b></li>
@@ -378,7 +379,7 @@ Hopefully will be updated to list all supported tags.</p>
 	  <li>COLOR</li>
 	  <li>SIZE</li>
 	  </ul>
-<LI><B>FORM</B></LI>
+<li><b>FORM</b></li>
 	  <ul>
 	  <li>ACTION</li>
 	  <li>METHOD</li>
@@ -406,36 +407,36 @@ Hopefully will be updated to list all supported tags.</p>
 	  </ul>
   <li><b>HR</b></li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>BCOLOR (HW proprietary, CSS wrapper)</LI>
-	  <li>COLOR</LI>
-	  <li>HEIGHT</LI>
+	  <li>ALIGN</li>
+	  <li>BCOLOR (HW proprietary, CSS wrapper)</li>
+	  <li>COLOR</li>
+	  <li>HEIGHT</li>
 	  <li>NOSHADE</li>
 	  <li>SIZE</li>
 	  <li>WIDTH</li>
 	  </ul>
   <li><b>HTML</b></li>
 	  <ul>
-	  <li>LANG</LI>
+	  <li>LANG</li>
 	  </ul>
   <li><b>I</b> (italics)</li>
-  <li><b>IMG</b> </ABBR></li>
+  <li><b>IMG</b> </li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>ALT</LI>
-	  <li>HEIGHT</LI>	
-	  <li>HSPACE</LI>
-	  <li>SRC</LI>
-	  <li>VSPACE</LI>
-	  <li>WIDTH</LI>
+	  <li>ALIGN</li>
+	  <li>ALT</li>
+	  <li>HEIGHT</li>	
+	  <li>HSPACE</li>
+	  <li>SRC</li>
+	  <li>VSPACE</li>
+	  <li>WIDTH</li>
 	  </ul>
   <li><b>INPUT</b></li>
 	  <ul>
-	  <li>CHECKED</LI>
-	  <li>MAXLENGTH</LI>
-	  <li>SIZE</LI>	
-	  <li>TYPE ('BUTTON','CHECKBOX','FILE',HIDDEN','PASSWORD','RADIO',RESET','SUBMIT',TEXT')</LI>
-	  <li>VALUE</LI>
+	  <li>CHECKED</li>
+	  <li>MAXLENGTH</li>
+	  <li>SIZE</li>	
+	  <li>TYPE ('BUTTON','CHECKBOX','FILE',HIDDEN','PASSWORD','RADIO',RESET','SUBMIT',TEXT')</li>
+	  <li>VALUE</li>
 	  </ul>
   <li><b>INS</b></li>
   <li><b>IOD </b>(IOD4 proprietary)</li>
@@ -463,7 +464,7 @@ Hopefully will be updated to list all supported tags.</p>
 	  </ul>
   <li><b>P</b></li>
 	  <ul>
-	  <li>ALIGN</LI>
+	  <li>ALIGN</li>
 	  </ul>
   <li><b>PLAINTEXT</b></li>
   <li><b>PRE</b></li>
@@ -477,7 +478,7 @@ Hopefully will be updated to list all supported tags.</p>
   <li><b>S</b> (strike through)</li>
   <li><b>SAMP</b></li>
   <li><b>SCRIPT</b> (unused atm)</li>
-  <UL><LI>SELECT</LI></UL>
+  <ul><li>SELECT</li></ul>
   <li><b>SMALL</b></li>
   <li><b>STRIKE</b></li>
   <li><b>STRONG</b></li>
@@ -486,44 +487,44 @@ Hopefully will be updated to list all supported tags.</p>
   <li><b>SUP</b></li>
   <li><b>TABLE</b></li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>BGCOLOR</LI>
-	  <li>BORDER</LI>
-	  <li>CELLPADDING</LI>
-	  <li>CELLSPACING</LI>
-	  <li>HEIGHT</LI>
-	  <li>WIDTH</LI>
+	  <li>ALIGN</li>
+	  <li>BGCOLOR</li>
+	  <li>BORDER</li>
+	  <li>CELLPADDING</li>
+	  <li>CELLSPACING</li>
+	  <li>HEIGHT</li>
+	  <li>WIDTH</li>
 	  </ul>
   <li><b>TD (table data cell)</b></li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>BGCOLOR</LI>
-	  <li>COLSPAN</LI>
-	  <li>HEIGHT</LI>
-	  <li>ROWSPAN</LI>
-	  <li>VALIGN</LI>
-	  <li>WIDTH</LI>
+	  <li>ALIGN</li>
+	  <li>BGCOLOR</li>
+	  <li>COLSPAN</li>
+	  <li>HEIGHT</li>
+	  <li>ROWSPAN</li>
+	  <li>VALIGN</li>
+	  <li>WIDTH</li>
 	  </ul>
   <li><b>(TEXTAREA)</b></li>
   <li><b>TH</b> (table header cell)</li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>BGCOLOR</LI>
-	  <li>COLSPAN</LI>
-	  <li>HEIGHT</LI>
-	  <li>ROWSPAN</LI>
-	  <li>VALIGN</LI>
-	  <li>WIDTH</LI>
+	  <li>ALIGN</li>
+	  <li>BGCOLOR</li>
+	  <li>COLSPAN</li>
+	  <li>HEIGHT</li>
+	  <li>ROWSPAN</li>
+	  <li>VALIGN</li>
+	  <li>WIDTH</li>
 	  </ul>
   <li><b>TITLE</b></li>
 	  <ul>
 	  </ul>
   <li><b>TR</b> (table row)</li>
 	  <ul>
-	  <li>ALIGN</LI>
-	  <li>BGCOLOR</LI>
-	  <li>HEIGHT</LI>
-	  <li>VALIGN</LI>
+	  <li>ALIGN</li>
+	  <li>BGCOLOR</li>
+	  <li>HEIGHT</li>
+	  <li>VALIGN</li>
 	  </ul>
     <li><b>TT</b> (teletype font)</li>
   <li><b>U</b> (underlined)</li>
@@ -537,7 +538,7 @@ Hopefully will be updated to list all supported tags.</p>
 
 <h3><a name="Links"><u>7.&nbsp; Project links</u></a></h3>
 
-<P>While HighWire won't directly use these at this point.  Here are some useful
+<p>While HighWire won't directly use these at this point.  Here are some useful
 links for the HighWire project:</p>
 <p><a href="http://highwire.atari-users.net" > http://highwire.atari-users.net </a>
 - Place for most current downloads and information about the Highwire project.</p>
@@ -546,8 +547,6 @@ HighWire Users mailing list </a>
 - A list for users to ask questions and report bugs.</p>
 <p><a href="http://www.atari-users.net/mailman/listinfo/highwire-atari-users.net" > 
 HighWire Developer Mailing list </a>
-- A list for people interested in actively working on the project.</p>
+- A list for people interested in actively working on the project</p>
 
-
-</body>
-</html>
+</body></html>
