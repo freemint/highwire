@@ -39,7 +39,8 @@ static LOCATION  __cache_dir = NULL;
 struct s_cache_node {
 	CACHENODE BackNode;
 	UWORD     NodeMask;
-	UWORD     Level4x;
+	unsigned  Level4x :8;
+	unsigned  Filled  :8;
 	union {
 		CACHENODE Node;
 		CACHEITEM Item;
@@ -47,7 +48,7 @@ struct s_cache_node {
 };
 
 static struct s_cache_node __tree_base = {
-	NULL, 0x0000, 0,
+	NULL, 0x0000, 0, 0,
 	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
 		{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL} }
 };
@@ -114,16 +115,17 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		atexit (exit_stats);
 	}
 #endif
-	
+
 	if (nitem && nitem->NodeHash != hash) {
 		do {
 			CACHENODE back = node;
 			if ((node = malloc (sizeof(struct s_cache_node))) != NULL) {
 				back->Array[idx].Node = node;
-				back->NodeMask       |= 1 << idx;
+				back->NodeMask       |= (1 << idx);
 				node->BackNode = back;
 				node->NodeMask = 0x0000;
 				node->Level4x  = back->Level4x +4;
+				node->Filled   = 1;
 				memset (node->Array, 0, sizeof(node->Array));
 				node->Array[(nitem->NodeHash >> node->Level4x) & 0xF].Item = nitem;
 				citem = nitem;
@@ -137,7 +139,9 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 	if (node && (citem = malloc (sizeof (struct s_cache_item))) != NULL) {
 		citem->Node           = node;
 		citem->NodeHash       = hash;
-		citem->NodeNext       = node->Array[idx].Item;
+		if ((citem->NodeNext  = node->Array[idx].Item) == NULL) {
+			node->Filled++;
+		}
 		node->Array[idx].Item = citem;
 		
 		citem->Location = location_share (loc);
@@ -164,17 +168,33 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 static void
 destroy_item (CACHEITEM citem)
 {
-	CACHENODE   node = citem->Node;
-	UWORD       idx  = (citem->NodeHash >> node->Level4x) & 0xF;
-	CACHEITEM * nptr = &node->Array[idx].Item;
-	
-	while (*nptr) {
-		if (*nptr == citem) {
-			*nptr = citem->NodeNext;
-			break;
+	CACHENODE node = citem->Node;
+	ULONG     hash = citem->NodeHash;
+	UWORD     idx  = (hash >> node->Level4x) & 0xF;
+
+	if (node->Array[idx].Item != citem) {
+		CACHEITEM * nptr = &node->Array[idx].Item;
+		while (*nptr) {
+			if (*nptr == citem) {
+				*nptr = citem->NodeNext;
+				break;
+			}
+			nptr = &(*nptr)->NodeNext;
 		}
-		nptr = &(*nptr)->NodeNext;
+
+	} else if ((node->Array[idx].Item = citem->NodeNext) == NULL) {
+		node->Filled--;
+		while (!node->Filled && node->BackNode) {
+			CACHENODE back = node->BackNode;
+			free (node);
+			node = back;
+			idx  = (hash >> node->Level4x) & 0xF;
+			node->Array[idx].Node = NULL;
+			node->NodeMask       &= ~(1 << idx);
+			node->Filled--;
+		}
 	}
+
 	if (citem->PrevItem) citem->PrevItem->NextItem = citem->NextItem;
 	else                 __cache_beg               = citem->NextItem;
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
@@ -193,9 +213,9 @@ cache_insert (LOCATION loc, long ident,
 {
 	CACHEITEM citem = create_item (loc, *object, size, dtor);
 	citem->Ident    = ident;
-	
+
 	*object = NULL;
-	
+
 	return citem->Object;
 }
 
@@ -210,7 +230,7 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 	CACHEITEM * p_cache = &node->Array[idx].Item;
 	CACHEITEM * p_found = NULL;
 	CACHEITEM   citem;
-	
+
 	while ((citem = *p_cache) != NULL) {
 		if (location_equal (loc, citem->Location)) {
 			if (ident == citem->Ident) {
@@ -243,7 +263,7 @@ cache_lookup (LOCATION loc, long ident, long * opt_found)
 		}
 		return citem->Object;
 	}
-	
+
 	if (opt_found) {
 		*opt_found = 0;
 	}
@@ -256,7 +276,7 @@ CACHED
 cache_bound (CACHED cached, LOCATION * exchange)
 {
 	CACHEITEM citem = __cache_beg;
-	
+
 	while (citem) {
 		if (cached == citem->Object) {
 			citem->Reffs++;
@@ -278,7 +298,7 @@ cache_release (CACHED * p_object, BOOL erase)
 {
 	CACHEOBJ object = NULL;
 	CACHED   cached = *p_object;
-	
+
 	if (cached) {
 		CACHEITEM citem = __cache_beg;
 		while (citem) {
@@ -307,7 +327,7 @@ cache_clear (CACHED this_n_all)
 {
 	size_t    num   = 0;
 	CACHEITEM citem = __cache_beg;
-	
+
 	while (citem) {
 		CACHEITEM next = citem->NextItem;
 		if (!citem->Reffs && citem->dtor
