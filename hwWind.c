@@ -16,6 +16,7 @@
 #include "hwWind.h"
 #include "Loader.h"
 #include "Location.h"
+#include "cache.h"
 #include "Logging.h"
 
 
@@ -844,7 +845,7 @@ hist_append (HwWIND This, CONTAINR sub)
 
 /*============================================================================*/
 void
-hwWind_history (HwWIND This, UWORD menu)
+hwWind_history (HwWIND This, UWORD menu, BOOL renew)
 {
 	if (menu < This->HistUsed) {
 		HISTENTR entr[100];
@@ -879,7 +880,7 @@ hwWind_history (HwWIND This, UWORD menu)
 			chng_toolbar (This, bttn_on, bttn_off, -1);
 		
 		} else {
-			UWORD i = 0;
+			UWORD i;
 			This->History[menu]->Text[0] = '*';
 			if (This->HistMenu != menu) {
 #ifdef GEM_MENU
@@ -889,6 +890,14 @@ hwWind_history (HwWIND This, UWORD menu)
 #endif
 				This->HistMenu = menu;
 			}
+			if (renew) {
+				i = 0;
+				do if (PROTO_isRemote (entr[i].Location->Proto)) {
+					CACHED cached = cache_lookup (entr[i].Location, 0, NULL);
+					if (cached) cache_clear (cached);
+				} while (++i < num);
+			}
+			i = 0;
 			do {
 				LOADER ldr = start_cont_load (entr[i].Target,
 				                              NULL, entr[i].Location, FALSE);
@@ -907,9 +916,9 @@ void
 hwWind_undo (HwWIND This, BOOL redo)
 {
 	if (redo) {
-		hwWind_history (This, This->HistMenu +1);
+		hwWind_history (This, This->HistMenu +1, FALSE);
 	} else if (This->HistMenu) {
-		hwWind_history (This, This->HistMenu -1);
+		hwWind_history (This, This->HistMenu -1, FALSE);
 	}
 }
 
@@ -1619,6 +1628,7 @@ hwWind_button (WORD mx, WORD my)
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
 		short     hist  = wind->HistMenu;
+		short     shift;
 		chng_toolbar (wind, 0, 0, tb_n);
 		if (tb_n <= TBAR_RGHT) {
 			m_in.emi_flags |= MU_TIMER;
@@ -1632,6 +1642,7 @@ hwWind_button (WORD mx, WORD my)
 			EVMULT_OUT out;
 			WORD       msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
+			shift = out.emo_kmeta & (K_RSHIFT|K_LSHIFT);
 			if (event & MU_TIMER) {
 				char * array[HISTORY_LAST];
 				short  i, n = 0;
@@ -1648,8 +1659,9 @@ hwWind_button (WORD mx, WORD my)
 				if (n < 0) {
 					tb_n = -1;
 				} else {
-					hist += (tb_n ? +1 + n : -1 - n);
-					tb_n =  TBAR_REDO;
+					hist  += (tb_n ? +1 + n : -1 - n);
+					tb_n  =  TBAR_REDO;
+					shift =  TRUE;
 				}
 				m_in.emi_m1leave = MO_LEAVE;
 				break;
@@ -1666,11 +1678,11 @@ hwWind_button (WORD mx, WORD my)
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
 		if (m_in.emi_m1leave) switch (tb_n) {
-			case TBAR_LEFT: hwWind_undo     (wind, FALSE); break;
-			case TBAR_RGHT: hwWind_undo     (wind, TRUE);  break;
-			case TBAR_HOME: hist = 0;
-			case TBAR_REDO: hwWind_history  (wind, hist);  break;
-			case TBAR_STOP: containr_escape (wind->Pane);  break;
+			case TBAR_LEFT: hwWind_undo     (wind, FALSE);        break;
+			case TBAR_RGHT: hwWind_undo     (wind, TRUE);         break;
+			case TBAR_HOME: hwWind_history  (wind, 0,    FALSE);  break;
+			case TBAR_REDO: hwWind_history  (wind, hist, !shift); break;
+			case TBAR_STOP: containr_escape (wind->Pane);         break;
 			case TBAR_OPEN: menu_open       (TRUE);
 			default:        chng_toolbar (wind, 0, 0, -1);
 		}

@@ -412,7 +412,7 @@ menu_reload (ENCODING encoding)
 			}
 		}
 	} else {
-		hwWind_history (hwWind_Top, hwWind_Top->HistMenu);
+		hwWind_history (hwWind_Top, hwWind_Top->HistMenu, TRUE);
 	}
 }
 
@@ -633,7 +633,7 @@ static void
 handle_menu (WORD title, WORD item, UWORD state)
 {
 	if (title == M_HISTORY) {
-		hwWind_history (hwWind_Top, item - M_HIST_BEG);
+		hwWind_history (hwWind_Top, item - M_HIST_BEG, FALSE);
 	
 	} else switch (item) {
 		case M_ABOUT:     menu_about(); break;
@@ -757,7 +757,7 @@ rpopup_open (WORD mx, WORD my)
 			hwWind_undo (wind, TRUE);
 			break;
 		case RPOP_RELOAD:
-			hwWind_history (wind, wind->HistMenu);
+			hwWind_history (wind, wind->HistMenu, TRUE);
 			break;
 		case RPOP_VIEWSRC: {
 			char buf[2 * HW_PATH_MAX];

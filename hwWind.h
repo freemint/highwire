@@ -48,7 +48,7 @@ void hwWind_iconify (HwWIND, const GRECT *);
 void hwWind_raise   (HwWIND, BOOL topNbot);
 void hwWind_close   (HwWIND, UWORD state);
 void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);
-void hwWind_history (HwWIND, UWORD menu);
+void hwWind_history (HwWIND, UWORD menu, BOOL renew);
 void hwWind_undo    (HwWIND, BOOL redo);
 
 extern WORD   hwWind_Mshape;
