@@ -543,8 +543,10 @@ table_finish (PARSER parser)
 				}
 				if (cell->ColSpan == 1) {
 					long width = content_minimum (&cell->Content);
+					if (width <= padding) {
+						cell->Content.Width = 0;
+					}
 					if (cell->Content.Width > 0) {
-						if (width <= padding) cell->Content.Width = max (1, padding);
 						if (width < cell->Content.Width) width = cell->Content.Width;
 						if (width < *minimum)    width = *minimum;
 						if (width < *fixed)      width = *fixed;
