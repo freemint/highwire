@@ -697,8 +697,12 @@ header_job (void * arg, long invalidated)
 		
 		loader->Date  = (hdr.Modified > 0 ? hdr.Modified : hdr.SrvrDate);
 		loader->Tdiff = hdr.LoclDate - hdr.SrvrDate;
-		if (loader->Date && hdr.Expires > 0) {
+		if (hdr.Expires > 0) {
 			loader->Expires = hdr.Expires + loader->Tdiff;
+		} else if (hdr.Modified <= 0) {
+			/* none valid date given at all, so we assume a dynamic page
+			 * (eg. from php) that needs to be revisited at the next session */
+			loader->Expires = -1; /* mark to get deleted at program end */
 		}
 		
 		if (hdr.Size >= 0 && !hdr.Chunked) {
