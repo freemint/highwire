@@ -603,7 +603,8 @@ free_stack (TEXTBUFF current)
 	TBLSTACK stack = current->tbl_stack;
 	
 	fontstack_clear (&current->fnt_stack);
-	stack->SavedCurr.form = current->form; /* might be more actual */
+	stack->SavedCurr.form   = current->form;   /* might be more actual */
+	stack->SavedCurr.anchor = current->anchor;
 	*current = stack->SavedCurr;
 	
 	add_paragraph (current, 0);
