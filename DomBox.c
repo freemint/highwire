@@ -538,6 +538,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	while (box) {
 		long set_width = width;
+		BOOL floating  = FALSE;
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
 
@@ -552,9 +553,15 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			} else {
 				box->Rect.X += blocker->L.width;
 				set_width = blk_width;
+				floating  = TRUE;
 			}
 		}
-		box->_vtab->format (box, set_width, blocker);
+		if (floating) {
+			struct blocking_area empty = { {0, 0}, {0, 0} };
+			box->_vtab->format (box, set_width, &empty);
+		} else {
+			box->_vtab->format (box, set_width, blocker);
+		}
 		
 		switch (box->Floating) {
 			case FLT_LEFT: {

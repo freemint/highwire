@@ -370,6 +370,10 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->SetWidth = width;
 		}
 	}
+	if (get_value (parser, CSS_FLOAT, out, sizeof(out))) {
+		if      (stricmp (out, "right") == 0) box->Floating = FLT_RIGHT;
+		else if (stricmp (out, "left")  == 0) box->Floating = FLT_LEFT;
+	}
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1938,6 +1942,13 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			return flags;
 		}
 	
+		if (floating == ALN_NO_FLT) {
+			if (get_value (parser, CSS_FLOAT, output, sizeof(output))) {
+				if      (stricmp (output, "right") == 0) floating = FLT_RIGHT;
+				else if (stricmp (output, "left")  == 0) floating = FLT_LEFT;
+			}
+			
+		}
 		if (floating != ALN_NO_FLT) {
 			H_ALIGN  align = current->paragraph->Box.TextAlign;
 			PARAGRPH par   = add_paragraph (current, 0);
