@@ -118,6 +118,7 @@ mime_byString (const char * str, const char ** tail)
 	txt_types[] = {
 		{ "plain", MIME_TXT_PLAIN },
 		{ "html",  MIME_TXT_HTML  },
+		{ "css",   MIME_TXT_CSS   },
 		{ NULL, }
 	},
 	img_types[] = {
