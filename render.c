@@ -591,7 +591,7 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
- * Script Area
+ * Style Area
  *
  * skip everything until </STYLE> tag
 */
@@ -914,9 +914,7 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
-
-			if (color >= 0)
-			{
+			if (color >= 0) {
 				parser->Current.font_step->color = color;
 				word_set_color (&parser->Current, color);
 			}
@@ -935,7 +933,178 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 /*------------------------------------------------------------------------------
  *  General Text Element
 */
-#define render_SPAN_tag render_FONT_tag
+static UWORD
+render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	TEXTBUFF current = &parser->Current;
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		struct font_step * fstp = NULL;
+		char output[100];
+		short step = current->font_step->step;
+		
+		if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
+			if (isdigit (output[0])) {
+				short  mean;
+				char * p;
+				long   size = strtol (output, &p, 10);
+				if (*p == '.' && isdigit(*(++p))) {
+					size = size * 10 + (*p - '0');
+					if (!isdigit(*(++p))) {
+						size = ((size <<8) +5) /10;
+					} else {
+						size = (((size * 10 + (*p - '0')) <<8) +5) /100;
+						while (isdigit(*(++p)));
+					}
+				} else {
+					size <<= 8;
+				}
+				if ((mean = toupper(*p)) != '\0' && mean != '%') {
+					mean = (mean <<8) | toupper(*(++p));
+				}
+				switch (mean) {
+					case 0x4558: /* EX */
+						size *= current->word->font->SpaceWidth;
+						goto case_PT; /* approximated */
+					
+					case 0x434D: /* MM */
+						size *= 10;
+					case 0x4D4D: /* CM */
+						size *= 10;
+						size = (size +127) /254;
+					case 0x494E: /* IN, inch */
+						size *= 6;
+					case 0x5043: /* PC, pica */
+						size *= 12;
+					case 0x5058: /* PX, pixel */
+						/* assume 72 dpi */
+						goto case_PT;
+					
+					case '%':
+						size = (size +50) /100;
+					case 0x454D: /* EM */
+						size *= current->font_size;
+					case_PT:
+					case 0x5054: /* PT, point */
+						size = (size + 128) >> 8;
+						break;
+					default:
+						size = 0;
+				}
+				if (size > 0) {
+					current->font_step = fstp = add_step (current->font_step);
+					current->font_size = size;
+					font_step2size (current->font_step, -size);
+				}
+			
+			} else if (stricmp (output, "smaller") == 0) {
+				step = (current->font_step->step > 1
+				        ? current->font_step->step -1 : 0);
+			
+			} else if (stricmp (output, "larger") == 0) {
+				step = (current->font_step->step < 6
+				        ? current->font_step->step +1 : 7);
+			
+			} else {
+				static const char * arr[] = {
+					"xx-small", "x-small", "small", "medium",
+					"large", "x-large", "xx-large" };
+				step = (int)numberof(arr);
+				while (step-- && stricmp (output, arr[step]));
+			}
+		}
+		if (!fstp) {
+			step_push (&parser->Current, step);
+			fstp = current->font_step;
+		}
+
+		if (get_value (parser, CSS_FONT_FAMILY, output, sizeof(output))) {
+			char * beg = output, * nxt = NULL;
+			short  fnt = TAgetFont (current->word->attr);
+			do {
+				if (*beg == '\'') {
+					while (isspace(*(++beg)));
+					if ((nxt = strchr (beg, '\'')) != NULL) {
+						char * end = nxt++;
+						while (isspace(*(--end)));
+						end[1] = '\0';
+					}
+				} else if ((nxt = strchr (beg, ',')) != NULL) {
+					char * end = nxt++;
+					while (isspace(*(--end)));
+					end[1] = '\0';
+				}
+				if (stricmp (beg, "sans-serif") == 0) {
+					fnt = header_font;
+					break;
+				} else if (stricmp (beg, "serif") == 0) {
+					fnt = normal_font;
+					break;
+				} else if (stricmp (beg, "monospace") == 0) {
+					fnt = pre_font;
+					break;
+				} else if ((beg = nxt) == NULL) {
+					break;
+				}
+				while (isspace(*beg)) beg++;
+			} while (*beg);
+			/* n/i: cursive, fantasy */
+			if (fnt != TAgetFont (current->word->attr)) {
+				fstp->type = 0x1000 | TAgetFont (current->word->attr);
+				word_set_font (current, fnt);
+			}
+		}
+		
+		if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))
+		    && (stricmp (output, "italic") == 0 ||
+		        stricmp (output, "oblique") == 0)) {
+			/* n/i: normal */
+			word_set_italic (current, fstp->setItalic = TRUE);
+		}
+		
+		if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
+			BOOL bold;
+			if (isdigit (output[0])) {
+				long n = (int)strtoul (output, NULL, 10);
+				bold = (n >= 700);
+			} else {
+				bold = (stricmp (output, "bold") == 0 ||
+				        stricmp (output, "bolder") == 0);
+			}
+			/* n/i: lighter, medium, 100..400 */
+			if (bold) word_set_bold (current, fstp->setBold = TRUE);
+		}
+		
+		if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
+			if (stricmp (output, "line-through") == 0) {
+				word_set_underline (current, fstp->setUndrln = TRUE);
+			} else if (stricmp (output, "underline") == 0) {
+				word_set_strike (current, fstp->setStrike = TRUE);
+			}
+		}
+		if (!ignore_colours) {
+			WORD color = get_value_color (parser, KEY_COLOR);
+			if (color >= 0) {
+				word_set_color (current, fstp->color = color);
+			}
+		}
+	
+	} else {
+		struct font_step * fstp = current->font_step;
+		if (fstp->type)      word_set_font      (current, fstp->type & 0xF);
+		if (fstp->setBold)   word_set_bold      (current, FALSE);
+		if (fstp->setItalic) word_set_italic    (current, FALSE);
+		if (fstp->setUndrln) word_set_underline (current, FALSE);
+		if (fstp->setStrike) word_set_strike    (current, FALSE);
+		step_pop (current);
+		fstp = current->font_step;
+		word_set_color (current, (current->word->link
+		                          ? parser->Frame->link_color: fstp->color));
+	}
+	word_set_point (current, current->font_size);
+	return flags;
+}
 
 /*------------------------------------------------------------------------------
  * Italic Text
@@ -2002,7 +2171,8 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START && parser->Current.lst_stack){
 		PARAGRPH paragraph = add_paragraph (&parser->Current, 0);
 		paragraph->alignment = ALN_LEFT;
-		paragraph->Indent = parser->Current.lst_stack->Indent;
+		paragraph->Indent    = parser->Current.lst_stack->Indent;
+		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
 	}
 	return (flags|PF_SPACE);
 }
@@ -2018,8 +2188,9 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START && parser->Current.lst_stack){
 		PARAGRPH paragraph = add_paragraph (&parser->Current, 0);
 		paragraph->alignment = ALN_LEFT;
-		paragraph->Indent = parser->Current.lst_stack->Indent
-		                  + parser->Current.lst_stack->Hanging;
+		paragraph->Indent    = parser->Current.lst_stack->Indent
+		                     + parser->Current.lst_stack->Hanging;
+		paragraph->Backgnd   = get_value_color (parser, KEY_BGCOLOR);
 	}
 	return (flags|PF_SPACE);
 }

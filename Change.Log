@@ -1,3 +1,9 @@
+(non-public of Oct.27, 2003)
+
+- Tag <span> implemented (general CSS inline
+  element).
+
+__________________________________________________
 Changes in V. 0.1.5 release  of October 24, 2003:
 
 - Enabled loading and displaying of image files
