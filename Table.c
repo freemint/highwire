@@ -41,10 +41,11 @@
 
 
 static struct s_dombox_vtab table_vTab = { 0, };
-static LONG vTab_MinWidth (DOMBOX *);
-static LONG vTab_MaxWidth (DOMBOX *);
-static void vTab_draw   (DOMBOX *, long x, long y, const GRECT *, void *);
-static void vTab_format (DOMBOX *, long width, BLOCKER);
+static LONG     vTab_MinWidth (DOMBOX *);
+static LONG     vTab_MaxWidth (DOMBOX *);
+static DOMBOX * vTab_ChildAt  (DOMBOX *, LRECT *, long x, long y, long clip[4]);
+static void     vTab_draw   (DOMBOX *, long x, long y, const GRECT *, void *);
+static void     vTab_format (DOMBOX *, long width, BLOCKER);
 
 
 /*============================================================================*/
@@ -100,6 +101,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 		table_vTab          = DomBox_vTab;
 		table_vTab.MinWidth = vTab_MinWidth;
 		table_vTab.MaxWidth = vTab_MaxWidth;
+		table_vTab.ChildAt  = vTab_ChildAt;
 		table_vTab.draw     = vTab_draw;
 		table_vTab.format   = vTab_format;
 	}
@@ -707,7 +709,7 @@ table_finish (PARSER parser)
 }
 
 
-/*============================================================================*/
+/*----------------------------------------------------------------------------*/
 static void
 vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 {
@@ -1048,6 +1050,66 @@ vTab_MaxWidth (DOMBOX * This)
 	return This->MaxWidth;
 }
 
+
+/*----------------------------------------------------------------------------*/
+static DOMBOX *
+vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
+{
+	TABLE    table = ((PARAGRPH)This)->Table;
+	TAB_ROW  row   = (table->NumCols ? table->Rows : NULL);
+	TAB_CELL cell  = NULL;
+	
+	clip[0] = r->X;
+	clip[1] = r->Y;
+	
+	if (row) {
+		long height = dombox_TopDist (This);
+		if (y < height) {
+			clip[3] = r->Y + height;
+			return NULL;
+		}
+		while (y >= (height += row->Height + table->Spacing)
+		       && (row = row->NextRow) != NULL) ;
+		if (!row) {
+			clip[1] = r->Y + height -1 - table->Spacing;
+			return NULL;
+		}
+		cell = row->Cells;
+	}
+	if (cell) {
+		long * col_w = table->ColWidth;
+		long   width = dombox_LftDist (This);
+		if (x < width) {
+			clip[2] = r->X + width;
+			return NULL;
+		}
+		while (x >= (width += *(col_w++) + table->Spacing)
+		       && (cell = cell->RightCell) != NULL) ;
+		if (!cell) {
+			clip[0] = r->X + width -1 - table->Spacing;
+			return NULL;
+		}
+		if (cell->DummyFor) {
+			cell = cell->DummyFor;
+		}
+		if (x >= cell->c_OffsetX + cell->c_Width) {
+			clip[0] = r->X + cell->c_OffsetX + cell->c_Width;
+			clip[2] = clip[0] + table->Spacing;
+			clip[1] = r->Y + cell->c_OffsetY - table->Spacing;
+			clip[3] = clip[1] + cell->c_Height + table->Spacing *2;
+			cell = NULL;
+		} else if (y >= cell->c_OffsetY + cell->c_Height) {
+			clip[0] = r->X + cell->c_OffsetX - table->Spacing;
+			clip[2] = clip[0] + cell->c_Width + table->Spacing *2;
+			clip[1] = r->Y + cell->c_OffsetY + cell->c_Height;
+			clip[3] = clip[1] + table->Spacing;
+			cell = NULL;
+		}
+	}
+	return (cell ? &cell->Content.Box : NULL);
+}
+
+
 /*----------------------------------------------------------------------------*/
 static void
 vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
@@ -1076,106 +1138,4 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 
 		row = row->NextRow;
 	}
-}
-
-
-/*============================================================================*/
-CONTENT *
-table_content (TABLE table, long x, long y, long area[4])
-{
-	CONTENT * cont   = NULL;
-	short     border = table->t_BorderW + table->Spacing;
-	TAB_ROW   row    = (table->NumCols ? table->Rows : NULL);
-	
-	if (row && border) {
-		if        (y < border) {
-			area[2] = table->t_Width;
-			area[3] = border;
-			row = NULL;
-		} else if (x < border) {
-			area[2] = border;
-			area[3] = table->t_Height;
-			row = NULL;
-		} else if (x >= table->t_Width - border) {
-			area[0] += table->t_Width - border;
-			area[2] =  border;
-			area[3] =  table->t_Height;
-			row = NULL;
-		} else if (y >= table->t_Height - border) {
-			area[1] += table->t_Height - border;
-			area[2] = table->t_Width;
-			area[3] = border;
-			row = NULL;
-		
-		} else {
-			x -= border;
-			y -= border;
-		}	
-	}
-	if (row) {
-		TAB_CELL cell = NULL;
-		long     c_x  = border;
-		long     c_y  = border;
-		long     r_h  = 0;
-		do {
-			r_h = row->Height;
-			if ((y -= r_h) < table->Spacing) {
-				cell = row->Cells;
-				break;
-			} else {
-				y   -=       table->Spacing;
-				c_y += r_h + table->Spacing;
-			}
-		} while ((row = row->NextRow) != NULL);
-		
-		if (cell) {
-			long * width = table->ColWidth;
-			do {
-				if ((x -= *width) < table->Spacing) {
-					if (cell->ColSpan & 0xFFFE) x = -1;
-					if (cell->RowSpan & 0xFFFE) y = -1;
-					if (cell->DummyFor) cell = cell->DummyFor;
-					if (x >= 0) c_x += *width;
-					break;
-				} else {
-					x   -=              table->Spacing;
-					c_x += *(width++) + table->Spacing;
-				}
-			} while ((cell = cell->RightCell) != NULL);
-		}
-		
-		if (x >= 0) {
-			area[0] += c_x;
-			area[2] =  table->Spacing;
-			if (cell) {
-				area[1] += cell->c_OffsetY - table->Spacing;
-				area[3] =  cell->c_Height  + table->Spacing *2;
-			} else {
-				area[1] += c_y - table->Spacing;
-				area[3] =  r_h + table->Spacing *2;
-			}
-		} else if (y >= 0) {
-			area[1] += c_y + r_h;
-			area[3] =  table->Spacing;
-			if (cell) {
-				area[0] += cell->c_OffsetX - table->Spacing;
-				area[2] =  cell->c_Width   + table->Spacing *2;
-			} else {
-				area[0] += c_x;
-				area[2] =  table->Spacing;
-			}
-		} else {
-			area[0] += cell->c_OffsetX;
-			area[1] += cell->c_OffsetY;
-			if (!cell->Content.Item) {
-				area[0] -= table->Spacing;
-				area[1] -= table->Spacing;
-				area[2] =  cell->c_Width  + table->Spacing *2;
-				area[3] =  cell->c_Height + table->Spacing *2;
-			} else {
-				cont = &cell->Content;
-			}
-		}
-	}
-	return cont;
 }

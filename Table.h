@@ -68,8 +68,5 @@ void table_cell   (PARSER,   WORD color, H_ALIGN, V_ALIGN, WORD height,
                              WORD wdith, UWORD rowspan, UWORD colspan);
 void table_finish (PARSER);
 
-CONTENT * table_content (TABLE, long x, long y, long area[4]);
-
-
 
 #endif /* __TABLE_H__ */
