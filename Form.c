@@ -882,10 +882,21 @@ form_activate (FORM form)
 
 
 /*============================================================================*/
-BOOL
+WORDITEM
 input_activate (INPUT input, WORD slct)
 {
 	FORM form = input->Form;
+	
+	if (input->Type >= IT_TEXT) {
+		WORDITEM word;
+		if (slct >= 0) {
+			word = NULL;
+		} else {
+			word = input->Word;
+			if (input == form->TextActive) form->TextActive = NULL;
+		}
+		return word;
+	}
 	
 	if (input->Type == IT_SELECT) {
 		if (slct >= 0) {
@@ -898,11 +909,11 @@ input_activate (INPUT input, WORD slct)
 			input->Word->length = item->Length;
 			input->Value        = item->Value;
 		}
-		return TRUE;
+		return input->Word;
 	}
 	
 	if (input->Type != IT_BUTTN) {
-		return FALSE;
+		return NULL;
 	}
 	
 	if (input->SubType == 'S' && form->Action) {
@@ -911,7 +922,7 @@ input_activate (INPUT input, WORD slct)
 	
 	input->checked = FALSE;
 	
-	return TRUE;
+	return input->Word;
 }
 
 
