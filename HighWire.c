@@ -103,11 +103,13 @@ main (int argc, char **argv)
 	va_helpbuf = gsanswer + HW_PATH_MAX;
 	Init_AV_Protocol();
 
-	if (ignore_colours) /* monochrome ? */
-	{
-		/* set the scroller widget colors for monochrome */
+	if (ignore_colours) {
+		/* set the scroller widget colours for monochrome */
 		slider_bkg = G_WHITE;
 		slider_col = G_WHITE;
+	} else {
+		/* set default colour for page background */
+		background_colour = G_LWHITE;
 	}
 
 	/* identify the AES and issue appropriate initialization calls
