@@ -1295,47 +1295,78 @@ static UWORD logo8_data[] = {
 	0xb02c,0x00e1, 0x7214,0x2041, 0x302c,0x01b2, 0x1814,0x0150,
 	0x1c28,0x01b4, 0x0ed5,0x0352, 0x06ab,0x06ae, 0x0100,0x3000,
 	0x00d1,0xf7f8, 0x003f,0xc000, 0x0000,0x0000, 0x0000,0x0000 
-} ;
+};
 MFDB logo8_icon = { logo8_data, 32,32, 2, 1, 8, 0,0,0 };
+
+static UWORD mask_data[] = {
+	0x0000,0x0000, 0x0000,0x7f00, 0x0000,0xffc0, 0x01ff,0xfffc,
+	0x01ff,0xfffe, 0x03ff,0xfffe, 0x07ff,0xfffe, 0x0fff,0xfffc,
+	0x1fff,0xfffc, 0x3fff,0xfffe, 0x3fff,0xfffe, 0x7fff,0xffff,
+	0x7fff,0xffff, 0x7fff,0xffff, 0x7fff,0xffff, 0xffff,0xffff,
+	0xffff,0xffff, 0xffff,0xffff, 0xffff,0xffff, 0xffff,0xffff,
+	0xffff,0xffff, 0x7fff,0xffff, 0x7fff,0xfffe, 0x3fff,0xfffe,
+	0x3fff,0xfffe, 0x1fff,0xfffe, 0x0fff,0xfffe, 0x07ff,0xfffe,
+	0x03ff,0xfffc, 0x00ff,0xf800, 0x001f,0x8000, 0x0000,0x0000
+};
+MFDB logo_mask = { mask_data, 32,32, 2, 0, 1, 0,0,0 };
 
 MFDB logo_icon;
 
 void
 init_icons(void)
 {
-	/* This is just a stub holder routine for the moment
-	 * I just wanted to put this up on CVS so that I can
-	 * grab it at home
-	 */
-	logo_icon = logo1_icon;
+	if (planes == 4) {
+		logo_icon = logo4_icon;
+	} else if (planes == 8) {
+		logo_icon = logo8_icon;
+	} else {
+		logo_icon = logo1_icon;
+	}
+	if (logo_icon.fd_stand) {
+		WORD color[2] = { G_BLACK, G_WHITE };
+		PXY  p[4];
+		vr_trnfm (vdi_handle, &logo_icon, &logo_icon);
+		p[0].p_x = p[0].p_y = p[2].p_x = p[2].p_y = 0;
+		p[1].p_x = p[3].p_x = logo_mask.fd_w -1;
+		p[1].p_y = p[3].p_y = logo_mask.fd_h -1;
+		vrt_cpyfm(vdi_handle, MD_ERASE, (short*)p, &logo_mask, &logo_icon, color);
+	}
 }
 
 /* - - - - - - - - - - - - - - - - - - - - - - - */
 static void
 vTab_drawIcon (HwWIND This, const GRECT * clip)
 {
-	MFDB  scrn = { NULL, };
-	short color[2];
-	PXY   lu ,p[4];
-	GRECT work;
+	MFDB   scrn     = { NULL, };
+	MFDB * icon     = (This->isBusy ? &logo1_icon : &logo_icon);
+	WORD   color[2] = { G_WHITE, G_LWHITE };
+	PXY    lu ,p[4];
+	GRECT  work;
 	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &work);
-	lu.p_x = work.g_x + (work.g_w - logo_icon.fd_w) /2;
-	lu.p_y = work.g_y + (work.g_h - logo_icon.fd_h) /2;
-	color[0] = (This->isBusy ? G_WHITE : G_BLACK);
-	vsf_color (vdi_handle, G_LWHITE);
+	lu.p_x = work.g_x + (work.g_w - icon->fd_w) /2;
+	lu.p_y = work.g_y + (work.g_h - icon->fd_h) /2;
+	vsf_color (vdi_handle, (planes >= 4 ? G_LWHITE : G_WHITE));
 	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
 	p[1].p_y = (p[0].p_y = clip->g_y) + clip->g_h -1;
 	v_hide_c (vdi_handle);
 	v_bar (vdi_handle, (short*)p);
 	p[2] = lu;
-	p[3] = *(PXY*)&logo_icon.fd_w;
+	p[3] = *(PXY*)&icon->fd_w;
 	if (rc_intersect (clip, (GRECT*)(p +2))) {
 		p[1].p_x = (p[0].p_x = p[2].p_x - lu.p_x) + p[3].p_x -1;
 		p[1].p_y = (p[0].p_y = p[2].p_y - lu.p_y) + p[3].p_y -1;
 		p[3].p_x += p[2].p_x -1;
 		p[3].p_y += p[2].p_y -1;
-		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
+		if (icon->fd_nplanes > 1) {
+			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
+			vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, icon,       &scrn);
+		} else {
+			if (!This->isBusy) {
+				color[0] = G_BLACK;
+			}
+			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, icon, &scrn, color);
+		}
 	}
 	v_show_c (vdi_handle, 1);
 }

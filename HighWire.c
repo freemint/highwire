@@ -255,7 +255,7 @@ highwire_ex (void)
 
 /******************************************************************************/
 
-extern MFDB       logo_icon;
+extern MFDB       logo_icon, logo_mask;
 static WINDOW     splash     = NULL;
 static const char spl_name[] = _HIGHWIRE_FULLNAME_;
 static const char spl_vers[] = _HIGHWIRE_VERSION_" "_HIGHWIRE_BETATAG_;
@@ -303,8 +303,8 @@ vTab_evKeybrd (WINDOW This, WORD scan, WORD ascii, UWORD kstate)
 static void
 vTab_draw (WINDOW This, const GRECT * clip)
 {
-	MFDB  scrn     = { NULL, };
-	WORD  color[2] = { G_BLACK, G_LBLACK }, dmy;
+	MFDB  scrn = { NULL, };
+	WORD  dmy;
 	PXY   p[4];
 	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
 	p[1].p_y = (p[0].p_y = clip->g_y) + clip->g_h -1;
@@ -313,7 +313,7 @@ vTab_draw (WINDOW This, const GRECT * clip)
 	p[3].p_x = (p[2].p_x += 8) + logo_icon.fd_w -1;
 	p[3].p_y = (p[2].p_y += 8) + logo_icon.fd_h -1;
 	vswr_mode     (vdi_handle, MD_TRANS);
-	vsf_color     (vdi_handle, G_LWHITE);
+	vsf_color     (vdi_handle, (planes >= 4 ? G_LWHITE : G_WHITE));
 	vst_alignment (vdi_handle, TA_LEFT, TA_TOP, &dmy,&dmy);
 	vst_color     (vdi_handle, G_BLACK);
 	vst_effects   (vdi_handle, TXT_NORMAL);
@@ -323,7 +323,14 @@ vTab_draw (WINDOW This, const GRECT * clip)
 	p[0].p_x = p[0].p_y = 0;
 	p[1].p_x = logo_icon.fd_w -1;
 	p[1].p_y = logo_icon.fd_h -1;
-	vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
+	if (logo_icon.fd_nplanes > 1) {
+		WORD color[2] = { G_WHITE, G_LWHITE };
+		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
+		vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, &logo_icon, &scrn);
+	} else {
+		WORD color[2] = { G_BLACK, G_LWHITE };
+		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
+	}
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y,     spl_name);
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y +16, spl_vers);
 	v_show_c (vdi_handle, 1);
