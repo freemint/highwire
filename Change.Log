@@ -1,3 +1,15 @@
+(non-public of Jan. 08, 2005)
+
+- Render improved for better layout of floating
+  block elements (eg. DIV, TABLE, P, ..).
+
+- CSS parser improved for better compatibility.
+  New keywords implemented: float, clear, border
+  and font.
+
+- Colour logo added for start window and icons.
+
+__________________________________________________
 Changes in V. 0.2.4 release  of December 25, 2004:
 
 - When a config file was created because none was
