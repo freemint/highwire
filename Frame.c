@@ -126,16 +126,13 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		{
 			case 1: /* BRD_RIGHT */
 				frame->clip.g_w -= frame->border_size;
-				scrollbar_size--;
 				break;
 			case 2: /* BRD_BOTTOM */
 				frame->clip.g_h -= frame->border_size;
-				scrollbar_size--;
 				break;
 			case 3: /* BRD_BOTH */
 				frame->clip.g_w -= frame->border_size;
 				frame->clip.g_h -= frame->border_size;
-				scrollbar_size--;
 				break;
 		}
 	}
@@ -205,9 +202,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		}
 		frame->h_bar.lu = scroll_bar_width -1;
 		frame->h_bar.rd = frame->clip.g_w - scroll_bar_width +1;
-		if (frame->border) {
-			frame->h_bar.lu--;
-		} else if (!frame->v_bar.on) {
+		if (!frame->v_bar.on) {
 			frame->h_bar.rd--;
 		}
 		frame->h_bar.size = (long)(frame->h_bar.rd - frame->h_bar.lu +1)
@@ -224,10 +219,10 @@ frame_calculate (FRAME frame, const GRECT * clip)
 	} else {
 		long new_height = frame->Page.Height - frame->clip.g_h;
 
-		if (frame->Page.Height <= frame->clip.g_h)
+		if (frame->Page.Height <= frame->clip.g_h) {
 			new_height = frame->clip.g_h;
-		else
-		{				
+		
+		} else {
 			if (old_height) {
 				long scroll = +(frame->v_bar.scroll * 1024 + old_height /2)
 				            / old_height;
@@ -241,10 +236,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 
 		frame->v_bar.lu = scroll_bar_width -1;
 		frame->v_bar.rd = frame->clip.g_h - scroll_bar_width +1;
-
-		if (frame->border) {
-			frame->v_bar.lu--;
-		} else if (!frame->h_bar.on) {
+		if (!frame->h_bar.on) {
 			frame->v_bar.rd--;
 		}
 
