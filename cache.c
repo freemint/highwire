@@ -58,7 +58,6 @@ static size_t    __cache_dsk_num = 0;
 static size_t    __cache_dsk_lim = 0;
 static LOCATION  __cache_dir = NULL;
 static long      __cache_fid = 1;
-static BOOL      __cache_idx = TRUE;
 
 struct s_cache_node {
 	CACHENODE BackNode;
@@ -70,7 +69,6 @@ struct s_cache_node {
 		CACHEITEM Item;
 	}         Array[16];
 };
-
 static struct s_cache_node __tree_base = {
 	NULL, 0x0000, 0, 0,
 	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
@@ -570,9 +568,6 @@ cache_flush (CACHEITEM citem, LOCATION loc)
 	}
 	fclose (file);
 	
-	if (!single) {
-		__cache_idx = FALSE;
-	}
 	return TRUE;
 }
 
@@ -673,7 +668,7 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 						free_location (&loc);
 						ndel++;
 					} else if (expr && expr <= locl) { /* Expired */
-						unlink (loc->FullName);
+						free_location (&loc);
 						loc = new_location (ptr +1, __cache_dir);
 						unlink (loc->FullName);
 						free_location (&loc);
