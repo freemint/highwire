@@ -14,17 +14,18 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 	PARAGRPH par  = current->paragraph;
 	
 	list->Hanging = current->word->font->SpaceWidth *5;
-	list->Indent  = par->Indent;
 	
 	if (!current->lst_stack) {
 		par = add_paragraph (current, 1);
+		list->Indent = par->Indent;
 	
 	} else if (par->paragraph_code != PAR_LI ||
 	           current->lst_stack->Spacer->next_word != current->prev_wrd) {
 		par = add_paragraph (current, 0);
+		list->Indent = par->Indent - par->Hanging;
 	
 	} else { /* reuse actual (empty) <li> line */
-		list->Indent += list->Hanging;
+		list->Indent = par->Indent - par->Hanging;
 	}
 	
 	par->alignment = ALN_LEFT;
@@ -48,15 +49,29 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 void
 list_finish (TEXTBUFF current)
 {
-	LSTSTACK list = current->lst_stack;
+	PARAGRPH par   = current->paragraph;
+	LSTSTACK list  = current->lst_stack;
 	current->lst_stack = list->next_stack_item;
+	
 	if (!current->lst_stack) {
-		add_paragraph (current, 1);
+		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
+			current->prev_wrd->next_word = NULL;
+			destroy_word_structure (par->item);
+			par->item         = current->word;
+			current->prev_wrd = NULL;
+		} else {
+			par = add_paragraph (current, 1);
+		}
 	} else {
-		add_paragraph (current, 0);
-		current->paragraph->Hanging = -current->lst_stack->Hanging;
+		if (list->Spacer == current->prev_wrd && par->paragraph_code != PAR_LI) {
+			current->lst_stack->Spacer = list->Spacer;
+			list->Indent -= -par->Hanging;
+		} else {
+			par = add_paragraph (current, 0);
+		}
+		par->Hanging = -current->lst_stack->Hanging;
 	}
-	current->paragraph->Indent = list->Indent;
+	par->Indent = list->Indent;
 	
 	free (list);
 }
@@ -266,40 +281,25 @@ void
 list_marker (TEXTBUFF current, BULLET bullet, short counter)
 {
 	char buffer[80] = "", * text = buffer;
-	short width;
 	WORD mapping    = current->word->font->Base->Mapping;
 	LSTSTACK list   = current->lst_stack;
 	PARAGRPH par    = current->paragraph;
+	WORD     width  = list->Hanging;
 	WORD     spc_wd = (current->word->font->SpaceWidth +1) /2;
-	WORDITEM spacer = NULL;
 	
-	if (par->paragraph_code == PAR_LI) {
-		if (list->Spacer == current->prev_wrd && list->Spacer != par->item) {
-			spacer = list->Spacer;
-		} else {
-			par = add_paragraph (current, 0);
-			par->Indent  -= list->Hanging;
-			par->Hanging = -list->Hanging;
-		}
-	} else {
-		if (list->Spacer == current->prev_wrd) {
-			spacer = list->Spacer;
-		} else if (par->item != current->word) {
-			par = add_paragraph (current, 0);
-			par->Hanging = -list->Hanging;
-		} else {
-			par->Indent  =  list->Indent;
-			par->Hanging = -list->Hanging;
-		}
-	}
-	par->paragraph_code = PAR_LI;
-	
-	if (!spacer) {
-		spacer = list->Spacer = current->word;
+	if (!(list->Spacer == current->prev_wrd && /* item is empty and...*/
+	      (par->paragraph_code != PAR_LI ||    /* ...first item of the list  */
+	       list->Spacer != par->item))) {      /* ...no nesting bullet befor */
+		par = add_paragraph (current, 0);
+		par->Indent  =  list->Indent;
+		par->Hanging = -list->Hanging;
+		
+		list->Spacer = current->word;
 		*(current->text++) = font_Nobrk (current->word->font);
 		new_word (current, TRUE);
 	}
-	spacer->word_width = current->word->font->SpaceWidth;
+	list->Spacer->word_width = current->word->font->SpaceWidth;
+	par->paragraph_code = PAR_LI;
 	
 	switch (bullet)
 	{
@@ -317,7 +317,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			break;
 		
 		case Number:
-			current->lst_stack->Counter = counter +1;
+			list->Counter = counter +1;
 			if (counter < 0) {
 				current->text = unicode_to_wchar (0x2212,  /* MINUS SIGN */
 				                                  current->text, mapping);
@@ -328,7 +328,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 		
 		case alpha:
 			if (counter != 0) {
-				current->lst_stack->Counter = counter +1;
+				list->Counter = counter +1;
 				if (counter < 0) {
 					current->text = unicode_to_wchar (0x2212,  /* MINUS SIGN */
 					                                  current->text, mapping);
@@ -340,7 +340,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			/* else use @ as small alphabet zero */
 		
 		case Alpha:
-			current->lst_stack->Counter = counter +1;
+			list->Counter = counter +1;
 			if (counter < 0) {
 				current->text = unicode_to_wchar (0x2212,  /* MINUS SIGN */
 				                                  current->text, mapping);
@@ -350,7 +350,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			break;
 		
 		case roman:
-			current->lst_stack->Counter = counter +1;
+			list->Counter = counter +1;
 			if (counter > 0 && counter < 3000) {
 				short2roman (&text, counter, FALSE);
 			} else {  /* BUG: small Roman numerals >= 3000 not implemented! */
@@ -359,7 +359,7 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			break;
 		
 		case Roman:
-			current->lst_stack->Counter = counter +1;
+			list->Counter = counter +1;
 			if (counter > 0 && counter < 20000) {
 				short2roman (&text, counter, TRUE);
 			} else {  /* BUG: Roman numerals >= 20000 not implemented! */
@@ -374,7 +374,6 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 		scan_string_to_16bit (buffer, ENCODING_ATARIST, &current->text, mapping);
 	}
 	new_word (current, TRUE);
-	width = current->lst_stack->Hanging
-	      - (current->prev_wrd->word_width += spc_wd);
-	spacer->word_width = (spc_wd > width ? spc_wd : width);
+	width -= (current->prev_wrd->word_width += spc_wd);
+	list->Spacer->word_width = (spc_wd > width ? spc_wd : width);
 }
