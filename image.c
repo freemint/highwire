@@ -984,12 +984,16 @@ raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
 
 
 /*----------------------------------------------------------------------------*/
+#ifdef __GNUC__
+static inline CHAR
+#else
 static CHAR
+#endif
 dither_gray (CHAR * gray, WORD * err, BYTE ** buf)
 {
 	BYTE * dth  = *buf;
 	UWORD  idx  = ((err[0] += (WORD)dth[0] + gray[0])
-	                              <= 0 ? 0 : err[0] >= 0xFF ? 0xFF : err[0]) >>3;
+	                           <= 0x07 ? 0 : err[0] >= 0xF8 ? 0x1F : err[0] >>3);
 	CHAR * irgb = (CHAR*)&graymap[idx];
 	
 	err[0] -= irgb[1];
@@ -1001,18 +1005,21 @@ dither_gray (CHAR * gray, WORD * err, BYTE ** buf)
 }
 
 /*----------------------------------------------------------------------------*/
+#ifdef __GNUC__
+static inline CHAR
+#else
 static CHAR
+#endif
 dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
 {
 	BYTE * dth  = *buf;
 	UWORD  r    = ((err[0] += (WORD)dth[0] + rgb[0])
-	                                  <= 0 ? 0 : err[0] >= 0xFF ? 0xFF : err[0]);
+	                            <= 42 ? 0 : err[0] >= 213 ? 5 : (err[0] *3) >>7);
 	UWORD  g    = ((err[1] += (WORD)dth[1] + rgb[1])
-	                                  <= 0 ? 0 : err[1] >= 0xFF ? 0xFF : err[1]);
+	                            <= 42 ? 0 : err[1] >= 213 ? 5 : (err[1] *3) >>7);
 	UWORD  b    = ((err[2] += (WORD)dth[2] + rgb[2])
-	                                  <= 0 ? 0 : err[2] >= 0xFF ? 0xFF : err[2]);
-	UWORD  idx  = (((r *6) /256) *6 + ((g *6) /256)) *6 + ((b *6) /256);
-	CHAR * irgb = (CHAR*)&cube216[idx];
+	                            <= 42 ? 0 : err[2] >= 213 ? 5 : (err[2] *3) >>7);
+	CHAR * irgb = (CHAR*)&cube216[(r *6 + g) *6 + b];
 	
 	err[0] -= irgb[1];
 	dth[0] =  (err[0] <= -254 ? (err[0] = -127) :
@@ -1070,9 +1077,7 @@ gscale_I4 (IMGINFO info, void * _dst)
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-/*		UWORD idx = info->RowBuf[x >>16] >>3;
-		*(tmp++)  = *(CHAR*)&graymap[idx];
-*/		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
+		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -1099,12 +1104,7 @@ dither_I4 (IMGINFO info, void * _dst)
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
-		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
-		           +  (((UWORD)rgb[1] *6) /256)) *6
-		           +  (((UWORD)rgb[2] *6) /256);
-		*(tmp++)   = *(CHAR*)&cube216[idx];
-*/		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
+		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -1233,9 +1233,7 @@ gscale_I8 (IMGINFO info, void * _dst)
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-/*		UWORD idx = info->RowBuf[x >>16] >>3;
-		*(tmp++)  = *(CHAR*)&graymap[idx];
-*/		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
+		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk8 (buf, dst, tmp - buf);
@@ -1262,12 +1260,7 @@ dither_I8 (IMGINFO info, void * _dst)
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
-		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
-		           +  (((UWORD)rgb[1] *6) /256)) *6
-		           +  (((UWORD)rgb[2] *6) /256);
-		*(tmp++)   = *(CHAR*)&cube216[idx];
-*/		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
+		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk8 (buf, dst, tmp - buf);
@@ -2071,7 +2064,6 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 	char  * buf   = info->RowBuf;
 	UWORD * dst   = data->fd_addr;
 	short   y     = 0;
-clock_t clk = clock();
 	
 	if (info->Interlace <= 0) {
 		size_t scale = (info->IncYfx +1) /2;
@@ -2112,8 +2104,6 @@ clock_t clk = clock();
 			y = interlace /2;
 		} while (interlace > 1);
 	}
-clk = clock() - clk;
-printf ("%li \n", (long)clk);
 }
 
 
