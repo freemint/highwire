@@ -764,16 +764,22 @@ header_job (void * arg, long invalidated)
 		loader->Error = reply;
 	}
 	
-	/* else either a very short file or an error case occured
+	inet_close (sock);
+	
+	/* if it is a short file and already finished, end proceedings
 	*/
-	inet_close  (sock);
+	if (loader->Data) {
+		return receive_job (loader, 0);
+	}
+	
+	/*  an error case occured
+	*/
 	if (!loader->PostBuf) {
 		cache_abort (loc);
 	}
-	if (!loader->Data) {
-		loader->MimeType = MIME_TEXT;
-		loader->Data     = strdup (hdr.Head);
-	}
+	loader->MimeType = MIME_TEXT;
+	loader->Data     = strdup (hdr.Head);
+	
 	if (loader->SuccJob) {
 		(*loader->SuccJob)(loader, 0);
 	} else {
