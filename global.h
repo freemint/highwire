@@ -6,9 +6,6 @@
 /* for printf for testing */
 #include <stdio.h>
 
-#ifndef EINVFN
-#define EINVFN -32
-#endif
 
 /* ******** Variable Definitions ******************* */
 
