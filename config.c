@@ -267,6 +267,7 @@ read_config(char *fn)
 				{ "CACHEDIR",             cfg_cachedir,0 },
 				{ "CACHEDSK",             cfg_cachedsk,0 },
 				{ "CACHEMEM",             cfg_cachemem,0 },
+				{ "COOKIES",              cfg_func,    (long)menu_cookies    },
 				{ "DFLT_BACKGND",         cfg_backgnd, 0 },
 				{ "FONT_MINSIZE",         cfg_minsize, 0 },
 				{ "FONT_SIZE",            cfg_fntsize, 0 },

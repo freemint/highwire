@@ -1,8 +1,13 @@
-(non-public of Jun 20, 2004)
+(non-public of Jun 26, 2004)
 
 - Basic cookie support implemented.
 
-- Support added for new Sting.OVL.
+- New config keyword RESTRICT_HOST added for
+  blocking images and/or cookies from certain
+  domains or hosts.
+  (see example.cfg\highwire.cfg for details).
+
+- New Sting.OVL.
 
 - Http request-header field 'Referer:'
   implemented.
