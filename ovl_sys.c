@@ -13,7 +13,6 @@
 #elif defined (LATTICE)
 # include <dos.h>
 # include <mintbind.h>
-# include <mint/basepage.h>
 # define BASPAG BASEPAGE
 
 #elif defined (__GNUC__)
