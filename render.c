@@ -2618,8 +2618,14 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_size  (parser, KEY_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border, FALSE);
-		parser->Current.paragraph->Box.HtmlCode = TAG_TABLE;
-		box_frame (parser, &parser->Current.paragraph->Box.Margin, CSS_MARGIN);
+		if (parser->hasStyle) {
+			DOMBOX * box = parser->Current.parentbox->ChildEnd;
+			box_frame (parser, &box->Margin, CSS_MARGIN);
+			if (box->BorderWidth) {
+				short color = get_value_color (parser, CSS_BORDER_COLOR);
+				if (color >= 0) box->BorderColor = color;
+			}
+		}
 	
 	} else {
 		TEXTBUFF current = &parser->Current;

@@ -23,7 +23,7 @@ struct s_table_stack {
 };
 
 struct s_table {
-	PARAGRPH Paragraph;
+	DOMBOX   Box;
 	short    Spacing;
 	short    Padding;
 	short    SetHeight;
