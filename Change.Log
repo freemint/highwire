@@ -1,4 +1,4 @@
-(non-public of Oct. 18, 2004):
+(non-public of Oct. 24, 2004):
 
 - Large portions of the cache handling code
   reworked.  This gets rid of several wrong
@@ -9,6 +9,11 @@
   now, this reduces reformat flickering on
   re-visited pages to the nearly absolute minimum
   (#0133).
+
+- The window handling code also got a large rework
+  to have non-modal dialog windows in the future.
+  As a little gimmick the F10 key does the same now
+  as the F11 does in Mozilla/IE.
 
 - An ugly hack was added to get yahoo's buggy
   standard login working (the non-ssl version).
@@ -22,7 +27,7 @@
 - Improved detection of system type (AES + kernel),
   now XaAES is recognized also.  This also allows
   to get rid of the window fuller bug with XaAES
-  (#0159, #0167).
+  (#0150, #0167).
 
 - Some error messages are displayed by alert boxes
   now instead of console output or simple writing
@@ -41,8 +46,8 @@
   matches all images which has '/ads/' somewhere
   in their path.
 
-- Bugs #0133, #0150, #0167, #0169, #0170, #0176,
-  #0177 resolved.
+- Bugs #0133, #0148, #0150, #0167, #0169, #0170,
+  #0176, #0177 resolved.
 
 __________________________________________________
 Changes in V. 0.2.1 release  of August 22, 2004:
