@@ -147,13 +147,13 @@ bold and bold italic.  The default values are <TT>5031</TT>, <TT>5032</TT>,
     <CODE>SCROLLING</CODE> of frames and framesets are ignored.  Also setting
     frame borders to zero will be prevented.  This makes some mal-designed
     pages more useable.<BR>
-    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    This setting can be changed at runtime in the <A href="c-MB.htm#Optn"
     >Menu Options</A>.
     <BR>&nbsp;
 <DT><TT><B>NO_IMAGE</B> = [0|1]</TT>
 <DD>If set to a non-zero value, images won't be displayed but the text from
     their <CODE>ALT</CODE> attribute will be used instead (if given).<BR>
-    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    This setting can be changed at runtime in the <A href="c-MB.htm#Optn"
     >Menu Options</A>.
 </DL>
 &nbsp;
@@ -189,22 +189,24 @@ bold and bold italic.  The default values are <TT>5031</TT>, <TT>5032</TT>,
 <H2><A name="Cnct">Connection Control:</A></H2>
 <DL>
 <DT><TT><B>COOKIES</B> = [0|1]</TT>
-<DD>The general Cookie handling policy can be set either to allow (<TT>= 1</TT>)
-    or to disallow (<TT>= 0</TT>).  The default is to disallow cookies.
+<DD>The general Cookie handling policy can be set either to allow 
+    <nobr>(<TT>= 1</TT>)</nobr> or to disallow <nobr>(<TT>= 0</TT>)</nobr>.  The
+    default is to disallow cookies.
     <BR>
-    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    This setting can be changed at runtime in the <A href="c-MB.htm#Optn"
     >Menu Options</A>.
     <BR>&nbsp;
 <DT><TT><B>RESTRICT_HOST</B> = <I>&lt;flags&gt;</I> <I>&lt;host or domain&gt;</I></TT>
 <DD>Instructs HighWire to refrain from certain HTTP actions to a particular
     server or a whole domain.  If the second parameter starts with a dot
-    ("<TT>.</TT>") it will be interpreted as a domain and else as full qualified
-    host name.  Note that there must never be a "http://" befor the host name!
+    ("<TT>.</TT>") it will be interpreted as a domain otherwise it's assumed to
+    be as fully qualified host name.  Note that there must never be a "http://"
+    befor the host name!
     <BR>
     The first argument <I>&lt;flags&gt;</I> defines the type(s) of action(s).
     There are two flags available:
     <BR><TT>&nbsp;&nbsp;&nbsp;C</TT>: &nbsp;</A>don't accept cookies from this
-        server or domain nor send some back
+        server or domain nor send any back
     <BR><TT>&nbsp;&nbsp;&nbsp;I</TT>: &nbsp;</A>don't load images from this
         server or domain
     <BR>Flags may be combined and this variable can be used multiple times for
@@ -231,7 +233,7 @@ bold and bold italic.  The default values are <TT>5031</TT>, <TT>5032</TT>,
     <I><B>Note:</B>  If you haven't installed any console window (T-Con,
     TosWin2, ...) this will lead to several text lines written over the screen.
     </I><BR>
-    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    This setting can be changed at runtime in the <A href="c-MB.htm#Optn"
     >Menu Options</A>.
 </DL>
 &nbsp;
