@@ -6,6 +6,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
+#ifdef LATTICE
+# define timezone __timezone
+#endif
 
 #include "global.h"
 #include "Location.h"
