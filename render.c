@@ -2190,8 +2190,21 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 			current->parentbox->HtmlCode = TAG_DIV;
 		}
 	} else if (current->tbl_stack && current->tbl_stack->isSpecial) {
+		DOMBOX * box = current->parentbox;
 		table_finish (parser);
 		font_switch (current->word->font, NULL);
+		
+		/* If there is only one child object the parent needs to inherit the
+		 * child's float attribute to get proper formatted.
+		*/
+		if (box->Floating == ALN_NO_FLT) {
+			DOMBOX * cld = box->ChildBeg;
+			if (cld == box->ChildEnd) {
+				box = box->Parent;
+				box->SetWidth = 0;
+				box->Floating = cld->Floating;
+			}
+		}
 	}
 	return (flags|PF_SPACE);
 }
