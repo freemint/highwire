@@ -106,8 +106,11 @@ typedef enum {
 #ifndef EINTR
 #define EINTR 128 /* Interrupted function call. */
 #endif
+#ifndef ECONNRESET
+#define ECONNRESET 316 /* Connection reset by peer. */
+#endif
 #ifndef ETIMEDOUT
-#define ETIMEDOUT 320 /* Connection timed out. */
+#define ETIMEDOUT  320 /* Connection timed out. */
 #endif
 
 

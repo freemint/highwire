@@ -277,7 +277,7 @@ inet_recv (long fh, char * buf, size_t len)
 			if (!ret) ret = n;
 			break;
 		} else if (n == 0x7FFFFFFF) { /* connection closed */
-			if (!ret) ret = -1;
+			if (!ret) ret = -ECONNRESET;
 			break;
 		} else if (n && (n = Fread (fh, (n < len ? n : len), buf)) < 0) {
 			if (!ret) ret = -errno;
@@ -298,7 +298,7 @@ inet_recv (long fh, char * buf, size_t len)
 	} else while (len) {
 		short n = CNbyte_count ((int)fh);
 		if (n < E_NODATA) {
-			if (!ret) ret = -1;
+			if (!ret) ret = (n == E_EOF || n == E_RRESET ? -ECONNRESET : -1);
 			break;
 		} else if (n > 0) {
 			if (n > len) n = len;
