@@ -37,7 +37,7 @@
 /* ******* Type Definitions ********* */
 
 typedef enum {
-	PAR_NONE = 0, PAR_LI, PAR_IMG, PAR_HR, PAR_TABLE
+	PAR_NONE = 0, PAR_LI, PAR_IMG, PAR_TABLE
 } PARAGRAPH_CODE;
 
 typedef enum {
