@@ -66,12 +66,10 @@ list_indent (WORD type)
 }
 
 
-/* get_align()
- *
+/*------------------------------------------------------------------------------
  * retrieves the alignment of a paragraph
  * based on frame->alignment (CENTER) or if it's in a Table
- */
-
+*/
 static H_ALIGN
 get_align (PARSER parser)
 {
@@ -117,6 +115,84 @@ url_correct (char * url)
 		} while (*src);
 	}
 	return url;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static const char *
+enc_to_sys (char * dst, size_t max_len,
+            const char * src, ENCODING enc, HTMLTAG closer, BOOL ignore)
+{
+	ENCODER_C encoder = encoder_char (enc);
+	char * beg = dst;
+	char * end = dst + max_len -2;
+	BOOL   spc = TRUE;
+	char   c;
+	
+	while ((c = *src) != '\0') {
+		if (c == '<') {
+			if (!closer) {
+				if (!ignore) break;
+			
+			} else {
+				const char * sym = src +1;
+				HTMLTAG      tag;
+				BOOL         slash;
+				if (*sym == '/') {
+					sym++;
+					slash = TRUE;
+				} else {
+					if (!ignore) break;
+					slash = FALSE;
+				}
+				if ((tag = parse_tag (NULL, &sym)) == TAG_Unknown) {
+					src = sym;
+				} else if (tag != closer) {
+					if (!ignore) break;
+					src = sym;
+				} else { /* equal */
+					src = sym;
+					if (slash) break;
+				}
+				continue;
+			}
+		}
+		if (dst >= end) {
+			src++;
+			continue;
+		}
+		if (c <= ' ') {
+			if (!spc) {
+				*(dst++) = ' ';
+				spc = TRUE;
+			}
+			src++;
+			continue;
+		}
+		if (c >= 0x7F) {
+			if (dst >= end -4) {
+				dst = end;
+			} else {
+				dst = (*encoder)(&src, dst);
+			}
+		} else if (c == '&') {
+			if (dst >= end -4) {
+				dst = end;
+			} else {
+				dst = scan_namedchar (&src, dst, FALSE,0);
+			}
+		} else {
+			src++;
+			*(dst++) = c;
+		}
+		spc = FALSE;
+	}
+	if (spc && dst > beg) {
+		dst--;
+	}
+	*dst = '\0';
+	
+	return src;
 }
 
 
@@ -168,68 +244,13 @@ static UWORD
 render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if (flags & PF_START) {
-		ENCODER_C encoder = encoder_char (parser->Frame->Encoding);
-		char   window_title[128 +5] = "";
-		char * title     = window_title;
-		char * watermark = window_title + aes_max_window_title_length;
-		BOOL   ready     = FALSE;
-		BOOL   space     = TRUE;
-		const char * symbol = *text;
-		
-		do switch (*symbol) {
-		
-			case '\0':
-				ready = TRUE;
-				break;
-			
-			case '\t':
-			case '\r':
-			case '\n':
-			case ' ':
-				if (!space && title < watermark) {
-					const char * sym = " ";
-					title = (*encoder)(&sym, title);
-					space = TRUE;
-				}
-				symbol++;
-				break;
-			
-			case '&':
-				if (title < watermark) {
-					title = scan_namedchar (&symbol, title, FALSE,0);
-					space = FALSE;
-				} else {
-					symbol++;
-				}
-				break;
-			
-			case '<':
-				if (symbol[1] == '/') {
-					const char * sym = symbol + 2;
-					if (parse_tag (parser, &sym) == TAG_TITLE) {
-						symbol = sym;
-						ready  = TRUE;
-						break;
-					}
-				}
-			default:
-				if (title < watermark) {
-					title = (*encoder)(&symbol, title);
-					space = FALSE;
-				} else {
-					symbol++;
-				}
-		} while (!ready);
-		
-		if (space) {
-			title--;
+		char   title[128] = "";
+		size_t size       = min (sizeof(title), aes_max_window_title_length);
+		*text = enc_to_sys (title, size,
+		                    *text, parser->Frame->Encoding, TAG_TITLE, TRUE);
+		if (title[0]) {
+			containr_notify (parser->Target, HW_SetTitle, title);
 		}
-		if (title > window_title) {
-			if (title < watermark) *title     = '\0';
-			else                   *watermark = '\0';
-			containr_notify (parser->Target, HW_SetTitle, window_title);
-		}
-		*text = symbol;
 	}
 	return flags;
 }
@@ -2034,15 +2055,11 @@ render_SELECT_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	TEXTBUFF current = &parser->Current;
-	
 	if (flags & PF_START) {
-		BOOL   disabled = get_value     (parser, KEY_DISABLED, NULL,0);
-		char * value    = get_value_str (parser, KEY_VALUE);
-		const char * beg = *text, * end = beg;
-		if ((end = strchr (beg, '<')) == NULL) {
-			end = strchr (beg, '\0');
-		}
+		ENCODING encoding = parser->Frame->Encoding;
+		BOOL     disabled = get_value     (parser, KEY_DISABLED, NULL,0);
+		char   * value    = get_value_str (parser, KEY_VALUE);
+		char     out[90];
 		if (value && !*value) {
 			free (value);
 			value = NULL;
@@ -2050,9 +2067,28 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 		if (!value && !disabled) {
 			disabled = get_value (parser, KEY_VALUE, NULL,0);
 		}
-		selct_option (current, beg, end - beg, disabled, parser->Frame->Encoding,
+		*text = enc_to_sys (out, sizeof(out), *text, encoding, TAG_OPTION, FALSE);
+		selct_option (&parser->Current, out, disabled, encoding,
 		              value, get_value (parser, KEY_SELECTED, NULL,0));
-		*text = end;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Selection Submenu
+*/
+static UWORD
+render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		char label[90], out[90];
+		if (get_value (parser, KEY_LABEL, label, sizeof(label))) {
+			ENCODING enc = parser->Frame->Encoding;
+			enc_to_sys (out, sizeof(out), label, enc, TAG_OPTGROUP, TRUE);
+			selct_option (&parser->Current, out, TRUE, enc, NULL, FALSE);
+		}
 	}
 	return (flags|PF_SPACE);
 }
