@@ -1766,7 +1766,35 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		GRECT    clip, rect;
 		INPUT    next;
 		WORD     key  = (scan << 8) | ascii;
-		WORDITEM word = input_keybrd (This->Input, key, kstate, &clip, &next);
+		WORDITEM word = NULL;
+		
+		if ((kstate & K_CTRL) && scan == 0x2F) { /* ^V -- copy from clipboard */
+			FILE * file = open_scrap (TRUE);
+			if (file) {
+				char buf[256], * p = buf;
+				size_t len = fread (buf, 1, sizeof (buf), file);
+				while (len-- > 0) {
+					if ((key = *(p++)) == '\n') key = '\r';
+					else if (key < ' ')         key = '\0';
+					if (key) {
+						WORDITEM w = input_keybrd (This->Input, key, 0, &clip, &next);
+						if (w) word = w;
+						else   break;
+					}
+				}
+				fclose (file);
+			}
+			if (word) {
+				clip.g_x = 0;
+				clip.g_w = word->word_width;
+				clip.g_y = -word->word_height;
+				clip.g_h = word->word_height + word->word_tail_drop;
+			}
+			next = This->Input;
+		
+		} else {
+			word = input_keybrd (This->Input, key, kstate, &clip, &next);
+		}
 		if (word) {
 			FRAME frame = containr_Frame ((CONTAINR)This->Active);
 			long  x, y;
