@@ -48,7 +48,11 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 	if ((button & RIGHT_BUTTON) &&
 	    (elem >= PE_PARAGRPH || elem == PE_EMPTY || elem == PE_FRAME)) {
 #if (_HIGHWIRE_RPOP_ == 1)
-		rpopup_open (mx, my);
+
+		if (elem > PE_IMAGE && elem < PE_INPUT)
+			rpoplink_open (mx, my, cont, hash);	
+		else
+			rpopup_open (mx, my);
 #endif
 	
 	} else switch (PE_Type (elem)) {
