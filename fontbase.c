@@ -335,4 +335,5 @@ fontstack_setSize (TEXTBUFF current, WORD size)
 	FNTSTACK fstk = current->font;
 	fstk->Size = size;
 	fstk->Step = font_step2size (-size);
+	word_set_point (current, size);
 }
