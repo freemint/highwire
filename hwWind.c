@@ -3,6 +3,8 @@
 #include <string.h>
 #include <gem.h>
 
+#include <gemx.h>
+
 #ifdef __PUREC__
 # define CONTAINR struct s_containr *
 # define HISTORY  struct s_history *
@@ -39,9 +41,9 @@ new_hwWind (const char * name, const char * info, const char * url)
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
+	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
 #else
-	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
+	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
 #endif	
 	short  i;
 	
@@ -98,13 +100,11 @@ new_hwWind (const char * name, const char * info, const char * url)
 	hwWind_setInfo (This, info, TRUE);
 #endif
 
-	wind_set(This->Handle,WF_HSLSIZE,1000,0,0,0);
-	
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
-	
+
 	if (url && *url) {
 		new_loader_job (url, NULL, This->Pane, ENCODING_WINDOWS1252, -1,-1);
 	}
@@ -167,6 +167,41 @@ hwWind_setName (HwWIND This, const char * name)
 	wind_set_str (This->Handle, WF_NAME, This->Name);
 }
 
+/*----------------------------------------------------------------------------*/
+/* Set Horizontal scroller space text - only works on top windows */
+
+void
+hwWind_setHSInfo (HwWIND This, const char * info)
+{
+	PXY p[8];
+
+	if (This != hwWind_Top)
+		return;
+	
+	p[0].p_y = p[2].p_y = This->Work.g_y + This->Work.g_h + 1;
+	p[1].p_y = p[3].p_y = This->Work.g_y + This->Work.g_h + 16;
+	p[0].p_x = This->Work.g_x + 18;
+	p[1].p_x = This->Work.g_x + This->Work.g_w - 20;
+
+	vswr_mode    (vdi_handle, MD_REPLACE);
+	vsf_interior (vdi_handle, FIS_SOLID);
+	vsf_style    (vdi_handle, 4);
+	vsf_color    (vdi_handle, G_WHITE);
+
+	v_bar        (vdi_handle, (short*)p);
+
+	vst_color (vdi_handle, G_BLACK);
+	vswr_mode (vdi_handle, MD_TRANS);
+
+	vst_map_mode (vdi_handle, 1);
+
+	vs_clip_pxy (vdi_handle, p);
+
+	v_ftext(vdi_handle, This->Work.g_x + 18, This->Work.g_y + This->Work.g_h + 14, info);
+
+	vs_clip_off (vdi_handle);
+}
+
 /*============================================================================*/
 #if (_HIGHWIRE_INFOLINE_==TRUE)
 void
@@ -193,8 +228,11 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 		}
 	}
 	wind_set_str (This->Handle, WF_INFO, info);
+	
+	hwWind_setHSInfo(This, info);
 }
 #endif
+
 
 /*----------------------------------------------------------------------------*/
 static
