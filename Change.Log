@@ -1,4 +1,9 @@
-(non-public of Sep. 25, 2003)
+(non-public of Oct. 01, 2003)
+
+- Enabled loading and displaying of image files
+  over remote connections.
+  NOTE:  This will only work when the CACHEDIR is
+  defined properly in HighWire's cfg file!!!
 
 - New config keyword added to control how many
   memory shall be used for caching of image
@@ -17,11 +22,6 @@
 
 - Decreased a bit flickering of image rendering,
   by improved cache prefetches.
-
-- Enabled loading and displaying of image files
-  over remote connections.
-  NOTE:  This will only work when the CACHEDIR is
-  defined properly in HighWire's cfg file!!!
 
 - Fixed the cache screwing up bug which occured
   when storing of files failed for some reason
@@ -49,10 +49,17 @@
 - Corrected the handling of URLs for <frame> when
   a previous <base href=..> was found.
 
+- Corrected clipping of infobar drawing for shaded
+  or iconified windows (#0118).
+
+- Implemented a pgrogress bar for the infobar to
+  indicate how busy HighWire is with loading and
+  rendering.
+
 - Added several checks to avoid crashes due to
   memory exhausted.
 
-- Bugs #0093, #0119, #0126 resolved.
+- Bugs #0093, #0118, #0119, #0126 resolved.
 
 __________________________________________________
 Changes in V. 0.1.4 release  of August 10, 2003:
