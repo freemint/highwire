@@ -1,8 +1,13 @@
-(non-public of Dec. 03, 2003)
+(non-public of Dec. 12, 2003)
 
 - The cache got a big rework and cached files will
   used now over subsequent sessions, not anymore
   forgetting everything after program end.
+
+- New config keywords added for controlling remote
+  connection timeouts:  TIMEOUT_CONNECT,
+  RETRY_HEADER and TIMEOUT_HEADER.
+  (see example.cfg\highwire.cfg for details).
 
 - Implementation of parsing of <STYLE> areas.
 
