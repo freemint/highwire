@@ -1491,9 +1491,11 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 		p[3].p_y += p[2].p_y -1;
 		if (icon->fd_nplanes > 1) {
 			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
-			vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, icon,       &scrn);
+/*			vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, icon,       &scrn);*/
 
-			/* again for me this is a standard call */
+			/* for me this is a standard call in my code all true
+			 * color blitting suffers from this
+			 */
 			if (planes > 8)
 				vro_cpyfm(vdi_handle,S_AND_D,(short*)p,icon,&scrn);
 			else
