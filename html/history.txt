@@ -1,5 +1,130 @@
 Ok here are the new supports and changes
 
+March 23, 2003
+
+  AltF4's patches
+
+  defs.h:      line 66..70 + 350 + 496..502:
+  O_Struct.c:  line 40 (new_step) + 49 (add_step):
+  W_Struct.c:  line 120 (new_word):
+  Frame.c:     line 35..42 + 54 (new_frame):
+  Table.c:     line 94 (table_start) + 249 (table_cell):
+  p_about.c:   line 290 (parse_about):
+  p_dir.c:     line 58 (parse_dir):
+  Containr.h:  line 75..79:
+  Containr.c:  line 73..76 + 80..83 (new_containr) + 158 + 163 + 167
+               + 172 + 180 (containr_fillup) + 256..266 (containr_setup)
+               + 304..305 (containr_clear) + 355..356 (create_r)
+               + 503 (process_r) + 615 + 617 + 623
+               + 625 (containr_byCoord) + 693 + 696 + 700 + 705 + 709
+               + 767..769 (containr_Element) + 947 + 949 + 951 + 966
+               + 975 (containr_calculate) + 1106 + 1118 + 1121 + 1123
+               + 1127 + 1133 + 1135 (containr_redraw):
+  Mouse_R.c:   line 223..224 + 226 (button_clicked):
+  render.c:    line 315 + 392 + 398..402 (render_FRAMESET_tag) + 573
+               + 582 (render_BODY_tag) + 722..723 (render_BASEFONT_tag)
+               + 826 + 834..835 (render_FONT_tag) + 1026
+               + 1052 (render_FONT_tag) + 1411..1413
+               + 1428 (render_H_tag) + 1542 (render_P_tag)
+               + 2322 (parse_image):
+    - code cleaned up, removed unused attributes/defines and renamed
+      others to have common naming scheme.
+    
+  Containr.h:  line 263:
+  Containr.c:  line 75 (new_containr) + 304..305 (containr_clear)
+    - new defines for frame border default values.
+  token.h:
+    - line 133:  new keyword FRAMESPACING.
+  render.c:
+    - line 283..307 (render_FRAMESET_tag):  overworked to handle
+      FRAMESPACING attribute.
+    - line 394 + 404:  replaced HW_PageStarted/HW_PageFinished notify
+      by faster HW_PageUpdated.
+
+March 22, 2003
+
+  AltF4's patches
+
+  Containr.h:  line 38:
+  hwWind.c:    line 822 (wnd_hdlr):
+    - new notify type HW_PageUpdated.
+    
+  Containr.c:
+    - line 31 + 354 (create_r) + 501 (process_r):  save/restore border
+      size and colour to/from history
+    - line 552 (containr_process):  notify about frame borderss to
+      redraw.
+    
+  Mouse_R.c:
+    - line 216 (button_clicked):  new case PE_BORDER for frame resize.
+
+March 21, 2003
+
+  AltF4's patches
+
+  Containr.c:
+    - line 71 + 73 + 84 (new_containr):  modified initial settings.
+    - line 248 + 258 (containr_setup) + 898 + 908
+      + 914 (containr_calculate):  adjust frame extent depending on
+      container border.
+    - line 600 + 605 (containr_byCoord):  detect coorinates of borders.
+    - line 666 + 717..721 + 727 + 732 (containr_Element):  corrected
+      detection of borders.
+    - line 1040 + 1062 (containr_redraw):  added drawing of border
+      (moved over from Frame.c).
+    
+  render.c:
+    - line 349 + 353 (render_FRAMESET_tag):  removed useless settings.
+    - line 394:  redraw notification for border of a parent container.
+    
+  Frame.c:    line 123..138 (frame_calculate):
+  Redraws.c:  line 35..118 (frame_draw):
+    - outcommented code that is located now in Containr.c
+
+March 19, 2003
+
+  AltF4's patches
+
+  render.c:
+    - line 90:  new function url_correct() to get rid of html entities
+      in an url.
+    - line 333 (render_FRAMESET_tag) + 961 + 969..982 (render_A_tag)
+      + 1245 (render_IMG_tag):  make use of url_correct() to get proper
+      formatted urls.
+    
+  image.c:
+    - line 203 (new_image):  avoid useles tries to decode directly
+      remote images.
+
+March 14, 2003
+
+  AltF4's patches
+
+  render.c:
+    - line 251..264 (render_FRAMESET_tag):  corrected value settings of
+      borders.
+    
+  Frame.c:
+    - line 129 + 133 + 138 (frame_calculate):  removed false decrement
+      of scrollbar_size.
+    - line 208 + 244:  removed slider arrow adaption to frame border.
+    
+  Redraws.c:
+    - line 41 + 45 + 62 + 66 + 83 + 86 + 93 + 103 + 107 (frame_draw):
+      corrected calculation of border extents.
+    - line 139:  corrected fill area calculation.
+    - line 183 + 218..235 (draw_vbar) + 339..353 (draw_hbar):
+      corrected calculation of slider border line coordinates.
+
+March 12, 2003
+
+  AltF4's patches
+
+  Redraws.c:
+    - line 224 + 231 (draw_vbar) + 345 + 352 (draw_hbar):  check for
+      presence of the _other_ slider rather for itself (was a typo).
+    - line 270 (draw_vbar):  corrected down arrow position.
+
 March 7, 2003
 
   Baldrick's patches
