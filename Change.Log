@@ -1,8 +1,8 @@
-(non-public of Mar. 17, 2004)
+Changes in V. 0.1.7 release  of March 25, 2004:
 
 - Large rework of most of the internal structures
   to reach better compatibility to the 'Document
-  Object Model'.
+  Object Model' (mainly needed for CSS support).
 
 - Fixed a bug in the CSS parser which caused
   sometimes hangings on the @import command.
@@ -10,8 +10,8 @@
 - Implemented handling of cascading selectors, for
   CSS 1.0 as well as for 2.0 specification.
 
-- For for lists and the tags CENTER, BLOCKQUOTE
-  and DIV the CSS styles background-color, border-
+- For lists and the tags CENTER, BLOCKQUOTE and
+  DIV the CSS styles background-color, border-
   width/-color,  margin, padding and text-indent
   are supported now.
 
@@ -23,6 +23,9 @@
 
 - Fixed a bug which crashed HighWire when the info
   dialog box was opend for an empty page window.
+
+- Reworked re-calculation of tables for handling
+  of images inside without width specification.
 
 - Improved calculation of redraw areas for images
   of unknown size, reduces flickering caused by
@@ -42,7 +45,7 @@
 - Workaround to catchup malformed HTML (missing
   <tr> as in CAB hotlists).
 
-- Bugs #0146 resolved.
+- Bugs #0086, #0139, #0143, #0146 resolved.
 
 __________________________________________________
 Changes in V. 0.1.6 release  of December 27, 2003:

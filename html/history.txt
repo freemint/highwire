@@ -1,5 +1,76 @@
 Ok here are the new supports and changes
 
+March 23, 2004   [V. 0.1.7 release]
+
+  AltF4's patches
+
+  render.c:
+    - line 344 (css_box_styles) + 449 (leave_box):  update current
+      background color due to box backgrounds.
+    - line 409 (group_box):  avoid double font stack push.
+    - line 2299..2305 (render_DIV_tag):  removed duplicated width
+      setting.
+
+  Paragrph.c:
+    - line 171 (add_paragraph):  reset current background color for new
+      paragraphs.
+
+March 22, 2004
+
+  AltF4's patches
+
+  Table.c:
+    - line 444 (calc_minmax) + 467..469 + 496..508 + 537..539
+      + 545..549 + 552..553 + 558..584 + 587..590 + 595..596
+      + 598..684 (table_finish):  extracted min/max width calculation
+      to a new function calc_minmax().
+    - line 1058 (vTab_MinWidth):  recalculate possibly changed minimum
+      widths.
+
+March 21, 2004
+
+  AltF4's patches
+
+  Table.c:
+    - line 691..694 + 696 (table_finish) + 869 (vTab_format)
+      + 1063 (vTab_MinWidth) + 1070 (vTab_MaxWidth):  min/max width
+      calculation improved.
+
+  Gerhard Stoll's patch:
+
+  hwWind.c:
+    - line 2007 (hwWind_keybrd):  handling for the end key in the url
+      input field.
+
+March 18, 2004
+
+  AltF4's patches
+
+  DomBox.c:
+    - line 187 (vTab_MinWidth):  corrected SetWidth alignment.
+
+  Table.c:
+    - line 34 + 345 (table_cell) + 552 + 554..555 + 560 + 562..565
+      + 571 + 573 + 575 + 608 + 610 + 636 + 639 (table_finish):  store
+      predefined widths in the SetWidth attribute instead of Width.
+
+March 17, 2004
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 485 (vTab_format):  restricted the 1-pixel-increase to not
+      affect paragraphs with the last line having its descent
+      determined by an image.
+
+March 16, 2004
+
+  AltF4's patches
+
+  img_png.c:
+    - line 15 + 103 (decPng_readi) + 89 (decPng_start)
+      + 111 (decPng_quit):  support added for interlaced png images.
+
 March 15, 2004
 
   AltF4's patches

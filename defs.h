@@ -3,7 +3,7 @@
 #define _HIGHWIRE_MAJOR_     0
 #define _HIGHWIRE_MINOR_     1
 #define _HIGHWIRE_REVISION_  7
-#define _HIGHWIRE_BETATAG_   "alpha"
+#define _HIGHWIRE_BETATAG_   "beta"
 #define _HIGHWIRE_VERSION_   "0.1.7"
 
 #include "hw-types.h"   /* get base definitions */
