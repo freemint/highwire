@@ -1646,30 +1646,24 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 /*------------------------------------------------------------------------------
  * Document Divisions
  *
- * DIV is only partially implemented from my understanding
- * baldrick - December 14, 2001
+ * implemented as a table with one singe cell
 */
 static UWORD
 render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	
-	if (flags & PF_START)
-	{
-		PARAGRPH paragraph = add_paragraph (&parser->Current, 2);
-
-		switch (toupper (get_value_char (parser, KEY_ALIGN)))
-		{
-			case 'R': paragraph->alignment = ALN_RIGHT;  break;
-			case 'C': paragraph->alignment = ALN_CENTER; break;
-			case 'L': paragraph->alignment = ALN_LEFT;   break;
-		}
+	if (flags & PF_START) {
+		WORD width = get_value_size (parser, KEY_WIDTH);
+		table_start (parser, get_value_color (parser, KEY_BGCOLOR), ALN_NO_FLT,
+		             0, (width ? width : -1024/*100%*/), 0, 0, 0);
+		table_cell (parser, -1, get_h_align (parser, ALN_LEFT), ALN_TOP,
+			         0, 0, 0, 0);
+		
+	} else if (parser->Current.tbl_stack) {
+		table_finish (parser);
+		font_switch (parser->Current.word->font, NULL);
 	}
-	else
-	{
-		add_paragraph(&parser->Current, 0)->alignment = get_align (parser);
-	}
-	
 	return (flags|PF_SPACE);
 }
 
