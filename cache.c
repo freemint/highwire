@@ -571,7 +571,7 @@ static long
 read_hex (char ** ptr)
 {
 	char * p = (**ptr == '$' ? *ptr + 1 : NULL);
-	long   n = (p ? strtol (p, &p, 16) : -2);
+	long   n = (p ? strtoul (p, &p, 16) : -2);
 	if (p > *ptr +1 && *p == '$') *ptr = p;
 	return n;
 }
