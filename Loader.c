@@ -14,8 +14,7 @@
 # include <mintbind.h>
 # define DTA      struct FILEINFO
 # define d_length size
-/* I'm certain this is in a .H somewhere, just couldn't find it - Baldrick*/
-# define O_RDONLY 0x00
+# include <fcntl.h>
 # define fxattr(f,n,a)  Fxattr (f, (char*)n, a)
 
 #elif defined (__GNUC__)

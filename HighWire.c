@@ -9,6 +9,7 @@
 
 #else /* LATTICE || __GNUC__ */
 #include <mintbind.h>
+#include <string.h> /* for memcmp() */
 #endif
 
 #include <gemx.h>
