@@ -1,4 +1,5 @@
 typedef struct s_cookie {
+	long   Expires;
 	size_t PathLen;
 	char * PathStr;
 	size_t ValueMax;

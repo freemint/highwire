@@ -12,7 +12,7 @@
 
 typedef struct s_cookie_jar * COOKIEJAR;
 struct s_cookie_jar {
-	COOKIEJAR Next;
+	COOKIEJAR    Next;
 	COOKIE       Cookie[20];
 	size_t       HostLen;
 	const char * HostStr;
@@ -78,7 +78,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 	const char * exp_ptr = NULL; size_t exp_len = 0;
 	const char * dmn_ptr = NULL; size_t dmn_len = 0;
 	const char * pth_ptr = NULL; size_t pth_len = 0;
-	long         expire  = 0;
+	long         expires = 0;
 	BOOL         ck_remv = FALSE;
 	
 #ifndef DEBUG
@@ -125,7 +125,6 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 	}
 #endif
 	
-	
 	while (*str == ';') {
 		const char * key_p, * val_p;
 		long         k_len,   v_len;
@@ -135,8 +134,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 		if        (k_len == 7 && strnicmp (key_p, "EXPIRES", 7) == 0) {
 			exp_ptr = val_p;
 			exp_len = v_len;
-			expire  = http_date (exp_ptr);
-			if (expire && (expire < srvr_date)) {
+			if ((expires = http_date (exp_ptr)) != 0l && (expires < srvr_date)) {
 				ck_remv = TRUE;
 			}
 		} else if (k_len == 6 && strnicmp (key_p, "DOMAIN",  6) == 0) {
@@ -315,6 +313,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 						cookie->ValueMax         = val_len;
 						cookie->PathStr          = path;
 						cookie->PathLen          = pth_len;
+						cookie->Expires          = 0;
 					} else {
 						free (value);         /* meory exhausted */
 						if (path) free (path);
@@ -337,6 +336,9 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 					memcpy (cookie->ValueStr, val_ptr, val_len);
 					cookie->ValueStr[val_len] = '\0';
 					cookie->ValueLen          = val_len;
+					if (!cookie->Expires) {
+						cookie->Expires        = expires;
+					}
 				}
 			}
 		}
@@ -379,7 +381,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 			}
 			if (exp_ptr) {
 				strftime (buff, sizeof(buff),
-				          "%Y-%m-%d %H:%M:%S", gmtime ((time_t*)&expire));
+				          "%Y-%m-%d %H:%M:%S", gmtime ((time_t*)&expires));
 				fprintf (ftmp, "   EXPIRES = %s '%.*s'\n",
 				         buff, (int)exp_len, exp_ptr);
 			}
