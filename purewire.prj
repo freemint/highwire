@@ -40,7 +40,7 @@ Frame.c    (global.h,defs.h,hw-types.h, Table.h,Form.h,Location.h,mime.h)
 color.c    (global.h,defs.h,hw-types.h)
 encoding.c ( defs.h,hw-types.h,         token.h,scanner.h, en_uni.h,en_bics.h,en_atari.h)
 scanner.c  ( defs.h,hw-types.h,         token.h,scanner.h)   [-M]
-parser.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h)
+parser.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Containr.h)
 p_about.c  (global.h,defs.h,hw-types.h, token.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h,Containr.h,inet.h,cache.h)
 p_dir.c    (global.h,defs.h,hw-types.h, token.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h)
 render.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Containr.h,mime.h,Loader.h,Location.h,Logging.h,Table.h,Form.h,fontbase.h,http.h)
