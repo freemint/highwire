@@ -26,6 +26,9 @@ static ULONG __cnt = 0;
 static void (*on_off) (long msec) = (void(*)(long))NULL;
 
 
+int current_prio = 0;
+
+
 /*==============================================================================
  */
 void
@@ -39,11 +42,17 @@ sched_init (void (*func) (long msec))
 
 /*----------------------------------------------------------------------------*/
 static void
-sort_in (SCHED sched)
+sort_in (SCHED sched, BOOL order)
 {
 	if (!__beg) {
 		sched->Prev = sched->Next = NULL;
 		__beg       = __end       = sched;
+	
+	} else if (!order) {
+		sched->Next = NULL;
+		sched->Prev = __end;
+		__end->Next = sched;
+		__end       = sched;
 	
 	} else if (__beg->Priority < sched->Priority) {
 		sched->Next = __beg;
@@ -85,11 +94,11 @@ sched_insert (SCHED_FUNC func, void * value, long hash, int prio)
 {
 	SCHED sched = malloc (sizeof (struct s_SCHED));
 	if (sched) {
-		sched->Priority = prio;
+		sched->Priority = (prio ? prio : current_prio);
 		sched->func     = func;
 		sched->Value    = value;
 		sched->Hash     = hash;
-		sort_in (sched);
+		sort_in (sched, TRUE);
 		
 		if (on_off) (*on_off) (1);
 		
@@ -153,14 +162,24 @@ schedule (int max_do)
 		if (max_do < 0) max_do = (int)__cnt;
 		
 		while (__beg) {
+			BOOL  order = TRUE;
 			SCHED sched = move_out (__beg);
-			if ((*sched->func)(sched->Value, 0)) {
-				sort_in (sched);
-			} else {
-				free (sched);
+			current_prio = (int)sched->Priority;
+			switch ((*sched->func)(sched->Value, 0)) {
+				case 0: /* JOB_DONE*/
+					free (sched);
+					break;
+				case -2: /* JOB_NOOP */
+					order = FALSE;
+				case -1: /* JOB_AGED */
+					if (sched->Priority > 1) sched->Priority -= 1;
+					else                     sched->Priority =  1;
+				default: /* JOB_KEEP*/
+					sort_in (sched, order);
 			}
 			if (!--max_do) break;
 		}
+		current_prio = 1;
 		
 		if (on_off && !__beg) (*on_off) (0);
 	}

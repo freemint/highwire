@@ -27,16 +27,27 @@ void  sched_init (void (*ctrl_func)(long msec));
 
 
 typedef int (*SCHED_FUNC) (void *, long);
+			/* Function type of jobs to be registered with the scheduler.  When the
+			 * job is called by the scheduler its return value is interpreted as
+			 * following:
+			 * 0:  (JOB_DONE) remove from the queue.  the job is responsible of
+			 *     freeing all no longer used resources.
+			 * +1: (JOB_KEEP) hold in queue for later restart, the job's priority
+			 *     stays unchanged.
+			 * -1: (JOB_AGED) hold in queue, but decreases the priority a bit
+			 *     because the job got older.
+			 * -2: (JOB_NOOP) same as -1 but sort in in the job at the very end of
+			 *     the queue.  intended for jobs which are waiting for something.
+			 */
 
 LONG  schedule (int max_jobs);
 			/* Perform scheduling of registered jobs.  'max_jobs` determines
 			 * the maximum number of jobs to be scheduled:
-			 *    0:  no limit, that means all jobs which are actually in the
-			 *        queue and also all which may be registered additional
-			 *        while this run,
-			 *    >0: up to this number of jobs including new ones posibly
-			 *        registered while this run,
-			 *    <0: all jobs in the queue, but without newly registered.
+			 * = 0: no limit, that means all jobs which are actually in the queue
+			 *      and also all which may be registered additional while this run,
+			 * > 0: up to this number of jobs including new ones posibly registered
+			 *      while this run,
+			 * < 0: all jobs in the queue, but without newly registered.
 			 * The return value is either '0' if no more jobs are registered
 			 * or the number of milliseconds after that the next scheduling run
 			 * should be performed.
@@ -45,9 +56,6 @@ LONG  schedule (int max_jobs);
 BOOL  sched_insert (SCHED_FUNC, void * arg, long hash, int prio);
 			/* Register the function 'job' to run at the next call of schedule(),
 			 * with 'arg' passed as its first argument and a 0 as the second.
-			 * Note that the job will held in queue after been run only if it
-			 * returns TRUE.  Else it will be unregistered automatically.
-			 * The return value is TRUE if registering was successfull.
 			*/
 ULONG sched_remove (SCHED_FUNC, void * arg);
 			/* Unregister all jobs for that 'job' and 'arg' matches.  If 'job' is
