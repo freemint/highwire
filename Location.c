@@ -281,7 +281,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 	
 	dst[max_len ? 0 : -1] = '\0';
 	
-	return (src - buffer);
+	return (dst - buffer);
 }
 
 
