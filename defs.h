@@ -352,6 +352,11 @@ extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
 #define Delete(this)   (this)->_vtab->delete(this)
+#define dombox_Dist(this,what)      ((this)->Margin.what + (this)->Padding.what)
+#define dombox_TopDist(this)       (dombox_Dist(this,Top) + (this)->BorderWidth)
+#define dombox_BotDist(this)       (dombox_Dist(this,Bot) + (this)->BorderWidth)
+#define dombox_LftDist(this)       (dombox_Dist(this,Lft) + (this)->BorderWidth)
+#define dombox_RgtDist(this)       (dombox_Dist(this,Rgt) + (this)->BorderWidth)
 void dombox_draw (DOMBOX *, long x, long y, const GRECT * clip, void *);
 
 
