@@ -35,12 +35,13 @@
 /*--- Prototypes ---*/
 long               __CDECL ovl_init   (void);
 struct ovl_info_t *__CDECL ovl_version(void);
+long               __CDECL ovl_getftab(void);
 long               __CDECL ovl_free   (void);
 
 #if defined(USE_MINT)
-OVL_DECL (OF_CHLDPRC);
+OVL_DECL (OF_CHLDPRC,FTAB_NETWORK);
 #else
-OVL_DECL (OF_SIMPLE);
+OVL_DECL (OF_SIMPLE,FTAB_NETWORK);
 #endif
 struct ovl_info_t ovl_data = {
 #if defined(USE_MINT)
@@ -57,6 +58,22 @@ struct ovl_info_t ovl_data = {
 /*============================================================================*/
 long __CDECL ovl_init(void)
 {
+	return (0);
+}
+
+
+/*============================================================================*/
+struct ovl_info_t *__CDECL ovl_version(void)
+{
+	return((struct ovl_info_t *)&ovl_data);
+}
+
+/* ----------------------------------------------------------------- *
+ * ovl_getftab - Returns function table for OVL                      *
+ * ----------------------------------------------------------------- */
+
+long __CDECL ovl_getftab(void)
+{
 	static INET_FTAB inet = {
 		inet_host_addr,
 		inet_connect,
@@ -67,13 +84,6 @@ long __CDECL ovl_init(void)
 	};
 
 	return (long)&inet;
-}
-
-
-/*============================================================================*/
-struct ovl_info_t *__CDECL ovl_version(void)
-{
-	return((struct ovl_info_t *)&ovl_data);
 }
 
 
