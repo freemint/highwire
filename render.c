@@ -290,39 +290,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	return fstk;
 }
 
-/*----------------------------------------------------------------------------*/
-static FNTSTACK
-css_block_styles (PARSER parser, FNTSTACK fstk)
-{
-	TEXTBUFF current = &parser->Current;
-	WORD     val;
-	char     output[20];
-	
-	if (fstk) css_text_styles (parser, fstk);
-	
-	if (!ignore_colours) {
-		WORD color = get_value_color (parser, KEY_BGCOLOR);
-		if (color >= 0 && color != current->backgnd) {
-			current->paragraph->Box.Backgnd = color;
-		}
-	}
-	
-	if ((val = get_h_align (parser, -1)) >= 0) {
-		current->paragraph->Box.TextAlign = val;
-	}
-	
-	if (get_value (parser, CSS_TEXT_INDENT, output, sizeof(output))) {
-		char * tail   = output;
-		short  indent = numerical (output, &tail, current->font->Size,
-		                           current->word->font->SpaceWidth);
-		if (tail > output) {
-			current->paragraph->Box.TextIndent = indent;
-		}
-	}
-	
-	return fstk;
-}
-
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -366,18 +333,14 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 }
 
 /*----------------------------------------------------------------------------*/
-static DOMBOX *
-group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
+static void
+css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 {
-	char     out[100];
-	TEXTBUFF current = &parser->Current;
-	DOMBOX * box     = dombox_ctor (malloc (sizeof (DOMBOX)),
-	                                current->parentbox, BC_GROUP);
-	box->HtmlCode = tag;
+	char out[100];
 	
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
-		if (color >= 0 && color != current->backgnd) {
+		if (color >= 0 && color != parser->Current.backgnd) {
 			box->Backgnd = color;
 		}
 		if ((color = get_value_color (parser, CSS_BORDER_COLOR)) >= 0) {
@@ -385,28 +348,49 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 		}
 	}
 	box->BorderWidth = get_value_unum (parser, KEY_BORDER, 0);
-	box->TextAlign   = get_h_align    (parser, align);
-	
-	add_paragraph(current, 0);
-	dombox_adopt (current->parentbox = box, &current->paragraph->Box);
-	current->paragraph->Box.TextAlign = box->TextAlign;
 	
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
+	
+	if ((int)(align = get_h_align (parser, align)) >= 0) {
+		box->TextAlign = align;
+	}
+	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
+		char * tail   = out;
+		short  indent = numerical (out, &tail, parser->Current.font->Size,
+		                           parser->Current.word->font->SpaceWidth);
+		if (tail > out) {
+			box->TextIndent = indent;
+		}
+	}
+	if (get_value (parser, KEY_WIDTH, out, sizeof(out))) {
+		short width = numerical (out, NULL, parser->Current.font->Size,
+		                         parser->Current.word->font->SpaceWidth);
+		if (width > 0) {
+			box->SetWidth = width;
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static DOMBOX *
+group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
+{
+	TEXTBUFF current = &parser->Current;
+	DOMBOX * box     = dombox_ctor (malloc (sizeof (DOMBOX)),
+	                                current->parentbox, BC_GROUP);
+	box->HtmlCode = tag;
+	
+	css_box_styles (parser, box, align);
+	
+	add_paragraph(current, 0);
+	dombox_adopt (current->parentbox = box, &current->paragraph->Box);
 	
 	if (box->Margin.Top < current->paragraph->Box.Margin.Top) {
 		 box->Margin.Top = current->paragraph->Box.Margin.Top;
 	}
 	current->paragraph->Box.Margin.Top = 0;
-	
-	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
-		char * tail   = out;
-		short  indent = numerical (out, &tail, current->font->Size,
-		                           current->word->font->SpaceWidth);
-		if (tail > out) {
-			box->TextIndent = indent;
-		}
-	}
+	current->paragraph->Box.TextAlign  = box->TextAlign;
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
 	css_text_styles (parser, NULL);
@@ -2028,11 +2012,10 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		fontstack_setType (current, header_font);
 
 		if (parser->hasStyle) {
-			css_block_styles (parser, current->font);
 			if (!current->lst_stack) {
-				box_frame (parser, &par->Box.Margin,  CSS_MARGIN);
-				box_frame (parser, &par->Box.Padding, CSS_PADDING);
+				css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
 			}
+			css_text_styles (parser, current->font);
 		} else {
 			par->Box.TextAlign = get_h_align (parser,
 			                                  current->parentbox->TextAlign);
@@ -2182,12 +2165,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			par->Box.HtmlCode = TAG_P;
 		}
 		
-		css_block_styles (parser, NULL);
-		if (!current->lst_stack) {
-			box_frame (parser, &par->Box.Margin,  CSS_MARGIN);
-			box_frame (parser, &par->Box.Padding, CSS_PADDING);
-		}
-		par->Box.TextAlign = get_h_align (parser, current->parentbox->TextAlign);
+		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
 		
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
@@ -2538,7 +2516,8 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		list_start (current, LT_NONE, 0);
 		if (parser->hasStyle) {
-			css_block_styles (parser, current->font);
+			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
+			css_text_styles (parser, current->font);
 		}
 	
 	} else if (current->lst_stack) {
@@ -2566,7 +2545,9 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 			fontstack_pop (current);
 		}
 		if (parser->hasStyle) {
-			css_block_styles (parser, fontstack_push (current, -1));
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &paragraph->Box, ALN_LEFT);
+			css_text_styles (parser, current->font);
 		}
 	}
 	return (flags|PF_SPACE);
@@ -2591,7 +2572,9 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 			fontstack_pop (current);
 		}
 		if (parser->hasStyle) {
-			css_block_styles (parser, fontstack_push (current, -1));
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &paragraph->Box, ALN_LEFT);
+			css_text_styles (parser, current->font);
 		}
 	}
 	return (flags|PF_SPACE);
