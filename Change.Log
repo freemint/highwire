@@ -1,8 +1,11 @@
-(non-public of April 12, 2004)
+(non-public of April 19, 2004)
 
 - Keyboard input implemented for form tags of the
-  type <input type=text ..>.
-  (still no <textarea> support yet).
+  type <input type=text ..> (still no <textarea>
+  support yet).  Jumping to other text fields of a
+  formular canbe done by the TAB key, inclusive
+  automatical page scrolling to the reached field.
+  Leaving the edit mode can be done with CTRL+TAB.
 
 - Table column width calculation changed, was
   causing crashes sometimes.

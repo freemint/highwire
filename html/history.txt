@@ -1,20 +1,154 @@
 Ok here are the new supports and changes
 
+April 19, 2004
+
+  AltF4's patches
+
+  Form.h:
+    - line 16:  parameterlist of input_keybrd() extended.
+
+  Form.c:    line 941 + 948 + 1015 (input_keybrd):
+  hwWind.c:  line 1818..1819 + 1823 + 1825 + 1831..1834 (hwWind_keybrd):
+    - support for the TAB key added to jump between text input fields.
+
+April 18, 2004
+
+  AltF4's patches
+
+  Form.h:
+    - line 14:  parameterlist of input_handle() extended.
+
+  Form.c:
+    - line 722 (input_handle):  parameterlist extended.
+    - line 757 + 759 (input_handle):  calculate cursor position from
+      mouse coordinates.
+
+  Mouse_R.c:
+    - line 196 (button_clicked):  calculate relative mouse coordinates
+      for text input field cursor position.
+
+April 17, 2004
+
+  AltF4's patches
+
+  Form.h:
+    - line 15:  return type of input_activate() changed.
+
+  Form.c:
+    - line 885 + 901 + 905 + 914 (input_activate):  return type
+      changed.
+    - line 889 (input_activate):  text input fields can become
+      deactivated.
+
+  Mouse_R.c:
+    - line 24 + 45 + 206 + 340 (button_clicked):  switch off cursor of
+      deactivated text input fields.
+
+April 16, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 688 (coord_diff) + 704..728 (input_handle):  coordinates
+      calculation moved into an own function.
+    - line 741..747 (input_handle):  switch off cursor of a previous
+      text input field.
+
+  Mouse_R.c:
+    - line 24 + 33 + 203 + 255 + 287 + 332 (button_clicked):  restore
+      previous active text input field if nothing changed.
+
+April 14, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 784 (form_activate) + 810..888 (input_activate) + 905
+      + 956 (input_keybrd):  new function form_activate(), to support
+      the return key for text input fields.
+
+April 13, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 282 + 303 (form_text):  scan named characters in text value
+      strings.
+    - line 814..819 + 867..871 (input_activate):  hex encoding for all
+      non-alphanumeric characters.
+
+April 12, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 810 + 836..839 (input_activate):  hex encoding for non-ascii
+      characters in values.
+    - line 830..831 (input_activate):  remove duplicate parameters in
+      GET urls.
+    - line 875 + 877..879 + 895 (input_keybrd):  unicode encoding for
+      send strings.
+
+April 11, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 926..927 + 934 (input_keybrd):  better delete/backspace
+      handling.
+    - line 983..984 (input_keybrd):  cast unsigned to avoid comparsion
+      overflow in Pure C.
+
+  highwire.prj:  line 36:
+  purewire.prj:  line 54:
+    - dependency updated.
+
+April 10, 2004
+
+  AltF4's patches
+
+  Form.h:
+    - line 15:  new function input_keybrd().
+
+  Form.c:
+    - line 31 (struct s_form) + 61 (struct s_input) + 106 (new_form)
+      + 143 (_alloc) + 272..273 + 283 (form_text) + 609 (input_draw)
+      + 698 (input_handle) + 817 (input_keybrd):  basic implementation
+      done for keyboard input for formular text input fields.
+
+  hwWind.h:    line 29 (struct hw_window) + 67 (hwWind_setActive);
+  hwWind.c:    line 18 + 205 (new_hwWind) + 1299  + 1373 (wnd_hdlr)
+               + 1811 + 1813 (hwWind_keybrd) + 2072 + 2082
+               + 2084 (hwWind_setActive):
+  keyinput.c:  line 73 + 78 (key_pressed):
+  Mouse_R.c:   line 36 + 202 (button_clicked):
+    - handle keyboard input for text input fields.
+
+April 09, 2004
+
+  AltF4's patches
+
+  Form.c:
+    - line 268 (form_text) + 314 ..315 (new_input): setting of size and
+      maxlength modified for text input fields.
+    - line 269 + 285 (form_text):  text field width calculation moved
+      over to NVDI function.
+
 April 07, 2004
 
   AltF4's patches
-    
+
   render.c
     - line 2935 (parse_html):  avoid useless CSS interpretation for
       closing tags, saves up to 20% parsing time on some sites.
-    
+
 April 06, 2004
 
   AltF4's patches
     .
   defs.h:
     - line 5..7:  bumped to version 0.1.8 alpha.
-    
+
   Loader.h:    line 44 (new_loader) + 48 (start_page_load)
                + 50 (start_cont_load):
   Form.c:      line 757 + 802..808 (input_activate):
@@ -27,56 +161,56 @@ April 06, 2004
   AEI.c:       line 141 (page_load) + 180 (vastart) + 384 (menu_open)
                + 407 (menu_reload):
     - parameter lists extended for cache control.
-    
+
   Loader.c:
     - line 162 + 201 (new_loader) + 266 + 275 (start_page_load) + 284
       287 (start_cont_load) + 354 (start_objc_load):  parameter lists
       extended for cache control.
     - line 568 +  574..579 (receive_job) + 614 (header_job):  avoid
       cache usage for contents resulting from POST actions.
-    
+
 April 05, 2004
 
   AltF4's patches
-    
+
   http.c:
     - line 334 + 346..347 + 350 + 397 (http_header):  reworked to allow
       subsequent header reciving.
-    
+
   Loader.c:
     - line 658 (header_job):  added handling of 100-continue server
       replies.
-    
+
 April 04, 2004
 
   AltF4's patches
-    
+
   Table.c:
     - line 849 (vTab_format):  column width calculation changed, was
       causing crashes sometimes.
-    
+
 April 02, 2004
 
   AltF4's patches
-    
+
   http.h:  line 22 (http_header):
   http.c:  line 323 + 362 + 372 + + 378..379 (http_header):
     - additional parameter for handling of POST method.
-    
+
   Loader.h:  line 14 (struct s_loader):
   Loader.c:  line 169 (new_loader) + 252 (delete_loader)
                + 651 (header_job):
     - buffer added for POST method arguments.
-    
+
   Form.c:
     - line 756 + 760 + 769..770 + 772 + 775
       + 792..794 (input_activate):  handling of form method POST
       implemented.
-    
+
 April 01, 2004
 
   AltF4's patches
-    
+
   Form.c:
     - line 90..93 (new_form):  improved handling of forms without
       defined action.
