@@ -258,7 +258,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 	const char * src;
 	
 	switch (loc->Proto) {
-		case PROT_ABOUT:  src = "about://"; break;
+		case PROT_ABOUT:  src = "about:"; break;
 		case PROT_MAILTO: src = "mailto:";  break;
 		case PROT_HTTP:   src = "http://";  break;
 		case PROT_HTTPS:  src = "https://"; break;
@@ -288,9 +288,16 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 	
 	if (max_len && dir) {
 		size_t len = (dir->Length < max_len ? dir->Length : max_len);
-		strncpy (dst, dir->Name, len);
-		dst     += len;
-		max_len -= len;
+		src        = dir->Name;
+		if (PROTO_isPseudo(loc->Proto) && *src == '/') {
+			src++;
+			len--;
+		}
+		if (len) {
+			strncpy (dst, dir->Name, len);
+			dst     += len;
+			max_len -= len;
+		}
 	}
 	
 	if (max_len && *loc->File) {
