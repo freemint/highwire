@@ -16,7 +16,7 @@
 #include "schedule.h"
 #include "cache.h"
 
-#if 01
+#if 0
 #include "Loader.h" /* enables remote access of images */
 #endif
 
@@ -2116,6 +2116,14 @@ init_display (void)
 
 
 /*----------------------------------------------------------------------------*/
+static BOOL
+skip_corrupted (IMGINFO info, char * buf)
+{
+	memset (buf, 0x99, info->ImgWidth * info->NumComps);
+	return TRUE;
+}
+
+/*----------------------------------------------------------------------------*/
 static void
 read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 {
@@ -2130,7 +2138,9 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 	if (info->Interlace <= 0) {
 		size_t scale = (info->IncYfx +1) /2;
 		while (y < img_h) {
-			(*img_rd)(info, buf);
+			if (!(*img_rd)(info, buf)) {
+				img_rd = skip_corrupted;
+			}
 			y++;
 			while ((scale >>16) < y) {
 				(*raster) (info, dst);
@@ -2148,7 +2158,9 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 				size_t scale = (size_t)y * y_mul + (info->IncYfx +1) /2;
 				short  y_beg =  scale          >>16;
 				short  y_end = (scale + y_mul) >>16;
-				(*img_rd)(info, buf);
+				if (!(*img_rd)(info, buf)) {
+					img_rd = skip_corrupted;
+				}
 				y += interlace;
 				if (y_beg < y_end) {
 					dst = (UWORD*)data->fd_addr + info->LnSize * y_beg;

@@ -83,7 +83,7 @@ decGif_start (const char * file, IMGINFO info)
 	
 	if (!map || img_w <= 0 || img_w >= 4096 || img_h <= 0 || img_h >= 4096) {
 		DGifCloseFile (gif);
-		return FALSE;
+		return TRUE;
 	}
 	
 	info->_priv_data = gif;
@@ -113,8 +113,7 @@ decGif_start (const char * file, IMGINFO info)
 static BOOL
 decGif_read (IMGINFO info, char * buffer)
 {
-	DGifGetLine (info->_priv_data, buffer, info->ImgWidth);
-	return TRUE;
+	return (DGifGetLine (info->_priv_data, buffer, info->ImgWidth) == GIF_OK);
 }
 
 /*----------------------------------------------------------------------------*/

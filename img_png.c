@@ -50,9 +50,15 @@ decPng_start (const char * name, IMGINFO info)
 		puts ("decPng_start(): low memory.");
 		return TRUE;
 	}
+	if (setjmp (png_jmpbuf (png_ptr))) {
+		png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+		fclose (file);
+		puts ("BUMMER");
+		return TRUE;
+	}
 	png_init_io       (png_ptr, file);
 	png_set_sig_bytes (png_ptr, (int)sizeof(header));
-	png_read_info     (png_ptr, info_ptr);
+	png_read_info (png_ptr, info_ptr);
 	
 	if (info_ptr->bit_depth == 16) {
 		png_set_strip_16 (png_ptr);
@@ -104,6 +110,7 @@ decPng_quit  (IMGINFO info)
 	png_structp png_ptr  = info->_priv_data;
 	png_infop   info_ptr = info->_priv_more;
 	if (png_ptr) {
+		png_read_end             (png_ptr,  info_ptr);
 		png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
 		fclose (info->_priv_file);
 		info->_priv_file = NULL;
