@@ -22,6 +22,7 @@
 #define M_HIST_END            60 /* STRING in tree MENUTREE */
 #define M_LOGGING             62 /* STRING in tree MENUTREE */
 #define M_ALT_TEXT            63 /* STRING in tree MENUTREE */
+#define M_FRM_CTRL            65 /* STRING in tree MENUTREE */
 
 #define ABOUT                  1 /* form/dialog */
 #define ABOUTOK                1 /* BUTTON in tree ABOUT */
