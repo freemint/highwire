@@ -70,7 +70,7 @@ get_align (PARSER parser)
 		return (ALN_CENTER);
 	}
 	if (parser->Current.tbl_stack && parser->Current.tbl_stack->WorkCell) {
-		return (parser->Current.tbl_stack->WorkCell->Content.Box.TextAlign);
+		return (parser->Current.tbl_stack->WorkCell->Box.TextAlign);
 	}
 	return (frame->Page.Box.TextAlign);
 }

@@ -46,7 +46,7 @@ struct s_table_row {
 };
 
 struct s_table_cell {
-	CONTENT   Content;
+	DOMBOX    Box;
 	V_ALIGN   AlignV;
 	TAB_CELL  DummyFor;
 	TAB_CELL  RightCell;
