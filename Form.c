@@ -1160,11 +1160,13 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			break;
 		
 		case 127: /* delete */
-			if (input->readonly
-			    || !edit_delc (input, form->TextCursrX, form->TextCursrY)) {
+			if (input->readonly) {
 				word = NULL;
-			} else {
+			} else if (form->TextCursrX < edit_rowln (input, form->TextCursrY)) {
+				edit_delc (input, form->TextCursrX, form->TextCursrY);
 				line = 1;
+			} else if (!edit_delc (input, form->TextCursrX, form->TextCursrY)) {
+				word = NULL;
 			}
 			break;
 		
