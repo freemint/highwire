@@ -19,7 +19,7 @@ typedef struct {
 } HTTP_HDR;
 
 short http_header (LOCATION, HTTP_HDR *, size_t blk_size,
-                   short * keep_alive, long tout_msec);
+                   short * keep_alive, const char * post_buf, long tout_msec);
 
 long     http_date    (const char * buf);
 ENCODING http_charset (const char * buf, size_t len, MIMETYPE *);

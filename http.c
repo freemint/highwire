@@ -320,7 +320,7 @@ expires (const char * beg, long len, HTTP_HDR * hdr)
 #ifdef USE_INET
 short
 http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
-             short * keep_alive, long tout_msec)
+             short * keep_alive, const char * post_buf, long tout_msec)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
@@ -359,7 +359,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	
 	} else {
 		const char rest[] = " HTTP/1.1\r\n";
-		char * p   = strchr (strcpy (buffer, (keep_alive ?"GET ":"HEAD ")), '\0');
+		const char * meth = (!keep_alive ? "HEAD " : post_buf ? "POST " : "GET ");
+		char * p   = strchr (strcpy (buffer, meth), '\0');
 		size_t len = min (strlen (loc->FullName),
 		                  sizeof(buffer) - sizeof(rest) - (p - buffer));
 		strncpy (p, loc->FullName, len);
@@ -367,16 +368,24 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1)) > 0) {
 			const char * stack = inet_info();
 			len = sprintf (buffer,
-			       "HOST: %s\r\n"
-			       "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n"
-			       "\r\n",
-			       name,
-			       _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
-			       _HIGHWIRE_REVISION_, (stack ? stack : ""));
+			      "HOST: %s\r\n"
+			      "User-Agent: Mozilla 2.0 (compatible; Atari %s/%i.%i.%i %s)\r\n",
+			      name,
+			      _HIGHWIRE_FULLNAME_, _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_,
+			      _HIGHWIRE_REVISION_, (stack ? stack : ""));
 			len = inet_send (sock, buffer, len);
 		}
-		if ((long)len < 0) {
-			if (len < -1) {
+		if ((long)len > 0 && post_buf) {
+			long n = strlen (post_buf);
+			len = sprintf (buffer,
+			               "Content-type: application/x-www-form-urlencoded\r\n"
+			               "Content-length: %li\r\n\r\n", n);
+			if ((long)(len = inet_send (sock, buffer, len)) > 0 && n) {
+				len = inet_send (sock, post_buf, n);
+			}
+		}
+		if ((long)len < 0 || (long)(len = inet_send (sock, "\r\n", 2)) < 0) {
+			if ((long)len < -1) {
 				sprintf (buffer, "Error: %s\n", strerror(-(int)len));
 			} else {
 				strcpy (buffer, "Connection error!\n");
