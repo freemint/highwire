@@ -21,6 +21,7 @@
 
 
 WORD         cfg_UptoDate     = -1;
+const char * cfg_File         = NULL;
 const char * cfg_StartPage    = "html\\highwire.htm";
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
@@ -28,7 +29,6 @@ BOOL         cfg_UseCSS       = TRUE;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
-static char       * cfg_path  = NULL;
 
 
 /*----------------------------------------------------------------------------*/
@@ -37,8 +37,8 @@ open_cfg (const char * mode)
 {
 	FILE * file = NULL;
 	
-	if (cfg_path) {
-		file = fopen (cfg_path, mode);
+	if (cfg_File) {
+		file = fopen (cfg_File, mode);
 		
 	} else {
 		char buff[1024], * p;
@@ -67,7 +67,7 @@ open_cfg (const char * mode)
 			file = fopen (buff, mode);
 		}
 		if (file) {
-			cfg_path = strdup (buff);
+			cfg_File = strdup (buff);
 		}
 	}
 	
@@ -85,7 +85,7 @@ save_config (const char * key, const char * arg)
 	}    * list = NULL, * match = NULL, * nmtch = NULL;
 	size_t klen = (key ? strlen (key) : 0);
 	BOOL   ok   = TRUE;
-	BOOL  fresh = (cfg_path == NULL);
+	BOOL  fresh = (cfg_File == NULL);
 	FILE * file;
 	
 	if ((file = open_cfg ("r")) != NULL) {
@@ -168,7 +168,7 @@ save_config (const char * key, const char * arg)
 		fclose (file);
 		
 		if (fresh) {
-			hwUi_info (NULL, "New config file created at\n%.100s", cfg_path);
+			hwUi_info (NULL, "New config file created at\n%.100s", cfg_File);
 		}
 	}
 	
