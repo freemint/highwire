@@ -23,6 +23,7 @@ extern WORD font_size;
 extern WORD font_minsize;
 extern WORD link_colour;
 extern WORD highlighted_link_colour;
+extern WORD background_colour;
 extern WORD text_colour;
 
 extern WORD page_margin;
