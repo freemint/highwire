@@ -32,7 +32,7 @@ INCLUDE = -I/usr/GEM/include
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = 
-LIBS = -L/usr/GEM/lib -lgem -liio -lungif -lsocket
+LIBS = -L/usr/GEM/lib -lgem -liio -lungif #-lsocket
 
 OBJDIR = obj$(CPU:68%=.%)
 
