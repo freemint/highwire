@@ -26,6 +26,8 @@ static WORD  inc_xy = 0;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
+static GRECT temp_area1;
+static GRECT temp_area2;
 
 WORD   hwWind_Mshape = ARROW;
 HwWIND hwWind_Top    = NULL;
@@ -43,7 +45,11 @@ new_hwWind (const char * name, const char * info, const char * url)
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
+#if (_HIGHWIRE_REALINFO_==TRUE)
 	WORD   kind = NAME|INFO|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
+#else
+	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|HSLIDE|SIZER;
+#endif
 #else
 	WORD   kind = NAME|CLOSER|FULLER|MOVER|SMALLER|LFARROW|SIZER;
 #endif	
@@ -57,10 +63,15 @@ new_hwWind (const char * name, const char * info, const char * url)
 		bevent = (appl_xgetinfo(AES_WINDOW, &out, &u,&u,&u) && (out & 0x20));
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
+
+		wind_calc_grect (WC_WORK, MOVER, &desk_area, &temp_area1);
+		wind_calc_grect (WC_WORK, VSLIDE|HSLIDE, &desk_area, &temp_area2);
+
+		inc_xy = (temp_area1.g_h - temp_area2.g_h);
+
 		curr_area.g_w -= desk_area.g_w;
 		curr_area.g_h -= desk_area.g_h;
-		inc_xy = (curr_area.g_w >= curr_area.g_h
-		          ? curr_area.g_w : curr_area.g_h) -1;
+
 		if (desk_area.g_w < 800) {
 			curr_area = desk_area;
 			curr_area.g_w = (desk_area.g_w *2) /3;
@@ -111,8 +122,10 @@ new_hwWind (const char * name, const char * info, const char * url)
 	hwWind_setName (This, name);
 	This->Stat[0] = ' ';
 	This->Info[0] = '\0';
-#if (_HIGHWIRE_INFOLINE_==TRUE)
+#if (_HIGHWIRE_REALINFO_==TRUE)
 	wind_set_str (This->Handle, WF_INFO, This->Info);
+#else
+	wind_set(This->Handle,WF_HSLSIZE,-1,0,0,0);
 #endif
 
 	if (bevent) {
@@ -206,10 +219,14 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 			return;
 	}
 	
-	p[1].p_y = This->Curr.g_y + This->Curr.g_h -1;
-	p[0].p_y = p[1].p_y                        - inc_xy +2;
-	p[0].p_x = This->Curr.g_x                  + inc_xy;
-	p[1].p_x = This->Curr.g_x + This->Curr.g_w - inc_xy -1;
+	p[0].p_y = This->Work.g_y + This->Work.g_h + 1;
+	p[1].p_y = p[0].p_y                        + inc_xy -2;
+#if (_HIGHWIRE_REALINFO_==TRUE)
+	p[0].p_x = This->Work.g_x                  + inc_xy;
+#else
+	p[0].p_x = This->Work.g_x                  + 1;
+#endif
+	p[1].p_x = This->Work.g_x + This->Work.g_w - inc_xy -1;
 	
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
@@ -273,7 +290,9 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 	}
 	
 	if (info) {
+#if (_HIGHWIRE_REALINFO_==TRUE)
 		wind_set_str (This->Handle, WF_INFO, info);
+#endif
 		hwWind_setHSInfo(This, info);
 	}
 }
