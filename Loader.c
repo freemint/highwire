@@ -71,6 +71,7 @@ static BOOL
 start_parser (LOADER loader)
 {
 	SCHED_FUNC func = parse_plain;
+	BOOL       chk0 = FALSE;
 	PARSER     parser;
 	
 	if (!loader->MimeType) {
@@ -87,6 +88,7 @@ start_parser (LOADER loader)
 		case MIME_TXT_HTML:
 			if (loader->Data) {
 				func = parse_html;
+				chk0 = TRUE;
 			
 			} else if (PROTO_isLocal(loader->Location->Proto)) {
 				func = parse_dir;
@@ -115,10 +117,21 @@ start_parser (LOADER loader)
 			if (strnicmp (p, "<html>",          6) == 0 ||
 			    strnicmp (p, "<!DOCTYPE HTML", 14) == 0) {
 				func = parse_html;
+				chk0 = TRUE;
 				break;
 			}
 		}
 		default: /* pretend it's plain text */ ;
+	}
+	
+	if (chk0) { /* check for invalid nul characters in html */
+		char * p = loader->Data, * q;
+		size_t n = loader->DataSize;
+		while (n > 0l && (q = memchr (p, '\0', n)) != NULL) {
+			*q = ' ';
+			n -= q - p;
+			p  = q;
+		}
 	}
 	
 	return sched_insert (func, parser, (long)parser->Target, PRIO_FINISH);
