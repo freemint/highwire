@@ -555,7 +555,7 @@ parse_tag (PARSER parser, const char ** pptr)
 			val = NULL;
 		}
 		if (lookup) {
-			unsigned len = (unsigned)(line - val);
+			unsigned len = (unsigned)(val ? line - val : 0ul);
 			while (len && isspace (*val)) {
 				val++;
 				len--;
