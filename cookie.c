@@ -224,7 +224,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 			}
 		} else {         /* search server cookiejar */
 			while (jar) {
-				if (jar->HostStr == host_ptr) {
+				if (!jar->DomainLen && jar->HostStr == host_ptr) {
 					break;
 				}
 				jar = jar->Next;
@@ -428,7 +428,7 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 	
 	while (jar) {
 		BOOL match;
-		if (!jar->DomainStr[0]) {
+		if (!jar->DomainLen) {
 			match = (host == jar->HostStr);
 		} else if (h_ln == jar->DomainLen -1) {
 			match = (strcmp (host, jar->DomainStr +1) == 0);
