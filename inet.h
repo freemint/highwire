@@ -4,12 +4,12 @@
 
 /*** Basic Stuff **************************************************************/
 
-int  inet_host_addr (const char * host, long * addr);
+short inet_host_addr (const char * host, long * addr);
 
-int  inet_connect (long addr, short port);
-long inet_send    (int fh, char * buf, size_t len);
-long inet_recv    (int fh, char * buf, size_t len);
-void inet_close   (int fh);
+long inet_connect (long addr, long port);
+long inet_send    (long fh, char * buf, size_t len);
+long inet_recv    (long fh, char * buf, size_t len);
+void inet_close   (long fh);
 
 const char * inet_info (void);
 

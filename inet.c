@@ -77,10 +77,10 @@ static int init_stick (void)
 
 
 /*============================================================================*/
-int
+short
 inet_host_addr (const char * name, long * addr)
 {
-	int ret = -1;
+	short ret = -1;
 
 #if defined(USE_MINT)
 	struct hostent * host = gethostbyname (name);
@@ -107,15 +107,15 @@ inet_host_addr (const char * name, long * addr)
 
 
 /*============================================================================*/
-int
-inet_connect (long addr, short port)
+long
+inet_connect (long addr, long port)
 {
-	int fh = -1;
+	long fh = -1;
 
 #if defined(USE_MINT)
 	struct sockaddr_in s_in;
 	s_in.sin_family = AF_INET;
-	s_in.sin_port   = htons (port);
+	s_in.sin_port   = htons ((short)port);
 	s_in.sin_addr   = *(struct in_addr *)&addr;
 	if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
 		fh = -errno;
@@ -125,10 +125,10 @@ inet_connect (long addr, short port)
 	}
 
 #elif defined(USE_STIK)
-	if (!tpl) {
+	if (!init_stick()) {
 		puts ("No STiK");
 	} else {
-		if ((fh = TCP_open (addr, port, 0, 2048)) < 0) {
+		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
 			fh = -1;
 		}
 	}
@@ -143,7 +143,7 @@ inet_connect (long addr, short port)
 
 /*============================================================================*/
 long
-inet_send (int fh, char * buf, size_t len)
+inet_send (long fh, char * buf, size_t len)
 {
 	long ret = -1;
 
@@ -154,7 +154,7 @@ inet_send (int fh, char * buf, size_t len)
 	if (!tpl) {
 		puts ("No STiK");
 	} else {
-		ret = TCP_send (fh, buf, (int)len);
+		ret = TCP_send ((int)fh, buf, (int)len);
 	}
 
 #else
@@ -167,7 +167,7 @@ inet_send (int fh, char * buf, size_t len)
 
 /*============================================================================*/
 long
-inet_recv (int fh, char * buf, size_t len)
+inet_recv (long fh, char * buf, size_t len)
 {
 	long ret = 0;
 
@@ -197,13 +197,13 @@ inet_recv (int fh, char * buf, size_t len)
 		puts ("No STiK");
 		ret = -1;
 	} else while (len) {
-		short n = CNbyte_count (fh);
+		short n = CNbyte_count ((int)fh);
 		if (n < E_NODATA) {
 			if (!ret) ret = -1;
 			break;
 		} else if (n > 0) {
 			if (n > len) n = len;
-			if ((n = CNget_block (fh, buf, n)) < 0) {
+			if ((n = CNget_block ((int)fh, buf, n)) < 0) {
 				if (!ret) ret = -1;
 				break;
 			} else {
@@ -227,7 +227,7 @@ inet_recv (int fh, char * buf, size_t len)
 
 /*============================================================================*/
 void
-inet_close (int fh)
+inet_close (long fh)
 {
 	if (fh >= 0) {
 
@@ -238,7 +238,7 @@ inet_close (int fh)
 		if (!tpl) {
 			puts ("No STiK");
 		} else {
-			TCP_close (fh, 0);
+			TCP_close ((int)fh, 0);
 		}
 	#endif
 	}
