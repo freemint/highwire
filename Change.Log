@@ -1,3 +1,18 @@
+(non-public of Jan. 08, 2004)
+
+- Large rework of most of the internal structures
+  to reach better compatibility to the 'Document
+  Object Model'.
+
+- Improved handling of cells with percentage width
+  inside tables without any width set.
+
+- Background color setting changed to avoid
+  multiple drawings of identical backgrounds.
+
+- Bugs #0146 resolved.
+
+__________________________________________________
 Changes in V. 0.1.6 release  of December 27, 2003:
 
 - The cache got a big rework and cached files will
