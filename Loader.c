@@ -851,6 +851,118 @@ generic_job (void * arg, long invalidated)
 	return JOB_DONE;
 }
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+int
+saveas_job (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	char fsel_file[HW_PATH_MAX] = "";
+	WORD r, butt;  /* file selector exit button */
+	int    fh1, fh2;
+	long fsize, bsize, rsize, csize = 0;
+	char *buffer;
+				
+	if (!invalidated && !loader->Error) {
+		LOCATION loc = (loader->Cached ? loader->Cached : loader->Location);
+
+		if (PROTO_isRemote (loc->Proto)) {
+			printf("saveas_job(): not in cache!\n");
+		
+		} else {
+			/* get cache file size */
+			fsize =	file_size(loc);
+
+			if (fsize <= 0)
+			{
+				printf("saveas_job(): file empty skipping\r\n");
+				goto saveas_bottom;
+			}
+ 			
+ 			/* It would be best to use the real filename here
+ 			 * I couldn't determine how to pull it out of the cache
+ 			 * It should be an easy task
+ 			 */
+			strcpy (fsel_file,loc->File);
+
+			/* get our new filename */
+			
+			if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
+			    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
+				r = fsel_exinput (fsel_path, fsel_file, &butt,
+			                  "HighWire: Save File as...");
+			} else {
+				r = fsel_input(fsel_path, fsel_file, &butt);
+			}
+
+			if (r && butt != FSEL_CANCEL) {
+				char * slash = strrchr (fsel_path, '\\');
+				if (slash) {
+					char   file[HW_PATH_MAX];
+					size_t len = slash - fsel_path +1;
+					memcpy (file, fsel_path, len);
+					strcpy (file + len, fsel_file);
+
+					if ((fh2 = open (file, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
+						/* get our cache file name */
+						location_FullName (loc, va_helpbuf, HW_PATH_MAX *2);
+
+						/* attempt to open cache file */
+						fh1 = open (va_helpbuf, O_RDONLY);
+						
+						if (fh1 < 0) {
+								printf("saveas_job(): file not found in cache\r\n");
+								close (fh2);
+								goto saveas_bottom;
+							} 
+
+						/* max 32k buffer to read/write */
+						if (fsize < 32000)
+							bsize = fsize;
+						else
+							bsize = 32000;
+											
+						buffer = malloc(bsize);
+
+						if (!buffer) {
+							close (fh1);
+							close (fh2);
+							printf("saveas_job(): memory malloc error\r\n");
+							goto saveas_bottom;
+						}
+															
+						while (csize < fsize)
+						{
+							rsize = read (fh1, buffer, bsize);
+							write (fh2, buffer, rsize);
+							csize += rsize;
+						}
+		
+						/* done so close our files */
+						close (fh1);
+						close (fh2);
+
+						/* and release our buffer */
+						free(buffer);
+						
+					} else
+						printf("File creation error\r\n");
+						
+				}
+				/* We don't worry about the else as all is done above */
+			}
+		}
+	}
+
+saveas_bottom:
+	
+	delete_loader (&loader);
+
+	/* We should close the window here
+	 * I didn't have time to figure that one out today
+	 */
+
+	return JOB_DONE;
+}
 
 /*----------------------------------------------------------------------------*/
 static short
@@ -914,6 +1026,36 @@ launch_viewer(const char *name)
 
 
 /******************************************************************************/
+
+/*============================================================================*/
+/* Get the size of a file from the cache, predominately */
+
+long
+file_size(const LOCATION loc)
+{
+	const char *filename = loc->FullName;
+	long         size = 0;
+	struct xattr file_info;
+	long         xret = fxattr(0, filename, &file_info);
+	
+	if (xret == E_OK) {  /* Fxattr() exists */
+		size = file_info.st_size;
+	
+	} else if (xret == -EINVFN) {  /* here for TOS filenames */
+		DTA  new, * old = Fgetdta();
+		Fsetdta(&new);
+
+		if (Fsfirst(filename, 0) == E_OK) {
+			size = new.d_length;
+		}
+		Fsetdta(old);
+	
+	} else {
+		size = 0;
+	}
+	
+	return(size);
+}
 
 
 /*============================================================================*/
