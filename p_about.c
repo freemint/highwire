@@ -13,20 +13,59 @@
 #include "Location.h"
 #include "Form.h"
 #include "inet.h"
+#include "ovl_sys.h"
 #include "cache.h"
+
+
+/*----------------------------------------------------------------------------*/
+static void
+about_modules (TEXTBUFF current, ENCODING enc)
+{
+	char buf[100];
+	MODULINF mod = NULL;
+	size_t   num = module_info (&mod);
+	
+	if (mod && num) {
+		size_t count = num;
+		while (count--) {
+	#if 01
+			struct ovl_info_t * info = (*mod->Meth->ovl_version)();
+			sprintf (buf, "%s: %s by %s",
+			         mod->File, info->name, info->author);
+			render_text (current, buf);
+			current->word->line_brk = BRK_LN;
+			sprintf (buf, "kill=0x%08lX", (long)mod->Meth);
+			font_byType (-1, FNT_BOLD, font_step2size (NULL, 2), current->word);
+			form_buttn (current, buf, "&times;", enc, 'S');
+			font_byType (-1, 0x0000, font_step2size (NULL, 3), current->word);
+	#else
+			sprintf (buf, "%s\r", mod->File);
+			render_text (current, buf);
+	#endif
+			mod++;
+		}
+		if (num > 0) {
+			render_hrule (current, ALN_LEFT, -512, 2);
+		}
+		free (mod - num);
+	
+	} else {
+		render_text (current, "(none)");
+	}
+}
 
 
 /*----------------------------------------------------------------------------*/
 static BOOL
 about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 {
-	size_t unused = FALSE;
-	char   buf[100];
+	BOOL unused = FALSE;
+	char buf[100];
 	
 	if (info) {
 		struct s_line {
 			WORDITEM word; UWORD len;
-		} * mem = malloc (sizeof(struct s_line) * num), * line = mem;
+		}    * mem    = malloc (sizeof(struct s_line) * num), * line = mem;
 		UWORD  max_ln = 0;
 		size_t count  = num;
 		while (count--) {
@@ -69,7 +108,7 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 		if (num > 0) {
 			render_hrule (current, ALN_LEFT, -512, 2);
 		}
-		free (info);
+		free (info - num);
 	}
 	return unused;
 }
@@ -82,7 +121,8 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	const char * i_net = inet_info();
 	char     buf[100];
 	WORDITEM list[10], * w = &list[-1];
-	WORD tab = 0;
+	WORD     tab   = 0;
+	size_t   m_num = module_info (NULL);
 	
 	#ifdef GEM_MENU
 		*(++w) = render_text (current, """GEMMenu:""""0.4""\r");
@@ -154,6 +194,14 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	}
 	render_hrule (current, ALN_LEFT, -512, 2);
 	
+	render_link (current, "modules: ", "about:modules", link_color);
+	if (m_num) {
+		sprintf (buf, "%li loaded\r", m_num);
+		render_text (current, buf);
+	} else {
+		render_text (current, "(none)\r");
+	}
+	
 	render_link (current, "cached: ", "about:cache", link_color);
 }
 
@@ -171,8 +219,8 @@ parse_about (void * arg, long invalidated)
 	const char * title = frame->Location->File;
 	WORD     mode; /* 0 = normal, 1 = cache */
 	CACHEINF info    = NULL;
+	size_t   c_mem   = 0, c_num = 0;
 	BOOL     clrable = TRUE; /* guess there is anything cached to be cleared */
-	size_t   c_mem, c_num;
 	
 	if (invalidated) {
 		delete_parser (parser);
@@ -183,17 +231,27 @@ parse_about (void * arg, long invalidated)
 	current->paragraph->alignment = ALN_CENTER;
 	font_byType (header_font, FNT_BOLD, font_step2size (NULL, 6), current->word);
 	
-	if (strncmp ("cache", title, 5) == 0) {
+	if (strncmp ("modules", title, 7) == 0) {
+		if (strncmp (title +7, "?kill=", 6) == 0) {
+			char * rest;
+			long   ovl = strtol (title +13, &rest, 16);
+			if (ovl > 0 && *rest == '=') {
+				kill_ovl ((void*)ovl);
+			}
+		}
+		containr_notify (parser->Target, HW_SetTitle, "About: Modules");
+		title = "Modules loaded:";
+		mode  = 2;
+	
+	} else if (strncmp ("cache", title, 5) == 0) {
 		if (strncmp (title +5, "?clear", 6) == 0) {
 			if (title[11] == '\0' || strcmp (title +11, "=clear") == 0) {
 				cache_clear (NULL);
-				mode = 1;
 			} else if (title[11] == '=') {
 				char * rest;
 				long   obj = strtol (title +12, &rest, 16);
 				if (obj > 0 && (!*rest || *rest == '=')) {
 					cache_clear ((CACHED)obj);
-					mode = 1;
 				}
 			}
 		}
@@ -211,11 +269,16 @@ parse_about (void * arg, long invalidated)
 	
 	current->paragraph->alignment = ALN_LEFT;
 	font_byType (normal_font, 0x0000, font_step2size (NULL, 3), current->word);
-	current->form = new_form (frame, NULL, strdup ("about:cache"), "GET");
 	
-	c_num = cache_info (&c_mem, (mode == 1 ? &info : NULL));
-	
+	if (mode <= 1) {
+		current->form = new_form (frame, NULL, strdup ("about:cache"), "GET");
+		c_num = cache_info (&c_mem, (mode == 1 ? &info : NULL));
+	}
 	switch (mode) {
+		case 2:
+			current->form = new_form (frame, NULL, strdup("about:modules"), "GET");
+			about_modules (current, frame->Encoding);
+			break;
 		case 1:
 			clrable = about_cache (current, frame->Encoding, info, c_num);
 			break;
@@ -231,7 +294,7 @@ parse_about (void * arg, long invalidated)
 		if (!clrable) {
 			input_disable (current->prev_wrd->input, TRUE);
 		}
-	} else {
+	} else if (mode <= 1) {
 		render_text (current, "(empty)");
 	}
 	
