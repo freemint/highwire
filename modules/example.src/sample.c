@@ -1,9 +1,5 @@
 /* sample.c
 *
-* version 0.1
-* Dan Ackerman
-* aka baldrick@netset.com
-*
 * This is a bare bones sample OVL skeleton for HighWire Project
 *
 */
@@ -34,11 +30,13 @@
 /*--- Prototypes ---*/
 long               __CDECL ovl_init   (void);
 struct ovl_info_t *__CDECL ovl_version(void);
+long               __CDECL ovl_getftab(void);
 long               __CDECL ovl_free   (void);
 
 /* structs in use to hold OVL values*/
 
-OVL_DECL (OF_SIMPLE);
+OVL_DECL (OF_SIMPLE,FTAB_SIMPLE);
+
 struct ovl_info_t ovl_data;
 
 
@@ -58,9 +56,9 @@ long __CDECL ovl_init(void)
 	 */
 
 	ovl_data.name    = "SAMPLE.OVL";	 
-	ovl_data.version = "0001";
-	ovl_data.date    = "010903";
-	ovl_data.author  = "Dan Ackerman";
+	ovl_data.version = "0003";
+	ovl_data.date    = "012903";
+	ovl_data.author  = "HighWire Dev Team";
 	
 	return(0);
 }
@@ -72,6 +70,17 @@ long __CDECL ovl_init(void)
 struct ovl_info_t *__CDECL ovl_version(void)
 {
 	return((struct ovl_info_t *)&ovl_data);
+}
+
+/* ----------------------------------------------------------------- *
+ * ovl_getftab - Returns function table for OVL                      *
+ * ----------------------------------------------------------------- */
+
+long __CDECL ovl_getftab(void)
+{
+	/* This OVL has no functions currently */
+	
+	return(0);
 }
 
 
