@@ -2094,6 +2094,10 @@ init_display (void)
 	depth   = ((UWORD)out[4] == 0x8000u ? 15 : out[2]); /* bits per pixel used */
 	pervert = (out[14] & 0x80);                         /* intel crap... */
 	
+	if (!pervert && depth > 8) {  /* extra check for reverted byte order: */
+		pervert = (out[16] < out[48]);    /* compare red and blue position */
+	}
+	
 	sprintf (disp_info, "%c%02i%s",
 	         (out[0] == 0 ? 'i' : out[0] == 2 ? 'p' : 'x'), depth,
 	         (pervert ? "r" : ""));
