@@ -70,7 +70,9 @@ WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
 /* in Widget.c */
 
+#ifdef _GEMLIB_H_
 WORD HW_form_do    (OBJECT *, WORD next);
+#endif
 WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
 
 /* in Redraws.c */
