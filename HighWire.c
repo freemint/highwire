@@ -321,7 +321,8 @@ vTab_draw (WINDOW This, const GRECT * clip)
 	v_hide_c (vdi_handle);
 	v_bar (vdi_handle, (short*)p);
 	p[0].p_x = p[0].p_y = 0;
-	p[1] = *(PXY*)&logo_icon.fd_w;
+	p[1].p_x = logo_icon.fd_w -1;
+	p[1].p_y = logo_icon.fd_h -1;
 	vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y,     spl_name);
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y +16, spl_vers);
