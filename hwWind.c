@@ -21,7 +21,6 @@
 
 
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
-static WORD  hsl_top   = -1, hsl_bot;
 static WORD  inc_xy = 0;
 static BOOL  bevent;
 static GRECT desk_area;
@@ -85,12 +84,10 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 			u   = W_HELEV;
 			out = -1;
 			if (wind_get (0, WF_DCOLOR, &u, &out, &u, &u) && out != -1) {
-				info_bgnd = out & 0x000F;
-				if (info_bgnd == G_BLACK) {
+				info_bgnd = out | 0x00F0;
+				if ((info_bgnd & 0x000F) == G_BLACK) {
 					info_fgnd = G_WHITE;
 				}
-				u = W_HSLIDE;
-				wind_get (0, WF_DCOLOR, &u, &hsl_top, &hsl_bot, &u);
 			}
 		}
 		
@@ -131,8 +128,8 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
 	}
-	if (hsl_top != -1) {
-		wind_set (This->Handle, WF_COLOR, W_HBAR, hsl_top, hsl_bot, -1);
+	if (info_bgnd & 0x0080) {
+		wind_set (This->Handle, WF_COLOR, W_HBAR, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
@@ -231,7 +228,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_style    (vdi_handle, 4);
-	vsf_color    (vdi_handle, info_bgnd);
+	vsf_color    (vdi_handle, info_bgnd & 0x000F);
 	
 	dmy = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
 	if (vst_font (vdi_handle, dmy) == 1) {
