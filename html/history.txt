@@ -1,6 +1,17 @@
 Ok here are the new supports and changes
 
-May 12, 2003   [V. 0.1.2 release]
+May 13, 2003   [V. 0.1.2 release]
+
+  AltF4's patches
+
+  render.c:
+    - line 252 (render_TITLE_tag):  force resetting to the actual font
+      characteristics because after the containr_notify() it can be
+      changed.
+
+May 12, 2003
+
+  AltF4's patches
 
 	- splitted this file into two parts to have it more convenient for
 	  editing.
