@@ -197,6 +197,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->Handle  = wind_create_grect (wind_kind, &desk_area);
 	This->isFull  = FALSE;
 	This->isIcon  = FALSE;
+	This->shaded  = FALSE;
 	This->isBusy  = 0;
 	This->loading = 0;
 	This->Pane    = new_containr (NULL);
@@ -350,7 +351,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	GRECT area, clip, rect;
 	short x_btn, dmy, fnt, pnt;
 	
-	if (This->isIcon) return;
+	if (This->isIcon || This->shaded) return;
 	
 	area = This->Work;
 	area.g_y += area.g_h - This->IbarH +1;
@@ -464,7 +465,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	short dmy;
 	PXY   p[2], clip[2];
 
-	if (This != hwWind_Top || This->isIcon) {
+	if (This != hwWind_Top || This->isIcon || This->shaded) {
 		return;
 	} else {
 		short top;
@@ -1151,7 +1152,7 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 			}
 		}
 	}
-	if (lft <= rgt && This->TbarH && !This->isIcon) {
+	if (lft <= rgt && This->TbarH && !This->isIcon && !This->shaded) {
 		GRECT clip, area;
 		clip.g_x = This->Work.g_x + This->TbarElem[lft].Offset -3;
 		clip.g_w = This->TbarElem[rgt].Offset + This->TbarElem[rgt].Width
@@ -1423,6 +1424,71 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 	}
 }
 
+
+/*============================================================================*/
+BOOL
+hwWind_message (WORD msg[], PXY mouse, UWORD state)
+{
+	HwWIND wind  = hwWind_byHandle (msg[3]);
+	BOOL   found = (wind != NULL);
+	BOOL   check = FALSE;
+	if (wind) switch (msg[0]) {
+		case WM_REDRAW:    hwWind_redraw  (wind, (GRECT*)(msg + 4)); break;
+		case WM_MOVED:     hwWind_move    (wind,  *(PXY*)(msg + 4)); break;
+		case WM_SIZED:     hwWind_resize  (wind, (GRECT*)(msg + 4)); break;
+		case WM_FULLED:    hwWind_full    (wind);                    break;
+		case WM_ICONIFY:
+			hwWind_iconify (wind, (GRECT*)(msg + 4));
+			if (wind->TbarActv == TBAR_EDIT) {
+				TBAREDIT * edit = TbarEdit (wind);
+				edit->Cursor = 0;
+				edit->Shift  = 0;
+				chng_toolbar (wind, 0, 0, -1);
+			}
+			check = TRUE;
+			break;
+		case WM_UNICONIFY:
+			hwWind_iconify (wind, NULL);
+			check = TRUE;
+			break;
+		case WM_TOPPED:
+			hwWind_raise (wind, TRUE);
+			check = TRUE;
+			break;
+		case WM_BOTTOMED:
+			hwWind_raise (wind, FALSE);
+			check = TRUE;
+			break;
+		case WM_ARROWED:
+			if (msg[4] == WA_LFLINE) {
+				hwWind_undo (wind, ((state & (K_RSHIFT|K_LSHIFT)) != 0));
+			}
+			break;
+		case 22360: /* shaded */
+			wind->shaded = TRUE;
+			if (wind->TbarActv == TBAR_EDIT) {
+				TBAREDIT * edit = TbarEdit (wind);
+				edit->Cursor = 0;
+				edit->Shift  = 0;
+				chng_toolbar (wind, 0, 0, -1);
+			}
+			break;
+		case 22361: /* unshaded */
+			wind->shaded = FALSE;
+			break;
+		case WM_CLOSED:
+			hwWind_close (wind, state);
+			check = (hwWind_Top != NULL);
+			break;
+		
+		default:
+			found = FALSE;
+	}
+	if (check) {
+		check_mouse_position (mouse.p_x, mouse.p_y);
+	}
+	return found;
+}
 
 /*============================================================================*/
 HwWIND
@@ -1721,7 +1787,8 @@ hwWind_keybrd (WORD key, UWORD state)
 		return wind;
 	
 	} else if (wind->TbarActv != TBAR_EDIT) {
-		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)) {
+		if ((key & 0xFF) == 27 && !containr_escape (wind->Pane)
+		    && !wind->isIcon && !wind->shaded) {
 			TBAREDIT * edit = TbarEdit (wind);
 			edit->Cursor = 0;
 			edit->Shift  = 0;

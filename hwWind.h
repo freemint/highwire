@@ -11,6 +11,7 @@ struct hw_window {
 	WORD    Handle;
 	BOOL    isFull;
 	BOOL    isIcon;
+	BOOL    shaded;
 	UWORD   isBusy;
 	UWORD   loading;
 	GRECT   Curr;
@@ -58,6 +59,7 @@ HwWIND  hwWind_byHandle (WORD);
 #define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
 
 void   hwWind_redraw (HwWIND, const GRECT *);
+BOOL   hwWind_message(WORD msg[], PXY mouse, UWORD state);
 HwWIND hwWind_mouse  (WORD mx, WORD my, GRECT * watch);
 HwWIND hwWind_button (WORD mx, WORD my);
 HwWIND hwWind_keybrd (WORD key, UWORD state);
