@@ -119,8 +119,9 @@ IMAGE
 new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
            short w, short h, short vspace, short hspace)
 {
-	LOCATION loc = new_location (file, base);
-	IMAGE    img = malloc (sizeof(struct s_image));
+	LOCATION loc     = new_location (file, base);
+	BOOL     blocked = ((loc->Flags & (1uL << ('I' - 'A'))) != 0);
+	IMAGE    img     = malloc (sizeof(struct s_image));
 	long     hash;
 	CACHED   cached;
 	
@@ -146,7 +147,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->word->image = img;
 	
 	hash   = img_hash ((w > 0 ? w : 0), (h > 0 ? h : 0), -1);
-	cached = cache_lookup (loc, hash, &hash);
+	cached = (blocked ? NULL : cache_lookup (loc, hash, &hash));
 	
 	if (cached) {
 		short bgnd = (hash >>24) & 0xFF;
@@ -186,17 +187,25 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 			img->u.Data = cache_bound (cached, &img->source);
 		}
 	}
-	img->disp_w = (w > 0 ? w : 16);
-	img->disp_h = (h > 0 ? h : 16);
-	set_word (img);
+	
+	if (blocked) {
+		img->disp_w = (w > 0 ? w : 1);
+		img->disp_h = (h > 0 ? h : 1);
+		set_word (img);
+	
+	} else {
+		img->disp_w = (w > 0 ? w : 16);
+		img->disp_h = (h > 0 ? h : 16);
+		set_word (img);
 		
 #if defined(__LOADER_H__)
-	if (!img->u.Data) {
+		if (!img->u.Data) {
 #else
-	if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
+		if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
-		if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
-			containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+			if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
+				containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+			}
 		}
 	}
 	
