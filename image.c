@@ -351,6 +351,10 @@ image_ldr (void * arg, long invalidated)
 		free_location (&img->source);
 		img->source = location_share (loader->Location);
 	}
+	if (MIME_Major (img->frame->MimeType) == MIME_IMAGE) {
+		free_location (&img->frame->Location);
+		img->frame->Location = location_share (img->source);
+	}
 	delete_loader (&loader);
 	
 /*	sched_insert (image_job, img, invalidated, 1);*/
@@ -409,10 +413,16 @@ image_job (void * arg, long invalidated)
 			} else if (PROTO_isRemote (loc->Proto)) {
 				if (!_ldr_limit) {
 					return TRUE;
+				
+				} else {
+					LOADER ldr = start_objc_load (frame->Container,
+					                              NULL, loc, image_ldr, img);
+					if (PROTO_isRemote (frame->Location->Proto)) {
+						ldr->Referer = location_share (frame->Location);
+					}
+					_ldr_limit--;
+					return FALSE;
 				}
-				_ldr_limit--;
-				start_objc_load (frame->Container, NULL, loc, image_ldr, img);
-				return FALSE;
 			}
 		}
 #endif

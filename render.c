@@ -3187,6 +3187,7 @@ parse_image (void * arg, long invalidated)
 	PARSER   parser  = arg;
 	FRAME    frame   = parser->Frame;
 	TEXTBUFF current = &parser->Current;
+	LOCATION loc;
 	
 	if (invalidated) {
 		delete_parser (parser);
@@ -3196,7 +3197,14 @@ parse_image (void * arg, long invalidated)
 	
 	font_byType (normal_font, 0x0000, -1, current->word);
 	
-	new_image (frame, current, NULL,frame->Location, 0,0, 0,0);
+	if (parser->Loader->Referer) {
+		loc = frame->Location;
+		frame->Location = location_share (parser->Loader->Referer);
+	} else {
+		loc = location_share (frame->Location);
+	}
+	new_image (frame, current, NULL, loc, 0,0, 0,0);
+	free_location (&loc);
 
 	delete_parser (parser);
 		

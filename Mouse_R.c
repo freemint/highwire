@@ -258,11 +258,15 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 					cont = new_hwWind (addr, NULL, NULL)->Pane;
 				}
 				if (cont) {
-					LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
-					                              TRUE, NULL);
+					LOCATION ref = (PROTO_isRemote (frame->Location->Proto)
+					                ? location_share (frame->Location) : NULL);
+					LOADER   ldr = start_page_load (cont, addr, frame->BaseHref,
+					                                TRUE, NULL);
 					if (ldr) {
+						ldr->Referer  = location_share (ref);
 						ldr->Encoding = link->encoding;
 					}
+					free_location (&ref);
 				}
 			}
 			txt_i = NULL;
