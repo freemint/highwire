@@ -249,7 +249,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 	buffer[sizeof(buffer) -1] = '\0';
 	
 	if (sock < 0) {
-		if (sock < -1) {
+		if (sock == -ETIMEDOUT) {
+			strcpy (buffer, "Connection timeout!\n");
+		} else if (sock < -1) {
 			sprintf (buffer, "Error: %s\n", strerror(-sock));
 		} else {
 			strcpy (buffer, "No route to  host!\n");
