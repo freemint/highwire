@@ -239,6 +239,8 @@ File types supported:
 
   ù HTML files (8-bit coded)
   ù GIF images
+  ù JPG images
+  ù PNG images (not yet complete: no interlaced pics at the moment)
   ù Plain text (8-bit and 16-bit coded)
 
 Configuration:
