@@ -933,6 +933,11 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
+ *  General Text Element
+*/
+#define render_SPAN_tag render_FONT_tag
+
+/*------------------------------------------------------------------------------
  * Italic Text
 */
 static UWORD
