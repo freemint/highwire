@@ -431,15 +431,17 @@ loader_job (void * arg, long invalidated)
 		HTTP_HDR     hdr;
 		short        sock = -1;
 		short        reply;
+		UWORD        retry = 0;
 		
 		if (host) {
 			char buf[300];
 			sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
 			containr_notify (loader->Target, HW_SetInfo, buf);
 		}
-		
-		reply = http_header (loader->Location,
-		                     &hdr, &sock, sizeof (loader->rdTemp) -2);
+		do {
+			reply = http_header (loader->Location,
+			                     &hdr, &sock, sizeof (loader->rdTemp) -2);
+		} while (reply == -ECONNRESET && retry++ < 1);
 		
 		if (hdr.MimeType) {
 			loader->MimeType = hdr.MimeType;
