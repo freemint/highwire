@@ -1,4 +1,8 @@
-(non-public of April 07, 2004)
+(non-public of April 12, 2004)
+
+- Keyboard input implemented for form tags of the
+  type <input type=text ..>.
+  (still no <textarea> support yet).
 
 - Table column width calculation changed, was
   causing crashes sometimes.
