@@ -502,10 +502,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 		}
 		if (!(box->Floating & FLT_MASK)) {
 			height += box->Rect.H;
-			if (blocker->L.bottom && blocker->L.bottom < height) {
+			if (blocker->L.bottom && blocker->L.bottom <= height) {
 				blocker->L.bottom = blocker->L.width = 0;
 			}
-			if (blocker->R.bottom && blocker->R.bottom < height) {
+			if (blocker->R.bottom && blocker->R.bottom <= height) {
 				blocker->R.bottom = blocker->R.width = 0;
 			}
 		} else if (This->Rect.H < box->Rect.Y + box->Rect.H) {
