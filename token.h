@@ -217,7 +217,7 @@
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
 		/*          BORDER_STYLE      */
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
-		/*          CLEAR             */
+		__CSS_ITEM (CLEAR,            0),
 		__CSS_ITEM (COLOR,            KEY_COLOR),
 		/*          EMPTY_CELLS       */
 		__CSS_ITEM (FLOAT,            0),
