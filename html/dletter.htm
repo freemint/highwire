@@ -2,9 +2,13 @@
 <html>
 <head>
   <meta http-equiv="Content-Language" content="en-uk">
-  <meta http-equiv="Content-Type"
- content="text/html; charset=windows-1252">
+  <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
   <title>HighWire main page</title>
+<STYLE type="text/css">
+<!--
+	li { margin-bottom:0.4em }
+-->
+</STYLE>
 </head>
 <body link="blue" alink="blue" bgcolor="white" text="black" vlink="blue">
 <center><img src="images/logotst2.gif"
@@ -35,31 +39,8 @@
             <td width="49%">
 <h3>A Message from the HighWire Development Team</h3>
 <hr>
-<p><b><i>Welcome to the latest release of HighWire, version 0.2.0</i></b></p>
+<p><b><i>Welcome to the latest release of HighWire, version 0.2.2</i></b></p>
 <img src="images/twisted.gif" alt="HighWire viewing Highwire" width="161" height="131" align="right" vspace="4" hspace="4">
-<p>&nbsp;&nbsp;&nbsp;&nbsp;If you are asking yourself what
-happened to versions 0.1.8 and 0.1.9, don't worry you did not
-miss them. We felt that this version was such a major upgrade over 
-the last version that we bumped the version number up to 0.2.0,
-completely bypassing .1.8 and .1.9. Sometimes the recognition 
-sinks in that a project is maturing. After you use this release 
-for awhile, we think you will agree with us.</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;As you cruise around you will notice that
-Form support is in place. Google away my friend, or pop over to
-the HighWire Forum (handily linked in the left frame) and drop us a note. 
-Some user interface extensions have been added for saving content and
-grabbing those handy URL's to the clipboard to send to your friends
-on AtarIRC or AtarICQ or just to save out to an email.</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;Then of course we have this whole new 
-document format.  Long gone are the blue frames with yellow borders
-put together on one afternoon to demonstrate the capabilities of
-HighWire.  HighWire is growing up and it was time for it's files 
-to grow up as well.  You should find this version to not only look 
-a bit more polished, but to be a bit more helpful.  Click on the Documentation 
-link in the left frame to take a look at the new docs.  And if you
-don't have online access and want to take highwire for a few tests,
-the demonstration html files are now located under the HTML Test Suite
-link in the left frame.</p>  
 <p>&nbsp;&nbsp;&nbsp;&nbsp;We hope that you will enjoy this version as 
 much as we have in the development stage.</p>
 <p>&#8211; <i>And as always for your help and support, Thank you,</i></p>
@@ -67,29 +48,40 @@ much as we have in the development stage.</p>
 <h3>Current Release Changes:
 </h3>
   <ul>
-    <li>&nbsp;Pop-up menu with Save As... and Copy URL added <br>
-    </li>
-    <li>&nbsp;&lt;TEXTAREA&gt; tag implemented.&nbsp; The length of the
-typed in text is restricted only by the system RAM&nbsp; <br>
-    </li>
-    <li>&nbsp;Keyboard input implemented for form tags of the type
-&lt;INPUT type=text ..&gt;.&nbsp; Jumping to other text fields of a
-formular can be done by the TAB key, inclusive automatical page
-scrolling to the reached field.&nbsp; Leaving the edit mode can be done
-with CTRL+TAB.</li>
-    <li>&nbsp;Table column width calculation changed, was causing
-crashes sometimes.</li>
-    <li>&nbsp;Speed up CSS parsing by avoiding useless CSS
-interpretation for closing tags, saves up to 20% parsing time on some
-sites.</li>
-    <li>&nbsp;Cache improved to avoid storing of contents resulting
-from POST actions.</li>
-    <li>&nbsp;Handling of form method POST implemented.</li>
-  </ul>
-<blockquote>
-</blockquote>
-<p>See the <a href="../Change.Log">Change.Log</a> file for the full
-list of updates. </p>
+  
+<li>Large portions of the cache handling code reworked.  This gets rid of
+    several wrong warnings about not found files (mostly due to login pages for
+    forums).</li>
+
+<li>Image width/height are saves in the disk cache now, this reduces reformat
+    flickering on re-visited pages to the nearly absolute minimum (#0133).</li>
+
+<li>More types of corrupted jpeg image data are catched now, instead of
+    aborting.</li>
+
+<li>The window handling code also got a large rework to have non-modal dialog
+    windows in the future.  As a little gimmick the F10 key does the same now as
+    the F11 does in Mozilla/IE.</li>
+
+<li>Improved detection of system type (AES + kernel), now XaAES is recognized
+    also.  This also allows to get rid of the window fuller bug with XaAES
+    (#0159, #0167).</li>
+
+<li>Additional filtering method to detect images which has a particulare
+    directory name in their URL.  This method is used if the search pattern
+    starts with a '/'.  For example.<br>
+    <TT>&nbsp;&nbsp;&nbsp;RESTRICT_HOST I /ads/</TT><br>
+    matches all images which has '/ads/' somewhere in their path.</li>
+
+<li>CTRL-V can be used now to paste text from the clipboard into formular input
+    fields.</li>
+
+<li>Bugs #0133, #0148, #0150, #0167, #0169, #0170, #0176, #0177 resolved.</li>
+
+<li>... and several more to be found in the <a href="../Change.Log">Change.Log</a>.
+
+</ul>
+
 <p>As a reminder, don't forget to check the <a
  href="../example.cfg/highwire.cfg"><b>example file</b></a> for
 explanations of new configuration keywords from the last release!
