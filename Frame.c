@@ -7,6 +7,7 @@
 
 #include "global.h"
 #include "Table.h"
+#include "Form.h"
 #include "Location.h"
 #include "Loader.h"  /* for mime types */
 #include "fontbase.h"
@@ -90,6 +91,9 @@ delete_frame (FRAME * p_frame)
 void
 frame_finish (FRAME frame, PARSER parser, TEXTBUFF current)
 {
+	if (current->form) {
+		form_finish (current);
+	}
 	while (current->tbl_stack) {
 		table_finish (parser);
 	}

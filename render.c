@@ -1971,6 +1971,9 @@ render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
 	
+	 if (current->form) {
+		form_finish (current);
+	}
 	if (flags & PF_START) {
 		char   output[10];
 		char * method = (get_value (parser, KEY_METHOD, output, sizeof(output))
@@ -1978,9 +1981,6 @@ render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 		current->form = new_form (parser->Frame,
 		                          get_value_str (parser, KEY_TARGET),
 		                          get_value_str (parser, KEY_ACTION), method);
-	} else if (current->form) {
-		selct_finish (current);
-		current->form = NULL;
 	}
 	
 	return flags;
@@ -2223,7 +2223,7 @@ parse_html (void * arg, long invalidated)
 				space_found = FALSE;
 		}
 	} /* end while (*symbol != '\0') */
-
+	
 	logprintf(LOG_BLUE, "%ld ms for '%s%s'\n",
 	          (clock() - start_clock) * 1000 / CLK_TCK,
 	          location_Path (frame->Location, NULL), frame->Location->File);

@@ -64,6 +64,7 @@ struct s_input {
 struct s_select {
 	SLCTITEM ItemList;
 	WORD     NumItems;
+	char   * Array[1];
 };
 struct s_slctitem {
 	SLCTITEM Next;
@@ -73,6 +74,9 @@ struct s_slctitem {
 	WCHAR    Text[80];
 	char     Strng[82];
 };
+
+
+static void finish_selct (INPUT);
 
 
 /*============================================================================*/
@@ -93,6 +97,20 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	form->Last      = NULL;
 	
 	return form;
+}
+
+/*============================================================================*/
+void
+form_finish (TEXTBUFF current)
+{
+	INPUT input = (current->form ? ((FORM)current->form)->InputList : NULL);
+	while (input) {
+		if (input->Type == IT_SELECT) {
+			finish_selct (input);
+		}
+		input = input->Next;
+	}
+	current->form = NULL;
 }
 
 
@@ -355,6 +373,7 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 		if ((input->u.Select = sel) != NULL) {
 			sel->ItemList = NULL;
 			sel->NumItems = 0;
+			sel->Array[0] = NULL;
 		} else {
 			disabled = TRUE;
 		}
@@ -434,23 +453,40 @@ selct_option (TEXTBUFF current, const char * text, UWORD tlen,
 void
 selct_finish (TEXTBUFF current)
 {
-	INPUT  input = (current->form ? ((FORM)current->form)->Last : NULL);
-	SELECT sel;
-	
-	if (!input || input->Type != IT_SELECT) {
-		return;
+	INPUT input = (current->form ? ((FORM)current->form)->Last : NULL);
+	if (input && input->Type == IT_SELECT) {
+		finish_selct (input);
 	}
-	if ((sel = input->u.Select) == NULL || !sel->NumItems) {
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+finish_selct (INPUT input)
+{
+	SELECT sel = input->u.Select;
+	WORD   num;
+	
+	if (!sel || !sel->NumItems) {
 		input->disabled = TRUE;
 		
-	} else if (sel->NumItems < 0) {
-		SLCTITEM item = sel->ItemList;
-		short    wdth = 0;
-		do if (wdth < item->Width) {
-			wdth = item->Width;
-		} while ((item = item->Next) != NULL);
-		input->Word->word_width += wdth +2;
-		sel->NumItems = -sel->NumItems;
+	} else if ((num = -sel->NumItems) > 0) {
+		SELECT rdy = malloc (sizeof (struct s_select) + num * sizeof(char*));
+		if (rdy) {
+			SLCTITEM item = sel->ItemList;
+			short    wdth = 0;
+			rdy->ItemList = sel->ItemList;
+			rdy->NumItems = num;
+			rdy->Array[0] = rdy->Array[num] = NULL;
+			do {
+				if (wdth < item->Width) {
+					wdth = item->Width;
+				}
+				rdy->Array[--num] = item->Strng;
+			} while ((item = item->Next) != NULL && num);
+			input->Word->word_width += wdth +2;
+			free (sel);
+			input->u.Select = rdy;
+		}
 	}
 }
 
@@ -654,32 +690,18 @@ input_handle (INPUT input, GRECT * radio)
 				OFFSET * offset = &input->Paragraph->Offset;
 				long     x      = word->h_offset + input->Paragraph->Indent;
 				long     y      = word->line->OffsetY;
-				SLCTITEM item = sel->ItemList;
-				short    n    = sel->NumItems;
-			#ifdef __GNUC__
-				char   * tab[n +1];
-			#else
-				char  ** tab = malloc ((n +1) * sizeof(char*));
-			#endif
-				tab[0] = tab[n] = NULL;
-				while (n-- && item) {
-					tab[n] = item->Strng;
-					item   = item->Next;
-				}
+				short    n;
 				do {
 					x += offset->X;
 					y += offset->Y;
 				} while ((offset = offset->Origin) != NULL);
-				n = HW_form_popup (tab,
+				n = HW_form_popup (sel->Array,
 				                   x - frame->h_bar.scroll + frame->clip.g_x,
 				                   y - frame->v_bar.scroll + frame->clip.g_y
 				                     + word->word_tail_drop -1,
 				                   FALSE);
-			#ifndef __GNUC__
-				free (tab);
-			#endif
 				if (n >= 0) {
-					item = sel->ItemList;
+					SLCTITEM item = sel->ItemList;
 					while (++n < sel->NumItems && item->Next) {
 						item = item->Next;
 					}
