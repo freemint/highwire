@@ -1,5 +1,391 @@
 Ok here are the new supports and changes
 
+March 15, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 389 (box_anchor):  store CSS class names of boxes.
+
+  parser.c:
+    - line 43 (struct s_style):  new pointer Link for cascading
+      selectors.
+    - line 145 (delete_parser) + 684 + 752..763 + 772..774 + 777
+      + 823 (parse_css):  store cascading selektors.
+    - line 409 + 464..470 + 524 + 526..533 + 535..543 (parse_tag):  new
+      function css_filter() handles cascaded selectors.
+    - line 744 (parse_css):  allow '-' in pseudo code expressions.
+
+March 13, 2004
+
+  AltF4's patches
+
+  parser.c:
+    - line 581 (css_import):  fixed scanning of url end.
+
+March 11, 2004
+
+  AltF4's patches
+
+  defs.h:    line 355 + 378:
+  DomBox.c:  line 88 (dombox_dtor) + 362:
+    - new attributes and methods for block level element Id and Class.
+
+  render.c:
+    - line 374 + 390 (group_box) + 1132 (render_BODY_tag)
+      + 1834 (render_IMG_tag) + 2008 + 2020..2023 + 2046 (render_H_tag)
+      + 2170 + 2184 + 2193..2196 (render_P_tag) + 2441 (render_OL_tag)
+      + 2464 (render_UL_tag) + 2488 (render_MENU_tag)
+      + 2530 (render_LI_tag) + 2551 (render_DL_tag)
+      + 2580 (render_DT_tag) + 2605 (render_DD_tag)
+      + 2657 (render_TABLE_tag) + 2711 (render_TD_tag)
+      + 2737 (render_TH_tag):  new function box_anchor() to set DOMBOX
+      ids and store anchor structs.
+
+March 08, 2004
+
+  AltF4's patches
+
+  defs.h:      line 549 (struct paragraph_item):
+  Paragrph.c:  line 69..71 (vTab_MinWidth) + 91 + 94..96 (vTab_MaxWidth)
+               + 133 (new_paragraph) + 188 + 199 (add_paragraph)
+               + 289..291 (vTab_format):
+  Form.c:      line 656 + 663 + 694 (input_handle):
+    - paragraph->Indent removed, not needed any longer.
+
+March 07, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 330 (enum BOXCLASS):  new identifier BC_LIST.
+    - line 601 + 604 + 606 (struct list_stack_item):  Indent and Spacer
+      removed, new Type and ListItem.
+
+  global.h:
+    - line 138:  list_start() argumentlist extended.
+
+  Paragrph.c:
+    - line 188..193 (add_paragraph):  paragraph indention dropped.
+
+  list.c:    line 11..48 (list_start) + 55..86 (list_finish) + 296
+               + 300..314 + 397 (list_marker):
+  render.c:  line 2012..2014 (render_H_tag) + 2172..2175 (render_P_tag)
+             + 2433 (render_OL_tag) + 2454 (render_UL_tag)
+             + 2476 (render_MENU_tag) + 2510 (render_LI_tag)
+             + 2527 + 2529 (render_DL_tag) + 2551..2554 (render_DT_tag)
+             + 2577..2581 (render_DD_tag):
+    - rendering of lists reworked, are based on DOMBOXs now.
+
+March 02, 2004
+
+  AltF4's patches
+
+  global.h:
+    - line 129:  new function create_box(), leave_box() global
+      accessible now.
+
+  render.c:
+    - line 380..381 + 386..392 (group_box) + 400:  new function
+      create_box().
+    - line 402 (leave_box):  global accessible now.
+    - line 403 + 405 (leave_box) + 2210 (render_CENTER_tag)
+      + 2253 (render_BLOCKQUOTE_tag) + 2278 (render_DIV_tag):  argument
+      type changed.
+
+March 01, 2004
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 294 (vTab_format):  corrected width calculation.
+
+  render.c:
+    - line 293..325 (css_block_styles) + 369..409 (group_box)
+      + 2031..2035 (render_H_tag) + 2185..2190 (render_P_tag)
+      + 2541 (render_DL_tag) + 2569 (render_DT_tag)
+      + 2594 (render_DD_tag):  css_block_styles() replaced by new
+      function css_box_styles().
+
+February 29, 2004
+
+  AltF4's patches
+
+  Table.h:   line 19 (struct s_table_stack) + 63..64 (table_start):
+  Table.c:   line 82 + 96 (table_start):
+  render.c:  line 2639 + 2651..2653 (render_TABLE_tag)
+             + 2671..2673 (render_TR_tag) + 2697..2699 (render_TD_tag)
+             + 2725..2727 (render_TH_tag):
+    - flag isSpecial removed, not needed anymore.
+
+  DomBox.c:
+    - line 505 + 508 (vTab_format):  corrected blocking areas boundary
+      checks.
+
+  parser.c:
+    - line 499 (parse_tag):  ignore leading and trailing white spaces
+      in attribute values.
+
+  Paragrph.c:
+    - line 277.278 + 284 (vTab_format):  handle defined width for text
+      paragraphs.
+
+February 29, 2004
+
+  AltF4's patches
+
+  DomBox.c:
+    - line 178 (vTab_MinWidth):  check SetWidth getting smaller than
+      MinWidth.
+
+  render.c:
+    - line 2291..2294 (render_DIV_tag):  read width value as CSS
+      expression.
+
+February 28, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 614 (render_HTML_tag):  ignore </html> tags which are not at
+      the end of a page.
+    - line 1106 (render_BODY_tag):  ignore subsequent <bod<> tags.
+
+February 26, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 45 (enum H_ALIGN):  identifiers FLT_LEFT, FLT_RIGHT added.
+
+  DomBox.c:
+    - line 446..447 + 453..454 + 458..475 + 478..483 + 486..517
+      + 519 (vTab_format):  reworked for better support of float-around
+      boxes.
+
+  Paragrph.c:  line 297 (vTab_format):
+  Table.c:     line 743 (vTab_format):
+    - setting of X coordinate removed, already done in the base method.
+
+  render.c:
+    - line 1835 (render_IMG_tag) + 2607..2613 (render_TABLE_tag):
+      changed floating attribute assignment.
+    - line 1938 (render_BR_tag):  improved calculation of spacers.
+    - line 2283..2289 (render_DIV_tag):  more restricted inheritance of
+      floating attribute.
+
+February 24, 2004
+
+  AltF4's patches
+
+  Table.h:   line 26 (struct s_table):
+  Table.c:   line 21..28 + 100..101 + 110..114 + 121 (table_start)
+             + 256 (table_cell) + 440 (free_stack) + 482 (table_finish)
+             + 722 + 967 + 995 + 1018 (vTab_format)
+             + 1064 (vTab_ChildAt) + 1123 (vTab_draw):
+  render.c:  line 2621..2622 (render_TABLE_tag):
+    - tables reworked to DOMBOX objects, instead of using paragraph
+      structures.
+
+  Table.c:
+    - line 262 (table_cell):  collect illegally placed text before the
+      first cell of a table.
+
+  defs.h:
+    - line 40 (enum PARAGRAPH_CODE):  identifier PAR_TABLE removed.
+    - line 545 (struct paragraph_item):  TABLE pointer removed.
+
+  Paragrph.c:
+    - line 32..34 (vTab_delete) + 135 (new_paragraph) + 179..180
+      + 208 (add_paragraph) + 259..257 (paragrph_finish):  TABLE
+      pointer removed from paragraph structure.
+
+February 23, 2004
+
+  AltF4's patches
+
+  render.c:
+    - line 411 (group_box) + 429 (leave_box):  handling of CSS font
+      styles added.
+    - line 1124..1136 (render_BODY_tag):  handling of CSS margin
+      attribute added.
+    - line 2014 + 2033 (render_H_tag):  corrected handling of CSS
+      'bold' attribute.
+    - line 2018 (render_H_tag) + 2166 (render_P_tag):  handling of CSS
+      margin and padding attribute added.
+
+  p_dir.c:
+    - line 132 (parse_dir):  avoid Lattice compiler warning.
+
+February 22, 2004
+
+  AltF4's patches
+
+  DomBox.c:
+    - line 445 (vTab_format):  take MaxWidth into account.
+
+  render.c:
+    - line 138 (numerical):  allow negative values.
+    - line 427..429 (leave_box):  returns now the correct box.
+    - line 2266..2299 (render_DIV_tag):  reworked, produces a DOMBOX
+      object now.
+
+February 21, 2004
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 227 (add_paragraph):  inherit TextIndent from parent.
+
+  render.c:
+    - line 371 + 400 (group_box):  interprete text-indent attribute.
+
+February 20, 2004
+
+  AltF4's patches
+
+  DomBox.c:
+    - line 441 + 515 + 518 + 521..522 (dombox_format):  corrected again
+      height calculation concerning blocking areas.
+
+  render.c:
+    - line 403 + 2173..2174 + 2178 + 2180..2185 (render_CENTER_tag)
+      + 2203 + 2205 + 2226.2230 (render_BLOCKQUOTE_tag):  new function
+      leave_box().
+
+February 19, 2004
+
+  AltF4's patches
+
+  defs.h:      line 359 (struct DOMBOX) + 547..548 (struct PARAGRAPH):
+  Paragrph.c:  line 46..47 + 73 (vTab_MinWidth) + 98 (vTab_MaxWidth)
+               + 138..139 (new_paragraph) + 197..198 + 212
+               + 229 (add_paragraph) + 286 + 297 + 299
+               + 301 (vTab_format):
+  list.c:      line 26 + 29 + 35 (list_start) + 76 (list_finish)
+               + 307 (list_marker):
+  render.c     line 319 (css_block_styles):
+    - paragrph->Rindent removed, paragrph->Hanging reblaced by
+      dombox->TextIndent.
+
+February 18, 2004
+
+  AltF4's patches
+
+  Paragrph.c:  line 286 + 514 (vTab_format):
+  Table.c:     line 1022 (vTab_format):
+    - consider left/right margins.
+
+  token.h:
+    - line 231:  CSS_PADDING is not longer mapped to KEY_CELLPADDING.
+    - line 228 + 232:  new CSS keywords for margin and padding.
+
+  render.c:
+    - line 133 + 136..139 + 142..143 + 148..149 + 179 (numerical)
+      + 194 (css_text_styles) + 304..306 (css_block_styles)
+      + 1837 (render_BR_tag):   argument list of numerical() extended
+      to return a pointer behind the expression.
+    - line 312 + 337 (group_box) + 1746 (render_IMG_tag)
+      + 1840..1849 (render_BR_tag) + 2545 (render_TABLE_tag):  new
+      function box_frame() to interprete CSS attributes margin and
+      padding.
+    - line 2527 + 2530 + 2544 (render_TABLE_tag):  CSS_PADDING is not
+      longer mapped to KEY_CELLPADDING.
+
+February 17, 2004
+
+  AltF4's patches
+
+  Table.c:
+    - line 93 (table_start):  set table stack alignment values to
+      defaults to catchup malformed HTML (missing <tr> as in CAB
+      hotlist).
+
+  token.h:
+    - line 210:  new CSS token border-color.
+
+  render.c:
+    - line 312 + 2082..2097 (render_CENTER_tag):  new function
+      group_box().
+    - line 2113..2147 (render_BLOCKQUOTE_tag):  reworked to produce a
+      box of class BC_GROUP.
+
+  Paragrph.c:
+    - line 231..232 (add_paragraph):  top margin calculation improved
+      for parents of class GROUP.
+    - line 486 (vTab_format):  add one pixel of hight for the last text
+      line.
+
+  DomBox.c:
+    - line 531..535 (dombox_format):  calculate blocking area bottoms
+      to box height.
+
+February 16, 2004
+
+  AltF4's patches
+
+  defs.h:    line 375:
+     - new function dombox_adopt().
+
+  DomBox.c:
+    - line 403:  new function dombox_adopt().
+    - line 411 + 481 (vTab_format):  calculate blocking areas to
+      box-relative coordinate.
+
+  Paragrph.c:
+    - line 141 + 154 (new_paragraph) + 225 (add_paragraph):  paragraph
+      alignment inherited from parent.
+
+  render.c:
+    - line 59..77:  get_align() removed.
+    - line 1916 + 1933 (render_H_tag) + 2062 + 2078 (render_P_tag):
+      paragraph alignment inherited from parent.
+    - line 2098..2108 (render_CENTER_tag):  reworked to produce a box
+      of class BC_GROUP.
+    - line 2528..2531 (render_TABLE_tag):  outdated patch removed.
+
+February 15, 2004
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 351 (vTab_format):  move leading text words below blocking
+      areas if they don't fit between/besides.
+
+  DomBox.c:
+    - line 421 (vTab_format):  don't move text paragraphs due to
+      blocking areas.
+
+  render.c:
+    - line 2192 + 2194 (render_DIV_tag):  inherit float attribute from
+      single child object.
+
+February 15, 2004
+
+  AltF4's patches
+
+  defs.h:
+    - line 330 (enum BOXCLASS):  new identifier BC_SINGLE.
+    - line 340 + 369:  new DOMBOX method Paragrph().
+
+  render.c:
+    - line 1727..1728 (render_IMG_tag) + 3052 (render_hrule):  new
+      BOXCLASS identifier BC_SINGLE.
+
+  DomBox.c:    line 13 + 20 + 199:
+  Paragrph.c:  line 101 + 139 (new_paragraph) + 210 (add_paragraph):
+  Containr.c:  line 947 (containr_Element):
+    - new DOMBOX method Paragrph().
+
+February 14, 2004
+
+  AltF4's patches
+
+  Paragrph.c:
+    - line 275 + 286 + 289 + 291 + 296 + 301 + 392 + 402 + 412..413
+      + 429..431 + 436..438 + 441 + 449..451 + 454 + 476 + 478
+      + 480 (vTab_format):  code simplified.
+
 February 13, 2004
 
   AltF4's patches
