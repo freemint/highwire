@@ -3099,7 +3099,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_HEIGHT),
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
-			         get_value_unum  (parser, KEY_COLSPAN, 0));
+			         get_value_unum  (parser, KEY_COLSPAN, 1));
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		current->parentbox->HtmlCode = TAG_TD;
 		box_anchor (parser, current->parentbox, TRUE);
@@ -3125,7 +3125,7 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_HEIGHT),
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
-			         get_value_unum  (parser, KEY_COLSPAN, 0));
+			         get_value_unum  (parser, KEY_COLSPAN, 1));
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;

@@ -364,6 +364,11 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	if (rowspan > 1) {
 		cell->RowSpan = rowspan;
 	}
+
+	if (colspan == 0) {
+		colspan = table->NumCols;
+	}
+	
 	if (colspan > 1) {
 		short span = 2 - colspan;
 		cell->ColSpan = colspan;
