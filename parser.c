@@ -63,8 +63,9 @@ new_parser (LOADER loader)
 	
 	containr_clear (parser->Target);
 	if (!loader->notified) {
-		loader->notified = containr_notify (loader->Target, HW_PageStarted,
-		                                    loader->Location->FullName);
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 	}
 	parser->Target->u.Frame = parser->Frame;
 	

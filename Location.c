@@ -226,6 +226,66 @@ location_share  (LOCATION loc)
 
 
 /*============================================================================*/
+size_t
+location_FullName (LOCATION loc, char * buffer, size_t max_len)
+{
+	DIR_ENT      dir = loc->Dir;
+	char       * dst = buffer;
+	const char * src;
+	
+	switch (loc->Proto) {
+		case PROT_ABOUT:  src = "about://"; break;
+		case PROT_MAILTO: src = "mailto:";  break;
+		case PROT_HTTP:   src = "http://";  break;
+		case PROT_HTTPS:  src = "https://"; break;
+		case PROT_FTP:    src = "ftp://";   break;
+		default:          src = (dir->isTos ? NULL : "file://");
+	}
+	if (src) {
+		size_t len = strlen (src);
+		if (len > max_len) {
+			len = max_len;
+		}
+		strncpy (dst, src, len);
+		dst     += len;
+		max_len -= len;
+	}
+	
+	if (max_len && loc->Host) {
+		HOST_ENT host = loc->Host;
+		size_t   len  = strlen (host->Name);
+		if (len > max_len) {
+			len = max_len;
+		}
+		strncpy (dst, host->Name, len);
+		dst     += len;
+		max_len -= len;
+	}
+	
+	if (max_len) {
+		size_t len = (dir->Length < max_len ? dir->Length : max_len);
+		strncpy (dst, dir->Name, len);
+		dst     += len;
+		max_len -= len;
+	}
+	
+	if (max_len && *loc->File) {
+		size_t len = strlen (loc->File);
+		if (len > max_len) {
+			len = max_len;
+		}
+		strncpy (dst, loc->File, len);
+		dst     += len;
+		max_len -= len;
+	}
+	
+	dst[max_len ? 0 : -1] = '\0';
+	
+	return (src - buffer);
+}
+
+
+/*============================================================================*/
 const char *
 location_Path  (LOCATION loc, UWORD * opt_len)
 {

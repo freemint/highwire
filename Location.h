@@ -36,9 +36,10 @@ void     free_location (LOCATION *);
 
 LOCATION location_share (LOCATION);
 
-const char * location_Path  (LOCATION, UWORD * opt_len);
-const char * location_Host  (LOCATION);
-BOOL         location_equal (LOCATION, LOCATION);
+size_t       location_FullName (LOCATION, char * buffer, size_t max_len);
+const char * location_Path     (LOCATION, UWORD * opt_len);
+const char * location_Host     (LOCATION);
+BOOL         location_equal    (LOCATION, LOCATION);
 
 BOOL location_resolve (LOCATION);
 int  location_open    (LOCATION, const char ** host_name);

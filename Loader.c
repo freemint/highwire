@@ -420,8 +420,9 @@ loader_job (void * arg, long invalidated)
 	}
 	
 	if (!loader->notified) {
-		loader->notified = containr_notify (loader->Target, HW_PageStarted,
-		                                    loader->Location->FullName);
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 	}
 	
 	if (loader->Location->Proto == PROT_HTTP) {
@@ -624,8 +625,9 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 		
 #ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
-		loader->notified = containr_notify (loader->Target, HW_PageStarted,
-		                                    loader->Location->FullName);
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 		sched_insert (loader_job, loader, (long)loader->Target);
 #endif /* USE_INET */
 	
@@ -641,8 +643,9 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 		sched_insert (parse_image, new_parser (loader), (long)loader->Target);
 		
 	} else {
-		loader->notified = containr_notify (loader->Target, HW_PageStarted,
-		                                    loader->Location->FullName);
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 		sched_insert (loader_job, loader, (long)loader->Target);
 	}
 	
