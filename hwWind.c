@@ -22,11 +22,10 @@
 
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
 static WORD  inc_xy = 0;
+static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
-static GRECT temp_area1;
-static GRECT temp_area2;
 
 WORD   hwWind_Mshape = ARROW;
 HwWIND hwWind_Top    = NULL;
@@ -62,15 +61,10 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		bevent = (appl_xgetinfo(AES_WINDOW, &out, &u,&u,&u) && (out & 0x20));
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
-
-		wind_calc_grect (WC_WORK, MOVER, &desk_area, &temp_area1);
-		wind_calc_grect (WC_WORK, VSLIDE|HSLIDE, &desk_area, &temp_area2);
-
-		inc_xy = (temp_area1.g_h - temp_area2.g_h);
-
-		curr_area.g_w -= desk_area.g_w;
-		curr_area.g_h -= desk_area.g_h;
-
+		widget_b = desk_area.g_x - curr_area.g_x;
+		widget_w = curr_area.g_w - desk_area.g_w;
+		widget_h = curr_area.g_h - desk_area.g_h;
+		inc_xy   = max (widget_w, widget_h) - widget_b;
 		if (desk_area.g_w < 800) {
 			curr_area = desk_area;
 			curr_area.g_w = (desk_area.g_w *2) /3;
@@ -216,14 +210,10 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 			return;
 	}
 	
-	p[0].p_y = This->Work.g_y + This->Work.g_h + 1;
-	p[1].p_y = p[0].p_y                        + inc_xy -2;
-#if (_HIGHWIRE_REALINFO_==TRUE)
-	p[0].p_x = This->Work.g_x                  + inc_xy;
-#else
-	p[0].p_x = This->Work.g_x                  + 1;
-#endif
-	p[1].p_x = This->Work.g_x + This->Work.g_w - inc_xy -1;
+	p[0].p_y = This->Work.g_y + This->Work.g_h                       +1;
+	p[1].p_y = This->Curr.g_y + This->Curr.g_h            - widget_b -1;
+	p[0].p_x = This->Curr.g_x                  + widget_w - widget_b +1;
+	p[1].p_x = This->Curr.g_x + This->Curr.g_w - widget_w + widget_b -2;
 	
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
