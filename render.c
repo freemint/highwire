@@ -1386,9 +1386,31 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			BOOL    slash;
 			HTMLTAG tag;
 			while (*line && *(line++) != '<');
+			if (*line == '!') {
+				char delim = '\0';
+				while (*(++line) == '-');
+				while (*line) {
+					if (*line == '\\') {
+						if (*(++line)) line++;
+						else           break;
+					} else if (*line == '\'' || *line == '"') {
+						if (delim) delim = '\0';
+						else       delim = *line;
+						line++;
+					} else if (*line == '-' && !delim) {
+						while (*(++line) == '-');
+						if (*line == '>') break;
+					} else {
+						line++;
+					}
+				}
+				if (*line) line++;
+				if (*line) continue;
+				else       break;
+			}
 			slash = (*line == '/');
 			if (slash) line++;
-			else       save = line +1;
+			else       save = line;
 			tag = parse_tag (parser, &line);
 			if (slash) {
 				if (tag == TAG_SCRIPT) {
