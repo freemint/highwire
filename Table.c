@@ -855,16 +855,18 @@ table_calc (TABLE table, long max_width)
 		if (max_width > table->t_MaxWidth) {
 			 max_width = table->t_MaxWidth;
 		}
+		max_width -= table->t_MinWidth;
+		
 		/* first mark all columns to be spread with a negative value */
 		do {
 			*col_width = *minimum;
 			if (*percent) {
-				long width = (table->t_MinWidth * *percent +512) /1024 - *minimum;
+				long width = (max_width * *percent +512) /1024;
 				if (width > spread) {
-					*col_width += spread;
+					*col_width = spread + *minimum;
 					spread = 0;
 				} else if (width > 0) {
-					*col_width += width;
+					*col_width = width + *minimum;
 					spread -= width;
 				}
 				rest--;
