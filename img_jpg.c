@@ -140,7 +140,12 @@ decJpg_quit (IMGINFO info)
 {
 	JPEG_DEC jpeg = info->_priv_data;
 	if (jpeg) {
-		jpeg_finish_decompress  (jpeg);
+		jmp_buf escape;
+		jpeg->client_data = &escape;
+		if (!setjmp (escape)) {
+			jpeg_finish_decompress (jpeg);
+		}
+		jpeg->client_data = NULL;
 		jpeg_destroy_decompress (jpeg);
 		free   (jpeg->err);
 		free   (jpeg);
