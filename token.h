@@ -128,7 +128,7 @@
 		__KEY_ITEM (COLS),         /* FRAMESET */
 		__KEY_ITEM (COLSPAN),      /* TD,TH */
 		__KEY_ITEM (CONTENT),      /* META */
-		__KEY_ITEM (DISABLED),     /* INPUT */
+		__KEY_ITEM (DISABLED),     /* INPUT,SELECT,OPTION */
 		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (FRAMESPACING), /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (HEIGHT),       /* HR,IMG,TABLE,TD,TH,TR */
@@ -150,6 +150,7 @@
 		__KEY_ITEM (ROWS),         /* FRAMESET */
 		__KEY_ITEM (ROWSPAN),      /* TD,TH */
 		__KEY_ITEM (SCROLLING),    /* FRAME */
+		__KEY_ITEM (SELECTED),     /* OPTION */
 		__KEY_ITEM (SHOUT),        /* IOD   -- IOD4 proprietary */
 		__KEY_ITEM (SIZE),         /* BASEFONT,FONT,HR */
 		__KEY_ITEM (SRC),          /* EMBED,FRAE,IMG  -- EMBED = NS proprietary */
