@@ -26,7 +26,6 @@ struct hw_window {
 	void  * Pane;
 	void  * Active;
 	void  * Input;
-	char    Name[128];
 	char    Stat[128];
 	char    Info[128];
 	UWORD   HistUsed;
@@ -38,12 +37,12 @@ struct hw_window {
 HwWIND  new_hwWind   (const char * name, const char * url, LOCATION);
 #define delete_hwWind(HwWIND)   delete_window (&(HwWIND)->Base)
 
-void hwWind_setName (HwWIND, const char *);
-void hwWind_setInfo (HwWIND, const char *, BOOL statNinfo);
-#define hwWind_raise(HwWIND, BOOL)      window_raise (&HwWIND->Base, BOOL, NULL)
-void hwWind_scroll  (HwWIND, CONTAINR, long dx, long dy);
-void hwWind_history (HwWIND, UWORD menu, BOOL renew);
-void hwWind_undo    (HwWIND, BOOL redo);
+#define hwWind_setName(HwWIND, name)    window_setName (&HwWIND->Base, name)
+void    hwWind_setInfo(HwWIND, const char *, BOOL statNinfo);
+#define hwWind_raise(  HwWIND, BOOL)    window_raise (&HwWIND->Base, BOOL, NULL)
+void    hwWind_scroll (HwWIND, CONTAINR, long dx, long dy);
+void    hwWind_history(HwWIND, UWORD menu, BOOL renew);
+void    hwWind_undo   (HwWIND, BOOL redo);
 
 extern WORD   hwWind_Mshape;
 extern HwWIND hwWind_Focus;

@@ -16,6 +16,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 	BOOL   isFull;
 	BOOL   isScrn;     /* special full screen mode as from F11 in Mozilla/IE */
 	GRECT  Curr;       /* outer extents of the window */
+	char   Name[80];   /* title bar string */
 	/***/
 	WINDOW(*destruct)(WINDOW_t);
 	BOOL (*evMessage)(WINDOW_t, WORD msg[], PXY, UWORD kstate);
@@ -40,5 +41,6 @@ void window_evKeybrd  (UWORD key, UWORD kstate);
 
 void window_redraw (WINDOW, const GRECT *);
 
-void window_raise  (WINDOW, BOOL topNbot, const GRECT *);
-void window_resize (WINDOW, const GRECT *, BOOL fulled);
+const char * window_setName (WINDOW, const char *);
+void         window_raise   (WINDOW, BOOL topNbot, const GRECT *);
+void         window_resize  (WINDOW, const GRECT *, BOOL fulled);

@@ -308,19 +308,6 @@ vTab_destruct (HwWIND This)
 }
 
 
-/*============================================================================*/
-void
-hwWind_setName (HwWIND This, const char * name)
-{
-	if (name && *name) {
-		strncpy (This->Name, name, sizeof(This->Name));
-		This->Name[sizeof(This->Name)-1] = '\0';
-	} else {
-		This->Name[0] = '\0';
-	}
-	wind_set_str (This->Base.Handle, WF_NAME, This->Name);
-}
-
 /*----------------------------------------------------------------------------*/
 static void
 draw_busybar (HwWIND This, const GRECT * area, const GRECT * clip)
@@ -627,7 +614,7 @@ vTab_sized (HwWIND This)
 			} else {
 				This->IbarH = widget_h - widget_b -1;
 			}
-			wind_set_str (This->Base.Handle, WF_NAME, This->Name);
+			wind_set_str (This->Base.Handle, WF_NAME, This->Base.Name);
 			if (bevent) {
 				wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
 			}
@@ -776,7 +763,7 @@ hist_append (HwWIND This, CONTAINR sub)
 		This->History[menu] = history_create (sub, This->Stat,
 		                                 (prev < 0 ? NULL : This->History[prev]));
 	} else {
-		This->History[menu] = history_create (This->Pane, This->Name, NULL);
+		This->History[menu] = history_create (This->Pane, This->Base.Name, NULL);
 	}
 	if (prev >= 0) {
 		This->History[prev]->Text[0] = ' ';
@@ -1183,6 +1170,7 @@ vTab_drawWork (HwWIND This, const GRECT * clip)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /* This is the old icon */
+#if 0
 static UWORD oldlogo_data[] = {
 	0x000c,0x0000, 0x0003,0xef00, 0x001f,0x7600, 0x0031,0xfb80,
 	0x0031,0xf080, 0x0006,0x70c0, 0x00ff,0xec00, 0x0087,0x7fc0,
@@ -1193,6 +1181,7 @@ static UWORD oldlogo_data[] = {
 	0x00d8,0x2600, 0x00d0,0x7600, 0x01b1,0x2600, 0x01ff,0xfe00,
 	0x0362,0x3200, 0x0260,0x3300, 0x0660,0x3300, 0x0460,0x3300
 };
+#endif
 
 static UWORD logo1_data[] = {
 	0x0000,0x0000, 0x0000,0x7f00, 0x0000,0xffc0, 0x01ff,0xfffc,

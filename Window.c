@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <gem.h>
 
 #include "global.h"
@@ -41,6 +42,7 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->isIcon  = FALSE;
 		This->isFull  = FALSE;
 		This->isScrn  = FALSE;
+		This->Name[0] = '\0';
 		This->Next = This->Prev = NULL;
 		
 		This->destruct  = window_dtor;
@@ -308,6 +310,22 @@ window_redraw (WINDOW This, const GRECT * clip)
 	}
 	
 	wind_update (END_UPDATE);
+}
+
+
+/*============================================================================*/
+const char *
+window_setName (WINDOW This, const char * name)
+{
+	if (name && *name) {
+		strncpy (This->Name, name, sizeof(This->Name));
+		This->Name[sizeof(This->Name)-1] = '\0';
+	} else {
+		This->Name[0] = '\0';
+	}
+	wind_set_str (This->Handle, WF_NAME, This->Name);
+	
+	return This->Name;
 }
 
 
