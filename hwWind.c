@@ -20,6 +20,8 @@
 #define HISTORY_LAST 20
 
 
+static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
+static WORD  hsl_top   = -1, hsl_bot;
 static WORD  inc_xy = 0;
 static BOOL  bevent;
 static GRECT desk_area;
@@ -68,7 +70,19 @@ new_hwWind (const char * name, const char * info, const char * url)
 			curr_area.g_w = (desk_area.g_w *3) /4;
 			curr_area.g_h = (desk_area.g_h *3) /4;
 		}
-	
+		if (!ignore_colours) {
+			u   = W_HELEV;
+			out = -1;
+			if (wind_get (0, WF_DCOLOR, &u, &out, &u, &u) && out != -1) {
+				info_bgnd = out & 0x000F;
+				if (info_bgnd == G_BLACK) {
+					info_fgnd = G_WHITE;
+				}
+				u = W_HSLIDE;
+				wind_get (0, WF_DCOLOR, &u, &hsl_top, &hsl_bot, &u);
+			}
+		}
+		
 	} else {
 		curr_area.g_x += inc_xy;
 		if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
@@ -95,15 +109,22 @@ new_hwWind (const char * name, const char * info, const char * url)
 	
 	set_size (This, &curr_area);
 	hwWind_setName (This, name);
-#if (_HIGHWIRE_INFOLINE_==TRUE)
+	This->Stat[0] = ' ';
 	This->Info[0] = '\0';
-	hwWind_setInfo (This, info, TRUE);
+#if (_HIGHWIRE_INFOLINE_==TRUE)
+	wind_set_str (This->Handle, WF_INFO, This->Info);
 #endif
 
 	if (bevent) {
 		wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
 	}
+	if (hsl_top != -1) {
+		wind_set (This->Handle, WF_COLOR, W_HBAR, hsl_top, hsl_bot, -1);
+	}
 	wind_open_grect (This->Handle, &This->Curr);
+#if (_HIGHWIRE_INFOLINE_==TRUE)
+	hwWind_setInfo (This, info, TRUE);
+#endif
 
 	if (url && *url) {
 		new_loader_job (url, NULL, This->Pane, ENCODING_WINDOWS1252, -1,-1);
@@ -170,40 +191,53 @@ hwWind_setName (HwWIND This, const char * name)
 /*----------------------------------------------------------------------------*/
 /* Set Horizontal scroller space text - only works on top windows */
 
-void
+static void
 hwWind_setHSInfo (HwWIND This, const char * info)
 {
-	PXY p[8];
+	short dmy;
+	PXY   p[2];
 
-	if (This != hwWind_Top)
+	if (This != hwWind_Top || This->isIcon) {
 		return;
-	else {
-		short top, dmy;
+	} else {
+		short top;
 		wind_get (0, WF_TOP, &top, &dmy, &dmy, &dmy);
 		if (top != This->Handle)
 			return;
 	}
 	
-	p[0].p_y = p[2].p_y = This->Work.g_y + This->Work.g_h + 1;
-	p[1].p_y = p[3].p_y = This->Work.g_y + This->Work.g_h + 16;
-	p[0].p_x = This->Work.g_x + 18;
-	p[1].p_x = This->Work.g_x + This->Work.g_w - 20;
-
+	p[1].p_y = This->Curr.g_y + This->Curr.g_h -1;
+	p[0].p_y = p[1].p_y                        - inc_xy +2;
+	p[0].p_x = This->Curr.g_x                  + inc_xy;
+	p[1].p_x = This->Curr.g_x + This->Curr.g_w - inc_xy -1;
+	
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_style    (vdi_handle, 4);
-	vsf_color    (vdi_handle, G_WHITE);
-
-	v_bar        (vdi_handle, (short*)p);
-
-	vst_color (vdi_handle, G_BLACK);
-	vswr_mode (vdi_handle, MD_TRANS);
-
-	vst_map_mode (vdi_handle, 1);
+	vsf_color    (vdi_handle, info_bgnd);
+	
+	dmy = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
+	if (vst_font (vdi_handle, dmy) == 1) {
+		vst_point (vdi_handle, (inc_xy < 16 ? 11 : 12), &dmy, &dmy, &dmy, &dmy);
+	} else {
+		vst_height (vdi_handle, 14, &dmy, &dmy, &dmy, &dmy);
+	}
+	vst_color     (vdi_handle, info_fgnd);
+	vst_map_mode  (vdi_handle, 1);
+	vst_effects   (vdi_handle, TXT_NORMAL);
+	vst_alignment (vdi_handle, TA_LEFT, TA_DESCENT, &dmy, &dmy);
 
 	vs_clip_pxy (vdi_handle, p);
 
-	v_ftext(vdi_handle, This->Work.g_x + 18, This->Work.g_y + This->Work.g_h + 14, info);
+	v_hide_c     (vdi_handle);
+	v_bar        (vdi_handle, (short*)p);
+
+	vswr_mode (vdi_handle, MD_TRANS);
+
+	v_ftext  (vdi_handle, p[0].p_x +1, p[1].p_y -1, info);
+	v_show_c (vdi_handle, 1);
+	
+	vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
 
 	vs_clip_off (vdi_handle);
 }
@@ -218,9 +252,11 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 			strncpy (This->Stat, info, sizeof(This->Stat));
 			This->Stat[sizeof(This->Stat)-1] = '\0';
 			info = This->Stat;
-		} else {
+		} else if (This->Stat[0]) {
 			This->Stat[0] = '\0';
 			info = This->Info;
+		} else {
+			info = (This->Info[0] ? This->Info : NULL);
 		}
 	
 	} else {
@@ -228,14 +264,18 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 			strncpy (This->Info, info, sizeof(This->Info));
 			This->Info[sizeof(This->Info)-1] = '\0';
 			info = This->Info;
-		} else {
+		} else if (This->Info[0]) {
 			This->Info[0] = '\0';
 			info = This->Stat;
+		} else {
+			info = (This->Stat[0] ? This->Stat : NULL);
 		}
 	}
-	wind_set_str (This->Handle, WF_INFO, info);
 	
-	hwWind_setHSInfo(This, info);
+	if (info) {
+		wind_set_str (This->Handle, WF_INFO, info);
+		hwWind_setHSInfo(This, info);
+	}
 }
 #endif
 
@@ -299,6 +339,7 @@ hwWind_full (HwWIND This)
 		if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
 			hwWind_redraw (This, &prev);
 		}
+		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 	}
 }
 
@@ -322,6 +363,7 @@ hwWind_iconify (HwWIND This, const GRECT * icon)
 				wind_set_grect (This->Handle, WF_CURRXYWH, &This->Curr);
 			}
 			This->isIcon = FALSE;
+			hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 		}
 	}
 }
@@ -347,6 +389,7 @@ hwWind_raise (HwWIND This, BOOL topNbot)
 			}
 		}
 		wind_set (This->Handle, WF_TOP, 0,0,0,0);
+		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 		
 	} else {
 		if (This->Next) {
