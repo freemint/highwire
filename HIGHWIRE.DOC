@@ -1,4 +1,4 @@
-Last updated: December 7, 2003
+Last updated: December 12, 2003
 
 =====================================
 
@@ -72,10 +72,14 @@ New items since it went open source:
   ù Frameset Support (90%)
   ù Tables (98%)
   ù HTML 4 compliant (90%)
+  ù HTML forms (20%)  
+  ù Online OVLs for mintnet, sting and support for iconnect
   ù Colour support (mapped to current system palette)
-  ù Graphics (95%) - Now loads HTML files with Gifs and Jpgs - colours are 
-    perfect in mono/256/32k/64k modes - other modes(24/32 bit) need adjusting
-  ù Gifs can now be dragged to a Highwire window where it will be displayed
+  ù Graphics (95%) - Now loads HTML files with Gifs, Jpgs and Pngs (50%) -
+    colours are  perfect in mono/256/32k/64k modes - other modes(24/32 bit) need
+    adjusting
+  ù Files (Graphics, HTMLs, Docs etc.) can be dragged to a Highwire window 
+    where they will be displayed
   ù Implementation of memory caching of images avoids multiple 
     loading of the same image. The pseudo URI "about:cache" now 
     shows detailed information about cached images.
@@ -150,11 +154,8 @@ New items since it went open source:
 It is currently missing:
 
   ù user interface
-  ù online module
-  ù HTML forms
   ù Java/JavaScript support
   ù use of internet clients
-  ù Support for PNG
   ù External viewer support
   ù lots more...
  
@@ -180,6 +181,7 @@ HighWire Code
   ù Matthias Jaap
   ù Rafal Kawecki
   ù David Leaver
+  ù Markus Lutz
   ù Mike De.Petris
   ù Denis Huguet (aka Stghost)
   ù Robert Goldsmith (original HighWire author - non active)
