@@ -234,6 +234,12 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	sprintf (buf, "Screen Mode: '%s'\r", image_dispinfo());
 	render_text (current, buf);
 	
+	sprintf (buf, "Config File: ");
+	render_text (current, buf);
+	sprintf (buf, (!cfg_File ? "(none)\r" : "%.*s\r"),
+	              (int)sizeof(buf) -1, cfg_File);
+	render_text (current, buf);
+	
 	render_link (current, "modules: ", "about:modules", link_color);
 	if (m_num) {
 		sprintf (buf, "%li loaded\r", m_num);
