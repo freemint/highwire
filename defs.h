@@ -322,12 +322,12 @@ typedef struct {
 } TBLR;
 
 typedef enum {
-	BC_MAIN = 0, /* BODY              */
-	BC_TABLE,    /* TABLE             */
-	BC_STRUCT,   /* TD, TH, DIV, ..   */
-	BC_GROUP,    /* DL,OL, UL, Hn, .. */
-	BC_MIXED,    /* LI, ..            */
-	BC_TXTPAR    /* P, IMG, HR, ..    */
+	BC_MAIN = 0, /* BODY                   */
+	BC_TABLE,    /* TABLE                  */
+	BC_STRUCT,   /* TD, TH, ..             */
+	BC_GROUP,    /* DIV, DL,OL, UL, Hn, .. */
+	BC_MIXED,    /* LI, ..                 */
+	BC_TXTPAR    /* P, IMG, HR, ..         */
 } BOXCLASS;
 
 typedef struct blocking_area * BLOCKER;
@@ -369,6 +369,7 @@ DOMBOX * dombox_dtor (DOMBOX *);
 #define  dombox_MaxWidth(this)     ((*((this)->_vtab->MaxWidth))(this))
 DOMBOX * dombox_byCoord (DOMBOX *, LRECT *, long * px, long * py);
 void     dombox_draw    (DOMBOX *, long x, long y, const GRECT * clip, void *);
+void     dombox_reorder (DOMBOX *, DOMBOX * behind);
 void     dombox_format  (DOMBOX *, long width);
 void     dombox_stretch (DOMBOX *, long height, V_ALIGN valign);
 
