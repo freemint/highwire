@@ -2,16 +2,12 @@
 * 
 * This will be the programming API for the ovl system.
 *
-* version 0.1
-* Dan Ackerman
-* aka baldrick@netset.com
-*
 */
 #ifndef __OVL_API__H__
 #define __OVL_API__H__
 
 
-#define OVL_REVISION 0x20030124ul
+#define OVL_REVISION 0x20030206ul
 
 
 /* unique header identification */
@@ -19,22 +15,25 @@
    or more appropriately which ever version your compiler is 
    more comfortable with
 */
-#define OVL_MAGIC		"WiRe"
-
-
+#define OVL_MAGIC	0x57695265L		/* "WiRe" 	 */
+	
 /*--- Module functions used by the client ---*/
 typedef struct ovl_methods_t
 {
 	union { char c[4]; long l;
 	}    magic;
 	long revision; /* interface revision date in ISO yyyymmdd  BCD */
-	long flags;    /* same basic information: */
+	long flags;    /* startup basic information: */
 	#define OF_SIMPLE  0x0000uL /* nothing special to do */
 	#define OF_STARTUP 0x0001uL /* needs to get main() started, Pexec(4) */
 	#define OF_CHLDPRC 0x0002uL /* needs to be started as process, Pexec(104) */
 	#define OF_THREAD  0x0003uL
+	long ftabtype; /* Function Table mapping reference */
+	#define FTAB_SIMPLE  0x0000uL /* standard FTAB interface   */
+	#define FTAB_NETWORK 0x0001uL /* networking FTAB interface */
 	long               __CDECL (*ovl_init)   (void);
 	struct ovl_info_t *__CDECL (*ovl_version)(void);
+	long               __CDECL (*ovl_getftab)(void);
 	long               __CDECL (*ovl_free)   (void);
 	long * magic_l;
 } OVL_METH;
@@ -53,10 +52,10 @@ struct ovl_info_t
 #ifdef OVL_MODULE
 
 #define _ovl_head { OVL_MAGIC }, OVL_REVISION
-#define _ovl_tail ovl_init, ovl_version, ovl_free, &ovl_methods.magic.l
+#define _ovl_tail ovl_init, ovl_version, ovl_getftab, ovl_free, &ovl_methods.magic.l
 
 /* shorthand for the OVL function table definition */
-#define OVL_DECL(flags) OVL_METH ovl_methods = { _ovl_head, flags, _ovl_tail }
+#define OVL_DECL(flags,ft_type) OVL_METH ovl_methods = { _ovl_head, flags, ft_type, _ovl_tail }
 
 
 #else /* ! OVL_MODULE*/
@@ -84,6 +83,12 @@ size_t module_info (MODULINF*);
  * ----------------------------------------------------------------- */
 
 #define ovl_version()          (*ovl_methods->ovl_version)()		
+
+/* ----------------------------------------------------------------- *
+ * ovl_getftab - Returns function table for OVL                      *
+ * ----------------------------------------------------------------- */
+
+#define ovl_getftab()          (*ovl_methods->ovl_getftab)()		
 
 /* ----------------------------------------------------------------- *
  * ovl_free - De-initialization of ovl                               *

@@ -1,9 +1,5 @@
 /* OVL_SYS.C
 *
-* version 0.1
-* Dan Ackerman
-* aka baldrick@netset.com
-*
 * starting guts of OVL loading and handling system
 *
 */
