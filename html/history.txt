@@ -1,5 +1,134 @@
 Ok here are the new supports and changes
 
+August 30, 2003
+
+  AltF4's patches
+
+  O_Struct.c:  line 10..14 (destroy_named_location_structure)
+               + 23..29 (new_named_location) + 39..42 (new_step)
+               +50..51 (add_step) + 58..68 (destroy_step)
+               + 77..83 (new_url_link):
+  W_Struct.c:  line 30 + 45..53 (_alloc) + 118 + 128 (new_word)
+               + 182..186 + 193..195 (word_store):
+  image.c:     line 417..420 (image_job) + 518 + 522 + 543..547 (setup):
+  render.c:    line 165..175 (insert_anchor)
+               + 1087 + 1110..1114 (render_A_tag):
+  schedule.h:  line 42:
+  schedule.c:  line 42 + 46..55 (sched_insert):
+    - added checks to avoid crashes due to memory exhausted.
+
+  image.c:
+    - line 194..195 (new_image) + 295..296 (image_calculate):  take
+      care if scheduler insert failed.
+
+  Loader.c:
+    - line 340 + 342 (start_objc_load):  added forgotten #ifdef.
+
+August 27, 2003
+
+  AltF4's patches
+
+  render.c
+    - line 2299..2381 (parse_html):  avoid infinit loops on too long
+      lines.
+
+  img_png.c:
+    - line 72 (decPng_start):  set correct component number despite of
+      alpha channel.
+
+August 26, 2003
+
+  AltF4's patches
+
+  global.h:  line 149:
+  color.c:   line 128:
+    - new function color_lookup().
+
+  image.c:
+    - line 2034..2039 + 2045..2050 (init_display):  made use of new
+      color_lookup(), saves a lot calls of vq_color().
+    - line 465 + 492..502 (setup) + 1053 (raster_I4) + 1147
+      + 1208 (raster_I8) + 1288 (raster_P8) + 1856..1858 (cnvpal_4_8)
+      + 1877..1880 (cnvpal_15) + 1904..1907 (cnvpal_high) + 1930
+      + 1938 (cnvpal_true):  format of colormap changed.
+    - line 1047..1053 (raster_I4) + 1856..1858 (cnvpal_4_8):  enabled
+      dithering also for gif images at 16 colours, a tad slower but
+      much better display quality.
+
+  pc_rastr.s:
+    - line 108 + 175 (raster_chunk8:):  typo fixed, number of chunks to
+      be stored corrected to 8.
+    - line 225 (pc_raster_I8):  format of colormap changed.
+
+August 25, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 370 (image_job):  made the row buffer 1 pixel wider.
+    - line 470 (setup):  aligned the bitmap rows to long boundary.
+    - line 823 + 854:  optimized asm 16/256 colour converters to
+      interleaved word chunks.
+    - line 856..857 + 862 (dither_gray) + 873..874
+      + 879..885 (dither_true):  slightly improved dithers for 16/256
+      colours.
+    - line 943..945 + 972..977 + 1106..1108 + 1135..1140:  removed
+      outcommented code.
+    - line 1322 + 1326..1331 (gscale_16) + 1335
+      + 1339..1346 (dither_16):  added optimized asm code.
+
+  pc_rastr.s:
+    - line 53:  optimized asm 16/256 colour converters to interleaved
+      word chunks.
+
+August 21, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 504..505 (setup) + 855 + 890 + 895..895 (gscale_I4) + 915
+      + 920..924 (dither_I4) + 1045 + 1050..1051 (raster_I8) + 1070
+      + 1075..1079 (dither_I8) + 1114..1117 (gscale_P8)
+      + 1127..1133 (dither_P8):  added GrayScale and TrueColor dither
+      functions for 16 and 256 colours screen modes.
+
+  Loader.h:  line 27 + 45:
+  Loader.c:  line 165 (new_loader) + 316 + 334 (start_objc_load):
+  render.c:  line 626 (render_BGSOUND_tag) + 1282 (render_EMBED_tag):
+    - added an extra pointer to struct LOADER.  not used yet but will
+      be necessary for later online access to images.
+
+  Loader.c:
+    - line 705 (header_job):  on connect error, call the correct job
+      for invalidating.
+
+August 20, 2003
+
+  AltF4's patches
+
+  image.c:
+    - line 63 + 1145 + 1494 + 1552..1558 + 1560 + 1616 (init_display):
+      implemented support for 32k colours screen mode.
+    - line 506..507 (setup):  made the code better readable.
+    - line 725..767 (raster_D2):  adapted to changed colormap format.
+    - line 842:  new funktion raster_chunks() and defines for
+      raster_chunk4() and raster_chunk8().
+    - (all ..I4 and ..I8 functions) line 852..872 + 881..900 + 909..934
+      + 1016..1036 + 1046..1065 + 1074..1096:  replaced code by calls
+      of raster_chunkN().
+    - line 1633..1634 (init_display):  fixed incomplete setting of the
+      grayscale translation array.
+
+August 19, 2003
+
+  AltF4's patches
+
+  img_png.c:
+    - line 3..4 + 46 (decPng_start):  adaptions for Pure C.
+
+  purewire.prj:
+    - line 13 + 34 + 66:  support of jpg and png enabled for Pure C.
+
 August 18, 2003
 
   AltF4's patches
