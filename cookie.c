@@ -8,6 +8,7 @@
 #include "mime.h"
 #include "http.h"
 #include "Location.h"
+#include "cache.h" /* for cache directiory */
 #include "cookie.h"
 
 typedef struct s_cookie_jar * COOKIEJAR;
@@ -19,7 +20,9 @@ struct s_cookie_jar {
 	size_t       DomainLen;
 	char         DomainStr[1];
 };
-static COOKIEJAR jar_list = NULL;
+static COOKIEJAR jar_list    = NULL;
+static char    * jar_file    = NULL;
+static BOOL      jar_changed = FALSE;
 
 
 /*#define DEBUG*/
@@ -93,6 +96,172 @@ destroy_cookie (COOKIE * list, short list_len)
 		*temp = *list;
 	}
 	*list = NULL;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+jar_load (void)
+{
+	FILE * file = fopen (jar_file, "rb");
+#ifdef DEBUG
+	FILE * ftmp = fopen ("U:\\tmp\\cookies.txt", "a");
+#endif	
+	if (file) {
+		COOKIEJAR * ptr = &jar_list;
+		long        now = time (NULL);
+		char        buff[1024];
+	#ifdef DEBUG
+		if (ftmp && !feof (ftmp)) {
+			fputs ("########################################"
+			       "########################################\n", ftmp);
+		}
+	#endif	
+		while (fgets (buff, (int)sizeof(buff), file)) {
+			COOKIEJAR jar  = NULL;
+			UWORD     num  = 0, ck = 0;
+			BOOL      skip = FALSE;
+			
+			{ /* host/domain */
+			
+				char host[300] = "", domain[300] = "";
+				int n = sscanf (buff, " H:%hu:%256[^:]:%256[^:]:",
+				                &num, host, domain);
+				if (n >= 2) {
+					ULONG        flags    = 0;
+					size_t       host_len = strlen (host);
+					const char * host_ptr = location_DBhost (host, host_len, &flags);
+					skip = ((flags & (1uL << ('C' - 'A'))) != 0l);
+					jar  = create_jar (host_ptr, host_len, domain,
+					                   (n == 3 ? strlen (domain) : 0));
+				}
+				if (!jar) {	
+			#ifndef DEBUG
+					break;
+			#else
+					if (ftmp) {
+						n = (int)strlen (buff);
+						while (n && isspace(buff[n-1])) n--;
+						fprintf (ftmp, "stopped: '%.*s'\n", n, buff);
+					}
+					break;
+				} else if (ftmp) {
+					fprintf (ftmp, "%s:\n", jar->HostStr);
+					if (jar->DomainStr[0]) {
+						fprintf (ftmp, "   DOMAIN  = '%s'\n", jar->DomainStr);
+					}
+			#endif	
+				}
+			}
+			while (num--) {
+				long   expires;
+				UWORD  nam_len, val_len, pth_len;
+				if (!fgets (buff, (int)sizeof(buff), file)
+				    || sscanf (buff, "C:%lX:%hu:%hu:%hu:",
+				               &expires, &nam_len, &val_len, &pth_len) != 4) {
+					break;
+				} else if (skip || expires < now) {
+					fscanf (file, (!pth_len ? "N:%*[^\n]\nV:%*[^\n]\n"
+					                        : "N:%*[^\n]\nV:%*[^\n]\nP:%*[^\n]\n"));
+					jar_changed = TRUE;
+			#ifdef DEBUG
+					if (ftmp) {
+						fprintf (ftmp, (skip ? "   (skipped)\n" : "   (expired)\n"));
+					}
+			#endif
+				} else {
+					COOKIE cookie = create_cookie (nam_len, val_len, pth_len);
+					if (cookie) {
+						sprintf (buff, "N:%%%hus\n", nam_len);
+						fscanf  (file, buff, cookie->NameStr);
+						sprintf (buff, "V:%%%hus\n", val_len);
+						fscanf  (file, buff, cookie->ValueStr);
+						if (pth_len) {
+							sprintf (buff, "P:%%%hus\n", pth_len);
+							fscanf  (file, buff, cookie->PathStr);
+						}
+						cookie->Expires = expires;
+						jar->Cookie[ck++] = cookie;
+				#ifdef DEBUG
+						if (ftmp) {
+							fprintf (ftmp, "   '%s' = '%s'\n",
+							         cookie->NameStr, cookie->ValueStr);
+							if (cookie->PathStr) {
+								fprintf (ftmp, "   PATH    = '%s'\n", cookie->PathStr);
+							} else {
+								fprintf (ftmp, "   path    = '/'\n");
+							}
+							strftime (buff, sizeof(buff), "%Y-%m-%d %H:%M:%S",
+							          gmtime ((time_t*)&cookie->Expires));
+							fprintf (ftmp, "   EXPIRES = %08lX %s\n",
+							         cookie->Expires, buff);
+						}
+				#endif	
+						if (ck >= numberof (jar->Cookie)) break;
+					}
+				}
+			}
+			if (jar->Cookie[0]) {
+				*ptr = jar;
+				ptr  = &jar->Next;
+			} else {
+				free (jar);
+			}
+		}
+		fclose (file);
+	}
+#ifdef DEBUG
+	if (ftmp) fclose (ftmp);
+#endif
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+jar_save (void)
+{
+	FILE * file = (jar_changed ? fopen (jar_file, "wb") : NULL);
+	if (file) {
+		COOKIEJAR jar = jar_list;
+		long      now = time (NULL);
+		while (jar) {
+			short i, num = 0;
+			for (i = 0; i < numberof (jar->Cookie) && jar->Cookie[i]; i++) {
+				if (jar->Cookie[i]->Expires > now) {
+					num++;
+				}
+			}
+			if (num) {
+				fprintf (file, "H:%u:%s:%s:\n", num, jar->HostStr, jar->DomainStr);
+				i = 0;
+				do {
+					COOKIE ck = jar->Cookie[i++];
+					if (ck->Expires > now) {
+				#ifdef DEBUG
+						struct tm gm = *gmtime ((time_t*)&ck->Expires);
+						fprintf (file,
+						         "C:%.08lX:%li:%li:%li:"
+						         " (%04i-%02i-%02i %02i:%02i:%02i)\n",
+						         ck->Expires, ck->NameLen, ck->ValueLen, ck->PathLen,
+						         gm.tm_year + 1900, gm.tm_mon, gm.tm_mday,
+						         gm.tm_hour, gm.tm_min, gm.tm_sec);
+				#else
+						fprintf (file, "C:%.08lX:%li:%li:%li:\n",
+						         ck->Expires, ck->NameLen, ck->ValueLen, ck->PathLen);
+				#endif
+						fprintf (file, "N:%s\n", ck->NameStr);
+						fprintf (file, "V:%s\n", ck->ValueStr);
+						if (ck->PathLen) {
+							fprintf (file, "P:%s\n", ck->PathStr);
+						}
+						num--;
+					}
+				} while (num);
+			}
+			jar = jar->Next;
+		}
+		fclose (file);
+		jar_changed = FALSE;
+	}
 }
 
 
@@ -321,7 +490,8 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 			         && cookie->PathStr[pth_len] == '\0'))) {
 				if (ck_remv) {
 					destroy_cookie (ck_ptr, n);
-					cookie = NULL;
+					cookie      = NULL;
+					jar_changed = TRUE;
 				}
 				break;
 			}
@@ -344,6 +514,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 						memcpy (cookie->PathStr, pth_ptr, pth_len);
 						cookie->PathStr[pth_len] = '\0';
 					}
+					jar_changed = TRUE;
 				}
 			} else {
 				if (expires) {
@@ -356,6 +527,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 						cookie->ValueStr = value;
 						cookie->ValueMax = val_len;
 						cookie->ValueLen = val_len;
+						jar_changed = TRUE;
 					} else {
 						cookie = NULL; /* meory exhausted */
 					}
@@ -448,6 +620,25 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 	UWORD        h_ln;
 	const char * host = location_Host (loc, &h_ln);
 	const char * path = location_Path (loc, NULL);
+	
+	if (!jar_file) {
+		static BOOL __once = TRUE;
+		if (__once) {
+			const char * cdir = cache_DirInfo();
+			size_t       size = (cdir ? strlen (cdir) : 0uL);
+			if (size) {
+				const char name[] = "cookies.dat";
+				if ((jar_file = malloc (size + sizeof(name))) != NULL) {
+					memcpy (jar_file,        cdir, size);
+					memcpy (jar_file + size, name, sizeof(name));
+					jar_load();
+					atexit (jar_save);
+					jar = jar_list;
+				}
+			}
+			__once = FALSE; /* try only one time */
+		}
+	}
 	
 	if (loc->Flags & (1uL << ('C' - 'A'))) {
 #ifdef DEBUG
