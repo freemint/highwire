@@ -2531,6 +2531,10 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				if (cont->Alignment == ALN_CENTER || cont->Alignment == ALN_RIGHT) {
 					floating = cont->Alignment;
 				}
+			} else if (parser->Current.paragraph->alignment == ALN_RIGHT ||
+			           parser->Current.paragraph->alignment == ALN_CENTER) {
+				/* workaround for <center> tag */
+				floating = parser->Current.paragraph->alignment;
 			}
 		}
 		table_start (parser,
