@@ -803,6 +803,9 @@ containr_Anchor (CONTAINR cont, const char * anchor, long * dx, long * dy)
 			y += offs->Y;
 			offs = offs->Origin;
 		}
+		if (y && frame->Page.MarginTop > 0) {
+			y -= frame->Page.MarginTop;
+		}
 		if ((*dx = x - frame->h_bar.scroll) != 0) rtn = TRUE;
 		if ((*dy = y - frame->v_bar.scroll) != 0) rtn = TRUE;
 	} else {
