@@ -23,6 +23,9 @@
 - Added handling for wrong opend/closed formulars
   regarding table structures.
 
+- Checking for proper font settings added to avoid
+  bad formatted text input fields.
+
 - Bugs #0160 resolved.
 
 __________________________________________________
