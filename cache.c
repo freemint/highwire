@@ -2,12 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined (__GNUC__)
-# include <fcntl.h>
-# include <unistd.h>
+#ifdef __PUREC__
+# include <tos.h>
 
-#elif defined (LATTICE)
+#else /* LATTICE || __GNUC__ */
+# include <mintbind.h>
 # include <fcntl.h>
+
+# if defined (__GNUC__)
+#  include <unistd.h>
+# endif
 #endif
 
 #include "defs.h"
@@ -38,6 +42,8 @@ static CACHEITEM __cache_end = NULL;
 static size_t    __cache_num = 0;
 static size_t    __cache_dsk = 0;
 static size_t    __cache_mem = 0;
+static size_t    __cache_max = 0;
+#define            CACHE_MAX ((size_t)100 *1024)
 static LOCATION  __cache_dir = NULL;
 
 struct s_cache_node {
@@ -238,12 +244,68 @@ destroy_item (CACHEITEM citem)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+cache_throw (long size)
+{
+	CACHEITEM citem = __cache_end;
+	/*BOOL      single;
+	if (size > 0) {
+		printf ("cache_throw(%li):\n", size);
+		single = FALSE;
+	} else {
+		single = TRUE;
+	}*/
+	while (citem) {
+		CACHEITEM prev = citem->PrevItem;
+		if (!citem->Reffs && citem->Ident && citem->dtor) {
+/*>>>>>>>>>> DEBUG */
+			if (!citem->Object) {
+				printf ("cache_throw(): no object '%s'!\n",
+				        citem->Location->FullName);
+				return FALSE;
+			}
+/*<<<<<<<<<< DEBUG */
+			/*if (single) {
+				printf ("cache_throw(): %li '%s'\n",
+				        citem->Size, citem->Location->File);
+			} else {
+				printf ("%7lu '%s'\n", citem->Size, citem->Location->File);
+			}*/
+			size -= citem->Size;
+			(*citem->dtor)(citem->Object);
+			destroy_item (citem);
+			if (size <= 0) return TRUE;
+		}
+		citem = prev;
+	}
+	/*if (single) {
+		puts ("cache_throw(): giving up");
+	} else {
+		puts ("    ... giving up");
+	}*/
+	return FALSE;
+}
+
+
 /*============================================================================*/
 CACHED
 cache_insert (LOCATION loc, long ident,
               CACHEOBJ * object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem;
+	
+	if (!__cache_max) {
+		if ((long)(__cache_max = (long)Malloc (-1) /2) < 0) {
+			__cache_max = 0;
+		}
+		if (__cache_max > CACHE_MAX) {
+			__cache_max = CACHE_MAX;
+		}
+	}
+	if (__cache_mem + size > __cache_max) {
+		cache_throw (__cache_mem + size - __cache_max);
+	}
 	
 	if ((citem = create_item (loc, *object, size, dtor)) == NULL) {
 		return NULL;
