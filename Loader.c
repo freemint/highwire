@@ -338,8 +338,10 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 	if (PROTO_isLocal (loc->Proto)) {
 		sched_insert (loader->SuccJob, loader, (long)target);
 	
+#ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
 		sched_insert (header_job, loader, (long)target);
+#endif
 	
 	} else {
 		printf ("start_objc_load() invalid protocol %i.\n", loc->Proto);
