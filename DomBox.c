@@ -528,11 +528,11 @@ dombox_format (DOMBOX * This, long width)
 {
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 	This->_vtab->format (This, width, &blocker);
-	if (This->Rect.H < blocker.L.bottom) {
-		 This->Rect.H = blocker.L.bottom;
+	if (This->Rect.H < blocker.L.bottom - This->Rect.Y) {
+		 This->Rect.H = blocker.L.bottom - This->Rect.Y;
 	}
-	if (This->Rect.H < blocker.R.bottom) {
-		 This->Rect.H = blocker.R.bottom;
+	if (This->Rect.H < blocker.R.bottom - This->Rect.Y) {
+		 This->Rect.H = blocker.R.bottom - This->Rect.Y;
 	}
 }
 
