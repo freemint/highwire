@@ -49,7 +49,7 @@ static BOOL ovl_load(void)
 	if (inet_ftab) {
 		return TRUE;
 	}
-	if ((inet_ovl = load_ovl ("modules\\network.ovl", ovl_invalid)) == NULL) {
+	if ((inet_ovl = load_ovl ("network.ovl", ovl_invalid)) == NULL) {
 		return FALSE; /* no OVL found */
 	}
 	if ((inet_ftab = (void*)(*inet_ovl->ovl_init)()) == NULL) {
@@ -74,6 +74,8 @@ static BOOL ovl_load(void)
 # include <string.h>
 # include <tos.h>
 # include <time.h>
+# undef min
+# undef max
 # include <transprt.h>
 
 
@@ -125,7 +127,7 @@ inet_host_addr (const char * name, long * addr)
 	struct hostent * host = gethostbyname (name);
 	if (host) {
 		*addr = *(long*)host->h_addr;
-		ret   = 0;
+		ret   = E_OK;
 	} else {
 		ret   = -errno;
 	}
@@ -133,7 +135,7 @@ inet_host_addr (const char * name, long * addr)
 #elif defined(USE_STIK)
 	if (init_stick()) {
 		if (resolve ((char*)name, NULL, (uint32*)addr, 1) > 0) {
-			ret = 0;
+			ret = E_OK;
 		}
 	}
 
