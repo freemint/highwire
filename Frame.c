@@ -33,6 +33,9 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->v_bar.on     = FALSE;
 	frame->h_bar.on     = FALSE;
 	frame->border       = FALSE;
+	frame->borders = BRD_NONE;
+	frame->border_size = 3;
+	frame->border_colour = G_LWHITE;
 	frame->resize       = TRUE;
 	frame->scroll       = SCROLL_AUTO;
 	frame->text_colour  = G_BLACK;
@@ -117,15 +120,26 @@ frame_calculate (FRAME frame, const GRECT * clip)
 	short scrollbar_size = scroll_bar_width;
 	
 	frame->clip = *clip;
-	
+
 	if (frame->border) {
-		frame->clip.g_x++;
-		frame->clip.g_y++;
-		frame->clip.g_w -= 2;
-		frame->clip.g_h -= 2;
-		scrollbar_size--;
+		switch (frame->borders)
+		{
+			case 1: /* BRD_RIGHT */
+				frame->clip.g_w -= frame->border_size;
+				scrollbar_size--;
+				break;
+			case 2: /* BRD_BOTTOM */
+				frame->clip.g_h -= frame->border_size;
+				scrollbar_size--;
+				break;
+			case 3: /* BRD_BOTH */
+				frame->clip.g_w -= frame->border_size;
+				frame->clip.g_h -= frame->border_size;
+				scrollbar_size--;
+				break;
+		}
 	}
-	
+
 	if (!frame->scroll) {
 		
 		if (frame->Page.Minimum <= frame->clip.g_w) {
