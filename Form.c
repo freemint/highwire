@@ -201,6 +201,7 @@ set_word (TEXTBUFF current, WORD asc, WORD dsc, WORD wid)
 	word->word_width     = wid +4;
 	word->word_height    = asc +2;
 	word->word_tail_drop = dsc +2;
+	word->space_width    = 0;
 	TA_Color(word->attr) = G_BLACK;
 }
 
@@ -1152,13 +1153,14 @@ edit_char (INPUT input, WORD chr, WORD col)
 		(*encoder)(&ptr, uni);
 		
 		if (input->Value) { /*password */
-			char * end = input->Value + input->TextLen +1;
+			char * end = input->Value + input->TextLen;
 			char * dst = input->Value + col;
 			do {
 				*(end +1) = *(end);
 			} while (--end >= dst);
-			*dst                   = *uni;
-			input->Word->item[col] = '*';
+			*dst = *uni;
+			input->Word->item[input->TextLen]    = '*';
+			input->Word->item[input->TextLen +1] = '\0';
 		
 		} else {
 			WCHAR * end = input->Word->item + input->TextLen;
