@@ -479,6 +479,7 @@ receive_job (void * arg, long invalidated)
 	LOADER loader = arg;
 	
 	if (invalidated) {
+		cache_abort (loader->Location);
 		if (loader->SuccJob) {
 			(*loader->SuccJob)(arg, invalidated);
 		} else {
@@ -563,6 +564,33 @@ header_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
+	switch (CQresultDsk (cache_exclusive (loc))) {
+		
+		case CQ_BUSY:
+		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
+			return TRUE;
+		
+		case CQ_LOCAL: {
+			CACHED cached = cache_lookup (loc, 0, NULL);
+			if (cached) {
+				union { CACHED c; LOCATION l; } u;
+				u.c            = cache_bound (cached, &loader->Location);
+				loader->Cached = u.l;
+				if (!loader->MimeType) {
+					loader->MimeType = mime_byExtension (loader->Cached->File, NULL);
+				}
+			/*	printf ("header_job(%s): cache hit\n", loc->FullName);*/
+				sched_insert ((loader->SuccJob ? loader->SuccJob : loader_job),
+				              loader, (long)loader->Target);
+				return FALSE;
+			
+			} else { /* cache incosistance error */
+				printf ("header_job(%s): not in cache!\n", loc->FullName);
+				return header_job (arg, (long)loader->Target); /* invalidate */
+			}
+		} /*break;*/
+	}	
+	
 	/* Connect to host
 	*/
 	if ((host = location_Host (loc)) != NULL) {
@@ -579,11 +607,12 @@ header_job (void * arg, long invalidated)
 	if ((reply == 301 || reply == 302) && hdr.Rdir) {
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = cache_lookup (redir, 0, NULL);
+		inet_close  (sock);
+		cache_abort (loc);
+		
 		if (!loader->MimeType) {
 			loader->MimeType = mime_byExtension (redir->File, NULL);
 		}
-		inet_close (sock);
-		
 		if (cached) {
 			union { CACHED c; LOCATION l; } u;
 	 		if (loader->Cached) {
@@ -642,6 +671,7 @@ header_job (void * arg, long invalidated)
 				loader->rdDest[1] = '\0';
 				loader->rdDest[2] = '\0';
 				inet_close (sock);
+				sock = -1;
 			} else {
 				loader->rdSocket = sock;
 				sched_insert (receive_job, loader, (long)loader->Target);
@@ -667,9 +697,11 @@ header_job (void * arg, long invalidated)
 	
 	/* else error case
 	*/
+	inet_close  (sock);
+	cache_abort (loc);
+	
 	loader->MimeType = MIME_TEXT;
 	loader->Data     = strdup (hdr.Head);
-	
 	sched_insert (parser_job, loader, (long)loader->Target);
 
 	return FALSE;
