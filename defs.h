@@ -163,12 +163,6 @@ typedef struct {
 } ck_entry;
 #endif
 
-#ifndef GLOBAL
-#define GLOBAL 0x0020
-#define ALLOCMODE 3|GLOBAL
-#endif
-
-
 /* ********** Consts ************** */
 
 #define SPACE_BICS  561
