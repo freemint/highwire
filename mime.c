@@ -21,6 +21,7 @@ static const struct ext_2_mime mime_list[] = {
 	{ "pdf",  MIME_APP_PDF,    "MyPdf"    },
 */
 	{ "au",    MIME_AUD_BASIC,  "GEMJing"  },
+	{ "css",   MIME_TXT_CSS,    NULL       },
 	{ "gif",   MIME_IMG_GIF,    NULL       },
 	{ "htm",   MIME_TXT_HTML,   NULL       },
 	{ "html",  MIME_TXT_HTML,   NULL       },
@@ -38,6 +39,7 @@ struct mime_2_ext {
 	const char     Ext[4];
 };
 static const struct mime_2_ext ext_list[] = {
+	{ MIME_TXT_CSS,   "css" },
 	{ MIME_TXT_HTML,  "htm" },
 	{ MIME_TXT_PLAIN, "txt" },
 	{ MIME_IMG_JPEG,  "jpg" },

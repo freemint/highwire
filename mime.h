@@ -11,6 +11,7 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 	MIME_TEXT = 0x1000,
 		MIME_TXT_PLAIN,   /* text/plain "*"                         */
 		MIME_TXT_HTML,    /* text/html  "*.htm,*.html,*.php,*.php?" */
+		MIME_TXT_CSS,     /* text/css   "*.css"                     */
 
 	MIME_IMAGE = 0x2000,
 		MIME_IMG_JPEG,    /* image/jpeg   "*.jpg,*.jpeg" */
