@@ -22,7 +22,7 @@ struct s_cookie_jar {
 static COOKIEJAR jar_list = NULL;
 
 
-/*#define DEBUG*/
+#define DEBUG
 
 
 /*----------------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 #endif /*DEBUG*/
 	COOKIEJAR    jar     = NULL;
 	COOKIE       cookie  = NULL;
-	const char * host_ptr;       size_t host_len;
+	const char * host_ptr;       UWORD  host_len;
 	const char * nam_ptr;        size_t nam_len = 0;
 	const char * val_ptr;        size_t val_len = 0;
 	const char * exp_ptr = NULL; size_t exp_len = 0;
@@ -108,8 +108,7 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 		val_len = ptr - val_ptr +1;
 	}
 	if (nam_len > 0 && val_len > 0) {
-		host_ptr = location_Host (loc);
-		host_len = strlen (host_ptr);
+		host_ptr = location_Host (loc, &host_len);
 	} else {
 		host_ptr = NULL;
 		host_len = 0u;
@@ -392,8 +391,8 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 {
 	COOKIEJAR    jar  = jar_list;
 	WORD         num  = 0;
-	const char * host = location_Host (loc);
-	size_t       h_ln = strlen (host);
+	UWORD        h_ln;
+	const char * host = location_Host (loc, &h_ln);
 	const char * path = location_Path (loc, NULL);
 	
 	while (jar) {

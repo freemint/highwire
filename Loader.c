@@ -656,7 +656,7 @@ header_job (void * arg, long invalidated)
 	
 	/* Connect to host
 	*/
-	if ((host = location_Host (loc)) != NULL) {
+	if ((host = location_Host (loc, NULL)) != NULL) {
 		char buf[300];
 		sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
