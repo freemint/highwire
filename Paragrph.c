@@ -768,10 +768,13 @@ content_minimum (CONTENT * content)
 		printf ("trash   = %i / %i \n", sum, n_trash);
 	}
 #endif
+
+#if 0
 	if (trash) {
 		destroy_word_structure (trash);
 	}
-	
+#endif
+
 	min_width += content->MarginLft + content->MarginRgt;
 	
 	return (content->Minimum = min_width);
