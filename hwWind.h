@@ -62,12 +62,16 @@ FRAME hwWind_ActiveFrame (HwWIND);
 
 
 typedef enum {
-	HWWS_INFOBAR = 0x6962617AuL /* 'ibar' infobar appearance, arg means:
+	HWWS_INFOBAR = 0x6962u, /* 'ib' infobar appearance, arg means:
 	                     * 0: no info output at all
 	                     * 1: only AES infobar (traditional GEM)
 	                     * 2: only output to the hslider area
 	                     * 3: both methods (default setting)
 	                     * 4: application widget infobar, no realtime resizing */
+	HWWS_TOOLBAR = 0x7462u  /* 'tb' toolbar setting, arg means:
+	                     * 0:  disabled
+	                     * >0: enabled and visible
+	                     * <0: enabled but invisible by default */
 } HWWIND_SET;
 
 void hwWind_setup (HWWIND_SET, long arg);

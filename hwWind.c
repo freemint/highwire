@@ -26,7 +26,11 @@ static WORD  widget_b, widget_w, widget_h;
 static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
+#ifdef __GNUC__
 static WORD  tbar_set = +21;
+#else
+static WORD  tbar_set = -21;
+#endif
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD  wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
 #else
@@ -56,6 +60,12 @@ hwWind_setup (HWWIND_SET set, long arg)
 			if      (arg & 4) wind_kind &= ~(HSLIDE|LFARROW|SIZER);
 			else if (arg & 2) wind_kind |=  LFARROW;
 			else              wind_kind &= ~LFARROW;
+			break;
+		
+		case HWWS_TOOLBAR:
+			if      (arg > 0) tbar_set = -21;
+			else if (arg < 0) tbar_set = +21;
+			else              tbar_set = 0;
 			break;
 	}
 }
