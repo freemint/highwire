@@ -464,7 +464,7 @@ render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_META_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	char output[100];
+	char output[HW_PATH_MAX];
 	UNUSED (text);
 	
 	if ((flags & PF_START)
