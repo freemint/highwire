@@ -48,7 +48,8 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	current->anchor    = &frame->first_named_location;
 	current->quot_lang = frame->Language;
 	
-	content_setup (&frame->Page, current, NULL, page_margin, background_colour);
+	content_setup (&frame->Page, current, NULL, BC_MAIN,
+	               page_margin, background_colour);
 	
 	if (margin_w >= 0) {
 		frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin_w;

@@ -6,7 +6,7 @@
 
 /*============================================================================*/
 DOMBOX *
-dombox_ctor (DOMBOX * This, DOMBOX * parent)
+dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 {
 	memset (This, 0, sizeof (struct s_dombox));
 	
@@ -16,12 +16,20 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent)
 	}
 	
 	if (parent) {
+		if (!class) {
+			puts ("dombox_ctor(): no class given.");
+		}
 		if (parent->ChildEnd) parent->ChildEnd->Sibling = This;
 		else                  parent->ChildBeg          = This;
 		parent->ChildEnd = This;
 		This->Parent     = parent;
+	} else {
+		if (class) {
+			puts ("dombox_ctor(): main got class.");
+		}
 	}
-	This->Backgnd = -1;
+	This->BoxClass = class;
+	This->Backgnd  = -1;
 	
 	return This;
 }
@@ -30,11 +38,11 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent)
 DOMBOX *
 dombox_dtor (DOMBOX * This)
 {
-	if (This->HtmlType < 0) {
-		puts ("dombox_ctor(): This already destroyed!");
+	if ((int)This->BoxClass < 0) {
+		puts ("dombox_ctor(): already destroyed!");
 	}
 	if (This->ChildBeg) {
-		puts ("dombox_ctor(): This has still children!");
+		puts ("dombox_ctor(): has still children!");
 	}
 	if (This->Parent) {
 		DOMBOX ** ptr = &This->Parent->ChildBeg;
@@ -46,7 +54,8 @@ dombox_dtor (DOMBOX * This)
 			ptr = &(*ptr)->Sibling;
 		}
 		This->Parent = NULL;
-		This->HtmlType = -1;
 	}
+	This->BoxClass = -1;
+	
 	return This;
 }

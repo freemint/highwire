@@ -321,6 +321,15 @@ typedef struct {
 	WORD Lft, Rgt;
 } TBLR;
 
+typedef enum {
+	BC_MAIN = 0, /* BODY              */
+	BC_TABLE,    /* TABLE             */
+	BC_STRUCT,   /* TD, TH, DIV, ..   */
+	BC_GROUP,    /* DL,OL, UL, Hn, .. */
+	BC_MIXED,    /* LI, ..            */
+	BC_TXTPAR    /* P, IMG, HR, ..    */
+} BOXCLASS;
+
 typedef struct s_dombox DOMBOX;
 struct s_dombox {
 	DOMBOX * Parent, * Sibling;
@@ -328,14 +337,14 @@ struct s_dombox {
 	LRECT    Rect;
 	LONG     MaxWidth;
 	LONG     MinWidth; /* smallest width where the content fits in    */
-	LONG     SetWidth; /* calculated value resulting from given Width */
-	WORD     HtmlType;
-	WORD     Backgnd;  /* -1 or colour value                          */
+	LONG     SetWidth; /* set Value, must not be smaller than Minimum */
+	BOXCLASS BoxClass;
+	WORD     Backgnd;  /* -1 for transparence, or colour value        */
 	TBLR     Margin;
 	TBLR     Padding;
 	WORD     BorderWidth, BorderColor;
 };
-DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent);
+DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
 
 

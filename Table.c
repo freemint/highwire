@@ -91,6 +91,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	par->Table          = table;
 	par->paragraph_code = PAR_TABLE;
 	par->floating       = floating;
+	par->Box.BoxClass   = BC_TABLE;
 	
 	current->tbl_stack = stack;
 	current->lst_stack = NULL;
@@ -207,7 +208,7 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 	if (left_side) {
 		left_side->RightCell = cell;
 	}
-	content_setup (&cell->Content, NULL, parent, padding, -1);
+	content_setup (&cell->Content, NULL, parent, BC_STRUCT, padding, -1);
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;

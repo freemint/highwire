@@ -63,7 +63,7 @@ new_paragraph (TEXTBUFF current)
 	paragraph->floating       = ALN_NO_FLT;
 	paragraph->eop_space      = 0;
 	
-	dombox_ctor (&paragraph->Box, current->parentbox);
+	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 
 	paragraph->next_paragraph = NULL;
 	
@@ -125,7 +125,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		paragraph->Rindent = copy_from->Rindent;
 		paragraph->alignment = copy_from->alignment;
 		paragraph->eop_space = 0;
-		dombox_ctor (&paragraph->Box, current->parentbox);
+		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->floating       = ALN_NO_FLT;
@@ -568,10 +568,10 @@ paragraph_extend (WORDITEM word)
 
 /*============================================================================*/
 void
-content_setup (CONTENT * content,
-               TEXTBUFF current, DOMBOX * parent, short margns, short backgnd)
+content_setup (CONTENT * content, TEXTBUFF current,
+               DOMBOX * parent, BOXCLASS class, short margns, short backgnd)
 {
-	dombox_ctor (&content->Box, parent);
+	dombox_ctor (&content->Box, parent, class);
 	content->Box.Backgnd = backgnd;
 	content->Alignment   = ALN_LEFT;
 	if (margns) {
