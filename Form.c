@@ -1102,7 +1102,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				} else {
 					word = NULL;
 				}
-			} else if (edit_rowln (input, form->TextCursrY)) {
+			} else if (edit_rowln (input, form->TextCursrY) && (key & 0xFF00)) {
 				form_activate (form);
 				form->TextActive = NULL;
 			} else {
