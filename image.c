@@ -501,8 +501,8 @@ setup (IMAGE img, IMGINFO info)
 		           |    ((long)rgb[2] * 255 +500) / 1000;
 	}
 	if (info->BitDepth > 1) {
-		if (planes <= 2) {
-			size_t size = (img->disp_w +1) *2;
+		if (planes <= 8) {
+			size_t size = (img->disp_w +1) *3;
 			info->DthBuf = malloc   (size);
 			memset (info->DthBuf, 0, size);
 		}
@@ -822,9 +822,9 @@ dither_D2 (IMGINFO info, void * _dst)
 }
 
 /*------------------------------------------------------------------------------
-* Converts 'num'=[1..16] pixel bytes into 'depth'=[1..8] word chunks.
-* Used for the I4 and I8 interleaved words formats.
-*/
+ * Converts 'num'=[1..16] pixel bytes into 'depth'=[1..8] word chunks.
+ * Used for the I4 and I8 interleaved words formats.
+ */
 static void
 raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
 {
@@ -852,6 +852,51 @@ raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
 }
 #define raster_chunk4(s,d,n)   raster_chunks (s, d, n, 4)
 #define raster_chunk8(s,d,n)   raster_chunks (s, d, n, 8)
+
+/*----------------------------------------------------------------------------*/
+static CHAR
+dither_gray (CHAR * gray, WORD * err, BYTE ** buf)
+{
+	BYTE * dth  = *buf;
+	UWORD  idx  = ((err[0] += (WORD)dth[0] + gray[0])
+	                              <= 0 ? 0 : err[0] >= 0xFF ? 0xFF : err[0]) >>3;
+	CHAR * irgb = (CHAR*)&graymap[idx];
+	
+	err[0] -= irgb[1];
+	dth[0] =  (err[0] <= -254 ? (err[0] = -127) :
+	           err[0] >= +254 ? (err[0] = +127) : (err[0] /= 2));
+	(*buf) += 1;
+	
+	return irgb[0];
+}
+
+/*----------------------------------------------------------------------------*/
+static CHAR
+dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
+{
+	BYTE * dth  = *buf;
+	UWORD  r    = ((err[0] += (WORD)dth[0] + rgb[0])
+	                                  <= 0 ? 0 : err[0] >= 0xFF ? 0xFF : err[0]);
+	UWORD  g    = ((err[1] += (WORD)dth[1] + rgb[1])
+	                                  <= 0 ? 0 : err[1] >= 0xFF ? 0xFF : err[1]);
+	UWORD  b    = ((err[2] += (WORD)dth[2] + rgb[2])
+	                                  <= 0 ? 0 : err[2] >= 0xFF ? 0xFF : err[2]);
+	UWORD  idx  = (((r *6) /256) *6 + ((g *6) /256)) *6 + ((b *6) /256);
+	CHAR * irgb = (CHAR*)&cube216[idx];
+	
+	err[0] -= irgb[1];
+	dth[0] =  (err[0] <= -254 ? (err[0] = -127) :
+	           err[0] >= +254 ? (err[0] = +127) : (err[0] /= 2));
+	err[1] -= irgb[2];
+	dth[1] =  (err[1] <= -254 ? (err[1] = -127) :
+	           err[1] >= +254 ? (err[1] = +127) : (err[1] /= 2));
+	err[2] -= irgb[3];
+	dth[2] =  (err[2] <= -254 ? (err[2] = -127) :
+	           err[2] >= +254 ? (err[2] = +127) : (err[2] /= 2));
+	(*buf) += 3;
+	
+	return irgb[0];
+}
 
 /*------------------------------------------------------------------------------
  * 4 planes interleaved words format
@@ -888,12 +933,16 @@ gscale_I4 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	
+	BYTE * dth    = info->DthBuf;
+	WORD   err    = 0;
+	
 	CHAR   buf[16];
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-		UWORD idx = info->RowBuf[x >>16] >>3;
+/*		UWORD idx = info->RowBuf[x >>16] >>3;
 		*(tmp++)  = *(CHAR*)&graymap[idx];
+*/		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -913,15 +962,19 @@ dither_I4 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	
+	BYTE * dth    = info->DthBuf;
+	WORD   err[3] = { 0, 0, 0 };
+	
 	CHAR   buf[16];
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
 		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
 		           +  (((UWORD)rgb[1] *6) /256)) *6
 		           +  (((UWORD)rgb[2] *6) /256);
 		*(tmp++)   = *(CHAR*)&cube216[idx];
+*/		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -940,7 +993,7 @@ dither_I4 (IMGINFO info, void * _dst)
 static void
 raster_I8 (IMGINFO info, void * _dst)
 {
-#if 0 && defined(__GNUC__)
+#if defined(__GNUC__)
 	size_t  x     = (info->IncXfx +1) /2;
 	__asm__ volatile ("
 		subq.w	#1, %4
@@ -1007,7 +1060,7 @@ raster_I8 (IMGINFO info, void * _dst)
 		: "d3","d4","d5","d6","d7"
 	);
 	
-#elif 0 && defined(__PUREC__)
+#elif defined(__PUREC__)
 	extern void pc_raster_I8 (void *, void *, void *, short, size_t, UWORD);
 	pc_raster_I8 (_dst, info->RowBuf, info->Pixel,
 	              info->DthWidth, info->IncXfx, info->PixMask);
@@ -1043,12 +1096,16 @@ gscale_I8 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	
+	BYTE * dth    = info->DthBuf;
+	WORD   err    = 0;
+	
 	CHAR   buf[16];
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-		UWORD idx = info->RowBuf[x >>16] >>3;
+/*		UWORD idx = info->RowBuf[x >>16] >>3;
 		*(tmp++)  = *(CHAR*)&graymap[idx];
+*/		*(tmp++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk8 (buf, dst, tmp - buf);
@@ -1068,15 +1125,19 @@ dither_I8 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 	
+	BYTE * dth    = info->DthBuf;
+	WORD   err[3] = { 0, 0, 0 };
+	
 	CHAR   buf[16];
 	short  n   = 16;
 	CHAR * tmp = buf;
 	do {
-		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
 		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
 		           +  (((UWORD)rgb[1] *6) /256)) *6
 		           +  (((UWORD)rgb[2] *6) /256);
 		*(tmp++)   = *(CHAR*)&cube216[idx];
+*/		*(tmp++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		
 		if (!--width || !--n) {
 			raster_chunk8 (buf, dst, tmp - buf);
@@ -1112,9 +1173,13 @@ gscale_P8 (IMGINFO info, void * _dst)
 	CHAR * dst   = _dst;
 	short  width = info->DthWidth;
 	size_t x     = (info->IncXfx +1) /2;
+	
+	BYTE * dth   = info->DthBuf;
+	WORD   err   = 0;
 	do {
-		UWORD idx = info->RowBuf[x >>16] >>3;
+/*		UWORD idx = info->RowBuf[x >>16] >>3;
 		*(dst++)  = *(CHAR*)&graymap[idx];
+*/		*(dst++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -1125,12 +1190,16 @@ dither_P8 (IMGINFO info, void * _dst)
 	CHAR * dst   = _dst;
 	short  width = info->DthWidth;
 	size_t x     = (info->IncXfx +1) /2;
+	
+	BYTE * dth    = info->DthBuf;
+	WORD   err[3] = { 0, 0, 0 };
 	do {
-		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
 		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
 		           +  (((UWORD)rgb[1] *6) /256)) *6
 		           +  (((UWORD)rgb[2] *6) /256);
 		*(dst++)   = *(CHAR*)&cube216[idx];
+*/		*(dst++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		x += info->IncXfx;
 	} while (--width);
 }
