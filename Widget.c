@@ -25,6 +25,7 @@
 #include "Logging.h"
 
 
+/*============================================================================*/
 WORD
 HW_form_do (OBJECT *tree, WORD next)
 {
@@ -104,101 +105,142 @@ HW_form_do (OBJECT *tree, WORD next)
 	
 	return which;
 }
-#if 0 /***** REPLACED *****/
+
+
+/*============================================================================*/
+WORD
+HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 {
-	WORD edit;
-	WORD which, cont;
-	WORD idx; 
-	WORD       msg[8];
-	EVMULT_OUT out;
-	GRECT tree_area;
+	static char sepr[] = "----------------------------------------"
+	                     "---------------------------------------";
+	static OBJECT * o_tree = NULL;
+	static short    o_pbeg = 1, o_pend;
+	static short    chr_w, chr_h;
+	static GRECT    clip;
 	
-	EVMULT_IN multi_widget = {
-		MU_MESAG|MU_BUTTON|MU_TIMER|MU_KEYBD|MU_M1,
-		0x102, 3, 0,			/* mouses */
-		MO_LEAVE,  {  0, 0, 0, 0 },   /* M1 */
-		0,        {  0, 0, 0, 0 },   /* M2 */
-		1, 0                       /* Timer */
-	};
-
-	tree_area.g_x = tree->ob_x;
-	tree_area.g_y = tree->ob_y;
-	tree_area.g_w = tree->ob_width;
-	tree_area.g_h = tree->ob_height;
-
-    multi_widget.emi_m1 = tree_area;
-    
-	edit = 0;
-	cont = 1;
-	while (cont)
-	{
-		/* position of the cursor on an editing field */
-
-		if (next!=0 && edit !=next)
-		{
-			edit = next;
-			next = 0;
-			/*turn on the text cursor and initialise idx */
-			objc_edit(tree, edit, 0, &idx, ED_INIT);
-		}
-
-		/* wait for mouse or key */
-
-		which = evnt_multi_fast (&multi_widget, msg, &out);
-
-		if (which & MU_KEYBD)
-		{
-			if (next!=0)
-			{
-				/* process the keystroke */
-
-				cont = form_keybd(tree, edit, 0, out.emo_kreturn, &next, &out.emo_kreturn);
-
-				if (out.emo_kreturn)
-					/* if not special the edit the form */
-					objc_edit(tree, edit, out.emo_kreturn, &idx, ED_CHAR);
-			}
-			else
-			{
-				/* handler for hot keys */
-
-				cont = 0;
-				next = out.emo_kreturn;
+	WORD    ret = -1;
+	char ** str = tab;
+	short   num = 0;
+	short   len = 0;
+	short   i;
+	
+	if (!o_tree) {
+		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_OUTLINED,
+		                { (long)0xFE1100L }, 4,1, 1,1 };
+		short n = 0;
+		
+		rsrc_obfix (&root, ROOT);
+		chr_w = root.ob_width;
+		chr_h = root.ob_height;
+		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &clip);
+		i = (clip.g_h -4) / chr_h;
+		o_pend = o_pbeg + i -1;
+		o_tree = malloc (sizeof(OBJECT) * (1 + i));
+		for (i = o_pbeg;;) {
+			o_tree[i].ob_type  = G_STRING;
+			o_tree[i].ob_flags = OF_SELECTABLE|OF_TOUCHEXIT|OF_FL3DBAK;
+			o_tree[i].ob_state = OS_NORMAL;
+			o_tree[i].ob_spec.free_string = sepr;
+			o_tree[i].ob_x      = 0;
+			o_tree[i].ob_y      = n;
+			o_tree[i].ob_width  = chr_w;
+			o_tree[i].ob_height = chr_h;
+			n += chr_h;
+			o_tree[i].ob_head = o_tree[i].ob_tail = -1;
+			if (i < o_pend) {
+				o_tree[i].ob_next = i +1;
+				i++;
+			} else {
+				o_tree[i].ob_next  =  0;
+				o_tree[i].ob_flags |= OF_LASTOB;
+				break;
 			}
 		}
-
-		if (which & MU_BUTTON)
-		{
-			/* find the object under the rodent */
-			next = objc_find(tree, ROOT, MAX_DEPTH,
-					 out.emo_mouse.p_x, out.emo_mouse.p_y);
-
-			if (next == (int)NULL)
-			{
-				/* If no object then ring the bell */
-
-				Bconout(2,'\a');
-				next = 0;
+		o_tree[0]         = root;
+		o_tree->ob_head   = o_pbeg;
+		o_tree->ob_tail   = o_pend;
+		o_tree->ob_height = n;
+	}
+	
+	i = o_pbeg -1;
+	while (*str && ++i <= o_pend) {
+		size_t l = strlen (*str);
+		if (l >= 80) (*str)[l = 79] = '\0';
+		if (**str == '-') {
+			o_tree[i].ob_flags &= ~OF_SELECTABLE;
+			o_tree[i].ob_state = OS_DISABLED;
+			if (strspn ((*str) +1, "-") == l) {
+				o_tree[i].ob_spec.free_string = sepr;
+				l = 0;
+			} else {
+				o_tree[i].ob_spec.free_string = *str;
+				while ((*str)[l -1] == '-' && (*str)[l -2] == '-') l--;
 			}
-			else 
-			{
-				/* else process the button */
-				cont = form_button(tree, next, out.emo_mbutton, &next);
+		} else {
+			o_tree[i].ob_flags |= OF_SELECTABLE;
+			if (**str == '!') {
+				**str = ' ';
+				o_tree[i].ob_state = OS_DISABLED;
+			} else {
+				o_tree[i].ob_state = OS_NORMAL;
+			}
+			o_tree[i].ob_spec.free_string = *str;
+			if ((*str)[l -1] != ' ') l++;
+		}
+		if (l > len) len = l;
+		str++;
+		num++;
+	}
+	wind_update (BEG_MCTRL);
+	if (len) {
+		WORD cx, cy, cw, ch, n;
+		o_tree->ob_tail   = (num += o_pbeg -1);
+		o_tree->ob_width  = len * chr_w;
+		o_tree->ob_height = o_tree[num].ob_y + o_tree[num].ob_height;
+		o_tree[num].ob_next  =  0;
+		o_tree[num].ob_flags |= OF_LASTOB;
+		for (i = o_pbeg; i <= num; o_tree[i++].ob_width = o_tree->ob_width);
+		if (popNmenu) {
+			o_tree->ob_flags = OF_FL3DBAK;
+			o_tree->ob_state = OS_OUTLINED;
+			o_tree->ob_spec.obspec.framesize = -2;
+			i = 0;
+		} else {
+			o_tree->ob_flags = OF_FL3DIND;
+			o_tree->ob_state = OS_SHADOWED;
+			o_tree->ob_spec.obspec.framesize = -1;
+			i = 3;
+		}
+		form_center (o_tree, &cx, &cy, &cw, &ch);
+		o_tree->ob_x -= cx - i;
+		o_tree->ob_y -= cy - i;
+		cx = (x + (cw += i *2) <= (n = clip.g_x + clip.g_w) ? x : n - cw);
+		if (cx < clip.g_x) cx = clip.g_x;
+		cy = (y + (ch += i *2) <= (n = clip.g_y + clip.g_h) ? y : n - ch);
+		if (cy < clip.g_y) cy = clip.g_y;
+		o_tree->ob_x += cx;
+		o_tree->ob_y += cy;
+		
+		form_dial (FMD_START, cx, cy, cw, ch, cx, cy, cw, ch);
+		objc_draw (o_tree, ROOT, MAX_DEPTH, cx, cy, cw, ch);
+		if ((n = HW_form_do (o_tree, 0)) > 0) {
+			ret = n - o_pbeg;
+		}
+		form_dial (FMD_FINISH, cx, cy, cw, ch, cx, cy, cw, ch);
+		
+		for (i = o_pbeg; i <= num; i++) {
+			if (o_tree[i].ob_spec.free_string[0] == ' ' &&
+			    o_tree[i].ob_state & OS_DISABLED) {
+				o_tree[i].ob_spec.free_string[0] = '!';
 			}
 		}
-
-		if (which & MU_M1)
-			cont = 0;
-
-		/* If finished or moving to a new object */
-
-		if (!cont || (next!=0 && next != edit))
-		{
-			/* then hide the text cursor */
-			objc_edit(tree, edit, 0, &idx, ED_END);
+		if (num < o_pend) {
+			o_tree[num].ob_next  =  num +1;
+			o_tree[num].ob_flags &= ~OF_LASTOB;
+			o_tree->ob_tail      =  o_pend;
 		}
 	}
-
-	return next;
+	wind_update (END_MCTRL);
+	
+	return ret;
 }
-#endif  /***** REPLACED *****/

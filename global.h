@@ -68,9 +68,10 @@ void    menu_logging  (void);
 void    menu_alt_text (void);
 WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
-#ifdef _GEMLIB_H_
-WORD HW_form_do (OBJECT *, WORD next);
-#endif
+/* in Widget.c */
+
+WORD HW_form_do    (OBJECT *, WORD next);
+WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
 
 /* in Redraws.c */
 
