@@ -4,7 +4,7 @@ ResourceMaster v2.072
 #FoHRD@rsm2out@HRD@hrd@@@ [HRD-File@
 #FoC-Header@rsm2out@C-Header@h@@@ [C-Header@
 #R 2@1@
-#T 0@1@MENUTREE@@66@
+#T 0@1@MENUTREE@@67@
 #O 6@32@M_HISTORY@@
 #O 10@28@M_ABOUT@@
 #O 19@28@M_OPEN@@
@@ -27,6 +27,7 @@ ResourceMaster v2.072
 #O 62@28@M_LOGGING@@
 #O 63@28@M_ALT_TEXT@@
 #O 65@28@M_FRM_CTRL@@
+#O 66@28@M_COOKIES@@
 #T 1@2@ABOUT@@6@
 #O 1@26@ABOUTOK@@
 #T 2@2@URLINPUT@@7@
@@ -49,4 +50,4 @@ ResourceMaster v2.072
 #O 3@28@RLINK_SAVE@@
 #O 5@28@RLINK_COPY@@
 #O 7@28@RLINK_INFO@@
-#c 18743@
+#c 18362@
