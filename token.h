@@ -203,9 +203,11 @@
 		__CSS_ITEM (COLOR,            KEY_COLOR),
 		/*          EMPTY_CELLS       */
 		/*          FLOAT             */
-		__CSS_ITEM (FONT_SIZE,        KEY_SIZE),
-		/*          FONT_STYLE        */
-		/*          FONT_WEIGHT       */
+		__CSS_ITEM (FONT_FAMILY,      0),
+		__CSS_ITEM (FONT_SIZE,        0),
+		/*          FONT_STRETCH      */
+		__CSS_ITEM (FONT_STYLE,       0),
+		__CSS_ITEM (FONT_WEIGHT,      0),
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
 		/*          LINE_HEIGHT       */
 		__CSS_ITEM (LIST_STYLE_TYPE,  0),
@@ -216,7 +218,7 @@
 		/*          MAX_WIDTH         */
 		__CSS_ITEM (PADDING,          KEY_CELLPADDING),
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
-		/*          TEXT_DECORATION   */
+		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (VERTICAL_ALIGN,   KEY_VALIGN),
 		__CSS_ITEM (WIDTH,            KEY_WIDTH)
 	__END_CSSS
