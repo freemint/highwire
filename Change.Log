@@ -1,8 +1,14 @@
-(non-public of Nov. 08, 2004)
+(non-public of Nov. 11, 2004)
 
 - Support for image link maps implemented (MAP/
   AREA/USEMAP that is) for all three area types
-  rectangle, circle and polygone.
+  rectangle, circle and polygone (#0078,#0128).
+  This includes also support for <A HREF> tags
+  used rather then <AREA>, as defined by HTML 4.0
+  (not even supported by IE5/Netscape/CAB).
+
+-  Support added for <INPUT type=image> form
+   elements (#0173).
 
 - Image formats XBM and XPM (X11 bitmap/pixmap)
   implemented.  These formats are very rare
@@ -11,7 +17,7 @@
   support at least the first format (even CAB
   does).
 
-- Bugs #0078, #128 resolved.
+- Bugs #0078, #0128, #0173 resolved.
 
 __________________________________________________
 Changes in V. 0.2.2 release  of October 31, 2004:
