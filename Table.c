@@ -654,6 +654,7 @@ table_finish (PARSER parser)
 	table->Percent  = malloc (sizeof (*table->Percent)  * table->NumCols);
 	table->ColWidth = malloc (sizeof (*table->ColWidth) * table->NumCols);
 
+
 #if 0
 {
 	int y = table->NumRows;
@@ -695,6 +696,12 @@ table_finish (PARSER parser)
 					cell->c_SetWidth = 0;
 				} else if (table->t_SetWidth > 0) {
 					short width = table->t_SetWidth - table->t_MinWidth;
+
+					/* dan */
+					if (width < table->t_SetMinWid) {
+						width = table->t_SetMinWid;
+					}
+					
 					cell->c_SetWidth = (-cell->c_SetWidth * width +512) /1024;
 					if (cell->c_SetWidth <= 0) cell->c_SetWidth = 1;
 				}
@@ -775,8 +782,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		return;
 	}
 	/*printf ("table_calc(%li) %i\n", max_width, table->t_SetWidth);*/
-
-
+	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 1:  adjust the given width to the table's boundarys.
 	 */
@@ -790,8 +796,6 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	if (set_width < table->t_MinWidth) {
 		 set_width = table->t_MinWidth;
 	}
-
-	/* dan */
 	if (set_width < table->t_SetMinWid) {
 		set_width = table->t_SetMinWid;
 	}
