@@ -1,5 +1,120 @@
 Ok here are the new supports and changes
 
+May 24, 2003
+
+  AltF4's patches
+
+  W_Struct.c:
+    - line 183..186 (word_store):  16bit WCHAR strings got aligned to
+      8bit for atari mapping to not confuse the VDI.
+
+  highwire.rsc, highwire.hrd, highwire.rsd, highwire.rso, highwire.rsm,
+  highwire.h:
+    - new menu entry "Force Frame Controls" added.
+
+  global.h:
+    - line 22 + 32:  new global variables font_minsize and
+      force_frame_controls.
+    - line 59:  extended argument list of button_clicked().
+    - line 70:  new function menu_frm_ctrl().
+
+  Variable.c:
+    - line 35 + 46:  new global variables font_minsize and
+      force_frame_controls.
+
+  AEI.c:
+    - line 442 (menu_fontsize): adapt font_minsize to font size when
+      decreasing.
+    - line 470 + 586 (handle_menu):  new function menu_frm_ctrl().
+
+  fontbase.c:
+    - line 220..235 (font_step2size):  adapt text height to
+      font_minsize.
+
+  render.c:
+    - line 335..337 + 350..352 + 396 (render_FRAMESET_tag):  handle
+      NORESIZE and SCROLLING keywords depending on the global
+      force_frame_controls.
+
+  config.c:
+    - line 60 + 105 (read_config): new config keywords FONT_MINSIZE and
+      FORCE_FRAMECTRL.
+
+  example.cfg/highwire.cfg:
+    - line 68 + 74:  added examples for FONT_MINSIZE and
+      FORCE_FRAMECTRL.
+
+  HighWire.c:
+    - line 192 (main):  extended argument list of button_clicked().
+
+  Mouse_R.c:
+    - line 20 (button_clicked):  new arguments clicks and state.
+    - line 54 + 67 + 120 + 133:  handle double clicks on slider arrows
+      in the same way as N.AES does.
+    - line 209..211:  removed call of graf_mkstate(), the state of meta
+      keys is taken from argument list now.
+
+May 22, 2003
+
+  AltF4's patches
+
+  Table.h:
+    - line 66..68:  extended argument lists of functions.
+
+  Table.c:
+    - line 65 + 67 + 86..90 + 106..115 (table_start) + 122 + 124 + 175
+      + 18..183 + 186..198 (table_row) + 236 + 242 + 253 + 307
+      + 311..328 + 330..335 + 337..344 + 351..352 + 354..356 + 467
+      + 507 (table_cell):  all values that was read from parsed keys
+      are taken from function arguments now.
+    - line 359 (table_cell):  corrected handling of table cells with
+      both colspan and rowspan set.
+
+  render.c:
+    - line 87:  new functions get_h_align() and get_v_align() to
+      interprete alignment values from parsed keys.
+    - line 1243 + 1262..1269 + 1274 (render_IMG_tag) + 1400..1401
+      + 1410..1415 (render_H_tag) + 1466 + 1475..1479 (render_HR_tag)
+      + 1526..1527 + 1537..1542 (render_P_tag):  replaced redundant
+      code by calls of get_h_align() and get_v_align().
+    - line 1644..1667 (render_DIV_tag):  re-implemented <div> tags as
+      tables with one single cell, matches their meaning much more than
+      the previous implementation.
+    - line 1932 (render_TABLE_tag) + 1949 (render_TR_tag)
+      + 1963 (render_TD_tag) + 1978 (render_TH_tag):  moved reading of
+      parsed keys from table functions to the renderer functions.
+
+  Form.c:
+    - line 175 (set_word):  set the text of buttons and input fields
+      always to black.
+    - line 589 (input_draw):  removed useless font switching, already
+      done by the calling function.
+
+May 19, 2003
+
+  AltF4's patches
+
+  defs.h:
+    - line 5..7:  bumped to version 0.1.3 alpha.
+
+  render.c:
+    - line 253..254 (render_TITLE_tag) + 1935 (render_TABLE_tag):
+      corrections for proper font settings after tables and title tags.
+    - line 468 (render_META_tag):  extended buffer for refresh urls.
+
+  keyinput.c:
+    - line 127 + 131 (key_pressed):  added handling of shift + left/
+      right cursor keys.
+
+  Paragrph.c:
+    - line 130 + 142 (add_paragraph):  reset hanging indention also for
+      reused paragraphs.
+
+  list.c:
+    - line 71..72 (list_finish): removed incorrect setting of hanging
+      indention after list closed; not sure yet if that will produce
+      failures somewhere else now, though.
+
 May 13, 2003   [V. 0.1.2 release]
 
   AltF4's patches

@@ -1,33 +1,51 @@
-(non-public of May 22, 2003)
+(non-public of May 25, 2003)
 
-- implemented handling of shift + left/right
+- Implemented handling of shift + left/right
   cursor keys (page-wise horizontal scrolling).
 
-- added a fix for <meta http-equiv="refresh" ..>
+- Double clicks on arrows of sliders are handled
+  now in the same way as N.AES does (for left and
+  right mouse button).
+
+- New menu entry (under 'Options') to have frames
+  always resizeable and scrollbars if necessary,
+  even if the HTML defines enything else there.
+  The default is off but can be set to on with the
+  keyword FORCE_FRAMECTRL = 1 in the config file.
+
+- New keyword FONT_MINSIZE to define a minimum
+  font height in points, eg. for <font size=1>
+  (see example.cfg\highwire.cfg for explanation).
+
+- Added a fix for <meta http-equiv="refresh" ..>
   tags with large refresh URLs.
 
-- corrected wrong setting of hanging indentions in
+- Improved calculation of percent and fractional
+  frame size values, makes it much more robust
+  against faulty frameset tags.
+
+- Corrected wrong setting of hanging indentions in
   and after lists.
 
-- corrected handling of table cells with both 
+- Corrected handling of table cells with both 
   colspan and rowspan set.
 
-- re-implemented <div> tag rendering to tables
+- Re-implemented <div> tag rendering to tables
   with one single cell, matches their meaning much
   more now than the previous implementation.
 
-- added resetting of font characteristics after
+- Added resetting of font characteristics after
   tables and title tags, this was messing up the
   rendere while calculating text word widths (only
   rarely seen on some very simple pages).
 
-- set texts of buttons and input fields always to
+- Set texts of buttons and input fields always to
   black.
 
-- removed several code redundancies.
+- Removed several code redundancies.
 
-- Bugs #0041, #0098, #0103, #0104, #0105, #0106,
-  #0108, #0110 resolved.
+- Bugs #0041, #0096, #0098, #0103, #0104, #0105,
+  #0106, #0108, #0109, #0110 resolved.
 
 __________________________________________________
 Changes in V. 0.1.2 release  of May 12, 2003:
