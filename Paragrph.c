@@ -588,10 +588,18 @@ content_destroy (CONTENT * content)
 
 	while (par) {
 		PARAGRPH next = par->next_paragraph;
-		if (par->item)
+		WORDLINE line = par->Line;
+		while (line) {
+			WORDLINE n_ln = line->NextLine;
+			free (line);
+			line = n_ln;
+		}
+		if (par->item) {
 			destroy_word_structure (par->item);
-		if (par->Table)
+		}
+		if (par->Table) {
 			delete_table (&par->Table);
+		}
 		free (par);
 		par = next;
 	}
@@ -760,6 +768,9 @@ content_minimum (CONTENT * content)
 		printf ("trash   = %i / %i \n", sum, n_trash);
 	}
 #endif
+	if (trash) {
+		destroy_word_structure (trash);
+	}
 	
 	min_width += content->MarginLft + content->MarginRgt;
 	
