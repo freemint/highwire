@@ -60,6 +60,7 @@
 		__TAG_ITEM (NOBR),
 		__TAG_ITEM (NOSCRIPT),
 		__TAG_ITEM (OL),
+		__TAG_ITEM (OPTGROUP),
 		__TAG_ITEM (OPTION),
 		__TAG_ITEM (P),
 		__TAG_ITEM (PLAINTEXT),
@@ -136,6 +137,7 @@
 		__KEY_ITEM (HSPACE),       /* IMG */
 		__KEY_ITEM (HTTP_EQUIV),   /* META */
 		__KEY_ITEM (ID),           /* A */
+		__KEY_ITEM (LABEL),        /* OPTGROUP */
 		__KEY_ITEM (LANG),         /* HTML,Q */
 		__KEY_ITEM (LEFTMARGIN),   /* BODY   -- IE proprietary */
 		__KEY_ITEM (LINK),         /* BODY */
