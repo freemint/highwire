@@ -36,6 +36,7 @@ struct s_table {
 	unsigned NumRows;
 	long   * Minimum;
 	long   * Maximum;
+	long   * Percent;
 	long   * ColWidth;
 };
 

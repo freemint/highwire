@@ -52,6 +52,7 @@ delete_table (TABLE * _table)
 		}
 		if (table->Minimum)  free (table->Minimum);
 		if (table->Maximum)  free (table->Maximum);
+		if (table->Percent)  free (table->Percent);
 		if (table->ColWidth) free (table->ColWidth);
 		*_table = NULL;
 	}
@@ -98,6 +99,7 @@ table_start (PARSER parser)
 	table->NumRows   = 0;
 	table->Minimum   = NULL;
 	table->Maximum   = NULL;
+	table->Percent   = NULL;
 	table->ColWidth  = NULL;
 
 	table->Color   = get_value_color (parser, KEY_BGCOLOR);
@@ -313,6 +315,8 @@ table_cell (PARSER parser, BOOL is_head)
 	#define par cell->Content.Item
 	par->alignment = (is_head ? ALN_CENTER : stack->AlignH);
 
+	parser->Current.nowrap = get_value (parser, KEY_NOWRAP, NULL,0);
+	
 	if (get_value (parser, KEY_ALIGN, buf, sizeof(buf))) {
 		if      (stricmp (buf, "left")    == 0) par->alignment = ALN_LEFT;
 		else if (stricmp (buf, "right")   == 0) par->alignment = ALN_RIGHT;
@@ -320,7 +324,6 @@ table_cell (PARSER parser, BOOL is_head)
 		else if (stricmp (buf, "justify") == 0) par->alignment = ALN_JUSTIFY;
 	}
 	cell->Content.Alignment = par->alignment;
-
 	#undef par
 
 	cell->AlignV = stack->AlignV;
@@ -456,7 +459,7 @@ table_finish (PARSER parser)
 	TAB_ROW  row;
 	TAB_CELL column;
 	short    padding;
-	long   * minimum, * maximum, * fixed;
+	long   * minimum, * maximum, * percent, * fixed;
 	int      i;
 	
 /*	printf ("table_finish() %i * %i \n", table->NumCols, table->NumRows);*/
@@ -491,6 +494,8 @@ table_finish (PARSER parser)
 	for (i = 0; i < table->NumCols; table->Minimum[i++] = padding);
 	table->Maximum = malloc (sizeof (*table->Maximum) * table->NumCols);
 	for (i = 0; i < table->NumCols; table->Maximum[i++] = 0);
+	table->Percent = malloc (sizeof (*table->Percent) * table->NumCols);
+	for (i = 0; i < table->NumCols; table->Percent[i++] = 0);
 	table->ColWidth = malloc (sizeof (*table->ColWidth) * table->NumCols);
 	for (i = 0; i < table->NumCols; table->ColWidth[i++] = 0);
 
@@ -520,15 +525,16 @@ table_finish (PARSER parser)
 #endif
 	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 * Step 1:  walk over all table cells and set the column's minimum/maximum
-	 *          width for cells with single colspan and the row's minimum height
-	 *          for cells with single rowspan.
+	 * Step 1:  walk over all table cells and set the column's minimum/maximum/
+	 *          percentage width for cells with single colspan and the row's
+	 *          minimum height for cells with single rowspan.
 	 */
 	row = table->Rows;
 	i   = table->NumRows;
 	do {
 		TAB_CELL cell = row->Cells;
 		fixed   = table->ColWidth;
+		percent = table->Percent;
 		minimum = table->Minimum;
 		maximum = table->Maximum;
 
@@ -551,6 +557,7 @@ table_finish (PARSER parser)
 						if (*minimum < width) *minimum = width;
 						width = content_maximum (&cell->Content);
 						if (*maximum < width) *maximum = width;
+						if (cell->Content.Width < 0) *percent = -cell->Content.Width;
 					}
 				}
 				if (cell->RowSpan == 1) {
@@ -560,6 +567,7 @@ table_finish (PARSER parser)
 				}
 			}
 			fixed++;
+			percent++;
 			minimum++;
 			maximum++;
 		} while ((cell = cell->RightCell) != NULL);
@@ -607,6 +615,36 @@ table_finish (PARSER parser)
 				} else {
 					spread_width (maximum, cell->ColSpan, table->Spacing,
 					              content_maximum (&cell->Content));
+					if (cell->Content.Width < 0) {
+						short empty = 0;
+						percent = table->Percent + (fixed - table->ColWidth);
+						width   = -cell->Content.Width;
+						for (i = 0; i < cell->ColSpan; i++) {
+							if (!percent[i]) {
+								empty++;
+							} else {
+								width -= percent[i];
+							}
+						}
+						if (width > 0) {
+							if (!empty) {
+								i = cell->ColSpan;
+								do {
+									short w = width / i;
+									*(percent++) += w;
+									width        -= w;
+								} while (--i);
+							
+							} else do {
+								if (!*percent) {
+									short w = width / empty--;
+									*percent += w;
+									width    -= w;
+								}
+								percent++;
+							} while (empty);
+						}
+					}
 				}
 			}
 		} while ((cell = cell->BelowCell) != NULL);
@@ -726,20 +764,45 @@ table_calc (TABLE table, long max_width)
 		 *            over all columns that hasn't a fixed width.
 		 */
 		long * col_width = table->ColWidth;
+		long * percent   = table->Percent;
 		long * maximum   = table->Maximum;
 		long * minimum   = table->Minimum;
-		int    i         = table->NumCols - table->FixCols;
+		short  rest      = table->NumCols - table->FixCols;
+		short  i         = table->NumCols;
 		short  spread    = set_width - table->t_MinWidth;
 		do {
-			if (*maximum > *minimum) {
-				short w = spread / i--;
-				*col_width = w + *minimum;
-				spread    -= w;
+			if (*percent) {
+				long width = (set_width * *percent +512) /1024 - *minimum;
+				*col_width = *minimum;
+				if (width > spread) {
+					*col_width += spread;
+					spread     =  0;
+				} else if (width > 0) {
+					*col_width += width;
+					spread     -= width;
+				}
+				rest--;
 			}
 			col_width++;
-			maximum++;
+			percent++;
 			minimum++;
-		} while (i);
+		} while (--i);
+		if (rest) {
+			col_width = table->ColWidth;
+			percent   = table->Percent;
+			minimum   = table->Minimum;
+			do {
+				if (!*percent && *maximum > *minimum) {
+					short w = spread / rest--;
+					*col_width = w + *minimum;
+					spread    -= w;
+				}
+				col_width++;
+				percent++;
+				maximum++;
+				minimum++;
+			} while (rest);
+		}
 		if (table->SetWidth > table->t_MinWidth) {
 			col_width = table->ColWidth;
 			minimum   = table->Minimum;
@@ -749,34 +812,73 @@ table_calc (TABLE table, long max_width)
 			} while (--i);
 
 			set_width = table->SetWidth = table->t_MinWidth;
+		
+		} else if (spread > 0) {
+			col_width = table->ColWidth;
+			percent   = table->Percent;
+			maximum   = table->Maximum;
+			minimum   = table->Minimum;
+			rest      = table->NumCols - table->FixCols;
+			do {
+				if (*(maximum++) > *(minimum++)) {
+					short w = spread / rest--;
+					*col_width += w;
+					spread     -= w;
+				}
+				col_width++;
+				percent++;
+			} while (rest);
 		}
 
 	} else { /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 		 *
-		 * Step 2.c:
+		 * Step 2.c:  no width was given, so calculate the needed table width
+		 *            while spreading the available width over all non-fixed
+		 *            columns.
 		 */
 		long * col_width = table->ColWidth;
+		long * percent   = table->Percent;
 		long * maximum   = table->Maximum;
 		long * minimum   = table->Minimum;
 		short  spread    = set_width - table->t_MinWidth;
 		short  rest      = table->NumCols;
 		int    i         = table->NumCols;
+		
+		if (max_width > table->t_MaxWidth) {
+			 max_width = table->t_MaxWidth;
+		}
+		/* first mark all columns to be spread with a negative value */
 		do {
-			*(col_width++) = -(*(maximum++) - *(minimum++));
+			*col_width = *minimum;
+			if (*percent) {
+				long width = (table->t_MinWidth * *percent +512) /1024 - *minimum;
+				if (width > spread) {
+					*col_width += spread;
+					spread = 0;
+				} else if (width > 0) {
+					*col_width += width;
+					spread -= width;
+				}
+				rest--;
+			} else if (*maximum > *minimum) {
+				*col_width -= *maximum;
+			} else {
+				rest--;
+			}
+			col_width++;
+			percent++;
+			maximum++;
+			minimum++;
 		} while (--i);
-		do {
+		while (rest) {
 			short width = -(spread / rest);
 			BOOL  found = FALSE;
 			col_width = table->ColWidth;
 			maximum   = table->Maximum;
 			minimum   = table->Minimum;
 			i = table->NumCols;
-			do {
-				if (!*col_width) {
-					*col_width = *maximum;
-					found      = TRUE;
-					if (!--rest) break;
-				} else if (*col_width < 0 && width <= *col_width) {
+			if (width) do {
+				if (*col_width < 0 && width <= *col_width) {
 					spread    += *col_width;
 					*col_width = *maximum;
 					found      = TRUE;
@@ -801,7 +903,7 @@ table_calc (TABLE table, long max_width)
 					minimum++;
 				} while (--i);
 			}
-		} while (rest);
+		}
 		set_width -= spread;
 	}
 
