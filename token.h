@@ -159,7 +159,6 @@
 		__KEY_ITEM (MAXLENGTH),    /* INPUT */
 		__KEY_ITEM (MEDIA),        /* LINK, STYLE */
 		__KEY_ITEM (METHOD),       /* FORM */
-		__KEY_ITEM (MIN_WIDTH),    /* CSS all except table elements and inline */
 		__KEY_ITEM (NAME),         /* A,FRAME */
 		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
@@ -242,7 +241,7 @@
 		/*          MAX_HEIGHT        */
 		/*          MAX_WIDTH         */
 		/*          MIN_HEIGHT        */
-		__CSS_ITEM (MIN_WIDTH,        KEY_MIN_WIDTH),
+		__CSS_ITEM (MIN_WIDTH,        0),
 		__CSS_ITEM (PADDING,          0),
 		__CSS_ITEM (PADDING_BOTTOM,   0),
 		__CSS_ITEM (PADDING_LEFT,     0),

@@ -3023,7 +3023,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			    && (val = numerical (out, NULL, em, ex)) >= 0) {
 				width = val;
 			}
-			if (get_value (parser, KEY_MIN_WIDTH, out, sizeof(out))
+			if (get_value (parser, CSS_MIN_WIDTH, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex)) >= 0) {
 				min_wid = val;
 			}
