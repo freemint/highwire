@@ -415,6 +415,7 @@ typedef struct word_line {
 	short    Count;   /* number of words */
 	short    Ascend;  /* space above the baseline */
 	short    Descend; /* space below the baseline */
+	long     Width;
 	struct word_line * NextLine;
 } * WORDLINE;
 
