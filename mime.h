@@ -20,6 +20,7 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 
 	MIME_AUDIO = 0x3000,
 		MIME_AUD_BASIC,   /* audio/basic */
+		MIME_AUD_X_WAV,   /* audio/x-wav */
 
 	MIME_VIDEO = 0x4000,
 		MIME_VID_MPEG,    /* video/mpeg   "*.mpg" */
@@ -35,6 +36,8 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 
 MIMETYPE     mime_byExtension (const char *, const char ** stored);
 const char * mime_toExtension (MIMETYPE);
+
+MIMETYPE mime_byString (const char *, const char ** tail);
 
 
 #endif /*__MIME_H__*/

@@ -22,47 +22,6 @@
 ENCODING
 http_charset (const char * beg, size_t len, MIMETYPE * p_type)
 {
-	static struct mime_sub {
-		const char * str;
-		MIMETYPE     type;
-	}
-	txt_types[] = {
-		{ "plain", MIME_TXT_PLAIN },
-		{ "html",  MIME_TXT_HTML  },
-		{ NULL, }
-	},
-	img_types[] = {
-		{ "gif",  MIME_IMG_GIF  },
-		{ "jpeg", MIME_IMG_JPEG },
-		{ "png",  MIME_IMG_PNG  },
-		{ NULL, }
-	},
-	aud_types[] = {
-		{ "basic", MIME_AUD_BASIC },
-		{ NULL, }
-	},
-	vid_types[] = {
-		{ "mpeg", MIME_VID_MPEG },
-		{ NULL, }
-	},
-	app_types[] = {
-		{ "octet-stream",  MIME_APP_OCTET },
-		{ "pdf",           MIME_APP_PDF   },
-		{ NULL, }
-	};
-	static struct mime {
-		const char      * str;
-		MIMETYPE          type;
-		struct mime_sub * sub;
-	} mime_types[] = {
-		{ "text",        MIME_TEXT,  txt_types },
-		{ "image",       MIME_IMAGE, img_types },
-		{ "audio",       MIME_AUDIO, aud_types },
-		{ "video",       MIME_VIDEO, vid_types },
-		{ "application", MIME_APPL,  app_types },
-		{ NULL, }
-	};
-	
 	MIMETYPE type = 0;
 	ENCODING cset = ENCODING_Unknown;
 	
@@ -78,37 +37,16 @@ http_charset (const char * beg, size_t len, MIMETYPE * p_type)
 		}
 	
 	} else {
-		struct mime * mime = mime_types;
-		while (isspace (*beg) && len-- > 0) beg++;
-		do {
-			size_t n = strlen (mime->str);
-			if (len >= n && strnicmp (beg, mime->str, n) == 0) {
-				beg += n;
-				len -= n;
-				type = mime->type;
-				if (len > 1 && *beg == '/') {
-					struct mime_sub * sub = mime->sub;
-					beg++;
-					len--;
-					do {
-						n = strlen (sub->str);
-						if (len >= n && strnicmp (beg, sub->str, n) == 0) {
-							beg += n;
-							len -= n;
-							type = sub->type;
-							break;
-						}
-					} while ((++sub)->str);
-				}
-				break;
+		const char * end = beg;
+		*p_type = type = mime_byString (beg, &end);
+		if ((long)(len -= end - beg) < 0) {
+			len = 0;
+		} else {
+			beg = end;
+			while (len > 0 && isspace(*beg)) {
+				len--;
+				beg++;
 			}
-		} while ((++mime)->str);
-		
-		*p_type = type;
-		
-		while (len > 0 && isspace(*beg)) {
-			len--;
-			beg++;
 		}
 		if (len <= 0) beg = "";
 	}
@@ -138,12 +76,14 @@ content_type (const char * beg, long len, HTTP_HDR * hdr)
 		ENCODING cset;
 		beg += sizeof(token)-1;
 		len -= sizeof(token)-1;
-		
-		cset = http_charset (beg, len, &type);
-		if (type) {
-			hdr->MimeType = type;
-			if (cset) {
-				hdr->Encoding = cset;
+		while (isspace (*beg) && len-- > 0) beg++;
+		if (len > 0) {
+			cset = http_charset (beg, len, &type);
+			if (type) {
+				hdr->MimeType = type;
+				if (cset) {
+					hdr->Encoding = cset;
+				}
 			}
 		}
 		found = TRUE;

@@ -29,7 +29,7 @@ static const struct ext_2_mime mime_list[] = {
 	{ "jpg",   MIME_IMG_JPEG,   ""         },
 	{ "shtml", MIME_TXT_HTML,   NULL       },
 	{ "txt",   MIME_TXT_PLAIN,  NULL       },
-	{ "wav",   MIME_AUDIO,      "GEMJing"  }
+	{ "wav",   MIME_AUD_X_WAV,  "GEMJing"  }
 };
 
 struct mime_2_ext {
@@ -84,3 +84,86 @@ mime_toExtension (MIMETYPE type)
 	
 	return ext;
 }
+
+
+/*============================================================================*/
+MIMETYPE
+mime_byString (const char * str, const char ** tail)
+{
+	MIMETYPE type = 0;
+	
+	static struct mime_sub {
+		const char * str;
+		MIMETYPE     type;
+	}
+	txt_types[] = {
+		{ "plain", MIME_TXT_PLAIN },
+		{ "html",  MIME_TXT_HTML  },
+		{ NULL, }
+	},
+	img_types[] = {
+		{ "gif",  MIME_IMG_GIF  },
+		{ "jpeg", MIME_IMG_JPEG },
+		{ "png",  MIME_IMG_PNG  },
+		{ NULL, }
+	},
+	aud_types[] = {
+		{ "basic", MIME_AUD_BASIC },
+		{ NULL, }
+	},
+	vid_types[] = {
+		{ "mpeg", MIME_VID_MPEG },
+		{ NULL, }
+	},
+	app_types[] = {
+		{ "octet-stream",  MIME_APP_OCTET },
+		{ "pdf",           MIME_APP_PDF   },
+		{ NULL, }
+	};
+	static struct mime {
+		const char      * str;
+		MIMETYPE          type;
+		struct mime_sub * sub;
+	} mime_types[] = {
+		{ "text",        MIME_TEXT,  txt_types },
+		{ "image",       MIME_IMAGE, img_types },
+		{ "audio",       MIME_AUDIO, aud_types },
+		{ "video",       MIME_VIDEO, vid_types },
+		{ "application", MIME_APPL,  app_types },
+		{ NULL, }
+	};
+	
+	struct mime * mime = mime_types;
+	size_t        len  = strspn (str, "abcdefghijklmnopqrstuvwxyz/-");
+	do {
+		size_t n = strlen (mime->str);
+		if (len >= n && strnicmp (str, mime->str, n) == 0) {
+			str += n;
+			len -= n;
+			type = mime->type;
+			if (len > 1 && *str == '/') {
+				struct mime_sub * sub = mime->sub;
+				str++;
+				len--;
+				do {
+					n = strlen (sub->str);
+					if (len >= n && strnicmp (str, sub->str, n) == 0) {
+						str += n;
+						len -= n;
+						type = sub->type;
+						break;
+					}
+				} while ((++sub)->str);
+			}
+			break;
+		}
+	} while ((++mime)->str);
+	
+	if (tail) *tail = str;
+	
+	return type;
+}
+
+
+
+
