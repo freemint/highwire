@@ -30,6 +30,7 @@ struct s_cache_item {
 	CACHEITEM NextItem;
 	CACHEITEM PrevItem;
 	size_t    Reffs;
+	BOOL      inMem;
 	long      Ident;
 	CACHEOBJ  Object;
 	size_t    Size;
@@ -126,7 +127,7 @@ tree_item (LOCATION loc)
 	CACHENODE node  = tree_node (hash);
 	UWORD     idx   = (hash >> node->Level4x) & 0xF;
 	CACHEITEM citem = node->Array[idx].Item;
-	while (citem && (citem->Ident || !location_equal (loc, citem->Location))) {
+	while (citem && (citem->inMem || !location_equal (loc, citem->Location))) {
 		citem = citem->NodeNext;
 	}
 	return citem;
@@ -135,7 +136,7 @@ tree_item (LOCATION loc)
 
 /*----------------------------------------------------------------------------*/
 static CACHEITEM
-create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
+create_item (LOCATION loc, CACHEOBJ object, size_t memsize, void (*dtor)(void*))
 {
 	ULONG     hash  = location_Hash (loc);
 	CACHENODE node  = tree_node (hash);
@@ -179,9 +180,10 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		node->Array[idx].Item = citem;
 		
 		citem->Location = location_share (loc);
+		citem->inMem    = (memsize != 0);
 		citem->Ident    = 0;
 		citem->Object   = object;
-		citem->Size     = size;
+		citem->Size     = memsize;
 		citem->Date     = 0;
 		citem->Expires  = 0;
 		citem->dtor     = dtor;
@@ -193,7 +195,7 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 		citem->NextItem = __cache_beg;
 		__cache_beg     = citem;
 		__cache_num++;
-		__cache_mem += size;
+		__cache_mem += memsize;
 	}
 	return citem;
 }
@@ -240,7 +242,7 @@ destroy_item (CACHEITEM citem)
 	}
 /*<<<<<<<<<< DEBUG */
 	__cache_num--;
-	if (citem->Ident) {
+	if (citem->inMem) {
 /*>>>>>>>>>> DEBUG */
 		if ((long)__cache_mem < (long)citem->Size) {
 			printf ("destroy_item(%s): size underflow %lu/%li!\n",
@@ -270,7 +272,7 @@ cache_throw (long size)
 	}*/
 	while (citem) {
 		CACHEITEM prev = citem->PrevItem;
-		if (!citem->Reffs && citem->Ident && citem->dtor) {
+		if (!citem->Reffs && citem->inMem && citem->dtor) {
 /*>>>>>>>>>> DEBUG */
 			if (!citem->Object) {
 				printf ("cache_throw(): no object '%s'!\n",
@@ -478,7 +480,7 @@ cache_info (size_t * size, CACHEINF * p_info)
 				info->Source  = citem->Location;
 				info->Ident   = citem->Ident;
 				info->Used    = citem->Reffs;
-				info->Local   = (citem->Ident ? NULL : citem->Object);
+				info->Local   = (citem->inMem ? NULL : citem->Object);
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
 				info->Object  = citem->Object;
@@ -662,7 +664,7 @@ cache_query (LOCATION loc, long ident, CACHEINF info)
 	
 	while (citem) {
 		if (location_equal (loc, citem->Location)) {
-			if (!citem->Ident) {
+			if (!citem->inMem) {
 				if (citem->Object) {
 					info->Local   = citem->Object;
 					info->Date    = citem->Date;
