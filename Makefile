@@ -85,7 +85,8 @@ CFILES = \
 	http.c inet.c \
 	Logging.c \
 	Widget.c \
-	fontbase.c
+	fontbase.c \
+	ovl_sys.c
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 
