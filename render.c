@@ -442,12 +442,13 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					}
 
 					if (get_value (parser, KEY_SRC, frame_file,sizeof(frame_file))) {
-						LOADER loader = new_loader_job (url_correct (frame_file),
-						                                base, container);
-						short margn_w = get_value_unum (parser, KEY_MARGINWIDTH,  -1);
-						short margn_h = get_value_unum (parser, KEY_MARGINHEIGHT, -1);
-						if (margn_w >= 0 || margn_h >= 0) {
-							loader_setParams (loader, 0, margn_w, margn_h);
+						LOADER ldr = start_page_load (container,
+						                              url_correct (frame_file), base);
+						if (ldr) {
+							short lft = get_value_unum (parser, KEY_MARGINWIDTH,  -1);
+							short top = get_value_unum (parser, KEY_MARGINHEIGHT, -1);
+							if (lft >= 0) ldr->MarginW = lft;
+							if (top >= 0) ldr->MarginH = top;
 						}
 					} else {
 						update = TRUE;
@@ -566,8 +567,8 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 							if (*end == '\'') *end = '\0';
 						}
 						if (*url) {
-							new_loader_job (url,
-							                parser->Frame->Location, parser->Target);
+							start_page_load (parser->Target,
+							                 url, parser->Frame->BaseHref);
 						}
 					}
 				}
@@ -622,7 +623,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 		char snd_file[HW_PATH_MAX];
 
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
-			new_loader_job (snd_file, parser->Frame->BaseHref, NULL);
+			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref);
 		}
 	}
 	return flags;

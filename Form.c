@@ -767,7 +767,7 @@ input_activate (INPUT input, WORD slct)
 			len = size;
 		}
 		url[len] = '\0';
-		new_loader_job (url, form->Frame->Location, form->Frame->Container);
+		start_page_load (form->Frame->Container, url, form->Frame->Location);
 		free (url);
 	}
 	

@@ -137,7 +137,7 @@ key_pressed (WORD key, UWORD state)
 		break;
 	case 0x3B00:  /* F1 (defined in DIN 2137-6, Nr 6.2.4 (ISO/IEC 9995-6?)) */
 	case 0x6200:  /* Help */
-		new_loader_job (help_file, NULL, containr_Base (active));
+		start_cont_load (containr_Base (active), help_file, NULL);
 		break;
 	}
 

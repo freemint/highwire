@@ -241,7 +241,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {
-		new_loader_job (url, loc, This->Pane);
+		start_page_load (This->Pane, url, loc);
 	}
 	
 #ifdef GEM_MENU
@@ -830,10 +830,13 @@ hwWind_history (HwWIND This, UWORD menu)
 				This->HistMenu = menu;
 			}
 			do {
-				LOADER ldr = new_loader_job (NULL, entr[i].Location, entr[i].Target);
-				loader_setParams (ldr, entr[i].Encoding, -1, -1);
-				ldr->ScrollV = entr[i].ScrollV;
-				ldr->ScrollH = entr[i].ScrollH;
+				LOADER ldr = start_cont_load (entr[i].Target,
+				                              NULL, entr[i].Location);
+				if (ldr) {
+					ldr->Encoding = entr[i].Encoding;
+					ldr->ScrollV  = entr[i].ScrollV;
+					ldr->ScrollH  = entr[i].ScrollH;
+				}
 			} while (++i < num);
 		}
 	}
@@ -1239,6 +1242,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				if (!cont->Parent && wind->TbarH) {
 					updt_toolbar (wind, gen_ptr);
 				}
+				chng_toolbar  (wind, 0, ~TBAR_STOP_MASK, -1);
 			}
 			if (!cont->Parent) {
 				hwWind_setName (wind, gen_ptr);
@@ -1311,7 +1315,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				} else {
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
-				chng_toolbar (wind, TBAR_STOP_MASK, ~TBAR_STOP_MASK, -1);
+				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
 			break;
 		
@@ -1326,7 +1330,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					graf_mkstate (&mx, &my, &u,&u);
 					check_mouse_position (mx, my);
 				}
-				chng_toolbar (wind, TBAR_REDO_MASK, TBAR_STOP_MASK, -1);
+				chng_toolbar (wind, 0, TBAR_STOP_MASK, -1);
 			}
 			break;
 		
@@ -1766,7 +1770,8 @@ hwWind_keybrd (WORD key, UWORD state)
 			
 			case 13: /* enter/return */
 				if (edit->Length) {
-					new_loader_job (edit->Text, NULL, wind->Pane);
+					start_page_load (wind->Pane, edit->Text, NULL);
+					chng_toolbar (wind, 0, 0, -1);
 					break;
 				}
 			case 9: /* tab */

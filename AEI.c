@@ -138,7 +138,7 @@ page_load(void)
 			size_t len = slash - fsel_path +1;
 			memcpy (file, fsel_path, len);
 			strcpy (file + len, fsel_file);
-			new_loader_job (file, NULL, hwWind_Top->Pane);
+			start_cont_load (hwWind_Top->Pane, file, NULL);
 		} else {
 			butt = FALSE;
 		}
@@ -177,7 +177,7 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 	}
 	
 	if (wind) {
-		new_loader_job (cmd, NULL, wind->Pane);
+		start_page_load (wind->Pane, cmd, NULL);
 	} else {
 		new_hwWind ("", cmd, NULL);
 	}
@@ -381,7 +381,7 @@ menu_open (BOOL fsel)
 		n = form_do (form, URL_EDIT);
 		form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 		if (n == URL_OK && ptext[0]) {
-			new_loader_job (ptext, NULL, hwWind_Top->Pane);
+			start_page_load (hwWind_Top->Pane, ptext, NULL);
 		} else if (n == URL_FILE) {
 			fsel = TRUE;
 		}
@@ -398,14 +398,18 @@ void
 menu_reload (ENCODING encoding)
 {
 	if (encoding > ENCODING_Unknown) {
-		FRAME  frame  = hwWind_ActiveFrame (NULL);
-		LOADER loader = new_loader_job (NULL, frame->Location, frame->Container);
-		
 		/* if an encoding is given (!=ENCODING_Unknown) set bit 7 to instruct
 		 * the parser not to switch it.
 		 */
-		loader_setParams (loader, (encoding | 0x80u),
-		                  frame->Page.MarginLft, frame->Page.MarginTop);
+		FRAME frame = hwWind_ActiveFrame (NULL);
+		if (frame) {
+			LOADER ldr = start_cont_load (frame->Container, NULL, frame->Location);
+			if (ldr) {
+				ldr->Encoding = (encoding | 0x80u);
+				ldr->MarginW  = frame->Page.MarginLft;
+				ldr->MarginH  = frame->Page.MarginTop;
+			}
+		}
 	} else {
 		hwWind_history (hwWind_Top, hwWind_Top->HistMenu);
 	}

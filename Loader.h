@@ -37,8 +37,9 @@ typedef struct s_loader {
 LOADER new_loader    (LOCATION, CONTAINR target);
 void   delete_loader (LOADER *);
 
-LOADER new_loader_job   (const char *address, LOCATION base, CONTAINR target);
-void   loader_setParams (LOADER, ENCODING, short margin_w, short margin_h);
+LOADER start_page_load (CONTAINR target, const char * url, LOCATION base);
+LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base);
+LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base);
 
 
 #endif /* __LOADER_H__ */

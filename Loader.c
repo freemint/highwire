@@ -48,7 +48,11 @@ char fsel_path[HW_PATH_MAX];
 char help_file[HW_PATH_MAX];
 
 
-static char *load_file (const LOCATION, size_t * expected, size_t * loaded);
+static BOOL loader_job (void * arg, long invalidated);
+static BOOL header_job (void * arg, long invalidated);
+
+static short  start_application (const char * appl, LOCATION loc);
+static char * load_file (const LOCATION, size_t * expected, size_t * loaded);
 
 
 /*******************************************************************************
@@ -223,6 +227,102 @@ delete_loader (LOADER * p_loader)
 		free (loader);
 		*p_loader = NULL;
 	}
+}
+
+
+/*============================================================================*/
+LOADER
+start_page_load (CONTAINR target, const char * url, LOCATION base)
+{
+	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
+	LOADER   loader = NULL;
+	
+	if (loc->Proto == PROT_MAILTO || loc->Proto == PROT_FTP) {
+		start_application (NULL, loc);
+	
+	} else {
+		loader = start_cont_load (target, NULL, loc);
+	}
+	free_location (&loc);
+	
+	return loader;
+}
+
+/*============================================================================*/
+LOADER
+start_cont_load (CONTAINR target, const char * url, LOCATION base)
+{
+	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
+	LOADER   loader = new_loader (loc, target);
+	
+	free_location (&loc);
+	loc = (loader->Cached ? loader->Cached : loader->Location);
+	
+	if (!loader->notified) {
+		char buf[1024];
+		location_FullName (loader->Location, buf, sizeof(buf));
+		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
+	}
+	
+	if (loc->Proto == PROT_DIR) {
+		loader->MimeType = MIME_TXT_HTML;
+		sched_insert (parse_dir, new_parser (loader), (long)target);
+		
+	} else if (loc->Proto == PROT_ABOUT) {
+		loader->MimeType = MIME_TXT_HTML;
+		sched_insert (parse_about, new_parser (loader), (long)target);
+		
+	} else if (MIME_Major(loader->MimeType) == MIME_IMAGE) {
+		loader->MimeType = MIME_IMAGE;
+		sched_insert (parse_image, new_parser (loader), (long)target);
+		
+#ifdef USE_INET
+	} else if (loc->Proto == PROT_HTTP) {
+		sched_insert (header_job, loader, (long)target);
+#endif /* USE_INET */
+	
+	} else if (loc->Proto) {
+		const char txt[] = "<html><head><title>Error</title></head><body>"
+		                   "<h1>Protocol #%i not supported!</h1></body></html>";
+		char buf [sizeof(txt) +10];
+		sprintf (buf, txt, loc->Proto);
+		loader->Data     = strdup (buf);
+		loader->MimeType = MIME_TXT_HTML;
+		sched_insert (parser_job, loader, (long)loader->Target);
+	
+	} else if (loader->ExtAppl) {
+		start_application (loader->ExtAppl, loc);
+		delete_loader (&loader);
+		
+	} else {
+		sched_insert (loader_job, loader, (long)target);
+	}
+	
+	return loader;
+}
+
+/*============================================================================*/
+LOADER
+start_objc_load (CONTAINR target, const char * url, LOCATION base)
+{
+	LOCATION loc  = new_location (url, base);
+	LOADER loader = new_loader (loc, target);
+	
+	free_location (&loc);
+	loc = (loader->Cached ? loader->Cached : loader->Location);
+	
+	if (!loader->ExtAppl) {
+		printf ("start_objc_load(%s) no appl found.\n", loc->FullName);
+	
+	} else if (loc->Proto != PROT_FILE) {
+		printf ("start_objc_load(%s) not a file.\n", loc->FullName);
+	
+	} else {
+		start_application (NULL, loc);
+	}
+	delete_loader (&loader);
+	
+	return loader;
 }
 
 
@@ -413,6 +513,136 @@ receive_job (void * arg, long invalidated)
 	
 	return FALSE;
 }	
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static BOOL
+header_job (void * arg, long invalidated)
+{
+	LOADER   loader = arg;
+	LOCATION loc    = loader->Location;
+	
+	const char * host;
+	HTTP_HDR     hdr;
+	short        sock = -1;
+	short        reply;
+	UWORD        retry = 0;
+	
+	if (invalidated) {
+		delete_loader (&loader);
+		return FALSE;
+	}
+	
+	/* Connect to host
+	*/
+	if ((host = location_Host (loc)) != NULL) {
+		char buf[300];
+		sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
+		containr_notify (loader->Target, HW_SetInfo, buf);
+	}
+	do {
+		reply = http_header (loc, &hdr, &sock, sizeof (loader->rdTemp) -2);
+	} while (reply == -ECONNRESET && retry++ < 1);
+	
+	/* Check for HTTP header redirect
+	*/
+	if ((reply == 301 || reply == 302) && hdr.Rdir) {
+		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
+		CACHED   cached = cache_lookup (redir, 0, NULL);
+		if (!loader->MimeType) {
+			loader->MimeType = hdr.MimeType;
+		}
+		if (cached) {
+			union { CACHED c; LOCATION l; } u;
+	 		if (loader->Cached) {
+ 				cache_release ((CACHED*)&loader->Cached, FALSE);
+ 			}
+			u.c = cache_bound (cached, &loader->Location);
+			loader->Cached = loc = u.l;
+			free_location (&redir);
+		} else {
+			free_location (&loader->Location);
+			loader->Location = loc = redir;
+		}
+		if (!loader->MimeType) {
+			loader->MimeType = mime_byExtension (loc->File, NULL);
+		}
+		inet_close (sock);
+		
+		return TRUE; /* re-schedule with the new location */
+	}
+	
+	/* start loading
+	*/
+	if (hdr.MimeType) {
+		loader->MimeType = hdr.MimeType;
+		if (hdr.Encoding) {
+			loader->Encoding = hdr.Encoding;
+		}
+	}
+	if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
+		char buf[300];
+		sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
+		containr_notify (loader->Target, HW_SetInfo, buf);
+		
+		if (hdr.Modified > 0) {
+			loader->Date = hdr.Modified;
+		} else if (hdr.SrvrDate > 0) {
+			loader->Date = hdr.SrvrDate;
+		}
+		if (loader->Date && hdr.Expires > 0) {
+			loader->Expires = hdr.Expires;
+		}
+		
+		if (hdr.Size >= 0 && !hdr.Chunked) {
+			loader->Data     = loader->rdDest = malloc (hdr.Size +3);
+			loader->DataSize = loader->rdLeft = hdr.Size;
+			loader->DataFill = hdr.Tlen;
+			if (loader->DataFill) {
+				if (loader->DataFill > loader->rdLeft) {
+					 loader->DataFill = loader->rdLeft;
+				}
+				memcpy (loader->rdDest, hdr.Tail, loader->DataFill);
+				loader->rdDest += loader->DataFill;
+				loader->rdLeft -= loader->DataFill;
+			}
+			if (sock < 0 || !loader->rdLeft) {
+				loader->rdDest[0] = '\0';
+				loader->rdDest[1] = '\0';
+				loader->rdDest[2] = '\0';
+				inet_close (sock);
+			} else {
+				loader->rdSocket = sock;
+				sched_insert (receive_job, loader, (long)loader->Target);
+				return FALSE;
+			}
+		
+		} else {
+			if ((loader->rdChunked = hdr.Chunked) == TRUE) {
+				loader->rdTemp[0] = '\r';
+				loader->rdTemp[1] = '\n';
+				loader->rdTlen = 2;
+			}
+			if (hdr.Tlen) {
+				memcpy (loader->rdTemp + loader->rdTlen, hdr.Tail, hdr.Tlen);
+				loader->rdTlen += hdr.Tlen;
+			}
+			loader->rdSocket = sock;
+			sched_insert (chunked_job, loader, (long)loader->Target);
+			return FALSE;
+		}
+	
+	}
+	
+	/* else error case
+	*/
+	loader->MimeType = MIME_TEXT;
+	loader->Data     = strdup (hdr.Head);
+	
+	sched_insert (parser_job, loader, (long)loader->Target);
+
+	return FALSE;
+}
 #endif /* USE_INET */
 
 
@@ -434,115 +664,7 @@ loader_job (void * arg, long invalidated)
 		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
 	}
 	
-	if (loc->Proto == PROT_HTTP) {
-#ifdef USE_INET
-		const char * host = location_Host (loc);
-		HTTP_HDR     hdr;
-		short        sock = -1;
-		short        reply;
-		UWORD        retry = 0;
-		
-		if (host) {
-			char buf[300];
-			sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
-			containr_notify (loader->Target, HW_SetInfo, buf);
-		}
-		do {
-			reply = http_header (loc, &hdr, &sock, sizeof (loader->rdTemp) -2);
-		} while (reply == -ECONNRESET && retry++ < 1);
-		
-		if ((reply == 301 || reply == 302) && hdr.Rdir) {
-			LOCATION redir  = new_location (hdr.Rdir, loader->Location);
-			CACHED   cached = cache_lookup (redir, 0, NULL);
-			if (!loader->MimeType) {
-				loader->MimeType = hdr.MimeType;
-			}
-			if (cached) {
-				union { CACHED c; LOCATION l; } u;
-		 		if (loader->Cached) {
- 					cache_release ((CACHED*)&loader->Cached, FALSE);
- 				}
-				u.c = cache_bound (cached, &loader->Location);
-				loader->Cached = loc = u.l;
-				free_location (&redir);
-			} else {
-				free_location (&loader->Location);
-				loader->Location = loc = redir;
-			}
-			if (!loader->MimeType) {
-				loader->MimeType = mime_byExtension (loc->File, NULL);
-			}
-			inet_close (sock);
-			
-			return TRUE; /* re-schedule with the new location */
-		}
-		
-		if (hdr.MimeType) {
-			loader->MimeType = hdr.MimeType;
-			if (hdr.Encoding) {
-				loader->Encoding = hdr.Encoding;
-			}
-		}
-		if (reply == 200 && MIME_Major(loader->MimeType) == MIME_TEXT) {
-			char buf[300];
-			sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
-			containr_notify (loader->Target, HW_SetInfo, buf);
-			
-			if (hdr.Modified > 0) {
-				loader->Date = hdr.Modified;
-			} else if (hdr.SrvrDate > 0) {
-				loader->Date = hdr.SrvrDate;
-			}
-			if (loader->Date && hdr.Expires > 0) {
-				loader->Expires = hdr.Expires;
-			}
-			
-			if (hdr.Size >= 0 && !hdr.Chunked) {
-				loader->Data     = loader->rdDest = malloc (hdr.Size +3);
-				loader->DataSize = loader->rdLeft = hdr.Size;
-				loader->DataFill = hdr.Tlen;
-				if (loader->DataFill) {
-					if (loader->DataFill > loader->rdLeft) {
-						 loader->DataFill = loader->rdLeft;
-					}
-					memcpy (loader->rdDest, hdr.Tail, loader->DataFill);
-					loader->rdDest += loader->DataFill;
-					loader->rdLeft -= loader->DataFill;
-				}
-				if (sock < 0 || !loader->rdLeft) {
-					loader->rdDest[0] = '\0';
-					loader->rdDest[1] = '\0';
-					loader->rdDest[2] = '\0';
-					inet_close (sock);
-				} else {
-					loader->rdSocket = sock;
-					sched_insert (receive_job, loader, (long)loader->Target);
-					return FALSE;
-				}
-			
-			} else {
-				if ((loader->rdChunked = hdr.Chunked) == TRUE) {
-					loader->rdTemp[0] = '\r';
-					loader->rdTemp[1] = '\n';
-					loader->rdTlen = 2;
-				}
-				if (hdr.Tlen) {
-					memcpy (loader->rdTemp + loader->rdTlen, hdr.Tail, hdr.Tlen);
-					loader->rdTlen += hdr.Tlen;
-				}
-				loader->rdSocket = sock;
-				sched_insert (chunked_job, loader, (long)loader->Target);
-				return FALSE;
-			}
-		
-		} else {
-			loader->MimeType = MIME_TEXT;
-			loader->Data     = strdup (hdr.Head);
-		}
-#endif /* USE_INET */
-	} else {
-		loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
-	}
+	loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
 	if (!loader->Data) {
 		loader->Data     = strdup ("<html><head><title>Error</title></head>"
 		                           "<body><h1>Page not found!</h1></body></html>");
@@ -577,6 +699,22 @@ find_application (const char * name)
 	return id;
 }
 
+/*----------------------------------------------------------------------------*/
+static short
+start_application (const char * appl, LOCATION loc)
+{
+	short id   = (appl ? find_application (appl) : -1);
+	if (id >= 0 || (id = find_application (NULL)) >= 0) {
+		short msg[8] = { VA_START, };
+		msg[1] = gl_apid;
+		msg[2] = msg[5] = msg[6] = msg[7] = 0;
+		*(char**)(msg +3) = va_helpbuf;
+		location_FullName (loc, va_helpbuf, HW_PATH_MAX *2);
+		appl_write (id, 16, msg);
+	}
+	return id;
+}
+
 
 /*==============================================================================
  * small routine to call external viewer to view the SRC to
@@ -599,13 +737,14 @@ launch_viewer(const char *name)
 	}
 }
 
+#if 0
 /*==============================================================================
  * registers a loader job with the scheduler.
  *
  * The parameters 'address', 'base' or 'target' can be NULL.
  * address == NULL: reread the file in base with default_encoding
  */
-LOADER
+static LOADER
 new_loader_job (const char *address, LOCATION base, CONTAINR target)
 {
 	LOCATION loc    = new_location (address, base);
@@ -685,19 +824,7 @@ new_loader_job (const char *address, LOCATION base, CONTAINR target)
 	
 	return loader;
 }
-
-/*============================================================================*/
-void
-loader_setParams (LOADER loader,
-                  ENCODING encoding, short margin_w, short margin_h)
-{
-	if (loader) {
-		if (encoding > ENCODING_Unknown) loader->Encoding = encoding;
-		if (margin_w >= 0)               loader->MarginW  = margin_w;
-		if (margin_h >= 0)               loader->MarginH  = margin_h;
-	}
-}
-
+#endif
 
 /******************************************************************************/
 

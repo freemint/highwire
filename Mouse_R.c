@@ -202,26 +202,29 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 		
 		case PE_TLINK: case PE_ILINK: {
 			struct url_link * link = hash;
-			if (*link->address == '#') {
+			const char      * addr = link->address;
+			if (*addr == '#') {
 				long dx, dy;
-				if (containr_Anchor (cont, link->address, &dx, &dy)) {
+				if (containr_Anchor (cont, addr, &dx, &dy)) {
 					hwWind_scroll (wind, cont, dx, dy);
 					check_mouse_position (mx, my);
 				}
 			} else {
-				LOCATION loc = frame->BaseHref;
 				if (state & K_ALT) {
-					cont = new_hwWind (link->address, "", NULL)->Pane;
+					cont = NULL;
 				} else if (link->u.target) {
-					if (stricmp (link->u.target, "_blank") == 0) {
-						cont = new_hwWind (link->address, "", NULL)->Pane;
-					} else {
-						CONTAINR target = containr_byName (cont, link->u.target);
-						if (target) cont = target;
+					cont = (stricmp (link->u.target, "_blank") == 0
+					        ? NULL : containr_byName (cont, link->u.target));
+				}
+				if (!cont) {
+					cont = new_hwWind (addr, NULL, NULL)->Pane;
+				}
+				if (cont) {
+					LOADER ldr = start_page_load (cont, addr, frame->BaseHref);
+					if (ldr) {
+						ldr->Encoding = link->encoding;
 					}
 				}
-				loader_setParams (new_loader_job (link->address, loc, cont),
-				                  link->encoding, -1,-1);
 			}
 		} break;
 		
