@@ -1,7 +1,12 @@
-(non-public of Jun 11, 2004)
+(non-public of Jun 15, 2004)
+
+- Support added for new Sting.OVL.
 
 - Http request-header field 'Referer:'
   implemented.
+
+- Corrected calculation of UTC date/time values as
+  needed for cache expiration.
 
 - Bugfix for anchors inside of tables which got
   lost when more than one was defined.
