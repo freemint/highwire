@@ -864,8 +864,16 @@ render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		char output[HW_PATH_MAX];
 		if (get_value (parser, KEY_HREF, output, sizeof(output)-1)) {
-			LOCATION base = new_location (strcat (output, "/"),
-			                              parser->Frame->Location);
+			LOCATION base;
+			size_t   len = strlen (output);
+			if (len && output[len -1] != '/') {
+				char buff[sizeof(output)];
+				location_FullName (parser->Frame->Location, buff, sizeof(buff));
+				if (strcmp (output, buff) != 0) {
+					strcat (output, "/");
+				}
+			}
+			base = new_location (output, parser->Frame->Location);
 			if (base) {
 				free_location (&parser->Frame->BaseHref);
 				parser->Frame->BaseHref = base;

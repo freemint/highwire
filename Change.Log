@@ -1,4 +1,4 @@
-(non-public of Sep. 27, 2004):
+(non-public of Oct. 04, 2004):
 
 - Large portions of the cache handling code
   reworked.  This gets rid of several wrong
@@ -27,6 +27,11 @@
 - Some error messages are displayed by alert boxes
   now instead of console output or simple writing
   to the screen
+
+- Workaround added for weird <base href=...>
+  constructs, where the complete document path is
+  used as the base (wrong usage that is, but also
+  used by the W3C staff!).
 
 - Bugs #0133, #0150, #0167, #0169, #0170 resolved.
 
