@@ -345,6 +345,7 @@ struct s_dombox {
 	LONG     MinWidth; /* smallest width where the content fits in    */
 	LONG     SetWidth; /* set Value, must not be smaller than Minimum */
 	BOXCLASS BoxClass;
+	WORD     HtmlCode;
 	WORD     Backgnd;  /* -1 for transparency, or colour value        */
 	TBLR     Margin;
 	TBLR     Padding;

@@ -1000,6 +1000,8 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		FRAME frame = parser->Frame;
 		WORD  margin;
 		
+		frame->Page.Box.HtmlCode = TAG_BODY;
+		
 		if (!ignore_colours)
 		{
 			WORD color;
@@ -1722,7 +1724,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	
 		if (floating != ALN_NO_FLT) {
-			add_paragraph (current, 0);
+			add_paragraph (current, 0)->Box.HtmlCode = TAG_IMG;
 			current->paragraph->paragraph_code = PAR_IMG;
 			current->paragraph->floating       = floating;
 		
@@ -1910,43 +1912,55 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 static UWORD
 render_H1_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 7, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 7, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H1;
+	return flags;
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 static UWORD
 render_H2_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 6, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 6, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H2;
+	return flags;
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 static UWORD
 render_H3_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 5, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 5, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H3;
+	return flags;
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 static UWORD
 render_H4_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 4, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 4, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H4;
+	return flags;
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 static UWORD
 render_H5_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 3, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 3, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H5;
+	return flags;
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 static UWORD
 render_H6_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED  (text);
-	return render_H_tag (parser, 2, flags);
+	UNUSED (text);
+	flags = render_H_tag (parser, 2, flags);
+	parser->Current.paragraph->Box.HtmlCode = TAG_H6;
+	return flags;
 }
 
 /*------------------------------------------------------------------------------
@@ -1970,7 +1984,9 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		
 		PARAGRPH hr_par = add_paragraph(current, 0);
 		WORDITEM hr_wrd = current->word;
-	
+		
+		hr_par->Box.HtmlCode = TAG_HR;
+		
 		new_word (current, TRUE);
 		add_paragraph (current, 0);
 	
@@ -2030,6 +2046,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		if (!current->lst_stack ||
 		     current->lst_stack->Spacer->next_word != current->prev_wrd) {
 			par = add_paragraph (current, 2);
+			par->Box.HtmlCode = TAG_P;
 		}
 		
 		css_block_styles (parser, NULL);
@@ -2162,6 +2179,7 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 			table_start (parser, color, fltng,
 			             0, (width ? width : -1024/*100%*/), 0, 0, border, TRUE);
 			table_cell (parser, -1, align, ALN_TOP, 0, 0, 0, 0);
+			current->parentbox->HtmlCode = TAG_DIV;
 		}
 	} else if (current->tbl_stack && current->tbl_stack->isSpecial) {
 		table_finish (parser);
@@ -2180,7 +2198,7 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		add_paragraph (current, 2);
+		add_paragraph (current, 2)->Box.HtmlCode = TAG_PRE;
 		current->paragraph->alignment = ALN_LEFT;
 		word_set_font (current, pre_font);
 		if (get_value_unum (parser, KEY_WIDTH, 80) > 80) {
@@ -2206,7 +2224,7 @@ render_PLAINTEXT_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		TEXTBUFF current = &parser->Current;
-		add_paragraph (current, 2);
+		add_paragraph (current, 2)->Box.HtmlCode = TAG_PLAINTEXT;
 		/* from now on plain text, never ending */
 /*		parse_text (*text, frame);*/
 		*text = strchr (*text, '\0');
@@ -2225,7 +2243,7 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		add_paragraph (current, 2);
+		add_paragraph (current, 2)->Box.HtmlCode = TAG_LISTING;
 		current->paragraph->alignment = ALN_LEFT;
 		word_set_font (current, pre_font);
 		TAsetCondns (current->word->attr, TRUE);
@@ -2486,6 +2504,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             get_value_size  (parser, KEY_WIDTH),
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             get_value_unum  (parser, KEY_CELLPADDING, 1), border, FALSE);
+		parser->Current.paragraph->Box.HtmlCode = TAG_TABLE;
 	
 	} else {
 		TEXTBUFF current = &parser->Current;
@@ -2548,6 +2567,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_unum  (parser, KEY_ROWSPAN, 0),
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
+		current->parentbox->HtmlCode = TAG_TD;
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);
@@ -2576,6 +2596,7 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_unum  (parser, KEY_COLSPAN, 0));
 		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
 		fontstack_setBold (current);
+		current->parentbox->HtmlCode = TAG_TH;
 		flags |= PF_FONT;
 	}
 	return (flags|PF_SPACE);

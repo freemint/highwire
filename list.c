@@ -29,8 +29,10 @@ list_start (TEXTBUFF current, BULLET bullet, short counter)
 		list->Indent = par->Indent - par->Hanging;
 	}
 	
-	par->alignment = ALN_LEFT;
-	par->Hanging -= list->Hanging;
+	par->Box.BoxClass = BC_MIXED;
+	par->Box.HtmlCode = TAG_LI;
+	par->alignment    = ALN_LEFT;
+	par->Hanging     -= list->Hanging;
 
 	list->next_stack_item = current->lst_stack;
 	current->lst_stack    = list;
@@ -299,6 +301,8 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	      (par->paragraph_code != PAR_LI ||    /* ...first item of the list  */
 	       list->Spacer != par->item))) {      /* ...no nesting bullet befor */
 		par = add_paragraph (current, 0);
+		par->Box.BoxClass = BC_MIXED;
+		par->Box.HtmlCode = TAG_LI;
 		par->Indent  =  list->Indent;
 		par->Hanging = -list->Hanging;
 		
