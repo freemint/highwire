@@ -130,23 +130,32 @@ font_face (char * buf, short dflt)
 
 /*----------------------------------------------------------------------------*/
 static short
-numerical (char * buf, short em, short ex)
+numerical (char * buf, char ** tail, short em, short ex)
 {
 	UWORD  mean;
-	long   size = strtol (buf, &buf, 10);
-	if (*buf == '.' && isdigit(*(++buf))) {
-		size = size * 10 + (*buf - '0');
-		if (!isdigit(*(++buf))) {
+	char * ptr;
+	long   size = strtol (buf, &ptr, 10);
+	if (size < 0 || ptr <= buf) {
+		if (tail) *tail = buf;
+		return -1;
+	}
+	if (*ptr == '.' && isdigit(*(++ptr))) {
+		size = size * 10 + (*ptr - '0');
+		if (!isdigit(*(++ptr))) {
 			size = ((size <<8) +5) /10;
 		} else {
-			size = (((size * 10 + (*buf - '0')) <<8) +5) /100;
-			while (isdigit(*(++buf)));
+			size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
+			while (isdigit(*(++ptr)));
 		}
 	} else {
 		size <<= 8;
 	}
-	if ((mean = *buf) != '\0' && mean != '%') {
-		mean = (toupper(mean) <<8) | toupper(*(++buf));
+	if ((mean = *ptr) != '\0') {
+		if (mean == '%') {
+			ptr++;
+		} else if (isalpha (mean) && isalpha (*(++ptr))) {
+			mean = (toupper(mean) <<8) | toupper(*(ptr++));
+		}
 	}
 	switch (mean) {
 		case 0x4558: /* EX */
@@ -177,6 +186,8 @@ numerical (char * buf, short em, short ex)
 		default:
 			size = 0;
 	}
+	if (tail) *tail = ptr;
+	
 	return (short)size;
 }
 
@@ -191,7 +202,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
 	
 		if (isdigit (output[0])) {
-			short size = numerical (output, current->font->Size,
+			short size = numerical (output, NULL, current->font->Size,
 			                        current->word->font->SpaceWidth);
 			if (size > 0) {
 				if (!fstk) {
@@ -301,9 +312,12 @@ css_block_styles (PARSER parser, FNTSTACK fstk)
 	}
 	
 	if (get_value (parser, CSS_TEXT_INDENT, output, sizeof(output))) {
-		short indent = numerical (output, current->font->Size,
-		                          current->word->font->SpaceWidth);
-		current->paragraph->Hanging = indent;
+		char * tail   = output;
+		short  indent = numerical (output, &tail, current->font->Size,
+		                           current->word->font->SpaceWidth);
+		if (tail > output) {
+			current->paragraph->Hanging = indent;
+		}
 	}
 	
 	return fstk;
@@ -1834,19 +1848,19 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 			short size = 0; /* instead of an ordinary line break              */
 			if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))
 			    && isdigit (output[0])) {
-				size = numerical (output, current->font->Size,
+				size = numerical (output, NULL, current->font->Size,
 			                     current->word->font->SpaceWidth);
 			}
-			if (current->prev_wrd) {
-				*(current->text++) = font_Nobrk (current->word->font);
-				new_word (current, TRUE);
-				if (size > 0) {
+			if (size > 0) {
+				if (current->prev_wrd) {
+					*(current->text++) = font_Nobrk (current->word->font);
+					new_word (current, TRUE);
 					current->prev_wrd->word_height    = size;
 					current->prev_wrd->word_tail_drop = 0;
+					current->prev_wrd->line_brk = clear;
+				} else {
+					current->paragraph->Box.Padding.Top += size;
 				}
-				current->prev_wrd->line_brk = clear;
-			} else {
-				current->paragraph->Box.Padding.Top += size;
 			}
 		}
 	}
