@@ -39,11 +39,12 @@ LONG  schedule (int max_jobs);
 			 * should be performed.
 			*/
 
-void  sched_insert (BOOL (*job)(void *, long), void * arg, long hash);
+BOOL  sched_insert (BOOL (*job)(void *, long), void * arg, long hash);
 			/* Register the function 'job' to run at the next call of schedule(),
 			 * with 'arg' passed as its first argument and a 0 as the second.
 			 * Note that the job will held in queue after been run only if it
 			 * returns TRUE.  Else it will be unregistered automatically.
+			 * The return value is TRUE if registering was successfull.
 			*/
 ULONG sched_remove (BOOL (*job)(void *, long), void * arg);
 			/* Unregister all jobs for that 'job' and 'arg' matches.  If 'job' is

@@ -39,20 +39,26 @@ sched_init (void (*func) (long msec))
 
 /*==============================================================================
  */
-void
+BOOL
 sched_insert (SCHED_FUNC func, void * value, long hash)
 {
 	SCHED sched = malloc (sizeof (struct s_SCHED));
-	sched->Next  = NULL;
-	sched->func  = func;
-	sched->Value = value;
-	sched->Hash  = hash;
-	if (__end) __end->Next = sched;
-	else       __beg       = sched;
-	__end = sched;
-	__cnt++;
+	if (sched) {
+		sched->Next  = NULL;
+		sched->func  = func;
+		sched->Value = value;
+		sched->Hash  = hash;
+		if (__end) __end->Next = sched;
+		else       __beg       = sched;
+		__end = sched;
+		__cnt++;
+		
+		if (on_off) (*on_off) (1);
+		
+		return TRUE;
+	}
 	
-	if (on_off) (*on_off) (1);
+	return FALSE; /* memory exhausted */
 }
 
 /*==============================================================================
