@@ -64,6 +64,8 @@ new_parser (LOADER loader)
 	parser->hasStyle = FALSE;
 	prsdata->Styles  = NULL;
 	prsdata->KeyNum  = 0;
+	prsdata->OwnMem.Next = NULL;
+	prsdata->OwnMem.Mem  = NULL;
 	
 	memset (current, 0, sizeof (parser->Current));
 	current->font     = fontstack_setup (&current->fnt_stack, -1);
