@@ -200,8 +200,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	for (i = 0; i <= HISTORY_LAST; This->History[i++] = NULL);
 	
 	hwWind_setName (This, (name && *name ? name : url));
-	This->Stat[0] = ' ';
-	This->Stat[1] = '\0';
+	This->Stat[0] = '\0';
 	This->Info[0] = '\0';
 	if (wind_kind & INFO) {
 		wind_set_str (This->Handle, WF_INFO, This->Info);
@@ -239,14 +238,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
-	if (This->TbarH) {
-		draw_toolbar (This, &This->Work, TRUE);
-	}
-	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
-		hwWind_setInfo (This, "", TRUE);
-	} else if (This->IbarH) {
-		draw_infobar (This, &This->Work, "");
-	}
+	hwWind_redraw (This, NULL);
 
 	if ((url && *url) || loc) {
 		new_loader_job (url, loc, This->Pane);
@@ -934,7 +926,6 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					} else {
 						vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 					}
-/*		if (i != TBAR_STOP) {*/
 					l[0].p_x = p[2].p_x -1;
 					l[2].p_y = p[2].p_y -1;
 					if (i == This->TbarActv) {
@@ -968,7 +959,6 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					l[3].p_y = l[0].p_y += 1;
 					vsl_color (vdi_handle, G_BLACK);
 					v_pline (vdi_handle, 4, (short*)l);
-/*		}*/
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 				}
