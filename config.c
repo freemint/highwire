@@ -202,6 +202,10 @@ static void
 cfg_startpage (char * param, long arg)
 {
 	(void)arg;
+	if (*param == '!') { /* for debugging only */
+		param++;
+		cfg_UptoDate = TRUE;
+	}
 	if (cfg_UptoDate > 0) {
 		cfg_StartPage = strdup (param);
 	}
