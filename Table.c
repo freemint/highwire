@@ -1025,7 +1025,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 				} while (--i);
 			}
 			if (height != cell->c_Height) {
-				content_stretch (&cell->Content, height, cell->AlignV);
+				dombox_stretch (&cell->Content.Box, height, cell->AlignV);
 			}
 			cell->c_OffsetX = x;
 			cell->c_OffsetY = y;

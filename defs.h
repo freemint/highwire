@@ -369,6 +369,7 @@ DOMBOX * dombox_dtor (DOMBOX *);
 DOMBOX * dombox_byCoord (DOMBOX *, LRECT *, long * px, long * py);
 void     dombox_draw    (DOMBOX *, long x, long y, const GRECT * clip, void *);
 void     dombox_format  (DOMBOX *, long width);
+void     dombox_stretch (DOMBOX *, long height, V_ALIGN valign);
 
 struct blocking_area {
 	struct {

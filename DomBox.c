@@ -418,3 +418,22 @@ dombox_format (DOMBOX * This, long width)
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 	This->_vtab->format (This, width, &blocker);
 }
+
+
+/*============================================================================*/
+void
+dombox_stretch (DOMBOX * This, long height, V_ALIGN valign)
+{
+	long offset = height - This->Rect.H;
+	if (offset > 0) {
+		This->Rect.H = height;
+		if (valign) {
+			DOMBOX * box = This->ChildBeg;
+			if (valign == ALN_MIDDLE) offset /= 2;
+			while (box) {
+				box->Rect.Y += offset;
+				box = box->Sibling;
+			}
+		}
+	}
+}
