@@ -39,54 +39,44 @@
             <td width="49%">
 <h3>A Message from the HighWire Development Team</h3>
 <hr>
-<p><b><i>Welcome to the latest release of HighWire, version 0.2.2</i></b></p>
+<p><b><i>Welcome to the latest release of HighWire, version 0.2.3</i></b></p>
 <img src="images/twisted.gif" alt="HighWire viewing Highwire" width="161" height="131" align="right" vspace="4" hspace="4">
-<p>&nbsp;&nbsp;&nbsp;&nbsp;We hope that you will enjoy this version as 
-much as we have in the development stage.</p>
+<p>
+Even though it has not been that long since the last release of HighWire, the
+recent changes seems to suggest that it's already time to make another public
+release available.  The useability of HighWire has now been significantly
+increased due to the implementation of imagemaps.  This means that all those
+sites you have been unable to utilize due to their site navigation being hidden
+in imagemaps are now likely to be working just fine!
+<p>
+Another improvement regarding site navigation and functionality is that HighWire
+now can handle having images working as form elements. When it comes to the 
+user interface HighWire is now also better at handling popup menus that are too
+long to fit the desktop height. If such a menu is opened now, you will notice
+that there are scroll  buttons added to the menu in order to allow you to scroll
+to the part of the popup menu that is currently located outside the visible
+screen area. A small bugfix has also been made to text input fields, were
+HighWire earlier on has been overriding the document when it tried setting a
+field width below 20 characters.
+<p>
+HighWire has also extended its support for image formats since 0.2.2 release.
+The new formats XBM and XPM are rarely used these days but are still in use by
+servers like eg. NCSA. Furthermore, all other decent browsers does support at
+least XBM. Even CAB does actually, and since HighWire is setting out to be a
+replacement for CAB it seemed obvious we should support these formats too!
+<p>
+As usual, more details of changes can be seen in the
+<a href="../Change.Log">Change.Log</a> file.
+
 <p>&#8211; <i>And as always for your help and support, Thank you,</i></p>
 <p>&#8211; <i>HighWire Development Team</i></p>
-<h3>Current Release Changes:
-</h3>
-  <ul>
-  
-<li>Large portions of the cache handling code reworked.  This gets rid of
-    several wrong warnings about not found files (mostly due to login pages for
-    forums).</li>
 
-<li>Image width/height are saves in the disk cache now, this reduces reformat
-    flickering on re-visited pages to the nearly absolute minimum (#0133).</li>
-
-<li>More types of corrupted jpeg image data are catched now, instead of
-    aborting.</li>
-
-<li>The window handling code also got a large rework to have non-modal dialog
-    windows in the future.  As a little gimmick the F10 key does the same now as
-    the F11 does in Mozilla/IE.</li>
-
-<li>Improved detection of system type (AES + kernel), now XaAES is recognized
-    also.  This also allows to get rid of the window fuller bug with XaAES
-    (#0159, #0167).</li>
-
-<li>Additional filtering method to detect images which has a particulare
-    directory name in their URL.  This method is used if the search pattern
-    starts with a '/'.  For example.<br>
-    <TT>&nbsp;&nbsp;&nbsp;RESTRICT_HOST I /ads/</TT><br>
-    matches all images which has '/ads/' somewhere in their path.</li>
-
-<li>CTRL-V can be used now to paste text from the clipboard into formular input
-    fields.</li>
-
-<li>Bugs #0133, #0148, #0150, #0167, #0169, #0170, #0176, #0177 resolved.</li>
-
-<li>... and several more to be found in the <a href="../Change.Log">Change.Log</a>.
-
-</ul>
-
+<!--
 <p>As a reminder, don't forget to check the <a
  href="../example.cfg/highwire.cfg"><b>example file</b></a> for
 explanations of new configuration keywords from the last release!
 </p>
-<p>&nbsp;</p>
+<p>&nbsp;</p> -->
 
             </td>
           </tr>
