@@ -22,7 +22,7 @@ struct s_cookie_jar {
 static COOKIEJAR jar_list = NULL;
 
 
-#define DEBUG
+/*#define DEBUG*/
 
 
 /*----------------------------------------------------------------------------*/
@@ -81,6 +81,12 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 	long         expire  = 0;
 	BOOL         ck_remv = FALSE;
 	
+#ifndef DEBUG
+	if (loc->Flags & (1uL << ('C' - 'A'))) {
+		return;
+	}
+#endif
+	
 	while (isspace (*str) && len-- > 0) str++;
 	while (len > 0 && isspace (str[len-1])) len--;
 	nam_ptr = str;
@@ -113,6 +119,12 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 		host_ptr = NULL;
 		host_len = 0u;
 	}
+#ifdef DEBUG
+	if (loc->Flags & (1uL << ('C' - 'A'))) {
+		host_ptr = NULL;
+	}
+#endif
+	
 	
 	while (*str == ';') {
 		const char * key_p, * val_p;
@@ -144,8 +156,8 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 				printf ("'%.*s'\n", (int)(_dbg_len > 0 ? _dbg_len : 0), _dbg_str);
 				_dbg_flg = TRUE;
 			}
-		#endif
 			printf ("'%.*s' = '%.*s'\n", (int)k_len, key_p, (int)v_len, val_p);
+		#endif
 		}
 		
 		while (len && isspace(*str)) {
@@ -375,6 +387,8 @@ cookie_set (LOCATION loc, const char * str, long len, long srvr_date)
 				fprintf (ftmp, "   %s> '%s'\n",
 				         (_dbg_new ? "==" : "--"),
 				         (jar->DomainStr[0] ? jar->DomainStr : jar->HostStr));
+			} else if (loc->Flags & (1uL << ('C' - 'A'))) {
+				fprintf (ftmp, "   >>> discarded <<<\n");
 			}
 			fclose (ftmp);
 		}
@@ -394,6 +408,21 @@ cookie_Jar (LOCATION loc, COOKIESET * cset)
 	UWORD        h_ln;
 	const char * host = location_Host (loc, &h_ln);
 	const char * path = location_Path (loc, NULL);
+	
+	if (loc->Flags & (1uL << ('C' - 'A'))) {
+#ifdef DEBUG
+		FILE * ftmp = fopen ("U:\\tmp\\cookies.txt", "a");
+		if (ftmp) {
+			fputs ("========================================"
+			       "========================================\n", ftmp);
+			fprintf (ftmp, "%s:\n(discarded)\n", host);
+			fputs ("========================================"
+			       "========================================\n", ftmp);
+			fclose (ftmp);
+		}
+#endif /*DEBUG*/
+		return 0;
+	}
 	
 	while (jar) {
 		BOOL match;
