@@ -138,7 +138,6 @@ new_paragraph (TEXTBUFF current)
 	paragraph->Rindent = 0;
 	paragraph->Hanging = 0;
 	paragraph->paragraph_code = PAR_NONE;
-	paragraph->Box.TextAlign  = ALN_LEFT;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 	if (!*(long*)&paragraph_vTab) {
@@ -152,6 +151,8 @@ new_paragraph (TEXTBUFF current)
 	}
 	paragraph->Box._vtab = &paragraph_vTab;
 
+	paragraph->Box.TextAlign = current->parentbox->TextAlign;
+	
 	paragraph->next_paragraph = NULL;
 	
 	current->prev_par  = NULL;
@@ -222,7 +223,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 		}
 		paragraph->Box._vtab = &paragraph_vTab;
 		
-		paragraph->Box.TextAlign = copy_from->Box.TextAlign;
+		paragraph->Box.TextAlign = current->parentbox->TextAlign;
 	}
 	paragraph->paragraph_code = PAR_NONE;
 	paragraph->Hanging        = 0;
