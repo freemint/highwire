@@ -1,12 +1,22 @@
-(non-public of Feb. 22, 2004)
+(non-public of Mar. 15, 2004)
 
 - Large rework of most of the internal structures
   to reach better compatibility to the 'Document
   Object Model'.
 
-- For the tags CENTER, BLOCKQUOTE and DIV the CSS
-  styles background-color, border-width/-color,
-  margin, padding and text-indent are supported.
+- Fixed a bug in the CSS parser which caused
+  sometimes hangings on the @import command.
+
+- Implemented handling of cascading selectors, for
+  CSS 1.0 as well as for 2.0 specification.
+
+- For for lists and the tags CENTER, BLOCKQUOTE
+  and DIV the CSS styles background-color, border-
+  width/-color,  margin, padding and text-indent
+  are supported now.
+
+- Block level elements store id='..' attributes
+  now and can be used for   <a href="#id"> .
 
 - Improved handling of floating text around tables
   etc.
