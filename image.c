@@ -511,7 +511,7 @@ setup (IMAGE img, IMGINFO info)
 	size_t   wd_width;
 	size_t   pg_size;
 	size_t   mem_size;
-	ULONG    transpar;
+	ULONG    transpar = (info->Transp < 0 ? (img->backgnd = -1) : img->backgnd);
 	pIMGDATA data;
 	
 	img_scale (img, info->ImgWidth, info->ImgHeight, info);
@@ -538,17 +538,7 @@ setup (IMAGE img, IMGINFO info)
 	if (!data->fd_stand) {
 		info->LnSize *= n_planes;
 	}
-	if (info->Transp < 0) {
-		transpar = img->backgnd = -1;
-	} else if (planes <= 8) {
-		transpar = img->backgnd;
-	} else {
-		short  rgb[3];
-		vq_color (vdi_handle, img->backgnd, 0, rgb);
-		transpar = ((( (((long)rgb[0] * 255 +500) / 1000)  <<8)
-		             | (((long)rgb[1] * 255 +500) / 1000)) <<8)
-		           |    ((long)rgb[2] * 255 +500) / 1000;
-	}
+	
 	if (info->BitDepth > 1) {
 		if (planes <= 8) {
 			size_t size = (img->disp_w +1) *3;
@@ -1099,7 +1089,7 @@ raster_I4 (IMGINFO info, void * _dst)
 	CHAR * tmp = buf;
 	do {
 		UWORD idx = info->RowBuf[x >>16];
-		*(tmp++)  = info->Pixel[idx];
+		*(tmp++)  = *(CHAR*)&info->Pixel[idx];
 		
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
@@ -1190,10 +1180,10 @@ raster_I8 (IMGINFO info, void * _dst)
 		swap		%6 | -> mask
 		move.w	(%3), d3
 		add.l		%5, (%3)
-		move.b	0(%1,d3.w), d3 | palette index
+		move.b	(d3.w,%1), d3 | palette index
 		and.w		%6, d3
 		lsl.w		#2, d3
-		move.w	2(%2,d3.w), %4 | pixel value
+		move.b	(d3.w,%2), %4 | pixel value
 		swap		%6 | -> chunk counter
 		
 		moveq.l	#0x03, d3 |chunks 0/1
@@ -1254,7 +1244,7 @@ raster_I8 (IMGINFO info, void * _dst)
 	CHAR * tmp = buf;
 	do {
 		UWORD idx = info->RowBuf[x >>16];
-		*(tmp++)  = info->Pixel[idx];
+		*(tmp++)  = *(CHAR*)&info->Pixel[idx];
 		
 		if (!--width || !--n) {
 			raster_chunk8 (buf, dst, tmp - buf);
@@ -1334,7 +1324,7 @@ raster_P8 (IMGINFO info, void * _dst)
 	ULONG * map   = info->Pixel;
 	UWORD   mask  = info->PixMask;
 	do {
-		*(dst++) = map[(short)info->RowBuf[x >>16] & mask];
+		*(dst++) = *(CHAR*)&map[(short)info->RowBuf[x >>16] & mask];
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -1349,9 +1339,7 @@ gscale_P8 (IMGINFO info, void * _dst)
 	BYTE * dth   = info->DthBuf;
 	WORD   err   = 0;
 	do {
-/*		UWORD idx = info->RowBuf[x >>16] >>3;
-		*(dst++)  = *(CHAR*)&graymap[idx];
-*/		*(dst++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
+		*(dst++) = dither_gray (&info->RowBuf[x >>16], &err, &dth);
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -1366,12 +1354,7 @@ dither_P8 (IMGINFO info, void * _dst)
 	BYTE * dth    = info->DthBuf;
 	WORD   err[3] = { 0, 0, 0 };
 	do {
-/*		CHAR * rgb = &info->RowBuf[(x >>16) *3];
-		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
-		           +  (((UWORD)rgb[1] *6) /256)) *6
-		           +  (((UWORD)rgb[2] *6) /256);
-		*(dst++)   = *(CHAR*)&cube216[idx];
-*/		*(dst++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
+		*(dst++) = dither_true (&info->RowBuf[(x >>16) *3], err, &dth);
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -1902,9 +1885,9 @@ cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
-		*(pal++) = pixel_val[!t--
-		                     ? backgnd & 0xFF
-		                     : remap_color (((((long)*r <<8) | *g) <<8) | *b)];
+		*(pal++) = color_lookup (!t-- ? (~0xFFuL|backgnd)
+                                    : (((((long)*r <<8) | *g) <<8) | *b),
+                               pixel_val);
 		r += info->PalStep;
 		g += info->PalStep;
 		b += info->PalStep;
@@ -1923,10 +1906,10 @@ cnvpal_15 (IMGINFO info, ULONG backgnd)
 	short   n   = info->NumColors;
 	do {
 		if (!t--) {
-			char * z = ((char*)&backgnd) +1;
-			*(pal++) = ((short)(z[0] & 0xF8) <<7)
-			         | ((short)(z[1] & 0xF8) <<2)
-			         |         (z[2]         >>3);
+			ULONG  z = color_lookup ((~0xFFuL|backgnd), NULL);
+			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<7)
+			         | ((short)(((CHAR*)&z)[2] & 0xF8) <<2)
+			         |         (((CHAR*)&z)[3]         >>3);
 		} else {
 			*(pal++) = ((short)(*r & 0xF8) <<7)
 			         | ((short)(*g & 0xF8) <<2)
@@ -1950,10 +1933,10 @@ cnvpal_high (IMGINFO info, ULONG backgnd)
 	short   n   = info->NumColors;
 	do {
 		if (!t--) {
-			char * z = ((char*)&backgnd) +1;
-			*(pal++) = ((short)(z[0] & 0xF8) <<8)
-			         | ((short)(z[1] & 0xFC) <<3)
-			         |         (z[2]         >>3);
+			ULONG  z = color_lookup ((~0xFFuL|backgnd), NULL);
+			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<8)
+			         | ((short)(((CHAR*)&z)[2] & 0xFC) <<3)
+			         |         (((CHAR*)&z)[3]         >>3);
 		} else {
 			*(pal++) = ((short)(*r & 0xF8) <<8)
 			         | ((short)(*g & 0xFC) <<3)
@@ -1976,7 +1959,8 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 	    info->PalRpos == 1 && info->PalGpos == 2 && info->PalBpos == 3) {
 		ULONG * rgb = (ULONG*)info->Palette;
 		do {
-			*(pal++) = (!t-- ? backgnd : *rgb);
+			*(pal++) = (!t-- ? color_lookup ((~0xFFuL|backgnd), NULL) & 0x00FFFFFFL
+			                 : *rgb);
 			rgb++;
 		} while (--n);
 	} else {
@@ -1984,7 +1968,8 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 		char  * g   = info->Palette + info->PalGpos;
 		char  * b   = info->Palette + info->PalBpos;
 		do {
-			*(pal++) = (!t-- ? backgnd : ((((long)*r <<8) | *g) <<8) | *b);
+			*(pal++) = (!t-- ? color_lookup ((~0xFFuL|backgnd), NULL) & 0x00FFFFFFL
+			                 : ((((long)*r <<8) | *g) <<8) | *b);
 			r += info->PalStep;
 			g += info->PalStep;
 			b += info->PalStep;
