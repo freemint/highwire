@@ -16,6 +16,10 @@
 #include "schedule.h"
 #include "cache.h"
 
+#if 01
+#include "Loader.h" /* enables remote access of images */
+#endif
+
 
 typedef struct s_img_info * IMGINFO;
 struct s_img_info {
