@@ -19,7 +19,9 @@
 
 typedef struct s_img_info * IMGINFO;
 struct s_img_info {
-	void  * _priv_data;           /* decoder private data */
+	void  * _priv_data; /* decoder private data */
+	void  * _priv_more;
+	FILE  * _priv_file;
 	BOOL   (*read)(IMGINFO, char * buffer);
 	void   (*quit)(IMGINFO);
 	UWORD    ImgWidth, ImgHeight; /* original size of the image */
@@ -46,22 +48,31 @@ struct s_img_info {
 	ULONG    Pixel[256];
 };
 
+static void invalid_cnvpal(void) { puts("invalid cnvpal"); exit(1); }
+static void invalid_raster(void) { puts("invalid raster"); exit(1); }
+static void invalid_gscale(void) { puts("invalid gscale"); exit(1); }
+static void invalid_dither(void) { puts("invalid dither"); exit(1); }
+
 static void   cnvpal_mono  (IMGINFO, ULONG);
-static void (*cnvpal_color)(IMGINFO, ULONG)  = NULL;
+static void (*cnvpal_color)(IMGINFO, ULONG)  = (void*)invalid_cnvpal;
 static void   raster_mono  (IMGINFO, void *);
-static void (*raster_color)(IMGINFO, void *) = NULL;
+static void (*raster_color)(IMGINFO, void *) = (void*)invalid_raster;
+static void (*raster_gray) (IMGINFO, void *) = (void*)invalid_gscale;
+static void (*raster_true) (IMGINFO, void *) = (void*)invalid_dither;
 static BOOL   stnd_bitmap  = FALSE;
 /*static BOOL   falcon_ovlay = FALSE;*/
 
-static short pixel_val[256];
 static char  disp_info[10] = "";
+static short pixel_val[256];
+static ULONG cube216[216];
+static ULONG graymap[32];
 
 
 static void init_display (void);
 static IMGINFO  get_decoder (const char * file);
-static pIMGDATA read_img    (IMAGE, IMGINFO, pIMGDATA);
-
-static BOOL image_job (void *, long);
+static pIMGDATA setup       (IMAGE, IMGINFO);
+static void     read_img    (IMAGE, IMGINFO, pIMGDATA);
+static BOOL     image_job   (void *, long);
 
 #define img_hash(w,h,c) (((((long)((char)c)<<12) ^ w)<<12) ^ h)
 
@@ -355,16 +366,14 @@ image_job (void * arg, long invalidated)
 		
 		containr_notify (frame->Container, HW_ImgBegLoad, img->source->FullName);
 		
-		if ((info = get_decoder (loc->FullName)) != NULL) {
-			static pIMGDATA setup (IMAGE, IMGINFO);
-			if ((data = setup (img, info)) != NULL) {
-				info->RowBuf = malloc (info->ImgWidth * info->NumComps);
-				read_img (img, info, data);
-				(*info->quit)(info);
-				if (info->RowBuf) free (info->RowBuf);
-				if (info->DthBuf) free (info->DthBuf);
-				free (info);
-			}
+		if ((info = get_decoder (loc->FullName)) != NULL &&
+		    (data = setup (img, info))           != NULL) {
+			info->RowBuf = malloc (info->ImgWidth * info->NumComps);
+			read_img (img, info, data);
+			(*info->quit)(info);
+			if (info->RowBuf) free (info->RowBuf);
+			if (info->DthBuf) free (info->DthBuf);
+			free (info);
 		}
 		if (data) {
 			if (data->fd_stand) {
@@ -497,8 +506,14 @@ setup (IMAGE img, IMGINFO info)
 			info->DthBuf = malloc ((img->disp_w +1) *2);
 			memset (info->DthBuf, 0, (img->disp_w *2));
 		}
-		(*cnvpal_color)(info, transpar);
-		info->raster = raster_color;
+		if (info->Palette) {
+			(*cnvpal_color)(info, transpar);
+			info->raster = raster_color;
+		} else {
+			info->raster = (info->NumComps == 3 ? raster_true : raster_gray);
+		}
+		data->bgnd = G_WHITE;
+		data->fgnd = G_BLACK;
 	} else {
 		cnvpal_mono (info, transpar);
 		data->bgnd = info->Pixel[0];
@@ -644,6 +659,67 @@ raster_D1 (IMGINFO info, void * _dst)
 		
 	} while (width);
 }
+/*------------------------------------*/
+static void
+gscale_D1 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	short * buf   = info->DthBuf;
+	short   ins   = 0;
+	UWORD   pixel = 0x8000;
+	UWORD   chunk = 0;
+	do {
+		ins += *buf + (short)info->RowBuf[x >>16];
+		
+		if (ins < 0x80) {
+			chunk |= pixel;
+		} else {
+			ins -= 0xFF;
+		}
+		*(buf++) = (ins >>= 2);
+		
+		if (!--width || !(pixel >>= 1)) {
+			*(dst++) = chunk;
+			chunk    = 0;
+			pixel    = 0x8000;
+		}
+		x += info->IncXfx;
+		
+	} while (width);
+}
+/*------------------------------------*/
+static void
+dither_D1 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	short * buf   = info->DthBuf;
+	short   ins   = 0;
+	UWORD   pixel = 0x8000;
+	UWORD   chunk = 0;
+	do {
+		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
+		ins += *buf + (WORD)rgb[0] *5 + (WORD)rgb[1] *9 + (WORD)rgb[2] *2;
+		
+		if (ins < 2040) {
+			chunk |= pixel;
+		} else {
+			ins -= 4080;
+		}
+		*(buf++) = (ins >>= 2);
+		
+		if (!--width || !(pixel >>= 1)) {
+			*(dst++) = chunk;
+			chunk    = 0;
+			pixel    = 0x8000;
+		}
+		x += info->IncXfx;
+		
+	} while (width);
+}
 
 /*------------------------------------------------------------------------------
  * 2 planes interleaved words format, uses a simple intensity dither.
@@ -700,6 +776,69 @@ raster_D2 (IMGINFO info, void * _dst)
 		
 	} while (width);
 }
+/*------------------------------------*/
+static void
+gscale_D2 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	short * buf   = info->DthBuf;
+	short   ins   = 0;
+	UWORD   pixel = 0x8000;
+	UWORD   chunk = 0;
+	do {
+		ins += *buf + (short)info->RowBuf[x >>16];
+		
+		if (ins < 0x80) {
+			chunk |= pixel;
+		} else {
+			ins -= 0xFF;
+		}
+		*(buf++) = (ins >>= 2);
+		
+		if (!--width || !(pixel >>= 1)) {
+			*(dst++) = chunk;
+			*(dst++) = chunk;
+			chunk    = 0;
+			pixel    = 0x8000;
+		}
+		x += info->IncXfx;
+		
+	} while (width);
+}
+/*------------------------------------*/
+static void
+dither_D2 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	short * buf   = info->DthBuf;
+	short   ins   = 0;
+	UWORD   pixel = 0x8000;
+	UWORD   chunk = 0;
+	do {
+		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
+		ins += *buf + (WORD)rgb[0] *5 + (WORD)rgb[1] *9 + (WORD)rgb[2] *2;
+		
+		if (ins < 2040) {
+			chunk |= pixel;
+		} else {
+			ins -= 4080;
+		}
+		*(buf++) = (ins >>= 2);
+		
+		if (!--width || !(pixel >>= 1)) {
+			*(dst++) = chunk;
+			*(dst++) = chunk;
+			chunk    = 0;
+			pixel    = 0x8000;
+		}
+		x += info->IncXfx;
+		
+	} while (width);
+}
 
 /*------------------------------------------------------------------------------
  * 4 planes interleaved words format
@@ -730,6 +869,65 @@ raster_I4 (IMGINFO info, void * _dst)
 		}
 		x += info->IncXfx;
 		
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_I4 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	UWORD   pixel = 0x8000;
+	do {
+		UWORD   idx   = info->RowBuf[x >>16] >>3;
+		short   color = *(CHAR*)&graymap[idx];
+		UWORD * chunk = dst;
+		short   i     = 4;
+		do {
+			if (color & 1) *chunk |=  pixel;
+			else           *chunk &= ~pixel;
+			chunk++;
+			color >>= 1;
+		} while (--i);
+		
+		if (!(pixel >>= 1)) {
+			pixel = 0x8000;
+			dst += 8;
+		}
+		x += info->IncXfx;
+		 
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_I4 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	UWORD   pixel = 0x8000;
+	do {
+		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
+		UWORD   idx   = ((((UWORD)rgb[0] *6) /256)  *6
+		              +  (((UWORD)rgb[1] *6) /256)) *6
+		              +  (((UWORD)rgb[2] *6) /256);
+		short   color = *(CHAR*)&cube216[idx];
+		UWORD * chunk = dst;
+		short   i     = 4;
+		do {
+			if (color & 1) *chunk |=  pixel;
+			else           *chunk &= ~pixel;
+			chunk++;
+			color >>= 1;
+		} while (--i);
+		
+		if (!(pixel >>= 1)) {
+			pixel = 0x8000;
+			dst += 8;
+		}
+		x += info->IncXfx;
+		 
 	} while (--width);
 }
 
@@ -838,6 +1036,65 @@ raster_I8 (IMGINFO info, void * _dst)
 	} while (--width);
 #endif
 }
+/*------------------------------------*/
+static void
+gscale_I8 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	UWORD   pixel = 0x8000;
+	do {
+		UWORD   idx   = info->RowBuf[x >>16] >>3;
+		short   color = *(CHAR*)&graymap[idx];
+		UWORD * chunk = dst;
+		short   i     = 8;
+		do {
+			if (color & 1) *chunk |=  pixel;
+			else           *chunk &= ~pixel;
+			chunk++;
+			color >>= 1;
+		} while (--i);
+		
+		if (!(pixel >>= 1)) {
+			pixel = 0x8000;
+			dst += 8;
+		}
+		x += info->IncXfx;
+		 
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_I8 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	UWORD   pixel = 0x8000;
+	do {
+		CHAR  * rgb   = &info->RowBuf[(x >>16) *3];
+		UWORD   idx   = ((((UWORD)rgb[0] *6) /256)  *6
+		              +  (((UWORD)rgb[1] *6) /256)) *6
+		              +  (((UWORD)rgb[2] *6) /256);
+		short   color = *(CHAR*)&cube216[idx];
+		UWORD * chunk = dst;
+		short   i     = 8;
+		do {
+			if (color & 1) *chunk |=  pixel;
+			else           *chunk &= ~pixel;
+			chunk++;
+			color >>= 1;
+		} while (--i);
+		
+		if (!(pixel >>= 1)) {
+			pixel = 0x8000;
+			dst += 8;
+		}
+		x += info->IncXfx;
+		 
+	} while (--width);
+}
 
 /*------------------------------------------------------------------------------
  * 8 planes packed pixels formart.
@@ -852,6 +1109,35 @@ raster_P8 (IMGINFO info, void * _dst)
 	UWORD   mask  = info->PixMask;
 	do {
 		*(dst++) = map[(short)info->RowBuf[x >>16] & mask];
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_P8 (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		UWORD idx = info->RowBuf[x >>16] >>3;
+		*(dst++)  = *(CHAR*)&graymap[idx];
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_P8 (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		UWORD  idx = ((((UWORD)rgb[0] *6) /256)  *6
+		           +  (((UWORD)rgb[1] *6) /256)) *6
+		           +  (((UWORD)rgb[2] *6) /256);
+		*(dst++)   = *(CHAR*)&cube216[idx];
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -873,6 +1159,34 @@ raster_16 (IMGINFO info, void * _dst)
 		x += info->IncXfx;
 	} while (--width);
 }
+/*------------------------------------*/
+static void
+gscale_16 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		UWORD rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = ((rgb & 0xF8) <<8) | ((rgb & 0xFC) <<3) | (rgb >>3);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_16 (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++)   = (((UWORD)rgb[0] & 0xF8) <<8)
+		           | (((UWORD)rgb[1] & 0xFC) <<3)
+		           |         (rgb[2]         >>3);
+		x += info->IncXfx;
+	} while (--width);
+}
 
 /*------------------------------------------------------------------------------
  * 16 planes packed pixels formart in wrong (intel) byte order, the pixel index
@@ -889,6 +1203,36 @@ raster_16r (IMGINFO info, void * _dst)
 	do {
 		UWORD rgb = map[(short)info->RowBuf[x >>16] & mask];
 		*(dst++)  = (rgb >> 8) | (rgb << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_16r (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		UWORD rgb = info->RowBuf[(x >>16)];
+		rgb       = ((rgb & 0xF8) <<8) | ((rgb & 0xFC) <<3) | (rgb >>3);
+		*(dst++)  = (rgb >> 8) | (rgb << 8);
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_16r (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		UWORD  pix = (((UWORD)rgb[0] & 0xF8) <<8)
+		           | (((UWORD)rgb[1] & 0xFC) <<3)
+		           |         (rgb[2]         >>3);
+		*(dst++)   = (pix >> 8) | (pix << 8);
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -912,6 +1256,36 @@ raster_24 (IMGINFO info, void * _dst)
 		x += info->IncXfx;
 	} while (--width);
 }
+/*------------------------------------*/
+static void
+gscale_24 (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR rgb = info->RowBuf[(x >>16)];
+		*(dst++) = rgb;
+		*(dst++) = rgb;
+		*(dst++) = rgb;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_24 (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++) = *(rgb++);
+		*(dst++) = *(rgb++);
+		*(dst++) = *(rgb);
+		x += info->IncXfx;
+	} while (--width);
+}
 
 /*------------------------------------------------------------------------------
  * 24 planes packed pixels formart in wrong (intel) byte order.
@@ -932,6 +1306,36 @@ raster_24r (IMGINFO info, void * _dst)
 		x += info->IncXfx;
 	} while (--width);
 }
+/*------------------------------------*/
+static void
+gscale_24r (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR rgb = info->RowBuf[(x >>16)];
+		*(dst++) = rgb;
+		*(dst++) = rgb;
+		*(dst++) = rgb;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_24r (IMGINFO info, void * _dst)
+{
+	CHAR * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++) = rgb[2];
+		*(dst++) = rgb[1];
+		*(dst++) = rgb[0];
+		x += info->IncXfx;
+	} while (--width);
+}
 
 /*------------------------------------------------------------------------------
  * 32 planes packed pixels formart.
@@ -946,6 +1350,32 @@ raster_32 (IMGINFO info, void * _dst)
 	UWORD   mask  = info->PixMask;
 	do {
 		*(dst++) = map[(short)info->RowBuf[x >>16] & mask];
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_32 (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		ULONG rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = (((rgb <<8) | rgb) <<8) | rgb;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_32 (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short  width = info->DthWidth;
+	size_t x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++)   = ((((ULONG)rgb[0] <<8) | rgb[1]) <<8) | rgb[2];
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -964,6 +1394,32 @@ raster_32r (IMGINFO info, void * _dst)
 	do {
 		CHAR * rgb = (CHAR*)&map[(short)info->RowBuf[x >>16] & mask];
 		*(dst++) = (((((long)rgb[3] <<8) | rgb[2]) <<8) | rgb[1]) <<8;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+gscale_32r (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		ULONG rgb = info->RowBuf[(x >>16)];
+		*(dst++)  = ((((rgb <<8) | rgb) <<8) | rgb) <<8;
+		x += info->IncXfx;
+	} while (--width);
+}
+/*------------------------------------*/
+static void
+dither_32r (IMGINFO info, void * _dst)
+{
+	ULONG * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	do {
+		CHAR * rgb = &info->RowBuf[(x >>16) *3];
+		*(dst++)   = (((((ULONG)rgb[2] <<8) | rgb[1]) <<8) | rgb[0]) <<8;
 		x += info->IncXfx;
 	} while (--width);
 }
@@ -1104,35 +1560,51 @@ init_display (void)
 	if (planes == 1) {                        /* monochrome */
 			cnvpal_color = cnvpal_1_2;
 			raster_color = raster_D1;
+			raster_gray  = gscale_D1;
+			raster_true  = dither_D1;
 	} else if (out[0] == 0) switch (planes) { /* interleaved words */
 		case 2:
 			cnvpal_color = cnvpal_1_2;
 			raster_color = raster_D2;
+			raster_gray  = gscale_D2;
+			raster_true  = dither_D2;
 			break;
 		case 4:
 			cnvpal_color = cnvpal_4_8;
 			raster_color = raster_I4;
+			raster_gray  = gscale_I4;
+			raster_true  = dither_I4;
 			break;
 		case 8:
 			cnvpal_color = cnvpal_4_8;
 			raster_color = raster_I8;
+			raster_gray  = gscale_I8;
+			raster_true  = dither_I8;
 			break;
 	} else if (out[0] == 2) switch (planes) { /* packed pixels */
 		case  8:
 			cnvpal_color = cnvpal_4_8;
 			raster_color = raster_P8;
+			raster_gray  = gscale_P8;
+			raster_true  = dither_P8;
 			break;
 		case 16:
 			cnvpal_color = cnvpal_high;
 			raster_color = (out[14] & 0x80 ? raster_16r : raster_16);
+			raster_gray  = (out[14] & 0x80 ? gscale_16r : gscale_16);
+			raster_true  = (out[14] & 0x80 ? dither_16r : dither_16);
 			break;
 		case 24:
 			cnvpal_color = cnvpal_true;
 			raster_color = (out[14] & 0x80 ? raster_24r : raster_24);
+			raster_gray  = (out[14] & 0x80 ? gscale_24r : gscale_24);
+			raster_true  = (out[14] & 0x80 ? dither_24r : dither_24);
 			break;
 		case 32:
 			cnvpal_color = cnvpal_true;
 			raster_color = (out[14] & 0x80 ? raster_32r : raster_32);
+			raster_gray  = (out[14] & 0x80 ? gscale_32r : gscale_32);
+			raster_true  = (out[14] & 0x80 ? dither_32r : dither_32);
 			break;
 	}
 	if (!raster_color) {                     /* standard format */
@@ -1140,11 +1612,38 @@ init_display (void)
 		raster_color = raster_stnd;
 		stnd_bitmap  = TRUE;
 	}
+	
+	if (planes == 4 || planes == 8) {
+		ULONG * dst;
+		ULONG   r, g, b;
+		dst = cube216;
+		for (r = 0x000000uL; r <= 0xFF0000uL; r += 0x330000uL) {
+			for (g = 0x000000uL; g <= 0x00FF00uL; g += 0x003300uL) {
+				for (b = 0x000000uL; b <= 0x0000FFuL; b += 0x000033uL) {
+					short i = remap_color (r | g | b), rgb[3];
+					vq_color (vdi_handle, i, 0, rgb);
+					*(dst++) = ((((((long)pixel_val[i] <<8)
+					         | (((long)rgb[0] * 255 +500) / 1000)) <<8)
+					         | (((long)rgb[1] * 255 +500) / 1000)) <<8)
+					         | (((long)rgb[2] * 255 +500) / 1000);
+				}
+			}
+		}
+		dst = graymap;
+		for (g = 0x000000uL; g <= 0xF0F0F0uL; g += 0x080808uL) {
+			short i = remap_color (g), rgb[3];
+			vq_color (vdi_handle, i, 0, rgb);
+			*(dst++) = ((((((long)pixel_val[i] <<8)
+			         | (((long)rgb[0] * 255 +500) / 1000)) <<8)
+			         | (((long)rgb[1] * 255 +500) / 1000)) <<8)
+			         | (((long)rgb[2] * 255 +500) / 1000);
+		}
+	}
 }
 
 
 /*----------------------------------------------------------------------------*/
-static pIMGDATA
+static void
 read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 {
 	BOOL (*img_rd)(IMGINFO, char * buf) = info->read;
@@ -1194,8 +1693,6 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 			y = interlace /2;
 		} while (interlace > 1);
 	}
-	
-	return data;
 }
 
 
@@ -1210,134 +1707,9 @@ typedef struct s_decoder {
 } DECODER;
 #define DECODER_CHAIN NULL
 
-
-/*----------------------------------------------------------------------------*/
-#ifdef LIBGIF
-#	include <gif_lib.h>
-#	undef TRUE
-#	undef FALSE
-
-static BOOL decGif_start (const char * file, IMGINFO info);
-static BOOL decGif_read  (IMGINFO, char * buffer);
-static void decGif_quit  (IMGINFO);
-
-static DECODER _decoder_gif = {
-	DECODER_CHAIN,
-	decGif_start
-};
-#undef  DECODER_CHAIN
-#define DECODER_CHAIN &_decoder_gif
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-decGif_start (const char * file, IMGINFO info)
-{
-	short interlace = 0;
-	short transpar  = -1;
-	short img_w     = 0;
-	short img_h     = 0;
-	
-	ColorMapObject * map = NULL;
-	GifFileType    * gif = DGifOpenFileName (file);
-	if (!gif) {
-		return FALSE;
-	
-	} else {
-		GifRecordType rec;
-		do {
-			if (DGifGetRecordType (gif, &rec) == GIF_ERROR) {
-				printf ("DGifGetRecordType() ");
-				PrintGifError();
-				break;
-			
-			} else if (rec == IMAGE_DESC_RECORD_TYPE) {
-				if (DGifGetImageDesc(gif) == GIF_ERROR) {
-					printf ("DGifGetImageDesc() ");
-					PrintGifError();
-					break;
-				
-				} else {
-					GifImageDesc * dsc = &gif->Image;
-					map = (dsc->ColorMap ? dsc->ColorMap : gif->SColorMap);
-					img_w = dsc->Width;
-					img_h = dsc->Height;
-					if (dsc->Interlace) {
-						interlace = 8;
-					}
-				}
-				break;
-			
-			} else if (rec == EXTENSION_RECORD_TYPE) {
-				int           code;
-				GifByteType * block;
-				if (DGifGetExtension (gif, &code, &block) == GIF_ERROR) {
-					printf ("DGifGetExtension() ");
-					PrintGifError();
-					break;
-				
-				} else while (block != NULL) {
-					if (code == 0xF9 && (block[1] & 1)) {
-						transpar = (short)block[4];
-					}
-					if (DGifGetExtensionNext (gif, &block) == GIF_ERROR) {
-						printf ("DGifGetExtensionNext() ");
-						PrintGifError();
-						break;
-					}
-				}
-			
-			} else {
-				printf ("other: %i \n", rec);
-				break;
-			}
-		} while (rec != TERMINATE_RECORD_TYPE);
-	}
-	
-	if (!map || img_w <= 0 || img_w >= 4096 || img_h <= 0 || img_h >= 4096) {
-		DGifCloseFile (gif);
-		return FALSE;
-	}
-	
-	info->_priv_data = gif;
-	info->read       = decGif_read;
-	info->quit       = decGif_quit;
-	info->ImgWidth   = img_w;
-	info->ImgHeight  = img_h;
-	info->NumComps   = 1;
-	info->BitDepth   = map->BitsPerPixel;
-	info->NumColors  = map->ColorCount;
-	if ((info->Palette = (char*)map->Colors) != NULL) {
-		GifColorType * rgb = NULL;
-		info->PalRpos = (unsigned)&rgb->Red;
-		info->PalGpos = (unsigned)&rgb->Green;
-		info->PalBpos = (unsigned)&rgb->Blue;
-		info->PalStep = (unsigned)&rgb[1];
-	}
-	info->Transp     = transpar;
-	info->Interlace  = interlace;
-	
-	return TRUE;
-}
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-decGif_read (IMGINFO info, char * buffer)
-{
-	DGifGetLine (info->_priv_data, buffer, info->ImgWidth);
-	return TRUE;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-decGif_quit (IMGINFO info)
-{
-	if (info->_priv_data) {
-		DGifCloseFile (info->_priv_data);
-		info->_priv_data = NULL;
-	}
-}
-#endif /* LIBGIF */
-
+#include "img_gif.c"
+/*#include "img_jpg.c"*/
+/*#include "img_png.c"*/
 
 /*----------------------------------------------------------------------------*/
 static IMGINFO
