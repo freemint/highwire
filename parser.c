@@ -33,6 +33,7 @@ typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 typedef struct s_style * STYLE;
 
 typedef struct s_parser_priv {
+	const char * Stack[5];
 	struct s_own_mem {
 		struct s_own_mem * Next;
 		char             * Mem;
@@ -66,8 +67,9 @@ new_parser (LOADER loader)
 	parser->ResumeSub = NULL;
 	parser->ResumeFnc = NULL;
 	parser->ResumeErr = E_OK;
-	prsdata->Styles  = NULL;
-	prsdata->KeyNum  = 0;
+	memset (prsdata->Stack, 0, sizeof(prsdata->Stack));
+	prsdata->Styles = NULL;
+	prsdata->KeyNum = 0;
 	prsdata->OwnMem.Next = NULL;
 	prsdata->OwnMem.Mem  = NULL;
 	
@@ -569,6 +571,17 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			prsdata->OwnMem.Next = own;
 		}
 		p = prsdata->OwnMem.Mem = takeover;
+	
+	} else if (!p) { /* error case, continue with next in stack */
+		short i;
+		if ((p = prsdata->Stack[0]) == NULL) {
+			puts ("CSS stack underflow!");
+			return parser->ResumePtr;
+		}
+		for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
+			prsdata->Stack[i] = prsdata->Stack[i +1];
+		}
+		prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
 	}
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
@@ -714,6 +727,18 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			} while ((style = *p_style) != NULL);
 		}
 		
+		if ((!*p || err) && prsdata->Stack[0]) {
+			short i;
+			if (err) {
+				if (*p) printf("parse_css(): stopped at '%.20s'\n", p);
+				err = FALSE;
+			}
+			p = prsdata->Stack[0];
+			for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
+				prsdata->Stack[i] = prsdata->Stack[i +1];
+			}
+			prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
+		}
 	} while (*p && !err);
 	
 	if (*p && *p != '-' && *p != '<') {
