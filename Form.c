@@ -20,6 +20,9 @@ typedef struct s_input * INPUT;
 #include "Form.h"
 
 
+typedef struct s_select   * SELECT;
+typedef struct s_slctitem * SLCTITEM;
+
 struct s_form {
 	FRAME       Frame;
 	FORM        Next;
@@ -35,6 +38,7 @@ typedef enum {
 	IT_RADIO,
 	IT_CHECK,
 	IT_BUTTN,
+	IT_SELECT,
 	IT_TEXT
 } INP_TYPE;
 
@@ -43,6 +47,7 @@ struct s_input {
 	union {
 		void * Void;
 		INPUT  Group; /* for radio buttons this points to the group node */
+		SELECT Select;
 	}        u;
 	WORDITEM Word;
 	PARAGRPH Paragraph;
@@ -54,6 +59,18 @@ struct s_input {
 	BOOL     disabled;
 	UWORD    TextMax;
 	char     Name[1];
+};
+
+struct s_select {
+	SLCTITEM ItemList;
+	WORD     NumItems;
+};
+struct s_slctitem {
+	SLCTITEM Next;
+	WORD     Width;
+	WORD     Length;
+	WCHAR    Text[80];
+	char     Strng[80];
 };
 
 
@@ -318,6 +335,117 @@ new_input (PARSER parser)
 
 
 /*============================================================================*/
+INPUT
+form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
+{
+	WORDITEM word = current->word;
+	WORD     asc  = word->word_height -1;
+	WORD     dsc  = word->word_tail_drop;
+	INPUT    input;
+	
+	if (!current->form /*&&
+		 (current->form = new_form (frame, NULL, NULL, NULL)) == NULL*/) {
+		input = NULL;
+	
+	} else if ((input = _alloc (IT_SELECT, current, name)) != NULL) {
+		SELECT sel = malloc (sizeof(struct s_select));
+		if ((input->u.Select = sel) != NULL) {
+			sel->ItemList = NULL;
+			sel->NumItems = 0;
+		} else {
+			disabled = TRUE;
+		}
+		input->disabled = disabled;
+		set_word (current, asc, dsc, asc + dsc);
+	}
+	
+	return input;
+}
+
+/*============================================================================*/
+INPUT
+selct_option (TEXTBUFF current, const char * text, UWORD tlen,
+              ENCODING enoding, BOOL disabled, char * value, BOOL selected)
+{
+	INPUT    input = (current->form ? ((FORM)current->form)->Last : NULL);
+	SELECT   sel;
+	SLCTITEM item;
+	
+	if (((!input || input->Type != IT_SELECT) &&
+	     (input = form_selct (current, "", 1, FALSE)) == NULL) ||
+	    (sel = input->u.Select) == NULL) {
+		return NULL;
+	}
+	
+	while (tlen && isspace (text[0])) {
+		text++;
+		tlen--;
+	}
+	while (tlen && isspace (text[tlen -1])) {
+		tlen--;
+	}
+	if (tlen && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
+		WORD  pts[8];
+		if (tlen >= sizeof(item->Strng)) {
+			tlen = sizeof(item->Strng) -1;
+		}
+		memcpy (item->Strng, text, tlen);
+		item->Strng[tlen] = '\0';
+		item->Length = tlen;
+		current->text = current->buffer;
+		scan_string_to_16bit (item->Strng, enoding, &current->text,
+		                      current->word->font->Base->Mapping);
+		tlen = current->text - current->buffer;
+		if (tlen >= numberof(item->Text)) {
+			tlen = numberof(item->Text) -1;
+		}
+		current->text = current->buffer;
+		memcpy (item->Text, current->buffer, tlen *2);
+		item->Text[tlen] = '\0';
+		item->Length = tlen;
+		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
+		item->Width = pts[2] - pts[0];
+		if (disabled) {
+			/* mark it somehow... */
+		} else if (!input->Value || selected) {
+			input->Word->item   = item->Text;
+			input->Word->length = item->Length;
+			input->Value        = item->Strng;
+		}
+		item->Next    = sel->ItemList;
+		sel->ItemList = item;
+		sel->NumItems--;
+	}
+	
+	return input;
+}
+
+/*============================================================================*/
+void
+selct_finish (TEXTBUFF current)
+{
+	INPUT  input = (current->form ? ((FORM)current->form)->Last : NULL);
+	SELECT sel;
+	
+	if (!input || input->Type != IT_SELECT) {
+		return;
+	}
+	if ((sel = input->u.Select) == NULL || !sel->NumItems) {
+		input->disabled = TRUE;
+		
+	} else if (sel->NumItems < 0) {
+		SLCTITEM item = sel->ItemList;
+		short    wdth = 0;
+		do if (wdth < item->Width) {
+			wdth = item->Width;
+		} while ((item = item->Next) != NULL);
+		input->Word->word_width += wdth +2;
+		sel->NumItems = -sel->NumItems;
+	}
+}
+
+
+/*============================================================================*/
 void
 input_draw (INPUT input, WORD x, WORD y)
 {
@@ -387,6 +515,22 @@ input_draw (INPUT input, WORD x, WORD y)
 			v_pline (vdi_handle, 3, (short*)p);
 			p[0].p_x--;
 			p[2].p_y--;
+		} else if (input->Type == IT_SELECT) {
+			short w;
+			p[1].p_x = p[2].p_x; /* save this */
+			p[3].p_y = p[4].p_y = p[2].p_y +3;
+			p[2].p_y            = p[0].p_y -2;
+			w = (p[2].p_y - p[3].p_y +1) & ~1;
+			p[4].p_x = p[2].p_x -2;
+			p[3].p_x = p[4].p_x - w;
+			p[2].p_x = p[3].p_x + w /2;
+			v_pline (vdi_handle, 3, (short*)(p +2));
+			vsl_color (vdi_handle, c_rd);
+			p[3] = p[2];
+			v_pline (vdi_handle, 2, (short*)(p +3));
+			p[2] = p[1];
+			p[0].p_x++;
+			p[2].p_y++;
 		} else {
 			vsl_color (vdi_handle, c_rd);
 			p[0].p_x++;

@@ -1978,16 +1978,13 @@ render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 		current->form = new_form (parser->Frame,
 		                          get_value_str (parser, KEY_TARGET),
 		                          get_value_str (parser, KEY_ACTION), method);
-	} else {
+	} else if (current->form) {
+		selct_finish (current);
 		current->form = NULL;
 	}
 	
 	return flags;
 }
-
-#define render_OPTION_tag   NULL
-#define render_SELECT_tag   NULL
-#define render_TEXTAREA_tag NULL
 
 /*------------------------------------------------------------------------------
  * Input
@@ -2005,6 +2002,53 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 	}
 	return flags;
 }
+
+/*------------------------------------------------------------------------------
+ * Selection List
+*/
+static UWORD
+render_SELECT_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	TEXTBUFF current = &parser->Current;
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+		char  name[100];
+		get_value (parser, KEY_NAME, name, sizeof(name));
+		if (form_selct (current, name, get_value_unum (parser, KEY_SIZE, 0),
+		                get_value (parser, KEY_DISABLED, NULL,0))) {
+			flags |= (PF_FONT|PF_SPACE);
+		}
+	} else if (current->form) {
+		selct_finish (current);
+		flags &= ~PF_SPACE;
+	}
+	return flags;
+}
+
+/*------------------------------------------------------------------------------
+ * Selection Item
+*/
+static UWORD
+render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	TEXTBUFF current = &parser->Current;
+	
+	if (flags & PF_START) {
+		const char * beg = *text, * end = beg;
+		if ((end = strchr (beg, '<')) == NULL) {
+			end = strchr (beg, '\0');
+		}
+		selct_option (current, beg, end - beg, parser->Frame->Encoding,
+		              get_value     (parser, KEY_DISABLED, NULL,0),
+		              get_value_str (parser, KEY_VALUE),
+		              get_value     (parser, KEY_SELECTED, NULL,0));
+		*text = end;
+	}
+	return (flags|PF_SPACE);
+}
+
+#define render_TEXTAREA_tag NULL
 
 
 /*==============================================================================

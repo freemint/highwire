@@ -16,9 +16,13 @@ BOOL input_activate (INPUT);
 INPUT form_check (TEXTBUFF, const char * name, char * value, BOOL checkd);
 INPUT form_radio (TEXTBUFF, const char * name, const char * value, BOOL checkd);
 INPUT form_buttn (TEXTBUFF, const char * name, const char * value,
-                  ENCODING encoding, char sub_type);
+                  ENCODING, char sub_type);
 INPUT form_text  (TEXTBUFF, const char * name, char * value, UWORD maxlen,
-                  ENCODING encoding, UWORD cols);
+                  ENCODING, UWORD cols);
 
+INPUT form_selct   (TEXTBUFF, const char * name, UWORD size, BOOL disabled);
+INPUT selct_option (TEXTBUFF, const char * text, UWORD tlen, BOOL disabled,
+                    ENCODING, char * value, BOOL selected);
+void  selct_finish (TEXTBUFF);
 
 #endif /* __FORM_H__ */
