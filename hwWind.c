@@ -2005,6 +2005,10 @@ hwWind_keybrd (WORD key, UWORD state)
 				scrl = -edit->Cursor;
 				break;
 			
+			case 0x4F: /* end */
+				scrl = edit->Length - edit->Cursor;
+				break;
+			
 			case 0x52: /* insert */
 				if (wind->Active) {
 					FRAME frame = containr_Frame ((CONTAINR)wind->Active);
