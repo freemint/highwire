@@ -959,10 +959,14 @@ raster_32r (UWORD * _dst, RASTERINFO * info, char * src)
 	UWORD  mask  = info->PixMask;
 	size_t x     = (info->IncXfx +1) /2;
 	short  width = info->Width;
+#if defined(LATTICE) && defined(LIBGIF)
 	GifColorType * pal = (GifColorType*)info->Palette;
+#else
+	long         * pal = info->Palette;
+#endif
 	do {
-		GifColorType * rgb = &pal[src[x >>16] & mask];
-		*(dst++) = (((((long)rgb->Blue <<8) | rgb->Green) <<8) | rgb->Red) <<8;
+		char * rgb = (char*)&pal[(short)src[x >>16] & mask];
+		*(dst++) = (((((long)rgb[2] <<8) | rgb[1]) <<8) | rgb[0]) <<8;
 		x += info->IncXfx;
 	} while (--width);
 }
