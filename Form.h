@@ -11,7 +11,7 @@ BOOL input_isEdit (INPUT);
 void input_draw   (INPUT, WORD x, WORD y);
 
 void     input_disable  (INPUT, BOOL onNoff);
-WORD     input_handle   (INPUT, GRECT *, char ***);
+WORD     input_handle   (INPUT, PXY, GRECT *, char ***);
 WORDITEM input_activate (INPUT, WORD slct);
 WORDITEM input_keybrd   (INPUT, WORD key, UWORD state, GRECT *);
 
