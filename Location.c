@@ -424,18 +424,22 @@ location_open (LOCATION loc, const char ** host_name)
 {
 	HOST_ENT host = loc->Host;
 	int      sock = -1;
+	char   * name;
 	
 	if (!host) {
-		*host_name = "";
+		name = "";
 	
 	} else {
-		*host_name = host->Name;
+		name = host->Name;
 		
 #ifdef USE_INET
 		if (host->Ip) {
 			sock = (int)inet_connect (host->Ip, loc->Port, conn_timeout);
 		}
 #endif /* USE_INET */
+	}
+	if (host_name) {
+		*host_name = name;
 	}
 	return sock;
 }
