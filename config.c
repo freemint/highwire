@@ -65,9 +65,111 @@ open_cfg (const char * mode)
 }
 
 
+/*============================================================================*/
+BOOL
+save_config (const char * key, const char * arg)
+{
+	struct cfg_line {
+		struct cfg_line * Next;
+		char              Text[1];
+	}    * list = NULL, * match = NULL, * nmtch = NULL;
+	size_t klen = (key ? strlen (key) : 0);
+	BOOL   ok   = TRUE;
+	FILE * file;
+	
+	if ((file = open_cfg ("r")) != NULL) {
+		struct cfg_line ** pptr = &list;
+		char buff[1024], * beg, * end;
+		while ((beg = fgets (buff, (int)sizeof(buff), file)) != NULL) {
+			struct cfg_line * line;
+			while (isspace (*beg)) beg++;
+			if (strnicmp (beg, "HighWire", 8) == 0) {
+				continue;
+			}
+			end = strchr (beg, '\0');
+			while (end > beg && isspace (end[-1])) {
+				*(--end) = '\0';
+			}
+			if ((line = malloc (sizeof(struct cfg_line) + (end - beg))) == NULL) {
+				ok = FALSE;
+				break;
+			}
+			memcpy (line->Text, beg, end - beg +1);
+			line->Next = NULL;
+			
+			if (klen) {
+				if (*beg != '#') {
+					if (strnicmp (beg, key, klen) == 0) {
+						if (!match) {
+							match = line;
+						} else { /* duplicate line, delete */
+							free (line);
+							line = NULL;
+						}
+					}
+				} else if (!nmtch) {
+					while (isspace (*(++beg)));
+					if (strnicmp (beg, key, klen) == 0) {
+						nmtch = line;
+					}
+				}
+			}
+			if (line) {
+				*pptr = line;
+				pptr  = &line->Next;
+			}
+		}
+		fclose (file);
+		
+		if (match) nmtch = NULL;
+		else       match = nmtch;
+	}
+	
+	if (ok && (file = open_cfg ("w")) != NULL) {
+		struct cfg_line * line = list;
+		fputs ("HighWire = " _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
+		                 " (" __DATE__ ")\n", file);
+		while (line) {
+			if (line == match) {
+				char * p = strchr (line->Text +1, '#');
+				size_t spc;
+				if (!p) {
+					p   = "";
+					spc = 0;
+				} else {
+					spc = klen + 3 + strlen (arg);
+					if (spc >= p - line->Text) {
+						spc = 0;
+					} else {
+						spc = (p - line->Text) - spc + strlen (p);
+					}
+				}
+				fprintf (file, "%s = %s%*s\n", key, arg, (int)spc, p);
+				
+			} else {
+				fputs (line->Text, file);
+				fputs ("\n", file);
+			}
+			line = line->Next;
+		}
+		if (!match && klen) { /* nothing found to replace, so append */
+			fprintf (file, "%s = %s\n", key, arg);
+		}
+		fclose (file);
+	}
+	
+	while (list) {
+		struct cfg_line * line = list;
+		list = line->Next;
+		free (line);
+	}
+	return ok;
+}
+
+
 /*******************************************************************************
  *
- * callback functions for config parsing
+ * callback functions for config file parsing
 */
 
 /*----------------------------------------------------------------------------*/
@@ -363,6 +465,6 @@ read_config(void)
 		}
 	}
 	fclose (fp);
-
+	
 	return TRUE;
 }
