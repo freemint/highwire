@@ -487,6 +487,7 @@ struct frame_item {
 		WORD size;   /* slider size     */
 	}    v_bar, h_bar;
 	BOOL border;
+	BOOL resize;
 	SCROLL_CODE scroll;
 	WORD   text_colour;
 	WORD   link_colour;

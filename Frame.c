@@ -33,6 +33,7 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->v_bar.on     = FALSE;
 	frame->h_bar.on     = FALSE;
 	frame->border       = FALSE;
+	frame->resize       = TRUE;
 	frame->scroll       = SCROLL_AUTO;
 	frame->text_colour  = G_BLACK;
 	frame->link_colour  = link_colour;
