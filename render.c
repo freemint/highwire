@@ -918,12 +918,26 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
 		{
-			char out2[30];
+			char out2[30], * amp = strchr (output, '&');
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
 			if (!target && frame->base_target) {
 				target = strdup (frame->base_target);
+			}
+			
+			while (amp) { /* get rid of html entities in the url */
+				const char * nxt = amp;
+				char * end = scan_namedchar (&nxt, out2, TRUE, MAP_UNICODE);
+				if (end == out2 +2 && !out2[0] && out2[1] && nxt[-1] == ';') {
+					*(amp++) = out2[1];
+					if (amp < nxt) {
+						strcpy (amp, nxt);
+					}
+				} else {
+					amp++;
+				}
+				amp = strchr (amp, '&');
 			}
 			
 			if (!word->link) {
