@@ -39,6 +39,8 @@
 #define RPOP_RELOAD        3 	/* G_STRING in (#3) RPOPUP */
 #define RPOP_VIEWSRC       5 	/* G_STRING in (#3) RPOPUP */
 #define RPOP_INFO          7 	/* G_STRING in (#3) RPOPUP */
+#define RPOP_COPY          8 	/* G_STRING in (#3) RPOPUP */
+#define RPOP_SAVE          9 	/* G_STRING in (#3) RPOPUP */
 
 #define RLINKPOP           4 	/* TREE - DIALOG */
 #define RLINK_OPEN         1 	/* G_STRING in (#4) RLINKPOP */

@@ -794,6 +794,34 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_INFO:
 			menu_info();
 			break;
+		case RPOP_SAVE:{
+			CONTAINR cont = NULL;
+
+			cont = new_hwWind (frame->Location, NULL, NULL)->Pane;
+
+			if (cont) {
+				LOADER ldr = start_objc_load (cont, frame->Location, frame->BaseHref, saveas_job, NULL);
+
+				if (ldr) {
+					ldr->Encoding = frame->Encoding;
+				}
+			}
+			
+			} break;
+		case RPOP_COPY: {
+			FILE * file;
+			char buf[2 * HW_PATH_MAX];
+			LOCATION loc = new_location(frame->Location, frame->BaseHref);
+
+			location_FullName (loc, buf, sizeof(buf));
+
+			file = open_scrap (FALSE);
+			if (file) {
+				fwrite (buf, 1, strlen(buf), file);
+				fclose (file);
+			}
+
+			} break;
 	}
 }
 
@@ -810,7 +838,6 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 	CONTAINR target;
 	struct url_link * link = hash;
 	const char      * addr = link->address;
-	FILE * file;
 	
 	HwWIND wind  = hwWind_byCoord (mx, my);
 	FRAME  frame = hwWind_ActiveFrame (wind);
@@ -919,6 +946,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 			break;
 
 		case RLINK_COPY: {
+			FILE * file;
 			char buf[2 * HW_PATH_MAX];
 			LOCATION loc = new_location(addr, frame->BaseHref);
 

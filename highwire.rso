@@ -2,10 +2,10 @@
 #define T1OBJ 66
 #define T2OBJ 72
 #define T3OBJ 79
-#define T4OBJ 87
+#define T4OBJ 90
 #define FREEBB 0
 #define FREEIMG 0
-#define FREESTR 87
+#define FREESTR 90
 
 BYTE *rs_strings[] = {
 " HIGHWIRE",
@@ -88,6 +88,9 @@ BYTE *rs_strings[] = {
 " View Source ",
 "-------------",
 " Info ",
+" Copy URL",
+" Save As...",
+"-------------",
 " Open",
 " Open New Window",
 " Save Target As...",
@@ -193,29 +196,32 @@ OBJECT rs_object[] = {
 5, -1, -1, G_BUTTON, 0x205, NORMAL, 0x45L, 66,5, 16,1,
 0, 6, 6, G_IBOX, FL3DIND, SELECTED, 0xff1101L, 2,2, 79,1,
 5, -1, -1, G_FBOXTEXT, 0x28, NORMAL, 0x2L, 0,0, 1035,1,
--1, 1, 7, G_BOX, FL3DBAK, OUTLINED, 0xfe1100L, 3,1, 13,7,
+-1, 1, 10, G_BOX, FL3DBAK, OUTLINED, 0xfe1100L, 3,1, 269,521,
 2, -1, -1, G_STRING, 0x441, NORMAL, 0x49L, 0,0, 13,1,
 3, -1, -1, G_STRING, 0x441, NORMAL, 0x4aL, 0,1, 13,1,
 4, -1, -1, G_STRING, 0x441, NORMAL, 0x4bL, 0,2, 13,1,
 5, -1, -1, G_STRING, 0x402, DISABLED, 0x4cL, 0,3, 13,1,
-6, -1, -1, G_STRING, 0x441, NORMAL, 0x4dL, 0,4, 13,1,
-7, -1, -1, G_STRING, FL3DBAK, DISABLED, 0x4eL, 0,5, 13,1,
-0, -1, -1, G_STRING, 0x461, NORMAL, 0x4fL, 0,6, 13,1,
+6, -1, -1, G_STRING, 0x441, NORMAL, 0x4dL, 0,2054, 13,1,
+7, -1, -1, G_STRING, FL3DBAK, DISABLED, 0x4eL, 0,2055, 13,1,
+8, -1, -1, G_STRING, 0x441, NORMAL, 0x4fL, 0,776, 269,3840,
+9, -1, -1, G_STRING, NONE, NORMAL, 0x50L, 256,2819, 13,513,
+10, -1, -1, G_STRING, NONE, NORMAL, 0x51L, 0,3332, 269,1,
+0, -1, -1, G_STRING, LASTOB, DISABLED, 0x52L, 256,3589, 13,1,
 -1, 1, 7, G_BOX, FL3DBAK, OUTLINED, 0x1100L, 0,0, 275,2310,
-2, -1, -1, G_STRING, NONE, NORMAL, 0x50L, 0,0, 19,1,
-3, -1, -1, G_STRING, NONE, NORMAL, 0x51L, 0,1, 19,1,
-4, -1, -1, G_STRING, NONE, NORMAL, 0x52L, 0,2, 19,1,
-5, -1, -1, G_STRING, NONE, DISABLED, 0x53L, 0,3, 19,1,
-6, -1, -1, G_STRING, NONE, NORMAL, 0x54L, 256,2309, 19,3840,
-7, -1, -1, G_STRING, NONE, NORMAL, 0x55L, 256,2819, 1554,1,
-0, -1, -1, G_STRING, LASTOB, DISABLED, 0x56L, 256,3076, 19,1};
+2, -1, -1, G_STRING, NONE, NORMAL, 0x53L, 0,0, 19,1,
+3, -1, -1, G_STRING, NONE, NORMAL, 0x54L, 0,1, 19,1,
+4, -1, -1, G_STRING, NONE, NORMAL, 0x55L, 0,2, 19,1,
+5, -1, -1, G_STRING, NONE, DISABLED, 0x56L, 0,3, 19,1,
+6, -1, -1, G_STRING, NONE, NORMAL, 0x57L, 256,2309, 19,3840,
+7, -1, -1, G_STRING, NONE, NORMAL, 0x58L, 256,2819, 1554,1,
+0, -1, -1, G_STRING, LASTOB, DISABLED, 0x59L, 256,3076, 19,1};
 
 LONG rs_trindex[] = {
 0L,
 66L,
 72L,
 79L,
-87L};
+90L};
 
 struct foobar {
 	WORD	dummy;
@@ -223,7 +229,7 @@ struct foobar {
 	} rs_imdope[] = {
 0};
 
-#define NUM_STRINGS 87
+#define NUM_STRINGS 90
 #define NUM_FRSTR 0
 #define NUM_IMAGES 0
 #define NUM_BB 0
@@ -231,7 +237,7 @@ struct foobar {
 #define NUM_IB 0
 #define NUM_CICONBLK 0
 #define NUM_TI 3
-#define NUM_OBS 95
+#define NUM_OBS 98
 #define NUM_TREE 5
 
 BYTE pname[] = "highwire.RSC";
