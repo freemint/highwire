@@ -39,6 +39,7 @@ HwWIND hwWind_Focus  = NULL;
 
 
 static void draw_infobar (HwWIND This, const GRECT * p_clip, const char * info);
+static void draw_toolbar (HwWIND This, const GRECT * p_clip);
 static void set_size (HwWIND, const GRECT *);
 static void wnd_hdlr (HW_EVENT, long, CONTAINR, const void *);
 
@@ -142,7 +143,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		This->IbarH = widget_h - widget_b -1;
 	}
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
-	This->TbarMask = 0xFF;
+	This->TbarMask = 0;
 	This->TbarActv = -1;
 	set_size (This, &curr_area);
 
@@ -154,6 +155,9 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		wind_set (This->Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	wind_open_grect (This->Handle, &This->Curr);
+	if (This->TbarH) {
+		draw_toolbar (This, &This->Work);
+	}
 	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
 		hwWind_setInfo (This, "", TRUE);
 	} else if (This->IbarH) {
@@ -752,46 +756,53 @@ hwWind_byValue (long val)
 
 
 /*----------------------------------------------------------------------------*/
+typedef struct {
+	WORD Offset;
+	WORD Fgnd, Bgnd;
+	WORD Data[15], Fill[15];
+}  TOOLBTN;
+static TOOLBTN hw_buttons[] = {
+#define	TBAR_LEFT 0
+	{	2, G_BLACK, G_GREEN,
+		{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
+			0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
+		{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
+			0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
+#define	TBAR_RGHT 1
+	{	22, G_BLACK, G_GREEN,
+		{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
+			0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
+		{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
+			0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
+#define	TBAR_HOME 2
+	{	42, G_BLACK, G_WHITE,
+		{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
+			0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
+		{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
+			0x2108, 0x2D68, 0x2D68, 0x2148, 0x3F68, 0x3F68, 0x0000 } },
+#define	TBAR_REDO 3
+	{	72, G_BLACK, G_YELLOW,
+		{	0x03E0, 0x0C10, 0x1F08, 0x2084, 0x0044, 0x10C6, 0x2882, 0x4444,
+			0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
+		{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
+			0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
+#define	TBAR_STOP 4
+	{	92, G_WHITE, G_RED,
+		{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
+			0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
+		{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
+			0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
+#define TBAR_LEFT_MASK (1 << TBAR_LEFT)
+#define TBAR_RGHT_MASK (1 << TBAR_RGHT)
+#define TBAR_HOME_MASK (1 << TBAR_HOME)
+#define TBAR_REDO_MASK (1 << TBAR_REDO)
+#define TBAR_STOP_MASK (1 << TBAR_STOP)
+};
+/*- - - - - - - - - - - - - - - - - - - - - - - -*/
 static void
 draw_toolbar (HwWIND This, const GRECT * p_clip)
 {
-	typedef struct {
-		WORD Offset;
-		WORD Fgnd, Bgnd;
-		WORD Data[15], Fill[15];
-	}  TOOLBTN;
-	static TOOLBTN buttons[] = {
-		{	2, G_BLACK, G_GREEN,
-			{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
-				0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
-			{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
-				0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
-		{	22, G_BLACK, G_GREEN,
-			{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
-				0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
-			{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
-				0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
-		{	42, G_BLACK, G_WHITE,
-			{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
-				0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
-			{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
-				0x2108, 0x2D68, 0x2D68, 0x2148, 0x3F68, 0x3F68, 0x0000 } },
-		{	72, G_BLACK, G_YELLOW,
-			{	0x03E0, 0x0C10, 0x1F08, 0x2084, 0x0044, 0x10C6, 0x2882, 0x4444,
-				0x8228, 0xC610, 0x4400, 0x4208, 0x21F0, 0x1060, 0x0F80 },
-			{	0x0000, 0x03E0, 0x00F0, 0x0078, 0x0038, 0x0038, 0x107C, 0x3838,
-				0x7C10, 0x3800, 0x3800, 0x3C00, 0x1E00, 0x0F80, 0x0000 } },
-		{	92, G_WHITE, G_RED,
-			{	0x0FE0, 0x1010, 0x2008, 0x4004, 0x975A, 0xA2DA, 0xA2DA, 0x92DA,
-				0x8AD2, 0x8AD2, 0xB292, 0x4004, 0x2008, 0x1010, 0x0FE0 },
-			{	0x0000, 0x0FE0, 0x1FF0, 0x3FF8, 0x68A4, 0x5D24, 0x5D24, 0x6D24,
-				0x752D, 0x752D, 0x4D6C, 0x3FF8, 0x1FF0, 0x0FE0, 0x0000 } }
-	};
-	GRECT area, clip;
-	
-	if (p_clip->g_y >= This->Work.g_y + This->TbarH) return;
-	
-	area = This->Work;
+	GRECT clip, area = This->Work;
 	area.g_h = This->TbarH;
 	clip = area;
 	
@@ -799,7 +810,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 		MFDB scrn = { NULL, }, icon = { NULL, 15,15,1, 1, 1, 0,0,0 };
 		WORD off[] = { G_LBLACK, 0 };
 		PXY  p[4] = { {0,0}, {14,14}, };
-		TOOLBTN * btn = buttons;
+		TOOLBTN * btn = hw_buttons;
 		int i;
 		clip.g_w += clip.g_x -1;
 		clip.g_h += clip.g_y -1;
@@ -813,7 +824,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 		v_pline (vdi_handle, 2, (short*)(p +2));
 		
 		p[3].p_y = (p[2].p_y = area.g_y +3) +15 -1;
-		for (i = 0; i < numberof(buttons); i++, btn++) {
+		for (i = 0; i < numberof(hw_buttons); i++, btn++) {
 			p[2].p_x = area.g_x + btn->Offset;
 			p[3].p_x = p[2].p_x + 15 -1;
 			icon.fd_addr = btn->Data;
@@ -828,7 +839,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
 				}
-	if (i != 4) {
+	if (i != TBAR_STOP) {
 				l[2].p_x = l[1].p_x = p[3].p_x +2;
 				l[0].p_y = l[1].p_y = p[3].p_y +2;
 				l[0].p_x =            p[2].p_x -1;
@@ -846,6 +857,9 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 				vsl_color (vdi_handle, G_BLACK);
 				v_pline (vdi_handle, 4, (short*)l);
 				if (i == This->TbarActv) {
+					l[1].p_x++;
+					l[1].p_y++;
+					l[2].p_x++;
 					l[2].p_y = l[0].p_y +1;
 					vsf_interior (vdi_handle, FIS_SOLID);
 					vsf_color    (vdi_handle, G_WHITE);
@@ -863,6 +877,53 @@ draw_toolbar (HwWIND This, const GRECT * p_clip)
 	}
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
+{
+	UWORD mask = 1;
+	short lft = 0, rgt = -1;
+	short i;
+	
+	if (This->TbarActv != active) {
+		if (active >= 0) {
+			lft = rgt = active;
+			This->TbarActv = active;
+		} else if (This->TbarActv >= 0) {
+			lft = rgt = This->TbarActv;
+			This->TbarActv = -1;
+		}
+	}
+	for (i = 0; i < numberof(hw_buttons); i++, mask <<= 1) {
+		if (This->TbarMask & mask) {
+			if (off & mask) {
+				This->TbarMask &= ~mask;
+				if (lft > i) lft = i;
+				if (rgt < i) rgt = i;
+			}
+		} else {
+			if (on & mask) {
+				This->TbarMask |= mask;
+				if (lft > i) lft = i;
+				if (rgt < i) rgt = i;
+			}
+		}
+	}
+	if (lft <= rgt && This->TbarH && !This->isIcon) {
+		GRECT clip, area;
+		clip.g_x = This->Work.g_x + hw_buttons[lft].Offset -3;
+		clip.g_w = hw_buttons[rgt].Offset - hw_buttons[lft].Offset +21;
+		clip.g_y = This->Work.g_y;
+		clip.g_h = This->TbarH -1;
+		wind_get_grect (This->Handle, WF_FIRSTXYWH, &area);
+		while (area.g_w > 0 && area.g_h > 0) {
+			if (rc_intersect (&clip, &area)) {
+				draw_toolbar (This, &area);
+			}
+			wind_get_grect (This->Handle, WF_NEXTXYWH, &area);
+		}
+	}
+}
 
 /*============================================================================*/
 void
@@ -870,6 +931,7 @@ hwWind_redraw (HwWIND This, const GRECT * clip)
 {
 	GRECT work, rect = desk_area;
 	char * info = (!This->IbarH ? NULL : *This->Info ? This->Info : This->Stat);
+	short  tbar = (!This->TbarH ? -32000 : This->Work.g_y + This->TbarH -1);
 	
 	wind_update (BEG_UPDATE);
 	
@@ -886,7 +948,7 @@ hwWind_redraw (HwWIND This, const GRECT * clip)
 		}
 		while (rect.g_w > 0 && rect.g_h > 0) {
 			if (rc_intersect (&work, &rect)) {
-				if (This->TbarH) {
+				if (rect.g_y <= tbar) {
 					draw_toolbar (This, &rect);
 				}
 				if (info) {
@@ -983,6 +1045,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				} else {
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
+				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
 		case HW_SetTitle:
 			if (!cont->Parent) {
@@ -1000,6 +1063,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				} else {
 					graf_mouse (hwWind_Mshape = BUSYBEE, NULL);
 				}
+				chng_toolbar (wind, TBAR_STOP_MASK, 0, -1);
 			}
 			hwWind_setInfo (wind, gen_ptr, TRUE);
 			break;
@@ -1042,6 +1106,23 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				}
 				if (!wind->isBusy) {
 					short mx, my, u;
+					if (wind->HistUsed > 1) {
+						WORD on  = TBAR_REDO_MASK;
+						WORD off = TBAR_STOP_MASK;
+						if (wind->HistMenu > 0) {
+							on  |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
+						} else {
+							off |= TBAR_LEFT_MASK|TBAR_HOME_MASK;
+						}
+						if (wind->HistMenu < wind->HistUsed -1) {
+							on  |= TBAR_RGHT_MASK;
+						} else {
+							off |= TBAR_RGHT_MASK;
+						}
+						chng_toolbar (wind, on, off, -1);
+					} else {
+						chng_toolbar (wind, TBAR_REDO_MASK, ~TBAR_REDO_MASK, -1);
+					}
 					graf_mkstate (&mx, &my, &u,&u);
 					check_mouse_position (mx, my);
 				}
@@ -1091,14 +1172,25 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 			if (wind->isIcon) {
 				wind = NULL;
 			
-			} else if (wind->IbarH) {
-				WORD y = clip.g_y + clip.g_h - wind->IbarH;
-				if (my < y) {
-					clip.g_h -= wind->IbarH;
-				} else {
-					clip.g_y += wind->IbarH;
-					clip.g_h =  wind->IbarH;
-					wind = NULL;
+			} else {
+				if (wind->TbarH) {
+					if (my >= clip.g_y + wind->TbarH) {
+						clip.g_y += wind->TbarH;
+						clip.g_h -= wind->TbarH;
+					} else {
+						clip.g_h =  wind->TbarH;
+						wind = NULL;
+					}
+				}
+				if (wind && wind->IbarH) {
+					WORD y = clip.g_y + clip.g_h - wind->IbarH;
+					if (my < y) {
+						clip.g_h -= wind->IbarH;
+					} else {
+						clip.g_y += wind->IbarH;
+						clip.g_h =  wind->IbarH;
+						wind = NULL;
+					}
 				}
 				rc_intersect (&clip, watch);
 			}
@@ -1113,11 +1205,25 @@ HwWIND
 hwWind_button (WORD mx, WORD my)
 {
 	HwWIND wind = hwWind_byCoord (mx, my);
-	WORD   ib_x = 0, ib_y = 0;
-	if (wind && wind->IbarH &&
-		 ((ib_y = wind->Work.g_y + wind->Work.g_h - wind->IbarH) > my ||
-		  (ib_x = wind->Work.g_x + wind->Work.g_w - wind->IbarH) > mx)) {
-		ib_y = 0;
+	WORD   ib_x = 0, ib_y = 0, tb_n = -1;
+	if (wind) {
+		if (wind->TbarH && my < wind->Work.g_y + wind->TbarH) {
+			short x = mx - wind->Work.g_x;
+			tb_n = numberof(hw_buttons) -1;
+			do if (x >= hw_buttons[tb_n].Offset -2) {
+				if (x >= hw_buttons[tb_n].Offset +19) {
+					tb_n = -1;
+				} else if (!(wind->TbarMask & (1 << tb_n))) {
+					wind = NULL;
+				}
+				break;
+			} while (tb_n--);
+		
+		} else if (wind->IbarH &&
+			       ((ib_y = wind->Work.g_y + wind->Work.g_h - wind->IbarH) > my ||
+			        (ib_x = wind->Work.g_x + wind->Work.g_w - wind->IbarH) > mx)) {
+			ib_y = ib_x = 0;
+		}
 	}
 	if (!wind) {
 		short dmy;
@@ -1125,10 +1231,40 @@ hwWind_button (WORD mx, WORD my)
 		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
 		wind_update (END_MCTRL);
 	
+	} else if (tb_n >= 0) {
+		short dmy;
+		wind_update (BEG_MCTRL);
+		chng_toolbar (wind, 0, 0, tb_n);
+		evnt_button (1, 0x03, 0x00, &mx, &my, &dmy, &dmy);
+		wind_update (END_MCTRL);
+		switch (tb_n) {
+			case TBAR_LEFT: hwWind_undo    (wind, FALSE);          break;
+			case TBAR_RGHT: hwWind_undo    (wind, TRUE);           break;
+			case TBAR_HOME: hwWind_history (wind, 0);              break;
+			case TBAR_REDO: hwWind_history (wind, wind->HistMenu); break;
+			default:        chng_toolbar (wind, 0, 0, -1);
+		}
+		wind = NULL;
+	
 	} else if (ib_y) {
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
 		PXY c[5], w[5];
+		c[0].p_x            = ib_x +1;
+		c[0].p_y            = ib_y +1;
+		c[1].p_x = c[1].p_y = wind->IbarH;
+		vsf_interior (vdi_handle, FIS_SOLID);
+		vswr_mode (vdi_handle, MD_XOR);
+		v_hide_c  (vdi_handle);
+		wind_get_grect (wind->Handle, WF_FIRSTXYWH, (GRECT*)w);
+		while (w[1].p_x > 0 && w[1].p_y > 0) {
+			if (rc_intersect ((GRECT*)c, (GRECT*)w)) {
+				w[1].p_x += w[0].p_x -1;
+				w[1].p_y += w[0].p_y -1;
+				v_bar (vdi_handle, (short*)w);
+			}
+			wind_get_grect (wind->Handle, WF_NEXTXYWH, (GRECT*)w);
+		}
 		c[0] = c[4] = *(PXY*)&wind->Curr;
 		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + wind->Curr.g_w -1;
 		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + wind->Curr.g_h -1;
@@ -1141,10 +1277,8 @@ hwWind_button (WORD mx, WORD my)
 		m_in.emi_m1.g_x = mx;
 		m_in.emi_m1.g_y = my;
 		m_in.emi_m1.g_w = m_in.emi_m1.g_h = 1;
-		vswr_mode (vdi_handle, MD_XOR);
 		vsl_type  (vdi_handle, USERLINE);
 		vsl_udsty (vdi_handle, 0xAAAA);
-		v_hide_c  (vdi_handle);
 		do {
 			EVMULT_OUT out;
 			WORD       msg[8];
