@@ -29,9 +29,6 @@ vTab_delete (DOMBOX * This)
 	if (par->item) {
 		destroy_word_list (par->item, NULL);
 	}
-	if (par->Table) {
-		delete_table (&par->Table);
-	}
 	DomBox_vTab.delete (This);
 }
 
@@ -131,10 +128,9 @@ new_paragraph (TEXTBUFF current)
 	
 	current->word = NULL;
 	
-	paragraph->item    = new_word (current, FALSE);
-	paragraph->Table   = NULL;
-	paragraph->Line    = NULL;
-	paragraph->Indent  = 0;
+	paragraph->item   = new_word (current, FALSE);
+	paragraph->Line   = NULL;
+	paragraph->Indent = 0;
 	paragraph->paragraph_code = PAR_NONE;
 	
 	dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
@@ -176,8 +172,7 @@ add_paragraph (TEXTBUFF current, short vspace)
 {
 	PARAGRPH paragraph = NULL;
 	
-	if (current->text > current->buffer
-	    || current->paragraph->paragraph_code >= PAR_TABLE) {
+	if (current->text > current->buffer) {
 		new_word (current, FALSE);
 	
 	} else if (current->prev_wrd) {
@@ -204,10 +199,9 @@ add_paragraph (TEXTBUFF current, short vspace)
 		current->paragraph        = paragraph;
 		paragraph->next_paragraph = NULL;
 		
-		paragraph->item    = current->word;
-		paragraph->Table   = NULL;
-		paragraph->Line    = NULL;
-		paragraph->Indent  = indent;
+		paragraph->item   = current->word;
+		paragraph->Line   = NULL;
+		paragraph->Indent = indent;
 		
 		dombox_ctor (&paragraph->Box, current->parentbox, BC_TXTPAR);
 		if (!*(long*)&paragraph_vTab) {
@@ -253,8 +247,7 @@ void paragrph_finish (TEXTBUFF current)
 			return;
 		}
 		
-		if (current->text > current->buffer
-		    || current->paragraph->paragraph_code >= PAR_TABLE) {
+		if (current->text > current->buffer) {
 			word_store (current);
 		
 		} else if (current->prev_wrd) {

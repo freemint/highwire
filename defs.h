@@ -37,7 +37,7 @@
 /* ******* Type Definitions ********* */
 
 typedef enum {
-	PAR_NONE = 0, PAR_LI, PAR_IMG, PAR_TABLE
+	PAR_NONE = 0, PAR_LI, PAR_IMG
 } PARAGRAPH_CODE;
 
 typedef enum {
@@ -542,7 +542,6 @@ struct word_item {
 struct paragraph_item {
 	DOMBOX   Box;
 	WORDITEM item;
-	TABLE    Table;
 	WORDLINE Line;    /* list of word lines */
 	WORD     Indent;  /* horizontal offset to the left side */
 	PARAGRAPH_CODE paragraph_code;
