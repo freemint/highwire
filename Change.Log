@@ -9,7 +9,7 @@
   memory shall be used for caching of image
   bitmaps in memory (not those on disk):
     CACHEMEM = <kilo bytes>
-  When not defined 100k will be asumed.
+  When not defined 100k will be assumed.
   (see example.cfg\highwire.cfg for details).
 
 - Added lot of functionality for dithering and
@@ -35,6 +35,10 @@
   protocol was given in the URL of the button bar
   (in fact, when neither a leading '/' nor any ':'
   was found there) (#0093).
+
+- Added timeout check for HTTP header request to
+  prevent HighWire from hanging due to not
+  responsing servers.
 
 - Fixed a bug occuring with both rowspan and
   colspan defined in one table cell (#0119).

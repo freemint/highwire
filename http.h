@@ -17,7 +17,8 @@ typedef struct {
 	const char * Rdir;
 } HTTP_HDR;
 
-short http_header (LOCATION, HTTP_HDR *, short * keep_alive, size_t blk_size);
+short http_header (LOCATION, HTTP_HDR *, size_t blk_size,
+                   short * keep_alive, long tout_msec);
 
 ENCODING http_charset (const char * buf, size_t len, MIMETYPE *);
 

@@ -311,11 +311,14 @@ expires (const char * beg, long len, HTTP_HDR * hdr)
 /*============================================================================*/
 #ifdef USE_INET
 short
-http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
+http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
+             short * keep_alive, long tout_msec)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
 	int    reply = 0;
+	
+	clock_t timeout = 0;
 	
 	char * ln_beg = buffer, * ln_end = ln_beg, * ln_brk = NULL;
 	
@@ -369,6 +372,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 		}
 	}
 	
+	tout_msec = (tout_msec * CLK_TCK) /1000; /* align to clock ticks */
 	do {
 		long n = inet_recv (sock, ln_end, (left <= blk_size ? left : blk_size));
 		
@@ -386,9 +390,24 @@ http_header (LOCATION loc, HTTP_HDR * hdr, short * keep_alive, size_t blk_size)
 			break;
 		
 		} else if (!n) { /* no data available yet */
-			continue;
+			clock_t clk = clock();
+			if (!timeout) {
+				timeout = clk;
+				continue;
+			} else if ((clk -= timeout) < tout_msec) {
+				continue;
+			}
+			/* else timed out */
+			clk *= 1000 / CLK_TCK;
+			sprintf (buffer, "Header %s %i.%03i sec.\n", 
+			         (reply ? "stalled" : "timeout"),
+			         (int)(clk /1000), (int)(clk % 1000));
+			inet_close (sock);
+			sock = -1;
+			return -ETIMEDOUT;
 		
 		} else {
+			timeout = 0;
 			ln_brk  = memchr (ln_end, '\n', n);
 			ln_end += n;
 			left   -= n;

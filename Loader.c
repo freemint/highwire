@@ -603,7 +603,8 @@ header_job (void * arg, long invalidated)
 		containr_notify (loader->Target, HW_SetInfo, buf);
 	}
 	do {
-		reply = http_header (loc, &hdr, &sock, sizeof (loader->rdTemp) -2);
+		reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2, &sock,
+		                     (loader->SuccJob ? 2000l : 5000l));
 	} while (reply == -ECONNRESET && retry++ < 1);
 	
 	/* Check for HTTP header redirect
