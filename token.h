@@ -43,7 +43,12 @@
 		__TAG_ITEM (FORM),
 		__TAG_ITEM (FRAME),
 		__TAG_ITEM (FRAMESET),
-		__TAG_ITEM (H),   /* for <H1>..<H6> */
+		__TAG_ITEM (H1),
+		__TAG_ITEM (H2),
+		__TAG_ITEM (H3),
+		__TAG_ITEM (H4),
+		__TAG_ITEM (H5),
+		__TAG_ITEM (H6),
 		__TAG_ITEM (HR),
 		__TAG_ITEM (HTML),
 		__TAG_ITEM (I),
@@ -107,7 +112,7 @@
 # define __END_KEYS
 
 #elif !defined (__TOKEN_KEY)
-# define __BEG_KEYS   typedef enum { KEY_Unknown = 0, KEY_H_HEIGHT,
+# define __BEG_KEYS   typedef enum { KEY_Unknown = 0,
 # define __KEY_ITEM(k)   KEY_##k
 # define __END_KEYS   , KEY_LastDefined } HTMLKEY;
 #endif
@@ -125,6 +130,7 @@
 		__KEY_ITEM (CELLSPACING),  /* TABLE */
 		__KEY_ITEM (CHARSET),      /* A */
 		__KEY_ITEM (CHECKED),      /* INPUT */
+		__KEY_ITEM (CLASS),        /* all */
 		__KEY_ITEM (CLEAR),        /* BR */
 		__KEY_ITEM (COLOR),        /* BASEFONT,FONT,HR,P */
 		__KEY_ITEM (COLS),         /* FRAMESET */
@@ -172,7 +178,7 @@
 	__END_KEYS
 	
 	#ifndef NumberofKEY
-	# define NumberofKEY (KEY_LastDefined - KEY_Unknown -2)
+	# define NumberofKEY (KEY_LastDefined - KEY_Unknown -1)
 	#endif
 
 	#undef __BEG_KEYS
