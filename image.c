@@ -2137,6 +2137,7 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 	
 	if (info->Interlace <= 0) {
 		size_t scale = (info->IncYfx +1) /2;
+		short  y_dst = img->disp_h;
 		while (y < img_h) {
 			if (!(*img_rd)(info, buf)) {
 				img_rd = skip_corrupted;
@@ -2146,6 +2147,7 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 				(*raster) (info, dst);
 				dst   += info->LnSize;
 				scale += info->IncYfx;
+				if (!--y_dst) break;
 			}
 		}
 	
