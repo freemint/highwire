@@ -214,6 +214,32 @@ button_clicked (WORD button, WORD mx, WORD my)
 			}
 		} break;
 		
+		case PE_BORDER: {
+			CONTAINR sibl  = cont->Sibling;
+			GRECT    bound = cont->Area;
+			WORD dx, dy;
+			
+			if (elem == PE_BORDER_RT) {
+				bound.g_w += sibl->Area.g_w
+				           - (sibl->Sibling ? sibl->Border_Size : 0);
+			} else { /* PE_BORDER_DN */
+				bound.g_h += sibl->Area.g_h - (sibl->Sibling ? sibl->Border_Size : 0);
+			}
+			graf_dragbox (watch.g_w, watch.g_h, watch.g_x, watch.g_y,
+			              bound.g_x, bound.g_y, bound.g_w, bound.g_h, &dx, &dy);
+			if ((dx -= watch.g_x) | (dy -= watch.g_y)) {
+				cont->Area.g_w += dx;
+				cont->Area.g_h += dy;
+				containr_calculate (cont, NULL);
+				sibl->Area.g_x += dx;
+				sibl->Area.g_y += dy;
+				sibl->Area.g_w -= dx;
+				sibl->Area.g_h -= dy;
+				containr_calculate (sibl, NULL);
+				hwWind_redraw (wind, &bound);
+			}
+		}	break;
+		
 		default:
 			if (elem >= PE_FRAME && (button & RIGHT_BUTTON)) {
 #if (_HIGHWIRE_RPOP_ == 1)
