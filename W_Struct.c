@@ -54,6 +54,7 @@ _alloc (WORDITEM prev)
 }
 
 
+/*============================================================================*/
 void
 destroy_word_structure (WORDITEM word)
 {
@@ -77,7 +78,8 @@ destroy_word_structure (WORDITEM word)
 }
 
 
-/* new_word()
+/*==============================================================================
+ * new_word()
  *
  * creates a new word_item object.  if the 'copy_from' is not NULL it is
  * taken as a source to copy attributes from.  the flag 'changed' determines
@@ -86,8 +88,7 @@ destroy_word_structure (WORDITEM word)
  *
  * modified to take frame_item * for inheritance from frame
  * Baldrick - Feb 28, 2002
- */
- 
+*/
 struct word_item *
 new_word (TEXTBUFF current, BOOL do_link)
 {
@@ -123,6 +124,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 	word->line_brk    = BRK_NONE;
 	word->word_width  = 0;
 	word->space_width = 0;
+	word->wrap        = FALSE;
 	word->image       = NULL;
 	word->input       = NULL;
 	word->next_word   = NULL;
@@ -134,6 +136,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 }
 
 
+/*============================================================================*/
 void
 word_store (TEXTBUFF current)
 {
@@ -146,6 +149,9 @@ word_store (TEXTBUFF current)
 		
 		if (current->buffer[0] == base->SpaceCode) {
 			word->space_width = word->font->SpaceWidth;
+			if (!current->nowrap) {
+				word->wrap = TRUE;
+			}
 		}
 		
 		if ((word->length = length) == 1 && word->space_width) {
@@ -177,7 +183,8 @@ word_store (TEXTBUFF current)
 }
 
 
-/* word_set_bold()
+/*==============================================================================
+ * word_set_bold()
  *
  * changes the value of the BOLD status of the current word
 */
@@ -196,7 +203,8 @@ word_set_bold (TEXTBUFF current, BOOL onNoff)
 }
 
 
-/* word_set_italic()
+/*==============================================================================
+ * word_set_italic()
  *
  * changes the value of the ITALIC status of the current word
 */
@@ -215,7 +223,8 @@ word_set_italic (TEXTBUFF current, BOOL onNoff)
 }
 
 
-/* word_set_strike()
+/*==============================================================================
+ * word_set_strike()
  *
  * changes the value of the STRIKE THROUGH status of the current word
 */
@@ -234,7 +243,8 @@ word_set_strike (TEXTBUFF current, BOOL onNoff)
 }
 
 
-/* word_set_underline()
+/*==============================================================================
+ * word_set_underline()
  *
  * changes the value of the UNDERLINED status of the current word
 */
