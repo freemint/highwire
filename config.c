@@ -421,6 +421,15 @@ cfg_http_proxy (char * param, long arg)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static void
+cfg_urlhist (char * param, long arg)
+{
+	(void)arg;
+	hwWind_urlhist (NULL, param);
+}
+
+
 /*============================================================================*/
 BOOL
 read_config(void)
@@ -450,7 +459,7 @@ read_config(void)
 		while (isspace(*p)) p++;
 		do if (*p == '_') {
 			buf[b] = *(p++);
-		} else if (isalpha(*p)) {
+		} else if (isalnum(*p)) {
 			buf[b] = toupper(*(p++));
 		} else {
 			break;
@@ -495,6 +504,16 @@ read_config(void)
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
 				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
 				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 },
+				{ "URL_01",               cfg_urlhist,   0 },
+				{ "URL_02",               cfg_urlhist,   1 },
+				{ "URL_03",               cfg_urlhist,   2 },
+				{ "URL_04",               cfg_urlhist,   3 },
+				{ "URL_05",               cfg_urlhist,   4 },
+				{ "URL_06",               cfg_urlhist,   5 },
+				{ "URL_07",               cfg_urlhist,   6 },
+				{ "URL_08",               cfg_urlhist,   7 },
+				{ "URL_09",               cfg_urlhist,   8 },
+				{ "URL_10",               cfg_urlhist,   9 },
 				{ "USE_CSS",              cfg_func,      (long)menu_use_css    },
 				{ "VIEW_IMAGES",          cfg_func,      (long)menu_images     }
 			};
