@@ -12,6 +12,9 @@
   <Hx> tags, blanks in anchor names are filtered
   out now in general.
 
+- Implemented <base href=...> tag (base URL for
+  relative links in a document).
+
 - Reworked config parser for faster program start
   on slow machines.
 
