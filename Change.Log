@@ -1,4 +1,4 @@
-(non-public of Nov. 25, 2003)
+(non-public of Dec. 03, 2003)
 
 - The cache got a big rework and cached files will
   used now over subsequent sessions, not anymore
@@ -24,7 +24,7 @@
   be received and led to endless reloads of that
   image.
 
-- Bugs #0134, #0138 resolved.
+- Bugs #0132, #0134, #0138 resolved.
 
 __________________________________________________
 Changes in V. 0.1.5 release  of October 24, 2003:
