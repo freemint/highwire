@@ -16,12 +16,10 @@
 
 #elif defined (LATTICE)
 # include <dos.h>
+# include <mintbind.h>
 
 #elif defined (__GNUC__)
-# include <unistd.h> /* for write() */
-# include <osbind.h>
-
-extern long _PgmSize; /* is this correct ??? */
+# include <mintbind.h>
 #endif
 
 /* we are building a module so we need to define OVL_MODULE
@@ -29,27 +27,25 @@ extern long _PgmSize; /* is this correct ??? */
  */
 #define OVL_MODULE
 
-#include "ovl_sys.h"
+#include "../../hw-types.h"
+#include "../../ovl_sys.h"
 
 
 /*--- Prototypes ---*/
-long ___CDECL ovl_init(void);
-struct ovl_info_t *___CDECL ovl_version(void);
-long ___CDECL ovl_free(void);
+long               __CDECL ovl_init   (void);
+struct ovl_info_t *__CDECL ovl_version(void);
+long               __CDECL ovl_free   (void);
 
 /* structs in use to hold OVL values*/
 
-char filemagic[4] = OVL_MAGIC;
-OVL_METH ovl_methods = {ovl_init,ovl_version,ovl_free};
+OVL_DECL (OF_SIMPLE);
 struct ovl_info_t ovl_data;
 
-int ovl_id;
-int parent_id;
 
 /* ----------------------------------------------------------------- *
  *  ovl_init() called by client to initialize ovl					 *
  * ----------------------------------------------------------------- */
-long ___CDECL ovl_init(void)
+long __CDECL ovl_init(void)
 {
 	/* Do any initialization that the OVL may need to do,
 	 * getting access to external functions etc here
@@ -61,10 +57,10 @@ long ___CDECL ovl_init(void)
 	 * edit later.
 	 */
 
-	ovl_data.name	 = "SAMPLE.OVL";	 
+	ovl_data.name    = "SAMPLE.OVL";	 
 	ovl_data.version = "0001";
-	ovl_data.date 	 = "010903";
-	ovl_data.author	 = "Dan Ackerman";
+	ovl_data.date    = "010903";
+	ovl_data.author  = "Dan Ackerman";
 	
 	return(0);
 }
@@ -73,7 +69,7 @@ long ___CDECL ovl_init(void)
  * ovl_version - Returns infos about module                          *
  * returns an ovl_info_t pointer
  * ----------------------------------------------------------------- */
-struct ovl_info_t *___CDECL ovl_version(void)
+struct ovl_info_t *__CDECL ovl_version(void)
 {
 	return((struct ovl_info_t *)&ovl_data);
 }
@@ -84,7 +80,7 @@ struct ovl_info_t *___CDECL ovl_version(void)
  *                  (freeing memory, closing files, etc...)          *
  *  returns 0 on success, <0 if an error has occured                 *
  * ----------------------------------------------------------------- */
-long ___CDECL ovl_free(void)
+long __CDECL ovl_free(void)
 {
 	return(0);
 }
@@ -95,15 +91,19 @@ long ___CDECL ovl_free(void)
  * ----------------------------------------------------------------- */
 int main(void)
 {
-  static void *array[] = {
-  	(void *)OVL_MAGIC,
-  	(OVL_METH *)&ovl_methods
-  	};
-  	
-  /* Don't actually write anything, just keep array from being swallowed */
-  write(1, array[0], 0);
-  
-  Ptermres(_PgmSize,0);		/* sit into memory */
-  
-  return (1);
+	if (!ovl_methods.flags) { /* OF_SIMPLE */
+		exit (1); /* this shouldn't happen, but not fatal */
+	
+	} else if (ovl_methods.flags >= OF_THREAD) {
+		exit (-25); /* EINVAL, mode yet not supported */
+	
+	} else if (ovl_methods.flags == OF_CHLDPRC) {
+		if (Psigsetmask (0) == -32/*EINVFN*/) {
+			exit (1); /* no signal handling, notify about that */
+		}
+		Pause(); /* else suspend */
+	}
+	
+	/* else OF_STARTUP, simply quit */
+	return 0;
 }
