@@ -32,6 +32,7 @@
 #define c_Width   Box.Rect.W
 #define c_Height  Box.Rect.H
 #define c_Backgnd Box.Backgnd
+#define c_SetWidth Box.SetWidth
 
 #ifdef DEBUG
 	#define _DEBUG
@@ -342,7 +343,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	cell->Box.TextAlign = parser->Current.paragraph->Box.TextAlign = h_align;
 	cell->AlignV        = v_align;
 	cell->c_Height      = (height <= 1024 ? height : 1024);
-	cell->c_Width       = (width  <= 1024 ? width  : 0);
+	cell->c_SetWidth    = (width  <= 1024 ? width  : 0);
 	
 	if (color < 0) {
 		color = row->Color;
@@ -549,30 +550,30 @@ table_finish (PARSER parser)
 		adjust_rowspans (cell, i--);
 		do {
 			if (cell->Box.ChildBeg) {
-				if (cell->c_Width < 0 && table->t_SetWidth > 0) {
+				if (cell->c_SetWidth < 0 && table->t_SetWidth > 0) {
 					short width = table->t_SetWidth - table->t_MinWidth;
-					cell->c_Width = (-cell->c_Width * width +512) /1024;
-					if (cell->c_Width <= 0) cell->c_Width = 1;
+					cell->c_SetWidth = (-cell->c_SetWidth * width +512) /1024;
+					if (cell->c_SetWidth <= 0) cell->c_SetWidth = 1;
 				}
 				if (cell->ColSpan == 1) {
 					long width = dombox_MinWidth (&cell->Box);
 					if (width <= padding) {
-						cell->c_Width = 0;
+						cell->c_SetWidth = 0;
 					}
-					if (cell->c_Width > 0) {
-						if (width < cell->c_Width) width = cell->c_Width;
-						if (width < *minimum)    width = *minimum;
-						if (width < *fixed)      width = *fixed;
+					if (cell->c_SetWidth > 0) {
+						if (width < cell->c_SetWidth) width = cell->c_SetWidth;
+						if (width < *minimum)         width = *minimum;
+						if (width < *fixed)           width = *fixed;
 						*minimum = *fixed = width;
 					} else {
 						if (*minimum < width) *minimum = width;
 						width = dombox_MaxWidth (&cell->Box);
 						if (*maximum < width) *maximum = width;
-						if (cell->c_Width < 0) {
+						if (cell->c_SetWidth < 0) {
 							if (table->NumCols > 1) {
-								*percent = -cell->c_Width;
+								*percent = -cell->c_SetWidth;
 							} else {
-								cell->c_Width = 0;
+								cell->c_SetWidth = 0;
 							}
 						}
 					}
@@ -605,9 +606,9 @@ table_finish (PARSER parser)
 			if (cell->Box.ChildBeg && cell->ColSpan > 1) {
 				long width = dombox_MinWidth (&cell->Box);
 				spread_width (minimum, cell->ColSpan, table->Spacing, width);
-				if (cell->c_Width > 0) {
+				if (cell->c_SetWidth > 0) {
 					short empty = 0;
-					if (width < cell->c_Width) width = cell->c_Width;
+					if (width < cell->c_SetWidth) width = cell->c_SetWidth;
 					for (i = 0; i < cell->ColSpan; i++) {
 						if (!fixed[i]) {
 							empty++;
@@ -633,10 +634,10 @@ table_finish (PARSER parser)
 				} else {
 					spread_width (maximum, cell->ColSpan, table->Spacing,
 					              dombox_MaxWidth (&cell->Box));
-					if (cell->c_Width < 0 && cell->ColSpan < table->NumCols) {
+					if (cell->c_SetWidth < 0 && cell->ColSpan < table->NumCols) {
 						short empty = 0;
 						percent = table->Percent + (fixed - table->ColWidth);
-						width   = -cell->c_Width;
+						width   = -cell->c_SetWidth;
 						for (i = 0; i < cell->ColSpan; i++) {
 							if (!percent[i]) {
 								empty++;
