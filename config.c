@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "file_sys.h"
 #include "global.h"
 #include "Location.h"
 #include "mime.h"
@@ -18,6 +19,56 @@
 #define HTMLKEY int
 #include "scanner.h"
 
+
+/*----------------------------------------------------------------------------*/
+static FILE *
+open_cfg (const char * mode)
+{
+	static char * path = NULL;
+	FILE        * file = NULL;
+	
+	if (path) {
+		file = fopen (path, mode);
+		
+	} else {
+		char buff[1024], * p;
+		if ((p = getenv ("HOME")) != NULL && *p) {
+			char slash = (p[1] == ':' ? '\\' : '/');
+			p = strchr (strcpy (buff, p), '\0');
+			if (p[-1] != slash) *(p++) = slash;
+			strcpy (p, "defaults");
+			p[8] = slash;
+			strcpy (p +9, _HIGHWIRE_CFG_);
+			file = fopen (buff, mode);
+			
+			if (!file) {
+				strcpy (p, _HIGHWIRE_CFG_);
+				file = fopen (buff, mode);
+			}
+		}
+		if (!file) {
+			buff[0] = Dgetdrv();
+			buff[0] += (buff[0] < 26 ? 'A' : -26 + '1');
+			buff[1] = ':';
+			Dgetpath (buff + 2, 0);
+			p = strchr (buff, '\0');
+			if (p[-1] != '\\') *(p++) = '\\';
+			strcpy (p, _HIGHWIRE_CFG_);
+			file = fopen (buff, mode);
+		}
+		if (file) {
+			path = strdup (buff);
+		}
+	}
+	
+	return file;
+}
+
+
+/*******************************************************************************
+ *
+ * callback functions for config parsing
+*/
 
 /*----------------------------------------------------------------------------*/
 #define FA(f,b,i)   (((long)f <<16) | (b ? 0x10 : 0x00) | (i ? 0x01 : 0x00))
@@ -223,29 +274,15 @@ cfg_http_proxy (char * param, long arg)
 }
 
 
-/******************************************************************************/
-WORD
-read_config(char *fn)
+/*============================================================================*/
+BOOL
+read_config(void)
 {
 	char l[HW_PATH_MAX], * p, * d;
-	FILE * fp = NULL;
+	FILE * fp = open_cfg ("r");
 	
-	if ((p = getenv ("HOME")) != NULL && *p) {
-		d = (p[1] == ':' ? "\\" : "/");
-		p = strchr (strcpy (l, p), '\0');
-		if (p[-1] != *d) *(p++) = *d;
-		strcat (strcat (strcpy (p, "defaults"), d), _HIGHWIRE_CFG_);
-		if ((fp = fopen (l, "r")) == NULL) {
-			strcpy (p, _HIGHWIRE_CFG_);
-			fp = fopen (l, "r");
-			if ((fp = fopen (l, "r")) == NULL) {
-				strcpy (p, ".highwire");
-				fp = fopen (l, "r");
-			}
-		}
-	}
-	if (!fp && (fp = fopen(fn, "r")) == NULL) {
-		return (-1);
+	if (!fp) {
+		return FALSE;
 	}
 
 	while ((p = fgets (l, (int)sizeof(l), fp)) != NULL) {
@@ -327,5 +364,5 @@ read_config(char *fn)
 	}
 	fclose (fp);
 
-	return (1);
+	return TRUE;
 }
