@@ -1,4 +1,4 @@
-(non-public of Aug. 26, 2003)
+(non-public of Aug. 29, 2003)
 
 - Added lot of functionality for dithering and
   displaying of images, especially for GrayScale
@@ -16,6 +16,12 @@
 - Fixed the 'too many open files' bug, resulting
   from forgotten socket close after connection
   failed.
+
+- Fixed the infinite loop caused by too long lines
+  in HTML textes.
+
+- Added several checks to avoid crashes due to
+  memory exhausted.
 
 __________________________________________________
 Changes in V. 0.1.4 release  of August 10, 2003:

@@ -162,17 +162,25 @@ insert_anchor (TEXTBUFF current, char * name, struct url_link * presave)
 		} while (*p);
 	}
 			
-	word->link = new_url_link (word, name, FALSE, NULL);
-	word->link->u.anchor = new_named_location (word->link->address,
-	                                           &current->paragraph->Offset);
-	*current->anchor = word->link->u.anchor;
-	current->anchor  = &word->link->u.anchor->next_location;
-	
-	/* prevent from getting deleted if empty */
-	*(current->text++) = font_Nobrk (word->font);
-	new_word (current, TRUE);
-	word->word_width = 0;
-	current->word->link = presave;
+	if ((word->link = new_url_link (word, name, FALSE, NULL)) != NULL) {
+		ANCHOR anchor = new_named_location (word->link->address,
+		                                    &current->paragraph->Offset);
+		if (!anchor) {  /* memory exhausted! */
+			free (word->link);
+			word->link = NULL;
+		
+		} else {
+			word->link->u.anchor = anchor;
+			*current->anchor     = anchor;
+			current->anchor      = &anchor->next_location;
+			
+			/* prevent from getting deleted if empty */
+			*(current->text++) = font_Nobrk (word->font);
+			new_word (current, TRUE);
+			word->word_width = 0;
+			current->word->link = presave;
+		}
+	}
 }
 
 
@@ -1084,7 +1092,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
 		{
-			char out2[30], * p = url_correct (output);
+			char * p = url_correct (output);
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
@@ -1107,13 +1115,13 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 			word_set_color (current, frame->link_color);
 
-			word->link = new_url_link (word, output, TRUE, target);
-			
-			if (get_value (parser, KEY_CHARSET, out2, sizeof(out2))) {
-				/* ENCODING_WINDOWS1252 as default, which is commen practice. */
-				word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
+			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
+				char out2[30];
+				if (get_value (parser, KEY_CHARSET, out2, sizeof(out2))) {
+					/* ENCODING_WINDOWS1252 as default, which is commen practice. */
+					word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
+				}
 			}
-		
 		} else if ((output = get_value_str (parser, KEY_NAME)) != NULL ||
 		           (output = get_value_str (parser, KEY_ID))   != NULL) {
 			insert_anchor (current, output, word->link);

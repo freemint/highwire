@@ -27,7 +27,6 @@ static WORDITEM
 _alloc (WORDITEM prev)
 {
 	CHUNK * chunk;
-	char  * mem;
 	UWORD   num;
 	
 	if (prev && (num = prev->_priv +1) < numberof (chunk->word)) {
@@ -42,15 +41,18 @@ _alloc (WORDITEM prev)
 		} while ((bit <<= 1) != 0uL);
 	}
 	
-	chunk = malloc (sizeof (CHUNK));
-	mem = (char*)chunk + offsetof(CHUNK, word->_priv);
-	for (num = 0; num < numberof (chunk->word); num++) {
-		*(UWORD*)mem = num;
-		mem += offsetof(CHUNK, word[1]) - offsetof(CHUNK, word[0]);
+	if ((chunk = malloc (sizeof (CHUNK))) != NULL) {
+		char * mem = (char*)chunk + offsetof(CHUNK, word->_priv);
+		for (num = 0; num < numberof (chunk->word); num++) {
+			*(UWORD*)mem = num;
+			mem += offsetof(CHUNK, word[1]) - offsetof(CHUNK, word[0]);
+		}
+		chunk->used = 1uL;
+		
+		return &chunk->word[0];
 	}
-	chunk->used = 1uL;
 	
-	return &chunk->word[0];
+	return NULL; /* memory exhausted */
 }
 
 
@@ -115,7 +117,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 	struct word_item * word      = NULL;
 	
 	if (!copy_from) {
-		word = _alloc (NULL); /*malloc (sizeof (struct word_item));*/
+		if ((word = _alloc (NULL)) == NULL) return NULL;
 		word->attr.packed    = TEXTATTR (current->font_size,
 			                              current->font_step->color);
 		word->font           = NULL;
@@ -125,7 +127,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 	
 	} else /*if (current->text > current->buffer)*/ {
 		word_store (current);
-		word = _alloc (copy_from); /*malloc (sizeof (struct word_item));*/
+		if ((word = _alloc (copy_from)) == NULL) return NULL;
 		word->attr.packed    = copy_from->attr.packed;
 		word->font           = copy_from->font;
 		word->word_height    = copy_from->word_height;
@@ -179,20 +181,26 @@ word_store (TEXTBUFF current)
 			pts[2] = word->space_width;
 		
 		} else {
-			size_t size = (length +1) *2;
-			word->item = malloc (size);
-			if (base->Mapping == MAP_ATARI) {
+			size_t  size = (length +1) *2;
+			WCHAR * item = malloc (size);
+			if (!item) {
+				item = &fixed[0].Empty; /* memory exhausted */
+			
+			} else if (base->Mapping == MAP_ATARI) {
 				WCHAR * src = current->buffer;
-				WCHAR * dst = word->item;
+				WCHAR * dst = item;
 				UWORD   len = length;
 				do {
 					*(dst++) = *(src++) & 0x00FF;
 				} while (--len);
 				*dst = 0;
+			
 			} else {
-				memcpy (word->item, current->buffer, size);
-				word->item[length] = 0;
+				memcpy (item, current->buffer, size);
+				item[length] = 0;
 			}
+			word->item = item;
+		
 	#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
 			vqt_f_extent16 (vdi_handle, word->item, pts);
 	#else
@@ -200,7 +208,6 @@ word_store (TEXTBUFF current)
 	#endif
 			pts[2] -= pts[0];
 		}
-		
 		if (word->image) {
 			word->image->alt_w = pts[2];
 		
