@@ -294,7 +294,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	}
 	
 	if (par->paragraph_code == PAR_IMG) {
-		This->Rect.X += blocker->L.width;
 		align = ALN_LEFT;
 	} else {
 		align = This->TextAlign;

@@ -740,7 +740,6 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	
 	(void)blocker;
 	
-	This->Rect.X += blocker->L.width;
 	This->Rect.W -= blocker->L.width + blocker->R.width;
 	max_width    -= blocker->L.width + blocker->R.width;
 	
