@@ -53,6 +53,7 @@ $(OBJDIR)/%.o: %.c
 CFILES = \
 	Logging.c \
 	schedule.c \
+	mime.c \
 	ovl_sys.c \
 	inet.c \
 	http.c \
