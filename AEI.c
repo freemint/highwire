@@ -622,20 +622,23 @@ rpopup_open (WORD mx, WORD my)
 	}
 	
 	form_center (rpopup, &x, &y, &w, &h);
-
-	rpopup->ob_x = mx -= 2;
-	rpopup->ob_y = my -= 2;
+	x -= rpopup->ob_x;
+	x += rpopup->ob_x = mx -2;
+	y -= rpopup->ob_y;
+	y += rpopup->ob_y = my -2;
 	
 	wind_update (BEG_MCTRL);
-	form_dial   (FMD_START, x, y, w, h, mx, my, w, h);
-	objc_draw   (rpopup, ROOT, MAX_DEPTH, mx, my, w, h);
+	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
+	objc_draw   (rpopup, ROOT, MAX_DEPTH, x, y, w, h);
 
 	which_obj = HW_form_do (rpopup, 0);
 /*	which_obj = form_do (rpopup, 0);*/
+/*	which_obj = form_popup (rpopup, 0,0);*/
 	
-	objc_change (rpopup, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
-
-	form_dial   (FMD_FINISH, x, y, w, h, mx, my, w, h);
+	if (which_obj > 0) {
+		objc_change (rpopup, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 	wind_update (END_MCTRL);
 	
 	switch(which_obj)
