@@ -199,7 +199,9 @@ button_clicked (WORD button, WORD clicks, UWORD state, WORD mx, WORD my)
 				           xy[1] += frame->clip.g_y - frame->v_bar.scroll;
 				           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
 				        } else {
+				           WORD dmy;
 				           hwWind_redraw (wind, &watch);
+				           evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
 				        }
 				        if (input_activate (hash, value)) {
 				           hwWind_redraw (wind, &watch);
