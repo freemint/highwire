@@ -18,7 +18,7 @@ LONG hdr_tout_gfx = 2000l; /* same as above but for graphics etc.     */
 WORD fonts[3][2][2] = {
 	{ {5031, 5032}, {5033, 5034} },
 	{ {5031, 5032}, {5033, 5034} },
-	{ {5031, 5032}, {5033, 5034} }
+	{ {   1,    1}, {   1,    1} }
 };
 
 /* ok there are 3 font families and these have 2 different effects
