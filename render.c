@@ -1017,17 +1017,17 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if ((margin = get_value_unum (parser, CSS_MARGIN, -1)) >= 0) {
-			frame->Page.Box.Margin.Top = frame->Page.Box.Margin.Bot =
-			frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin;
+			frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot =
+			frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin;
 			
 		} else {
 			if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
-				frame->Page.Box.Margin.Top = frame->Page.Box.Margin.Bot = margin;
+				frame->Page.Box.Padding.Top = frame->Page.Box.Padding.Bot = margin;
 			}
 			if ((margin = get_value_unum (parser, KEY_MARGINWIDTH, -1)) >= 0 ||
 			    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
-				frame->Page.Box.Margin.Lft = frame->Page.Box.Margin.Rgt = margin;
+				frame->Page.Box.Padding.Lft = frame->Page.Box.Padding.Rgt = margin;
 			}
 		}
 	}
