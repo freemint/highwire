@@ -13,8 +13,12 @@
 
 
 typedef struct s_cache_item * CACHEITEM;
+typedef struct s_cache_node * CACHENODE;
 
 struct s_cache_item {
+	CACHENODE Node;
+	ULONG     NodeHash;
+	CACHEITEM NodeNext;
 	LOCATION  Location;
 	CACHEITEM NextItem;
 	CACHEITEM PrevItem;
@@ -32,29 +36,127 @@ static size_t    __cache_num = 0;
 static size_t    __cache_mem = 0;
 static LOCATION  __cache_dir = NULL;
 
+struct s_cache_node {
+	CACHENODE BackNode;
+	UWORD     NodeMask;
+	UWORD     Level4x;
+	union {
+		CACHENODE Node;
+		CACHEITEM Item;
+	}         Array[16];
+};
+
+static struct s_cache_node __tree_base = {
+	NULL, 0x0000, 0,
+	{	{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL},
+		{NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL}, {NULL} }
+};
+
+
+/*----------------------------------------------------------------------------*/
+#if 0
+static long __stats (CACHENODE node)
+{
+	static int level = 0;
+	long  sum = 0;
+	UWORD mask, idx;
+	for (idx = 0, mask = 0x0001, ++level; idx < 16; idx++, mask <<= 1) {
+		if (node->Array[idx].Node) {
+			sum += (node->NodeMask & mask ? __stats (node->Array[idx].Node)
+			                              : level);
+		}
+	}
+	level--;
+	return sum;
+}
+static void exit_stats (void)
+{
+	long res   = __stats (&__tree_base);
+	int  level = 1;
+	size_t n = __cache_num;
+	while (n > 16) {
+		level++;
+		n >>= 4;
+	}
+	printf ("quality(%lu): %li\n", __cache_num, res - (__cache_num * level));
+}
+#define EXIT_STATS
+#endif
+
+
+/*----------------------------------------------------------------------------*/
+static CACHENODE
+tree_node (ULONG hash)
+{
+	CACHENODE node = &__tree_base;
+	UWORD     idx  = hash & 0xF;
+	while (node->NodeMask & (1 << idx)) {
+		node = node->Array[idx].Node;
+		idx  = (hash >>= 4) & 0xF;
+	}
+	return node;
+}
+
 
 /*----------------------------------------------------------------------------*/
 static CACHEITEM
 create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 {
-	CACHEITEM citem = malloc (sizeof (struct s_cache_item));
-	citem->Location = location_share (loc);
-	citem->Ident     = 0;
-	citem->Object   = object;
-	citem->Size     = size;
-	citem->Date     = 0;
-	citem->Expires  = 0;
-	citem->dtor     = dtor;
-	citem->Reffs    = 1;
+	ULONG     hash  = location_Hash (loc);
+	CACHENODE node  = tree_node (hash);
+	UWORD     idx   = (hash >> node->Level4x) & 0xF;
+	CACHEITEM nitem = node->Array[idx].Item;
+	CACHEITEM citem = NULL;
+#ifdef EXIT_STATS
+	static BOOL __once = TRUE;
+	if (__once) {
+		__once = FALSE;
+		atexit (exit_stats);
+	}
+#endif
 	
-	if (__cache_beg) __cache_beg->PrevItem = citem;
-	else             __cache_end           = citem;
-	citem->PrevItem = NULL;
-	citem->NextItem = __cache_beg;
-	__cache_beg     = citem;
-	__cache_num++;
-	__cache_mem += size;
-	
+	if (nitem && nitem->NodeHash != hash) {
+		do {
+			CACHENODE back = node;
+			if ((node = malloc (sizeof(struct s_cache_node))) != NULL) {
+				back->Array[idx].Node = node;
+				back->NodeMask       |= 1 << idx;
+				node->BackNode = back;
+				node->NodeMask = 0x0000;
+				node->Level4x  = back->Level4x +4;
+				memset (node->Array, 0, sizeof(node->Array));
+				node->Array[(nitem->NodeHash >> node->Level4x) & 0xF].Item = nitem;
+				citem = nitem;
+				do {
+					citem->Node = node;
+				} while ((citem = citem->NodeNext) != NULL);
+				idx = (hash >> node->Level4x) & 0xF;
+			}
+		} while (node->Array[idx].Item);
+	}
+	if (node && (citem = malloc (sizeof (struct s_cache_item))) != NULL) {
+		citem->Node           = node;
+		citem->NodeHash       = hash;
+		citem->NodeNext       = node->Array[idx].Item;
+		node->Array[idx].Item = citem;
+		
+		citem->Location = location_share (loc);
+		citem->Ident    = 0;
+		citem->Object   = object;
+		citem->Size     = size;
+		citem->Date     = 0;
+		citem->Expires  = 0;
+		citem->dtor     = dtor;
+		citem->Reffs    = 1;
+		
+		if (__cache_beg) __cache_beg->PrevItem = citem;
+		else             __cache_end           = citem;
+		citem->PrevItem = NULL;
+		citem->NextItem = __cache_beg;
+		__cache_beg     = citem;
+		__cache_num++;
+		__cache_mem += size;
+	}
 	return citem;
 }
 
@@ -62,6 +164,17 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 static void
 destroy_item (CACHEITEM citem)
 {
+	CACHENODE   node = citem->Node;
+	UWORD       idx  = (citem->NodeHash >> node->Level4x) & 0xF;
+	CACHEITEM * nptr = &node->Array[idx].Item;
+	
+	while (*nptr) {
+		if (*nptr == citem) {
+			*nptr = citem->NodeNext;
+			break;
+		}
+		nptr = &(*nptr)->NodeNext;
+	}
 	if (citem->PrevItem) citem->PrevItem->NextItem = citem->NextItem;
 	else                 __cache_beg               = citem->NextItem;
 	if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
@@ -91,34 +204,44 @@ cache_insert (LOCATION loc, long ident,
 CACHED
 cache_lookup (LOCATION loc, long ident, long * opt_found)
 {
-	CACHEITEM found = NULL;
-	CACHEITEM citem = __cache_beg;
+	ULONG       hash    = location_Hash (loc);
+	CACHENODE   node    = tree_node (hash);
+	UWORD       idx     = (hash >> node->Level4x) & 0xF;
+	CACHEITEM * p_cache = &node->Array[idx].Item;
+	CACHEITEM * p_found = NULL;
+	CACHEITEM   citem;
 	
-	while (citem) {
+	while ((citem = *p_cache) != NULL) {
 		if (location_equal (loc, citem->Location)) {
 			if (ident == citem->Ident) {
-				found = citem;
+				p_found = p_cache;
 				break;
 			} else if (opt_found && citem->Ident) {
-				found = citem;
+				p_found = p_cache;
 			}
 		}
-		citem = citem->NextItem;
+		p_cache = &citem->NodeNext;
 	}
-	if (found) {
-		if (found->PrevItem) {
-			found->PrevItem->NextItem = found->NextItem;
-			if (found->NextItem) found->NextItem->PrevItem = found->PrevItem;
-			else                 __cache_end               = found->PrevItem;
-			__cache_beg->PrevItem = found;
-			found->PrevItem       = NULL;
-			found->NextItem       = __cache_beg;
-			__cache_beg           = found;
+	if (p_found) {
+		citem = *p_found;
+		if (p_found != &node->Array[idx].Item) {
+			*p_found              = citem->NodeNext;
+			citem->NodeNext       = node->Array[idx].Item;
+			node->Array[idx].Item = citem;
+		}
+		if (citem->PrevItem) {
+			citem->PrevItem->NextItem = citem->NextItem;
+			if (citem->NextItem) citem->NextItem->PrevItem = citem->PrevItem;
+			else                 __cache_end               = citem->PrevItem;
+			__cache_beg->PrevItem = citem;
+			citem->PrevItem       = NULL;
+			citem->NextItem       = __cache_beg;
+			__cache_beg           = citem;
 		}
 		if (opt_found) {
-			*opt_found = found->Ident;
+			*opt_found = citem->Ident;
 		}
-		return found->Object;
+		return citem->Object;
 	}
 	
 	if (opt_found) {
