@@ -545,13 +545,8 @@ struct paragraph_item {
 	PARAGRPH next_paragraph;
 };
 
-typedef struct {
-	DOMBOX   Box;
-	PARAGRPH Item;
-} CONTENT;
-
 struct frame_item {
-	CONTENT  Page;
+	DOMBOX   Page;
 	CONTAINR Container;
 	LOCATION Location;
 	LOCATION BaseHref;
