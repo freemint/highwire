@@ -1,9 +1,12 @@
-(non-public of Aug. 18, 2003)
+(non-public of Aug. 26, 2003)
 
-- Added functions for GrayScale and TrueColor
-  images, only a rough basic implementation yet.
+- Added lot of functionality for dithering and
+  displaying of images, especially for GrayScale
+  and TrueColor.
 
-- Support for jpg and png enabled (gcc only yet).
+- Support for jpg and png implemented.
+
+- Implemented support for 32k colours screen mode.
 
 - Fixed the cache screwing up bug which occured
   when storing of files failed for some reason
