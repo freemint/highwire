@@ -29,98 +29,11 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 		*/
 		PXY l[5];
 		int corner = 0;
-
-		vsl_color (vdi_handle, G_BLACK);
-		vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
-
-#if 0 /***** REPLACED *****/
-		if (frame->border) {
-			switch (frame->borders)
-			{
-				case 1: /* BRD_RIGHT */
-					l[0].p_x = bgnd[1].p_x
-					         + (frame->v_bar.on ? scroll_bar_width +1 : 1);
-					l[1].p_x = l[0].p_x + frame->border_size -1;
-					l[0].p_y = bgnd[0].p_y -1;
-					l[1].p_y = bgnd[1].p_y
-					         + (frame->h_bar.on ? scroll_bar_width : 0);
-					vsf_color (vdi_handle, frame->border_colour);
-					v_bar (vdi_handle, (short*)l);
-
-					l[1].p_x = l[0].p_x;
-					vsl_color (vdi_handle, G_WHITE);
-					v_pline (vdi_handle, 2, (short*)l);	/* left border line */
-	
-					l[1].p_x = l[0].p_x + frame->border_size - 1;
-					l[0].p_x = l[1].p_x;
-					vsl_color (vdi_handle, G_LBLACK);
-					v_pline (vdi_handle, 2, (short*)l);	/* right border line */
-					break;
-
-				case 2: /* BRD_BOTTOM */
-					l[0].p_y = bgnd[1].p_y
-					         + (frame->h_bar.on ? scroll_bar_width +1 : 1);
-					l[1].p_y = l[0].p_y + frame->border_size -1;
-					l[0].p_x = bgnd[0].p_x -1;
-					l[1].p_x = bgnd[1].p_x
-					         + (frame->v_bar.on ? scroll_bar_width : 0);
-					vsf_color (vdi_handle, frame->border_colour);
-					v_bar (vdi_handle, (short*)l);
-
-					l[1].p_y = l[0].p_y;
-					vsl_color (vdi_handle, G_WHITE);
-					v_pline (vdi_handle, 2, (short*)l);	/* top border line */
-
-					l[1].p_y = l[0].p_y + frame->border_size - 1;
-					l[0].p_y = l[1].p_y;
-					vsl_color (vdi_handle, G_LBLACK);
-					v_pline (vdi_handle, 2, (short*)l);	/* bottom border line */
-					break;
-
-				case 3: /* BRD_BOTH */
-					l[0].p_x = bgnd[1].p_x
-					         + (frame->v_bar.on ? scroll_bar_width +1 : 1);
-					l[1].p_x = l[0].p_x + frame->border_size -1;
-					l[0].p_y = bgnd[0].p_y -1;
-					l[1].p_y = bgnd[1].p_y + frame->border_size
-					         + (frame->h_bar.on ? scroll_bar_width : 0);
-					vsf_color (vdi_handle, frame->border_colour);
-					v_bar (vdi_handle, (short*)l);
-
-					l[1].p_x = l[0].p_x;
-					vsl_color (vdi_handle, G_WHITE);
-					v_pline (vdi_handle, 2, (short*)l);	/* left border line */
-	
-					l[1].p_x = l[0].p_x + frame->border_size - 1;
-					l[0].p_x = l[1].p_x;
-					vsl_color (vdi_handle, G_LBLACK);
-					v_pline (vdi_handle, 2, (short*)l);	/* right border line */
-
-					l[0].p_y = bgnd[1].p_y
-					         + (frame->h_bar.on ? scroll_bar_width +1 : 1);
-					l[1].p_y = l[0].p_y + frame->border_size -1;
-					l[0].p_x = bgnd[0].p_x -1;
-					l[1].p_x = bgnd[1].p_x
-					         + (frame->v_bar.on ? scroll_bar_width : 0);
-					vsf_color (vdi_handle, frame->border_colour);
-					v_bar (vdi_handle, (short*)l);
-
-					l[1].p_y = l[0].p_y;
-					vsl_color (vdi_handle, G_WHITE);
-					v_pline (vdi_handle, 2, (short*)l);	/* top border line */
-
-					l[1].p_y = l[0].p_y + frame->border_size - 1;
-					l[0].p_y = l[1].p_y;
-					vsl_color (vdi_handle, G_LBLACK);
-					v_pline (vdi_handle, 2, (short*)l);	/* bottom border line */
-			}
-			
-			vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
-		}
-#endif /***** REPLACED *****/
 		
 		if (frame->scroll != SCROLL_NEVER)
 		{
+			vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
+			
 			if (frame->v_bar.on && clip.g_x + clip.g_w -1 > bgnd[1].p_x) {
 				draw_vbar (frame, TRUE);
 				corner++;
@@ -135,6 +48,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 				short b  = scroll_bar_width - 2;
 				l[1].p_x = (l[0].p_x = bgnd[1].p_x +2) + b;
 				l[1].p_y = (l[0].p_y = bgnd[1].p_y +2) + b;
+				vsf_color (vdi_handle, frame->Page.Backgnd);
 				v_bar (vdi_handle, (short*)l);
 			}
 		}
@@ -188,41 +102,7 @@ draw_vbar (FRAME frame, BOOL complete)
 			n = 5;
 		}
 		v_pline (vdi_handle, n, (short*)p);
-
-#if 0
-/* This is code that doesn't work yet */
-
-		if (frame->h_bar.on) 
-			p[0].p_y += scroll_bar_width;
-
-		if (frame->border && (frame->borders > 1)) /* bottom or both */
-		{
-			p[0].p_y = frame->clip.g_y + frame->clip.g_h;/* - frame->border_size;*/
-			bot = p[0].p_y - scroll_bar_width + 1;
-		}
-
-	vsl_color (vdi_handle, G_GREEN);
-
-		if (frame->border && ((frame->borders == 1)||
-			(frame->borders == 3))) /* right or both */
-		{
-			lft = frame->clip.g_x + frame->clip.g_w +1;/* - frame->border_size + 3;*/
-			rgt = lft + scroll_bar_width - 3;
-		}
-
-		p[0].p_x = p[1].p_x = lft -1;
-
-	v_pline (vdi_handle, 2, (short*)p);	/* left border line */
-		p[0].p_x = p[1].p_x = rgt + 1;
-
-
-		v_pline (vdi_handle, 2, (short*)p);	/* right border line */
-	vsl_color (vdi_handle, G_BLACK);
-
-/*		v_pline (vdi_handle, n, (short*)p);*/		/* left border line */
-#endif
 		
-
 		p[0].p_y = top - (scroll_bar_width -2);
 		p[1].p_y = top - 1;
 		p[2].p_y = bot + 1;
@@ -705,8 +585,8 @@ draw_contents (CONTENT * content,
 	long     clip_y    = (long)clip->g_y - y_abs;
 
 	if (content->Backgnd >= 0) {
-		long x = x_abs + content->Width;
-		long y = y_abs + content->Height;
+		long x = x_abs + content->Width  -1;
+		long y = y_abs + content->Height -1;
 		PXY  p[2];
 		p[0].p_x = ((long)clip->g_x >= x_abs ? clip->g_x : x_abs);
 		p[0].p_y = ((long)clip->g_y >= y_abs ? clip->g_y : y_abs);
