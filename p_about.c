@@ -76,10 +76,10 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 			render_text (current, source);
 			render_text (current, "")->line_brk = BRK_LN;
 			w = current->word;
-			if (info->Hash) {
-				int ic = (int)(info->Hash >>24) & 0x00FF; /* bgnd colour */
-				int iw = (int)(info->Hash >>12) & 0x0FFF; /* width       */
-				int ih = (int) info->Hash       & 0x0FFF; /* height      */
+			if (info->Ident) {
+				int ic = (int)(info->Ident >>24) & 0x00FF; /* bgnd colour */
+				int iw = (int)(info->Ident >>12) & 0x0FFF; /* width       */
+				int ih = (int) info->Ident       & 0x0FFF; /* height      */
 				sprintf (buf, "Memory:%i*%i,%02X", iw, ih, ic);
 				render_text (current, buf);
 			} else {

@@ -1,9 +1,9 @@
 typedef void       * CACHEOBJ;
 typedef const void * CACHED;
 
-CACHED   cache_insert  (LOCATION, long hash,
+CACHED   cache_insert  (LOCATION, long ident,
                         CACHEOBJ *, size_t size, void (*dtor)(void*));
-CACHED   cache_lookup  (LOCATION, long hash, long * opt_found);
+CACHED   cache_lookup  (LOCATION, long ident, long * opt_found);
 CACHED   cache_bound   (CACHED, LOCATION * exchange);
 CACHEOBJ cache_release (CACHED *, BOOL erase);
 size_t   cache_clear   (CACHED this_n_all);
@@ -11,7 +11,7 @@ size_t   cache_clear   (CACHED this_n_all);
 typedef struct s_cache_info {
 	size_t       Size;
 	size_t       Used;
-	long         Hash;
+	long         Ident;
 	LOCATION     Source;
 	long         Date;
 	long         Expires;

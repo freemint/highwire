@@ -16,7 +16,7 @@ typedef struct s_cache_item {
 	struct s_cache_item * Next;
 	size_t                Reffs;
 	LOCATION Location;
-	long     Hash;
+	long     Ident;
 	CACHEOBJ Object;
 	size_t   Size;
 	long     Date;
@@ -35,7 +35,7 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem = malloc (sizeof (struct s_cache_item));
 	citem->Location = location_share (loc);
-	citem->Hash     = 0;
+	citem->Ident     = 0;
 	citem->Object   = object;
 	citem->Size     = size;
 	citem->Date     = 0;
@@ -53,11 +53,11 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 
 /*============================================================================*/
 CACHED
-cache_insert (LOCATION loc, long hash,
+cache_insert (LOCATION loc, long ident,
               CACHEOBJ * object, size_t size, void (*dtor)(void*))
 {
 	CACHEITEM citem = create_item (loc, *object, size, dtor);
-	citem->Hash     = hash;
+	citem->Ident     = ident;
 	
 	*object = NULL;
 	
@@ -67,7 +67,7 @@ cache_insert (LOCATION loc, long hash,
 
 /*============================================================================*/
 CACHED
-cache_lookup (LOCATION loc, long hash, long * opt_found)
+cache_lookup (LOCATION loc, long ident, long * opt_found)
 {
 	CACHEITEM * p_cache = &__cache;
 	CACHEITEM * p_found = NULL;
@@ -75,10 +75,10 @@ cache_lookup (LOCATION loc, long hash, long * opt_found)
 	
 	while ((citem = *p_cache) != NULL) {
 		if (location_equal (loc, citem->Location)) {
-			if (hash == citem->Hash) {
+			if (ident == citem->Ident) {
 				p_found = p_cache;
 				break;
-			} else if (opt_found && citem->Hash) {
+			} else if (opt_found && citem->Ident) {
 				p_found = p_cache;
 			}
 		}
@@ -92,7 +92,7 @@ cache_lookup (LOCATION loc, long hash, long * opt_found)
 			__cache     = citem;
 		}
 		if (opt_found) {
-			*opt_found = citem->Hash;
+			*opt_found = citem->Ident;
 		}
 		return citem->Object;
 	}
@@ -201,10 +201,10 @@ cache_info (size_t * size, CACHEINF * p_info)
 			size_t    num   = __cache_num;
 			CACHEITEM citem = __cache;
 			do {
-				LOCATION local = (citem->Hash ? citem->Location : citem->Object);
+				LOCATION local = (citem->Ident ? citem->Location : citem->Object);
 				info->Size    = citem->Size;
 				info->Used    = citem->Reffs;
-				info->Hash    = citem->Hash;
+				info->Ident    = citem->Ident;
 				info->Source  = citem->Location;
 				info->Date    = citem->Date;
 				info->Expires = citem->Expires;
