@@ -195,33 +195,36 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		} break;
 		
 		case PE_INPUT: {
-			WORD    value = 0;
-			char ** popup = NULL;
-			GRECT   radio;
-			PXY     pxy;
-			pxy.p_x = mouse.p_x - watch.g_x;
-			pxy.p_y = mouse.p_y - watch.g_y;
-			switch (input_handle (hash, pxy, &radio, &popup)) {
-				case 2: radio.g_x += watch.g_x;
-				        radio.g_y += watch.g_y;
-				        hwWind_redraw (wind, &radio);
-				case 1: if (popup) {
-				           long * xy = (long*)&radio;
-				           xy[0] += frame->clip.g_x - frame->h_bar.scroll;
-				           xy[1] += frame->clip.g_y - frame->v_bar.scroll;
-				           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
-				        } else {
-				           WORD dmy;
-				           if (input_isEdit (hash)) {
-				              txt_i = txt_o = NULL;
-				              hwWind_setActive (wind, cont, hash);
-				           }
-				           hwWind_redraw (wind, &watch);
-				           evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
-				        }
-				        if (input_activate (hash, value)) {
-				           hwWind_redraw (wind, &watch);
-				        }
+			hwWind_raise (wind, TRUE);
+			if (!wind->Base.Prev) {
+				WORD    value = 0;
+				char ** popup = NULL;
+				GRECT   radio;
+				PXY     pxy;
+				pxy.p_x = mouse.p_x - watch.g_x;
+				pxy.p_y = mouse.p_y - watch.g_y;
+				switch (input_handle (hash, pxy, &radio, &popup)) {
+					case 2: radio.g_x += watch.g_x;
+					        radio.g_y += watch.g_y;
+					        hwWind_redraw (wind, &radio);
+					case 1: if (popup) {
+					           long * xy = (long*)&radio;
+					           xy[0] += frame->clip.g_x - frame->h_bar.scroll;
+					           xy[1] += frame->clip.g_y - frame->v_bar.scroll;
+					           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
+					        } else {
+					           WORD dmy;
+					           if (input_isEdit (hash)) {
+					              txt_i = txt_o = NULL;
+					              hwWind_setActive (wind, cont, hash);
+					           }
+					           hwWind_redraw (wind, &watch);
+					           evnt_button (1, 0x03, 0x00, &dmy,&dmy,&dmy,&dmy);
+					        }
+					        if (input_activate (hash, value)) {
+					           hwWind_redraw (wind, &watch);
+					        }
+				}
 			}
 		}	break;
 		
