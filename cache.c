@@ -277,7 +277,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 		sprintf (buf, "%08lX%s%s", num, dot, type);
 		loc = new_location (buf, __cache_dir);
 		location_FullName (loc, buf, sizeof(buf));
-		if ((fh = open (buf, O_RDWR|O_CREAT, 0666)) >= 0) {
+		if ((fh = open (buf, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
 			CACHEITEM citem;
 			write (fh, data, size);
 			close (fh);
