@@ -7,6 +7,13 @@
 
 /* ******** Variable Definitions ******************* */
 
+
+WORD conn_timeout = 3; /* seconds for connection establishing           */
+WORD conn_retry   = 1; /* number of tries when connection reset occured */
+LONG hdr_tout_doc = 5000l; /* milliseconds to wait for a reply header */
+LONG hdr_tout_gfx = 2000l; /* same as above but for graphics etc.     */
+
+
 /* To be in-program settings.  Default for the user settings in highwire.cfg. */
 WORD fonts[3][2][2] = {
 	{ {5031, 5032}, {5033, 5034} },

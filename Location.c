@@ -16,7 +16,7 @@
 # include <osbind.h>
 #endif
 
-#include "defs.h"
+#include "global.h"
 #include "Location.h"
 #include "Logging.h"
 #include "inet.h"
@@ -398,7 +398,7 @@ location_open (LOCATION loc, const char ** host_name)
 		
 #ifdef USE_INET
 		if (host->Ip) {
-			sock = (int)inet_connect (host->Ip, loc->Port, 3/*sec*/);
+			sock = (int)inet_connect (host->Ip, loc->Port, conn_timeout);
 		}
 #endif /* USE_INET */
 	}

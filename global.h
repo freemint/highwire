@@ -15,6 +15,11 @@ extern VDI_Workstation  vdi_dev;
 #define planes         (vdi_dev.planes)
 #define ignore_colours (planes < 2)
 
+extern WORD conn_timeout; /* seconds for connection establishing           */
+extern WORD conn_retry;   /* number of tries when connection reset occured */
+extern LONG hdr_tout_doc; /* milliseconds to wait for a reply header */
+extern LONG hdr_tout_gfx; /* same as above but for graphics etc.     */
+
 extern WORD aes_max_window_title_length;
 
 /* To be in-program settings */
