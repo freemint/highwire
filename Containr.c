@@ -93,7 +93,6 @@ delete_containr (CONTAINR *p_cont)
 	CONTAINR cont = *p_cont;
 	if (cont) {
 		containr_clear(cont);
-		sched_clear ((long)cont);
 		if (cont->Name) {
 			free (cont->Name);
 		}
@@ -288,6 +287,7 @@ containr_clear (CONTAINR cont)
 				continue;
 			}
 		}
+		sched_clear ((long)cont);
 		
 		if (!depth) {
 			cont->Mode        = CNT_EMPTY;
@@ -306,7 +306,6 @@ containr_clear (CONTAINR cont)
 				next = cont->Parent;
 				depth--;
 			}
-			sched_clear ((long)cont);
 			if (cont->Name) free (cont->Name);
 			free (cont);
 			cont = next;
