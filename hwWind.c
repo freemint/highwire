@@ -94,7 +94,8 @@ new_hwWind (const char * name, const char * info, const char * url)
 	set_size (This, &curr_area);
 	hwWind_setName (This, name);
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-	hwWind_setInfo (This, info);
+	This->Info[0] = '\0';
+	hwWind_setInfo (This, info, TRUE);
 #endif
 	
 	if (bevent) {
@@ -167,15 +168,29 @@ hwWind_setName (HwWIND This, const char * name)
 /*============================================================================*/
 #if (_HIGHWIRE_INFOLINE_==TRUE)
 void
-hwWind_setInfo (HwWIND This, const char * info)
+hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 {
-	if (info && *info) {
-		strncpy (This->Info, info, sizeof(This->Info));
-		This->Info[sizeof(This->Info)-1] = '\0';
+	if (statNinfo) {
+		if (info && *info) {
+			strncpy (This->Stat, info, sizeof(This->Stat));
+			This->Stat[sizeof(This->Stat)-1] = '\0';
+			info = This->Stat;
+		} else {
+			This->Stat[0] = '\0';
+			info = This->Info;
+		}
+	
 	} else {
-		This->Info[0] = '\0';
+		if (info && *info) {
+			strncpy (This->Info, info, sizeof(This->Info));
+			This->Info[sizeof(This->Info)-1] = '\0';
+			info = This->Info;
+		} else {
+			This->Info[0] = '\0';
+			info = This->Stat;
+		}
 	}
-	wind_set_str (This->Handle, WF_INFO, This->Info);
+	wind_set_str (This->Handle, WF_INFO, info);
 }
 #endif
 
@@ -374,7 +389,7 @@ hist_append (HwWIND This, CONTAINR sub)
 	}
 	
 	if (sub) {
-		This->History[menu] = history_create (sub, This->Info,
+		This->History[menu] = history_create (sub, This->Stat,
 		                                 (prev < 0 ? NULL : This->History[prev]));
 	} else {
 		This->History[menu] = history_create (This->Pane, This->Name, NULL);
@@ -575,7 +590,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 		case HW_SetInfo:
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-			hwWind_setInfo (wind, gen_ptr);
+			hwWind_setInfo (wind, gen_ptr, TRUE);
 #endif
 			break;
 		
@@ -588,7 +603,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				}
 			}
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-			hwWind_setInfo (wind, gen_ptr);
+			hwWind_setInfo (wind, gen_ptr, TRUE);
 #endif
 			break;
 		
@@ -606,6 +621,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					}
 #endif
 				}
+				wind->Info[0] = '\0';
 			}
 			if (gen_ptr) {
 				FRAME active = hwWind_setActive (wind, cont);
@@ -618,7 +634,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 		case HW_ImgEndLoad:
 #if (_HIGHWIRE_INFOLINE_==TRUE)
-			hwWind_setInfo (wind, "");
+			hwWind_setInfo (wind, "", TRUE);
 #endif
 			if (wind->isBusy) {
 				wind->isBusy--;

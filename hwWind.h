@@ -19,6 +19,7 @@ struct hw_window {
 	void  * Pane;
 	void  * Active;
 	char    Name[128];
+	char    Stat[128];
 	char    Info[128];
 	UWORD   HistUsed;
 	UWORD   HistMenu;
@@ -30,7 +31,7 @@ HwWIND new_hwWind    (const char * name, const char * info, const char * url);
 void   delete_hwWind (HwWIND);
 
 void hwWind_setName (HwWIND, const char *);
-void hwWind_setInfo (HwWIND, const char *);
+void hwWind_setInfo (HwWIND, const char *, BOOL statNinfo);
 void hwWind_move    (HwWIND, PXY);
 void hwWind_resize  (HwWIND, const GRECT *);
 void hwWind_full    (HwWIND);
