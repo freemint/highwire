@@ -36,7 +36,7 @@ new_formWind (OBJECT * tree, const char * title)
 		(void)title;
 		
 		tree->ob_flags |= OF_FLAG15;
-		window_ctor (This, MOVER|CLOSER, NULL, TRUE);
+		window_ctor (This, MOVER|CLOSER, title, NULL, TRUE);
 		This->Tree = tree;
 		This->Work = (GRECT*)&tree->ob_x;
 		wind_calc_grect (WC_BORDER, This->Base.Widgets,

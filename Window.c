@@ -27,12 +27,16 @@ static GRECT desk_area = { 0,0, 0,0 };
 
 /*============================================================================*/
 WINDOW
-window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
+window_ctor (WINDOW This, WORD widgets,
+             const char * name, GRECT * curr, BOOL modal)
 {
 	if (!desk_area.g_w || !desk_area.g_h) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 	}
 	
+	if (name && *name) {
+		widgets |= NAME;
+	}
 	if (This && (This->Handle = wind_create_grect (widgets, &desk_area)) < 0) {
 		This = NULL;
 	}
@@ -58,7 +62,9 @@ window_ctor (WINDOW This, WORD widgets, GRECT * curr, BOOL modal)
 		This->iconified = vTab_iconified;
 		
 		if (widgets & NAME) {
-			wind_set_str (This->Handle, WF_NAME, "");
+			window_setName (This, name);
+		} else {
+			This->Name[0] = '\0';
 		}
 		if (widgets & INFO) {
 			wind_set_str (This->Handle, WF_INFO, "");
@@ -77,13 +83,15 @@ WINDOW
 window_dtor (WINDOW This)
 {
 	if (This) {
-		if (This->Prev) This->Prev->Next = This->Next;
-		else            window_Top       = This->Next;
-		if (This->Next) This->Next->Prev = This->Prev;
+		if (window_Top == This) window_Top       = This->Next;
+		else if (This->Prev)    This->Prev->Next = This->Next;
+		if      (This->Next)    This->Next->Prev = This->Prev;
 		This->Next = This->Prev = NULL;
-		wind_close  (This->Handle);
-		wind_delete (This->Handle);
-		This->Handle  = -1;
+		if (This->Handle > 0) {
+			wind_close  (This->Handle);
+			wind_delete (This->Handle);
+			This->Handle  = -1;
+		}
 	}
 	return This;
 }

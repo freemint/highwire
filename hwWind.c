@@ -206,7 +206,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		}
 	}
 	
-	window_ctor (This, wind_kind, NULL, FALSE);
+	window_ctor (This, wind_kind, (name && *name ? name : url), NULL, FALSE);
 	This->Base.destruct  = vTab_destruct;
 	This->Base.evMessage = vTab_evMessage;
 	This->Base.evButton  = vTab_evButton;
@@ -231,7 +231,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	This->HistMenu = 0;
 	for (i = 0; i <= HISTORY_LAST; This->History[i++] = NULL);
 	
-	hwWind_setName (This, (name && *name ? name : url));
 	This->Stat[0] = '\0';
 	This->Info[0] = '\0';
 	

@@ -4,7 +4,8 @@ typedef struct s_window * WINDOW;
 #define WINDOW_t WINDOW
 
 #else
-WINDOW_t window_ctor (WINDOW_t, WORD widgets, GRECT *, BOOL modal);
+WINDOW_t window_ctor (WINDOW_t, WORD widgets,
+                                const char * name, GRECT *, BOOL modal);
 WINDOW   window_dtor (WINDOW_t);
 #endif
 typedef struct s_window {   /* all of the following are private attributes, */
