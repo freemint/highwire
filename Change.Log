@@ -1,4 +1,11 @@
-(non-public of Mar. 09, 2005)
+(non-public of Mar. 11, 2005)
+
+- Dir listing corrected for displaying file/dir
+  names containing blanks (#0085).
+
+- Handling of <SCRIPT> and <STYLE> tags improved
+  to avoid displaying of code fragments under some
+  circumstances.
 
 - Link handling overworked and improved.  Works
   much better now for local anchors with blanks
@@ -31,7 +38,7 @@
 - Colour logo added for start window and icons as
   well as a separate RSC for the desktop.
 
-- Bug #0127 resolved.
+- Bugs #0085, #0127 resolved.
 
 __________________________________________________
 Changes in V. 0.2.4 release  of December 25, 2004:
