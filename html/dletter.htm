@@ -39,20 +39,36 @@
             <td width="49%">
 <h3>A Message from the HighWire Development Team</h3>
 <hr>
-<p><b><i>Welcome to the latest release of HighWire, version 0.2.4</i></b></p>
+<p><b><i>Welcome to the latest release of HighWire, version 0.2.5</i></b></p>
 <img src="images/twisted.gif" alt="HighWire viewing Highwire" width="161" height="131" align="right" vspace="4" hspace="4">
+<p>
+Spring is almost here and time to get another public version out.   This time alot of bugs have been squashed and hopefully
+several complaints will disappear.  While still not perfect in all cases, great effort has gone into the display of many
+sites that previously were less than desireable. The end result is that there are now a
+ few, that I personally think look better in Highwire than IE or Firefox.
+<p>
+While we still have alot of things to add, we all think and hope you will find this version to be much improved
+whether it's the matter of just how the page looks to how the program operates.  
 <p>
 Main changes and additions in this versions:
 <ul>
-<li>New config file keyword START_PAGE to define what page or file should be
-    displayed at program start.
-<li>High/TrueColor (24/32bit) screen modes for Hades and Falcon Nova graphic
-    card drivers added.  Now images will appear with correct colours.
-<li>Menu bar entry 'Options' changed, now when one of the entries
-    "<tt>Cookies&nbsp;allowed</tt>", "<tt>View&nbsp;Images</tt>" and
-    "<tt>Use&nbsp;CSS</tt>" got changed this will be saved to the config file.
-<li>Bugs fixed which were causing very short files not to be loaded and endless
-    reload tries due to empty or not found CSS files.
+<li>CSS parser improved for better compatibility
+<ul>New Keywords implemented
+<li>height
+<li>float
+<li>clear
+<li>border
+<li>font
+<li>min-width
+<li>size values enabled for tables
+</ul>
+<li>Rendering improved for floating block elements (eg. DIV, TABLE, P ...)
+<li>NOWRAP bugfix
+<li>Several improvements for Table layout
+<li>Link Handling reworked and improved
+<li>Colour logo added for start window and icons as well as a seperate RSC file for the desktop
+<li>A few continous loop lockup bugs eliminated
+<li>better handling of Script and Style tags
 <li>Several more (but less obvious) bugs fixed.
 </ul>
 As usual, more details of changes can be seen in the
