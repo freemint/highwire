@@ -2725,6 +2725,7 @@ parse_html (void * arg, long invalidated)
 		(*(RENDER)parser->ResumeFnc)(parser, &symbol, PF_START);
 		parser_resumed (parser);
 	}
+	font_switch (current->word->font, NULL);
 	flags       = PF_SPACE; /* skip leading spaces */
 	linetoolong = FALSE;    /* "line too long" error printed? */
 	encoder     = encoder_word (frame->Encoding,
@@ -2948,15 +2949,13 @@ parse_plain (void * arg, long invalidated)
 					new_word (current, TRUE);
 				
 				} else if (!current->prev_par) {
-					*(current->text++) = font_Nobrk (current->word->font);
-					current->word->line_brk = BRK_LN;
-					new_word (current, TRUE);
+					current->paragraph->Box.Margin.Top += linefeed;
 				
 				} else {
 					if (current->prev_wrd) {
 						add_paragraph(current, 0);
 					}
-					current->prev_par->eop_space += linefeed;
+					current->prev_par->Box.Margin.Bot += linefeed;
 				}
 		}
 	}
