@@ -463,8 +463,9 @@ image_job (void * arg, long invalidated)
 	
 	if ((img->set_w >= 0 && par->Box.MinWidth < img->word->word_width)
 	    || img->disp_w != old_w || img->disp_h != old_h) {
-		long par_x = par->Box.Rect.X;
-		long par_y = par->Box.Rect.Y;
+/*		long par_x = par->Box.Rect.X;*/
+/*		long par_y = par->Box.Rect.Y;*/
+		long off_y = img->offset.Y;
 		long par_w = par->Box.Rect.W;
 		long par_h = par->Box.Rect.H;
 		if (par->Box.MinWidth < img->disp_w) {
@@ -473,7 +474,7 @@ image_job (void * arg, long invalidated)
 		}
 		dombox_MinWidth (&frame->Page.Box);
 		
-		if (containr_calculate (frame->Container, NULL)) {
+	/*	if (containr_calculate (frame->Container, NULL)) {
 			calc_xy = 0;
 		} else if (par_w == par->Box.Rect.W && par_h == par->Box.Rect.H) {
 			calc_xy = 1;
@@ -481,6 +482,27 @@ image_job (void * arg, long invalidated)
 			rec.g_h = par_h;
 		} else if (par_x == par->Box.Rect.X && par_y == par->Box.Rect.Y) {
 			calc_xy = -1;
+	*/
+		if (containr_calculate (frame->Container, NULL)
+		    && par_w == par->Box.Rect.W) {
+			DOMBOX * box = img->offset.Origin;
+			long x = frame->clip.g_x - frame->h_bar.scroll;
+			long y = frame->clip.g_y - frame->v_bar.scroll;
+			do {
+				x += box->Rect.X;
+				y += box->Rect.Y;
+			} while ((box = box->Parent) != NULL);
+			rec.g_y = y;
+			if (off_y == img->offset.Y) {
+				rec.g_y += off_y;
+			} else {
+				off_y = 0;
+			}
+			if (par_h == par->Box.Rect.H) {
+				rec.g_x = x;
+				rec.g_w = par_w;
+				rec.g_h = par_h - off_y;
+			}
 		}
 	
 	} else if (img->u.Data) {
