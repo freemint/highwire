@@ -918,14 +918,19 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current,void *hash)
 			}
 			break;
 
-		case RLINK_COPY:
+		case RLINK_COPY: {
+			char buf[2 * HW_PATH_MAX];
+			LOCATION loc = new_location(addr, frame->BaseHref);
+
+			location_FullName (loc, buf, sizeof(buf));
+
 			file = open_scrap (FALSE);
 			if (file) {
-				fwrite (addr, 1, strlen(addr), file);
+				fwrite (buf, 1, strlen(buf), file);
 				fclose (file);
 			}
 
-			break;
+			} break;
 
 		case RLINK_INFO:
 			menu_info();
