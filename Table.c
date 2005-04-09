@@ -50,32 +50,29 @@ static DOMBOX * vTab_ChildAt  (DOMBOX *, LRECT *, long x, long y, long clip[4]);
 static void     vTab_draw   (DOMBOX *, long x, long y, const GRECT *, void *);
 static void     vTab_format (DOMBOX *, long width, BLOCKER);
 
-
-/*============================================================================*/
-void
-delete_table (TABLE * _table)
+/*----------------------------------------------------------------------------*/
+static void
+vTab_delete (DOMBOX * This)
 {
-	TABLE table = *_table;
-	if (table) {
-		TAB_ROW row = table->Rows;
-		while (row) {
-			TAB_ROW  next_row = row->NextRow;
-			TAB_CELL cell     = row->Cells;
-			while (cell) {
-				TAB_CELL next_cell = cell->RightCell;
-				Delete (&cell->Box);
-				cell = next_cell;
-			}
-			free (row);
-			row = next_row;
+	TABLE table = (TABLE)This;
+	TAB_ROW row = table->Rows;
+	while (row) {
+		TAB_ROW  next_row = row->NextRow;
+		TAB_CELL cell     = row->Cells;
+		while (cell) {
+			TAB_CELL next_cell = cell->RightCell;
+			Delete (&cell->Box);
+			cell = next_cell;
 		}
-		if (table->Minimum)  free (table->Minimum);
-		if (table->Maximum)  free (table->Maximum);
-		if (table->Percent)  free (table->Percent);
-		if (table->ColWidth) free (table->ColWidth);
-		free (table);
-		*_table = NULL;
+		free (row);
+		row = next_row;
 	}
+	if (table->Minimum)  free (table->Minimum);
+	if (table->Maximum)  free (table->Maximum);
+	if (table->Percent)  free (table->Percent);
+	if (table->ColWidth) free (table->ColWidth);
+	
+	DomBox_vTab.delete (This);
 }
 
 
@@ -102,6 +99,7 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	dombox_ctor (&table->Box, current->parentbox, BC_TABLE);
 	if (!*(long*)&table_vTab) {
 		table_vTab          = DomBox_vTab;
+		table_vTab.delete   = vTab_delete;
 		table_vTab.MinWidth = vTab_MinWidth;
 		table_vTab.MaxWidth = vTab_MaxWidth;
 		table_vTab.ChildAt  = vTab_ChildAt;

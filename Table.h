@@ -55,7 +55,6 @@ struct s_table_cell {
 	char _debug;
 };
 
-void delete_table (TABLE*);
 
 void table_start  (PARSER,   WORD color, H_ALIGN floating, WORD height,
                              WORD wdith, WORD minwidth, WORD spacng, WORD paddng, WORD border);
