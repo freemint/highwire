@@ -6,7 +6,6 @@
 
 #include "global.h"
 #include "token.h"
-#include "Table.h"
 #include "fontbase.h"
 
 
