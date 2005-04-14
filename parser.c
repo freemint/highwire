@@ -731,7 +731,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 	}
 	
 	do {
-		const char * beg = NULL, * end = NULL;
+		const char * beg = NULL, * end = NULL, * tok = p;
 		STYLE style = NULL;
 		STYLE b_lnk = NULL;
 		BOOL  skip  = FALSE;
@@ -754,6 +754,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				continue;
 			}
 			
+			tok = p;
+			
 			if (*p == '@') { /*............................... special */
 				const char * q = p;
 				if (strnicmp (q +1, "import", 6) == 0) {
@@ -763,7 +765,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
-					q = (*q == '{' ? strchr (q +1, '}') : strchr (q, ';'));
+					q = (*q == '{' ? strchr (q +1, '}') : NULL);
 					if (q) q++;
 				}
 				if ((err = (q == NULL)) == TRUE) break;
@@ -877,6 +879,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		}
 		
 		if (err || *p != '{') {
+			p         = tok;
 			beg = end = NULL;
 			err       = TRUE;
 			
@@ -929,22 +932,37 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			} while ((style = *p_style) != NULL);
 		}
 		
-		if ((!*p || err) && prsdata->Stack[0]) {
-			short i;
-			if (err) {
-				if (*p) printf("parse_css(): stopped at '%.20s'\n", p);
+		if (!*p || err) {
+			if (err && *p != '-' && *p != '<') {
+				int n  = 0, ln = 0, cn = 0;
+				while (p[n]) {
+					if (p[n] == '\n') {
+						if (++ln == 2) {
+							n--;
+							break;
+						} else {
+							cn = 0;
+						}
+					} else {
+						if (++cn == 79) {
+							break;
+						}
+					}
+					n++;
+				}
+				printf("parse_css(): stopped at\n%.*s\n", n, p);
+			}
+			if (prsdata->Stack[0]) {
+				short i;
 				err = FALSE;
+				p   = prsdata->Stack[0];
+				for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
+					prsdata->Stack[i] = prsdata->Stack[i +1];
+				}
+				prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
 			}
-			p = prsdata->Stack[0];
-			for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
-				prsdata->Stack[i] = prsdata->Stack[i +1];
-			}
-			prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
 		}
 	} while (*p && !err);
 	
-	if (*p && *p != '-' && *p != '<') {
-		printf("parse_css(): stopped at '%.70s'\n", p);
-	}
 	return p;
 }
