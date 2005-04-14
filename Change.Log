@@ -1,3 +1,16 @@
+(non public of Apr. 13, 2005)
+
+- The URL input field got an own history for the
+  ten last URLs typed in by the user.  These
+  entries are stored and stay persistent between
+  program quit and the next start.
+
+- Table attributes COLSPAN=0 and ROWSPAN=0
+  implemented.
+
+- Memory leak closed in the Table destructor.
+
+__________________________________________________
 Changes in V. 0.2.5 release  of March 15, 2005:
 
 - Dir listing corrected for displaying file/dir
