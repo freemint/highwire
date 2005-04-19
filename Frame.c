@@ -197,8 +197,12 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		if (!frame->v_bar.on) {
 			frame->h_bar.rd--;
 		}
-		frame->h_bar.size = (long)(frame->h_bar.rd - frame->h_bar.lu +1)
-		                  * frame->clip.g_w / frame->Page.Rect.W;
+		
+		frame->h_bar.size = (frame->Page.Rect.W
+		                     ? (long)(frame->h_bar.rd - frame->h_bar.lu +1)
+		                       * frame->clip.g_w / frame->Page.Rect.W
+						         : 0);
+		
 		if (frame->h_bar.size < scroll_bar_width) {
 			 frame->h_bar.size = scroll_bar_width;
 		}
@@ -250,9 +254,10 @@ frame_calculate (FRAME frame, const GRECT * clip)
 BOOL
 frame_slider (struct slider * slider, long max_scroll)
 {
+	short tmp  = max_scroll - (slider->pos - slider->lu);
 	short size = slider->rd - slider->lu +1 - slider->size;
-	short step = +(slider->scroll * size + (max_scroll /2)) / max_scroll
-	           - (slider->pos - slider->lu);
+	short step = tmp ? +(slider->scroll * size + (max_scroll /2)) / max_scroll
+	           - (slider->pos - slider->lu) : 0;
 	slider->pos += step;
 	
 	return  (step != 0);
