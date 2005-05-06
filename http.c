@@ -398,7 +398,7 @@ set_cookie (const char * beg, long len, HTTP_HDR * hdr)
 short
 http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
              short * keep_alive, long tout_msec,
-             LOCATION referer, const char * post_buf)
+             LOCATION referer, const char * auth, const char * post_buf)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
@@ -483,6 +483,10 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			                          buffer + len, sizeof(buffer) - len -2);
 			strcpy (buffer + len, "\r\n");
 			len = inet_send (sock, buffer, len +2);
+		}
+		if ((long)len > 0 && auth) {
+			len = sprintf (buffer, "Authorization: Basic %s\r\n", auth);
+			len = inet_send (sock, buffer, len);
 		}
 		if ((long)len > 0 && cfg_AllowCookies) {
 			COOKIESET cset;

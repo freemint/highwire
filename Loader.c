@@ -661,7 +661,7 @@ header_job (void * arg, long invalidated)
 	do {
 		long tout = (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc);
 		reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
-		                     &sock, tout, loader->Referer, loader->PostBuf);
+		                     &sock, tout, loader->Referer, NULL, loader->PostBuf);
 		if (reply == -ECONNRESET) {
 			retry++;
 		} else if (reply != 100) {
@@ -718,7 +718,7 @@ header_job (void * arg, long invalidated)
 			loader->Encoding = hdr.Encoding;
 		}
 	}
-	if (reply == 200 /*&& MIME_Major(loader->MimeType) == MIME_TEXT*/) {
+	if (reply == 200) {
 		char buf[300];
 		sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
