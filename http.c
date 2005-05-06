@@ -215,6 +215,47 @@ content_length (const char * beg, long len, HTTP_HDR * hdr)
 	return found;
 }
 
+
+/*------------------------------------------------------------------------------
+ * authenticate and redirect are mutual exclusive and use the same memory.
+*/
+static BOOL
+www_authenticate (const char * beg, long len, HTTP_HDR * hdr)
+{
+	const char token[] = "WWW-Authenticate:";
+	BOOL       found;
+	
+	if (len >= sizeof(token) && strnicmp (beg, token, sizeof(token)-1) == 0) {
+		beg += sizeof(token)-1;
+		len -= sizeof(token)-1;
+		while (isspace (*beg) && len-- > 0) beg++;
+		if (len > 0) {
+			const char realm[] = "realm=";
+			const char * q = strstr (beg, realm);
+			if (q && (len -= (q += sizeof(realm)-1) - beg)  > 0) {
+				if (*(beg = q) == '"') {
+					q = strchr (++beg, '"');
+				} else while (len && !isspace(*q)) {
+					len--;
+					q++;
+				}
+				if ((q - beg < len) && (len = q - beg) > 0) {
+					char * p = strchr (hdr->Tail, '\0');
+					do {
+						*(--p) = *(--q);
+					} while (--len);
+					hdr->Realm = p;
+					hdr->Rdir  = NULL;
+				}
+			}
+		}
+		found = TRUE;
+	} else {
+		found = FALSE;
+	}
+	return found;
+}
+
 /*----------------------------------------------------------------------------*/
 static BOOL
 redirect (const char * beg, long len, HTTP_HDR * hdr)
@@ -226,7 +267,7 @@ redirect (const char * beg, long len, HTTP_HDR * hdr)
 		beg += sizeof(token)-1;
 		len -= sizeof(token)-1;
 		while (isspace (*beg) && len-- > 0) beg++;
-		if (len > 0) {
+		if (len > 0 && !hdr->Realm) {
 			beg += len;
 			while (isspace (*(--beg)) && --len);
 			if (len) {
@@ -351,6 +392,7 @@ set_cookie (const char * beg, long len, HTTP_HDR * hdr)
 	return found;
 }
 
+
 /*============================================================================*/
 #ifdef USE_INET
 short
@@ -377,6 +419,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	hdr->MimeType = -1;
 	hdr->Encoding = ENCODING_Unknown;
 	hdr->Chunked  = FALSE;
+	hdr->Realm    = NULL;
 	hdr->Rdir     = NULL;
 	hdr->Head     = buffer;
 	buffer[sizeof(buffer) -1] = '\0';
@@ -564,13 +607,14 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			}
 			while (isspace (*ln_beg) && ++ln_beg < ln_brk);
 			if ((n = ln_brk - ln_beg) > 0
-				 && !content_length (ln_beg, n, hdr)
-				 && !content_type   (ln_beg, n, hdr)
-				 && !redirect       (ln_beg, n, hdr)
-				 && !transfer_enc   (ln_beg, n, hdr)
-				 && !server_date    (ln_beg, n, hdr)
-				 && !last_modified  (ln_beg, n, hdr)
-				 && !expires        (ln_beg, n, hdr)
+				 && !content_length  (ln_beg, n, hdr)
+				 && !content_type    (ln_beg, n, hdr)
+				 && !redirect        (ln_beg, n, hdr)
+				 && !transfer_enc    (ln_beg, n, hdr)
+				 && !server_date     (ln_beg, n, hdr)
+				 && !last_modified   (ln_beg, n, hdr)
+				 && !expires         (ln_beg, n, hdr)
+				 && !www_authenticate(ln_beg, n, hdr)
 				) {
 			   long r = (cfg_AllowCookies ? set_cookie (ln_beg, n, hdr) : 0);
 			   if (r && r < n) {
