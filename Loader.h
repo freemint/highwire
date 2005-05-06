@@ -13,6 +13,8 @@ typedef struct s_loader {
 	ENCODING Encoding;
 	MIMETYPE MimeType;
 	LOCATION Referer;    /* resource from which the Request-URI was obtained */
+	char   * AuthRealm;
+	char   * AuthBasic;
 	char   * PostBuf;
 	char     FileExt[4];
 	char   * ExtAppl;

@@ -159,6 +159,8 @@ new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 	loader->Encoding   = ENCODING_WINDOWS1252;
 	loader->MimeType   = MIME_Unknown;
 	loader->Referer    = NULL;
+	loader->AuthRealm  = NULL;
+	loader->AuthBasic  = NULL;
 	loader->PostBuf    = NULL;
 	loader->FileExt[0] = '\0';
 	loader->MarginW    = -1;
@@ -245,6 +247,12 @@ delete_loader (LOADER * p_loader)
 		}
 		if (loader->PostBuf) {
 			free (loader->PostBuf);
+		}
+		if (loader->AuthRealm) {
+			free (loader->AuthRealm);
+		}
+		if (loader->AuthBasic) {
+			free (loader->AuthBasic);
 		}
 		free_location (&loader->Referer);
 		free_location (&loader->Location);
@@ -608,6 +616,7 @@ header_job (void * arg, long invalidated)
 	short        sock = -1;
 	short        reply;
 	UWORD        retry = 0;
+	char       * auth  = NULL;
 	
 	if (invalidated) {
 		if (loader->SuccJob) {
@@ -658,17 +667,37 @@ header_job (void * arg, long invalidated)
 		sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
 	}
-	do {
-		long tout = (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc);
-		reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
-		                     &sock, tout, loader->Referer, NULL, loader->PostBuf);
-		if (reply == -ECONNRESET) {
-			retry++;
-		} else if (reply != 100) {
-			break;
+	while(1) { /* authorization loop */
+		do {
+			long tout = (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc);
+			reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
+			                     &sock, tout, loader->Referer, auth, loader->PostBuf);
+			if (reply == -ECONNRESET) {
+				retry++;
+			} else if (reply != 100) {
+				break;
+			}
+		} while (retry <= conn_retry);
+		
+		if (reply == 401) {
+			if (!auth && hdr.Realm && loader->AuthBasic && loader->AuthRealm
+			          && strcmp (loader->AuthRealm, hdr.Realm) == 0) {
+				inet_close (sock);
+				sock = -1;
+				auth = loader->AuthBasic;
+				continue;
+			}
+			if (loader->AuthRealm) {
+				free (loader->AuthRealm);
+				loader->AuthRealm = NULL;
+			}
+			if (loader->AuthBasic) {
+				free (loader->AuthBasic);
+				loader->AuthBasic = NULL;
+			}
 		}
-	} while (retry <= conn_retry);
-	
+		break;
+	}
 	/* Check for HTTP header redirect
 	*/
 	if ((reply == 301 || reply == 302 || reply == 303) && hdr.Rdir) {
