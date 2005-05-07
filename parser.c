@@ -99,6 +99,10 @@ new_parser (LOADER loader)
 		parser->Frame->h_bar.scroll = loader->ScrollH;
 		parser->Frame->Page.Rect.W  = parser->Frame->clip.g_w +1024;
 	}
+	if (loader->AuthRealm) {
+		parser->Frame->AuthRealm = loader->AuthRealm; loader->AuthRealm = NULL;
+		parser->Frame->AuthBasic = loader->AuthBasic; loader->AuthBasic = NULL;
+	}
 	parser->Frame->Container = parser->Target;
 	
 	containr_clear (parser->Target);

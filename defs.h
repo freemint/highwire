@@ -57,7 +57,9 @@ typedef enum {
 } SCROLL_CODE;
 
 typedef enum {
-	METH_GET = 0, METH_POST
+	METH_GET = 0,
+	METH_POST,
+	METH_AUTH /* internal used for HTTP autentication */
 } FORM_METHOD;
 
 typedef enum {  /* HTML:          CSS:          */
@@ -523,6 +525,8 @@ struct frame_item {
 	BOOL     ForceEnc; /* don't use encoding from meta tag */
 	LANGUAGE Language;
 	UWORD    MimeType; /* determines whether the content needs no parsing */
+	char   * AuthRealm;
+	char   * AuthBasic;
 	struct slider {
 		long scroll;
 		BOOL on;

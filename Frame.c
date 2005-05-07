@@ -43,6 +43,8 @@ new_frame (LOCATION loc, TEXTBUFF current,
 	frame->ForceEnc     = ((encoding & 0x80u) != 0);
 	frame->Language     = LANG_Unknown;
 	frame->MimeType     = (mime_type == MIME_TEXT ? MIME_TXT_PLAIN : mime_type);
+	frame->AuthRealm    = NULL;
+	frame->AuthBasic    = NULL;
 	frame->h_bar.scroll = 0;
 	frame->v_bar.scroll = 0;
 	frame->v_bar.on     = FALSE;
@@ -87,6 +89,12 @@ delete_frame (FRAME * p_frame)
 		}
 		if (frame->base_target) {
 			free (frame->base_target);
+		}
+		if (frame->AuthRealm) {
+			free (frame->AuthRealm);
+		}
+		if (frame->AuthBasic) {
+			free (frame->AuthBasic);
 		}
 		free_location (&frame->Location);
 		free_location (&frame->BaseHref);
