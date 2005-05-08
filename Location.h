@@ -43,6 +43,7 @@ size_t       location_FullName (LOCATION, char * buffer, size_t max_len);
 const char * location_Path     (LOCATION, UWORD * opt_len);
 const char * location_Host     (LOCATION, UWORD * opt_len);
 BOOL         location_equal    (LOCATION, LOCATION);
+#define      location_equalHost(a, b)             (a && b && a->Host == b->Host)
 
 int  location_open (LOCATION, const char ** host_name);
 
