@@ -1195,7 +1195,7 @@ update_urlhist (void)
 	short   i   = 0;
 	while (ent && ++i <= URL_HIST_MAX) {
 		if (++k[5] > '9') {
-			k[5] = 0;
+			k[5] = '0';
 			k[4]++;
 		}
 		save_config (k, ent->Link);
