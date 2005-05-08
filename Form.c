@@ -126,8 +126,9 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	
 	form->Target = target;
 	form->Action = action;
-	form->Method = (method && stricmp (method, "post") == 0
-	                ? METH_POST : METH_GET);
+	form->Method = (method && strcmp  (method, "AUTH") == 0 ? METH_AUTH :
+	                method && stricmp (method, "post") == 0 ? METH_POST :
+	                                                          METH_GET);
 	form->TextActive = NULL;
 	form->TextCursrX = 0;
 	form->TextCursrY = 0;
@@ -903,13 +904,92 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 
 
 /*----------------------------------------------------------------------------*/
+static char *
+base64enc (const char * src, long len)
+{
+	char * mem = (src && len > 0 ? malloc (((len +2) /3) *4 +1) : NULL);
+	if (mem) {
+		const char trans[] =
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		char * dst = mem;
+		do {
+			if (len >= 3) {
+				long val = ((((long)src[0] <<8) | src[1]) <<8) | src[2];
+				dst[3] = trans[val & 0x3F]; val >>= 6;
+				dst[2] = trans[val & 0x3F]; val >>= 6;
+				dst[1] = trans[val & 0x3F]; val >>= 6;
+				dst[0] = trans[val & 0x3F];
+			} else if (len == 2) {
+				long val = (((long)src[0] <<8) | src[1]) <<2;
+				dst[3] = '=';
+				dst[2] = trans[val & 0x3F]; val >>= 6;
+				dst[1] = trans[val & 0x3F]; val >>= 6;
+				dst[0] = trans[val & 0x3F];
+			} else /* len == 1 */ {
+				long val = (long)src[0] <<4;
+				dst[3] = '=';
+				dst[2] = '=';
+				dst[1] = trans[val & 0x3F]; val >>= 6;
+				dst[0] = trans[val & 0x3F];
+			}
+			src += 3;
+			dst += 4;
+		} while ((len -= 3) > 0);
+		dst[0] = '\0';
+	}
+	return mem;
+}
+
+/*----------------------------------------------------------------------------*/
 static void
 form_activate (FORM form)
 {
-	FRAME  frame = form->Frame;
-	INPUT  elem  = form->InputList;
-	size_t size  = 0, len;
-	char * data, * url;
+	FRAME    frame = form->Frame;
+	INPUT    elem  = form->InputList;
+	LOCATION loc   = frame->Location;
+	size_t   size  = 0, len;
+	char   * data, * url;
+	
+	if (form->Method == METH_AUTH) { /* special case, internal created *
+	                                  * for HTTP Authentication        */
+		LOADER ldr = start_page_load (frame->Container, NULL,loc, TRUE, NULL);
+		const char * realm = (ldr && frame->AuthRealm && *frame->AuthRealm
+		                      ? frame->AuthRealm : NULL);
+		char buf[100], * p = buf;
+		if (realm) {
+			WCHAR * beg, * end;
+			if (elem && elem->TextArray) {
+				beg = elem->TextArray[0];
+				end = elem->TextArray[1] -1;
+			} else {
+				beg = end = NULL;
+			}
+			if (beg < end) {
+				do {
+					*(p++)= *(beg++);
+				} while (beg < end);
+				*(p++) = ':';
+				*(p)   = '\0';
+				elem = elem->Next;
+			} else {
+				realm = NULL;
+			}
+		}
+		if (realm) {
+			if (elem && elem->Value) {
+				strcpy (p, elem->Value);
+				elem = elem->Next;
+			} else {
+				realm = NULL;
+			}
+		}
+		if (realm && elem && !elem->Next
+		          && elem->Type == IT_BUTTN && elem->SubType == 'S') {
+			ldr->AuthRealm = strdup (realm);
+			ldr->AuthBasic = base64enc (buf, strlen(buf));
+		}
+		return;
+	}
 	
 	if (elem) {
 		do if (elem->checked && *elem->Name) {
@@ -997,11 +1077,10 @@ form_activate (FORM form)
 	}
 	data[len] = '\0';
 	if (form->Method != METH_POST) {
-		start_page_load (frame->Container, url, frame->Location, TRUE, NULL);
+		start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
-		LOADER ldr = start_page_load (frame->Container, url, frame->Location,
-		                              TRUE, data);
+		LOADER ldr = start_page_load (frame->Container, url,loc, TRUE, data);
 		if (!ldr) free (data);
 	}
 }
