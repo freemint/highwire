@@ -1,4 +1,4 @@
-(non public of Apr. 13, 2005)
+(non public of May 07, 2005)
 
 - Support added for HTTP Authentication (RFC2069
   Basic only, no RFC2617 Digest/MD5 yet).
