@@ -267,6 +267,11 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 					LOADER   ldr = start_page_load (cont, addr, frame->BaseHref,
 					                                TRUE, NULL);
 					if (ldr) {
+						if (location_equalHost (ref, ldr->Location)
+					       && frame->AuthRealm && frame->AuthBasic) {
+							ldr->AuthRealm = strdup (frame->AuthRealm);
+							ldr->AuthBasic = strdup (frame->AuthBasic);
+						}
 						ldr->Referer  = location_share (ref);
 						ldr->Encoding = link->encoding;
 					}

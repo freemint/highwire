@@ -947,15 +947,19 @@ form_activate (FORM form)
 	FRAME    frame = form->Frame;
 	INPUT    elem  = form->InputList;
 	LOCATION loc   = frame->Location;
+	LOADER   ldr   = NULL;
 	size_t   size  = 0, len;
 	char   * data, * url;
 	
 	if (form->Method == METH_AUTH) { /* special case, internal created *
 	                                  * for HTTP Authentication        */
-		LOADER ldr = start_page_load (frame->Container, NULL,loc, TRUE, NULL);
 		const char * realm = (ldr && frame->AuthRealm && *frame->AuthRealm
 		                      ? frame->AuthRealm : NULL);
 		char buf[100], * p = buf;
+		ldr = start_page_load (frame->Container, NULL,loc, TRUE, NULL);
+		if (!ldr) {
+			realm = NULL;
+		}
 		if (realm) {
 			WCHAR * beg, * end;
 			if (elem && elem->TextArray) {
@@ -1077,11 +1081,19 @@ form_activate (FORM form)
 	}
 	data[len] = '\0';
 	if (form->Method != METH_POST) {
-		start_page_load (frame->Container, url,loc, TRUE, NULL);
+		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
-		LOADER ldr = start_page_load (frame->Container, url,loc, TRUE, data);
+		ldr = start_page_load (frame->Container, url,loc, TRUE, data);
 		if (!ldr) free (data);
+	}
+	if (ldr) {
+		if (location_equalHost (loc, ldr->Location)
+	       && frame->AuthRealm && frame->AuthBasic) {
+			ldr->AuthRealm = strdup (frame->AuthRealm);
+			ldr->AuthBasic = strdup (frame->AuthBasic);
+		}
+		ldr->Referer = location_share (loc);
 	}
 }
 
