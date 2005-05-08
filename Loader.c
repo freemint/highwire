@@ -695,6 +695,49 @@ header_job (void * arg, long invalidated)
 				free (loader->AuthBasic);
 				loader->AuthBasic = NULL;
 			}
+			if (hdr.Realm && !loader->SuccJob) {
+				const char form[] =
+					"<html><head><title>%.*s</title></head>"
+					"<body bgcolor=\"white\">"
+					"<h1>Authorization Required</h1>&nbsp;<br>"
+					"Enter user name and password for <q><b>%s</b></q> at <b>%s</b>:"
+					"<form "/*action=\"http://127.0.0.1:8080\" */"method=\"AUTH\">"
+					"<table border=\"0\">"
+					"<tr><td align=right>User:&nbsp;"
+					    "<td><input type=\"text\" name=\"USR\">"
+					"<tr><td align=right>Password:&nbsp;"
+					    "<td><input type=\"password\" name=\"PWD\">"
+					"<tr><td align=right>"
+					      "<input type=\"submit\" value=\"Login\">&nbsp;"
+					"</table></form>&nbsp;<p><hr size=\"1\">"
+					"\n<small><pre>%s</pre></small>\n"
+					"</bod></html>";
+				const char * titl = hdr.Head, * text;
+				size_t       titl_s, size;
+				while (*titl && !isspace(*titl)) titl++;
+				while (isspace(*titl))           titl++;
+				text = titl;
+				while (*text && *text != '\r' && *text != '\n') text++;
+				titl_s = text - titl;
+				while (isspace(*text)) text++;
+				size = sizeof(form)
+				     + titl_s + strlen(hdr.Realm) + strlen(host) + strlen (text);
+				if ((loader->AuthRealm = strdup (hdr.Realm)) != NULL &&
+				    (loader->Data = malloc (size)) != NULL) {
+					inet_close (sock);
+					sock = -1;
+					if (!loader->PostBuf) {
+						cache_abort (loc);
+					}
+					size = sprintf (loader->Data, form,
+					                (int)titl_s, titl, hdr.Realm, host, text);
+					loader->Data[++size] = '\0';
+					loader->Data[++size] = '\0';
+					loader->MimeType = MIME_TXT_HTML;
+					start_parser (loader);
+					return JOB_DONE;
+				}
+			}
 		}
 		break;
 	}
