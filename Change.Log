@@ -1,5 +1,8 @@
 (non public of Apr. 13, 2005)
 
+- Support added for HTTP Authentication (RFC2069
+  Basic only, no RFC2617 Digest/MD5 yet).
+
 - The URL input field got an own history for the
   ten last URLs typed in by the user.  These
   entries are stored and stay persistent between
