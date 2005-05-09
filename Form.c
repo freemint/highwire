@@ -953,7 +953,7 @@ form_activate (FORM form)
 	
 	if (form->Method == METH_AUTH) { /* special case, internal created *
 	                                  * for HTTP Authentication        */
-		const char * realm = (ldr && frame->AuthRealm && *frame->AuthRealm
+		const char * realm = (frame->AuthRealm && *frame->AuthRealm
 		                      ? frame->AuthRealm : NULL);
 		char buf[100], * p = buf;
 		ldr = start_page_load (frame->Container, NULL,loc, TRUE, NULL);
