@@ -176,6 +176,7 @@ new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 	loader->DataFill = 0;
 	loader->Data     = NULL;
 	loader->notified = FALSE;
+	loader->Retry    = conn_retry;
 	loader->Error    = E_OK;
 	/* */
 	loader->SuccJob = NULL;
@@ -615,7 +616,6 @@ header_job (void * arg, long invalidated)
 	HTTP_HDR     hdr;
 	short        sock = -1;
 	short        reply;
-	UWORD        retry = 0;
 	char       * auth  = NULL;
 	
 	if (invalidated) {
@@ -672,12 +672,17 @@ header_job (void * arg, long invalidated)
 			long tout = (loader->SuccJob ? hdr_tout_gfx : hdr_tout_doc);
 			reply = http_header (loc, &hdr, sizeof (loader->rdTemp) -2,
 			                     &sock, tout, loader->Referer, auth, loader->PostBuf);
-			if (reply == -ECONNRESET) {
-				retry++;
-			} else if (reply != 100) {
-				break;
+		} while (reply == 100);
+		
+		if (reply == -ECONNRESET) {
+			if (loader->Retry) {
+				if (!loader->PostBuf) {
+					cache_abort (loc);
+				}
+				loader->Retry--;
+				return JOB_KEEP; /* try connecting later */
 			}
-		} while (retry <= conn_retry);
+		}
 		
 		if (reply == 401) {
 			if (!auth && hdr.Realm && loader->AuthBasic && loader->AuthRealm
