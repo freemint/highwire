@@ -188,6 +188,16 @@ bold and bold italic.  The default values are <TT>5031</TT>, <TT>5032</TT>,
 <!----------------------------------------------------------------------------->
 <H2><A name="Cnct">Connection Control:</A></H2>
 <DL>
+<DT><TT><B>TIMEOUT_CONNECT</B> = n</TT>
+<DD>Number of seconds Highwire shall wait for a connection to get established.
+    After this time a connection try will be seen as timed out.  The default
+    value is one second.
+<DT><TT><B>RETRY_HEADER</B> = n</TT>
+<DD>Definines how often HighWire tries to load a page or some other data.  The
+    default value is three times.
+<DT><TT><B>TIMEOUT_HEADER</B> = txt [, gfx]</TT>
+<DD><font color=red><TT><B><I>- TO BE ADDED -</I></B></TT></FONT>
+    <BR>&nbsp;
 <DT><TT><B>COOKIES</B> = [0|1]</TT>
 <DD>The general Cookie handling policy can be set either to allow 
     <nobr>(<TT>= 1</TT>)</nobr> or to disallow <nobr>(<TT>= 0</TT>)</nobr>.  The

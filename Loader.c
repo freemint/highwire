@@ -176,7 +176,7 @@ new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 	loader->DataFill = 0;
 	loader->Data     = NULL;
 	loader->notified = FALSE;
-	loader->Retry    = conn_retry;
+	loader->Retry    = cfg_ConnRetry;
 	loader->Error    = E_OK;
 	/* */
 	loader->SuccJob = NULL;

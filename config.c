@@ -24,6 +24,8 @@ const char * cfg_StartPage    = "html\\highwire.htm";
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
+WORD         cfg_ConnTout     = 1;
+WORD         cfg_ConnRetry    = 3;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
@@ -291,7 +293,7 @@ cfg_timeout_connect (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	if (n > 0) conn_timeout = n;
+	if (n > 0) cfg_ConnTout = n;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -311,7 +313,7 @@ cfg_retry (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	if (n > 0) conn_retry = n;
+	if (n > 0) cfg_ConnRetry = n;
 }
 
 /*----------------------------------------------------------------------------*/

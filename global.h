@@ -15,8 +15,6 @@ extern VDI_Workstation  vdi_dev;
 #define planes         (vdi_dev.planes)
 #define ignore_colours (planes < 2)
 
-extern WORD conn_timeout; /* seconds for connection establishing           */
-extern WORD conn_retry;   /* number of tries when connection reset occured */
 extern LONG hdr_tout_doc; /* milliseconds to wait for a reply header */
 extern LONG hdr_tout_gfx; /* same as above but for graphics etc.     */
 
@@ -139,6 +137,9 @@ extern const char * cfg_StartPage;
 extern BOOL         cfg_AllowCookies;
 extern BOOL         cfg_ViewImages;
 extern BOOL         cfg_UseCSS;
+extern WORD         cfg_ConnTout;  /* seconds for connection establishing  */
+extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
+                                    * couldn't get established immediately */
 
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
