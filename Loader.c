@@ -674,7 +674,7 @@ header_job (void * arg, long invalidated)
 			                     &sock, tout, loader->Referer, auth, loader->PostBuf);
 		} while (reply == 100);
 		
-		if (reply == -ECONNRESET) {
+		if (reply == -ECONNRESET || reply == -ETIMEDOUT) {
 			if (loader->Retry) {
 				if (!loader->PostBuf) {
 					cache_abort (loc);
