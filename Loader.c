@@ -1238,5 +1238,5 @@ init_paths(void)
 	strcat(fsel_path, "html\\*.HTM*");  /* uppercase is for the TOS file selector */
 
 	strcpy(help_file, temp_location);  /* used for keyboard F1 or Help */
-	strcat(help_file, "html\\hwdoc.htm#Use");
+	strcat(help_file, "html\\help\\index.htm");
 }
