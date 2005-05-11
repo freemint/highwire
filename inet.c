@@ -13,9 +13,13 @@
 #   define USE_STIK /* also if USE_STNG is already defined, (nearly) same API */
 #  endif
 # endif
+
+static WORD sockets_free = 0;
+
 #endif /* USE_INET */
 
 
+#include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
 
@@ -100,6 +104,25 @@ static long  __CDECL demand_connect (long addr, long port, long tout_sec)
 # include <unistd.h>
 # include <mintbind.h>
 
+/*----------------------------------------------------------------------------*/
+static BOOL init_mintnet (void)
+{
+	static BOOL __once = TRUE;
+	if (__once) {
+		short n;
+		sockets_free = 32;
+		for (n = 0; n < 32; n++) {
+			if (Finstat (n) >= 0 || Foutstat (n) >= 0) sockets_free--;
+		}
+		if ((sockets_free -= 2) > 0) { /* always save two free handles */
+			__once = FALSE;
+		} else {
+			sockets_free = 0;
+		}
+	}
+	return (sockets_free > 0);
+}
+
 
 #elif defined(USE_ICNN) /******************************************************/
 # include <time.h>
@@ -115,6 +138,7 @@ static BOOL init_iconnect (void)
 	static int flag = -1;
 	if (flag < 0) {
 		flag = (sock_init() == E_OK ? 1 : 0);
+		sockets_free = 32;
 	}
 	return (flag > 0);
 }
@@ -155,6 +179,7 @@ static BOOL init_stik (void)
 			}
 			jar++;
 		}
+		sockets_free = 32;
 	}
 	return (tpl != NULL);
 }
@@ -219,57 +244,70 @@ inet_connect (long addr, long port, long tout_sec)
 	long fh = -1;
 
 #if defined(USE_MINT)
-	struct sockaddr_in s_in;
-	s_in.sin_family = AF_INET;
-	s_in.sin_port   = htons ((short)port);
-	s_in.sin_addr   = *(struct in_addr *)&addr;
-	if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
-		fh = -errno;
+	if (!init_mintnet()) {
+		fh = -35/*EMFILE*/;
 	} else {
-		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
-		if (alrm >= 0) {
-			timeout = FALSE;
-			Talarm (tout_sec);
-		}
-		if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-			close (fh);
-			fh = -(timeout && errno == EINTR ? ETIMEDOUT : errno);
-		}
-		if (alrm >= 0) {
-			Talarm (0);
-			Psignal (14/*SIGALRM*/, alrm);
+		struct sockaddr_in s_in;
+		s_in.sin_family = AF_INET;
+		s_in.sin_port   = htons ((short)port);
+		s_in.sin_addr   = *(struct in_addr *)&addr;
+		if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
+			fh = -errno;
+		} else {
+			long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
+			if (alrm >= 0) {
+				timeout = FALSE;
+				Talarm (tout_sec);
+			}
+			if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
+				close (fh);
+				fh = -(timeout && errno == EINTR ? ETIMEDOUT : errno);
+			} else {
+				sockets_free--;
+			}
+			if (alrm >= 0) {
+				Talarm (0);
+				Psignal (14/*SIGALRM*/, alrm);
+			}
 		}
 	}
 
 #elif defined(USE_ICNN)
-	clock_t timeout =0;
-	sockaddr_in s_in;
-	s_in.sin_family = AF_INET;
-	s_in.sin_port   = htons ((short)port);
-	s_in.sin_addr   = *(unsigned long *)&addr;
-	do {
-		if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			fh = -1;
-			break;
-		} else {
-			int n = connect ((int)fh, &s_in, (int)sizeof(s_in));
-			if (n == E_OK) {
-				sfcntl ((int)fh, F_SETFL, O_NDELAY);
+	if (sockets_free <= 0) {
+		fh = -35/*EMFILE*/;
+	} else {
+		clock_t timeout = 0;
+		sockaddr_in s_in;
+		s_in.sin_family = AF_INET;
+		s_in.sin_port   = htons ((short)port);
+		s_in.sin_addr   = *(unsigned long *)&addr;
+		do {
+			if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+				fh = -1;
 				break;
+			} else {
+				int n = connect ((int)fh, &s_in, (int)sizeof(s_in));
+				if (n == E_OK) {
+					sfcntl ((int)fh, F_SETFL, O_NDELAY);
+					sockets_free--;
+					break;
+				}
+				sclose ((int)fh);
+				fh = -1;
+				if (!timeout) {
+					timeout = clock() + tout_sec * CLK_TCK;
+				} else if (n != -ETIMEDOUT || clock() < timeout) {
+					break;
+				}
 			}
-			sclose ((int)fh);
-			fh = -1;
-			if (!timeout) {
-				timeout = clock() + tout_sec * CLK_TCK;
-			} else if (n != -ETIMEDOUT || clock() < timeout) {
-				break;
-			}
-		}
-	} while (1);
+		} while (1);
+	}
 
 #elif defined(USE_STIK)
 	if (!init_stik()) {
 		puts ("No STiK/Sting");
+	} else if (sockets_free <= 0) {
+		fh = -35/*EMFILE*/;
 	} else {
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
@@ -278,6 +316,8 @@ inet_connect (long addr, long port, long tout_sec)
 		}
 		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
 			fh = -(fh == -1001L ? ETIMEDOUT : 1);
+		} else {
+			sockets_free--;
 		}
 		if (alrm >= 0) {
 			Talarm (0);
@@ -402,19 +442,19 @@ inet_close (long fh)
 	if (fh >= 0) {
 
 	#if defined(USE_MINT)
-		close (fh);
+		if (close (fh) == 0) sockets_free++;
 
 	#elif defined(USE_ICNN)
-		sclose ((int)fh);
+		if (sclose ((int)fh) == 0) sockets_free++;
 
 	#elif defined(USE_STIK)
 		if (!tpl) {
 			puts ("No STiK/Sting");
 		} else {
 		#ifdef USE_STNG
-			TCP_close ((int)fh, 0, NULL);
+			if (TCP_close ((int)fh, 0, NULL) == 0) sockets_free++;
 		#else /*STiK2*/
-			TCP_close ((int)fh, 0);
+			if (TCP_close ((int)fh, 0) == 0) sockets_free++;
 		#endif
 		}
 	
