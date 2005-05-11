@@ -143,6 +143,7 @@ extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
 
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
+const char * devl_flag (const char * flag);
 
 
 /* in Frame.c */

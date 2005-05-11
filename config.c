@@ -432,6 +432,62 @@ cfg_urlhist (char * param, long arg)
 }
 
 
+/*----------------------------------------------------------------------------*/
+typedef struct s_devl_flag * DEVL_FLAG;
+struct s_devl_flag {
+	DEVL_FLAG Next;
+	char    * Value;
+	char      Name[1];
+};
+static DEVL_FLAG _flag_list = NULL;
+/*- - - - - - - - - - - - - - - - - - - -*/
+static void
+cfg_devl_flags (char * param, long arg)
+{
+	(void)arg;
+	while (isalnum (*param)) {
+		char * f_beg = param, * f_end = param;
+		char * v_beg = NULL,  * v_end = NULL;
+		while (isalnum (*(++f_end)));
+		if (*f_end != ':') {
+			param = f_end;
+		} else {
+			v_beg = v_end = f_end +1;
+			while (isalnum (*(v_end))) v_end++;
+			param = v_end;
+		}
+		if (f_beg < f_end) {
+			size_t   f_len = f_end - f_beg;
+			size_t   v_len = v_end - v_beg;
+			size_t    size = sizeof (struct s_devl_flag)
+			               + f_len + (v_len ? v_len +1 : 0);
+			DEVL_FLAG flag = malloc (size);
+			if (flag) {
+				((char*)memcpy (flag->Name, f_beg, f_len))[f_len] = '\0';
+				flag->Value = flag->Name + f_len;
+				if (v_len) {
+					((char*)memcpy (++flag->Value, v_beg, v_len))[v_len] = '\0';
+				}
+				flag->Next = _flag_list;
+				_flag_list = flag;
+			}
+		}
+		while (isspace(*param)) param++;
+	}
+}
+
+/*============================================================================*/
+const char *
+devl_flag (const char * name)
+{
+	DEVL_FLAG flag = _flag_list;
+	while (flag && strcmp (flag->Name, name) != 0) {
+		flag = flag->Next;
+	}
+	return (flag ? flag->Value : NULL);
+}
+
+
 /*============================================================================*/
 BOOL
 read_config(void)
@@ -485,6 +541,7 @@ read_config(void)
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
 				{ "CACHEMEM",             cfg_cachemem,  0 },
 				{ "COOKIES",              cfg_func,      (long)menu_cookies    },
+				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
