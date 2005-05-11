@@ -65,7 +65,7 @@ scan_tag (const char ** pptr)
 				break;
 			}
 		} else { /* expression is longer than the longest known tag */
-			while (isalpha (*(++line)));
+			while (isalpha (*(line))) line++;
 			len = 0;   /* reset, don't perform a search */
 			break;
 		}
