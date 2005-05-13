@@ -683,6 +683,12 @@ header_job (void * arg, long invalidated)
 				return JOB_KEEP; /* try connecting later */
 			}
 		}
+		if (reply == -35/*EMFILE*/) {
+			if (!loader->PostBuf) {
+				cache_abort (loc);
+			}
+			return JOB_KEEP; /* too many open connections yet, try again later */
+		}
 		
 		if (reply == 401) {
 			if (!auth && hdr.Realm && loader->AuthBasic && loader->AuthRealm
