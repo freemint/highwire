@@ -349,7 +349,6 @@ image_calculate (IMAGE img, short par_width)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #if defined(__LOADER_H__)
-static short _ldr_limit = 8;
 static int
 image_ldr (void * arg, long invalidated)
 {
@@ -377,7 +376,6 @@ image_ldr (void * arg, long invalidated)
 	
 /*	sched_insert (image_job, img, invalidated, 1);*/
 	image_job (img, invalidated);
-	_ldr_limit++;
 	
 	return FALSE;
 }
@@ -431,20 +429,14 @@ image_job (void * arg, long invalidated)
 				return TRUE;
 			
 			} else if (PROTO_isRemote (loc->Proto)) {
-				if (!_ldr_limit) {
-					return TRUE;
-				
-				} else {
-					LOADER ldr = start_objc_load (frame->Container,
-					                              NULL, loc, image_ldr, img);
-					if (ldr) {
-						if (PROTO_isRemote (frame->Location->Proto)) {
-							ldr->Referer = location_share (frame->Location);
-						}
+				LOADER ldr = start_objc_load (frame->Container,
+				                              NULL, loc, image_ldr, img);
+				if (ldr) {
+					if (PROTO_isRemote (frame->Location->Proto)) {
+						ldr->Referer = location_share (frame->Location);
 					}
-					_ldr_limit--;
-					return FALSE;
 				}
+				return FALSE;
 			}
 		}
 #endif
