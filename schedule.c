@@ -48,11 +48,21 @@ sort_in (SCHED sched, BOOL order)
 		sched->Prev = sched->Next = NULL;
 		__beg       = __end       = sched;
 	
-	} else if (!order) {
+	} else if (__end->Priority >= sched->Priority) {
 		sched->Next = NULL;
 		sched->Prev = __end;
 		__end->Next = sched;
 		__end       = sched;
+	
+	} else if (!order) {
+		SCHED queue = __beg;
+		while (queue->Priority >= sched->Priority) {
+			queue = queue->Next;
+		}
+		sched->Prev = queue;
+		if ((sched->Next = queue->Next) != NULL) queue->Next->Prev = sched;
+		else                                     __end             = sched;
+		queue->Next = sched;
 	
 	} else if (__beg->Priority < sched->Priority) {
 		sched->Next = __beg;
