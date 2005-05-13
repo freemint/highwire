@@ -19,7 +19,6 @@ static WORD sockets_free = 0;
 #endif /* USE_INET */
 
 
-#include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
 
@@ -42,6 +41,8 @@ INET_FTAB inet_ftab = {
 	inet_send,
 	inet_recv,
 	inet_close,
+	inet_instat,
+	inet_select,
 	inet_info
 }, backup;
 
@@ -126,11 +127,14 @@ static BOOL init_mintnet (void)
 
 #elif defined(USE_ICNN) /******************************************************/
 # include <time.h>
+# include <string.h>
 # include <iconnect/sockinit.h>
 # include <iconnect/netdb.h>
 # include <iconnect/socket.h>
 # include <iconnect/in.h>
 # include <iconnect/sfcntl.h>
+# include <iconnect/types.h>
+# include <iconnect/sockios.h>
 
 /*----------------------------------------------------------------------------*/
 static BOOL init_iconnect (void)
@@ -228,12 +232,12 @@ inet_host_addr (const char * name, long * addr)
 
 /*----------------------------------------------------------------------------*/
 #if defined(USE_MINT) || defined(USE_STIK)
-static BOOL timeout = FALSE;
+static BOOL sig_tout = FALSE;
 
 static void sig_alrm (long sig)
 {
 	(void)sig;
-	timeout = TRUE;
+	sig_tout = TRUE;
 }
 #endif
 
@@ -256,12 +260,12 @@ inet_connect (long addr, long port, long tout_sec)
 		} else {
 			long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 			if (alrm >= 0) {
-				timeout = FALSE;
+				sig_tout = FALSE;
 				Talarm (tout_sec);
 			}
 			if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
 				close (fh);
-				fh = -(timeout && errno == EINTR ? ETIMEDOUT : errno);
+				fh = -(sig_tout && errno == EINTR ? ETIMEDOUT : errno);
 			} else {
 				sockets_free--;
 			}
@@ -311,7 +315,7 @@ inet_connect (long addr, long port, long tout_sec)
 	} else {
 		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
 		if (alrm >= 0) {
-			timeout = FALSE;
+			sig_tout = FALSE;
 			Talarm (tout_sec);
 		}
 		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
@@ -460,6 +464,128 @@ inet_close (long fh)
 	
 	#endif
 	}
+}
+
+
+/*============================================================================*/
+long __CDECL
+inet_instat (long fh)
+{
+	long ret = -1;
+
+#if defined(USE_MINT)
+	ret = Finstat (fh);
+	if (ret == 0x7FFFFFFF) { /* connection closed */
+		ret = -ECONNRESET;
+	}
+
+#elif defined(USE_ICNN)
+	char buf[1];
+	ret = recv ((int)fh, buf, 1, (int)MSG_PEEK);
+
+#elif defined(USE_STIK)
+	if (!tpl) {
+		puts ("No STiK/Sting");
+	} else {
+		ret = CNbyte_count ((int)fh);
+		if (ret < E_NODATA) {
+			ret = (ret == E_EOF || ret == E_RRESET ? -ECONNRESET : -1);
+		}
+	}
+
+#else
+	(void)fh;
+#endif
+
+	return ret;
+}
+
+/*============================================================================*/
+long __CDECL
+inet_select (long timeout, long * rfds, long * wfds) /* timeout is milliseconds */
+{
+	long ret = 0;
+
+#if defined(USE_MINT)
+	ret = Fselect (timeout, rfds, wfds, NULL);
+
+#elif defined(USE_ICNN)
+	timeval to_in;
+	fd_set * p_rf, * p_wf;
+	if (rfds && *rfds) {
+		static fd_set i_rf;
+		char * c_rf = (char*)FD_ZERO (&i_rf);
+		c_rf[0] = ((char*)&rfds)[3];
+		c_rf[1] = ((char*)&rfds)[2];
+		c_rf[2] = ((char*)&rfds)[1];
+		c_rf[3] = ((char*)&rfds)[0];
+		p_rf    = &i_rf;
+	} else {
+		p_rf    = NULL;
+	}
+	if (wfds && *wfds) {
+		static fd_set i_wf;
+		char * c_wf = (char*)FD_ZERO (&i_wf);
+		c_wf[0] = ((char*)&wfds)[3];
+		c_wf[1] = ((char*)&wfds)[2];
+		c_wf[2] = ((char*)&wfds)[1];
+		c_wf[3] = ((char*)&wfds)[0];
+		p_wf    = &i_wf;
+	} else {
+		p_wf    = NULL;
+	}
+	to_in.tv_sec  = (int)(timeout /1000);    /* calc seconds from milliseconds */
+	to_in.tv_usec = (int)((timeout%1000)*1000); /* calc remainder in microsecs */ 
+	ret = select((int)32, p_rf, p_wf, NULL, &to_in);
+	if (p_rf) {
+		char * c_rf = (char*)p_rf;
+		((char*)&rfds)[3] = c_rf[0];
+		((char*)&rfds)[2] = c_rf[1];
+		((char*)&rfds)[1] = c_rf[2];
+		((char*)&rfds)[0] = c_rf[3];
+	}
+	if (p_wf) {
+		char * c_wf = (char*)p_wf;
+		((char*)&wfds)[3] = c_wf[0];
+		((char*)&wfds)[2] = c_wf[1];
+		((char*)&wfds)[1] = c_wf[2];
+		((char*)&wfds)[0] = c_wf[3];
+	}
+
+#elif defined(USE_STIK)
+	short bit;
+	long rf_in, wf_in, rf_out, wf_out;
+	rf_in = wf_in = rf_out = wf_out = 0;
+	if (rfds) rf_in = *rfds;
+	if (wfds) wf_in = *wfds;
+	do {
+		for (bit = 0; bit < 32; bit++) {
+			long mask = 1 << bit;
+			if ((rf_in & mask) || (wf_in & mask)) {
+				short n = CNbyte_count ((int)bit);
+				if (n == E_BADHANDLE) {
+					rf_out = wf_out = 0;
+					ret = -1;
+					break;
+				}
+				if ((rf_in & mask) && (n != 0)) {
+					ret++;
+					rf_out |= mask;
+				}
+				if (wf_in & mask) ret++;
+			}
+		}
+	} while ((timeout == 0) && (ret == 0));
+	if (ret > 0) wf_out = wf_in;
+	if (rfds) *rfds = rf_out;
+	if (wfds) *wfds = wf_out;
+
+#else
+	(void)timeout; (void)rfds; (void)wfds;
+
+#endif
+
+	return ret;
 }
 
 

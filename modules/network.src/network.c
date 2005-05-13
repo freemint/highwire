@@ -47,7 +47,7 @@ struct ovl_info_t ovl_data = {
 /*============================================================================*/
 long __CDECL ovl_init(void)
 {
-	return 0x20031208l;
+	return INET_VERSION;
 }
 
 
@@ -69,6 +69,8 @@ void * __CDECL ovl_getftab(void)
 		inet_send,
 		inet_recv,
 		inet_close,
+		inet_instat,
+		inet_select,
 		inet_info
 	};
 

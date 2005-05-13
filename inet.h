@@ -2,7 +2,7 @@
 #define __HW_INET_H__
 
 
-#define INET_VERSION 0x20031208l /* synchronize network OVL version */
+#define INET_VERSION 0x20050513l /* synchronize network OVL version */
 
 
 /*------------------------------------------------------------------------------
@@ -19,6 +19,8 @@ typedef struct {
 	long  __CDECL (*send)    (long fh, const char * buf, size_t len);
 	long  __CDECL (*recv)    (long fh, char       * buf, size_t len);
 	void  __CDECL (*close)   (long fh);
+	long  __CDECL (*instat)  (long fh);
+	long  __CDECL (*select)  (long timeout, long * rfds, long * wfds);
 	const char * __CDECL (*info) (void);
 } INET_FTAB;
 
@@ -29,6 +31,8 @@ typedef struct {
 #define inet_send(f,b,l)    (*inet_ftab.send)(f,b,l)
 #define inet_recv(f,b,l)    (*inet_ftab.recv)(f,b,l)
 #define inet_close(f)       (*inet_ftab.close)(f)
+#define inet_instat(f)      (*inet_ftab.instat)(f)
+#define inet_select(t,r,w)  (*inet_ftab.select)(t,r,w)
 #define inet_info()         (*inet_ftab.info)()
 
 extern INET_FTAB inet_ftab; /* This must be global accessible. */
@@ -41,6 +45,8 @@ long  __CDECL inet_connect (long addr, long port, long tout_sec);
 long  __CDECL inet_send    (long fh, const char * buf, size_t len);
 long  __CDECL inet_recv    (long fh, char       * buf, size_t len);
 void  __CDECL inet_close   (long fh);
+long  __CDECL inet_instat  (long fh);
+long  __CDECL inet_select  (long timeout, long * rfds, long * wfds);
 const char * __CDECL inet_info (void);
 
 #endif
