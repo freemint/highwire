@@ -1,4 +1,4 @@
-(non public of May 07, 2005)
+(non public of May 13, 2005)
 
 - Support added for HTTP Authentication (RFC2069
   Basic only, no RFC2617 Digest/MD5 yet).
@@ -12,6 +12,14 @@
   implemented.
 
 - Memory leak closed in the Table destructor.
+
+- Loading strategy changed to reduce the
+  probability of connection timeouts.  Also some
+  some pages with lots of images are loaded a bit
+  faster now.
+
+- The HELP key opens the correct document now
+  rather then the outdated file.
 
 __________________________________________________
 Changes in V. 0.2.5 release  of March 15, 2005:
