@@ -389,7 +389,7 @@ menu_open (BOOL fsel)
 			return; /* already open */
 		}
 		ptext[0] = '\0';
-		formwind_do (form, URL_EDIT, "Open Page", menu_open_handler);
+		formwind_do (form, URL_EDIT, "Open Page", TRUE, menu_open_handler);
 	
 	} else {
 #endif

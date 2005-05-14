@@ -29,14 +29,14 @@ static BOOL dummy_handler (OBJECT *, WORD obj);
 
 /*============================================================================*/
 static FORMWIND
-new_formWind (OBJECT * tree, const char * title)
+new_formWind (OBJECT * tree, const char * title, BOOL modal)
 {
 	FORMWIND This = (tree ? malloc (sizeof (struct form_window)) : NULL);
 	if (This) {
 		(void)title;
 		
 		tree->ob_flags |= OF_FLAG15;
-		window_ctor (This, MOVER|CLOSER, title, NULL, TRUE);
+		window_ctor (This, MOVER|CLOSER, title, NULL, modal);
 		This->Tree = tree;
 		This->Work = (GRECT*)&tree->ob_x;
 		wind_calc_grect (WC_BORDER, This->Base.Widgets,
@@ -185,14 +185,14 @@ dummy_handler (OBJECT * tree, WORD obj)
 
 
 /*============================================================================*/
-BOOL
+WORD
 formwind_do (OBJECT * tree, WORD start, const char * title,
-             BOOL(*handler)(OBJECT*,WORD))
+             BOOL modal, BOOL(*handler)(OBJECT*,WORD))
 {
 	FORMWIND wind = NULL;
 	
 	if (!tree || (tree->ob_flags & OF_FLAG15)
-	          || (wind = new_formWind (tree, title)) == NULL) return FALSE;
+	          || (wind = new_formWind (tree, title, modal)) == NULL) return -1;
 	
 	if (handler) {
 		wind->handler = handler;
@@ -202,5 +202,5 @@ formwind_do (OBJECT * tree, WORD start, const char * title,
 		wind->EditObj = start;
 	}
 	
-	return TRUE;
+	return wind->Base.Handle;
 }
