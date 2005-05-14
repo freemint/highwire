@@ -36,6 +36,8 @@ typedef struct s_window {   /* all of the following are private attributes, */
 
 #define delete_window(WINDOW) {if (WINDOW) free((*(WINDOW)->destruct)(WINDOW));}
 
+WINDOW window_byHandle (WORD);
+
 BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 void window_evButton  (WORD bmask, PXY mouse, UWORD kstate, WORD clicks);
 void window_evKeybrd  (UWORD key, UWORD kstate);

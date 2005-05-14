@@ -98,6 +98,18 @@ window_dtor (WINDOW This)
 
 
 /*============================================================================*/
+WINDOW
+window_byHandle (WORD hdl)
+{
+	WINDOW wind = window_Top;
+	while (wind && wind->Handle != hdl) {
+		wind = wind->Next;
+	}
+	return wind;
+}
+
+
+/*============================================================================*/
 static BOOL
 vTab_evMessage (WINDOW This, WORD msg[], PXY mouse, UWORD kstate)
 {
@@ -111,10 +123,7 @@ vTab_evMessage (WINDOW This, WORD msg[], PXY mouse, UWORD kstate)
 BOOL
 window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 {
-	WINDOW wind = window_Top;
-	while (wind && wind->Handle != msg[3]) {
-		wind = wind->Next;
-	}
+	WINDOW wind = window_byHandle (msg[3]);
 	if (!wind) {
 		return FALSE;
 	}
@@ -197,11 +206,7 @@ vTab_evButton (WINDOW This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 void
 window_evButton (WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 {
-	WINDOW wind = window_Top;
-	WORD   hdl  = wind_find (mouse.p_x, mouse.p_y);
-	while (wind && wind->Handle != hdl) {
-		wind = wind->Next;
-	}
+	WINDOW wind = window_byHandle (wind_find (mouse.p_x, mouse.p_y));
 	if (wind && (wind == window_Top || !window_Top->isModal)) {
 		(*wind->evButton)(wind, bmask, mouse, kstate, clicks);
 	}
