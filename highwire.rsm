@@ -1,5 +1,5 @@
 ResourceMaster v2.072
-#C 5@0@0@
+#C 6@0@0@
 #N 99@0@AZAaza___  _@AZAaza090___  _@@@
 #FoHRD@rsm2out@HRD@hrd@@@ [HRD-File@
 #FoC-Header@rsm2out@C-Header@h@@@ [C-Header@
@@ -51,4 +51,25 @@ ResourceMaster v2.072
 #O 3@28@RLINK_SAVE@@
 #O 5@28@RLINK_COPY@@
 #O 7@28@RLINK_INFO@@
-#c 17670@
+#T 5@2@DLMNGR@@25@
+#O 1@25@DLM_1@@
+#O 2@28@DLM_1FILE@@
+#O 4@20@DLM_1BAR@@
+#O 5@26@DLM_1BTN@@
+#O 6@21@DLM_1TEXT@@
+#O 7@25@DLM_2@@
+#O 8@28@DLM_2FILE@@
+#O 10@20@DLM_2BAR@@
+#O 11@26@DLM_2BTN@@
+#O 12@21@DLM_2TEXT@@
+#O 13@25@DLM_3@@
+#O 14@28@DLM_3FILE@@
+#O 16@20@DLM_3BAR@@
+#O 17@26@DLM_3BTN@@
+#O 18@21@DLM_3TEXT@@
+#O 19@25@DLM_4@@
+#O 20@28@DLM_4FILE@@
+#O 22@20@DLM_4BAR@@
+#O 23@26@DLM_4BTN@@
+#O 24@21@DLM_4TEXT@@
+#c 8634@

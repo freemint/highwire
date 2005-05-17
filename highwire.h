@@ -51,3 +51,25 @@
 #define RLINK_SAVE 3  /* STRING in tree RLINKPOP */
 #define RLINK_COPY 5  /* STRING in tree RLINKPOP */
 #define RLINK_INFO 7  /* STRING in tree RLINKPOP */
+
+#define DLMNGR 5  /* form/dial */
+#define DLM_1 1  /* IBOX in tree DLMNGR */
+#define DLM_1FILE 2  /* STRING in tree DLMNGR */
+#define DLM_1BAR 4  /* BOX in tree DLMNGR */
+#define DLM_1BTN 5  /* BUTTON in tree DLMNGR */
+#define DLM_1TEXT 6  /* TEXT in tree DLMNGR */
+#define DLM_2 7  /* IBOX in tree DLMNGR */
+#define DLM_2FILE 8  /* STRING in tree DLMNGR */
+#define DLM_2BAR 10  /* BOX in tree DLMNGR */
+#define DLM_2BTN 11  /* BUTTON in tree DLMNGR */
+#define DLM_2TEXT 12  /* TEXT in tree DLMNGR */
+#define DLM_3 13  /* IBOX in tree DLMNGR */
+#define DLM_3FILE 14  /* STRING in tree DLMNGR */
+#define DLM_3BAR 16  /* BOX in tree DLMNGR */
+#define DLM_3BTN 17  /* BUTTON in tree DLMNGR */
+#define DLM_3TEXT 18  /* TEXT in tree DLMNGR */
+#define DLM_4 19  /* IBOX in tree DLMNGR */
+#define DLM_4FILE 20  /* STRING in tree DLMNGR */
+#define DLM_4BAR 22  /* BOX in tree DLMNGR */
+#define DLM_4BTN 23  /* BUTTON in tree DLMNGR */
+#define DLM_4TEXT 24  /* TEXT in tree DLMNGR */
