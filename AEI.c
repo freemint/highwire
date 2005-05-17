@@ -999,17 +999,18 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			}
 			break;
 		
-		case RLINK_SAVE:
-			cont = new_hwWind (addr, NULL, NULL)->Pane;
-
-			if (cont) {
-				LOADER ldr = start_objc_load (cont, addr, frame->BaseHref, saveas_job, NULL);
-
+		case RLINK_SAVE: {
+			LOCATION loc = new_location (addr, frame->BaseHref);
+			if (loc->Proto == PROT_HTTP && devl_flag ("DlMngr")) {
+				dl_manager (loc, frame->Location);
+			} else if ((cont = new_hwWind (addr, NULL, NULL)->Pane) != NULL) {
+				LOADER ldr = start_objc_load (cont, NULL, loc, saveas_job, NULL);
 				if (ldr) {
 					ldr->Encoding = link->encoding;
 				}
 			}
-			break;
+			free_location (&loc);
+		}	break;
 
 		case RLINK_COPY: {
 			FILE * file;

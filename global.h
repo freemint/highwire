@@ -101,6 +101,10 @@ WORD formwind_do (OBJECT *, WORD start, const char * title,
                   BOOL modal, BOOL(*handler)(OBJECT*,WORD));
 #endif
 
+/* in dl_mngr.c */
+
+void dl_manager (LOCATION what, LOCATION ref);
+
 /* in Widget.c */
 
 #ifdef _GEMLIB_H_
