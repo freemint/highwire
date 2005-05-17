@@ -162,9 +162,11 @@ static BOOL
 vTab_close (FORMWIND This, UWORD kstate)
 {
 	(void)kstate;
-	(*This->handler)(This->Tree, -1);
-	This->Tree->ob_flags &= ~OF_FLAG15;
-	return TRUE; /* to be deleted */
+	if ((*This->handler)(This->Tree, -1)) {
+		This->Tree->ob_flags &= ~OF_FLAG15;
+		return TRUE; /* to be deleted */
+	}
+	return FALSE;
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
