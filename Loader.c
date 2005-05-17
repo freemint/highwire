@@ -360,7 +360,8 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
                  int (*successor)(void*, long), void * objc)
 {
 	LOCATION loc  = new_location (url, base);
-	LOADER loader = new_loader (loc, target, TRUE);
+	BOOL hdr_only = (!target && successor);
+	LOADER loader = new_loader (loc, target, !hdr_only);
 	
 	free_location (&loc);
 	loc = (loader->Cached ? loader->Cached : loader->Location);
@@ -383,7 +384,8 @@ start_objc_load (CONTAINR target, const char * url, LOCATION base,
 	
 #ifdef USE_INET
 	} else if (loc->Proto == PROT_HTTP) {
-		sched_insert (header_job, loader, (long)target, PRIO_TRIVIAL);
+		sched_insert (header_job, loader, (long)target,
+		              (hdr_only ? PRIO_USERACT : PRIO_TRIVIAL));
 #endif
 	
 	} else {
@@ -616,7 +618,9 @@ header_job (void * arg, long invalidated)
 	HTTP_HDR     hdr;
 	short        sock = -1;
 	short        reply;
-	char       * auth  = NULL;
+	char       * auth = NULL;
+	
+	BOOL hdr_only = (!loader->Target && loader->SuccJob);
 	
 	if (invalidated) {
 		if (loader->SuccJob) {
@@ -627,7 +631,7 @@ header_job (void * arg, long invalidated)
 		return JOB_DONE;
 	}
 	
-	if (!loader->PostBuf) switch (CResultDsk (cache_exclusive (loc))) {
+	if (!loader->PostBuf && !hdr_only) switch(CResultDsk(cache_exclusive(loc))) {
 		
 		case CR_BUSY:
 		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
@@ -706,7 +710,7 @@ header_job (void * arg, long invalidated)
 				free (loader->AuthBasic);
 				loader->AuthBasic = NULL;
 			}
-			if (hdr.Realm && !loader->SuccJob) {
+			if (hdr.Realm && !loader->SuccJob && !hdr_only) {
 				const char form[] =
 					"<html><head><title>%.*s</title></head>"
 					"<body bgcolor=\"white\">"
@@ -756,7 +760,7 @@ header_job (void * arg, long invalidated)
 	*/
 	if ((reply == 301 || reply == 302 || reply == 303) && hdr.Rdir) {
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
-		CACHED   cached = cache_lookup (redir, 0, NULL);
+		CACHED   cached = (hdr_only ? NULL : cache_lookup (redir, 0, NULL));
 		inet_close  (sock);
 		if (!loader->PostBuf) {
 			cache_abort (loc);
@@ -816,7 +820,17 @@ header_job (void * arg, long invalidated)
 			loader->Expires = -1; /* mark to get deleted at program end */
 		}
 		
-		if (hdr.Size >= 0 && !hdr.Chunked) {
+		if (hdr_only) {
+			loader->DataSize = hdr.Size;
+			if (hdr.Tlen) {
+				memcpy (loader->rdTemp, hdr.Tail, hdr.Tlen);
+				loader->rdTlen = hdr.Tlen;
+			}
+			loader->rdSocket = sock;
+			sched_insert (loader->SuccJob, loader, (long)0, PRIO_RECIVE);
+			return JOB_DONE;
+		
+		} else if (hdr.Size >= 0 && !hdr.Chunked) {
 			loader->Data     = loader->rdDest = malloc (hdr.Size +3);
 			loader->DataSize = loader->rdLeft = hdr.Size;
 			loader->DataFill = hdr.Tlen;
