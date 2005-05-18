@@ -339,9 +339,10 @@ fsel_job (void * arg, long invalidated)
 				if (loader->rdTlen) {
 					memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
 				}
-				slot->Data.Fill = slot->Data.Blck = loader->rdTlen;
-				slot->Data.Socket                 = loader->rdSocket;
-				loader->rdSocket = -1;
+				slot->Data.Blck   = loader->rdTlen;
+				slot->Data.Fill   = 0;
+				slot->Data.Socket = loader->rdSocket;
+				loader->rdSocket  = -1;
 				break;
 			}
 		}
