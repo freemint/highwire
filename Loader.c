@@ -621,6 +621,8 @@ header_job (void * arg, long invalidated)
 	char       * auth = NULL;
 	
 	BOOL hdr_only = (!loader->Target && loader->SuccJob);
+	BOOL cache_lk = (!loader->PostBuf && !hdr_only);
+#define CACHE_ABORT(loc)   { if (cache_lk) cache_abort (loc); }
 	
 	if (invalidated) {
 		if (loader->SuccJob) {
@@ -631,7 +633,7 @@ header_job (void * arg, long invalidated)
 		return JOB_DONE;
 	}
 	
-	if (!loader->PostBuf && !hdr_only) switch(CResultDsk(cache_exclusive(loc))) {
+	if (cache_lk) switch (CResultDsk (cache_exclusive (loc))) {
 		
 		case CR_BUSY:
 		/*	printf ("header_job(%s): cache busy\n", loc->FullName);*/
@@ -680,17 +682,13 @@ header_job (void * arg, long invalidated)
 		
 		if (reply == -ECONNRESET || reply == -ETIMEDOUT) {
 			if (loader->Retry) {
-				if (!loader->PostBuf) {
-					cache_abort (loc);
-				}
+				CACHE_ABORT(loc);
 				loader->Retry--;
 				return JOB_KEEP; /* try connecting later */
 			}
 		}
 		if (reply == -35/*EMFILE*/) {
-			if (!loader->PostBuf) {
-				cache_abort (loc);
-			}
+			CACHE_ABORT(loc);
 			return JOB_KEEP; /* too many open connections yet, try again later */
 		}
 		
@@ -716,7 +714,7 @@ header_job (void * arg, long invalidated)
 					"<body bgcolor=\"white\">"
 					"<h1>Authorization Required</h1>&nbsp;<br>"
 					"Enter user name and password for <q><b>%s</b></q> at <b>%s</b>:"
-					"<form "/*action=\"http://127.0.0.1:8080\" */"method=\"AUTH\">"
+					"<form method=\"AUTH\">"
 					"<table border=\"0\">"
 					"<tr><td align=right>User:&nbsp;"
 					    "<td><input type=\"text\" name=\"USR\">"
@@ -741,9 +739,7 @@ header_job (void * arg, long invalidated)
 				    (loader->Data = malloc (size)) != NULL) {
 					inet_close (sock);
 					sock = -1;
-					if (!loader->PostBuf) {
-						cache_abort (loc);
-					}
+					CACHE_ABORT(loc);
 					size = sprintf (loader->Data, form,
 					                (int)titl_s, titl, hdr.Realm, host, text);
 					loader->Data[++size] = '\0';
@@ -762,9 +758,7 @@ header_job (void * arg, long invalidated)
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = (hdr_only ? NULL : cache_lookup (redir, 0, NULL));
 		inet_close  (sock);
-		if (!loader->PostBuf) {
-			cache_abort (loc);
-		}
+		CACHE_ABORT(loc);
 		
 		if (!loader->MimeType) {
 			loader->MimeType = mime_byExtension (redir->File, NULL, NULL);
@@ -883,9 +877,8 @@ header_job (void * arg, long invalidated)
 	
 	/*  an error case occured
 	*/
-	if (!loader->PostBuf) {
-		cache_abort (loc);
-	}
+	CACHE_ABORT(loc);
+	
 	loader->MimeType = MIME_TEXT;
 	loader->Data     = strdup (hdr.Head);
 	
@@ -894,7 +887,9 @@ header_job (void * arg, long invalidated)
 	} else {
 		start_parser (loader);
 	}
-
+	
+#undef CACHE_ABORT(loc)
+	
 	return JOB_DONE;
 }
 #endif /* USE_INET */
