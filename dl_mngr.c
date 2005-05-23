@@ -174,7 +174,7 @@ recv_job (void * arg, long invalidated)
 		n = inet_recv (slot->Data.Socket, slot->Data.Buffer + slot->Data.Blck, n);
 		if (n > 0) {
 			slot->Data.Blck += n;
-			if (slot->Data.Fill + n == slot->Data.Size) {
+			if (slot->Data.Fill + slot->Data.Blck == slot->Data.Size) {
 				n = -1;
 			} else {
 				if (slot->Data.Size >= 0) {
