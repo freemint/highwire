@@ -788,16 +788,11 @@ cache_build (void)
 {
 	FILE * file = fopen (__cache_path, "rb");
 	if (file) {
-		char hdr[20] = "";
-		long magic   = 0;
-		long fid     = 0;
-		int  pos     = 0;
-		if (fgets (hdr, (int)sizeof(hdr) -1, file)
-		    && (sscanf (hdr, "%8lX:%8lX%n", &magic, &fid, &pos) == 2)
-		    && (magic == MAGIC_NUM) && (fid > 0) && (pos == 17)
-		    && (hdr[17] == '\n' || hdr[17] == '\r')) {
-			__cache_fid = fid;
-		} else {
+		char hdr[20] = "", * p = hdr;
+		if (!(fgets (hdr, (int)sizeof(hdr) -1, file)
+		      && strtoul (p, &p, 16) == MAGIC_NUM && *(p++) == ':'
+		      && (__cache_fid = strtoul (p, &p, 16)) > 0 && p == hdr +17
+		      && (hdr[17] == '\n' || hdr[17] == '\r'))) {
 			__cache_fid = 0l;
 			fclose (file);
 			file = NULL;
