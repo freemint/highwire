@@ -614,7 +614,7 @@ header_job (void * arg, long invalidated)
 	LOADER   loader = arg;
 	LOCATION loc    = loader->Location;
 	
-	const char * host;
+	const char * host = NULL;
 	HTTP_HDR     hdr;
 	short        sock = -1;
 	short        reply;
@@ -668,7 +668,10 @@ header_job (void * arg, long invalidated)
 	
 	/* Connect to host
 	*/
-	if ((host = location_Host (loc, NULL)) != NULL) {
+	if (loader->Target) {
+		if ((host = location_Host (loc, NULL)) != NULL && !*host) host = NULL;
+	}
+	if (host) {
 		char buf[300];
 		sprintf (buf, "Connecting: %.*s", (int)(sizeof(buf) -13), host);
 		containr_notify (loader->Target, HW_SetInfo, buf);
@@ -800,10 +803,11 @@ header_job (void * arg, long invalidated)
 		}
 	}
 	if (reply == 200) {
-		char buf[300];
-		sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
-		containr_notify (loader->Target, HW_SetInfo, buf);
-		
+		if (host) {
+			char buf[300];
+			sprintf (buf, "Receiving from %.*s", (int)(sizeof(buf) -16), host);
+			containr_notify (loader->Target, HW_SetInfo, buf);
+		}
 		loader->Date  = (hdr.Modified > 0 ? hdr.Modified : hdr.SrvrDate);
 		loader->Tdiff = hdr.LoclDate - hdr.SrvrDate;
 		if (hdr.Expires > 0) {
