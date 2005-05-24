@@ -23,7 +23,7 @@ static WINDOW window = NULL;
 
 typedef struct s_slot {
 	const struct {
-		WORD Box, File, Text, Bar, Btn;
+		WORD Box, File, Info, Bar, Btn;
 	} F;
 	struct {
 		WORD   Socket;
@@ -55,11 +55,10 @@ slot_find (void)
 	}
 	form[slot->F.Box].ob_flags &= ~OF_HIDETREE;
 	form[slot->F.Btn].ob_state &= ~OS_SELECTED;
-	form[slot->F.Text].ob_spec.tedinfo->te_just = TE_LEFT;
-	form[slot->F.Bar].ob_spec.obspec.fillpattern = IP_4PATT;
+	form[slot->F.Info].ob_spec.tedinfo->te_just = TE_LEFT;
+	form[slot->F.Bar].ob_flags                  |= OF_HIDETREE;
+	form[slot->F.Bar].ob_spec.obspec.fillpattern = IP_SOLID;
 	form[slot->F.Bar].ob_spec.obspec.interiorcol = G_GREEN;
-	form[slot->F.Bar].ob_x     = 0;
-	form[slot->F.Bar].ob_width = 1;
 	slot->Data.Socket = -1;
 	slot->Data.Target = -1;
 	slot->Data.Buffer = NULL;
@@ -87,13 +86,13 @@ slot_remove (SLOT slot)
 		SLOT next = slot +1;
 		if (!(form[next->F.Box].ob_flags & OF_HIDETREE)) {
 			OBSPEC spec_file = form[slot->F.File].ob_spec;
-			OBSPEC spec_text = form[slot->F.Text].ob_spec;
+			OBSPEC spec_text = form[slot->F.Info].ob_spec;
 			OBSPEC spec_btn  = form[slot->F.Btn].ob_spec;
 			OBSPEC spec_bar  = form[slot->F.Bar].ob_spec;
 			GRECT  rect_bar  = *(GRECT*)&form[slot->F.Bar].ob_x;
 			do {
 				form[slot->F.File].ob_spec = form[next->F.File].ob_spec;
-				form[slot->F.Text].ob_spec = form[next->F.Text].ob_spec;
+				form[slot->F.Info].ob_spec = form[next->F.Info].ob_spec;
 				form[slot->F.Btn].ob_spec  = form[next->F.Btn].ob_spec;
 				form[slot->F.Btn].ob_state = form[next->F.Btn].ob_state;
 				form[slot->F.Bar].ob_spec  = form[next->F.Bar].ob_spec;
@@ -103,7 +102,7 @@ slot_remove (SLOT slot)
 			} while (++next < &slot_tab[numberof(slot_tab)]
 			         && !(form[next->F.Box].ob_flags & OF_HIDETREE));
 			form[slot->F.File].ob_spec = spec_file;
-			form[slot->F.Text].ob_spec = spec_text;
+			form[slot->F.Info].ob_spec = spec_text;
 			form[slot->F.Btn].ob_spec  = spec_btn;
 			form[slot->F.Bar].ob_spec  = spec_bar;
 			*(GRECT*)&form[slot->F.Bar].ob_x = rect_bar;
@@ -127,11 +126,12 @@ slot_byArg (void * arg)
 static void
 slot_error (SLOT slot, const char * text)
 {
-	strncpy (form[slot->F.Text].ob_spec.tedinfo->te_ptext, text,
-	         form[slot->F.Text].ob_spec.tedinfo->te_txtlen -1);
+	strncpy (form[slot->F.Info].ob_spec.tedinfo->te_ptext, text,
+	         form[slot->F.Info].ob_spec.tedinfo->te_txtlen -1);
+	form[slot->F.Info].ob_spec.tedinfo->te_just = TE_LEFT;
 	form[slot->F.Btn].ob_state           &= ~OS_DISABLED;
 	form[slot->F.Btn].ob_spec.free_string = btn_text_cancel;
-	form[slot->F.Bar].ob_spec.obspec.fillpattern = IP_SOLID;
+	form[slot->F.Bar].ob_flags                  &= ~OF_HIDETREE;
 	form[slot->F.Bar].ob_spec.obspec.interiorcol = G_RED;
 	if (slot->Data.Size < 0) {
 		form[slot->F.Bar].ob_x     = 0;
@@ -158,7 +158,7 @@ recv_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
 	BOOL save = FALSE;
-	WORD draw = 0;
+	WORD draw = 0, dr_x = 0, dr_w = 0;
 	
 	if (invalidated) {
 		slot_remove (slot);
@@ -180,13 +180,16 @@ recv_job (void * arg, long invalidated)
 				if (slot->Data.Size >= 0) {
 					WORD w = ((slot->Data.Fill + slot->Data.Blck) *256)
 					       / slot->Data.Size;
-					if (w != form[slot->F.Bar].ob_width) {
+					if (w > form[slot->F.Bar].ob_width) {
+						dr_x = form[slot->F.Bar].ob_width;
+						dr_w = w - dr_x;
 						form[slot->F.Bar].ob_width = w;
 						draw = slot->F.Bar;
 					}
 				} else {
-					if (form[slot->F.Bar].ob_x < 254) {
-						form[slot->F.Bar].ob_x++;
+					if (form[slot->F.Bar].ob_x < 232) {
+						dr_x = form[slot->F.Bar].ob_x++;
+						dr_w = 25;
 					} else {
 						form[slot->F.Bar].ob_x = 0;
 					}
@@ -216,13 +219,13 @@ recv_job (void * arg, long invalidated)
 		
 		if (slot->Data.Size < 0) {
 			slot->Data.Size = slot->Data.Fill;
-			sprintf (form[slot->F.Text].ob_spec.tedinfo->te_ptext,
+			sprintf (form[slot->F.Info].ob_spec.tedinfo->te_ptext,
 			         "%li bytes", slot->Data.Size);
 			form[slot->F.Bar].ob_x = 0;
 		}
 		if (slot->Data.Size == slot->Data.Fill) {
 			form[slot->F.Btn].ob_spec.free_string = btn_text_ok;
-			form[slot->F.Bar].ob_spec.obspec.fillpattern = IP_SOLID;
+			form[slot->F.Bar].ob_spec.obspec.fillpattern = IP_4PATT;
 			form[slot->F.Bar].ob_width                   = 256;
 		} else {
 			slot_error (slot, "Connection broken!");
@@ -232,7 +235,12 @@ recv_job (void * arg, long invalidated)
 	if (draw) {
 		GRECT clip;
 		objc_offset (form, draw, &clip.g_x, &clip.g_y);
-		clip.g_w = form[draw].ob_width;
+		if (dr_w) {
+			clip.g_x += dr_x;
+			clip.g_w =  dr_w;
+		} else {
+			clip.g_w = form[draw].ob_width;
+		}
 		clip.g_h = form[draw].ob_height;
 		window_redraw (window, &clip);
 	}
@@ -250,16 +258,13 @@ fsel_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
 	SLOT   slot   = loader->FreeArg;
-	BOOL   ok;
+	BOOL   ok, err;
 	
 	if (invalidated) {
 		delete_loader (&loader);
 		return FALSE;
 	}
 	
-/*	printf ("fsel_job: %i -> %li / %li / %li\n",
-	        loader->Error, loader->rdTlen, loader->DataFill, loader->DataSize);
-*/	
 	if (loader->Error) {
 		char * p = loader->Data;
 		if (p) {
@@ -280,17 +285,23 @@ fsel_job (void * arg, long invalidated)
 			if (!*p) p = NULL;
 		}
 		slot_error (slot, (p ? p : "Connection Error!"));
-		ok = FALSE;
+		ok  = FALSE;
+		err = TRUE;
 	
 	} else {
+		form[slot->F.Bar].ob_flags &= ~OF_HIDETREE;
+		form[slot->F.Bar].ob_x      = 0;
 		if ((slot->Data.Size = loader->DataSize) < 0) {
-			strcpy (form[slot->F.Text].ob_spec.tedinfo->te_ptext, "size unknown");
+			form[slot->F.Bar].ob_width = 24;
+			strcpy (form[slot->F.Info].ob_spec.tedinfo->te_ptext, "size unknown");
 		} else {
-			sprintf (form[slot->F.Text].ob_spec.tedinfo->te_ptext,
+			form[slot->F.Bar].ob_width = 1;
+			sprintf (form[slot->F.Info].ob_spec.tedinfo->te_ptext,
 			         "%li bytes", slot->Data.Size);
 		}
-		form[slot->F.Text].ob_spec.tedinfo->te_just = TE_RIGHT;
-		ok = TRUE;
+		form[slot->F.Info].ob_spec.tedinfo->te_just = TE_RIGHT;
+		ok  = TRUE;
+		err = FALSE;
 	}
 	slot_redraw (slot, TRUE);
 	window_raise  (window, TRUE, NULL);
@@ -350,7 +361,7 @@ fsel_job (void * arg, long invalidated)
 	if (ok) {
 		sched_insert (recv_job, slot->Data.Buffer, (long)slot, 20/*PRIO_RECIVE*/);
 		form[slot->F.Btn].ob_state &= ~OS_DISABLED;
-	} else {
+	} else if (!err) {
 		slot_remove (slot);
 	}
 	slot_redraw (slot, FALSE);
@@ -444,11 +455,11 @@ dl_manager (LOCATION loc, LOCATION ref)
 		}
 		form[slot->F.Btn].ob_state |= OS_DISABLED;
 		form[slot->F.Btn].ob_spec.free_string = btn_text_stop;
-		sprintf (form[slot->F.Text].ob_spec.tedinfo->te_ptext, t_msk,
-		         (int)(form[slot->F.Text].ob_spec.tedinfo->te_txtlen -1
+		sprintf (form[slot->F.Info].ob_spec.tedinfo->te_ptext, t_msk,
+		         (int)(form[slot->F.Info].ob_spec.tedinfo->te_txtlen -1
 		               -(sizeof(t_msk) -5)), (host ? host : "(???)"));
 		if (!host) {
-			strcpy (form[slot->F.File].ob_spec.tedinfo->te_ptext, "???");
+			strcpy (form[slot->F.File].ob_spec.free_string, "???");
 		} else {
 			char buf[2048], * p = buf;
 			size_t len = location_FullName (loc, buf, sizeof(buf));
