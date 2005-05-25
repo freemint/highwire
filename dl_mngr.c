@@ -134,11 +134,14 @@ slot_remove (SLOT slot)
 }
 
 /*----------------------------------------------------------------------------*/
+#define slot_Arg(slot)   (void*)FILE_Strng(slot)
+
+/*----------------------------------------------------------------------------*/
 static SLOT
 slot_byArg (void * arg)
 {
 	SLOT slot = slot_tab;
-	while (slot->Data.Buffer != arg) {
+	while (arg != slot_Arg(slot)) {
 		if (++slot > slot_end) return NULL;
 	}
 	return slot;
@@ -150,7 +153,6 @@ slot_error (SLOT slot, const char * text)
 {
 	strncpy (INFO_Strng(slot), text, INFO_StrLn(slot) -1);
 	INFO_Adjst(slot) =  TE_LEFT;
-	BTTN_State(slot) &= ~OS_DISABLED;
 	BTTN_Strng(slot) =  bttn_text_cancel;
 	PBAR_Flags(slot) &= ~OF_HIDETREE;
 	PBAR_Color(slot) =  G_RED;
@@ -182,8 +184,6 @@ recv_job (void * arg, long invalidated)
 	WORD draw = 0, dr_x = 0, dr_w = 0;
 	
 	if (invalidated) {
-		slot_remove (slot);
-		slot_redraw (slot, FALSE);
 		return FALSE;
 	}
 	
@@ -278,7 +278,7 @@ static int
 fsel_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
-	SLOT   slot   = loader->FreeArg;
+	SLOT   slot   = slot_byArg (loader->FreeArg);
 	BOOL   ok, err;
 	
 	if (invalidated) {
@@ -379,8 +379,8 @@ fsel_job (void * arg, long invalidated)
 		}
 	}
 	if (ok) {
-		sched_insert (recv_job, slot->Data.Buffer, (long)slot, 20/*PRIO_RECIVE*/);
-		BTTN_State(slot) &= ~OS_DISABLED;
+		arg = slot_Arg(slot);
+		sched_insert (recv_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 	} else if (!err) {
 		slot_remove (slot);
 	}
@@ -415,10 +415,9 @@ dlmngr_handler (OBJECT * tree, WORD obj)
 			case DLM_4BTN: slot = &slot_tab[3]; break;
 		}
 		if (slot) {
-			if (!sched_clear ((long)slot)) {
-				slot_remove (slot);
-				slot_redraw (slot, FALSE);
-			}
+			sched_clear ((long)slot_Arg(slot));
+			slot_remove (slot);
+			slot_redraw (slot, FALSE);
 			if (!slot_used (slot_tab)) {
 				free ((*dlm_wind->destruct)(dlm_wind));
 				dlm_wind = NULL;
@@ -471,8 +470,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 			puts ("dl_manager(): no slot free");
 			return;
 		}
-		BTTN_State(slot) |= OS_DISABLED;
-		BTTN_Strng(slot) =  bttn_text_stop;
+		BTTN_Strng(slot) = bttn_text_stop;
 		sprintf (INFO_Strng(slot), t_msk,
 		         (int)(INFO_StrLn(slot) -1 -(sizeof(t_msk) -5)),
 		         (host ? host : "(???)"));
@@ -487,9 +485,10 @@ dl_manager (LOCATION loc, LOCATION ref)
 			}
 			strcpy (FILE_Strng(slot), p);
 		}
-		slot_redraw (slot, TRUE);
+		window_redraw (dlm_wind, NULL);
 		
-		if ((ldr = start_objc_load (NULL, NULL, loc, fsel_job, slot)) != NULL) {
+		ldr = start_objc_load (NULL, NULL, loc, fsel_job, slot_Arg(slot));
+		if (ldr) {
 			ldr->Referer = location_share (ref);
 		}
 	}
