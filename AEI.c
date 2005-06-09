@@ -773,6 +773,7 @@ rpopup_open (WORD mx, WORD my)
 	
 	HwWIND wind  = hwWind_byCoord (mx, my);
 	FRAME  frame = hwWind_ActiveFrame (wind);
+	LOCATION loc = (frame ? frame->Location : NULL);
 	short x, y, w, h, which_obj;
 	GRECT desk;
 	
@@ -795,6 +796,10 @@ rpopup_open (WORD mx, WORD my)
 		}
 		if (wind->HistMenu >= wind->HistUsed -1) {
 			objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0, OS_DISABLED, 0);
+		}
+		if (loc->Proto != PROT_FILE && !cache_lookup (loc, 0, NULL)) {
+			objc_change (rpopup, RPOP_VIEWSRC, 0, 0,0,0,0, OS_DISABLED, 0);
+			objc_change (rpopup, RPOP_SAVE,    0, 0,0,0,0, OS_DISABLED, 0);
 		}
 	}
 	
@@ -848,7 +853,6 @@ rpopup_open (WORD mx, WORD my)
 			break;
 		case RPOP_VIEWSRC: {
 			char buf[2 * HW_PATH_MAX];
-			LOCATION loc = frame->Location;
 			if (PROTO_isRemote (loc->Proto)) {
 				CACHED cached = cache_lookup (loc, 0, NULL);
 				if (cached) {
@@ -863,16 +867,13 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_INFO:
 			menu_info();
 			break;
-		case RPOP_SAVE:{
+		case RPOP_SAVE: {
 			CONTAINR cont = NULL;
 			char buf[2 * HW_PATH_MAX];
-
-			LOCATION loc = frame->Location;
 
 			location_FullName (loc, buf, sizeof(buf));
 
 			cont = new_hwWind (buf, NULL, NULL)->Pane;
-
 			if (cont) {
 				LOADER ldr = start_objc_load (cont, buf,
 				                              frame->BaseHref, saveas_job, NULL);
@@ -885,7 +886,6 @@ rpopup_open (WORD mx, WORD my)
 		case RPOP_COPY: {
 			FILE * file;
 			char buf[2 * HW_PATH_MAX];
-			LOCATION loc = frame->Location;
 
 			location_FullName (loc, buf, sizeof(buf));
 
@@ -914,8 +914,15 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	
 	HwWIND wind  = hwWind_byContainr (current);
 	FRAME  frame = hwWind_ActiveFrame (wind);
+	LOCATION loc = new_location (addr, frame->BaseHref);
 	short x, y, w, h, which_obj;
 	GRECT desk;
+	
+	if (loc->Proto != PROT_FILE && loc->Proto != PROT_HTTP) {
+		objc_change (rpoplink, RLINK_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
+	} else {
+		objc_change (rpoplink, RLINK_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
 	
 	form_center (rpoplink, &x, &y, &w, &h);
 	x -= rpoplink->ob_x;
@@ -978,8 +985,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 				break;
 			
 			} else if (cont) {
-				LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
-				                              TRUE, NULL);
+				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
 				if (ldr) {
 					ldr->Encoding = link->encoding;
 				}
@@ -991,16 +997,14 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			wind = new_hwWind (addr, NULL, NULL);
 			cont = (wind ? wind->Pane : NULL);
 			if (cont) {
-				LOADER ldr = start_page_load (cont, addr, frame->BaseHref,
-				                              TRUE, NULL);
+				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
 				if (ldr) {
 					ldr->Encoding = link->encoding;
 				}
 			}
 			break;
 		
-		case RLINK_SAVE: {
-			LOCATION loc = new_location (addr, frame->BaseHref);
+		case RLINK_SAVE:
 			if (loc->Proto == PROT_HTTP && devl_flag ("DlMngr")) {
 				dl_manager (loc, frame->Location);
 			} else if ((cont = new_hwWind (addr, NULL, NULL)->Pane) != NULL) {
@@ -1009,13 +1013,11 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 					ldr->Encoding = link->encoding;
 				}
 			}
-			free_location (&loc);
-		}	break;
+			break;
 
 		case RLINK_COPY: {
 			FILE * file;
 			char buf[2 * HW_PATH_MAX];
-			LOCATION loc = new_location(addr, frame->BaseHref);
 
 			location_FullName (loc, buf, sizeof(buf));
 
@@ -1031,6 +1033,8 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			menu_info();
 			break;
 	}
+	
+	free_location (&loc);
 }
 #endif
 
