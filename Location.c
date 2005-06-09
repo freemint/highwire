@@ -1109,19 +1109,19 @@ location_rdIdx (FILE * file)
 		size_t len   = (d_tag > 0 ? strlen (ptr) : 0);
 		while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
 		if (h_tag <= 0) {
-			puts ("location_rdIdx(): host tag missing.");
+			printf ("location_rdIdx(%s): host tag missing.\n", ptr);
 			return NULL;
 		} else if (!host && (host = host_search (h_tag)) == NULL) {
-			puts ("location_rdIdx(): host entry not found.");
+			printf ("location_rdIdx(%s): host entry not found.\n", ptr);
 			return NULL;
 		} else if (d_tag <= 0) {
-			puts ("location_rdIdx(): dir tag missing.");
+			printf ("location_rdIdx(%s): dir tag missing.\n", ptr);
 			return NULL;
 		} else if (!dir && (dir = dir_search (d_tag)) == NULL) {
-			puts ("location_rdIdx(): dir entry not found.");
+			printf ("location_rdIdx(%s): dir entry not found.\n", ptr);
 			return NULL;
 		} else if (proto < 0 || port < 0) {
-			printf ("location_rdIdx(): format error %i/%i.", proto, port);
+			printf ("location_rdIdx(%s): format error %i/%i.\n", ptr, proto, port);
 			return NULL;
 		} else if ((loc = _alloc (dir, ptr)) != NULL) {
 			loc->Proto = proto;
