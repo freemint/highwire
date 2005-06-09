@@ -1150,7 +1150,7 @@ launch_viewer(const char *name)
 /* Get the size of a file from the cache, predominately */
 
 long
-file_size(const LOCATION loc)
+file_size (const LOCATION loc)
 {
 	const char *filename = loc->FullName;
 	long         size = 0;
@@ -1170,7 +1170,7 @@ file_size(const LOCATION loc)
 		Fsetdta(old);
 	
 	} else {
-		size = 0;
+		size = -1;
 	}
 	
 	return(size);
@@ -1181,36 +1181,17 @@ file_size(const LOCATION loc)
 char *
 load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 {
-	const char *filename = loc->FullName;
-	long         size = 0;
-	char       * file = NULL;
-	struct xattr file_info;
-	long         xret = F_xattr(0, filename, &file_info);
-	
-	if (xret == E_OK) {  /* Fxattr() exists */
-		size = file_info.size;
-	
-	} else if (xret == -EINVFN) {  /* here for TOS filenames */
-		DTA  new, * old = Fgetdta();
-		Fsetdta(&new);
-
-		if (Fsfirst(filename, 0) == E_OK) {
-			size = new.d_length;
-		}
-		Fsetdta(old);
-	
-	} else {
-		*expected = *loaded = 0;
-		return NULL;
-	}
+	long   size = file_size (loc);
+	char * file = NULL;
 	
 	*expected = size;
 	
 	if ((file = malloc (size + 3)) == NULL) {
 		size = 0;
 	
-	} else if (size) {
-		int fh = open (filename, O_RDONLY);
+	} else if (size >= 0) {
+		const char * filename = loc->FullName;
+		int          fh       = open (filename, O_RDONLY);
 		if (fh < 0) {
 			size = 0;
 		} else {
