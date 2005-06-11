@@ -33,10 +33,10 @@ typedef struct s_slot {
 	} Data;
 } * SLOT;
 static struct s_slot slot_tab[4] = {
-	{ DLM_1, DLM_1FILE, DLM_1TEXT, DLM_1BAR, DLM_1BTN, },
-	{ DLM_2, DLM_2FILE, DLM_2TEXT, DLM_2BAR, DLM_2BTN, },
-	{ DLM_3, DLM_3FILE, DLM_3TEXT, DLM_3BAR, DLM_3BTN, },
-	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, }
+	{ DLM_1, DLM_1FILE, DLM_1TEXT, DLM_1BAR, DLM_1BTN, { -1,-1,NULL,0,0,0 } },
+	{ DLM_2, DLM_2FILE, DLM_2TEXT, DLM_2BAR, DLM_2BTN, { -1,-1,NULL,0,0,0 } },
+	{ DLM_3, DLM_3FILE, DLM_3TEXT, DLM_3BAR, DLM_3BTN, { -1,-1,NULL,0,0,0 } },
+	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, { -1,-1,NULL,0,0,0 } }
 };
 #define slot_end   (slot_tab + numberof(slot_tab) -1)
 
@@ -80,10 +80,6 @@ slot_find (void)
 	while (!(BASE_Flags(slot) & OF_HIDETREE)) {
 		if (++slot > slot_end) return NULL;
 	}
-	slot->Data.Socket = -1;
-	slot->Data.Target = -1;
-	slot->Data.Buffer = NULL;
-	slot->Data.Size   = -1;
 	slot_view (slot);
 	INFO_Adjst(slot) =  TE_LEFT;
 	PBAR_Flags(slot) |= OF_HIDETREE;
