@@ -268,14 +268,84 @@ recv_job (void * arg, long invalidated)
 	return TRUE;
 }
 
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
 fsel_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
 	SLOT   slot   = slot_byArg (loader->FreeArg);
-	BOOL   ok, err;
+	
+	arg = slot_Arg(slot);
+	do {
+		char fsel_file[HW_PATH_MAX];
+		WORD butt = -1;
+		WORD ret  = strlen (loader->Location->File);
+		
+		if (ret) {
+			const char * p = memchr (loader->Location->File, '?', ret);
+			if (p) ret = (WORD)(p - loader->Location->File);
+		}
+		if (ret) {
+			memcpy (fsel_file, loader->Location->File, ret);
+		}
+		fsel_file[ret] = '\0';
+		
+		if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
+		    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
+			ret = fsel_exinput (fsel_path, fsel_file, &butt, "Save Target as...");
+		} else {
+			ret = fsel_input (fsel_path, fsel_file, &butt);
+		}
+		if (!ret || butt != FSEL_OK || !*fsel_file) {
+			arg = NULL;
+		} else {
+			char * p = strrchr (fsel_path, '\\');
+			long   n = p - fsel_path +1;
+			if (n > 0) {
+				memmove (fsel_file + n, fsel_file, strlen (fsel_file) +1);
+				memcpy  (fsel_file,     fsel_path, n);
+			} else {
+				arg = NULL;
+			}
+		}
+		if (arg) {
+			slot->Data.Target = open (fsel_file,
+			                          O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
+			if (slot->Data.Target < 0) {
+				hwUi_warn ("Download", "Cannot create target file.");
+			} else if ((slot->Data.Buffer = malloc (BUF_SIZE)) == NULL) {
+				hwUi_warn ("Download", "Not enough memory left!");
+				arg = NULL;
+			} else {
+				if (loader->rdTlen) {
+					memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
+				}
+				slot->Data.Blck   = loader->rdTlen;
+				slot->Data.Fill   = 0;
+				slot->Data.Socket = loader->rdSocket;
+				loader->rdSocket  = -1;
+				sched_insert (recv_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
+				break;
+			}
+		}
+	} while (arg);
+	
+	if (!arg) {
+		slot_remove (slot);
+	}
+	slot_redraw (slot, FALSE);
+	
+	delete_loader (&loader);
+	
+	return FALSE;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static int
+conn_job (void * arg, long invalidated)
+{
+	LOADER loader = arg;
+	SLOT   slot   = slot_byArg (loader->FreeArg);
 	
 	if (invalidated) {
 		delete_loader (&loader);
@@ -301,9 +371,8 @@ fsel_job (void * arg, long invalidated)
 			}
 			if (!*p) p = NULL;
 		}
+		slot->Data.Size = -1;
 		slot_error (slot, (p ? p : "Connection Error!"));
-		ok  = FALSE;
-		err = TRUE;
 	
 	} else {
 		PBAR_Flags(slot)   &= ~OF_HIDETREE;
@@ -316,73 +385,10 @@ fsel_job (void * arg, long invalidated)
 			sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
 		}
 		INFO_Adjst(slot) = TE_RIGHT;
-		ok  = TRUE;
-		err = FALSE;
+		sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 	}
 	slot_redraw (slot, TRUE);
 	window_raise  (dlm_wind, TRUE, NULL);
-	
-	while (ok) {
-		char fsel_file[HW_PATH_MAX];
-		WORD butt = -1;
-		WORD ret  = strlen (loader->Location->File);
-		
-		if (ret) {
-			const char * p = memchr (loader->Location->File, '?', ret);
-			if (p) ret = (WORD)(p - loader->Location->File);
-		}
-		if (ret) {
-			memcpy (fsel_file, loader->Location->File, ret);
-		}
-		fsel_file[ret] = '\0';
-		
-		if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-		    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-			ret = fsel_exinput (fsel_path, fsel_file, &butt, "Save Target as...");
-		} else {
-			ret = fsel_input (fsel_path, fsel_file, &butt);
-		}
-		if (!ret || butt != FSEL_OK || !*fsel_file) {
-			ok = FALSE;
-		} else {
-			char * p = strrchr (fsel_path, '\\');
-			long   n = p - fsel_path +1;
-			if (n > 0) {
-				memmove (fsel_file + n, fsel_file, strlen (fsel_file) +1);
-				memcpy  (fsel_file,     fsel_path, n);
-			} else {
-				ok = FALSE;
-			}
-		}
-		if (ok) {
-			slot->Data.Target = open (fsel_file,
-			                          O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
-			if (slot->Data.Target < 0) {
-				hwUi_warn ("Download", "Cannot create target file.");
-			} else if ((slot->Data.Buffer = malloc (BUF_SIZE)) == NULL) {
-				hwUi_warn ("Download", "Not enough memory left!");
-				ok = FALSE;
-			} else {
-				if (loader->rdTlen) {
-					memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
-				}
-				slot->Data.Blck   = loader->rdTlen;
-				slot->Data.Fill   = 0;
-				slot->Data.Socket = loader->rdSocket;
-				loader->rdSocket  = -1;
-				break;
-			}
-		}
-	}
-	if (ok) {
-		arg = slot_Arg(slot);
-		sched_insert (recv_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
-	} else if (!err) {
-		slot_remove (slot);
-	}
-	slot_redraw (slot, FALSE);
-	
-	delete_loader (&loader);
 	
 	return FALSE;
 }
@@ -483,7 +489,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 		}
 		window_redraw (dlm_wind, NULL);
 		
-		ldr = start_objc_load (NULL, NULL, loc, fsel_job, slot_Arg(slot));
+		ldr = start_objc_load (NULL, NULL, loc, conn_job, slot_Arg(slot));
 		if (ldr) {
 			ldr->Referer = location_share (ref);
 		}
