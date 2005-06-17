@@ -145,6 +145,19 @@ slot_byArg (void * arg)
 
 /*----------------------------------------------------------------------------*/
 static void
+slot_setfile (SLOT slot, LOCATION loc)
+{
+	char buf[2048], * p = buf;
+	size_t len = location_FullName (loc, buf, sizeof(buf));
+	if (len > file_text_max) {
+		p += len - file_text_max;
+		*p = '®';
+	}
+	strcpy (FILE_Strng(slot), p);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
 slot_error (SLOT slot, const char * text)
 {
 	strncpy (INFO_Strng(slot), text, INFO_StrLn(slot) -1);
@@ -313,17 +326,7 @@ fsel_job (void * arg, long invalidated)
 			                          O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
 			if (slot->Data.Target < 0) {
 				hwUi_warn ("Download", "Cannot create target file.");
-			} else if ((slot->Data.Buffer = malloc (BUF_SIZE)) == NULL) {
-				hwUi_warn ("Download", "Not enough memory left!");
-				arg = NULL;
 			} else {
-				if (loader->rdTlen) {
-					memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
-				}
-				slot->Data.Blck   = loader->rdTlen;
-				slot->Data.Fill   = 0;
-				slot->Data.Socket = loader->rdSocket;
-				loader->rdSocket  = -1;
 				sched_insert (recv_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 				break;
 			}
@@ -385,6 +388,13 @@ conn_job (void * arg, long invalidated)
 			sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
 		}
 		INFO_Adjst(slot) = TE_RIGHT;
+		if (loader->rdTlen) {
+			memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
+		}
+		slot->Data.Blck   = loader->rdTlen;
+		slot->Data.Fill   = 0;
+		slot->Data.Socket = loader->rdSocket;
+		loader->rdSocket  = -1;
 		sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 	}
 	slot_redraw (slot, TRUE);
@@ -436,6 +446,8 @@ dlmngr_handler (OBJECT * tree, WORD obj)
 void
 dl_manager (LOCATION loc, LOCATION ref)
 {
+	SLOT slot;
+	
 	if (!dlm_wind) {
 		short n;
 		if (!dlm_form) {
@@ -458,40 +470,36 @@ dl_manager (LOCATION loc, LOCATION ref)
 		}
 		n = formwind_do (dlm_form, 0, "Download Manager", FALSE, dlmngr_handler);
 		dlm_wind = window_byHandle (n);
+		if (!dlm_wind) return;  /* something went wrong */
 	} else {
 		window_raise (dlm_wind, TRUE, NULL);
 	}
 	
-	if (dlm_wind) {
-		const char * host    = location_Host (loc, NULL);
-		const char   t_msk[] = "Connecting: %.*s";
-		LOADER       ldr;
-		
-		SLOT slot = slot_find();
-		if (!slot) {
-			puts ("dl_manager(): no slot free");
-			return;
-		}
-		BTTN_Strng(slot) = bttn_text_stop;
-		sprintf (INFO_Strng(slot), t_msk,
-		         (int)(INFO_StrLn(slot) -1 -(sizeof(t_msk) -5)),
-		         (host ? host : "(???)"));
-		if (!host) {
-			strcpy (FILE_Strng(slot), "???");
-		} else {
-			char buf[2048], * p = buf;
-			size_t len = location_FullName (loc, buf, sizeof(buf));
-			if (len > file_text_max) {
-				p += len - file_text_max;
-				*p = '®';
-			}
-			strcpy (FILE_Strng(slot), p);
-		}
-		window_redraw (dlm_wind, NULL);
-		
-		ldr = start_objc_load (NULL, NULL, loc, conn_job, slot_Arg(slot));
+	if ((slot = slot_find()) == NULL) {
+		hwUi_info ("DownloadManager", "No slot free.");
+		return;
+	}
+	if ((slot->Data.Buffer = malloc (BUF_SIZE)) == NULL) {
+		hwUi_warn ("DownloadManager", "Not enough memory left!");
+		slot_hide (slot);
+		return;
+	}
+	
+	slot_setfile (slot, loc);
+	
+	/***/ {
+		LOADER ldr = start_objc_load (NULL, NULL, loc, conn_job, slot_Arg(slot));
 		if (ldr) {
+			const char t_msk[] = "Connecting: %.*s";
+			sprintf (INFO_Strng(slot), t_msk,
+			         (int)(INFO_StrLn(slot) -1 -(sizeof(t_msk) -5)),
+			         location_Host (loc, NULL));
+			BTTN_Strng(slot) = bttn_text_stop;
 			ldr->Referer = location_share (ref);
+		} else {
+			BTTN_Strng(slot) = bttn_text_cancel;
+			slot_error (slot, "Internal Error!");
 		}
 	}
+	window_redraw (dlm_wind, NULL);
 }
