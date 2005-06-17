@@ -24,19 +24,20 @@ static WINDOW   dlm_wind = NULL;
 typedef struct s_slot {
 	const WORD Base, File, Info, Pbar, Bttn;
 	struct {
-		WORD   Socket;
-		WORD   Target;
-		char * Buffer;
-		long   Size;
-		long   Fill;
-		long   Blck;
+		LOCATION Location;
+		WORD     Socket;
+		WORD     Target;
+		char   * Buffer;
+		long     Size;
+		long     Fill;
+		long     Blck;
 	} Data;
 } * SLOT;
 static struct s_slot slot_tab[4] = {
-	{ DLM_1, DLM_1FILE, DLM_1TEXT, DLM_1BAR, DLM_1BTN, { -1,-1,NULL,0,0,0 } },
-	{ DLM_2, DLM_2FILE, DLM_2TEXT, DLM_2BAR, DLM_2BTN, { -1,-1,NULL,0,0,0 } },
-	{ DLM_3, DLM_3FILE, DLM_3TEXT, DLM_3BAR, DLM_3BTN, { -1,-1,NULL,0,0,0 } },
-	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, { -1,-1,NULL,0,0,0 } }
+	{ DLM_1, DLM_1FILE, DLM_1TEXT, DLM_1BAR, DLM_1BTN, {NULL,-1,-1,NULL,0,0,0} },
+	{ DLM_2, DLM_2FILE, DLM_2TEXT, DLM_2BAR, DLM_2BTN, {NULL,-1,-1,NULL,0,0,0} },
+	{ DLM_3, DLM_3FILE, DLM_3TEXT, DLM_3BAR, DLM_3BTN, {NULL,-1,-1,NULL,0,0,0} },
+	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, {NULL,-1,-1,NULL,0,0,0} }
 };
 #define slot_end   (slot_tab + numberof(slot_tab) -1)
 
@@ -95,16 +96,15 @@ slot_remove (SLOT slot)
 {
 	if (slot->Data.Socket >= 0) {
 		inet_close (slot->Data.Socket);
-		slot->Data.Socket = -1;
 	}
 	if (slot->Data.Target >= 0) {
 		close (slot->Data.Target);
-		slot->Data.Target = -1;
 	}
 	if (slot->Data.Buffer) {
 		free (slot->Data.Buffer);
-		slot->Data.Buffer = NULL;
 	}
+	free_location (&slot->Data.Location);
+	
 	if (slot < slot_end) {
 		SLOT next = slot +1;
 		if (slot_used (next)) {
@@ -125,7 +125,11 @@ slot_remove (SLOT slot)
 			INFO_Ospec(slot) = info_spec;
 			BTTN_Strng(slot) = bttn_text;
 		}
+		slot->Data.Location = NULL;
 	}
+	slot->Data.Socket = -1;
+	slot->Data.Target = -1;
+	slot->Data.Buffer = NULL;
 	slot_hide (slot);
 }
 
@@ -285,21 +289,23 @@ recv_job (void * arg, long invalidated)
 static int
 fsel_job (void * arg, long invalidated)
 {
-	LOADER loader = arg;
-	SLOT   slot   = slot_byArg (loader->FreeArg);
+	SLOT slot = slot_byArg (arg);
 	
-	arg = slot_Arg(slot);
+	if (invalidated) {
+		return FALSE;
+	}
+	
 	do {
 		char fsel_file[HW_PATH_MAX];
 		WORD butt = -1;
-		WORD ret  = strlen (loader->Location->File);
+		WORD ret  = strlen (slot->Data.Location->File);
 		
 		if (ret) {
-			const char * p = memchr (loader->Location->File, '?', ret);
-			if (p) ret = (WORD)(p - loader->Location->File);
+			const char * p = memchr (slot->Data.Location->File, '?', ret);
+			if (p) ret = (WORD)(p - slot->Data.Location->File);
 		}
 		if (ret) {
-			memcpy (fsel_file, loader->Location->File, ret);
+			memcpy (fsel_file, slot->Data.Location->File, ret);
 		}
 		fsel_file[ret] = '\0';
 		
@@ -337,8 +343,6 @@ fsel_job (void * arg, long invalidated)
 		slot_remove (slot);
 	}
 	slot_redraw (slot, FALSE);
-	
-	delete_loader (&loader);
 	
 	return FALSE;
 }
@@ -395,10 +399,13 @@ conn_job (void * arg, long invalidated)
 		slot->Data.Fill   = 0;
 		slot->Data.Socket = loader->rdSocket;
 		loader->rdSocket  = -1;
+		arg = slot_Arg(slot);
 		sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 	}
 	slot_redraw (slot, TRUE);
 	window_raise  (dlm_wind, TRUE, NULL);
+	
+	delete_loader (&loader);
 	
 	return FALSE;
 }
@@ -485,6 +492,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 		return;
 	}
 	
+	slot->Data.Location = location_share (loc);
 	slot_setfile (slot, loc);
 	
 	/***/ {
