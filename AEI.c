@@ -1005,14 +1005,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			break;
 		
 		case RLINK_SAVE:
-			if (loc->Proto == PROT_HTTP) {
-				dl_manager (loc, frame->Location);
-			} else if ((cont = new_hwWind (addr, NULL, NULL)->Pane) != NULL) {
-				LOADER ldr = start_objc_load (cont, NULL, loc, saveas_job, NULL);
-				if (ldr) {
-					ldr->Encoding = link->encoding;
-				}
-			}
+			dl_manager (loc, frame->Location);
 			break;
 
 		case RLINK_COPY: {
