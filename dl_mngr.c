@@ -25,7 +25,7 @@ typedef struct s_slot {
 	const WORD Base, File, Info, Pbar, Bttn;
 	struct {
 		LOCATION Location;
-		WORD     Socket;
+		WORD     Source;
 		WORD     Target;
 		char   * Buffer;
 		long     Size;
@@ -94,8 +94,10 @@ slot_find (void)
 static void
 slot_remove (SLOT slot)
 {
-	if (slot->Data.Socket >= 0) {
-		inet_close (slot->Data.Socket);
+	if (slot->Data.Source >= 0) {
+		LOCATION loc = slot->Data.Location;
+		if (PROTO_isRemote (loc->Proto)) inet_close (slot->Data.Source);
+		else                             close      (slot->Data.Source);
 	}
 	if (slot->Data.Target >= 0) {
 		close (slot->Data.Target);
@@ -127,7 +129,7 @@ slot_remove (SLOT slot)
 		}
 		slot->Data.Location = NULL;
 	}
-	slot->Data.Socket = -1;
+	slot->Data.Source = -1;
 	slot->Data.Target = -1;
 	slot->Data.Buffer = NULL;
 	slot_hide (slot);
@@ -190,6 +192,51 @@ slot_redraw (SLOT slot, BOOL only_this)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
+load_job (void * arg, long invalidated)
+{
+	SLOT slot = slot_byArg (arg);
+	
+	if (invalidated) {
+		return FALSE;
+	}
+	
+	if (slot->Data.Source >= 0) {
+		long n = read (slot->Data.Source, slot->Data.Buffer, BUF_SIZE);
+		if (n > 0) {
+			write (slot->Data.Target, slot->Data.Buffer, n);
+			slot->Data.Fill += n;
+			n = (slot->Data.Fill *256) / slot->Data.Size;
+			if (n > PBAR_Rect(slot).g_w) {
+				GRECT clip;
+				objc_offset (dlm_form, slot->Pbar, &clip.g_x, &clip.g_y);
+				clip.g_h =  PBAR_Rect(slot).g_h;
+				clip.g_x += PBAR_Rect(slot).g_w;
+				clip.g_w =  n - PBAR_Rect(slot).g_w;
+				PBAR_Rect(slot).g_w = n;
+				window_redraw (dlm_wind, &clip);
+			}
+			
+		} else {
+			BTTN_Strng(slot) = bttn_text_ok;
+			PBAR_Fpatt(slot) = IP_4PATT;
+			window_redraw (dlm_wind, NULL);
+			close (slot->Data.Source);
+			slot->Data.Source = -1;
+		}
+	}
+	if (slot->Data.Source < 0) {
+		close (slot->Data.Target);
+		slot->Data.Target = -1;
+		free (slot->Data.Buffer);
+		slot->Data.Buffer = NULL;
+		window_raise (dlm_wind, TRUE, NULL);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static int
 recv_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
@@ -200,12 +247,12 @@ recv_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	if (slot->Data.Socket >= 0) {
+	if (slot->Data.Source >= 0) {
 		long n = BUF_SIZE - slot->Data.Blck;
 		if (slot->Data.Size > 0 && n > slot->Data.Size - slot->Data.Fill) {
 			n = slot->Data.Size - slot->Data.Fill;
 		}
-		n = inet_recv (slot->Data.Socket, slot->Data.Buffer + slot->Data.Blck, n);
+		n = inet_recv (slot->Data.Source, slot->Data.Buffer + slot->Data.Blck, n);
 		if (n > 0) {
 			slot->Data.Blck += n;
 			if (slot->Data.Fill + slot->Data.Blck == slot->Data.Size) {
@@ -233,8 +280,8 @@ recv_job (void * arg, long invalidated)
 			}
 		}
 		if (n < 0) {
-			inet_close (slot->Data.Socket);
-			slot->Data.Socket = -1;
+			inet_close (slot->Data.Source);
+			slot->Data.Source = -1;
 			save = (slot->Data.Blck > 0);
 		}
 	} else {
@@ -245,7 +292,7 @@ recv_job (void * arg, long invalidated)
 		slot->Data.Fill += slot->Data.Blck;
 		slot->Data.Blck =  0;
 	}
-	if (slot->Data.Socket < 0) {
+	if (slot->Data.Source < 0) {
 		close (slot->Data.Target);
 		slot->Data.Target = -1;
 		free (slot->Data.Buffer);
@@ -263,7 +310,6 @@ recv_job (void * arg, long invalidated)
 		} else {
 			slot_error (slot, "Connection broken!");
 		}
-/*		dlm_form[slot->Info].ob_spec.tedinfo->te_color |= G_LBLACK <<8;*/
 		draw = slot->Base;
 	}
 	if (draw) {
@@ -278,7 +324,7 @@ recv_job (void * arg, long invalidated)
 		clip.g_h = dlm_form[draw].ob_height;
 		window_redraw (dlm_wind, &clip);
 	}
-	if (slot->Data.Socket < 0) {
+	if (slot->Data.Source < 0) {
 		window_raise (dlm_wind, TRUE, NULL);
 		return FALSE;
 	}
@@ -333,7 +379,9 @@ fsel_job (void * arg, long invalidated)
 			if (slot->Data.Target < 0) {
 				hwUi_warn ("Download", "Cannot create target file.");
 			} else {
-				sched_insert (recv_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
+				SCHED_FUNC job = (PROTO_isRemote (slot->Data.Location->Proto)
+				                  ? recv_job : load_job);
+				sched_insert (job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 				break;
 			}
 		}
@@ -397,7 +445,7 @@ conn_job (void * arg, long invalidated)
 		}
 		slot->Data.Blck   = loader->rdTlen;
 		slot->Data.Fill   = 0;
-		slot->Data.Socket = loader->rdSocket;
+		slot->Data.Source = loader->rdSocket;
 		loader->rdSocket  = -1;
 		arg = slot_Arg(slot);
 		sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
@@ -495,7 +543,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 	slot->Data.Location = location_share (loc);
 	slot_setfile (slot, loc);
 	
-	/***/ {
+	if (PROTO_isRemote (loc->Proto)) {
 		LOADER ldr = start_objc_load (NULL, NULL, loc, conn_job, slot_Arg(slot));
 		if (ldr) {
 			const char t_msk[] = "Connecting: %.*s";
@@ -507,6 +555,28 @@ dl_manager (LOCATION loc, LOCATION ref)
 		} else {
 			BTTN_Strng(slot) = bttn_text_cancel;
 			slot_error (slot, "Internal Error!");
+		}
+	
+	} else { /* local file */
+		if ((slot->Data.Size = file_size (loc)) < 0) {
+			BTTN_Strng(slot) = bttn_text_cancel;
+			slot_error (slot, "File does not exist!");
+		} else {
+			char buf[2048];
+			location_FullName (loc, buf, sizeof(buf));
+			if ((slot->Data.Source = open (buf, O_RDONLY|O_RAW)) < 0) {
+				BTTN_Strng(slot) = bttn_text_cancel;
+				slot_error (slot, "Cannot read file!");
+			} else {
+				void * arg = slot_Arg(slot);
+				PBAR_Flags(slot)   &= ~OF_HIDETREE;
+				PBAR_Rect(slot).g_x = 0;
+				PBAR_Rect(slot).g_w = 1;
+				INFO_Adjst(slot)    = TE_RIGHT;
+				BTTN_Strng(slot)    = bttn_text_stop;
+				sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
+				sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
+			}
 		}
 	}
 	window_redraw (dlm_wind, NULL);
