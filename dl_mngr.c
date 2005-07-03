@@ -465,15 +465,22 @@ dlmngr_handler (OBJECT * tree, WORD obj)
 {
 	(void)tree;
 	
-	if (obj < 0) {
+	if (obj < 0) { /* window close notification from parent class */
+		if (slot_used (slot_tab)) {
+			SLOT slot = slot_tab;
+			do if (slot->Data.Source < 0) { /* not in use anymore */
+				slot_remove (slot);
+				slot_redraw (slot, FALSE);
+			} else { /* check the next slot */
+				slot++;
+			} while (slot <= slot_end && slot_used (slot));
+		}
 		if (!slot_used (slot_tab)) {
 			dlm_wind = NULL; /* to be deleted */
-		} else {
-			window_raise (dlm_wind, FALSE, NULL);
 		}
 		return (dlm_wind == NULL);;
 	
-	} else {
+	} else { /* some of the buttons got pressed */
 		SLOT slot = NULL;
 		switch (obj) {
 			case DLM_1BTN: slot = &slot_tab[0]; break;
