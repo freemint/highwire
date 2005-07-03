@@ -1,4 +1,8 @@
-(non public of May 13, 2005)
+(non public of Jun. 30, 2005)
+
+- Download manager implemented for the "Save
+  Target As" popup item.  Can handle up to four
+  connections at a time.
 
 - Support added for HTTP Authentication (RFC2069
   Basic only, no RFC2617 Digest/MD5 yet).
@@ -15,7 +19,7 @@
 
 - Loading strategy changed to reduce the
   probability of connection timeouts.  Also some
-  some pages with lots of images are loaded a bit
+  pages with lots of images are loaded a bit
   faster now.
 
 - The HELP key opens the correct document now
@@ -310,8 +314,8 @@ Changes in V. 0.1.7 release  of March 25, 2004:
   CSS 1.0 as well as for 2.0 specification.
 
 - For lists and the tags CENTER, BLOCKQUOTE and
-  DIV the CSS styles background-color, border-
-  width/-color,  margin, padding and text-indent
+  DIV the CSS styles background-color, border-width/-color,  margin, 
+  padding and text-indent
   are supported now.
 
 - Block level elements store id='..' attributes
@@ -508,8 +512,7 @@ Changes in V. 0.1.4 release  of August 10, 2003:
 - Sound files from remote sites are now loaded
   also and can be played by external players.
 
-- Fixed a problem with tables which were over-
-  lapping other objects.
+- Fixed a problem with tables which were over-lapping other objects.
 
 - Reworked config parser for faster program start
   on slow machines.
