@@ -126,7 +126,7 @@ start_parser (LOADER loader)
 	
 	if (chk0) { /* check for invalid nul characters in html */
 		char * p = loader->Data, * q;
-		size_t n = loader->DataSize;
+		long   n = loader->DataSize;
 		while (n > 0l && (q = memchr (p, '\0', n)) != NULL) {
 			*q = ' ';
 			n -= q - p;
@@ -1184,12 +1184,12 @@ load_file (const LOCATION loc, size_t * expected, size_t * loaded)
 	long   size = file_size (loc);
 	char * file = NULL;
 	
-	*expected = size;
+	*expected = (size > 0 ? size : 0);
 	
-	if ((file = malloc (size + 3)) == NULL) {
+	if (size < 0 || (file = malloc (size + 3)) == NULL) {
 		size = 0;
 	
-	} else if (size >= 0) {
+	} else {
 		const char * filename = loc->FullName;
 		int          fh       = open (filename, O_RDONLY);
 		if (fh < 0) {
