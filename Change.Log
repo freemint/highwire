@@ -25,6 +25,8 @@
 - The HELP key opens the correct document now
   rather then the outdated file.
 
+- Bug #0186 resolved.
+
 __________________________________________________
 Changes in V. 0.2.5 release  of March 15, 2005:
 
