@@ -1091,10 +1091,10 @@ vTab_MinWidth (DOMBOX * This)
 	TABLE table = (TABLE)This;
 	LONG	minwid_ret;
 
-	if (table->Minimum) {
+/*	if (table->Minimum) {
 		calc_minmax (table);
 	}
-
+dan test 7/21/05 */
 	if (This->SetMinWid) {
 		if (This->SetWidth) {
 			if (This->SetWidth < This->SetMinWid)
