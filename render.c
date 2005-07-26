@@ -1382,6 +1382,66 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		const char * line = *text, * save = NULL;
+		int scr_cnt = 1;
+
+		/* goto jump point if we have a script embeded in a script
+		 * like on the site in bug report 202 - Dan 26.7.05
+		 */
+		 
+		embeded_script:
+		
+		do {
+			BOOL    slash;
+			HTMLTAG tag;
+			while (*(line++) != '<');
+
+			slash = (*line == '/');
+			if (slash) line++;
+			else       save = line;
+
+			tag = parse_tag (parser, &line);
+
+			if (slash) {
+				if (tag == TAG_SCRIPT) {
+					scr_cnt -= 1;
+					
+					if (scr_cnt < 1) {
+						flags &= ~PF_SCRIPT;
+						break;
+					}
+				}
+			} else if (tag == TAG_NOSCRIPT) {
+				scr_cnt -= 1;
+				if (scr_cnt < 1) {
+					flags |= PF_SCRIPT;
+					break;
+				}
+			} else if (tag == TAG_SCRIPT) {
+				scr_cnt += 1;
+				goto embeded_script;
+			} else {
+				line = save;
+			}
+		} while (*line);
+		*text = line;
+	
+	} else {
+		flags &= ~PF_SCRIPT;
+	}
+
+	return flags;
+}
+#if 0
+/* temporary backup just in case I misunderstood what was supposed
+ * to be going on in this routine - Dan 7-26-05
+ */
+static UWORD
+render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (parser);
+
+	if (flags & PF_START) {
+		const char * line = *text, * save = NULL;
 		do {
 			BOOL    slash;
 			HTMLTAG tag;
@@ -1424,7 +1484,6 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 				line = save;
 			}
 		} while (*line);
-	
 		*text = line;
 	
 	} else {
@@ -1432,6 +1491,7 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 	}
 	return flags;
 }
+#endif
 
 /*------------------------------------------------------------------------------
  * NoScript Area
