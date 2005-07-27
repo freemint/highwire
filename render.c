@@ -691,7 +691,7 @@ static char *
 url_correct (char * url)
 {
 	char * p = url;
-	
+
 	if (*p && *p <= ' ') { /* skip leading control characters */
 		char * q = url;
 		while (*(++p) && *q <= ' ');
@@ -719,7 +719,7 @@ url_correct (char * url)
 	} else if (!anc_correct (p +1)) {
 		*p = '\0';
 	}
-	
+
 	return url;
 }
 
@@ -2275,7 +2275,15 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if (get_value (parser, KEY_SRC, img_file, sizeof(img_file))) {
-			url_correct (img_file);
+			char * p = url_correct (img_file);
+
+			if (*p && *p != '#') {
+				BOOL  skip = FALSE;
+				char * dst = p;
+				do if ((*dst = *(p)) > ' ' || skip) {
+					skip |= (*(dst++) == '#');
+				} while (*(p++));
+			}
 		}
 		new_image (frame, current, img_file, frame->BaseHref,
 		           get_value_size (parser, KEY_WIDTH),
