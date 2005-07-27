@@ -1,7 +1,9 @@
 #ifdef LIBJPG
 
+#define XMD_H /* avoid redefining INT16 and INT32, already done in gemlib */
 #include <setjmp.h>
 #include <jpeglib.h>
+#undef XMD_H
 
 static BOOL decJpg_start (const char * file, IMGINFO info);
 static BOOL decJpg_read  (IMGINFO, char * buffer);
