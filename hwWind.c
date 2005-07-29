@@ -1559,10 +1559,9 @@ TC_trans (MFDB *src)
 	}
 
 	free(temp_addr);
-	free(src->fd_addr);
 	src->fd_stand = 0;	/* standard format */
-
-	src->fd_addr = new_addr;
+	src->fd_addr  = new_addr;
+	
 	return( TRUE );
 }
 
