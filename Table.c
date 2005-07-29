@@ -1088,10 +1088,10 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 static LONG
 vTab_MinWidth (DOMBOX * This)
 {
-	TABLE table = (TABLE)This;
 	LONG	minwid_ret;
+/*	TABLE table = (TABLE)This;
 
-/*	if (table->Minimum) {
+	if (table->Minimum) {
 		calc_minmax (table);
 	}
 dan test 7/21/05 */
