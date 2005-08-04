@@ -656,25 +656,27 @@ static void
 raster_mono (IMGINFO info, void * _dst)
 {
 #if defined(__GNUC__)
-	__asm__ volatile ("
-		subq.w	#1, %2 | width
-		move.l	%3, d0 | scale -> index
-		addq.l	#1, d0
-		lsr.l		#1, d0
-		0:	clr.w 	d1          | chunk
-			move.w	#0x8000, d2 | pixel
-		1:	swap		d0
-			btst		#0, (d0.w,%1) | (src[index>>16] & 1)
-			beq.b		2f
-			or.w		d2, d1        | chunk |= pixel
-		2:	swap		d0
-			add.l		%3, d0        | index += info->IncXfx
-			lsr.w		#1, d2
-			dbeq		%2, 1b
-		move.w	d1, (%0)+
-		subq.w	#1, %2
-		bpl.b		0b
-		"
+	__asm__ volatile (
+		"subq.w	#1, %2 | width\n"
+	"	move.l	%3, d0 | scale -> index\n"
+	"	addq.l	#1, d0\n"
+	"	lsr.l		#1, d0\n"
+	"0:\n"
+	"	clr.w 	d1          | chunk\n"
+	"	move.w	#0x8000, d2 | pixel\n"
+	"1:\n"
+	"	swap		d0\n"
+	"	btst		#0, (d0.w,%1) | (src[index>>16] & 1)\n"
+	"	beq.b		2f\n"
+	"	or.w		d2, d1        | chunk |= pixel\n"
+	"2:\n"
+	"	swap		d0\n"
+	"	add.l		%3, d0        | index += info->IncXfx\n"
+	"	lsr.w		#1, d2\n"
+	"	dbeq		%2, 1b\n"
+	"	move.w	d1, (%0)+\n"
+	"	subq.w	#1, %2\n"
+	"	bpl.b		0b"
 		:                                       /* output */
 		: "a"(_dst), "a"(info->RowBuf),
 		  /*  %0         %1             */
@@ -944,43 +946,42 @@ dither_D2 (IMGINFO info, void * _dst)
 static void
 raster_chunk4 (CHAR * src, UWORD * dst, size_t num)
 {
-	__asm__ volatile ("
-		clr.l		d4
-		move.b	(%0)+, d4
-		move.l	d4, d5
-		andi.b	#0x03, d4 |chunks 0/1
-		ror.l 	#1, d4
-		ror.w		#1, d4
-		andi.b	#0x0C, d5 |chunks 2/3
-		ror.l 	#3, d5
-		ror.w		#1, d5
+	__asm__ volatile (
+		"clr.l	d4\n"
+	"	move.b	(%0)+, d4\n"
+	"	move.l	d4, d5\n"
+	"	andi.b	#0x03, d4 |chunks 0/1\n"
+	"	ror.l 	#1, d4\n"
+	"	ror.w		#1, d4\n"
+	"	andi.b	#0x0C, d5 |chunks 2/3\n"
+	"	ror.l 	#3, d5\n"
+	"	ror.w		#1, d5\n"
 		
-		subq.l	#2, %2
-		bmi		9f
+	"	subq.l	#2, %2\n"
+	"	bmi			9f\n"
 		
-		moveq.l	#1, d1
+	"	moveq.l	#1, d1\n"
 		
-		1: | chunk loop
-		move.b	(%0)+, d2
+	"1: | chunk loop\n"
+	"	move.b	(%0)+, d2\n"
 		
-		moveq.l	#0x03, d3 |chunks 0/1
-		and.b		d2, d3
-		ror.l 	#1, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d4
-		moveq.l	#0x0C, d3 |chunks 2/3
-		and.b		d2, d3
-		ror.l 	#3, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d5
+	"	moveq.l	#0x03, d3 |chunks 0/1\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#1, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d4\n"
+	"	moveq.l	#0x0C, d3 |chunks 2/3\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#3, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d5\n"
 		
-		addq.w	#1, d1
-		dbra		%2, 1b | chunk loop
-		9:
-		movem.l	d4-d5, (%1)
-		"
+	"	addq.w	#1, d1\n"
+	"	dbra		%2, 1b | chunk loop\n"
+	"9:\n"
+	"	movem.l	d4-d5, (%1)"
 		: /* no return value */
 		: "a"(src),"a"(dst), "d"(num)
 		/*    %0       %1        %2 */
@@ -995,63 +996,62 @@ raster_chunk4 (CHAR * src, UWORD * dst, size_t num)
 static void
 raster_chunk8 (CHAR * src, UWORD * dst, size_t num)
 {
-	__asm__ volatile ("
-		clr.l		d4
-		move.b	(%0)+, d4
-		move.l	d4, d5
-		move.l	d4, d6
-		move.l	d4, d7
-		andi.b	#0x03, d4 |chunks 0/1
-		ror.l 	#1, d4
-		ror.w		#1, d4
-		andi.b	#0x0C, d5 |chunks 2/3
-		ror.l 	#3, d5
-		ror.w		#1, d5
-		andi.b	#0x30, d6 |chunks 4/5
-		ror.l 	#5, d6
-		ror.w		#1, d6
-		andi.b	#0xC0, d7 |chunks 6/7
-		ror.l 	#7, d7
-		ror.w		#1, d7
+	__asm__ volatile (
+		"clr.l	d4\n"
+	"	move.b	(%0)+, d4\n"
+	"	move.l	d4, d5\n"
+	"	move.l	d4, d6\n"
+	"	move.l	d4, d7\n"
+	"	andi.b	#0x03, d4 |chunks 0/1\n"
+	"	ror.l 	#1, d4\n"
+	"	ror.w		#1, d4\n"
+	"	andi.b	#0x0C, d5 |chunks 2/3\n"
+	"	ror.l 	#3, d5\n"
+	"	ror.w		#1, d5\n"
+	"	andi.b	#0x30, d6 |chunks 4/5\n"
+	"	ror.l 	#5, d6\n"
+	"	ror.w		#1, d6\n"
+	"	andi.b	#0xC0, d7 |chunks 6/7\n"
+	"	ror.l 	#7, d7\n"
+	"	ror.w		#1, d7\n"
 		
-		subq.l	#2, %2
-		bmi		9f
+	"	subq.l	#2, %2\n"
+	"	bmi			9f\n"
 		
-		moveq.l	#1, d1
+	"	moveq.l	#1, d1\n"
 		
-		1: | chunk loop
-		move.b	(%0)+, d2
+	"1: | chunk loop\n"
+	"	move.b	(%0)+, d2\n"
 		
-		moveq.l	#0x03, d3 |chunks 0/1
-		and.b		d2, d3
-		ror.l 	#1, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d4
-		moveq.l	#0x0C, d3 |chunks 2/3
-		and.b		d2, d3
-		ror.l 	#3, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d5
-		moveq.l	#0x30, d3 |chunks 4/5
-		and.b		d2, d3
-		ror.l 	#5, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d6
-		move.l	#0xC0, d3 |chunks 6/7
-		and.b		d2, d3
-		ror.l 	#7, d3
-		ror.w		#1, d3
-		lsr.l		d1, d3
-		or.l		d3, d7
+	"	moveq.l	#0x03, d3 |chunks 0/1\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#1, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d4\n"
+	"	moveq.l	#0x0C, d3 |chunks 2/3\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#3, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d5\n"
+	"	moveq.l	#0x30, d3 |chunks 4/5\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#5, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d6\n"
+	"	move.l	#0xC0, d3 |chunks 6/7\n"
+	"	and.b		d2, d3\n"
+	"	ror.l 	#7, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		d1, d3\n"
+	"	or.l		d3, d7\n"
 		
-		addq.w	#1, d1
-		dbra		%2, 1b | chunk loop
-		9:
-		movem.l	d4-d7, (%1)
-		"
+	"	addq.w	#1, d1\n"
+	"	dbra		%2, 1b | chunk loop\n"
+	"9:\n"
+	"	movem.l	d4-d7, (%1)"
 		: /* no return value */
 		: "a"(src),"a"(dst), "d"(num)
 		/*    %0       %1        %2 */
@@ -1253,63 +1253,62 @@ raster_I8 (IMGINFO info, void * _dst)
 {
 #if defined(__GNUC__)
 	size_t  x     = (info->IncXfx +1) /2;
-	__asm__ volatile ("
-		subq.w	#1, %4
-		swap		%6 | -> chunk counter
+	__asm__ volatile (
+		"subq.w	#1, %4\n"
+	"	swap		%6 | -> chunk counter\n"
 		
-		1: | line loop
-		clr.w		%6
-		clr.l		d4
-		clr.l		d5
-		clr.l		d6
-		clr.l		d7
+	"1: | line loop\n"
+	"	clr.w		%6\n"
+	"	clr.l		d4\n"
+	"	clr.l		d5\n"
+	"	clr.l		d6\n"
+	"	clr.l		d7\n"
 		
-		5: | chunk loop
-		swap		%4 | -> value
-		swap		%6 | -> mask
-		move.w	(%3), d3
-		add.l		%5, (%3)
-		move.b	(d3.w,%1), d3 | palette index
-		and.w		%6, d3
-		lsl.w		#2, d3
-		move.b	(d3.w,%2), %4 | pixel value
-		swap		%6 | -> chunk counter
+	"5: | chunk loop\n"
+	"	swap		%4 | -> value\n"
+	"	swap		%6 | -> mask\n"
+	"	move.w	(%3), d3\n"
+	"	add.l		%5, (%3)\n"
+	"	move.b	(d3.w,%1), d3 | palette index\n"
+	"	and.w		%6, d3\n"
+	"	lsl.w		#2, d3\n"
+	"	move.b	(d3.w,%2), %4 | pixel value\n"
+	"	swap		%6 | -> chunk counter\n"
 		
-		moveq.l	#0x03, d3 |chunks 0/1
-		and.b		%4, d3
-		ror.l 	#1, d3
-		ror.w		#1, d3
-		lsr.l		%6, d3
-		or.l		d3, d4
-		moveq.l	#0x0C, d3 |chunks 2/3
-		and.b		%4, d3
-		ror.l 	#3, d3
-		ror.w		#1, d3
-		lsr.l		%6, d3
-		or.l		d3, d5
-		moveq.l	#0x30, d3 |chunks 4/5
-		and.b		%4, d3
-		ror.l 	#5, d3
-		ror.w		#1, d3
-		lsr.l		%6, d3
-		or.l		d3, d6
-		move.l	#0xC0, d3 |chunks 6/7
-		and.b		%4, d3
-		ror.l 	#7, d3
-		ror.w		#1, d3
-		lsr.l		%6, d3
-		or.l		d3, d7
+	"	moveq.l	#0x03, d3 |chunks 0/1\n"
+	"	and.b		%4, d3\n"
+	"	ror.l 	#1, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		%6, d3\n"
+	"	or.l		d3, d4\n"
+	"	moveq.l	#0x0C, d3 |chunks 2/3\n"
+	"	and.b		%4, d3\n"
+	"	ror.l 	#3, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		%6, d3\n"
+	"	or.l		d3, d5\n"
+	"	moveq.l	#0x30, d3 |chunks 4/5\n"
+	"	and.b		%4, d3\n"
+	"	ror.l 	#5, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		%6, d3\n"
+	"	or.l		d3, d6\n"
+	"	move.l	#0xC0, d3 |chunks 6/7\n"
+	"	and.b		%4, d3\n"
+	"	ror.l 	#7, d3\n"
+	"	ror.w		#1, d3\n"
+	"	lsr.l		%6, d3\n"
+	"	or.l		d3, d7\n"
 		
-		swap		%4 | -> width
-		addq.b	#1, %6
-		btst.b	#4, %6
-		dbne		%4, 5b | chunk loop
+	"	swap		%4 | -> width\n"
+	"	addq.b	#1, %6\n"
+	"	btst.b	#4, %6\n"
+	"	dbne		%4, 5b | chunk loop\n"
 		
-		movem.l	d4-d7, (%0)
-		adda.w	#16, %0
-		subq.w	#1, %4
-		bpl.b		1b
-		"
+	"	movem.l	d4-d7, (%0)\n"
+	"	adda.w	#16, %0\n"
+	"	subq.w	#1, %4\n"
+	"	bpl.b		1b"
 		:
 		: "a"(_dst),"a"(info->RowBuf),"a"(info->Pixel),"a"(&x),
 		/*    %0        %1                %2               %3 */
@@ -1566,27 +1565,27 @@ gscale_16 (IMGINFO info, void * _dst)
 {
 #if defined (__GNUC__)
 	if (info->IncXfx == 0x00010000uL) {
-		__asm__ volatile ("
-			subq.l	#1, %2
-			lsr.l		#1, %2
-			1:
-			clr.l		d0
-			move.w	(%0)+, d0 |........:........|12345678:12345678|
-			lsl.l		#8, d0    |........:12345678|12345678:........|
-			lsr.w		#8, d0    |........:12345678|........:12345678|
-			move.l	d0, d1
-			lsr.l		#2, d0    |........:..123456|78......:..123456|
-			andi.w	#0x3F, d0 |........:..123456|........:..123456|
-			lsl.l		#5, d0    |.....123:456.....|.....123:456.....|
-			lsr.l		#3, d1    |........:...12345|678.....:...12345|
-			andi.w	#0x1F, d1 |........:...12345|........:...12345|
-			or.l		d1, d0
-			lsl.l		#8, d1    |...12345:........|...12345:........|
-			lsl.l		#3, d1    |12345...:........|12345...:........|
-			or.l		d1, d0
-			move.l	d0, (%1)+
-			dbra		%2, 1b
-			" : /* no return */
+		__asm__ volatile (
+			"subq.l	#1, %2\n"
+		"	lsr.l		#1, %2\n"
+		"1:\n"
+		"	clr.l		d0\n"
+		"	move.w	(%0)+, d0 |........:........|12345678:12345678|\n"
+		"	lsl.l		#8, d0    |........:12345678|12345678:........|\n"
+		"	lsr.w		#8, d0    |........:12345678|........:12345678|\n"
+		"	move.l	d0, d1\n"
+		"	lsr.l  	 #2, d0    |........:..123456|78......:..123456|\n"
+		"	andi.w	#0x3F, d0 |........:..123456|........:..123456|\n"
+		"	lsl.l		#5, d0    |.....123:456.....|.....123:456.....|\n"
+		"	lsr.l		#3, d1    |........:...12345|678.....:...12345|\n"
+		"	andi.w	#0x1F, d1 |........:...12345|........:...12345|\n"
+		"	or.l		d1, d0\n"
+		"	lsl.l		#8, d1    |...12345:........|...12345:........|\n"
+		"	lsl.l		#3, d1    |12345...:........|12345...:........|\n"
+		"	or.l		d1, d0\n"
+		"	move.l	d0, (%1)+\n"
+		"	dbra		%2, 1b"
+			: /* no return */
 			: "a"(info->RowBuf),"a"(_dst), "d"((long)info->DthWidth)
 			/*    %0                %1         %2           */
 			: "d0","d1","d2"
@@ -1599,16 +1598,16 @@ gscale_16 (IMGINFO info, void * _dst)
 	size_t  x     = (info->IncXfx +1) /2;
 	do {
 #if defined (__GNUC__)
-		__asm__ volatile ("
-			move.b	(%0), d0
-			move.b	d0, d1
-			lsl.w		#5, d0
-			move.b	d1, d0
-			lsl.l		#6, d0
-			move.b	d1, d0
-			lsr.l		#3, d0
-			move.w	d0, (%1)
-			" : /* no return */
+		__asm__ volatile (
+			"move.b	(%0), d0\n"
+		"	move.b	d0, d1\n"
+		"	lsl.w		#5, d0\n"
+		"	move.b	d1, d0\n"
+		"	lsl.l		#6, d0\n"
+		"	move.b	d1, d0\n"
+		"	lsr.l		#3, d0\n"
+		"	move.w	d0, (%1)"
+			: /* no return */
 			: "a"(&info->RowBuf[x >>16]),"a"(dst++)
 			: "d0","d1"
 		);
@@ -1625,28 +1624,28 @@ dither_16 (IMGINFO info, void * _dst)
 {
 #if defined (__GNUC__)
 	if (info->IncXfx == 0x00010000uL) {
-		__asm__ volatile ("
-			subq.l	#1, %2
-			lsr.l		#1, %2
-			1:
-			movem.w	(%0), d0/d1/d2 |R8:G8| / |B8:r8| / |g8:b8|
-			addq.l	#6, %0
-			lsl.l		#5, d0      |........:...RRRRR|RRRGGGGG:GGG00000|
-			lsl.w		#3, d0      |........:...RRRRR|GGGGGGGG:00000000|
-			lsl.l		#6, d0      |.....RRR:RRGGGGGG|GG000000:00000000|
-			move.w	d1, d0      |.....RRR:RRGGGGGG|BBBBBBBB:rrrrrrrr|
-			lsl.l		#5, d0      |RRRRRGGG:GGGBBBBB|BBBrrrrr:rrr00000|
-			move.w	d0, d1      |........:........|BBBrrrrr:rrr00000|
-			lsl.l		#8, d1      |........:BBBrrrrr|rrr00000:00000000|
-			move.w	d2, d1      |........:BBBrrrrr|gggggggg:bbbbbbbb|
-			lsl.l		#6, d1      |..BBBrrr:rrgggggg|ggbbbbbb:bb000000|
-			lsl.w		#2, d1      |..BBBrrr:rrgggggg|bbbbbbbb:00000000|
-			lsl.l		#5, d1      |rrrrrggg:gggbbbbb|bbb00000:00000000|
-			swap		d1
-			move.w	d1, d0
-			move.l	d0, (%1)+
-			dbra		%2, 1b
-			" : /* no return */
+		__asm__ volatile (
+			"subq.l	#1, %2\n"
+		"	lsr.l		#1, %2\n"
+		"1:\n"
+		"	movem.w	(%0), d0/d1/d2 |R8:G8| / |B8:r8| / |g8:b8|\n"
+		"	addq.l	#6, %0\n"
+		"	lsl.l		#5, d0      |........:...RRRRR|RRRGGGGG:GGG00000|\n"
+		"	lsl.w		#3, d0	  |........:...RRRRR|GGGGGGGG:00000000|\n"
+		"	lsl.l		#6, d0      |.....RRR:RRGGGGGG|GG000000:00000000|\n"
+		"	move.w	d1, d0      |.....RRR:RRGGGGGG|BBBBBBBB:rrrrrrrr|\n"
+		"	lsl.l		#5, d0      |RRRRRGGG:GGGBBBBB|BBBrrrrr:rrr00000|\n"
+		"	move.w	d0, d1      |........:........|BBBrrrrr:rrr00000|\n"
+		"	lsl.l		#8, d1      |........:BBBrrrrr|rrr00000:00000000|\n"
+		"	move.w	d2, d1      |........:BBBrrrrr|gggggggg:bbbbbbbb|\n"
+		"	lsl.l		#6, d1      |..BBBrrr:rrgggggg|ggbbbbbb:bb000000|\n"
+		"	lsl.w		#2, d1	  |..BBBrrr:rrgggggg|bbbbbbbb:00000000|\n"
+		"	lsl.l		#5, d1      |rrrrrggg:gggbbbbb|bbb00000:00000000|\n"
+		"	swap		d1\n"
+		"	move.w	d1, d0\n"
+		"	move.l	d0, (%1)+\n"
+		"	dbra		%2, 1b"
+			: /* no return */
 			: "a"(info->RowBuf),"a"(_dst), "d"(info->DthWidth)
 			/*    %0                %1        %2           */
 			: "d0","d1","d2"
@@ -1659,15 +1658,15 @@ dither_16 (IMGINFO info, void * _dst)
 	size_t  x     = (info->IncXfx +1) /2;
 	do {
 #if defined (__GNUC__)
-		__asm__ volatile ("
-			move.b	(%0)+, d0
-			lsl.w		#5, d0
-			move.b	(%0)+, d0
-			lsl.l		#6, d0
-			move.b	(%0)+, d0
-			lsr.l		#3, d0
-			move.w	d0, (%1)
-			" : /* no return */
+		__asm__ volatile (
+			"move.b	(%0)+, d0\n"
+		"	lsl.w		#5, d0\n"
+		"	move.b	(%0)+, d0\n"
+		"	lsl.l		#6, d0\n"
+		"	move.b	(%0)+, d0\n"
+		"	lsr.l		#3, d0\n"
+		"	move.w	d0, (%1)"
+			: /* no return */
 			: "a"(&info->RowBuf[(x >>16) *3]),"a"(dst++)
 			: "d0"
 		);
