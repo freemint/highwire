@@ -1395,6 +1395,9 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			HTMLTAG tag;
 			while (*(line++) != '<');
 
+			if (*line == '\\')
+				line++;
+
 			slash = (*line == '/');
 			if (slash) line++;
 			else       save = line;
@@ -1431,67 +1434,6 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 
 	return flags;
 }
-#if 0
-/* temporary backup just in case I misunderstood what was supposed
- * to be going on in this routine - Dan 7-26-05
- */
-static UWORD
-render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
-{
-	UNUSED (parser);
-
-	if (flags & PF_START) {
-		const char * line = *text, * save = NULL;
-		do {
-			BOOL    slash;
-			HTMLTAG tag;
-			while (*line && *(line++) != '<');
-			if (*line == '!') {
-				char delim = '\0';
-				while (*(++line) == '-');
-				while (*line) {
-					if (*line == '\\') {
-						if (*(++line)) line++;
-						else           break;
-					} else if (*line == '\'' || *line == '"') {
-						if (delim) delim = '\0';
-						else       delim = *line;
-						line++;
-					} else if (*line == '-' && !delim) {
-						while (*(++line) == '-');
-						if (*line == '>') break;
-					} else {
-						line++;
-					}
-				}
-				if (*line) line++;
-				if (*line) continue;
-				else       break;
-			}
-			slash = (*line == '/');
-			if (slash) line++;
-			else       save = line;
-			tag = parse_tag (parser, &line);
-			if (slash) {
-				if (tag == TAG_SCRIPT) {
-					flags &= ~PF_SCRIPT;
-					break;
-				}
-			} else if (tag == TAG_NOSCRIPT) {
-				flags |= PF_SCRIPT;
-				break;
-			} else {
-				line = save;
-			}
-		} while (*line);
-		*text = line;
-	
-	} else {
-		flags &= ~PF_SCRIPT;
-	}
-	return flags;
-}
-#endif
 
 /*------------------------------------------------------------------------------
  * NoScript Area
