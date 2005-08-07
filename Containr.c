@@ -64,7 +64,8 @@ void containr_debug (CONTAINR);
 CONTAINR
 new_containr (CONTAINR parent)
 {
-	CONTAINR cont = calloc (1, sizeof (struct s_containr));
+	CONTAINR cont = malloc (sizeof (struct s_containr));
+	memset (cont, 0, sizeof (struct s_containr));
 
 	if (parent == NULL) {
 		cont->Base    = cont;

@@ -111,12 +111,13 @@ decXmp_start (const char * name, IMGINFO info)
 			if (i == 4 && xmap->W > 0 && xmap->H > 0
 			    && xmap->Colors >= 2 && xmap->Colors <= 255
 			    && xmap->NumChrs >= 1 && xmap->NumChrs <= 3) {
-				pix = calloc (sizeof(ULONG), 256 *2);
+				pix = malloc (sizeof(ULONG) *256 *2);
 				map = pix +256;
 			}
 			if (pix) {
 				char form[] = "\"%0[^\t] c %19[^\"]\",", val[20];
 				form[2] += xmap->NumChrs;
+				memset (pix, 0, (char*)map - (char*)pix);
 				for (i = 0; i < xmap->Colors; i++) {
 					BOOL ok = TRUE;
 					if ((p = xmap_read (file, xmap, FALSE)) == NULL ||
