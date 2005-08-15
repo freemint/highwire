@@ -1381,51 +1381,48 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (parser);
 	
 	if (flags & PF_START) {
-		const char * line = *text, * save = NULL;
-		int scr_cnt = 1;
-
-		/* goto jump point if we have a script embeded in a script
-		 * like on the site in bug report 202 - Dan 26.7.05
-		 */
-		 
-		embeded_script:
+		const char * line = *text;
+		char         quot = '\0', c;
 		
-		do {
-			BOOL    slash;
-			HTMLTAG tag;
-			while (*(line++) != '<');
-
-			if (*line == '\\')
-				line++;
-
-			slash = (*line == '/');
-			if (slash) line++;
-			else       save = line;
-
-			tag = parse_tag (parser, &line);
-
-			if (slash) {
-				if (tag == TAG_SCRIPT) {
-					scr_cnt -= 1;
-					
-					if (scr_cnt < 1) {
-						flags &= ~PF_SCRIPT;
-						break;
-					}
+		while ((c = *line) != '\0') {
+			line++;
+			
+			/* normal javascript code level */
+			
+			if (c == '<') {
+				*text = line; /* save this */
+				if (*line == '/' || parse_tag (NULL, &line) != TAG_Unknown) {
+					line = *text -1;                           /* ending tag found */
+					break;
+				
+				} else if (*line == '!') {  /* just a comment tag, simply skip it */
+					while (*(++line) == '-');
+					continue;
 				}
-			} else if (tag == TAG_NOSCRIPT) {
-				scr_cnt -= 1;
-				if (scr_cnt < 1) {
-					flags |= PF_SCRIPT;
+			}
+			if (c != '\'' && c != '\"') {          /* normal character, go ahead */
+				continue;
+			
+			} else {               /* quotation ".." or '..' found, fall through */
+				quot = c;
+			}
+			
+			/* quotation scanner */
+			
+			while (quot) {
+				if ((c = *(line++)) == '\0') {
+					line--;   /* ran out of data */
 					break;
 				}
-			} else if (tag == TAG_SCRIPT) {
-				scr_cnt += 1;
-				goto embeded_script;
-			} else {
-				line = save;
+				if (c == quot) { /* quotation end found, quit this inner loop */
+					quot = '\0';
+				
+				} else if (c == '\\') { /* escape character, skip next char */
+					if (!*line) break;   /* ran out of data */
+					else        line++;  /* skip this */
+				}
 			}
-		} while (*line);
+		}
 		*text = line;
 	
 	} else {
