@@ -28,6 +28,7 @@ static const struct ext_2_mime mime_list[] = {
 	{ "html",  MIME_TXT_HTML,   NULL       },
 	{ "jpeg",  MIME_IMG_JPEG,   ""         },
 	{ "jpg",   MIME_IMG_JPEG,   ""         },
+	{ "jpe",   MIME_IMG_JPEG,   ""         },
 	{ "png",   MIME_IMG_PNG,    ""         },
 	{ "shtml", MIME_TXT_HTML,   NULL       },
 	{ "snd",   MIME_AUD_BASIC,  "GEMJing"  },
