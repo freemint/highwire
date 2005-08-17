@@ -78,7 +78,7 @@ static SLOT
 slot_find (void)
 {
 	SLOT slot = slot_tab;
-	while (!(BASE_Flags(slot) & OF_HIDETREE)) {
+	while (slot_used(slot)) {
 		if (++slot > slot_end) return NULL;
 	}
 	slot_view (slot);
@@ -538,9 +538,38 @@ dl_manager (LOCATION loc, LOCATION ref)
 	}
 	
 	if ((slot = slot_find()) == NULL) {
-		hwUi_info ("DownloadManager", "No slot free.");
-		return;
+		const char str_head[] = "[1][HighWire DownloadManager:"
+		                           "|========================="
+		                           "|No more slot free.]"
+		                        "[cancel";
+		const char str_tdup[] = "|tidy up]";
+		char       form[sizeof(str_head) + sizeof(str_tdup)];
+		short cnt = 0;
+		slot = slot_tab;
+		do if (BTTN_Strng(slot) == bttn_text_ok ||
+			    BTTN_Strng(slot) == bttn_text_cancel) {
+			cnt++;
+		} while (++slot <= slot_end);
+		window_redraw (dlm_wind, NULL);
+		strcpy (form, str_head);
+		if (cnt) strcat (form, str_tdup);
+		else     strcat (form, "]");
+		if (form_alert ((!cnt ? 1 : 2), form) == 1) {
+			cnt = 0;
+		} else {   /* clean up finished/broken slots */
+			slot = slot_tab;
+			do if (BTTN_Strng(slot) != bttn_text_stop) {
+				slot_remove (slot);
+				slot_redraw (slot, FALSE);
+			} else {
+				slot++;
+			} while (slot <= slot_end && slot_used(slot));
+		}
+		if (!cnt || (slot = slot_find()) == NULL) {
+			return;
+		}
 	}
+	
 	if ((slot->Data.Buffer = malloc (BUF_SIZE)) == NULL) {
 		hwUi_warn ("DownloadManager", "Not enough memory left!");
 		slot_hide (slot);
