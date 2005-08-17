@@ -49,6 +49,8 @@ static const struct mime_2_ext ext_list[] = {
 	{ MIME_IMG_JPEG,  "jpg" },
 	{ MIME_IMG_GIF,   "gif" },
 	{ MIME_IMG_PNG,   "png" },
+	{ MIME_IMG_X_XBM, "xbm" },
+	{ MIME_IMG_X_XPM, "xpm" },
 	{ MIME_AUD_BASIC, "au"  },
 	{ MIME_AUD_X_WAV, "wav" }
 };
