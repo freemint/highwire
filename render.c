@@ -1391,14 +1391,16 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			
 			if (c == '<') {
 				*text = line; /* save this */
-				if (*line == '/' || parse_tag (NULL, &line) != TAG_Unknown) {
-					line = *text -1;                           /* ending tag found */
-					break;
-				
-				} else if (*line == '!') {  /* just a comment tag, simply skip it */
+				if (*line == '!') {        /* just a comment tag, simply skip it */
 					while (*(++line) == '-');
 					continue;
 				}
+				if (*line == '/' || parse_tag (NULL, &line) != TAG_Unknown) {
+					line = *text -1; /* ending tag found, reset pointer to the '<' */
+					break;
+				}
+				/* else still code, continue just after the '<' */
+				line = *text;
 			}
 			if (c != '\'' && c != '\"') {          /* normal character, go ahead */
 				continue;
