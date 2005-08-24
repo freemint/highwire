@@ -2315,6 +2315,22 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 							while (len-- && isspace (*(++ptr)));
 							memmove (buf, ptr, len);
 						}
+						/* [GS] Start patch */
+						if (len > 0)
+						{
+							char ZStr[256], * ptr = buf;
+							WORD i;
+							i = 0;
+								while ( len-- > 0 )
+								{
+									if ( *ptr >= ' ' )
+										ZStr[i++]=*ptr;
+									++ptr;
+								}
+							len = i;
+							memcpy (buf, ZStr, len);
+						}
+						/* End patch */
 						if (len > 0) {
 							char * ptr = edit->Text + edit->Cursor;
 							char * src = edit->Text + edit->Length;
