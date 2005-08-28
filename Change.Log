@@ -1,4 +1,4 @@
-(non public of Jun. 30, 2005)
+(non public of Aug. 28, 2005)
 
 - Download manager implemented for the "Save
   Target As" popup item.  Can handle up to four
@@ -13,9 +13,13 @@
   program quit and the next start.
 
 - Table attributes COLSPAN=0 and ROWSPAN=0
-  implemented.
+  implemented (#0112).
 
 - Memory leak closed in the Table destructor.
+
+- Bugfix for memory from the program's data
+  segment get freed in true color (reported by
+  Zorro).
 
 - Loading strategy changed to reduce the
   probability of connection timeouts.  Also some
@@ -25,7 +29,14 @@
 - The HELP key opens the correct document now
   rather then the outdated file.
 
-- Bug #0186 resolved.
+- Improved code to filter out javascript parts
+  from HTML (#0201).
+
+- Code adapted for gemlib version >= 0.43 (#0145)
+  and inline asm adapted for gcc 3.
+
+- Bugs #0112, #0129, #0145, #0158, #0186, #0201
+  resolved.
 
 __________________________________________________
 Changes in V. 0.2.5 release  of March 15, 2005:
