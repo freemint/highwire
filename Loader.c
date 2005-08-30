@@ -892,7 +892,7 @@ header_job (void * arg, long invalidated)
 		start_parser (loader);
 	}
 	
-#undef CACHE_ABORT(loc)
+#undef CACHE_ABORT
 	
 	return JOB_DONE;
 }
