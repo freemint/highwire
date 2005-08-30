@@ -1,7 +1,7 @@
 HighWire.App
 .C	[-b4 -r6 -cu -d0 -m0 -rs -fm -e]
 .S	[-m0]
-.L	[TTMALLOC TTLOAD DEFINE __STACK=16384]
+.L	[TTMALLOC TTLOAD]
 =
 C.O
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)
