@@ -48,7 +48,11 @@ vTab_MinWidth (DOMBOX * This)
 			if (word->image && word->image->set_w < 0) {
 				wrd_width += 1 + word->image->hspace *2;
 			} else {
-				wrd_width += word->word_width - (lbrk ? word->space_width :0);
+				/* the next line causes problems with non broken text on some sites
+				  This modification fixes the problems.  Not necessarily the ideal fix.
+				wrd_width += word->word_width - (lbrk ? word->space_width :0);*/
+				if (word->word_width - (lbrk ? word->space_width :0) > wrd_width)
+					wrd_width = word->word_width - (lbrk ? word->space_width :0);
 			}
 			lbrk = word->line_brk;
 			word = word->next_word;
