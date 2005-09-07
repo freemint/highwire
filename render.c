@@ -525,6 +525,41 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->SetHeight = height;
 		}
 	}
+	
+	/* devl stuff, activate in cfg: DEVL_FLAGS = CssPosition */
+	if (box->HtmlCode == TAG_DIV) {
+		static BOOL __once = FALSE, _CssPosition = FALSE;
+		if (!__once) {
+			_CssPosition = (devl_flag ("CssPosition") != NULL);
+		}
+	if (_CssPosition &&   get_value (parser, CSS_POSITION, out, sizeof(out))) {
+		UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
+		              stricmp (out, "relative") == 0 ? 0x003 : 0);
+		if (mask) {
+			if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
+				short lft = numerical (out, NULL, parser->Current.font->Size,
+			                          parser->Current.word->font->SpaceWidth);
+				if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.p_x = lft;
+				else                               mask           &= ~0x001;
+			}
+			if (get_value (parser, CSS_TOP, out, sizeof(out))) {
+				short top = numerical (out, NULL, parser->Current.font->Size,
+			                          parser->Current.word->font->SpaceWidth);
+				if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.p_y = top;
+				else                               mask           &= ~0x002;
+			}
+			if (mask & 0x003) {
+				DOMBOX * parent = box->Parent;
+				box->SetPosMsk  = mask;
+				while (parent) {
+					parent->SetPosCld |= mask;
+					parent = parent->Parent;
+				}
+			}
+		}
+	}
+	} /* devl stuff */
+	
 	if (get_value (parser, CSS_FLOAT, out, sizeof(out))) {
 		if      (stricmp (out, "right") == 0) box->Floating = FLT_RIGHT;
 		else if (stricmp (out, "left")  == 0) box->Floating = FLT_LEFT;
