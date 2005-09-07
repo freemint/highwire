@@ -231,6 +231,15 @@ static DOMBOX *
 vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 {
 	DOMBOX * cld = This->ChildBeg;
+	
+	/*** devl stuff, activate in cfg: DEVL_FLAGS = CssPosition */
+	static int _CssPosition = -1;
+	if (_CssPosition < 0) {
+		_CssPosition = (devl_flag ("CssPosition") ? TRUE : FALSE);
+	}
+	
+	if (_CssPosition > 0) {
+	
 	LONG     top = 0, bot;
 	
 	while (y >= (bot = cld->Rect.Y + cld->Rect.H)) {
@@ -276,6 +285,54 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 		}
 		cld = cld->Sibling;
 	}
+	
+	} else { /*** old stuff */
+	
+	DOMBOX * fnd = NULL;
+	
+	while (cld) {
+		long lft  = cld->Rect.X                  + cld->Margin.Lft;
+		long rgt  = cld->Rect.X + cld->Rect.W -1 - cld->Margin.Rgt;
+		BOOL in_x = (lft <= x && x <= rgt);
+		long top  = cld->Rect.Y                  + cld->Margin.Top;
+		long bot  = cld->Rect.Y + cld->Rect.H -1 - cld->Margin.Bot;
+		BOOL in_y = (top <= y && y <= bot);
+		
+		if (in_x && in_y) {
+			c_lft = lft + r->X;
+			c_rgt = rgt + r->X;
+			c_top = top + r->Y;
+			c_bot = bot + r->Y;
+			fnd   = cld;
+		
+		} else {
+			if (!in_x) {
+				if        (x  <  lft) {
+					if (c_rgt >= (lft += r->X)) {
+						if (in_y) c_rgt = lft -1;
+						else      in_x  = TRUE;
+					}
+				} else  /* x  >  rgt */{
+					if (c_lft <= (rgt += r->X)) {
+						if (in_y) c_lft = rgt +1;
+						else      in_x  = TRUE;
+					}
+				}
+			}
+			if (in_x) {
+				if        (y  <  top) {
+					if (c_bot >= (top += r->Y)) c_bot = top -1;
+				} else if (y  >  bot) {
+					if (c_top <= (bot += r->Y)) c_top = bot +1;
+				}
+			}
+		}
+		cld = cld->Sibling;
+	}
+	cld = fnd;
+	
+	} /*** old stuff */
+	
 	return cld;
 }
 
@@ -317,10 +374,11 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 	long     y   = *py;
 	long     clip[4];
 	
-	c_rgt = (c_lft = r->X = -x) + box->Rect.W -1;
-	c_bot = (c_top = r->Y = -y) + box->Rect.H -1;
+	c_rgt = (c_lft = r->X = 0) + box->Rect.W -1;
+	c_bot = (c_top = r->Y = 0) + box->Rect.H -1;
 
 	while (cld) {
+	if (!(box->SetPosCld > 0x100)) {
 		if (y < cld->Rect.Y) {
 			c_bot = r->Y + cld->Rect.Y -1;
 			break;
@@ -337,6 +395,7 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 			c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1 +1;
 			break;
 		}
+	} /* !(box->SetPosCld > 0x100) */
 		if ((cld = box->_vtab->ChildAt (box, r, x, y, clip)) != NULL) {
 			r->X += cld->Rect.X;
 			r->Y += cld->Rect.Y;
@@ -346,8 +405,13 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 			y    -= box->Rect.Y;
 		}
 	}
-	*px = r->X;
-	*py = r->Y;
+/*	printf ("%4li,%4li -> %4li,%4li / %4li,%4li ",
+	        *px, *py, c_lft, c_rgt, c_top, c_bot);
+	if (box->IdName) printf ("%12s", box->IdName);
+	else             printf ("%12p", box);
+*/
+	*px = r->X - (x = *px);
+	*py = r->Y - (y = *py);
 	if (c_rgt < r->X + box->Rect.W -1) {
 		r->W = c_rgt - r->X +1;
 	} else {
@@ -366,6 +430,9 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 		r->H -= (c_top - r->Y);
 		r->Y =  c_top;
 	}
+	r->X -= x;
+	r->Y -= y;
+/*	printf ("   [%li,%li/%li,%li]\n", r->X, r->Y, r->W, r->H);*/
 	
 	return box;
 }
