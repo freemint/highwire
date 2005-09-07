@@ -232,6 +232,7 @@
 		__CSS_ITEM (FONT_WEIGHT,      0),
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
 		/*          LINE_HEIGHT       */
+		__CSS_ITEM (LEFT,             0), /* for position */
 		__CSS_ITEM (LIST_STYLE_TYPE,  0),
 		__CSS_ITEM (MARGIN,           0),
 		__CSS_ITEM (MARGIN_BOTTOM,    0),
@@ -247,9 +248,11 @@
 		__CSS_ITEM (PADDING_LEFT,     0),
 		__CSS_ITEM (PADDING_RIGHT,    0),
 		__CSS_ITEM (PADDING_TOP,      0),
+		__CSS_ITEM (POSITION,         0),
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (TEXT_INDENT,      0),
+		__CSS_ITEM (TOP,              0), /* for position */
 		__CSS_ITEM (VERTICAL_ALIGN,   KEY_VALIGN),
 		__CSS_ITEM (WHITE_SPACE,      0),
 		__CSS_ITEM (WIDTH,            KEY_WIDTH)
