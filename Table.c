@@ -450,7 +450,6 @@ spread_width (long * list, short span, short spacing, long width)
 	}
 }
 
-
 /*----------------------------------------------------------------------------*/
 static void
 calc_minmax (TABLE table)
@@ -711,7 +710,7 @@ table_finish (PARSER parser)
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 2:  set all column's minimum/maximum/percentage width of cells
 	 */
-	calc_minmax (table);
+/*	calc_minmax (table); dan Sep 13,2005*/
 	if (table->FixCols == table->NumCols) {
 		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 
@@ -1089,12 +1088,12 @@ static LONG
 vTab_MinWidth (DOMBOX * This)
 {
 	LONG	minwid_ret;
-/*	TABLE table = (TABLE)This;
+	TABLE table = (TABLE)This;
 
 	if (table->Minimum) {
 		calc_minmax (table);
 	}
-dan test 7/21/05 */
+
 	if (This->SetMinWid) {
 		if (This->SetWidth) {
 			if (This->SetWidth < This->SetMinWid)
@@ -1116,6 +1115,8 @@ dan test 7/21/05 */
 
 	return (minwid_ret);
 }
+
+
 
 /*----------------------------------------------------------------------------*/
 static LONG
