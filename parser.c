@@ -517,16 +517,17 @@ parse_tag (PARSER parser, const char ** pptr)
 	/* first check for comment
 	 */
 	if (*line == '!') {
-		line++;
-		if (line[0] == '-' && line[1] == '-') {
-			const char * end = strstr (line + 2, "--");
-
-			if (end)
-				line = end;
+		const char * end;
+		if (*(++line) == '-') {
+			if      ((end = strstr (++line, "-->")) != NULL) end += 3;
+			else if ((end = strstr (line,    "->")) != NULL) end += 2;
+		} else {
+			end = NULL;
 		}
-		while (*line && *(line++) != '>')
-			;
-		*pptr = line;
+		if (!end) {
+			if ((end = strchr (line, '>')) != NULL) end += 1;
+		}
+		*pptr = (end ? end : strchr (line, '\0'));
 
 		return TAG_Unknown;
 	}
