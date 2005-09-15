@@ -1437,6 +1437,20 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 				/* else still code, continue just after the '<' */
 				line = *text;
 			}
+			if (c == '/') {                                /* javascript comment */
+				if (*line == '*') {
+					const char * end = strstr (++line, "*/");
+					if (end) line = end +2;
+				} else if (*line == '/') {
+					while (*(++line) == ' ' || *line == '\t');
+					if (strcmp (line, "-->") == 0) {
+						line += 3;
+					} else if (*line) {
+						while ((c = *(++line)) != '\0' && c != '\r' && c != '\n');
+					}
+					continue;
+				}
+			}
 			if (c != '\'' && c != '\"') {          /* normal character, go ahead */
 				continue;
 			
