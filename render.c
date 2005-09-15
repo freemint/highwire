@@ -1430,7 +1430,7 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 					while (*(++line) == '-');
 					continue;
 				}
-				if (*line == '/' || parse_tag (NULL, &line) != TAG_Unknown) {
+				if (*line == '/' || parse_tag (NULL, &line) == TAG_NOSCRIPT) {
 					line = *text -1; /* ending tag found, reset pointer to the '<' */
 					break;
 				}
