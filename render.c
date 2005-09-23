@@ -1443,7 +1443,7 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 					if (end) line = end +2;
 				} else if (*line == '/') {
 					while (*(++line) == ' ' || *line == '\t');
-					if (strcmp (line, "-->") == 0) {
+					if (strncmp (line, "-->", 3) == 0) {
 						line += 3;
 					} else if (*line) {
 						while ((c = *(++line)) != '\0' && c != '\r' && c != '\n');
