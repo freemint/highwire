@@ -459,6 +459,13 @@ calc_minmax (TABLE table)
 	TAB_CELL column;
 	long   * minimum, * maximum, * percent, * fixed;
 	int      i;
+	LONG temp_MinWidth, temp_MaxWidth;
+	
+	/* grab the old values as we come into the routine
+	 * this is to supress tables growing for no real reason
+	 */
+	temp_MinWidth = table->t_MinWidth;
+	temp_MaxWidth = table->t_MaxWidth;
 	
 	table->t_MinWidth = table->t_MaxWidth
 	                  = dombox_LftDist (&table->Box)
@@ -602,6 +609,14 @@ calc_minmax (TABLE table)
 	} while ((column = column->RightCell) != NULL);
 	table->t_MinWidth -= table->Spacing;
 	table->t_MaxWidth -= table->Spacing;
+
+	/* now verify that it wasn't a unrequired growth */
+	
+	if (table->t_MinWidth == (temp_MinWidth + table->Spacing))
+		table->t_MinWidth = temp_MinWidth;
+	
+	if (table->t_MaxWidth == (temp_MaxWidth + table->Spacing))
+		table->t_MaxWidth = temp_MaxWidth;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -710,7 +725,7 @@ table_finish (PARSER parser)
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 2:  set all column's minimum/maximum/percentage width of cells
 	 */
-/*	calc_minmax (table); dan Sep 13,2005*/
+	calc_minmax (table);
 	if (table->FixCols == table->NumCols) {
 		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 
