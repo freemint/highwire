@@ -471,7 +471,7 @@ calc_minmax (TABLE table)
 	                  = dombox_LftDist (&table->Box)
 	                  + dombox_RgtDist (&table->Box);
 	table->FixCols    = 0;
-	for (i = 0; i < table->NumCols; table->Minimum[i++] = padding);
+	for (i = 0; i < table->NumCols; table->Minimum[i++] = 0); /*padding); dan*/
 	for (i = 0; i < table->NumCols; table->Maximum[i++] = 0);
 	for (i = 0; i < table->NumCols; table->Percent[i++] = 0);
 	for (i = 0; i < table->NumCols; table->ColWidth[i++] = 0);
@@ -490,6 +490,7 @@ calc_minmax (TABLE table)
 			if (cell->Box.ChildBeg) {
 				if (cell->ColSpan == 1) {
 					long width = dombox_MinWidth (&cell->Box);
+
 					if (width <= padding) {
 						cell->c_SetWidth = 0;
 					}
@@ -533,7 +534,40 @@ calc_minmax (TABLE table)
 		do {
 			if (cell->Box.ChildBeg && cell->ColSpan > 1) {
 				long width = dombox_MinWidth (&cell->Box);
-				spread_width (minimum, cell->ColSpan, table->Spacing, width);
+
+				/*printf("width = %ld  min = %ld    \r\n",width,*minimum);*/
+				/*	This next line causes our ghost columns, but does not seem
+				 * to really effect most tables.  So I rewrote the routine
+				 * slightly to ignore empty cells
+				 */
+				/* spread_width (minimum, cell->ColSpan, table->Spacing, width);*/
+
+				/* A slightly modified spread_width */
+				
+				{
+					short i = cell->ColSpan;
+					short span = cell->ColSpan;
+
+					width -= *minimum;
+					while (--i && (width -= (minimum[i] + table->Spacing)) > 0);
+
+					if (width > 0) {
+						do {
+							short w = width / span;
+		
+							if (*minimum != 0)
+							{
+								minimum[--span] += w;
+								width        -= w;
+							}
+							else
+								--span;
+						} while (span > 1);
+						*minimum += width;
+					}
+				}
+				/*printf("width = %ld  min = %ld    \r\n",width,*minimum);*/
+
 				if (cell->c_SetWidth > 0) {
 					short empty = 0;
 					if (width < cell->c_SetWidth) width = cell->c_SetWidth;
@@ -544,7 +578,8 @@ calc_minmax (TABLE table)
 						} else {
 							width -= fixed[i];
 						}
-					}
+					} /* end i < cell->ColSpan */
+					
 					if (empty) {
 						i = -1;
 						while(1) {
@@ -558,8 +593,9 @@ calc_minmax (TABLE table)
 								if (!--empty) break;
 							}
 						}
-					}
-				} else {
+					}  /* end if (empty) */
+				} else { 
+					/* else cell->c_SetWidth !> 0) */
 					spread_width (maximum, cell->ColSpan, table->Spacing,
 					              dombox_MaxWidth (&cell->Box));
 					if (cell->c_SetWidth < 0 && cell->ColSpan < table->NumCols) {
@@ -591,9 +627,12 @@ calc_minmax (TABLE table)
 							} while (empty);
 						}
 					}
-				}
-			}
+				} /* end cell->c_SetWidth !> 0 */
+
+			} /* end  (cell->Box.ChildBeg && cell->ColSpan > 1)*/
+			
 		} while ((cell = cell->BelowCell) != NULL);
+
 		if (*fixed) {
 			table->FixCols++;
 			if (*fixed < *minimum) *fixed = *minimum;
@@ -617,6 +656,9 @@ calc_minmax (TABLE table)
 	
 	if (table->t_MaxWidth == (temp_MaxWidth + table->Spacing))
 		table->t_MaxWidth = temp_MaxWidth;
+
+/*	if (table->t_MinWidth > table->t_SetWidth)
+		table->t_MinWidth = table->t_SetWidth;*/
 }
 
 /*----------------------------------------------------------------------------*/
@@ -724,17 +766,28 @@ table_finish (PARSER parser)
 	
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 2:  set all column's minimum/maximum/percentage width of cells
+	 *
+	 * FYI A note on processing - Dan
+	 *
+	 * If you watch the tables coming through here, they go the 
+	 * innermost table first to the outermost table last. 
+	 * But in vTab_format() they go outermost table first down to
+	 * the innermost table
 	 */
 	calc_minmax (table);
-	if (table->FixCols == table->NumCols) {
-		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 
+	if (table->FixCols == table->NumCols) {
+		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth; 
+		/* prefered method I think		table->t_MaxWidth = table->t_MinWidth = table->t_SetWidth;*/
 	} else if (table->t_SetWidth > 0) {
 		if (table->t_SetWidth < table->t_MinWidth) {
 			 table->t_SetWidth = table->t_MinWidth;
-		}
+		}	
+/*printf("1 table->t_SetWidth = %ld  \r\n",table->t_SetWidth);*/
+		
 		table->t_MaxWidth = table->t_SetWidth;
 	}
+
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 3:  walk over all table rows and spread the minimum height
@@ -789,13 +842,16 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		#endif
 		return;
 	}
-	/*printf ("table_calc(%li) %i\n", max_width, table->t_SetWidth);*/
-	
+/*	printf ("table_calc(%li) %i\n", max_width, table->t_SetWidth);*/
+/*	printf ("table_calc(max %ld) set %ld\n", max_width, table->t_SetWidth);*/
+		
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 * Step 1:  adjust the given width to the table's boundarys.
 	 */
 	if (table->t_SetWidth > 0) {
 		set_width = table->t_SetWidth;
+/*printf("A SET_WIDTH = %ld   \r\n",set_width);*/
+
 	} else if (table->t_SetWidth) {
 		set_width = (max_width * -table->t_SetWidth + 512) / 1024;
 	} else {
@@ -803,7 +859,9 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	}
 	if (set_width < table->t_MinWidth) {
 		 set_width = table->t_MinWidth;
+/*printf("B SET_WIDTH = %ld   \r\n",set_width);*/
 	}
+
 	if (set_width < table->t_SetMinWid) {
 		set_width = table->t_SetMinWid;
 	}
