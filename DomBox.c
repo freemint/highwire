@@ -172,6 +172,9 @@ static LONG
 vTab_MinWidth (DOMBOX * This)
 {
 	DOMBOX * box = This->ChildBeg;
+	LONG tempminwidth;
+	
+	tempminwidth = This->MinWidth;
 	
 	This->MinWidth = (This->SetWidth > 0 ? This->SetWidth : 0);
 	while (box) {
@@ -181,7 +184,12 @@ vTab_MinWidth (DOMBOX * This)
 		}
 		box = box->Sibling;
 	}
-	This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
+	
+	/* This tracks if the size has already been calculated and
+	 * tries to keep the system from growing the DOMBOX unnecisarily
+	 */
+	if (tempminwidth != This->MinWidth)
+		This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
 	
 	if (This->SetWidth > 0 && This->SetWidth < This->MinWidth) {
 		This->SetWidth = This->MinWidth;

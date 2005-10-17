@@ -42,6 +42,10 @@ vTab_MinWidth (DOMBOX * This)
 	BOOL      lbrk = TRUE;
 	long wrd_width = (This->TextIndent > 0 ? +This->TextIndent : 0);
 	long hanging   = (This->TextIndent < 0 ? -This->TextIndent : 0);
+	LONG tempminwidth;
+
+	tempminwidth = This->MinWidth;
+
 	This->MinWidth = 0;
 	while (word) {
 		if (lbrk || !word->wrap) {
@@ -71,7 +75,15 @@ vTab_MinWidth (DOMBOX * This)
 		 This->MinWidth = wrd_width;
 	}
 	
-	return (This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This));
+	/* This tracks if the size has already been calculated and
+	 * tries to keep the system from growing the DOMBOX unnecisarily
+	 */
+	if (tempminwidth != This->MinWidth) {
+		This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
+	}
+
+	return This->MinWidth;
+/*	return (This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This));*/
 }
 
 /*----------------------------------------------------------------------------*/
