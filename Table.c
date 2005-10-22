@@ -545,11 +545,11 @@ calc_minmax (TABLE table)
 				/* A slightly modified spread_width */
 				
 				{
-					short i = cell->ColSpan;
+					short j = cell->ColSpan;
 					short span = cell->ColSpan;
 
 					width -= *minimum;
-					while (--i && (width -= (minimum[i] + table->Spacing)) > 0);
+					while (--j && (width -= (minimum[j] + table->Spacing)) > 0);
 
 					if (width > 0) {
 						do {
