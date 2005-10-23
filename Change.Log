@@ -1,4 +1,4 @@
-(non public of Aug. 28, 2005)
+(non public of Oct. 22, 2005)
 
 - Download manager implemented for the "Save
   Target As" popup item.  Can handle up to four
@@ -10,10 +10,13 @@
 - The URL input field got an own history for the
   ten last URLs typed in by the user.  These
   entries are stored and stay persistent between
-  program quit and the next start.
+  program quit and the next start.  Also there are
+  some improvements to remove control characters
+  due to due to copy&paste actions (by G.Stoll).
 
 - Table attributes COLSPAN=0 and ROWSPAN=0
-  implemented (#0112).
+  implemented (#0112).  Some improvements for
+  table rendering (width calculation).
 
 - Memory leak closed in the Table destructor.
 
@@ -29,8 +32,13 @@
 - The HELP key opens the correct document now
   rather then the outdated file.
 
+- Correction to have X11 bitmap and pixmap images
+  stored in the cache with the right extension;
+  Added truncated *.jpe to recognized extensions.
+
 - Improved code to filter out javascript parts
-  from HTML (#0201).
+  from HTML (#0201), also improved code for
+  handling HTML comments.
 
 - Code adapted for gemlib version >= 0.43 (#0145)
   and inline asm adapted for gcc 3.
