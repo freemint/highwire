@@ -460,7 +460,7 @@ calc_minmax (TABLE table)
 	long   * minimum, * maximum, * percent, * fixed;
 	int      i;
 	LONG temp_MinWidth, temp_MaxWidth;
-	
+
 	/* grab the old values as we come into the routine
 	 * this is to supress tables growing for no real reason
 	 */
@@ -535,7 +535,6 @@ calc_minmax (TABLE table)
 			if (cell->Box.ChildBeg && cell->ColSpan > 1) {
 				long width = dombox_MinWidth (&cell->Box);
 
-				/*printf("width = %ld  min = %ld    \r\n",width,*minimum);*/
 				/*	This next line causes our ghost columns, but does not seem
 				 * to really effect most tables.  So I rewrote the routine
 				 * slightly to ignore empty cells
@@ -566,7 +565,6 @@ calc_minmax (TABLE table)
 						*minimum += width;
 					}
 				}
-				/*printf("width = %ld  min = %ld    \r\n",width,*minimum);*/
 
 				if (cell->c_SetWidth > 0) {
 					short empty = 0;
@@ -783,7 +781,6 @@ table_finish (PARSER parser)
 		if (table->t_SetWidth < table->t_MinWidth) {
 			 table->t_SetWidth = table->t_MinWidth;
 		}	
-/*printf("1 table->t_SetWidth = %ld  \r\n",table->t_SetWidth);*/
 		
 		table->t_MaxWidth = table->t_SetWidth;
 	}
@@ -982,17 +979,67 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		short  spread    = set_width - table->t_MinWidth;
 		short  rest      = table->NumCols;
 		int    i         = table->NumCols;
-		
+
+		short temp_per, temp_set;
+		long  temp_tper, temp_cper, temp_swid, temp_width;
+		temp_per = temp_set = 0;
+
 		if (max_width > table->t_MaxWidth) {
 			 max_width = table->t_MaxWidth;
 		}
 		max_width -= table->t_MinWidth;
+
+		/* check for mixed set and percent table cells*/
+		do {
+			if (*percent)
+				temp_per = 1;
+			else if (col_width > 0)
+				temp_set = 1;		
+
+			col_width++;
+			percent++;
+		} while (--i);	
 		
+		/* reset vars */
+		i = table->NumCols;	
+		col_width = table->ColWidth;
+		percent   = table->Percent;
+
+		/* we have a mixed table so we need to determine real width */
+		if ((temp_per == 1) && (temp_set==1))
+		{
+			temp_tper = temp_cper = temp_swid= 0;
+
+			do {
+				if (*percent)
+					temp_tper += *percent;
+				else if (col_width > 0)
+					temp_swid += *col_width;
+
+				percent++;
+				col_width++;
+			} while (--i);
+
+			temp_cper = (1024 - temp_tper);			
+			temp_width = (temp_swid * 1024) / temp_cper;
+
+			table->t_SetWidth = set_width =  temp_width;
+
+			calc_minmax (table);
+		
+			/* reset vars */
+			i = table->NumCols;	
+			minimum   = table->Minimum;
+			col_width = table->ColWidth;
+			percent   = table->Percent;
+		}
+
 		/* first mark all columns to be spread with a negative value */
 		do {
 			*col_width = *minimum;
 			if (*percent) {
 				long width = (max_width * *percent +512) /1024;
+
 				if (width > spread) {
 					*col_width = spread + *minimum;
 					spread = 0;
@@ -1011,6 +1058,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 			maximum++;
 			minimum++;
 		} while (--i);
+
 		while (rest) {
 			short width = -(spread / rest);
 			BOOL  found = FALSE;
@@ -1058,6 +1106,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		long   * col_width = table->ColWidth;
 		TAB_CELL cell      = row->Cells;
 		row->Height = row->MinHeight;
+
 		while (cell) {
 			long width = *(col_width++);
 			if (cell->Box.ChildBeg) {
