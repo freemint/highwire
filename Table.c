@@ -828,11 +828,14 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	TAB_ROW row;
 	long    set_width, y;
 	
-	(void)blocker;
+	/*(void)blocker;  ?????? dan */
 	
+/*	printf("T blocker->L.width = %ld    \r\n",blocker->L.width);
+	printf("T blocker->R.width = %ld    \r\n",blocker->R.width);
+*/
 	This->Rect.W -= blocker->L.width + blocker->R.width;
 	max_width    -= blocker->L.width + blocker->R.width;
-	
+
 	if (!table->NumCols) {
 		#ifdef _DEBUG
 			printf ("table_calc(): no columns!\n");
@@ -1006,7 +1009,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		percent   = table->Percent;
 
 		/* we have a mixed table so we need to determine real width */
-		if ((temp_per == 1) && (temp_set==1))
+		if ((temp_per == 1) && (temp_set==1) && (table->FixCols > 0))
 		{
 			temp_tper = temp_cper = temp_swid= 0;
 
