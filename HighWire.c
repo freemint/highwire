@@ -42,6 +42,7 @@ OBJECT *about;
 OBJECT *rpopup;
 OBJECT *menutree;
 OBJECT *rpoplink;
+OBJECT *rpopimg;
 #endif
 
 static EVMULT_IN multi_in = {
@@ -139,6 +140,7 @@ main (int argc, char **argv)
 	rsrc_gaddr(R_TREE, ABOUT, &about);
 	rsrc_gaddr(R_TREE, RPOPUP, &rpopup);
 	rsrc_gaddr(R_TREE, RLINKPOP, &rpoplink);
+	rsrc_gaddr(R_TREE, RIMGPOP, &rpopimg);
 
 	menu_bar (menutree, MENU_INSTALL);
 	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
