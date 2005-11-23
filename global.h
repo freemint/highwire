@@ -80,6 +80,8 @@ extern UWORD _systype(void);
 BOOL page_load   (void);
 void rpopup_open (WORD, WORD);
 void rpoplink_open (WORD, WORD, CONTAINR, void *);
+void rpopilink_open (WORD, WORD, CONTAINR, void *);
+void rpopimg_open (WORD, WORD, CONTAINR);
 void update_menu (ENCODING, BOOL raw_text);
 BOOL process_messages (WORD msg[], PXY, UWORD state);
 void    menu_open     (BOOL fsel);

@@ -776,7 +776,7 @@ rpopup_open (WORD mx, WORD my)
 	LOCATION loc = (frame ? frame->Location : NULL);
 	short x, y, w, h, which_obj;
 	GRECT desk;
-	
+
 	if (!frame) {   /* empty window, nearly no action possible */
 		short i;
 		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
@@ -1023,6 +1023,275 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			} break;
 
 		case RLINK_INFO:
+			menu_info();
+			break;
+	}
+	
+	free_location (&loc);
+}
+
+/*============================================================================*/
+/* rpopimg_open
+ */
+void
+rpopimg_open (WORD mx, WORD my, CONTAINR current)
+{
+	extern OBJECT *rpopimg;
+	CONTAINR          cont = NULL;
+	
+	HwWIND wind  = hwWind_byContainr (current);
+	FRAME  frame = hwWind_ActiveFrame (wind);
+	short x, y, w, h, which_obj;
+	GRECT desk;
+	
+	IMAGE img;
+	LOCATION imgloc;
+
+	LRECT    rect;
+	long     px  = (long)mx - frame->clip.g_x + frame->h_bar.scroll;
+	long     py  = (long)my - frame->clip.g_y + frame->v_bar.scroll;
+	DOMBOX * box = dombox_byCoord  (&frame->Page, &rect, &px, &py);
+	PARAGRPH par = dombox_Paragrph (box);
+
+	WORDITEM word;
+	long     area[4];
+		
+	area[0] = px + mx - frame->clip.g_x;
+	area[1] = py + my - frame->clip.g_y;
+	area[2] = rect.W;
+	area[3] = rect.H;
+	word    = paragrph_word (par, -px, -py, area);
+
+	img = word->image;
+	imgloc = img->source;
+
+	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
+	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_DISABLED, 0);
+	
+	form_center (rpopimg, &x, &y, &w, &h);
+	x -= rpopimg->ob_x;
+	x += rpopimg->ob_x = mx -2;
+	y -= rpopimg->ob_y;
+	y += rpopimg->ob_y = my -2;
+	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
+		rpopimg->ob_x += desk.g_w;
+		x            += desk.g_w;
+	}
+	if ((desk.g_x -= x) > 0) {
+		rpopimg->ob_x += desk.g_x;
+		x            += desk.g_x;
+	}
+	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
+		rpopimg->ob_y += desk.g_h;
+		y            += desk.g_h;
+	}
+	if ((desk.g_y -= y) > 0) {
+		rpopimg->ob_y += desk.g_y;
+		y              += desk.g_y;
+	}
+	
+	wind_update (BEG_MCTRL);
+	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
+	objc_draw   (rpopimg, ROOT, MAX_DEPTH, x, y, w, h);
+
+	which_obj = HW_form_do (rpopimg, 0);
+	
+	if (which_obj > 0) {
+		objc_change (rpopimg, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
+	wind_update (END_MCTRL);
+	
+	switch (which_obj)
+	{
+		case RIMG_OPEN: {
+			start_page_load (current, NULL, imgloc, TRUE, NULL);
+
+			} break;
+						
+		case RIMG_NEW: {
+			char buf[2 * HW_PATH_MAX];
+
+			location_FullName (imgloc, buf, sizeof(buf));
+
+			wind = new_hwWind (buf, NULL, NULL);
+			cont = (wind ? wind->Pane : NULL);
+			if (cont) 
+				start_page_load (cont, NULL, imgloc, TRUE, NULL);
+				
+			} break;
+
+		case RIMG_SAVEIMG:
+			dl_manager (imgloc, frame->Location);
+			break;
+
+		case RIMG_COPYIMGURL: {
+			FILE * file;
+			char buf[2 * HW_PATH_MAX];
+
+			location_FullName (imgloc, buf, sizeof(buf));
+
+			file = open_scrap (FALSE);
+			if (file) {
+				fwrite (buf, 1, strlen(buf), file);
+				fclose (file);
+			}
+
+			} break;
+
+		case RIMG_INFO:
+			menu_info();
+			break;
+	}
+	
+	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
+	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_NORMAL, 0);
+}
+
+/*============================================================================*/
+/* rpopimg_open
+ */
+void
+rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
+{
+	extern OBJECT *rpopimg;
+	CONTAINR          cont = NULL;
+	struct url_link * link = hash;
+	const char      * addr = link->address;
+	
+	HwWIND wind  = hwWind_byContainr (current);
+	FRAME  frame = hwWind_ActiveFrame (wind);
+	LOCATION loc = new_location (addr, frame->BaseHref);
+	short x, y, w, h, which_obj;
+	GRECT desk;
+	
+	IMAGE img = link->start->image;
+	LOCATION imgloc = img->source;
+	
+	if (loc->Proto != PROT_FILE && loc->Proto != PROT_HTTP) {
+		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
+	} else {
+		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	
+	form_center (rpopimg, &x, &y, &w, &h);
+	x -= rpopimg->ob_x;
+	x += rpopimg->ob_x = mx -2;
+	y -= rpopimg->ob_y;
+	y += rpopimg->ob_y = my -2;
+	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
+		rpopimg->ob_x += desk.g_w;
+		x            += desk.g_w;
+	}
+	if ((desk.g_x -= x) > 0) {
+		rpopimg->ob_x += desk.g_x;
+		x            += desk.g_x;
+	}
+	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
+		rpopimg->ob_y += desk.g_h;
+		y            += desk.g_h;
+	}
+	if ((desk.g_y -= y) > 0) {
+		rpopimg->ob_y += desk.g_y;
+		y              += desk.g_y;
+	}
+	
+	wind_update (BEG_MCTRL);
+	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
+	objc_draw   (rpopimg, ROOT, MAX_DEPTH, x, y, w, h);
+
+	which_obj = HW_form_do (rpopimg, 0);
+/*	which_obj = form_do (rpopimg, 0);*/
+/*	which_obj = form_popup (rpopimg, 0,0);*/
+	
+	if (which_obj > 0) {
+		objc_change (rpopimg, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
+	wind_update (END_MCTRL);
+	
+	switch (which_obj)
+	{
+		case RIMG_OPEN: 
+			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
+			        ? containr_byName (current, link->u.target) : NULL);
+			if (cont) {
+				const char * p = strchr (addr, '#');
+				FRAME  t_frame = containr_Frame (cont);
+				if (p && t_frame) {
+					const char * fname = t_frame->Location->File;
+					if (strncmp (fname, addr, (p - addr)) == 0 && !fname[p - addr]) {
+						addr = p;   /* content matches */
+					}
+				}
+			}
+			if (*addr == '#') {
+				long dx, dy;
+				if (containr_Anchor (current, addr, &dx, &dy)) {
+					hwWind_scroll (wind, current, dx, dy);
+					check_mouse_position (mx, my);
+				}
+				break;
+			
+			} else if (cont) {
+				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
+				if (ldr) {
+					ldr->Encoding = link->encoding;
+				}
+				break;
+			
+			} /* else fall through */
+			
+		case RIMG_NEW:
+			wind = new_hwWind (addr, NULL, NULL);
+			cont = (wind ? wind->Pane : NULL);
+			if (cont) {
+				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
+				if (ldr) {
+					ldr->Encoding = link->encoding;
+				}
+			}
+			break;
+		
+		case RIMG_SAVE:
+			dl_manager (loc, frame->Location);
+			break;
+
+		case RIMG_COPY: {
+			FILE * file;
+			char buf[2 * HW_PATH_MAX];
+
+			location_FullName (loc, buf, sizeof(buf));
+
+			file = open_scrap (FALSE);
+			if (file) {
+				fwrite (buf, 1, strlen(buf), file);
+				fclose (file);
+			}
+
+			} break;
+
+		case RIMG_SAVEIMG:
+			dl_manager (imgloc, frame->Location);
+			break;
+
+		case RIMG_COPYIMGURL: {
+			FILE * file;
+			char buf[2 * HW_PATH_MAX];
+
+			location_FullName (imgloc, buf, sizeof(buf));
+
+			file = open_scrap (FALSE);
+			if (file) {
+				fwrite (buf, 1, strlen(buf), file);
+				fclose (file);
+			}
+
+			} break;
+
+		case RIMG_INFO:
 			menu_info();
 			break;
 	}

@@ -50,7 +50,11 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 	    (elem >= PE_PARAGRPH || elem == PE_EMPTY || elem == PE_FRAME)) {
 #if (_HIGHWIRE_RPOP_ == 1)
 
-		if (elem > PE_IMAGE && elem < PE_INPUT)
+		if (elem == PE_ILINK)
+			rpopilink_open (mouse.p_x, mouse.p_y, cont, hash);			
+		else if (elem == PE_IMAGE)
+			rpopimg_open (mouse.p_x, mouse.p_y, cont);			
+		else if (elem > PE_IMAGE && elem < PE_INPUT)
 			rpoplink_open (mouse.p_x, mouse.p_y, cont, hash);	
 		else
 			rpopup_open (mouse.p_x, mouse.p_y);
