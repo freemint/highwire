@@ -985,8 +985,10 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				}
 			
 			} else if (!word->link || !word->link->isHref) {
-				type = PE_TEXT;
-			
+				if (word->image)
+					type = PE_IMAGE;
+				else
+					type = PE_TEXT;
 			} else if (word->image) {
 				type = PE_ILINK;
 				if (hash) {
