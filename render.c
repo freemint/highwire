@@ -137,7 +137,6 @@ numerical (const char * buf, char ** tail, short em, short ex)
 	long   size;
 	if (!scan_numeric (&buf, &size, &unit)) {
 		size = -1;
-	
 	} else switch (unit) {
 		case 0x4558: /* EX */
 			size *= ex;
@@ -156,7 +155,7 @@ numerical (const char * buf, char ** tail, short em, short ex)
 			/* assume 72 dpi */
 			goto case_PT;
 		
-		case '%':
+		case 0x2520:
 			size = (size +50) /100;
 		case 0x454D: /* EM */
 			size *= em;
@@ -2460,6 +2459,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 				css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
 			}
 			css_text_styles (parser, current->font);
+
 		} else {
 			par->Box.TextAlign = get_h_align (parser,
 			                                  current->parentbox->TextAlign);
