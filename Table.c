@@ -992,6 +992,8 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		}
 		max_width -= table->t_MinWidth;
 
+	if (table->FixCols > 0)
+	{
 		/* check for mixed set and percent table cells*/
 		do {
 			if (*percent)
@@ -1009,7 +1011,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		percent   = table->Percent;
 
 		/* we have a mixed table so we need to determine real width */
-		if ((temp_per == 1) && (temp_set==1) && (table->FixCols > 0))
+		if ((temp_per == 1) && (temp_set==1))
 		{
 			temp_tper = temp_cper = temp_swid= 0;
 
@@ -1036,6 +1038,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 			col_width = table->ColWidth;
 			percent   = table->Percent;
 		}
+}
 
 		/* first mark all columns to be spread with a negative value */
 		do {
