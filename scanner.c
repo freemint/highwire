@@ -18,7 +18,6 @@
 #include "token.h"
 #include "scanner.h"
 
-
 /*==============================================================================
  * Scanner for html TAG name expressions inside of
  *    <TAG>  |  <TAG ...>  |  <TAG(n) ...>
@@ -309,7 +308,7 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 			if      (toupper(ptr[1]) == 'N') { *unit = _('I','N'); ptr += 2; }
 			else                               *unit = 0;
 			break;
-		case '%':                           { *unit = _('%',0);   ptr += 1; }
+		case '%':                           { *unit = _('%',' ');   ptr += 1; }
 			break;
 		default:                              *unit = 0;
 		#undef _
