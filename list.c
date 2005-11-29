@@ -5,16 +5,21 @@
 #include "scanner.h"
 #include "fontbase.h"
 
+/* move these to a .H ? */
+extern void css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align);
+extern FNTSTACK css_text_styles (PARSER parser, FNTSTACK fstk);
+extern BOOL    get_value       (PARSER, HTMLKEY, char * output, const size_t max_len);
 
 /*============================================================================*/
 void
-list_start (TEXTBUFF current, BULLET bullet, short counter, short type)
+list_start (PARSER parser, TEXTBUFF current, BULLET bullet, short counter, short type )
 {
 	LSTSTACK list = malloc (sizeof (struct list_stack_item));
 	DOMBOX * nest = (current->parentbox->BoxClass == BC_LIST
 	                 ? current->parentbox : NULL);
 	DOMBOX * box  = create_box (current, BC_LIST, (nest ? 0 : 2));
-	
+	char out[100];
+		
 	box->HtmlCode = list->Type = type;
 	
 	if (nest) {
@@ -26,9 +31,21 @@ list_start (TEXTBUFF current, BULLET bullet, short counter, short type)
 		}
 		box->Margin.Lft = current->lst_stack->Hanging;
 	}
+
+	/* moved these here since all lists called them */
+	css_box_styles  (parser, box, ALN_LEFT);
+	css_text_styles (parser, current->font);
+
 	list->BulletStyle = bullet;
 	list->Counter     = counter;
-	list->Hanging     = current->word->font->SpaceWidth *5;
+
+	/* special case ? */
+	if ((get_value (parser, CSS_MARGIN, out, sizeof(out))) &&
+		(box->Margin.Lft == 0))
+			list->Hanging     = 0;
+	else
+		list->Hanging     = current->word->font->SpaceWidth *5;
+
 	list->ListItem    = NULL;
 	list->FontStk     = current->font;
 	
@@ -339,10 +356,16 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 			break;
 		
 		case LT_NONE:
-			*(current->text++) = font_Nobrk (current->word->font);
-			if (!list->BulletStyle) {
+			if (list->Hanging == 0)
+			{
 				spc_wd = 0;
-				width  = current->prev_wrd->word_width *2;
+				width = 0;
+			}else {
+				*(current->text++) = font_Nobrk (current->word->font);
+				if (!list->BulletStyle) {
+					spc_wd = 0;
+					width  = current->prev_wrd->word_width *2;
+				}
 			}
 	}
 	

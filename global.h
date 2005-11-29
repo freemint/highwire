@@ -186,7 +186,7 @@ WORDITEM render_link  (TEXTBUFF, const char *, const char * url, short color);
 
 /* in list.c */
 
-void list_start  (TEXTBUFF, BULLET, short counter, short type);
+void list_start  (PARSER, TEXTBUFF, BULLET, short counter, short type);
 void list_finish (TEXTBUFF);
 void list_marker (TEXTBUFF, BULLET, short counter);
 
