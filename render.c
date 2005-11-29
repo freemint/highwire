@@ -179,7 +179,8 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL percent)
 }
 
 /*----------------------------------------------------------------------------*/
-static FNTSTACK
+/*static*/
+FNTSTACK
 css_text_styles (PARSER parser, FNTSTACK fstk)
 {
 	TEXTBUFF current = &parser->Current;
@@ -446,7 +447,8 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 }
 
 /*----------------------------------------------------------------------------*/
-static void
+/*static */
+void
 css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 {
 	char out[100];
@@ -644,7 +646,6 @@ leave_box (TEXTBUFF current, WORD tag)
 	
 	if (box->HtmlCode != tag) {
 		box = NULL;
-	
 	} else {
 		PARAGRPH par = add_paragraph (current, 0);
 		current->parentbox = box->Parent;
@@ -2810,7 +2811,10 @@ list_bullet (PARSER parser, BULLET dflt)
 	if (get_value (parser, CSS_LIST_STYLE_TYPE, buf, sizeof(buf))
 	    && strcmp (buf, "none") == 0) {
 		bullet = LT_NONE;
-	
+	} else if (get_value (parser, CSS_LIST_STYLE, buf, sizeof(buf))
+	    && strcmp (buf, "none") == 0) {
+		bullet = LT_NONE;	
+		/* list-style is not fully implemented */	
 	 } else if (dflt >= LT_DECIMAL) {
 		if (buf[0]) {
 			if      (stricmp (buf, "decimal")     == 0) bullet = LT_DECIMAL;
@@ -2856,9 +2860,9 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		short  counter = get_value_unum (parser, KEY_START, 1);
 		BULLET bullet  = list_bullet    (parser, LT_DECIMAL);
-		list_start (current, (bullet ? bullet : LT_DECIMAL), counter, TAG_OL);
-		css_box_styles  (parser, current->parentbox, ALN_LEFT);
-		css_text_styles (parser, current->font);
+		list_start (parser, current, (bullet ? bullet : LT_DECIMAL), counter, TAG_OL);
+/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);*/
+/*		css_text_styles (parser, current->font);*/
 		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
@@ -2877,12 +2881,14 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
+	
 	if (flags & PF_START) {
 		BULLET bullet = (current->lst_stack
 		                 ? current->lst_stack->BulletStyle %3 +1 : LT_DISC);
-		list_start (current, list_bullet (parser, bullet), 0, TAG_UL);
-		css_box_styles  (parser, current->parentbox, ALN_LEFT);
+		list_start (parser, current, list_bullet (parser, bullet), 0, TAG_UL);
+/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);
 		css_text_styles (parser, current->font);
+*/
 		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
@@ -2905,9 +2911,9 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		list_start (current, LT_DISC, 0, TAG_MENU);
-		css_box_styles  (parser, current->parentbox, ALN_LEFT);
-		css_text_styles (parser, current->font);
+		list_start (parser, current, LT_DISC, 0, TAG_MENU);
+/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);*/
+/*		css_text_styles (parser, current->font);*/
 		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
@@ -2942,7 +2948,7 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 		short  counter = get_value_unum (parser, KEY_VALUE,
 		                                 current->lst_stack->Counter);
 		BULLET bullet = list_bullet (parser, current->lst_stack->BulletStyle);
-		list_marker (current, bullet, counter);
+
 		if (current->lst_stack->FontStk != current->font) {
 			fontstack_pop (current);
 		}
@@ -2950,7 +2956,10 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 			fontstack_push (current, -1);
 			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
 			css_text_styles (parser, current->font);
-		}
+		} 
+
+		list_marker (current, bullet, counter);
+		
 		box_anchor (parser, &current->paragraph->Box, TRUE);
 		flags |= PF_FONT;
 	}
@@ -2968,11 +2977,12 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 	
 	if (flags & PF_START) {
-		list_start (current, LT_NONE, 0, TAG_DL);
-		if (parser->hasStyle) {
+		list_start (parser, current, LT_NONE, 0, TAG_DL);
+/*		if (parser->hasStyle) {
 			css_box_styles  (parser, current->parentbox, ALN_LEFT);
 			css_text_styles (parser, current->font);
-		}
+		}*/
+
 		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
