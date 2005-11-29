@@ -15,7 +15,6 @@
 
 static const char base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-
 typedef struct s_cache_item * CACHEITEM;
 typedef struct s_cache_node * CACHENODE;
 
@@ -35,6 +34,18 @@ struct s_cache_item {
 	void    (*dtor)(void*);
 	char      Cached[10];    /* enough for 'ABCD.xyz' */
 };
+
+struct s_cache_node {
+	CACHENODE BackNode;
+	UWORD     NodeMask;
+	unsigned  Level4x :8;
+	unsigned  Filled  :8;
+	union {
+		CACHENODE Node;
+		CACHEITEM Item;
+	}         Array[16];
+};
+
 #define item_isMem( citem )   ((citem)->dtor != NULL)
 
 static CACHEITEM __cache_beg = NULL;
@@ -900,16 +911,6 @@ cache_remove (long num, long use)
  *   Search tree handling (sorted by LOCATION)
 */
 
-struct s_cache_node {
-	CACHENODE BackNode;
-	UWORD     NodeMask;
-	unsigned  Level4x :8;
-	unsigned  Filled  :8;
-	union {
-		CACHENODE Node;
-		CACHEITEM Item;
-	}         Array[16];
-};
 
 /* root node, take care that ALL elements are zero-ed at startup! */
 static struct s_cache_node __tree_base = {
