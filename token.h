@@ -233,6 +233,7 @@
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
 		/*          LINE_HEIGHT       */
 		__CSS_ITEM (LEFT,             0), /* for position */
+		__CSS_ITEM (LIST_STYLE,       0),
 		__CSS_ITEM (LIST_STYLE_TYPE,  0),
 		__CSS_ITEM (MARGIN,           0),
 		__CSS_ITEM (MARGIN_BOTTOM,    0),
