@@ -173,6 +173,8 @@ void launch_viewer(const char *name);
 
 /* in render.c */
 
+FNTSTACK css_text_styles (PARSER, FNTSTACK);
+void     css_box_styles  (PARSER, DOMBOX *, H_ALIGN);
 int parse_html  (void*, long);
 int parse_plain (void*, long);
 int parse_image (void*, long);

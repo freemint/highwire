@@ -1,14 +1,15 @@
 #include <stdlib.h>
 
+#ifdef __PUREC__
+# define PARSER   struct s_parser * PARSER
+#endif
 #include "global.h"
 #include "token.h"
 #include "scanner.h"
+#include "Loader.h"
+#include "parser.h"
 #include "fontbase.h"
 
-/* move these to a .H ? */
-extern void css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align);
-extern FNTSTACK css_text_styles (PARSER parser, FNTSTACK fstk);
-extern BOOL    get_value       (PARSER, HTMLKEY, char * output, const size_t max_len);
 
 /*============================================================================*/
 void

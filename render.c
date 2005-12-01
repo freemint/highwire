@@ -13,6 +13,9 @@
 #include "token.h" /* must be included before gem/gemx.h */
 #include <gemx.h>
 
+#ifdef __PUREC__
+# define PARSER   struct s_parser * PARSER
+#endif
 #include "global.h"
 #include "scanner.h"
 #include "Loader.h"
