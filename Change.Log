@@ -1,4 +1,9 @@
-Changes in V. 0.2.6 release  of Novembre 08, 2005:
+(non-public of Nov. 30, 2005)
+
+- Now also "Save as..." vor images.
+
+__________________________________________________
+Changes in V. 0.2.6 release  of November 08, 2005:
 
 - Download manager implemented for the "Save
   Target As" popup item.  Can handle up to four
