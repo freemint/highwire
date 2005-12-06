@@ -18,6 +18,8 @@
 #include "token.h"
 #include "scanner.h"
 
+#include <stdio.h> /* dan */
+
 /*==============================================================================
  * Scanner for html TAG name expressions inside of
  *    <TAG>  |  <TAG ...>  |  <TAG(n) ...>
@@ -256,7 +258,7 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	while (isspace (**pptr)) (*pptr)++;
 	neg  = (**pptr == '-');
 	size = strtol (*pptr, &ptr, 10);
-	
+
 	if (ptr <= *pptr) {
 		*num = 0;
 		return FALSE;
@@ -268,21 +270,29 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	} else if (size < 0l) {
 		size = -size;
 	}
-	if (*ptr == '.' && isdigit(*(++ptr))) {
-		size = size * 10 + (*ptr - '0');
-		if (!isdigit(*(++ptr))) {
-			size = ((size <<8) +5) /10;
+
+	/* Scan out % values.  I don't think they can be floats - Dan */
+	if (toupper(*ptr) != '%') {
+		if (*ptr == '.' && isdigit(*(++ptr))) {
+			size = size * 10 + (*ptr - '0');
+			if (!isdigit(*(++ptr))) {
+				size = ((size <<8) +5) /10;
+			} else {
+				size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
+				while (isdigit(*(++ptr)));
+			}
 		} else {
-			size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
-			while (isdigit(*(++ptr)));
+			size <<= 8;
 		}
-	} else {
-		size <<= 8;
 	}
+
+if (neg)
+printf("negative size\r\n");
+
 	if (ok) {
 		*num = (neg ? -size : +size);
 	}
-	
+
 	switch (toupper(*ptr)) {
 		#define _(u,l) (((UWORD)(u)<<8)|(l))
 		case 'E':
