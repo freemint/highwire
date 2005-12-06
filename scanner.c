@@ -18,8 +18,6 @@
 #include "token.h"
 #include "scanner.h"
 
-#include <stdio.h> /* dan */
-
 /*==============================================================================
  * Scanner for html TAG name expressions inside of
  *    <TAG>  |  <TAG ...>  |  <TAG(n) ...>
@@ -285,9 +283,6 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 			size <<= 8;
 		}
 	}
-
-if (neg)
-printf("negative size\r\n");
 
 	if (ok) {
 		*num = (neg ? -size : +size);
