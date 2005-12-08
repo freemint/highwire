@@ -145,7 +145,11 @@ new_word (TEXTBUFF current, BOOL do_link)
 	word->line_brk    = BRK_NONE;
 	word->word_width  = 0;
 	word->space_width = 0;
-	word->wrap        = FALSE;
+if (current->nowrap) {
+ 	word->wrap        = FALSE;
+} else {
+	word->wrap 		  = TRUE;
+}
 	word->image       = NULL;
 	word->input       = NULL;
 	word->line        = NULL;
@@ -175,7 +179,7 @@ word_store (TEXTBUFF current)
 				word->wrap = TRUE;
 			}
 		}
-		
+
 		if ((word->length = length) == 1 && word->space_width) {
 			word->item = &fixed[base->Mapping].Space;
 			pts[2] = word->space_width;
