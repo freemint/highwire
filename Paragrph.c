@@ -53,17 +53,22 @@ vTab_MinWidth (DOMBOX * This)
 				wrd_width += 1 + word->image->hspace *2;
 			} else {
 				/* the next line causes problems with non broken text on some sites
-				  This modification fixes the problems.  Not necessarily the ideal fix.
-				wrd_width += word->word_width - (lbrk ? word->space_width :0);*/
-				if (word->word_width - (lbrk ? word->space_width :0) > wrd_width)
-					wrd_width = word->word_width - (lbrk ? word->space_width :0);
+				  This modification fixes the problems.  Not necessarily the ideal fix.*/
+				wrd_width += word->word_width - (lbrk ? word->space_width :0);
+
+				/* Ok with other changes in the code I needed to back this out
+				   however I can't remember which sites realy brought out
+				   the bug these were supposed to fix.  So I left them here
+				   just in case we needed to bring them back   Dec 8, 2005 Dan
+					if (word->word_width - (lbrk ? word->space_width :0) > wrd_width)
+						wrd_width = word->word_width - (lbrk ? word->space_width :0); */
 			}
 			lbrk = word->line_brk;
 			word = word->next_word;
 			if (!lbrk) {
 				continue;
 			}
-		} /* else wrap || ln_brk */
+		} 
 		
 		if (This->MinWidth < wrd_width) {
 			 This->MinWidth = wrd_width;
@@ -76,7 +81,7 @@ vTab_MinWidth (DOMBOX * This)
 	}
 	
 	/* This tracks if the size has already been calculated and
-	 * tries to keep the system from growing the DOMBOX unnecisarily
+	 * tries to keep the system from growing the DOMBOX unneccisarily
 	 */
 	if (tempminwidth != This->MinWidth) {
 		This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
