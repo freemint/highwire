@@ -345,7 +345,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	cell->AlignV        = v_align;
 	cell->c_Height      = (height <= 1024 ? height : 1024);
 	cell->c_SetWidth    = (width  <= 1024 ? width  : 0);
-	
+
 	if (color < 0) {
 		color = row->Color;
 	} else if (color == table->t_Backgnd) {
@@ -626,7 +626,6 @@ calc_minmax (TABLE table)
 						}
 					}
 				} /* end cell->c_SetWidth !> 0 */
-
 			} /* end  (cell->Box.ChildBeg && cell->ColSpan > 1)*/
 			
 		} while ((cell = cell->BelowCell) != NULL);
@@ -654,6 +653,7 @@ calc_minmax (TABLE table)
 	
 	if (table->t_MaxWidth == (temp_MaxWidth + table->Spacing))
 		table->t_MaxWidth = temp_MaxWidth;
+
 
 /*	if (table->t_MinWidth > table->t_SetWidth)
 		table->t_MinWidth = table->t_SetWidth;*/
@@ -827,12 +827,7 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	TABLE   table = (TABLE)This;
 	TAB_ROW row;
 	long    set_width, y;
-	
-	/*(void)blocker;  ?????? dan */
-	
-/*	printf("T blocker->L.width = %ld    \r\n",blocker->L.width);
-	printf("T blocker->R.width = %ld    \r\n",blocker->R.width);
-*/
+
 	This->Rect.W -= blocker->L.width + blocker->R.width;
 	max_width    -= blocker->L.width + blocker->R.width;
 
@@ -992,53 +987,54 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 		}
 		max_width -= table->t_MinWidth;
 
-	if (table->FixCols > 0)
-	{
-		/* check for mixed set and percent table cells*/
-		do {
-			if (*percent)
-				temp_per = 1;
-			else if (col_width > 0)
-				temp_set = 1;		
-
-			col_width++;
-			percent++;
-		} while (--i);	
-		
-		/* reset vars */
-		i = table->NumCols;	
-		col_width = table->ColWidth;
-		percent   = table->Percent;
-
-		/* we have a mixed table so we need to determine real width */
-		if ((temp_per == 1) && (temp_set==1))
-		{
-			temp_tper = temp_cper = temp_swid= 0;
-
+		if (table->FixCols > 0)	{
+			/* check for mixed set and percent table cells*/
 			do {
 				if (*percent)
-					temp_tper += *percent;
+					temp_per = 1;
 				else if (col_width > 0)
-					temp_swid += *col_width;
+					temp_set = 1;		
 
-				percent++;
 				col_width++;
-			} while (--i);
-
-			temp_cper = (1024 - temp_tper);			
-			temp_width = (temp_swid * 1024) / temp_cper;
-
-			table->t_SetWidth = set_width =  temp_width;
-
-			calc_minmax (table);
+				percent++;
+			} while (--i);	
 		
 			/* reset vars */
 			i = table->NumCols;	
-			minimum   = table->Minimum;
 			col_width = table->ColWidth;
 			percent   = table->Percent;
+
+			/* we have a mixed table so we need to determine real width */
+			if ((temp_per == 1) && (temp_set==1))	{
+				temp_tper = temp_cper = temp_swid= 0;
+
+				do {
+					if (*percent)
+						temp_tper += *percent;
+					else if (col_width > 0)
+						temp_swid += *col_width;
+
+					percent++;
+					col_width++;
+				} while (--i);
+
+				temp_cper = (1024 - temp_tper);			
+
+				if (temp_cper > 0) {
+					temp_width = (temp_swid * 1024) / temp_cper;
+
+					table->t_SetWidth = set_width =  temp_width;
+
+					calc_minmax (table);
+				}
+		
+				/* reset vars */
+				i = table->NumCols;	
+				minimum   = table->Minimum;
+				col_width = table->ColWidth;
+				percent   = table->Percent;
+			}
 		}
-}
 
 		/* first mark all columns to be spread with a negative value */
 		do {
@@ -1240,7 +1236,6 @@ vTab_MinWidth (DOMBOX * This)
 		else
 			minwid_ret = This->MinWidth;	
 	}
-
 	return (minwid_ret);
 }
 

@@ -2465,7 +2465,7 @@ render_WBR_tag (PARSER parser, const char ** text, UWORD flags)
 		if (current->text > current->buffer) {
 			new_word (current, TRUE);
 		}
-		current->word->wrap = TRUE;
+ 		current->word->wrap = TRUE;
 	}
 	
 	return flags;
@@ -2768,7 +2768,7 @@ static UWORD
 render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED  (text);
-	
+
 	if (flags & PF_START) {
 		group_box (parser, TAG_DIV, ALN_LEFT);
 		
