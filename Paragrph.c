@@ -140,7 +140,7 @@ PARAGRPH
 new_paragraph (TEXTBUFF current)
 {
 	PARAGRPH paragraph = malloc (sizeof (struct paragraph_item));
-	
+
 	current->styles.italic     = 0;
 	current->styles.bold       = 0;
 	current->styles.underlined = 0;
@@ -300,6 +300,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	long       r_height  = 0;
 	H_ALIGN    align;
 	WORD hanging, hang_nxt;
+
+	/* supress 'a name' tags from making empty lines */
+	if ((word->link)&&(word->word_width == 0)&& !word->next_word) {
+		return;
+	}
 	
 	if (This->SetWidth) {
 		if (This->SetWidth > 0) {
