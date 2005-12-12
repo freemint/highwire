@@ -441,7 +441,11 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}
 		/* n/i: normal, pre */
 	}
-	
+	else {
+		/* I'm not sure this is correct but it works - Dan 12/12/05 */
+		current->nowrap = 0;
+	}	
+		
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_COLOR);
 		if (color >= 0) {
@@ -1953,10 +1957,10 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_underline (current, TRUE);
 			}
 
-			/* we need the following at some point
-			if (parser->hasStyle)
+			/* we need the following at some point */
+			/*if (parser->hasStyle)
 				css_text_styles (parser, current->font);
-			else */
+			else*/ 
 			word_set_color (current, frame->link_color);
 
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
@@ -2006,7 +2010,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					word->link->u.anchor = anchor;
 					*current->anchor     = anchor;
 					current->anchor      = &anchor->next_location;
-					
 					/* prevent from getting deleted if empty */
 					*(current->text++) = font_Nobrk (word->font);
 					new_word (current, TRUE);
