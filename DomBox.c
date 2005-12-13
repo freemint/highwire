@@ -246,7 +246,7 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 		_CssPosition = (devl_flag ("CssPosition") ? TRUE : FALSE);
 	}
 	
-	if (!_CssPosition) { /*** old method */
+	if (!_CssPosition || (_CssPosition && !cfg_UseCSS)) { /*** old method */
 	
 	LONG     top = 0, bot;
 	
@@ -294,7 +294,7 @@ vTab_ChildAt (DOMBOX * This, LRECT * r, long x, long y, long clip[4])
 		cld = cld->Sibling;
 	}
 	
-	} else { /*** new method for CssPosition */
+	} else if (_CssPosition && cfg_UseCSS){ /*** new method for CssPosition */
 	
 	DOMBOX * fnd = NULL;
 	
