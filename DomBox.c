@@ -194,6 +194,7 @@ vTab_MinWidth (DOMBOX * This)
 	if (This->SetWidth > 0 && This->SetWidth < This->MinWidth) {
 		This->SetWidth = This->MinWidth;
 	}
+
 	return This->MinWidth;
 }
 
@@ -634,7 +635,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	while (box) {
 		long set_width = width;
 		BOOL floating  = (box->Floating != ALN_NO_FLT);
-		BOOL absolute  = (box->SetPosMsk > 0x100);
+		BOOL absolute  = (box->SetPosMsk > 0x100); /* dan = */
 		
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
@@ -730,6 +731,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (This->Rect.H < box->Rect.Y + box->Rect.H) {
 				 This->Rect.H = box->Rect.Y + box->Rect.H;
 			}
+
+			/* override the page minwidth in absolute positions */
+			if (This->MinWidth < box->Rect.X + box->Rect.W) {
+				This->MinWidth = box->Rect.X + box->Rect.W;
+			}
 		}
 		
 		box = box->Sibling;
@@ -742,6 +748,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	if ((This->Rect.H += dombox_BotDist (This)) < This->SetHeight) {
 		This->Rect.H = This->SetHeight;
 	}
+	
 }
 
 /*============================================================================*/
