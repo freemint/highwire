@@ -173,7 +173,7 @@ vTab_MinWidth (DOMBOX * This)
 {
 	DOMBOX * box = This->ChildBeg;
 	LONG tempminwidth;
-	
+
 	tempminwidth = This->MinWidth;
 	
 	This->MinWidth = (This->SetWidth > 0 ? This->SetWidth : 0);
@@ -386,24 +386,25 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 	c_bot = (c_top = r->Y = 0) + box->Rect.H -1;
 
 	while (cld) {
-	if (!(box->SetPosCld > 0x100)) {
-		if (y < cld->Rect.Y) {
-			c_bot = r->Y + cld->Rect.Y -1;
-			break;
-		}
-		if (x < dombox_LftDist (box)) {
-			c_rgt = r->X + dombox_LftDist (box) -1;
-			break;
-		}
-		if (x >= box->Rect.W - dombox_RgtDist (box)) {
-			c_lft = r->X + box->Rect.W - dombox_RgtDist (box) -1 +1;
-			break;
-		}
-		if (y >= box->Rect.H - dombox_BotDist (box)) {
-			c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1 +1;
-			break;
-		}
-	} /* !(box->SetPosCld > 0x100) */
+		if (!(box->SetPosCld > 0x100)) {
+			if (y < cld->Rect.Y) {
+				c_bot = r->Y + cld->Rect.Y -1;
+				break;
+			}
+			if (x < dombox_LftDist (box)) {
+				c_rgt = r->X + dombox_LftDist (box) -1;
+				break;
+			}
+			if (x >= box->Rect.W - dombox_RgtDist (box)) {
+				c_lft = r->X + box->Rect.W - dombox_RgtDist (box) -1 +1;
+				break;
+			}
+			if (y >= box->Rect.H - dombox_BotDist (box)) {
+				c_top = r->Y + box->Rect.H - dombox_BotDist (box) -1 +1;
+				break;
+			}
+		} /* !(box->SetPosCld > 0x100) */
+
 		if ((cld = box->_vtab->ChildAt (box, r, x, y, clip)) != NULL) {
 			r->X += cld->Rect.X;
 			r->Y += cld->Rect.Y;
@@ -411,7 +412,7 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 			cld  =  box->ChildBeg;
 			x    -= box->Rect.X;
 			y    -= box->Rect.Y;
-		}
+		} 
 	}
 /*	printf ("%4li,%4li -> %4li,%4li / %4li,%4li ",
 	        *px, *py, c_lft, c_rgt, c_top, c_bot);
@@ -583,6 +584,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	struct blocking_area t_blocker = *p_blocker;
 	BLOCKER              blocker   = &t_blocker;
+
 	if (blocker->L.bottom) {
 		if ((blocker->L.width -= This->Margin.Lft) <= 0) {
 			blocker->L.bottom = blocker->L.width = 0;
@@ -625,9 +627,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			}
 		}
 	}
+
 	This->Rect.W = width;
 	width -= dombox_LftDist (This) + dombox_RgtDist (This);
-	
+
 	while (box) {
 		long set_width = width;
 		BOOL floating  = (box->Floating != ALN_NO_FLT);
@@ -640,7 +643,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (box->SetPosMsk & 0x01) box->Rect.X = box->SetPos.p_x;
 			if (box->SetPosMsk & 0x02) box->Rect.Y = box->SetPos.p_y;
 			floating = FALSE;
-		
 		} else if (box->ClearFlt) {
 			L_BRK clear = box->ClearFlt & ~BRK_LN;
 			if (blocker->L.bottom && (clear & BRK_LEFT)) {
@@ -683,9 +685,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			struct blocking_area empty = { {0, 0}, {0, 0} };
 			box->_vtab->format (box, set_width, &empty);
 		} else {
+			/* BUS errors happen sometimes on next line */
 			box->_vtab->format (box, set_width, blocker);
 		}
-		
+
 		if (!absolute) switch (box->Floating) {
 			case FLT_RIGHT:
 				box->Rect.X += width - box->Rect.W;
@@ -723,13 +726,19 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (blocker->R.bottom && blocker->R.bottom <= height) {
 					blocker->R.bottom = blocker->R.width = 0;
 				}
+		} else {
+			if (This->Rect.H < box->Rect.Y + box->Rect.H) {
+				 This->Rect.H = box->Rect.Y + box->Rect.H;
+			}
 		}
 		
 		box = box->Sibling;
 	}
+
 	if (This->Rect.H < height) {
 		This->Rect.H = height;
 	}
+
 	if ((This->Rect.H += dombox_BotDist (This)) < This->SetHeight) {
 		This->Rect.H = This->SetHeight;
 	}
