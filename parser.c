@@ -125,15 +125,18 @@ delete_parser (PARSER parser)
 	if (!cont->Mode) {
 		frame_finish (frame, parser, &parser->Current);
 		containr_setup (cont, frame, frame->Location->Anchor);
+
 		if (parser->Loader->notified) {
 			containr_notify (cont, HW_PageFinished, &cont->Area);
 			parser->Loader->notified = FALSE;
 		}
+
 	} else {
 		fontstack_clear (&parser->Current.fnt_stack);
 		delete_frame (&frame);
 		containr_calculate (cont, NULL);
 	}
+
 	delete_loader (&parser->Loader);
 	
 	if (ParserPriv(parser)->OwnMem.Mem) {
@@ -431,6 +434,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	STYLE      style   = prsdata->Styles;
 	while (style) {
 		BOOL match;
+
 		if ((style->Css.Key && style->Css.Key != tag) ||
 		    (class_id != style->ClassId)              ||
 		    (keyval && (strncmp (style->Ident, keyval->Value, keyval->Len)
@@ -767,9 +771,29 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					if ((q = css_import (parser, q)) == NULL) {
 						return NULL;
 					}
+				} else if (strnicmp (q +1, "font-face", 9) == 0) {
+					/* The same as setting the font family 
+					 * for the whole document
+					 * http://www.w3.org/TR/REC-CSS2/fonts.html#font-descriptions
+					 */
+					/* dan - just ignore them for the moment? */
+					q = q+10;
+
+/*					while (isalpha (*(++q))) ;*/
+					while (isspace (*(++q))) ;
+
+				} else if (strnicmp (q +1, "page", 4) == 0) {
+					/* A way to define the size, margins etc 
+					 * for the whole document
+					 * http://www.w3.org/TR/REC-CSS2/page.html#page-box
+					 */
+					/* dan - just ignore them for the moment? */
+					while (isalpha (*(++q))) ;
+					while (isspace (*(++q))) ;
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
+					
 					q = (*q == '{' ? strchr (q +1, '}') : NULL);
 					if (q) q++;
 				}
@@ -801,7 +825,6 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				while (isalnum (*(++p)) || *p == '-' || *p == '_');
 				end = p;
 				if (beg == end) cid = '\0';
-			
 			} else {
 				beg = end = NULL;
 			}
