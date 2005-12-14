@@ -193,7 +193,8 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	TEXTBUFF current = &parser->Current;
 	short    step    = -1;
 	char output[100];
-	
+
+		
 	if (get_value (parser, CSS_FONT, output, sizeof(output))) {
 		WORD comma = 0;
 		char *   p = output;
@@ -342,9 +343,13 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	
 		/* here em and ex refer to the parents size not current size */
 
+
 		if (isdigit (output[0])) {
-			short size = numerical (output, NULL, current->font->Size,
-									(current->fnt_stack.Size/2));
+			short size = numerical (output, NULL, font_size,
+									(font_size/2));
+									/* current->word->font->SpaceWidth);*/
+/*			short size = numerical (output, NULL, current->font->Size,
+									(current->fnt_stack.Size/2));*/
 									/* current->word->font->SpaceWidth);*/
 
 			if (!fstk) {
@@ -443,9 +448,12 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	}
 	else {
 		/* I'm not sure this is correct but it works - Dan 12/12/05 */
-		current->nowrap = 0;
+		if (current->font->setNoWrap==TRUE) {	
+			current->font->setNoWrap=FALSE;
+			current->nowrap = FALSE;
+		}
 	}	
-		
+
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_COLOR);
 		if (color >= 0) {
@@ -1957,11 +1965,11 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_underline (current, TRUE);
 			}
 
-			/* we need the following at some point */
-			/*if (parser->hasStyle)
+			/* we need the following at some point dan*/
+			if (parser->hasStyle)
 				css_text_styles (parser, current->font);
-			else*/ 
-			word_set_color (current, frame->link_color);
+			else 
+				word_set_color (current, frame->link_color);
 
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
@@ -2658,7 +2666,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 		
 	if (flags & PF_START) {
-		
+
 		/* Ignore a paragraph start just behind a <LI> tag.
 		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
 		 */
@@ -2672,7 +2680,6 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 
 		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
-		/* why wasn't this here ? dan */
 		css_text_styles (parser, current->font);
 
 		box_anchor (parser, &par->Box, FALSE);
@@ -3253,7 +3260,8 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 		current->parentbox->HtmlCode = TAG_TD;
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
-	}
+	} 
+
 	return (flags|PF_SPACE);
 }
 
