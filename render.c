@@ -512,7 +512,7 @@ void
 css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 {
 	char out[100];
-	
+
 	if (get_value (parser, CSS_BORDER, out, sizeof(out))) {
 		char * p = out;
 		while (*p) {
@@ -1470,6 +1470,8 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
+
+			css_text_styles (parser, parser->Current.font); /* dan why not here? */
 		}
 		box_anchor (parser, &frame->Page, TRUE);
 	}
@@ -1781,7 +1783,15 @@ render_I_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	
-	word_set_italic (&parser->Current, (flags & PF_START));
+	/* correct??? dan */
+	if (flags & PF_START) {
+		word_set_italic (&parser->Current, TRUE);
+		css_text_styles (parser, NULL);
+	} else {
+		word_set_italic (&parser->Current, FALSE);
+		fontstack_pop (&parser->Current);
+	}
+
 	return flags;
 }
 
@@ -1813,9 +1823,10 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-	
+
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
+
 		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
@@ -1966,10 +1977,13 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 
 			/* we need the following at some point dan*/
-			if (parser->hasStyle)
+			if (parser->hasStyle) {
 				css_text_styles (parser, current->font);
-			else 
+			} else {
+				/* fontstack_push (current, -1);*/
+
 				word_set_color (current, frame->link_color);
+			}
 
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
@@ -2028,9 +2042,12 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}	
 	} else if (word->link) {
-		word_set_color     (current, current->font->Color);
+	
+		word_set_color     (current, current->font->Color);	
 		word_set_underline (current, FALSE);
 		word->link = NULL;
+
+		fontstack_pop (current);
 	}
 	
 	return flags;
