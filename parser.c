@@ -744,7 +744,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		STYLE style = NULL;
 		STYLE b_lnk = NULL;
 		BOOL  skip  = FALSE;
-		
+
 		while (*p) {
 			WORD key = TAG_Unknown;
 			char cid = '\0';
@@ -778,22 +778,21 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					 */
 					/* dan - just ignore them for the moment? */
 					q = q+10;
-
-/*					while (isalpha (*(++q))) ;*/
-					while (isspace (*(++q))) ;
-
+					while (*q != '}') ++q;
+					q = q++;
 				} else if (strnicmp (q +1, "page", 4) == 0) {
 					/* A way to define the size, margins etc 
 					 * for the whole document
 					 * http://www.w3.org/TR/REC-CSS2/page.html#page-box
 					 */
 					/* dan - just ignore them for the moment? */
-					while (isalpha (*(++q))) ;
-					while (isspace (*(++q))) ;
+					q = q+5;
+					while (*q != '}') ++q;
+					q = q++;
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
-					
+
 					q = (*q == '{' ? strchr (q +1, '}') : NULL);
 					if (q) q++;
 				}
@@ -820,7 +819,12 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			
 			if (*p == '.' || *p == '#') { /*............. class or id */
 				cid = *(p++);
-				if ((err = (!isalpha (*p))) == TRUE) break;
+
+				/* can't start with numbers */
+				/* if ((err = (!isalpha (*p))) == TRUE)	break; */
+
+				if (!isalpha (*p)) skip = TRUE;
+				
 				beg = p;
 				while (isalnum (*(++p)) || *p == '-' || *p == '_');
 				end = p;
@@ -910,7 +914,6 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			p         = tok;
 			beg = end = NULL;
 			err       = TRUE;
-			
 		} else /* if (*p == '{') */ {
 			while (isspace (*(++p)));
 			beg = p;
