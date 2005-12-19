@@ -2555,7 +2555,6 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 				css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
 			}
 			css_text_styles (parser, current->font);
-
 		} else {
 			par->Box.TextAlign = get_h_align (parser,
 			                                  current->parentbox->TextAlign);
@@ -2702,12 +2701,17 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
 				word_set_color (current, color);
+			} else {
+				word_set_color (current, current->parentbox->FontStk->Color);
 			}
 		}
 		
-		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
-/*		css_text_styles (parser, current->font); out dan*/
-
+		if (parser->hasStyle) {
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
+			css_text_styles (parser, current->font);
+		}
+				
 		box_anchor (parser, &par->Box, FALSE);
 
 	} else {
@@ -2831,6 +2835,17 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (get_value_unum (parser, KEY_WIDTH, 80) > 80) {
 			TAsetCondns (current->word->attr, TRUE);
 		}
+
+		if (!ignore_colours) {
+			word_set_color (current, current->parentbox->FontStk->Color);
+		}
+
+		if (parser->hasStyle) {
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
+			css_text_styles (parser, current->font);
+		}
+		
 		flags |= PF_PRE;
 	} else {
 		word_set_font (current, current->font->Type);
