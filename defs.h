@@ -135,6 +135,9 @@ typedef struct paragraph_item * PARAGRPH;
 typedef struct word_item      * WORDITEM;
 typedef struct s_font         * FONT;       /* in fontbase.h */
 typedef struct s_location     * LOCATION;   /* in Location.h */
+typedef struct s_fontstack * FNTSTACK;
+typedef struct s_fontstack   FNTSBASE;
+
 #if !defined(__PUREC__)
 typedef struct s_containr     * CONTAINR;
 typedef struct s_history      * HISTORY;
@@ -324,6 +327,7 @@ struct s_dombox {
 	L_BRK    ClearFlt;
 	H_ALIGN  TextAlign;
 	WORD     TextIndent; /* paragraph hanginging, <0: left, >0: right       */
+	FNTSTACK FontStk;	 /* fontstack for the dombox */
 };
 extern struct s_dombox_vtab DomBox_vTab;
 DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
@@ -397,8 +401,6 @@ typedef struct s_image {
 	short  hspace;
 } * IMAGE;
 
-typedef struct s_fontstack * FNTSTACK;
-typedef struct s_fontstack   FNTSBASE;
 struct s_fontstack {
 	FNTSTACK Prev, Next;
 	WORD Color;
