@@ -88,7 +88,6 @@ vTab_MinWidth (DOMBOX * This)
 	}
 
 	return This->MinWidth;
-/*	return (This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This));*/
 }
 
 /*----------------------------------------------------------------------------*/
@@ -302,6 +301,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 	WORD hanging, hang_nxt;
 
 	/* supress 'a name' tags from making empty lines */
+	/* This supresses more than it should heise.de/ct/ */
 	if ((word->link)&&(word->word_width == 0)&& !word->next_word) {
 		return;
 	}
