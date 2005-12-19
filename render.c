@@ -662,6 +662,8 @@ box_anchor (PARSER parser, DOMBOX * box, BOOL force)
 	if (get_value (parser, KEY_CLASS, out, sizeof(out))) {
 		dombox_setClass (box, out, force);
 	}
+
+	box->FontStk = current->font; /* dan printf */	
 }
 
 /*----------------------------------------------------------------------------*/
@@ -679,7 +681,7 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	current->paragraph->Box.TextIndent = box->TextIndent;
 	
 	css_text_styles (parser, current->font);
-	
+
 	box_anchor (parser, box, TRUE);
 	
 	return box;
@@ -697,7 +699,7 @@ create_box (TEXTBUFF current, BOXCLASS bc, WORD par_top)
 	par->Box.Margin.Top = 0;
 	
 	dombox_adopt (current->parentbox = box, &par->Box);
-	
+
 	fontstack_push (current, -1);
 	
 	return box;
@@ -1471,7 +1473,9 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
 
-			css_text_styles (parser, parser->Current.font); /* dan why not here? */
+			css_text_styles (parser, parser->Current.font);
+
+			frame->text_color = parser->Current.font->Color;
 		}
 		box_anchor (parser, &frame->Page, TRUE);
 	}
@@ -1972,17 +1976,16 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				} while (*(p++));
 			}
 			
+			fontstack_push (current, -1);
+
 			if (!word->link) {
 				word_set_underline (current, TRUE);
 			}
 
-			/* we need the following at some point dan*/
+			word_set_color (current, frame->link_color);
+
 			if (parser->hasStyle) {
 				css_text_styles (parser, current->font);
-			} else {
-				/* fontstack_push (current, -1);*/
-
-				word_set_color (current, frame->link_color);
 			}
 
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
@@ -2042,8 +2045,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}	
 	} else if (word->link) {
-	
-		word_set_color     (current, current->font->Color);	
+		word_set_color     (current, current->font->Color);
 		word_set_underline (current, FALSE);
 		word->link = NULL;
 
@@ -2696,18 +2698,18 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 
-		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
-		css_text_styles (parser, current->font);
-
-		box_anchor (parser, &par->Box, FALSE);
-
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
 				word_set_color (current, color);
 			}
 		}
-	
+		
+		css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
+/*		css_text_styles (parser, current->font); out dan*/
+
+		box_anchor (parser, &par->Box, FALSE);
+
 	} else {
 		par = add_paragraph (current, 2);
 
