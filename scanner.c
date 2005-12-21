@@ -665,6 +665,10 @@ scan_color (const char * text, size_t len)
 				char * p;
 				long   c = strtol (text, &p, 10);
 				while (isspace(*p)) p++;
+				if (*(text = p) == '.') {
+					p++;
+					while (isdigit(*p)) p++;
+				}
 				if (*(text = p) == '%') {
 					c = (255 * c + 50) /100;
 					while (isspace(*(++text)));
