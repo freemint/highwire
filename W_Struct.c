@@ -5,7 +5,7 @@
 
 #include "global.h"
 #include "fontbase.h"
-
+#include "Table.h"
 
 static struct {
 	WCHAR Space, Empty;
