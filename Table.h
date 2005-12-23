@@ -51,6 +51,7 @@ struct s_table_cell {
 	TAB_CELL  BelowCell;
 	short     ColSpan;
 	short     RowSpan;
+	BOOL      nowrap;
 
 	char _debug;
 };
