@@ -255,8 +255,11 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 					if (strnicmp (p, "italic",  len) == 0 ||
 					    strnicmp (p, "oblique", len) == 0) {
 						fontstack_setItalic (current);
-						/* n/i: normal */
-					
+					} else if (strnicmp (p, "normal", len) == 0) {
+						/* if I don't override this can fail - dan */
+						current->styles.italic = 1;
+						word_set_italic (&parser->Current, FALSE);
+
 					/* font-weight */
 					} else if (strnicmp (p, "bold",   len) == 0 ||
 					           strnicmp (p, "bolder", len) == 0) {
@@ -411,11 +414,15 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}
 	}
 	
-	if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))
-	    && (stricmp (output, "italic") == 0 ||
-	        stricmp (output, "oblique") == 0)) {
-		/* n/i: normal */
-		fontstack_setItalic (current);
+	if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))) {
+		if ((stricmp (output, "italic") == 0) 
+			|| (stricmp (output, "oblique") == 0)) {
+				fontstack_setItalic (current);
+		} else if (stricmp (output, "normal") == 0) {
+			/* if I don't override this can fail - dan */
+			current->styles.italic = 1;
+			word_set_italic (&parser->Current, FALSE);
+		}
 	}
 	
 	if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
@@ -436,7 +443,13 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			fontstack_setStrike (current);
 		} else if (stricmp (output, "underline") == 0) {
 			fontstack_setUndrln (current);
-		}
+		} else if (stricmp (output, "none") == 0) {
+			if (fstk->setStrike) 
+				word_set_strike(current, fstk->setStrike = FALSE);
+
+			if (fstk->setUndrln) 
+				word_set_underline (current, fstk->setUndrln = FALSE);
+		}		
 		/* n/i: overline */
 	}
 	
@@ -446,13 +459,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}
 		/* n/i: normal, pre */
 	}
-	else {
-		/* I'm not sure this is correct but it works - Dan 12/12/05 */
-		if (current->font->setNoWrap==TRUE) {	
-			current->font->setNoWrap=FALSE;
-			current->nowrap = FALSE;
-		}
-	}	
 
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_COLOR);
@@ -1771,7 +1777,6 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		css_text_styles (parser, NULL);
-	
 	} else {
 		fontstack_pop (&parser->Current);
 	}
@@ -1785,12 +1790,14 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_I_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
 	/* correct??? dan */
 	if (flags & PF_START) {
+		fontstack_push (current, -1);
 		word_set_italic (&parser->Current, TRUE);
-		css_text_styles (parser, NULL);
+		css_text_styles (parser, current->font);
 	} else {
 		word_set_italic (&parser->Current, FALSE);
 		fontstack_pop (&parser->Current);
@@ -3290,12 +3297,17 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
-		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
+
+/*		current->nowrap = get_value_exists (parser, KEY_NOWRAP); */
+		current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
+		current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		current->parentbox->HtmlCode = TAG_TD;
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
-	} 
-
+	} else if (current->tbl_stack) {	
+		if (current->tbl_stack->WorkCell->nowrap)
+			current->nowrap = FALSE;
+	}
 	return (flags|PF_SPACE);
 }
 
@@ -3317,11 +3329,16 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			         get_value_size  (parser, KEY_WIDTH),
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
-		current->nowrap = get_value_exists (parser, KEY_NOWRAP);
+/*		current->nowrap = get_value_exists (parser, KEY_NOWRAP);*/
+		current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
+		current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
+	} else if (current->tbl_stack) {	
+	 	if (current->tbl_stack->WorkCell->nowrap)
+			current->nowrap = FALSE;
 	}
 	return (flags|PF_SPACE);
 }
