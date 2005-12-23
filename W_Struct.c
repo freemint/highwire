@@ -124,7 +124,6 @@ new_word (TEXTBUFF current, BOOL do_link)
 		font_byType (-1, -1, -1, word);
 		word->vertical_align = ALN_BOTTOM;
 		word->link           = NULL;
-	
 	} else /*if (current->text > current->buffer)*/ {
 		word_store (current);
 		if ((word = _alloc (copy_from)) == NULL) return NULL;
@@ -145,11 +144,14 @@ new_word (TEXTBUFF current, BOOL do_link)
 	word->line_brk    = BRK_NONE;
 	word->word_width  = 0;
 	word->space_width = 0;
-if (current->nowrap) {
- 	word->wrap        = FALSE;
-} else {
-	word->wrap 		  = TRUE;
-}
+
+	/* Only tables problematic ? */
+	if (current->tbl_stack && current->tbl_stack->WorkCell->nowrap) {
+		word->wrap        = FALSE;
+	} else {
+		word->wrap 		  = TRUE;
+	}
+
 	word->image       = NULL;
 	word->input       = NULL;
 	word->line        = NULL;
