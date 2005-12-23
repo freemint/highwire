@@ -345,6 +345,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	cell->AlignV        = v_align;
 	cell->c_Height      = (height <= 1024 ? height : 1024);
 	cell->c_SetWidth    = (width  <= 1024 ? width  : 0);
+	cell->nowrap 		= FALSE;
 
 	if (color < 0) {
 		color = row->Color;
@@ -1236,6 +1237,7 @@ vTab_MinWidth (DOMBOX * This)
 		else
 			minwid_ret = This->MinWidth;	
 	}
+
 	return (minwid_ret);
 }
 
