@@ -1,6 +1,18 @@
-(non-public of Nov. 30, 2005)
+Changes in V. 0.2.7 release  of December 24, 2005:
 
-- Now also "Save as..." vor images.
+- "Save as..." implemented for images, via the
+  right click popup menu.
+
+- Numerous improvements on the CSS style support
+  (eg. 'list-style:..') and CSS styles applied to
+  many more tags than before.
+
+- Percentage Font Size bug fixed.
+
+- Table Cell 'nowrap' bug fixed.
+
+- Scanner improved to recognize some odd but legal
+  percentage color values.
 
 __________________________________________________
 Changes in V. 0.2.6 release  of November 08, 2005:
