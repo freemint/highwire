@@ -220,6 +220,11 @@ reset_text_styles (PARSER parser)
 		word_set_strike(&parser->Current, current->font->setStrike);
 	}
 
+	if (current->font->setCondns != frame->Page.FontStk->setCondns) {
+		current->font->setCondns = frame->Page.FontStk->setCondns;
+		TAsetCondns (current->word->attr, current->font->setCondns);
+	}
+
 }
 
 /*----------------------------------------------------------------------------*/
@@ -479,15 +484,16 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		} else if (stricmp (output, "underline") == 0) {
 			fontstack_setUndrln (current);
 		} else if (stricmp (output, "none") == 0) {
-			/* I don't think this is necessary */
-;
 #if 0
 			if (fstk->setStrike) 
 				word_set_strike(current, fstk->setStrike = FALSE);
-
-			if (fstk->setUndrln) 
-				word_set_underline (current, fstk->setUndrln = FALSE);
 #endif
+	
+			/* fstk->setUndrln and current->font.setUnderline fail
+			 * for the following test  dan
+			 */
+			if (current->styles.underlined)
+				word_set_underline (current, fstk->setUndrln = FALSE);
 		}		
 		/* n/i: overline */
 	}
@@ -496,6 +502,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		if (stricmp (output, "nowrap") == 0) {
 			fontstack_setNoWrap (current);
 		}
+
 		/* n/i: normal, pre */
 	}
 
