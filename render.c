@@ -154,9 +154,13 @@ numerical (const char * buf, char ** tail, short em, short ex)
 			size *= 6;
 		case 0x5043: /* PC, pica */
 			size *= 12;
-		case 0x5058: /* PX, pixel */
-			/* assume 72 dpi */
 			goto case_PT;
+		case 0x5058: /* PX, pixel */
+			/* small mod to get sizes to match market pervasive
+			 * sizing instead of real values - Dan
+			 */
+			size = (size - 384) >> 8;
+			break;
 		
 		case 0x2520: /* % */
 			/* this mod is just to keep percentages standard
@@ -183,6 +187,39 @@ numerical (const char * buf, char ** tail, short em, short ex)
 		*tail = ptr.v;
 	}
 	return (short)size;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+reset_text_styles (PARSER parser)
+{
+	TEXTBUFF current = &parser->Current;
+	FRAME    frame    = parser->Frame;
+
+	/* These could potentially need to be set from the parent
+	 * and not from the base of the frame
+	 */
+
+	if (current->font->setItalic != frame->Page.FontStk->setItalic) {
+		current->font->setItalic = frame->Page.FontStk->setItalic;
+		word_set_italic (&parser->Current, current->font->setItalic);
+	}
+
+	if (current->font->setUndrln != frame->Page.FontStk->setUndrln) {
+		current->font->setUndrln = frame->Page.FontStk->setUndrln;
+		word_set_underline (&parser->Current, current->font->setUndrln);
+	}
+
+	if (current->font->setBold != frame->Page.FontStk->setBold) {
+		current->font->setBold = frame->Page.FontStk->setBold;
+		word_set_bold(&parser->Current, current->font->setBold);
+	}
+
+	if (current->font->setStrike != frame->Page.FontStk->setStrike) {
+		current->font->setStrike = frame->Page.FontStk->setStrike;
+		word_set_strike(&parser->Current, current->font->setStrike);
+	}
+
 }
 
 /*----------------------------------------------------------------------------*/
@@ -257,7 +294,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 						fontstack_setItalic (current);
 					} else if (strnicmp (p, "normal", len) == 0) {
 						/* if I don't override this can fail - dan */
-						current->styles.italic = 1;
 						word_set_italic (&parser->Current, FALSE);
 
 					/* font-weight */
@@ -420,7 +456,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				fontstack_setItalic (current);
 		} else if (stricmp (output, "normal") == 0) {
 			/* if I don't override this can fail - dan */
-			current->styles.italic = 1;
 			word_set_italic (&parser->Current, FALSE);
 		}
 	}
@@ -444,11 +479,15 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		} else if (stricmp (output, "underline") == 0) {
 			fontstack_setUndrln (current);
 		} else if (stricmp (output, "none") == 0) {
+			/* I don't think this is necessary */
+;
+#if 0
 			if (fstk->setStrike) 
 				word_set_strike(current, fstk->setStrike = FALSE);
 
 			if (fstk->setUndrln) 
 				word_set_underline (current, fstk->setUndrln = FALSE);
+#endif
 		}		
 		/* n/i: overline */
 	}
@@ -1479,7 +1518,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
 
-			css_text_styles (parser, parser->Current.font);
+			frame->Page.FontStk = css_text_styles (parser, parser->Current.font);
 
 			frame->text_color = parser->Current.font->Color;
 		}
@@ -1982,6 +2021,8 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					skip |= (*(dst++) == '#');
 				} while (*(p++));
 			}
+
+			reset_text_styles(parser);
 			
 			fontstack_push (current, -1);
 
@@ -2553,6 +2594,8 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
 		}
+
+		reset_text_styles(parser);
 		
 		fontstack_push (current, step);
 		fontstack_setType (current, header_font);
@@ -2703,6 +2746,9 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
 		}
+		
+		/* reset fontstack */
+		reset_text_styles(parser);
 
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
