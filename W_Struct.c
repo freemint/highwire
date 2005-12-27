@@ -303,11 +303,3 @@ word_set_underline (TEXTBUFF current, BOOL onNoff)
 		}
 	}
 }
-
-
-long
-word_offset (WORDITEM word)
-{
-	WORDLINE line = word->line;
-	return (line->OffsetY + line->Paragraph->Box.Rect.Y - word->word_height);
-}
