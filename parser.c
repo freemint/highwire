@@ -826,7 +826,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				if (!isalpha (*p)) skip = TRUE;
 				
 				beg = p;
-				while (isalnum (*(++p)) || *p == '-' || *p == '_');
+				while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
+
 				end = p;
 				if (beg == end) cid = '\0';
 			} else {
