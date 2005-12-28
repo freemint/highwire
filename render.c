@@ -200,6 +200,12 @@ reset_text_styles (PARSER parser)
 	 * and not from the base of the frame
 	 */
 
+	/* test in case we don't have a body tag in document */
+	if (!frame->Page.FontStk) {
+		frame->Page.FontStk = current->font;
+		return;
+	}
+	
 	if (current->font->setItalic != frame->Page.FontStk->setItalic) {
 		current->font->setItalic = frame->Page.FontStk->setItalic;
 		word_set_italic (&parser->Current, current->font->setItalic);
@@ -484,14 +490,13 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		} else if (stricmp (output, "underline") == 0) {
 			fontstack_setUndrln (current);
 		} else if (stricmp (output, "none") == 0) {
-#if 0
-			if (fstk->setStrike) 
-				word_set_strike(current, fstk->setStrike = FALSE);
-#endif
-	
 			/* fstk->setUndrln and current->font.setUnderline fail
-			 * for the following test  dan
+			 * for the following tests  dan
 			 */
+			
+			if (current->styles.strike) 
+				word_set_strike(current, fstk->setStrike = FALSE);
+ 
 			if (current->styles.underlined)
 				word_set_underline (current, fstk->setUndrln = FALSE);
 		}		
@@ -2973,43 +2978,38 @@ list_bullet (PARSER parser, BULLET dflt)
 	char buf[22];
 	int  bullet = -1;
 	
-	if (get_value (parser, CSS_LIST_STYLE_TYPE, buf, sizeof(buf))
-	    && strcmp (buf, "none") == 0) {
-		bullet = LT_NONE;
-	} else if (get_value (parser, CSS_LIST_STYLE, buf, sizeof(buf))
-	    && strcmp (buf, "none") == 0) {
-		bullet = LT_NONE;	
-		/* list-style is not fully implemented */	
-	 } else if (dflt >= LT_DECIMAL) {
-		if (buf[0]) {
-			if      (stricmp (buf, "decimal")     == 0) bullet = LT_DECIMAL;
-			else if (stricmp (buf, "lower-alpha") == 0) bullet = LT_L_ALPHA;
-			else if (stricmp (buf, "upper-alpha") == 0) bullet = LT_U_ALPHA;
-			else if (stricmp (buf, "lower-roman") == 0) bullet = LT_L_ROMAN;
-			else if (stricmp (buf, "upper-roman") == 0) bullet = LT_U_ROMAN;
-		}
-		if (bullet < 0) switch (get_value_char (parser, KEY_TYPE)) {
-			case 'a': bullet = LT_L_ALPHA; break;
-			case 'A': bullet = LT_U_ALPHA; break;
-			case 'i': bullet = LT_L_ROMAN; break;
-			case 'I': bullet = LT_U_ROMAN; break;
-			case '1': bullet = LT_DECIMAL; break;
-			default:  bullet = dflt;
-		}
-	
-	} else {
-		if (buf[0]) {
-			if      (stricmp (buf, "disc")   == 0) bullet = LT_DISC;
-			else if (stricmp (buf, "square") == 0) bullet = LT_SQUARE;
-			else if (stricmp (buf, "circle") == 0) bullet = LT_CIRCLE;
-		}
-		if (bullet < 0) switch (toupper(get_value_char (parser, KEY_TYPE))) {
-			case 'D': bullet = LT_DISC;   break;
-			case 'S': bullet = LT_SQUARE; break;
-			case 'C': bullet = LT_CIRCLE; break;
-			default:  bullet = dflt;
-		}
+	if (get_value (parser, CSS_LIST_STYLE_TYPE, buf, sizeof(buf))) {
+		; /* just be happy we found it */
+	} else if (get_value (parser, CSS_LIST_STYLE, buf, sizeof(buf))) {
+		; /* just be happy we found it */
 	}
+		 	
+	if (buf[0]) {
+		if 		(stricmp (buf, "none") 		  == 0) bullet = LT_NONE;
+		else if (stricmp (buf, "decimal")     == 0) bullet = LT_DECIMAL;
+		else if (stricmp (buf, "lower-alpha") == 0) bullet = LT_L_ALPHA;
+		else if (stricmp (buf, "lower-latin") == 0) bullet = LT_L_ALPHA;
+		else if (stricmp (buf, "upper-alpha") == 0) bullet = LT_U_ALPHA;
+		else if (stricmp (buf, "upper-latin") == 0) bullet = LT_U_ALPHA;
+		else if (stricmp (buf, "lower-roman") == 0) bullet = LT_L_ROMAN;
+		else if (stricmp (buf, "upper-roman") == 0) bullet = LT_U_ROMAN;
+		else if (stricmp (buf, "disc")   == 0) bullet = LT_DISC;
+		else if (stricmp (buf, "square") == 0) bullet = LT_SQUARE;
+		else if (stricmp (buf, "circle") == 0) bullet = LT_CIRCLE;
+	}
+	
+	if (bullet < 0) 	switch (get_value_char (parser, KEY_TYPE)) {
+		case 'a': bullet = LT_L_ALPHA; break;
+		case 'A': bullet = LT_U_ALPHA; break;
+		case 'i': bullet = LT_L_ROMAN; break;
+		case 'I': bullet = LT_U_ROMAN; break;
+		case '1': bullet = LT_DECIMAL; break;
+		case 'D': bullet = LT_DISC;   break;
+		case 'S': bullet = LT_SQUARE; break;
+		case 'C': bullet = LT_CIRCLE; break;
+		default:  bullet = dflt;
+	}
+
 	return bullet;
 }
 
@@ -3025,11 +3025,8 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		short  counter = get_value_unum (parser, KEY_START, 1);
 		BULLET bullet  = list_bullet    (parser, LT_DECIMAL);
-		list_start (parser, current, (bullet ? bullet : LT_DECIMAL), counter, TAG_OL);
-/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);*/
-/*		css_text_styles (parser, current->font);*/
-		box_anchor (parser, current->parentbox, TRUE);
-	
+		list_start (parser, current, bullet, counter, TAG_OL);
+		box_anchor (parser, current->parentbox, TRUE);	
 	} else if (current->lst_stack) {
 		list_finish (current);
 	}
