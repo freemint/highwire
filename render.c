@@ -154,14 +154,9 @@ numerical (const char * buf, char ** tail, short em, short ex)
 			size *= 6;
 		case 0x5043: /* PC, pica */
 			size *= 12;
-			goto case_PT;
 		case 0x5058: /* PX, pixel */
-			/* small mod to get sizes to match market pervasive
-			 * sizing instead of real values - Dan
-			 */
-			size = (size - 384) >> 8;
-			break;
-		
+			goto case_PT;
+
 		case 0x2520: /* % */
 			/* this mod is just to keep percentages standard
 			 * across all the interfaces.  I don't think
@@ -664,7 +659,9 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		}
 	if (_CssPosition &&   get_value (parser, CSS_POSITION, out, sizeof(out))) {
 		UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
+					  stricmp (out, "fixed") == 0 ? 0x103:
 		              stricmp (out, "relative") == 0 ? 0x003 : 0);
+
 		if (mask) {
 			if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
 				short lft = numerical (out, NULL, parser->Current.font->Size,
@@ -2869,11 +2866,11 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START) {
 		group_box (parser, TAG_DIV, ALN_LEFT);
-		
 	} else {
 		DOMBOX * box = leave_box (&parser->Current, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
 		                box->ChildBeg == box->ChildEnd ? box->ChildBeg : NULL);
+
 		if (cld && (cld->Floating == (FLT_LEFT) || cld->Floating == (FLT_RIGHT))
 		        && dombox_MinWidth (cld) == dombox_MaxWidth (cld)) {
 			box->SetWidth = dombox_MinWidth (box);
