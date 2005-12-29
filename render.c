@@ -154,9 +154,17 @@ numerical (const char * buf, char ** tail, short em, short ex)
 			size *= 6;
 		case 0x5043: /* PC, pica */
 			size *= 12;
-		case 0x5058: /* PX, pixel */
 			goto case_PT;
+		case 0x5058: /* PX, pixel */
+			val = (size + 128) >> 8;
+			
+			if (val > 0)
+				size = (val * 9)/10;
+			else
+				size = val;
 
+			break;
+			
 		case 0x2520: /* % */
 			/* this mod is just to keep percentages standard
 			 * across all the interfaces.  I don't think
@@ -299,7 +307,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 					    strnicmp (p, "oblique", len) == 0) {
 						fontstack_setItalic (current);
 					} else if (strnicmp (p, "normal", len) == 0) {
-						/* if I don't override this can fail - dan */
 						word_set_italic (&parser->Current, FALSE);
 
 					/* font-weight */
