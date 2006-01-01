@@ -302,11 +302,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER blocker)
 
 	/* supress 'a name' tags from making empty lines */
 	/* This supresses more than it should heise.de/ct/ */
-/*  Backed out for the christmas snapshot release
+/*  Backed out for the christmas snapshot release */
 	if ((word->link)&&(word->word_width == 0)&& !word->next_word) {
 		return;
 	}
-*/	
+	
 	if (This->SetWidth) {
 		if (This->SetWidth > 0) {
 			width = This->SetWidth;
