@@ -216,12 +216,17 @@
 		                                             * supported attribute yet  */
 		__CSS_ITEM (BACKGROUND_COLOR, KEY_BGCOLOR),
 		__CSS_ITEM (BORDER,           0),
+		__CSS_ITEM (BORDER_BOTTOM,    0),
+		__CSS_ITEM (BORDER_LEFT,      0),
+		__CSS_ITEM (BORDER_RIGHT,     0),
+		__CSS_ITEM (BORDER_TOP,       0),
 		__CSS_ITEM (BORDER_COLOR,     0),
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
 		/*          BORDER_STYLE      */
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
 		__CSS_ITEM (CLEAR,            0),
 		__CSS_ITEM (COLOR,            KEY_COLOR),
+		__CSS_ITEM (DISPLAY,          0),
 		/*          EMPTY_CELLS       */
 		__CSS_ITEM (FLOAT,            0),
 		__CSS_ITEM (FONT,             0),
