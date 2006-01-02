@@ -130,8 +130,14 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->ColWidth  = NULL;
 
 	table->t_Backgnd = (color != current->backgnd ? color : -1);
-	table->t_BorderW = border;
-	table->t_BorderC = -1; /* 3D outset */
+
+	table->t_BorderW.Top = table->t_BorderW.Bot = 
+	table->t_BorderW.Lft = table->t_BorderW.Rgt = border;
+
+	/* 3D outset */
+	table->t_BorderC.Top = table->t_BorderC.Bot =
+	table->t_BorderC.Lft = table->t_BorderC.Rgt = -1;
+
 	table->Spacing   = spacing;
 	table->Padding   = padding + (border ? 1 : 0);
 	table->t_SetWidth  = width;
@@ -234,8 +240,15 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 		cell->Box.Padding.Top = cell->Box.Padding.Bot =
 		cell->Box.Padding.Lft = cell->Box.Padding.Rgt = padding;
 	}
-	cell->Box.BorderWidth = (parent->BorderWidth ? 1 : 0);
-	cell->Box.BorderColor = -2; /* 3D inset */
+	cell->Box.BorderWidth.Top = (parent->BorderWidth.Top ? 1 : 0);
+	cell->Box.BorderWidth.Bot = (parent->BorderWidth.Bot ? 1 : 0);
+	cell->Box.BorderWidth.Lft = (parent->BorderWidth.Lft ? 1 : 0);
+	cell->Box.BorderWidth.Rgt = (parent->BorderWidth.Rgt ? 1 : 0);
+	
+	/* 3D inset */
+	cell->Box.BorderColor.Top = cell->Box.BorderColor.Bot =
+	cell->Box.BorderColor.Lft =cell->Box.BorderColor.Rgt = -2; 
+
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;
@@ -657,7 +670,10 @@ calc_minmax (TABLE table)
 
 
 /*	if (table->t_MinWidth > table->t_SetWidth)
-		table->t_MinWidth = table->t_SetWidth;*/
+	{
+		table->t_MinWidth = table->t_SetWidth;
+		calc_minmax(table);
+	}*/
 }
 
 /*----------------------------------------------------------------------------*/
@@ -776,8 +792,9 @@ table_finish (PARSER parser)
 	calc_minmax (table);
 
 	if (table->FixCols == table->NumCols) {
-		table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth; 
-		/* prefered method I think		table->t_MaxWidth = table->t_MinWidth = table->t_SetWidth;*/
+		/*table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth; */
+		/* prefered method I think	*/
+			table->t_MaxWidth = table->t_MinWidth = table->t_SetWidth;
 	} else if (table->t_SetWidth > 0) {
 		if (table->t_SetWidth < table->t_MinWidth) {
 			 table->t_SetWidth = table->t_MinWidth;
@@ -1316,7 +1333,7 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 {
 	TABLE table       = (TABLE)This;
 	long  clip_bottom = clip->g_y + clip->g_h -1;
-	long  row_y       = y + table->t_BorderW + table->Spacing;
+	long  row_y       = y + table->t_BorderW.Top + table->t_BorderW.Bot + table->Spacing;
 	TAB_ROW row       = table->Rows;
 
 	/*puts("table_draw");*/
