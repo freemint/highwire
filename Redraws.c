@@ -648,3 +648,36 @@ draw_border (const GRECT * rec, short lu, short rd, short width)
 		p[2].p_y--;
 	}
 }
+
+/*============================================================================*/
+void
+draw_TBLR_border (const GRECT * rec, short lu, short rd, TBLR width)
+{
+	PXY p[3];
+	short b	= width.Top;
+
+	p[2].p_x = (p[1].p_x = p[0].p_x = rec->g_x) + rec->g_w -1;
+	p[0].p_y = (p[1].p_y = p[2].p_y = rec->g_y) + rec->g_h -1;
+	vsl_color (vdi_handle, lu);
+	while(1) {
+		v_pline (vdi_handle, 3, (short*)p);
+		if (!--b) break;
+		p[1].p_x = ++p[0].p_x;
+		p[1].p_y = ++p[2].p_y;
+		p[2].p_x--;
+		p[0].p_y--;
+	}
+	
+	b = width.Lft;
+	p[0].p_x++; p[1].p_x = p[2].p_x;
+	p[2].p_y++; p[1].p_y = p[0].p_y;
+	vsl_color (vdi_handle, rd);
+	while(1) {
+		v_pline (vdi_handle, 3, (short*)p);
+		if (!--b) break;
+		p[1].p_x = ++p[2].p_x;
+		p[1].p_y = ++p[0].p_y;
+		p[0].p_x--;
+		p[2].p_y--;
+	}
+}
