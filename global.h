@@ -134,6 +134,7 @@ void draw_vbar      (FRAME, BOOL complete);
 void draw_hr        (PARAGRPH, WORD x, WORD y);
 long draw_paragraph (PARAGRPH, WORD x, long y, const GRECT *, void * highlight);
 void draw_border    (const GRECT *, short lu, short rd, short width);
+void draw_TBLR_border (const GRECT *, short lu, short rd, TBLR width);
 
 /* in Config.c */
 
