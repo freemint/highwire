@@ -322,7 +322,8 @@ struct s_dombox {
 	WORD     Backgnd;   /* -1 for transparency, else colour value            */
 	TBLR     Margin;
 	TBLR     Padding;
-	WORD     BorderWidth, BorderColor;
+	TBLR     BorderWidth;
+	TBLR     BorderColor;
 	H_ALIGN  Floating;
 	L_BRK    ClearFlt;
 	H_ALIGN  TextAlign;
@@ -334,10 +335,10 @@ DOMBOX * dombox_ctor (DOMBOX *, DOMBOX * parent, BOXCLASS);
 DOMBOX * dombox_dtor (DOMBOX *);
 #define  Delete(this)   ((*((this)->_vtab->delete))(this))
 #define  dombox_Dist(this,what)    ((this)->Margin.what + (this)->Padding.what)
-#define  dombox_TopDist(this)      (dombox_Dist(this,Top) + (this)->BorderWidth)
-#define  dombox_BotDist(this)      (dombox_Dist(this,Bot) + (this)->BorderWidth)
-#define  dombox_LftDist(this)      (dombox_Dist(this,Lft) + (this)->BorderWidth)
-#define  dombox_RgtDist(this)      (dombox_Dist(this,Rgt) + (this)->BorderWidth)
+#define  dombox_TopDist(this)      (dombox_Dist(this,Top) + (this)->BorderWidth.Top)
+#define  dombox_BotDist(this)      (dombox_Dist(this,Bot) + (this)->BorderWidth.Bot)
+#define  dombox_LftDist(this)      (dombox_Dist(this,Lft) + (this)->BorderWidth.Lft)
+#define  dombox_RgtDist(this)      (dombox_Dist(this,Rgt) + (this)->BorderWidth.Rgt)
 DOMBOX * dombox_Offset  (DOMBOX *, long * x, long * y);
 #define  dombox_MinWidth(this)     ((*((this)->_vtab->MinWidth))(this))
 #define  dombox_MaxWidth(this)     ((*((this)->_vtab->MaxWidth))(this))
