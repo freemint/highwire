@@ -108,39 +108,102 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 	long y1 = y + This->Margin.Top;
 	long y2 = y - This->Margin.Bot + This->Rect.H -1;
 	
-	if (This->BorderWidth) {
-		if (This->BorderColor >= 0) {
-			short n = This->BorderWidth;
-			PXY b[5];
-			b[3].p_x = b[0].p_x = x1;
-			b[1].p_x = b[2].p_x = x2;
-			b[1].p_y = b[0].p_y = y1;
-			b[3].p_y = b[2].p_y = y2;
-			vsl_color (vdi_handle, This->BorderColor);
-			while(1) {
-				b[4] = b[0];
-				v_pline (vdi_handle, 5, (short*)b);
-				if (!--n) break;
-				b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
-				b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
-			}
-		} else { /* 3D */
+	if (This->BorderWidth.Top ||
+		This->BorderWidth.Bot ||
+		This->BorderWidth.Lft ||
+		This->BorderWidth.Rgt ) {
+
+		/* This should all be reordered into some better test
+		 * however the New Years champagne is still catching up
+		 * with me - Dan 
+		 */		
+
+		if (This->BorderColor.Top < 0) {
 			GRECT b;
 			b.g_x = x1;
 			b.g_y = y1;
 			b.g_w = x2 - x1 +1;
 			b.g_h = y2 - y1 +1;
-			if (This->BorderColor == -1) { /* outset */
-				draw_border (&b, G_WHITE, G_LBLACK, This->BorderWidth);
+			if (This->BorderColor.Top == -1) { /* outset */
+				draw_TBLR_border (&b, G_WHITE, G_LBLACK, This->BorderWidth); /* should be all */
 			} else { /* inset */
-				draw_border (&b, G_LBLACK, G_WHITE, This->BorderWidth);
+				draw_TBLR_border (&b, G_LBLACK, G_WHITE, This->BorderWidth); /* should be all */
 			}
-		}
-		x1 += This->BorderWidth;
-		x2 -= This->BorderWidth;
-		y1 += This->BorderWidth;
-		y2 -= This->BorderWidth;
+		} else {
+			short n;
+			PXY b[5];
+
+			if (This->BorderColor.Top >= 0 && This->BorderWidth.Top > 0) {
+				n = This->BorderWidth.Top;
+
+				b[3].p_x = b[0].p_x = x1;
+				b[1].p_x = b[2].p_x = x2;
+				b[1].p_y = b[0].p_y = y1;
+				b[3].p_y = b[2].p_y = y1;
+				vsl_color (vdi_handle, This->BorderColor.Top);
+				while(1) {
+					b[4] = b[0];
+					v_pline (vdi_handle, 5, (short*)b);
+					if (!--n) break;
+					b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+				}
+			}
+
+			if (This->BorderColor.Bot >= 0 && This->BorderWidth.Bot > 0) {
+				n = This->BorderWidth.Bot;
+
+				b[3].p_x = b[0].p_x = x1;
+				b[1].p_x = b[2].p_x = x2;
+				b[1].p_y = b[0].p_y = y2;
+				b[3].p_y = b[2].p_y = y2;
+				vsl_color (vdi_handle, This->BorderColor.Bot);
+				while(1) {
+					b[4] = b[0];
+					v_pline (vdi_handle, 5, (short*)b);
+					if (!--n) break;
+					b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+				}
+			}
+
+			if (This->BorderColor.Lft >= 0 && This->BorderWidth.Lft > 0) {
+				n = This->BorderWidth.Lft;
+
+				b[3].p_x = b[0].p_x = x1;
+				b[1].p_x = b[2].p_x = x1;
+				b[1].p_y = b[0].p_y = y1;
+				b[3].p_y = b[2].p_y = y2;
+				vsl_color (vdi_handle, This->BorderColor.Lft);
+				while(1) {
+					b[4] = b[0];
+					v_pline (vdi_handle, 5, (short*)b);
+					if (!--n) break;
+					b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+				}
+			}
+
+			if (This->BorderColor.Rgt >= 0 && This->BorderWidth.Rgt > 0) {
+				n = This->BorderWidth.Rgt;
+
+				b[3].p_x = b[0].p_x = x2;
+				b[1].p_x = b[2].p_x = x2;
+				b[1].p_y = b[0].p_y = y1;
+				b[3].p_y = b[2].p_y = y2;
+				vsl_color (vdi_handle, This->BorderColor.Rgt);
+				while(1) {
+					b[4] = b[0];
+					v_pline (vdi_handle, 5, (short*)b);
+					if (!--n) break;
+					b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+				}
+			}
+		} 
+
+		x1 += This->BorderWidth.Lft;
+		x2 -= This->BorderWidth.Rgt;
+		y1 += This->BorderWidth.Top;
+		y2 -= This->BorderWidth.Bot;
 	}
+
 	if (This->Backgnd >= 0) {
 		PXY p[2];
 		p[0].p_x = ((long)clip->g_x >= x1 ? clip->g_x : x1);
