@@ -578,7 +578,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 	short em = parser->Current.font->Size;
 	short ex = parser->Current.font->Size/2; 
 	char  out[100];
-	short val;
 	short width = -1;
 
 	if (get_value (parser, key, out, sizeof(out))) {
@@ -648,6 +647,8 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 							box->BorderWidth.Top = box->BorderWidth.Bot = 
 							  box->BorderWidth.Lft = box->BorderWidth.Rgt = width;
 							break;
+						default:
+							break;
 					}
 			}
 
@@ -668,6 +669,8 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 					case CSS_BORDER:
 						box->BorderColor.Top = box->BorderColor.Bot = 
 						  box->BorderColor.Lft = box->BorderColor.Rgt = remap_color (color);
+						break;
+					default:
 						break;
 				}
 			}
@@ -713,7 +716,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		}
 	}
 
-	if (get_value (parser, KEY_FRAMEBORDER, out, sizeof(out))) {
+	if (get_value (parser, KEY_BORDER, out, sizeof(out))) {
 		box->BorderWidth.Top = get_value_unum (parser, KEY_BORDER, box->BorderWidth.Top);
 		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top;
 	}
