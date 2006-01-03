@@ -789,6 +789,15 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					q = q+5;
 					while (*q != '}') ++q;
 					q = q++;
+				} else if (strnicmp (q +1, "charset", 7) == 0) {
+					/* A way to define the charset of the
+					 * css style sheet
+					 * http://www.w3.org/TR/CSS21/syndata.html#x60
+					 */
+					/* dan - just ignore them for the moment? */
+					q = q+8;
+					while (*q != ';') ++q;
+					q = q++;
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
@@ -808,6 +817,9 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					/* ignore IE6 nonsense */
 					while (isspace (*(++p)));
 					continue;
+				} if (*p == '{') {
+					key = TAG_LastDefined; /* matches all */
+					p--;
 				} else {
 					err = TRUE;
 					break;
