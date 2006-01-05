@@ -432,6 +432,10 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	PARSPRIV   prsdata = ParserPriv(parser);
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
 	STYLE      style   = prsdata->Styles;
+
+WORD		weight = 0;
+WORD		best_weight = 0;
+
 	while (style) {
 		BOOL match;
 
@@ -443,45 +447,71 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 		} else {
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
+
 			while (link && box) {
 				if (*link->Css.Value == '>') {
 					/* exact: <parent><tag> */
+weight += 1;
 				} else if (*link->Css.Value == '*') {
 					/* exact: <parent><*><tag> */
 					if ((box = box->Parent) == NULL) break;
+weight += 1;
 				} else if (*link->Css.Value == '+') {
 					/* exact: </sibling><tag> */
 					if ((box = box->ChildBeg) == NULL) break;
 					while (box->Sibling && box->Sibling->Sibling) box = box->Sibling;
+weight += 1;
 				}
 				if (link->ClassId == '.') {
 					if (!box->ClName || strcmp (box->ClName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					}
+else
+weight += 10;
 				} else if (link->ClassId == '#') {
 					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					}
+else {
+weight += 100;
+}
+
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
+if (link->Css.Key == box->real_parent->HtmlCode)
+{
+link = link->Link;
+box = box->Parent;
+weight += 1;
+} else {
+
 					box = (!*link->Css.Value ? box->Parent : NULL);
 					continue;
-				
+}				
 				} else {
+weight += 1;
 					link = link->Link;
 					box  = box->Parent;
 				}
 			}
 			match = (link == NULL);
 		}
+
 		if (match) {
+if (weight >= best_weight) {
 			parser->hasStyle = TRUE;
 			entry = css_values (parser, style->Css.Value, style->Css.Len);
+best_weight = weight;
+}
 		}
+
+weight = 0;
 		style = style->Next;
 	}
+
+
 	return entry;
 }
 
@@ -758,7 +788,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				} else {
 					q = NULL; /* syntax */
 				}
-				if ((err = (q == NULL)) == TRUE) break;
+				if ((err = (q == NULL)) == TRUE)	break;
 				p = q +1;
 				continue;
 			}
@@ -813,6 +843,10 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			if (*p == '*') { /*................................ joker */
 				if (*(++p) == '.') {
 					key = TAG_LastDefined; /* matches all */
+				} else if (isalpha (*p)) {
+					key = TAG_LastDefined; /* matches all */
+					/*key = scan_tag (&p);*/
+					continue;
 				} else if (isspace (*p)) {
 					/* ignore IE6 nonsense */
 					while (isspace (*(++p)));
@@ -922,8 +956,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			else if (*p  == ',') p++;
 			else                 break;
 		}
-		
-		if (err || *p != '{') {
+
+		if (*p && (err || *p != '{')) {
 			p         = tok;
 			beg = end = NULL;
 			err       = TRUE;
