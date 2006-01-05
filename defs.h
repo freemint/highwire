@@ -306,6 +306,7 @@ struct s_dombox {
 	}      * _vtab;
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;
+DOMBOX *real_parent;
 	LRECT    Rect;
 	LONG     MaxWidth;
 	LONG     MinWidth;  /* smallest width where the content fits in          */
