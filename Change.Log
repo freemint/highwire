@@ -1,3 +1,12 @@
+Changes since public release
+
+- PX sizes reduced to more closely match FF,IE display
+
+- CSS parser improved for better compatibility.
+  New keywords implemented: border-top, border-bottom,
+  border-left, border-right, display
+
+__________________________________________________
 Changes in V. 0.2.7 release  of December 24, 2005:
 
 - "Save as..." implemented for images, via the
