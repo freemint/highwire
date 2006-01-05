@@ -856,9 +856,12 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 DOMBOX *
 create_box (TEXTBUFF current, BOXCLASS bc, WORD par_top)
 {
+DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
 	DOMBOX * box = dombox_ctor (malloc (sizeof(DOMBOX)), current->parentbox, bc);
 	PARAGRPH par = add_paragraph (current, par_top);
-	
+
+box->real_parent = rparent;
+
 	box->Margin.Top = par->Box.Margin.Top;
 	par->Box.Margin.Top = 0;
 	
@@ -878,8 +881,10 @@ leave_box (TEXTBUFF current, WORD tag)
 	if (box->HtmlCode != tag) {
 		box = NULL;
 	} else {
+DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
 		PARAGRPH par = add_paragraph (current, 0);
 		current->parentbox = box->Parent;
+box->real_parent = rparent;
 		dombox_adopt (box->Parent, &par->Box);
 		par->Box.TextAlign = box->Parent->TextAlign;
 		
