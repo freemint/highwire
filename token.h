@@ -217,11 +217,11 @@
 		__CSS_ITEM (BACKGROUND_COLOR, KEY_BGCOLOR),
 		__CSS_ITEM (BORDER,           0),
 		__CSS_ITEM (BORDER_BOTTOM,    0),
+		__CSS_ITEM (BORDER_COLOR,     0),
 		__CSS_ITEM (BORDER_LEFT,      0),
 		__CSS_ITEM (BORDER_RIGHT,     0),
-		__CSS_ITEM (BORDER_TOP,       0),
-		__CSS_ITEM (BORDER_COLOR,     0),
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
+		__CSS_ITEM (BORDER_TOP,       0),
 		/*          BORDER_STYLE      */
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
 		__CSS_ITEM (CLEAR,            0),
@@ -236,8 +236,8 @@
 		__CSS_ITEM (FONT_STYLE,       0),
 		__CSS_ITEM (FONT_WEIGHT,      0),
 		__CSS_ITEM (HEIGHT,           KEY_HEIGHT),
-		/*          LINE_HEIGHT       */
 		__CSS_ITEM (LEFT,             0), /* for position */
+		/*			LINE_HEIGHT,      */
 		__CSS_ITEM (LIST_STYLE,       0),
 		__CSS_ITEM (LIST_STYLE_TYPE,  0),
 		__CSS_ITEM (MARGIN,           0),
