@@ -34,6 +34,7 @@ typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 	BF16(HTMLKEY,  Key);
 	BF16(unsigned, Len);
 	const char   * Value;
+WORD weight;
 } KEYVALUE;
 
 typedef struct s_style * STYLE;
@@ -374,10 +375,11 @@ get_value_color (PARSER parser, HTMLKEY key)
 
 /*----------------------------------------------------------------------------*/
 static KEYVALUE *
-css_values (PARSER parser, const char * line, size_t len)
+css_values (PARSER parser, const char * line, size_t len, WORD weight)
 {
 	PARSPRIV   prsdata = ParserPriv(parser);
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
+
 	while (len) {
 		const char * ptr = line;
 		short        css = scan_css (&line, len);
@@ -392,6 +394,7 @@ css_values (PARSER parser, const char * line, size_t len)
 			}
 			line = val;
 		}
+
 		while (len && *line != ';') {
 			len--;
 			line++;
@@ -401,17 +404,41 @@ css_values (PARSER parser, const char * line, size_t len)
 			while (--ptr >= val && isspace(*ptr));
 			if (ptr < val) val = NULL;
 		}
+
+if (val && (css != CSS_Unknown)) {
+	if ((ent = find_key (parser, (HTMLKEY)css)) == NULL) {
+		if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
+			ent = entry++;
+			prsdata->KeyNum++;
+			ent->weight = 0;
+		} else {
+			printf("KeyValTab overflow\r\n");
+		}         
+	} else {
+		/*printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);*/
+		;
+	}
+
+} 
+
+#if 0		
 		if (val && ((css < CSS_Unknown
 		             && (ent = find_key (parser, (HTMLKEY)css)) == NULL)
 		            || css != CSS_Unknown)
 		        && (prsdata->KeyNum < numberof(prsdata->KeyValTab))) {
 			ent = entry++;
 			prsdata->KeyNum++;
+/*ent->weight = 0;*/
 		}
+#endif
 		if (ent) {
+
+/*if (weight >= ent->weight) {*/
 			ent->Key   = css;
 			ent->Value = val;
 			ent->Len   = (unsigned)(ptr - val +1);
+ent->weight = weight;
+/*}*/
 		}
 		if (len && *line == ';') {
 			len--;
@@ -434,7 +461,6 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	STYLE      style   = prsdata->Styles;
 
 WORD		weight = 0;
-WORD		best_weight = 0;
 
 	while (style) {
 		BOOL match;
@@ -480,7 +506,7 @@ weight += 100;
 
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
-if (link->Css.Key == box->real_parent->HtmlCode)
+if (box->BoxClass == BC_LIST && link->Css.Key == box->real_parent->HtmlCode)
 {
 link = link->Link;
 box = box->Parent;
@@ -500,11 +526,8 @@ weight += 1;
 		}
 
 		if (match) {
-if (weight >= best_weight) {
 			parser->hasStyle = TRUE;
-			entry = css_values (parser, style->Css.Value, style->Css.Len);
-best_weight = weight;
-}
+			entry = css_values (parser, style->Css.Value, style->Css.Len,weight);
 		}
 
 weight = 0;
@@ -610,13 +633,17 @@ parse_tag (PARSER parser, const char ** pptr)
 			if (key == KEY_STYLE) {
 				if (val && len) {
 					parser->hasStyle = TRUE;
-					entry = css_values (parser, val, len);
+					entry = css_values (parser, val, len,1000);
 				}
 			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
 				entry->Key = key;
 				if (val && len) {
 					entry->Value = val;
 					entry->Len   = len;
+/*if ((key != KEY_CLASS)||(key != KEY_ID)) {
+entry->weight = 1000;
+printf("setting weight\r\n");
+}*/
 				} else {
 					entry->Value = NULL;
 					entry->Len   = 0;
@@ -808,6 +835,12 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					 */
 					/* dan - just ignore them for the moment? */
 					q = q+10;
+					while (*q != '}') ++q;
+					q = q++;
+				} else if (strnicmp (q +1, "ie", 2) == 0) {
+					/*  Some stupid ie directive?		 */
+					/* dan - just ignore them for the moment? */
+					q = q+3;
 					while (*q != '}') ++q;
 					q = q++;
 				} else if (strnicmp (q +1, "page", 4) == 0) {
