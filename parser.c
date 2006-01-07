@@ -415,8 +415,8 @@ if (val && (css != CSS_Unknown)) {
 			printf("KeyValTab overflow\r\n");
 		}         
 	} else {
-		/*printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);*/
-		;
+/*		printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
+*/		;
 	}
 
 } 
@@ -433,12 +433,15 @@ if (val && (css != CSS_Unknown)) {
 #endif
 		if (ent) {
 
-/*if (weight >= ent->weight) {*/
+if (weight >= ent->weight) {
 			ent->Key   = css;
 			ent->Value = val;
 			ent->Len   = (unsigned)(ptr - val +1);
 ent->weight = weight;
-/*}*/
+
+/*printf("new   ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
+*/
+}
 		}
 		if (len && *line == ';') {
 			len--;
@@ -474,6 +477,15 @@ WORD		weight = 0;
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
 
+if (style->Css.Key && style->Css.Key == tag)
+weight += 1;
+
+if (class_id == style->ClassId) {
+	if (style->ClassId == '.')
+		weight += 10;
+	else if (style->ClassId == '#')
+		weight += 100;
+}
 			while (link && box) {
 				if (*link->Css.Value == '>') {
 					/* exact: <parent><tag> */
@@ -493,8 +505,9 @@ weight += 1;
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					}
-else
+else {
 weight += 10;
+}
 				} else if (link->ClassId == '#') {
 					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
@@ -518,6 +531,7 @@ weight += 1;
 }				
 				} else {
 weight += 1;
+
 					link = link->Link;
 					box  = box->Parent;
 				}
@@ -990,7 +1004,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			else                 break;
 		}
 
-		if (*p && (err || *p != '{')) {
+		if (err || *p != '{') {
 			p         = tok;
 			beg = end = NULL;
 			err       = TRUE;
