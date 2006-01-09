@@ -402,8 +402,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	
 		/* here em and ex refer to the parents size not current size */
 
-
-		if (isdigit (output[0])) {
+		if ((isdigit (output[0]))||(output[0] == '.')) {
 			short size = numerical (output, NULL, font_size,
 									(font_size/2));
 									/* current->word->font->SpaceWidth);*/
@@ -881,10 +880,8 @@ leave_box (TEXTBUFF current, WORD tag)
 	if (box->HtmlCode != tag) {
 		box = NULL;
 	} else {
-DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
 		PARAGRPH par = add_paragraph (current, 0);
 		current->parentbox = box->Parent;
-box->real_parent = rparent;
 		dombox_adopt (box->Parent, &par->Box);
 		par->Box.TextAlign = box->Parent->TextAlign;
 		
@@ -1446,15 +1443,15 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		char out[100];
 		const char * line = *text;
-		
+
 		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     strstr (out, "all") || strstr (out, "screen"))) {
-			
+
 			if (!parser->ResumeSub) { /* initial call */
 				while (isspace (*line)) line++;
-				
+
 				if (*line == '<') {        /* skip leading '<!--' */
 					if (*(++line) == '!') {
 						while (*(++line) == '-');
@@ -1469,7 +1466,6 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 				} else if (*line != '<') {
 					line = parse_css (parser, line, NULL);
 				}
-			
 			} else {
 				line = (parser->ResumeErr ? NULL : parser->ResumeSub);
 				line = parse_css (parser, line, NULL);
@@ -1479,7 +1475,7 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 				parser_resume (parser, render_STYLE_tag, *text, NULL);
 				longjmp (resume_jbuf, 1);
 			}
-			
+
 			if (*line == '-') {        /* skip trailing '-->' */
 				while (*(++line) == '-');
 				if (*line == '>') {
