@@ -542,7 +542,7 @@ WORD		weight = 0;
 			entry = css_values (parser, style->Css.Value, style->Css.Len,weight);
 		}
 
-weight = 0;
+		weight = 0;
 		style = style->Next;
 	}
 
@@ -615,12 +615,12 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	while (*line  &&  *line != '>') {
 		const char  * val = line;
-		const char *walk = val;
 		HTMLKEY key   = scan_key (&line, lookup);
 		BOOL    rhs   = (val == line);
 		char    delim = '\0';
 
 		while (isspace(*line)) line++;
+
 		if (*line == '=') {
 			while (isspace(*(++line)));
 			rhs = TRUE;
@@ -628,6 +628,7 @@ parse_tag (PARSER parser, const char ** pptr)
 		if (rhs) {
 			val = line;
 #if 0
+
 /* I dumped this once only to find that I need to test with it in place
  * again. Sorry about the mess - Dan
  */  
@@ -637,23 +638,24 @@ parse_tag (PARSER parser, const char ** pptr)
 			
 			if (!line) line = strchr (val, (delim = '\0'));
 #endif
-			delim = *val;
-			walk = line;
-			walk++;
-
+			line++;
+			
 			if ((*val == 39)||(*val == '"')) {
-				while ((*walk != *val)&&(*walk != '>')) ++walk;
+				while ((*line != *val)&&(*line != '>')) ++line;
+				delim = *val;
 				val++;
 			} else {
-				while ((*walk!=' ')&&(*walk!='>')&&(*walk!='\t')&&(*walk!='\r')&&(*walk!='\n')) ++walk;			
+				while ((*line!=' ')&&(*line!='>')&&(*line!='\t')&&(*line!='\r')&&(*line!='\n')) ++line;			
 			}
-			
-			line = walk++;
+
+			if (*line == '\0') delim = '\0';			
+
 		} else {
 			val = NULL;
 		}
 		if (lookup) {
 			unsigned len = (unsigned)(val ? line - val : 0ul);
+			
 			while (len && isspace (*val)) {
 				val++;
 				len--;
@@ -668,13 +670,10 @@ parse_tag (PARSER parser, const char ** pptr)
 				}
 			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
 				entry->Key = key;
+
 				if (val && len) {
 					entry->Value = val;
 					entry->Len   = len;
-/*if ((key != KEY_CLASS)||(key != KEY_ID)) {
-entry->weight = 1000;
-printf("setting weight\r\n");
-}*/
 				} else {
 					entry->Value = NULL;
 					entry->Len   = 0;
@@ -690,7 +689,9 @@ printf("setting weight\r\n");
 				}
 			}
 		}
+
 		if (delim && delim == *line) line++;
+
 		while (isspace(*line)) line++;
 	}
 
@@ -783,6 +784,7 @@ css_import (PARSER parser, const char * ptr)
 		}
 		free_location (&loc);
 	}
+
 	return ptr;
 }
 
@@ -1023,7 +1025,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		}
 
 		if (err || *p != '{') {
-			if (*p)
+/*			if (*p)*/
 				err       = TRUE;
 			p         = tok;
 			beg = end = NULL;
@@ -1107,6 +1109,6 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			}
 		}
 	} while (*p && !err);
-	
+
 	return p;
 }
