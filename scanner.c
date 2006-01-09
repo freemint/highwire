@@ -179,6 +179,7 @@ scan_css (const char ** pptr, size_t length)
 	size_t       len  = 0;
 	char buf[18];
 
+
 	while (len < length) {
 		char c = *line;
 		if (c == '-' && len) {
@@ -251,11 +252,17 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	BOOL   ok = TRUE;
 	char * ptr;
 	BOOL   neg;
+	BOOL   ltz; /* less than zero */
 	long   size;
 	
 	while (isspace (**pptr)) (*pptr)++;
 	neg  = (**pptr == '-');
-	size = strtol (*pptr, &ptr, 10);
+	ltz  = (**pptr == '.');
+	
+	if (ltz)
+		size = strtol (*pptr++, &ptr, 10);	
+	else
+		size = strtol (*pptr, &ptr, 10);
 
 	if (ptr <= *pptr) {
 		*num = 0;
