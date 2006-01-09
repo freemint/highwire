@@ -463,7 +463,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
 	STYLE      style   = prsdata->Styles;
 
-WORD		weight = 0;
+	WORD		weight = 0;
 
 	while (style) {
 		BOOL match;
@@ -481,14 +481,26 @@ WORD		weight = 0;
 				weight += 1;
 
 			if (class_id == style->ClassId) {
-				if (style->ClassId == '.')
-					weight += 10;
-				else if (style->ClassId == '#')
-					weight += 100;
+				if (style->ClassId == '.') {
+					if (keyval && (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
+/*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);*/
+						weight += 10;
+
+						if (weight > 10)
+							box = (!*link->Css.Value ? box->Parent : NULL);
+					}
+				} else if (style->ClassId == '#') {
+					if (keyval && (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
+/*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);*/
+						weight += 100;
+
+						if (weight > 100)
+							box = (!*link->Css.Value ? box->Parent : NULL);
+					}
+				}
 			}
 			
 			while (link && box) {
-
 				/* these  > * + get no weight */
 				if (*link->Css.Value == '>') {
 					/* exact: <parent><tag> */
@@ -528,6 +540,7 @@ WORD		weight = 0;
 						continue;
 					}				
 				} else {
+	
 					weight += 1;
 
 					link = link->Link;
