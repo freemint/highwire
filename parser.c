@@ -477,60 +477,58 @@ WORD		weight = 0;
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
 
-if (style->Css.Key && style->Css.Key == tag)
-weight += 1;
+			if (style->Css.Key && style->Css.Key == tag)
+				weight += 1;
 
-if (class_id == style->ClassId) {
-	if (style->ClassId == '.')
-		weight += 10;
-	else if (style->ClassId == '#')
-		weight += 100;
-}
+			if (class_id == style->ClassId) {
+				if (style->ClassId == '.')
+					weight += 10;
+				else if (style->ClassId == '#')
+					weight += 100;
+			}
+			
 			while (link && box) {
+
+				/* these  > * + get no weight */
 				if (*link->Css.Value == '>') {
 					/* exact: <parent><tag> */
-weight += 1;
 				} else if (*link->Css.Value == '*') {
 					/* exact: <parent><*><tag> */
 					if ((box = box->Parent) == NULL) break;
-weight += 1;
 				} else if (*link->Css.Value == '+') {
 					/* exact: </sibling><tag> */
 					if ((box = box->ChildBeg) == NULL) break;
 					while (box->Sibling && box->Sibling->Sibling) box = box->Sibling;
-weight += 1;
 				}
 				if (link->ClassId == '.') {
 					if (!box->ClName || strcmp (box->ClName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
+					} else {
+/*printf("Class %s   \r\n",box->ClName);*/
+						weight += 10;
 					}
-else {
-weight += 10;
-}
 				} else if (link->ClassId == '#') {
 					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
+					} else {
+/*printf("ID %s   \r\n",box->ClName);*/
+						weight += 100;
 					}
-else {
-weight += 100;
-}
-
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
-if (box->BoxClass == BC_LIST && link->Css.Key == box->real_parent->HtmlCode)
-{
-link = link->Link;
-box = box->Parent;
-weight += 1;
-} else {
-
-					box = (!*link->Css.Value ? box->Parent : NULL);
-					continue;
-}				
+					if (link->Css.Key == box->real_parent->HtmlCode)
+					{
+						link = link->Link;
+						box = box->Parent;
+						weight += 1;
+					} else {
+						box = (!*link->Css.Value ? box->Parent : NULL);
+						continue;
+					}				
 				} else {
-weight += 1;
+					weight += 1;
 
 					link = link->Link;
 					box  = box->Parent;
@@ -617,6 +615,7 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	while (*line  &&  *line != '>') {
 		const char  * val = line;
+		const char *walk = val;
 		HTMLKEY key   = scan_key (&line, lookup);
 		BOOL    rhs   = (val == line);
 		char    delim = '\0';
@@ -628,10 +627,28 @@ parse_tag (PARSER parser, const char ** pptr)
 		}
 		if (rhs) {
 			val = line;
-			if      (*val == 39)  line = strchr (++val, (delim = 39));
-			else if (*val == '"') line = strchr (++val, (delim = '"'));
-			else                  line = strpbrk (val, " >\t\r\n");
+#if 0
+/* I dumped this once only to find that I need to test with it in place
+ * again. Sorry about the mess - Dan
+ */  
+			if 		(*val == 39)	line = strchr (++val, (delim = 39));
+			else if (*val == '"')	line = strchr (++val, (delim = '"'));
+			else					line = strpbrk (val, " >\t\r\n");
+			
 			if (!line) line = strchr (val, (delim = '\0'));
+#endif
+			delim = *val;
+			walk = line;
+			walk++;
+
+			if ((*val == 39)||(*val == '"')) {
+				while ((*walk != *val)&&(*walk != '>')) ++walk;
+				val++;
+			} else {
+				while ((*walk!=' ')&&(*walk!='>')&&(*walk!='\t')&&(*walk!='\r')&&(*walk!='\n')) ++walk;			
+			}
+			
+			line = walk++;
 		} else {
 			val = NULL;
 		}
@@ -926,7 +943,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			} else {
 				beg = end = NULL;
 			}
-			
+
+
 			if (*p == ':') { /*........................ pseudo format */
 				if (key == TAG_A
 				    && strnicmp (p +1, "link", 4) == 0 && !isalpha (*(p +5))) {
@@ -1005,9 +1023,10 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		}
 
 		if (err || *p != '{') {
+			if (*p)
+				err       = TRUE;
 			p         = tok;
 			beg = end = NULL;
-			err       = TRUE;
 		} else /* if (*p == '{') */ {
 			while (isspace (*(++p)));
 			beg = p;
