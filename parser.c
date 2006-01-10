@@ -535,16 +535,27 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						link = link->Link;
 						box = box->Parent;
 						weight += 1;
+
+						/* temporary fix for missing a DOMBOX for HTML tag */
+						if ((link->Css.Key && link->Css.Key == TAG_HTML) && !box) {
+							weight += 1;
+							link = link->Link;
+						}
 					} else {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					}				
 				} else {
-	
 					weight += 1;
 
 					link = link->Link;
 					box  = box->Parent;
+
+					/* temporary fix for missing a DOMBOX for HTML tag */
+					if ((link->Css.Key && link->Css.Key == TAG_HTML) && !box) {
+						weight += 1;
+						link = link->Link;
+					}
 				}
 			}
 			match = (link == NULL);
@@ -930,7 +941,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					/* ignore IE6 nonsense */
 					while (isspace (*(++p)));
 					continue;
-				} if (*p == '{') {
+				} else if (*p == '{') {
 					key = TAG_LastDefined; /* matches all */
 					p--;
 				} else {
@@ -949,7 +960,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				/* if ((err = (!isalpha (*p))) == TRUE)	break; */
 
 				if (!isalpha (*p)) skip = TRUE;
-				
+
 				beg = p;
 				while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
 
