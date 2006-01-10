@@ -1048,9 +1048,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			else                 break;
 		}
 
-		if (err || *p != '{') {
-/*			if (*p)*/
-				err       = TRUE;
+		if (err || (style && *p != '{')) {
+			err       = TRUE;
 			p         = tok;
 			beg = end = NULL;
 		} else /* if (*p == '{') */ {
