@@ -858,6 +858,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		STYLE style = NULL;
 		STYLE b_lnk = NULL;
 		BOOL  skip  = FALSE;
+		BOOL  done  = FALSE;
 
 		while (*p) {
 			WORD key = TAG_Unknown;
@@ -873,7 +874,9 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					q = NULL; /* syntax */
 				}
 				if ((err = (q == NULL)) == TRUE)	break;
-				p = q +1;
+				p = q;
+				while (isspace (*(++p)));
+				done = (!*p && !style);
 				continue;
 			}
 			
@@ -1048,7 +1051,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			else                 break;
 		}
 
-		if (err || (style && *p != '{')) {
+		if (err || *p != '{') {
 			err       = TRUE;
 			p         = tok;
 			beg = end = NULL;
@@ -1119,7 +1122,9 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					}
 					n++;
 				}
-				printf("parse_css(): stopped at\n%.*s\n", n, p);
+				if (!done) {
+					printf("parse_css(): stopped at\n%.*s\n", n, p);
+				}
 			}
 			if (prsdata->Stack[0]) {
 				short i;
