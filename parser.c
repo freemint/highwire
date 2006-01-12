@@ -533,14 +533,14 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 					}
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
-					if (link->Css.Key == box->real_parent->HtmlCode)
+					if (box->real_parent && (link->Css.Key == box->real_parent->HtmlCode))
 					{
 						link = link->Link;
 						box = box->Parent;
 						weight += 1;
 
 						/* temporary fix for missing a DOMBOX for HTML tag */
-						if ((link->Css.Key && link->Css.Key == TAG_HTML) && !box) {
+						if ((link->Css.Key && link->Css.Key == TAG_HTML) && (box == NULL)) {
 							weight += 1;
 							link = link->Link;
 						}
@@ -555,7 +555,7 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 					box  = box->Parent;
 
 					/* temporary fix for missing a DOMBOX for HTML tag */
-					if ((link->Css.Key && link->Css.Key == TAG_HTML) && !box) {
+					if ((link->Css.Key && link->Css.Key == TAG_HTML) && (box == NULL)) {
 						weight += 1;
 						link = link->Link;
 					}
