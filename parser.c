@@ -465,6 +465,9 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 
 	WORD		weight = 0;
 
+/*if (keyval)
+printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
+*/
 	while (style) {
 		BOOL match;
 
@@ -487,7 +490,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						weight += 10;
 
 						if (weight > 10)
-							box = (!*link->Css.Value ? box->Parent : NULL);
+							box = (!*link->Css.Value ? box : NULL);
 					}
 				} else if (style->ClassId == '#') {
 					if (keyval && (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
@@ -495,7 +498,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						weight += 100;
 
 						if (weight > 100)
-							box = (!*link->Css.Value ? box->Parent : NULL);
+							box = (!*link->Css.Value ? box : NULL);
 					}
 				}
 			}
