@@ -480,25 +480,27 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
 
-			if (style->Css.Key && style->Css.Key == tag)
+			if (style->Css.Key && style->Css.Key == tag) {
 				weight += 1;
-
+			}
 			if (class_id == style->ClassId) {
 				if (style->ClassId == '.') {
-					if (keyval && (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
+					if (keyval &&
+					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
 /*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);*/
 						weight += 10;
-
-						if (weight > 10)
-							box = (!*link->Css.Value ? box : NULL);
+						if (link && weight > 10 && *link->Css.Value) {
+							box = NULL;
+						}
 					}
 				} else if (style->ClassId == '#') {
-					if (keyval && (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
+					if (keyval &&
+					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
 /*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);*/
 						weight += 100;
-
-						if (weight > 100)
-							box = (!*link->Css.Value ? box : NULL);
+						if (link && weight > 100 && *link->Css.Value) {
+							box = NULL;
+						}
 					}
 				}
 			}
@@ -533,34 +535,29 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 					}
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
-					if (box->real_parent && (link->Css.Key == box->real_parent->HtmlCode))
-					{
+					if (box->real_parent
+					    && (link->Css.Key == box->real_parent->HtmlCode)) {
 						link = link->Link;
 						box = box->Parent;
 						weight += 1;
 
 						/* temporary fix for missing a DOMBOX for HTML tag */
-						if ((link->Css.Key && link->Css.Key == TAG_HTML) && (box == NULL)) {
+						if (link && (link->Css.Key && link->Css.Key == TAG_HTML)
+						         && (box == NULL)) {
 							weight += 1;
 							link = link->Link;
 						}
-					} else {
+					} else if (link) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					}				
 				} else {
-					weight += 1;
-
 					link = link->Link;
 					box  = box->Parent;
-/* <stghost patch> */
-					if (link == NULL)
-					{
-						break;
-					}
-/* </stghost patch> */
+					weight += 1;
+
 					/* temporary fix for missing a DOMBOX for HTML tag */
-					if ((link->Css.Key && link->Css.Key == TAG_HTML) && (box == NULL)) {
+					if (link && (link->Css.Key == TAG_HTML) && (box == NULL)) {
 						weight += 1;
 						link = link->Link;
 					}
@@ -571,7 +568,7 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 
 		if (match) {
 			parser->hasStyle = TRUE;
-			entry = css_values (parser, style->Css.Value, style->Css.Len,weight);
+			entry = css_values (parser, style->Css.Value, style->Css.Len, weight);
 		}
 
 		weight = 0;
