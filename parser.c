@@ -553,7 +553,12 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 
 					link = link->Link;
 					box  = box->Parent;
-
+/* <stghost patch> */
+					if (link == NULL)
+					{
+						break;
+					}
+/* </stghost patch> */
 					/* temporary fix for missing a DOMBOX for HTML tag */
 					if ((link->Css.Key && link->Css.Key == TAG_HTML) && (box == NULL)) {
 						weight += 1;
