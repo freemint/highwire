@@ -146,7 +146,9 @@ new_word (TEXTBUFF current, BOOL do_link)
 	word->space_width = 0;
 
 	/* Only tables problematic ? */
-	if (current->tbl_stack && current->tbl_stack->WorkCell->nowrap) {
+/*	if (current->tbl_stack && current->tbl_stack->WorkCell->nowrap) {
+	WorkCell appears to be null sometimes, check added */
+	if (current->tbl_stack && current->tbl_stack->WorkCell && current->tbl_stack->WorkCell->nowrap) {
 		word->wrap        = FALSE;
 	} else {
 		word->wrap 		  = TRUE;
