@@ -644,6 +644,7 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	while (*line  &&  *line != '>') {
 		const char  * val = line;
+		const char  * line2 = line;
 		HTMLKEY key   = scan_key (&line, lookup);
 		BOOL    rhs   = (val == line);
 		char    delim = '\0';
@@ -670,7 +671,17 @@ parse_tag (PARSER parser, const char ** pptr)
 			line++;
 			
 			if ((*val == 39)||(*val == '"')) {
+				retry_delim:
 				while ((*line != *val)&&(*line != '>')) ++line;
+
+				if (*line == '>') {
+					line2 = line;
+					
+					while ((*line != *val)&&(*line != '<')) ++line;
+
+					if (*line == '<')	line = line2; 
+				}
+
 				delim = *val;
 				val++;
 			} else {
