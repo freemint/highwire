@@ -234,6 +234,10 @@ reset_text_styles (PARSER parser)
 		TAsetCondns (current->word->attr, current->font->setCondns);
 	}
 
+	if (!ignore_colours) {
+		word_set_color (current, frame->Page.FontStk->Color);
+	}
+
 /*	if (current->font->Size != frame->Page.FontStk->Size) {
 		current->font->Size = frame->Page.FontStk->Size;
 	}
@@ -2213,7 +2217,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}	
 	} else if (word->link) {
-		word_set_color     (current, current->font->Color);
+		word_set_color (current, current->font->Color);
 		word_set_underline (current, FALSE);
 		word->link = NULL;
 
@@ -2878,12 +2882,11 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_color (current, current->parentbox->FontStk->Color);
 			}
 		}
-		
-		if (parser->hasStyle) {
-			fontstack_push (current, -1);
-			css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
-			css_text_styles (parser, current->font);
-		}
+
+		/* watch if this causes problems */
+		fontstack_push (current, -1);
+		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
+		css_text_styles (parser, current->font);
 				
 		box_anchor (parser, &par->Box, FALSE);
 
@@ -2894,6 +2897,10 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (!ignore_colours) {
 			word_set_color (current, current->font->Color);
+			/* Not certain how to handle this yet CSS might complicate
+			 * support for font tags if we aren't careful
+			 */
+			/*word_set_color (current, current->parentbox->FontStk->Color);*/
 		}
 	}
 
