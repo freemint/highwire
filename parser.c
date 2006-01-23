@@ -671,7 +671,6 @@ parse_tag (PARSER parser, const char ** pptr)
 			line++;
 			
 			if ((*val == 39)||(*val == '"')) {
-				retry_delim:
 				while ((*line != *val)&&(*line != '>')) ++line;
 
 				if (*line == '>') {
