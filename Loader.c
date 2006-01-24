@@ -1113,7 +1113,7 @@ start_application (const char * appl, LOCATION loc)
 {
 	short id   = (appl ? find_application (appl) : -1);
 	if (id >= 0 || (id = find_application (NULL)) >= 0) {
-		short msg[8] = { VA_START, };
+		short msg[8] = { AV_STARTPROG, };
 		msg[1] = gl_apid;
 		msg[2] = msg[5] = msg[6] = msg[7] = 0;
 		*(char**)(msg +3) = va_helpbuf;
