@@ -792,9 +792,12 @@ table_finish (PARSER parser)
 	calc_minmax (table);
 
 	if (table->FixCols == table->NumCols) {
-		/*table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth; */
-		/* prefered method I think	*/
+		if (table->t_SetWidth > 0) {
+			/* prefered method I think	*/
 			table->t_MaxWidth = table->t_MinWidth = table->t_SetWidth;
+		} else {
+			table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
+		}
 	} else if (table->t_SetWidth > 0) {
 		if (table->t_SetWidth < table->t_MinWidth) {
 			 table->t_SetWidth = table->t_MinWidth;
