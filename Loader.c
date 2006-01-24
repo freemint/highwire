@@ -425,13 +425,13 @@ chunked_job (void * arg, long invalidated)
 			if (size < loader->rdTlen) {
 				 size = loader->rdTlen;
 			}
-			
 		} else {
 			long n = loader->rdTlen -2;
 			data   = (n > 0 ? memchr (data +2, '\n', n) : NULL);
 			if (!data) {
 				n = inet_recv (loader->rdSocket, loader->rdTemp + loader->rdTlen,
 				               sizeof (loader->rdTemp) - loader->rdTlen);
+
 				if (n > 0) {
 					loader->rdTlen += n;
 					if (loader->rdTlen > 2) {
@@ -544,7 +544,7 @@ receive_job (void * arg, long invalidated)
 	if (loader->rdLeft) {
 		long n = inet_recv (loader->rdSocket, loader->rdDest, loader->rdLeft);
 		int  r = JOB_AGED;
-		
+
 		if (n < 0) { /* no more data available */
 			inet_close (loader->rdSocket);
 			loader->rdSocket = -1;
@@ -558,10 +558,11 @@ receive_job (void * arg, long invalidated)
 		} else {
 			r = JOB_NOOP;
 		}
-		if (loader->rdLeft) {
+
+		if (loader->rdLeft) { 
 			return r;  /* re-schedule for next block of data */
 		}
-		
+
 		if (!loader->DataSize) {
 			if (chunked_job (arg, 0)) {
 				return JOB_DONE;  /* chunk head need to be completed */
@@ -570,6 +571,7 @@ receive_job (void * arg, long invalidated)
 				return r;  /* re-schedule for start of next chunk */
 			}
 		}
+
 	}
 	/* else download finished */
 	
@@ -1134,7 +1136,7 @@ launch_viewer(const char *name)
 
 	if (id >= 0 || (id = find_application (NULL)) >= 0) {
 		short msg[8];
-		msg[0] = (VA_START);
+		msg[0] = (AV_STARTPROG);
 		msg[1] = gl_apid;
 		msg[2] = 0;
 		*(char**)(msg +3) = strcpy (va_helpbuf, name);
