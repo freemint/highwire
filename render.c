@@ -3453,21 +3453,29 @@ static UWORD
 render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
+	WORD tempsize;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
+		tempsize = get_value_size  (parser, KEY_WIDTH);
+
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
 			         get_h_align     (parser, current->tbl_stack->AlignH),
 			         get_v_align     (parser, current->tbl_stack->AlignV),
 			         get_value_size  (parser, KEY_HEIGHT),
-			         get_value_size  (parser, KEY_WIDTH),
+			         tempsize,
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
 
-/*		current->nowrap = get_value_exists (parser, KEY_NOWRAP); */
-		current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
-		current->nowrap = current->tbl_stack->WorkCell->nowrap;
+		/* if the table has a fixed width ignore a nowrap value
+		 * seems to be the standard method
+		 */
+		if (tempsize <= 0) {
+			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
+			current->nowrap = current->tbl_stack->WorkCell->nowrap;
+		}
+
 		current->parentbox->HtmlCode = TAG_TD;
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
@@ -3485,20 +3493,29 @@ static UWORD
 render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
+	WORD tempsize;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
+		tempsize = get_value_size  (parser, KEY_WIDTH);
+		
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
 			         get_h_align     (parser, ALN_CENTER),
 			         get_v_align     (parser, current->tbl_stack->AlignV),
 			         get_value_size  (parser, KEY_HEIGHT),
-			         get_value_size  (parser, KEY_WIDTH),
+			         tempsize,
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
-/*		current->nowrap = get_value_exists (parser, KEY_NOWRAP);*/
-		current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
-		current->nowrap = current->tbl_stack->WorkCell->nowrap;
+
+		/* if the table has a fixed width ignore a nowrap value
+		 * seems to be the standard method
+		 */
+		if (tempsize <= 0) {
+			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
+			current->nowrap = current->tbl_stack->WorkCell->nowrap;
+		}
+
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;
 		box_anchor (parser, current->parentbox, TRUE);
