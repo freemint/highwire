@@ -244,6 +244,7 @@ scan_css (const char ** pptr, size_t length)
 	return key;
 }
 
+#include <stdio.h>
 
 /*============================================================================*/
 BOOL
@@ -252,19 +253,16 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	BOOL   ok = TRUE;
 	char * ptr;
 	BOOL   neg;
-	BOOL   ltz; /* less than zero */
+	BOOL   lto; /* less than one */
 	long   size;
 	
 	while (isspace (**pptr)) (*pptr)++;
 	neg  = (**pptr == '-');
-	ltz  = (**pptr == '.');
+	lto  = (**pptr == '.');
 	
-	if (ltz)
-		size = strtol (*pptr++, &ptr, 10);	
-	else
-		size = strtol (*pptr, &ptr, 10);
+	size = strtol (*pptr, &ptr, 10);
 
-	if (ptr <= *pptr) {
+	if ((!lto) && (ptr <= *pptr)) {
 		*num = 0;
 		return FALSE;
 	
@@ -294,6 +292,9 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	if (ok) {
 		*num = (neg ? -size : +size);
 	}
+
+	if (*ptr == ' ')
+		while (isspace(*ptr)) ptr++;
 
 	switch (toupper(*ptr)) {
 		#define _(u,l) (((UWORD)(u)<<8)|(l))
@@ -325,8 +326,9 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 		default:                              *unit = 0;
 		#undef _
 	}
-	*pptr = ptr;
 	
+	*pptr = ptr;
+
 	return ok;
 }
 
