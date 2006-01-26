@@ -793,8 +793,20 @@ table_finish (PARSER parser)
 
 	if (table->FixCols == table->NumCols) {
 		if (table->t_SetWidth > 0) {
-			/* prefered method I think	*/
 			table->t_MaxWidth = table->t_MinWidth = table->t_SetWidth;
+			
+			/* If we are here we have to check the size of the cells */
+			row = table->Rows;
+			i   = table->NumRows;
+			do {
+				TAB_CELL cell = row->Cells;
+				do {
+					if (cell->c_SetWidth > 0) {
+						cell->c_SetWidth = 0;
+					}
+				} while ((cell = cell->RightCell) != NULL);
+			} while ((row = row->NextRow) != NULL);
+
 		} else {
 			table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 		}
