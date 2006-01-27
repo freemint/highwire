@@ -807,6 +807,7 @@ table_finish (PARSER parser)
 				} while ((cell = cell->RightCell) != NULL);
 			} while ((row = row->NextRow) != NULL);
 
+			calc_minmax (table);
 		} else {
 			table->t_SetWidth = table->t_MaxWidth = table->t_MinWidth;
 		}
