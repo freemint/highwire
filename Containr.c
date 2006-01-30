@@ -863,7 +863,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 	FRAME    frame;
 	short    area_rgt, area_bot;
 	
-	if (hash) *hash = NULL;
+	*hash = NULL;
 	
 	debug_draw (NULL, NULL);
 	if (!cont) {
@@ -979,10 +979,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				type = PE_PARAGRPH;
 			
 			} else if (word->input) {
-				type = (input_isEdit (word->input) ? PE_EDITABLE : PE_INPUT);
-				if (hash) {
-					*hash = word->input;
-				}
+				type  = (input_isEdit (word->input) ? PE_EDITABLE : PE_INPUT);
+				*hash = word->input;
 			
 			} else if (!word->link || !word->link->isHref) {
 				if (word->image)
@@ -990,121 +988,117 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				else
 					type = PE_TEXT;
 			} else if (word->image) {
-				type = PE_ILINK;
-				if (hash) {
-					*hash = word->link;
-					if (word->image->map) {
-						WORD     mx  = -px - word->h_offset;
-						WORD     my  = -py - word->line->OffsetY + word->line->Ascend;
-						IMAGE    img = word->image;
-						IMAGEMAP map = word->image->map;
-						MAPAREA  reg = map->Areas;
-						WORD     a_x = 0, a_y = 0, a_w = 0, a_h = 0;
-						while (reg) {
-							GRECT * ext = &reg->u.Extent;
-							if (mx >= ext->g_x && mx  < ext->g_x + ext->g_w &&
-							    my >= ext->g_y && my  < ext->g_y + ext->g_h) {
-								break;
-							}
-							reg = reg->Next;
+				type  = PE_ILINK;
+				*hash = word->link;
+				if (word->image->map) {
+					WORD     mx  = -px - word->h_offset;
+					WORD     my  = -py - word->line->OffsetY + word->line->Ascend;
+					IMAGE    img = word->image;
+					IMAGEMAP map = word->image->map;
+					MAPAREA  reg = map->Areas;
+					WORD     a_x = 0, a_y = 0, a_w = 0, a_h = 0;
+					while (reg) {
+						GRECT * ext = &reg->u.Extent;
+						if (mx >= ext->g_x && mx  < ext->g_x + ext->g_w &&
+						    my >= ext->g_y && my  < ext->g_y + ext->g_h) {
+							break;
 						}
-						if (reg) {
-							map->Link.address  = reg->Address;
-							map->Link.u.target = reg->Target;
-							a_x = reg->u.Extent.g_x;
-							a_y = reg->u.Extent.g_y;
-							a_w = reg->u.Extent.g_w;
-							a_h = reg->u.Extent.g_h;
-							switch (reg->Type) {
-							case 'P': {
-								PXY * a = reg->u.Poly.P;
-								WORD  n = reg->u.Poly.Count;
-								WORD  i = 0;
-								while (--n) {
-									PXY * b = a +1;
-									if ((a->p_y >= my && b->p_y < my) ||
-									    (a->p_y <= my && b->p_y > my)) {
-										if (a->p_x >= mx && b->p_x >= mx) {
-											i++;
-										} else if (b->p_x > mx) {
-											WORD d = (my - a->p_y) * (b->p_x - a->p_x)
-											       / (b->p_y - a->p_y);
-											if (mx <= a->p_x + d) i++;
-										} else if (b->p_x < mx) {
-											WORD d = (my - b->p_y) * (a->p_x - b->p_x)
-											       / (a->p_y - b->p_y);
-											if (mx <= b->p_x + d) i++;
-										}
-										
+						reg = reg->Next;
+					}
+					if (reg) {
+						map->Link.address  = reg->Address;
+						map->Link.u.target = reg->Target;
+						a_x = reg->u.Extent.g_x;
+						a_y = reg->u.Extent.g_y;
+						a_w = reg->u.Extent.g_w;
+						a_h = reg->u.Extent.g_h;
+						switch (reg->Type) {
+						case 'P': {
+							PXY * a = reg->u.Poly.P;
+							WORD  n = reg->u.Poly.Count;
+							WORD  i = 0;
+							while (--n) {
+								PXY * b = a +1;
+								if ((a->p_y >= my && b->p_y < my) ||
+								    (a->p_y <= my && b->p_y > my)) {
+									if (a->p_x >= mx && b->p_x >= mx) {
+										i++;
+									} else if (b->p_x > mx) {
+										WORD d = (my - a->p_y) * (b->p_x - a->p_x)
+										       / (b->p_y - a->p_y);
+										if (mx <= a->p_x + d) i++;
+									} else if (b->p_x < mx) {
+										WORD d = (my - b->p_y) * (a->p_x - b->p_x)
+										       / (a->p_y - b->p_y);
+										if (mx <= b->p_x + d) i++;
 									}
-									a = b;
+									
 								}
-								if (!(i & 1)) {
-									type = PE_TEXT;
-								}
-								a_w = a_h = 0;
-								break;
+								a = b;
 							}
-							case 'C': {
-								long r  = (long)reg->u.Circ.Radius * reg->u.Circ.Radius;
-								long dx = mx - reg->u.Circ.Centre.p_x;
-								long dy = my - reg->u.Circ.Centre.p_y;
-								if (r >= dx*dx + dy*dy) {
-									if (dx < 0 ) { a_w = -dx *2 +1; a_x = mx;          }
-									else         { a_w = +dx *2 +1; a_x = mx - a_w +1; }
-									if (dy < 0 ) { a_h = -dy *2 +1; a_y = my;          }
-									else         { a_h = +dy *2 +1; a_y = my - a_h +1; }
+							if (!(i & 1)) {
+								type = PE_TEXT;
+							}
+							a_w = a_h = 0;
+							break;
+						}
+						case 'C': {
+							long r  = (long)reg->u.Circ.Radius * reg->u.Circ.Radius;
+							long dx = mx - reg->u.Circ.Centre.p_x;
+							long dy = my - reg->u.Circ.Centre.p_y;
+							if (r >= dx*dx + dy*dy) {
+								if (dx < 0 ) { a_w = -dx *2 +1; a_x = mx;          }
+								else         { a_w = +dx *2 +1; a_x = mx - a_w +1; }
+								if (dy < 0 ) { a_h = -dy *2 +1; a_y = my;          }
+								else         { a_h = +dy *2 +1; a_y = my - a_h +1; }
+							} else {
+								if (dx < 0) { a_w  = mx - a_x +1;        }
+								else        { a_w -= mx - a_x; a_x = mx; }
+								if (dy < 0) { a_h  = my - a_y +1;        }
+								else        { a_h -= my - a_y; a_y = my; }
+								type = PE_TEXT;
+							}
+						}
+						default:
+							if (a_w > img->disp_w - a_x) {
+								WORD w = img->disp_w - a_x;
+								if (mx < a_x + w) {
+									a_w = w;
 								} else {
-									if (dx < 0) { a_w  = mx - a_x +1;        }
-									else        { a_w -= mx - a_x; a_x = mx; }
-									if (dy < 0) { a_h  = my - a_y +1;        }
-									else        { a_h -= my - a_y; a_y = my; }
+									a_w -= a_x -1;
+									a_x += w;
 									type = PE_TEXT;
 								}
 							}
-							default:
-								if (a_w > img->disp_w - a_x) {
-									WORD w = img->disp_w - a_x;
-									if (mx < a_x + w) {
-										a_w = w;
-									} else {
-										a_w -= a_x -1;
-										a_x += w;
-										type = PE_TEXT;
-									}
-								}
-								if (a_h > img->disp_h - a_y) {
-									WORD h = img->disp_h - a_y;
-									if (my < a_y + h) {
-										a_h = h;
-									} else {
-										a_h -= a_y -1;
-										a_y += h;
-										type = PE_TEXT;
-									}
+							if (a_h > img->disp_h - a_y) {
+								WORD h = img->disp_h - a_y;
+								if (my < a_y + h) {
+									a_h = h;
+								} else {
+									a_h -= a_y -1;
+									a_y += h;
+									type = PE_TEXT;
 								}
 							}
-						} else {
-							type = PE_TEXT;
 						}
-						if (a_w > 0 && a_h > 0) {
-							rect.X += a_x;
-							rect.Y += a_y;
-							rect.W =  a_w;
-							rect.H =  a_h;
-						} else {
-							rect.X += mx;
-							rect.Y += my;
-							rect.W = rect.H = 1;
-						}
+					} else {
+						type = PE_TEXT;
+					}
+					if (a_w > 0 && a_h > 0) {
+						rect.X += a_x;
+						rect.Y += a_y;
+						rect.W =  a_w;
+						rect.H =  a_h;
+					} else {
+						rect.X += mx;
+						rect.Y += my;
+						rect.W = rect.H = 1;
 					}
 				}
 			
 			} else {
-				type = PE_TLINK;
-				if (hash) {
-					*hash = word->link;
-				}
+				type  = PE_TLINK;
+				*hash = word->link;
 				if (clip) {
 					*clip = paragraph_extend (word);
 					clip->g_x += rect.X + frame->clip.g_x;
