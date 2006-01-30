@@ -81,9 +81,8 @@ delete_frame (FRAME * p_frame)
 {
 	FRAME frame = *p_frame;
 	if (frame) {
-		if (frame->MapList) {
-			destroy_imagemap (&frame->MapList, TRUE);
-		}
+		IMAGEMAP maps  = frame->MapList;
+		frame->MapList = NULL;
 		if (frame->first_named_location) {
 			destroy_named_location_structure (frame->first_named_location);
 		}
@@ -99,6 +98,9 @@ delete_frame (FRAME * p_frame)
 		free_location (&frame->Location);
 		free_location (&frame->BaseHref);
 		Delete (&frame->Page);
+		if (maps) {
+			destroy_imagemap (&maps, TRUE);
+		}
 		*p_frame = NULL;
 	}
 }
