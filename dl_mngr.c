@@ -440,6 +440,10 @@ conn_job (void * arg, long invalidated)
 			sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
 		}
 		INFO_Adjst(slot) = TE_RIGHT;
+		if (slot->Data.Location != loader->Location) {
+			free_location (&slot->Data.Location);
+			slot->Data.Location = location_share (loader->Location);
+		}
 		if (loader->rdTlen) {
 			memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
 		}
