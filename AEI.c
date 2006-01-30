@@ -908,6 +908,7 @@ void
 rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 {
 	extern OBJECT *rpoplink;
+	
 	CONTAINR          cont = NULL;
 	struct url_link * link = hash;
 	const char      * addr = link->address;
@@ -1030,41 +1031,34 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	free_location (&loc);
 }
 
+/*----------------------------------------------------------------------------*/
+static WORDITEM
+find_word (FRAME frame, WORD x, WORD y)
+{
+	LRECT    rect;
+	long     px  = (long)x - frame->clip.g_x + frame->h_bar.scroll;
+	long     py  = (long)y - frame->clip.g_y + frame->v_bar.scroll;
+	DOMBOX * box = dombox_byCoord  (&frame->Page, &rect, &px, &py);
+	PARAGRPH par = dombox_Paragrph (box);
+	rect.X = px + x - frame->clip.g_x;
+	rect.Y = py + y - frame->clip.g_y;
+	return paragrph_word (par, -px, -py, (LONG*)&rect);
+}
+
 /*============================================================================*/
-/* rpopimg_open
- */
 void
 rpopimg_open (WORD mx, WORD my, CONTAINR current)
 {
 	extern OBJECT *rpopimg;
-	CONTAINR          cont = NULL;
 	
-	HwWIND wind  = hwWind_byContainr (current);
-	FRAME  frame = hwWind_ActiveFrame (wind);
+	CONTAINR cont   = NULL;
+	HwWIND   wind   = hwWind_byContainr (current);
+	FRAME    frame  = hwWind_ActiveFrame (wind);
+	WORDITEM word   = find_word (frame, mx, my);
+	LOCATION imgloc = word->image->source;
 	short x, y, w, h, which_obj;
 	GRECT desk;
 	
-	IMAGE img;
-	LOCATION imgloc;
-
-	LRECT    rect;
-	long     px  = (long)mx - frame->clip.g_x + frame->h_bar.scroll;
-	long     py  = (long)my - frame->clip.g_y + frame->v_bar.scroll;
-	DOMBOX * box = dombox_byCoord  (&frame->Page, &rect, &px, &py);
-	PARAGRPH par = dombox_Paragrph (box);
-
-	WORDITEM word;
-	long     area[4];
-		
-	area[0] = px + mx - frame->clip.g_x;
-	area[1] = py + my - frame->clip.g_y;
-	area[2] = rect.W;
-	area[3] = rect.H;
-	word    = paragrph_word (par, -px, -py, area);
-
-	img = word->image;
-	imgloc = img->source;
-
 	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
 	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_DISABLED, 0);
 	
@@ -1156,18 +1150,18 @@ void
 rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 {
 	extern OBJECT *rpopimg;
+	
 	CONTAINR          cont = NULL;
 	struct url_link * link = hash;
 	const char      * addr = link->address;
 	
-	HwWIND wind  = hwWind_byContainr (current);
-	FRAME  frame = hwWind_ActiveFrame (wind);
-	LOCATION loc = new_location (addr, frame->BaseHref);
+	HwWIND   wind   = hwWind_byContainr (current);
+	FRAME    frame  = hwWind_ActiveFrame (wind);
+	LOCATION loc    = new_location (addr, frame->BaseHref);
+	WORDITEM word   = (link->start ? link->start : find_word (frame, mx, my));
+	LOCATION imgloc = word->image->source;
 	short x, y, w, h, which_obj;
 	GRECT desk;
-	
-	IMAGE img = link->start->image;
-	LOCATION imgloc = img->source;
 	
 	if (loc->Proto != PROT_FILE && loc->Proto != PROT_HTTP) {
 		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
