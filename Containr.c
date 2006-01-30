@@ -983,13 +983,13 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				*hash = word->input;
 			
 			} else if (!word->link || !word->link->isHref) {
-				if (word->image)
+				if (word->image) {
 					type = PE_IMAGE;
-				else
+				} else {
 					type = PE_TEXT;
+				}
 			} else if (word->image) {
-				type  = PE_ILINK;
-				*hash = word->link;
+				type = PE_ILINK;
 				if (word->image->map) {
 					WORD     mx  = -px - word->h_offset;
 					WORD     my  = -py - word->line->OffsetY + word->line->Ascend;
@@ -1037,7 +1037,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 								a = b;
 							}
 							if (!(i & 1)) {
-								type = PE_TEXT;
+								type = PE_IMAGE;
 							}
 							a_w = a_h = 0;
 							break;
@@ -1056,7 +1056,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 								else        { a_w -= mx - a_x; a_x = mx; }
 								if (dy < 0) { a_h  = my - a_y +1;        }
 								else        { a_h -= my - a_y; a_y = my; }
-								type = PE_TEXT;
+								type = PE_IMAGE;
 							}
 						}
 						default:
@@ -1067,7 +1067,7 @@ containr_Element (CONTAINR *_cont, short x, short y,
 								} else {
 									a_w -= a_x -1;
 									a_x += w;
-									type = PE_TEXT;
+									type = PE_IMAGE;
 								}
 							}
 							if (a_h > img->disp_h - a_y) {
@@ -1077,12 +1077,12 @@ containr_Element (CONTAINR *_cont, short x, short y,
 								} else {
 									a_h -= a_y -1;
 									a_y += h;
-									type = PE_TEXT;
+									type = PE_IMAGE;
 								}
 							}
 						}
 					} else {
-						type = PE_TEXT;
+						type = PE_IMAGE;
 					}
 					if (a_w > 0 && a_h > 0) {
 						rect.X += a_x;
@@ -1095,7 +1095,9 @@ containr_Element (CONTAINR *_cont, short x, short y,
 						rect.W = rect.H = 1;
 					}
 				}
-			
+				if (type == PE_ILINK) {
+					*hash = word->link;
+				}
 			} else {
 				type  = PE_TLINK;
 				*hash = word->link;
