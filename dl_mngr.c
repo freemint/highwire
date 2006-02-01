@@ -23,14 +23,14 @@ static WINDOW   dlm_wind = NULL;
 
 typedef struct s_slot {
 	const WORD Base, File, Info, Pbar, Bttn;
-	struct {
+	struct s_sdat {
 		LOCATION Location;
 		WORD     Source;
 		WORD     Target;
 		char   * Buffer;
-		long     Size;
-		long     Fill;
-		long     Blck;
+		long     Size;   /* size of the source or <0 if unknown           */
+		long     Fill;   /* number of already stored bytes in target file */
+		long     Blck;   /* remaining byte in 'Buffer'                    */
 	} Data;
 } * SLOT;
 static struct s_slot slot_tab[4] = {
@@ -40,6 +40,17 @@ static struct s_slot slot_tab[4] = {
 	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, {NULL,-1,-1,NULL,0,0,0} }
 };
 #define slot_end   (slot_tab + numberof(slot_tab) -1)
+
+static char * bttn_text_ok     = "-";
+static char * bttn_text_stop   = "-";
+static char * bttn_text_cancel = "-";
+static size_t file_text_max    = MAX_LEN; /* from gem.h */
+
+
+/*******************************************************************************
+ *
+ * Functions to modify the GUI.
+*/
 
 /*** some macros to make the code more handy ***/
 /* G_BOX: base box covering a slot */
@@ -61,11 +72,6 @@ static struct s_slot slot_tab[4] = {
 /* G_BUTTON */
 #define BTTN_State(slot)   dlm_form[(slot)->Bttn].ob_state
 #define BTTN_Strng(slot)   dlm_form[(slot)->Bttn].ob_spec.free_string
-
-static char * bttn_text_ok     = "-";
-static char * bttn_text_stop   = "-";
-static char * bttn_text_cancel = "-";
-static size_t file_text_max    = MAX_LEN; /* from gem.h */
 
 
 /*----------------------------------------------------------------------------*/
@@ -190,22 +196,29 @@ slot_redraw (SLOT slot, BOOL only_this)
 }
 
 
+/*******************************************************************************
+ *
+ * Job functions (callbacks).
+*/
+typedef struct s_sdat * SDAT;
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
 load_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
+	SDAT data = &slot->Data;
 	
 	if (invalidated) {
 		return FALSE;
 	}
 	
-	if (slot->Data.Source >= 0) {
-		long n = read (slot->Data.Source, slot->Data.Buffer, BUF_SIZE);
+	if (data->Source >= 0) {
+		long n = read (data->Source, data->Buffer, BUF_SIZE);
 		if (n > 0) {
-			write (slot->Data.Target, slot->Data.Buffer, n);
-			slot->Data.Fill += n;
-			n = (slot->Data.Fill *256) / slot->Data.Size;
+			write (data->Target, data->Buffer, n);
+			data->Fill += n;
+			n = (data->Fill *256) / data->Size;
 			if (n > PBAR_Rect(slot).g_w) {
 				GRECT clip;
 				objc_offset (dlm_form, slot->Pbar, &clip.g_x, &clip.g_y);
@@ -220,15 +233,15 @@ load_job (void * arg, long invalidated)
 			BTTN_Strng(slot) = bttn_text_ok;
 			PBAR_Fpatt(slot) = IP_4PATT;
 			window_redraw (dlm_wind, NULL);
-			close (slot->Data.Source);
-			slot->Data.Source = -1;
+			close (data->Source);
+			data->Source = -1;
 		}
 	}
-	if (slot->Data.Source < 0) {
-		close (slot->Data.Target);
-		slot->Data.Target = -1;
-		free (slot->Data.Buffer);
-		slot->Data.Buffer = NULL;
+	if (data->Source < 0) {
+		close (data->Target);
+		data->Target = -1;
+		free (data->Buffer);
+		data->Buffer = NULL;
 		window_raise (dlm_wind, TRUE, NULL);
 		return FALSE;
 	}
@@ -240,6 +253,7 @@ static int
 recv_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
+	SDAT data = &slot->Data;
 	BOOL save = FALSE;
 	WORD draw = 0, dr_x = 0, dr_w = 0;
 	
@@ -247,20 +261,19 @@ recv_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
-	if (slot->Data.Source >= 0) {
-		long n = BUF_SIZE - slot->Data.Blck;
-		if (slot->Data.Size > 0 && n > slot->Data.Size - slot->Data.Fill) {
-			n = slot->Data.Size - slot->Data.Fill;
+	if (data->Source >= 0) {
+		long n = BUF_SIZE - data->Blck;
+		if (data->Size > 0 && n > data->Size - data->Fill) {
+			n = data->Size - data->Fill;
 		}
-		n = inet_recv (slot->Data.Source, slot->Data.Buffer + slot->Data.Blck, n);
+		n = inet_recv (data->Source, data->Buffer + data->Blck, n);
 		if (n > 0) {
-			slot->Data.Blck += n;
-			if (slot->Data.Fill + slot->Data.Blck == slot->Data.Size) {
+			data->Blck += n;
+			if (data->Fill + data->Blck == data->Size) {
 				n = -1;
 			} else {
-				if (slot->Data.Size >= 0) {
-					WORD w = ((slot->Data.Fill + slot->Data.Blck) *256)
-					       / slot->Data.Size;
+				if (data->Size >= 0) {
+					WORD w = ((data->Fill + data->Blck) *256) / data->Size;
 					if (w > PBAR_Rect(slot).g_w) {
 						dr_x = PBAR_Rect(slot).g_w;
 						dr_w = w - dr_x;
@@ -276,34 +289,34 @@ recv_job (void * arg, long invalidated)
 					}
 					draw = dlm_form[slot->Pbar].ob_next;
 				}
-				save = (slot->Data.Blck > BUF_SIZE /2);
+				save = (data->Blck > BUF_SIZE /2);
 			}
 		}
 		if (n < 0) {
-			inet_close (slot->Data.Source);
-			slot->Data.Source = -1;
-			save = (slot->Data.Blck > 0);
+			inet_close (data->Source);
+			data->Source = -1;
+			save = (data->Blck > 0);
 		}
 	} else {
-		save = (slot->Data.Blck > 0);
+		save = (data->Blck > 0);
 	}
 	if (save) {
-		write (slot->Data.Target, slot->Data.Buffer, slot->Data.Blck);
-		slot->Data.Fill += slot->Data.Blck;
-		slot->Data.Blck =  0;
+		write (data->Target, data->Buffer, data->Blck);
+		data->Fill += data->Blck;
+		data->Blck =  0;
 	}
-	if (slot->Data.Source < 0) {
-		close (slot->Data.Target);
-		slot->Data.Target = -1;
-		free (slot->Data.Buffer);
-		slot->Data.Buffer = NULL;
+	if (data->Source < 0) {
+		close (data->Target);
+		data->Target = -1;
+		free (data->Buffer);
+		data->Buffer = NULL;
 		
-		if (slot->Data.Size < 0) {
-			slot->Data.Size = slot->Data.Fill;
-			sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
+		if (data->Size < 0) {
+			data->Size = data->Fill;
+			sprintf (INFO_Strng(slot), "%li bytes", data->Size);
 			PBAR_Rect(slot).g_x = 0;
 		}
-		if (slot->Data.Size == slot->Data.Fill) {
+		if (data->Size == data->Fill) {
 			BTTN_Strng(slot)    = bttn_text_ok;
 			PBAR_Fpatt(slot)    = IP_4PATT;
 			PBAR_Rect(slot).g_w = 256;
@@ -324,7 +337,7 @@ recv_job (void * arg, long invalidated)
 		clip.g_h = dlm_form[draw].ob_height;
 		window_redraw (dlm_wind, &clip);
 	}
-	if (slot->Data.Source < 0) {
+	if (data->Source < 0) {
 		window_raise (dlm_wind, TRUE, NULL);
 		return FALSE;
 	}
@@ -336,6 +349,7 @@ static int
 fsel_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
+	SDAT data = &slot->Data;
 	
 	if (invalidated) {
 		return FALSE;
@@ -344,14 +358,14 @@ fsel_job (void * arg, long invalidated)
 	do {
 		char fsel_file[HW_PATH_MAX];
 		WORD butt = -1;
-		WORD ret  = strlen (slot->Data.Location->File);
+		WORD ret  = strlen (data->Location->File);
 		
 		if (ret) {
-			const char * p = memchr (slot->Data.Location->File, '?', ret);
-			if (p) ret = (WORD)(p - slot->Data.Location->File);
+			const char * p = memchr (data->Location->File, '?', ret);
+			if (p) ret = (WORD)(p - data->Location->File);
 		}
 		if (ret) {
-			memcpy (fsel_file, slot->Data.Location->File, ret);
+			memcpy (fsel_file, data->Location->File, ret);
 		}
 		fsel_file[ret] = '\0';
 		
@@ -374,12 +388,11 @@ fsel_job (void * arg, long invalidated)
 			}
 		}
 		if (arg) {
-			slot->Data.Target = open (fsel_file,
-			                          O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
-			if (slot->Data.Target < 0) {
+			data->Target = open (fsel_file, O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
+			if (data->Target < 0) {
 				hwUi_warn ("Download", "Cannot create target file.");
 			} else {
-				SCHED_FUNC job = (PROTO_isRemote (slot->Data.Location->Proto)
+				SCHED_FUNC job = (PROTO_isRemote (data->Location->Proto)
 				                  ? recv_job : load_job);
 				sched_insert (job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 				break;
@@ -401,6 +414,7 @@ conn_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
 	SLOT   slot   = slot_byArg (loader->FreeArg);
+	SDAT   data   = &slot->Data;
 	
 	if (invalidated) {
 		delete_loader (&loader);
@@ -426,31 +440,31 @@ conn_job (void * arg, long invalidated)
 			}
 			if (!*p) p = NULL;
 		}
-		slot->Data.Size = -1;
+		data->Size = -1;
 		slot_error (slot, (p ? p : "Connection Error!"));
 	
 	} else {
 		PBAR_Flags(slot)   &= ~OF_HIDETREE;
 		PBAR_Rect(slot).g_x = 0;
-		if ((slot->Data.Size = loader->DataSize) < 0) {
+		if ((data->Size = loader->DataSize) < 0) {
 			PBAR_Rect(slot).g_w = 24;
 			strcpy (INFO_Strng(slot), "size unknown");
 		} else {
 			PBAR_Rect(slot).g_w = 1;
-			sprintf (INFO_Strng(slot), "%li bytes", slot->Data.Size);
+			sprintf (INFO_Strng(slot), "%li bytes", data->Size);
 		}
 		INFO_Adjst(slot) = TE_RIGHT;
-		if (slot->Data.Location != loader->Location) {
-			free_location (&slot->Data.Location);
-			slot->Data.Location = location_share (loader->Location);
+		if (data->Location != loader->Location) {
+			free_location (&data->Location);
+			data->Location = location_share (loader->Location);
 		}
 		if (loader->rdTlen) {
-			memcpy (slot->Data.Buffer, loader->rdTemp, loader->rdTlen);
+			memcpy (data->Buffer, loader->rdTemp, loader->rdTlen);
 		}
-		slot->Data.Blck   = loader->rdTlen;
-		slot->Data.Fill   = 0;
-		slot->Data.Source = loader->rdSocket;
-		loader->rdSocket  = -1;
+		data->Blck       = loader->rdTlen;
+		data->Fill       = 0;
+		data->Source     = loader->rdSocket;
+		loader->rdSocket = -1;
 		arg = slot_Arg(slot);
 		sched_insert (fsel_job, arg, (long)arg, 20/*PRIO_RECIVE*/);
 	}
@@ -462,6 +476,11 @@ conn_job (void * arg, long invalidated)
 	return FALSE;
 }
 
+
+/*******************************************************************************
+ *
+ * Window handling.
+*/
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
