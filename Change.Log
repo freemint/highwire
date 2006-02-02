@@ -1,18 +1,38 @@
-Changes in V. 0.2.8 release
+(non-public of Feb 02, 2006)
 
-- Several bad pointer bugs from 0.2.7 release fixed
+- Several bugs with bad pointers from the 0.2.7
+  release fixed, some no longer used code removed.
 
-- Download manager handles chunked encoding
+- The download manager handles 'chunked mode' data
+  streams correctly now;  Target file names get
+  adapted for redirected connections (eg. download
+  some release zip from the HighWire site).
 
-- unterminated strings now attempted to be parsed
+- Unterminated attribute strings in tags now
+  attempted to be parsed.
 
-- CSS specificity or weighting system introduced
+- Improved VA/AV protocol messageing, replaced
+  VA_START by AV_STARTPROG.
 
-- PX sizes reduced to more closely match FF,IE display
+- CSS specificity or weighting system introduced.
 
-- CSS parser improved for better compatibility.
-  New keywords implemented: border-top, border-bottom,
-  border-left, border-right, display (inline, none)
+- CSS parser improved for better compatibility:
+  attribute text-decoration:none suppresses text
+  underline;  Float values without leading digits
+  supported;  Handle values when there are speces
+  before theit units;  PX sizes reduced to more
+  closely match FF,IE display.
+
+- New CSS keywords implemented: border-top,
+  border-bottom, border-left, border-right,
+  display (inline, none).
+
+- Wrong error output removed which occured every
+  time when a CSS file was (correctly) ending with
+  a comment.
+
+- Table width calculation improved, eg. when the
+  'nowrap' attribute comes into count.
 
 - Bugs #0122, #161 resolved.
 
