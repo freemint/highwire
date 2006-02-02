@@ -822,9 +822,14 @@ header_job (void * arg, long invalidated)
 		
 		if (hdr_only) {
 			loader->DataSize = hdr.Size;
+			if ((loader->rdChunked = hdr.Chunked) == TRUE) {
+				loader->rdTemp[0] = '\r';
+				loader->rdTemp[1] = '\n';
+				loader->rdTlen = 2;
+			}
 			if (hdr.Tlen) {
-				memcpy (loader->rdTemp, hdr.Tail, hdr.Tlen);
-				loader->rdTlen = hdr.Tlen;
+				memcpy (loader->rdTemp + loader->rdTlen, hdr.Tail, hdr.Tlen);
+				loader->rdTlen += hdr.Tlen;
 			}
 			loader->rdSocket = sock;
 			sched_insert (loader->SuccJob, loader, (long)0, PRIO_RECIVE);

@@ -31,13 +31,14 @@ typedef struct s_slot {
 		long     Size;   /* size of the source or <0 if unknown           */
 		long     Fill;   /* number of already stored bytes in target file */
 		long     Blck;   /* remaining byte in 'Buffer'                    */
+		long     Chnk;   /* !=0: chunked mode                             */
 	} Data;
 } * SLOT;
 static struct s_slot slot_tab[4] = {
-	{ DLM_1, DLM_1FILE, DLM_1TEXT, DLM_1BAR, DLM_1BTN, {NULL,-1,-1,NULL,0,0,0} },
-	{ DLM_2, DLM_2FILE, DLM_2TEXT, DLM_2BAR, DLM_2BTN, {NULL,-1,-1,NULL,0,0,0} },
-	{ DLM_3, DLM_3FILE, DLM_3TEXT, DLM_3BAR, DLM_3BTN, {NULL,-1,-1,NULL,0,0,0} },
-	{ DLM_4, DLM_4FILE, DLM_4TEXT, DLM_4BAR, DLM_4BTN, {NULL,-1,-1,NULL,0,0,0} }
+	{ DLM_1, DLM_1FILE,DLM_1TEXT,DLM_1BAR,DLM_1BTN, {NULL,-1,-1,NULL,0,0,0,0} },
+	{ DLM_2, DLM_2FILE,DLM_2TEXT,DLM_2BAR,DLM_2BTN, {NULL,-1,-1,NULL,0,0,0,0} },
+	{ DLM_3, DLM_3FILE,DLM_3TEXT,DLM_3BAR,DLM_3BTN, {NULL,-1,-1,NULL,0,0,0,0} },
+	{ DLM_4, DLM_4FILE,DLM_4TEXT,DLM_4BAR,DLM_4BTN, {NULL,-1,-1,NULL,0,0,0,0} }
 };
 #define slot_end   (slot_tab + numberof(slot_tab) -1)
 
@@ -261,6 +262,28 @@ recv_job (void * arg, long invalidated)
 		return FALSE;
 	}
 	
+	if (data->Chnk < 0) { /* read chunk size */
+		char * cr = (data->Blck >= 5
+		             ? memchr (data->Buffer +2, '\n', data->Blck -2) : NULL);
+		if (cr) {
+			*(cr++) = '\0';
+			if ((data->Chnk = strtoul (data->Buffer +2, NULL, 16)) > 0) {
+				data->Blck -= cr - data->Buffer;
+				if (data->Blck > 0) {
+					memmove (data->Buffer, cr, data->Blck);
+					save = (data->Blck >= data->Chnk);
+				}
+			} else { /* end download */
+				data->Blck = 0; /* ignore remaining data */
+				if (data->Source >= 0) {
+					inet_close (data->Source);
+					data->Source = -1;
+				}
+			}
+		} else if (data->Source < 0) {
+			data->Blck = 0; /* chunk header incomplete */
+		}
+	}
 	if (data->Source >= 0) {
 		long n = BUF_SIZE - data->Blck;
 		if (data->Size > 0 && n > data->Size - data->Fill) {
@@ -289,7 +312,7 @@ recv_job (void * arg, long invalidated)
 					}
 					draw = dlm_form[slot->Pbar].ob_next;
 				}
-				save = (data->Blck > BUF_SIZE /2);
+				save |= data->Blck > BUF_SIZE /2;
 			}
 		}
 		if (n < 0) {
@@ -297,21 +320,29 @@ recv_job (void * arg, long invalidated)
 			data->Source = -1;
 			save = (data->Blck > 0);
 		}
-	} else {
+	} else { /* data->Source < 0 */
 		save = (data->Blck > 0);
 	}
-	if (save) {
-		write (data->Target, data->Buffer, data->Blck);
-		data->Fill += data->Blck;
-		data->Blck =  0;
+	if (save && data->Chnk >= 0) {
+		size_t len = (data->Chnk && data->Chnk < data->Blck
+		              ? data->Chnk : data->Blck);
+		write (data->Target, data->Buffer, len);
+		data->Fill += len;
+		data->Blck -= len;
+		if (data->Blck) {
+			memmove (data->Buffer, data->Buffer + len, data->Blck);
+		}
+		if (data->Chnk && !(data->Chnk -= len)) {
+			data->Chnk = -1; /* next chunk header to be read */
+		}
 	}
-	if (data->Source < 0) {
+	if (data->Source < 0 && data->Blck <= 0) {
 		close (data->Target);
 		data->Target = -1;
 		free (data->Buffer);
 		data->Buffer = NULL;
 		
-		if (data->Size < 0) {
+		if (data->Size < 0 && data->Chnk == 0) {
 			data->Size = data->Fill;
 			sprintf (INFO_Strng(slot), "%li bytes", data->Size);
 			PBAR_Rect(slot).g_x = 0;
@@ -337,7 +368,7 @@ recv_job (void * arg, long invalidated)
 		clip.g_h = dlm_form[draw].ob_height;
 		window_redraw (dlm_wind, &clip);
 	}
-	if (data->Source < 0) {
+	if (data->Target < 0) {
 		window_raise (dlm_wind, TRUE, NULL);
 		return FALSE;
 	}
@@ -461,6 +492,7 @@ conn_job (void * arg, long invalidated)
 		if (loader->rdTlen) {
 			memcpy (data->Buffer, loader->rdTemp, loader->rdTlen);
 		}
+		data->Chnk       = (loader->rdChunked ? -1 : 0);
 		data->Blck       = loader->rdTlen;
 		data->Fill       = 0;
 		data->Source     = loader->rdSocket;
