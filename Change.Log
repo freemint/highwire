@@ -1,10 +1,20 @@
-Changes since public release
+Changes in V. 0.2.8 release
+
+- Several bad pointer bugs from 0.2.7 release fixed
+
+- Download manager handles chunked encoding
+
+- unterminated strings now attempted to be parsed
+
+- CSS specificity or weighting system introduced
 
 - PX sizes reduced to more closely match FF,IE display
 
 - CSS parser improved for better compatibility.
   New keywords implemented: border-top, border-bottom,
-  border-left, border-right, display
+  border-left, border-right, display (inline, none)
+
+- Bugs #0122, #161 resolved.
 
 __________________________________________________
 Changes in V. 0.2.7 release  of December 24, 2005:
