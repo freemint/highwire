@@ -10,6 +10,7 @@
 # define timezone __timezone
 #endif
 
+#include "version.h"
 #include "global.h"
 #include "Location.h"
 #include "mime.h"

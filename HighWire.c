@@ -14,6 +14,7 @@
 
 #include <gemx.h>
 
+#include "version.h"
 #include "global.h"
 #include "Logging.h"
 #include "schedule.h"
@@ -354,7 +355,8 @@ static void
 open_splash (void)
 {
 	GRECT curr;
-	WORD w = 8 + logo_icon.fd_w + 8 + (sizeof(spl_vers) -1) *8 + 8;
+	WORD w = 8 + logo_icon.fd_w + 8
+	       + (max (sizeof(spl_name), sizeof(spl_vers)) -1) *8 + 8;
 	WORD h = 8 + logo_icon.fd_h + 8;
 	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &curr);
 	curr.g_x += (curr.g_w - w) /2;

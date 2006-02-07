@@ -17,6 +17,7 @@
 # define HISTORY  struct s_history *
 #endif
 
+#include "version.h"
 #include "av_comm.h"
 #include "global.h"
 #include "Location.h"
@@ -326,7 +327,7 @@ menu_about (void)
 	form_alert (1, "[1]"
 	               "[" _HIGHWIRE_FULLNAME_ " HTML Browser"
 	               "|GEM Menu v. 0.4"
-	               "|Core     v. " _HIGHWIRE_VERSION_ " (" _HIGHWIRE_BETATAG_ ")"
+	               "|Core     v. " _HIGHWIRE_VERSION_ " " _HIGHWIRE_BETATAG_
 	               "|http://highwire.atari-users.net/]"
 	               "[  OK  ]");
 }

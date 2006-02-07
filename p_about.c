@@ -5,6 +5,7 @@
 
 #include <gem.h>
 
+#include "version.h"
 #include "global.h"
 #include "Loader.h"
 #include "parser.h"

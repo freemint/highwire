@@ -22,11 +22,11 @@ modules\network.src\purec.prj
 modules\example.src\sample.prj
 ;
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)
-schedule.c 	
+schedule.c (  hw-types.h, schedule.h)
 mime.c     (  hw-types.h, mime.h)
 ovl_sys.c  ( defs.h,hw-types.h, ovl_sys.h)
 inet.c     (  hw-types.h,       ovl_sys.h,inet.h)
-http.c     ( defs.h,hw-types.h, Location.h,mime.h,http.h,inet.h,scanner.h)
+http.c     ( defs.h,hw-types.h,version.h, Location.h,mime.h,http.h,inet.h,scanner.h)
 cache.c    ( defs.h,hw-types.h, Location.h,cache.h)
 Location.c (global.h,defs.h,hw-types.h, Location.h,Logging.h,inet.h)
 cookie.c   ( defs.h,hw-types.h, mime.h,http.h,Location.h,cookie.h)
@@ -45,7 +45,7 @@ color.c    (global.h,defs.h,hw-types.h)
 encoding.c ( defs.h,hw-types.h,         scanner.h, en_uni.h,en_bics.h,en_atari.h)
 scanner.c  ( defs.h,hw-types.h,         token.h,scanner.h)   [-M]
 parser.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Containr.h,Loader.h,mime.h,cache.h,parser.h,Location.h,fontbase.h)
-p_about.c  (global.h,defs.h,hw-types.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h,Containr.h,inet.h,cache.h,Form.h,ovl_sys.h)
+p_about.c  (global.h,defs.h,hw-types.h,version.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h,Containr.h,inet.h,cache.h,Form.h,ovl_sys.h)
 p_dir.c    (global.h,defs.h,hw-types.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h)
 render.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Containr.h,mime.h,Loader.h,Location.h,Logging.h,Table.h,Form.h,fontbase.h,http.h,cache.h)
 Containr.c (global.h,defs.h,hw-types.h, Containr.h,Form.h,schedule.h,Location.h)
@@ -58,13 +58,13 @@ dl_mngr.c  (global.h,defs.h,hw-types.h, schedule.h,Location.h,Loader.h,Window.h,
 Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h)
 hwWind.c   (global.h,defs.h,hw-types.h, hwWind.h,Containr.h,Form.h,mime.h,Loader.h,Logging.h,Location.h,cache.h)
 av_prot.c  (global.h,defs.h,hw-types.h, av_comm.h)
-config.c   (global.h,defs.h,hw-types.h, cache.h,hwWind.h,scanner.h)
+config.c   (global.h,defs.h,hw-types.h,version.h, cache.h,hwWind.h,scanner.h)
 Variable.c (global.h,defs.h,hw-types.h)
 Nice_VDI.c (global.h,defs.h,hw-types.h)
 keyinput.c (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h)
 Mouse_R.c  (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Form.h,hwWind.h,Location.h,Form.h)
-AEI.c      (global.h,defs.h,hw-types.h,highwire.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h,av_comm.h,cache.h)
-HighWire.c (global.h,defs.h,hw-types.h,highwire.h, Logging.h,schedule.h,hwWind.h,ovl_sys.h)
+AEI.c      (global.h,defs.h,hw-types.h,version.h,highwire.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h,av_comm.h,cache.h)
+HighWire.c (global.h,defs.h,hw-types.h,version.h,highwire.h, Logging.h,schedule.h,hwWind.h,ovl_sys.h)
 ;
 UNGIF.LIB
 PCSTDLIB.LIB

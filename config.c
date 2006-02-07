@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "version.h"
 #include "file_sys.h"
 #include "global.h"
 #include "Location.h"

@@ -1,10 +1,6 @@
 /* @(#)highwire/defs.h
  */
-#define _HIGHWIRE_MAJOR_     0
-#define _HIGHWIRE_MINOR_     2
-#define _HIGHWIRE_REVISION_  8
-#define _HIGHWIRE_BETATAG_   "alpha"
-#define _HIGHWIRE_VERSION_   "0.2.8"
+/* all version defines moved to version.h */
 
 #include "hw-types.h"   /* get base definitions */
 
