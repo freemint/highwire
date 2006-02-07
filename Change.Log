@@ -1,4 +1,4 @@
-(non-public of Feb 02, 2006)
+Changes in V. 0.3.0 release  of February 07, 2006:
 
 - Several bugs with bad pointers from the 0.2.7
   release fixed, some no longer used code removed.
@@ -25,7 +25,7 @@
 
 - New CSS keywords implemented: border-top,
   border-bottom, border-left, border-right,
-  display (inline, none).
+  display:inline.
 
 - Wrong error output removed which occured every
   time when a CSS file was (correctly) ending with
@@ -391,7 +391,7 @@ Changes in V. 0.1.7 release  of March 25, 2004:
   CSS 1.0 as well as for 2.0 specification.
 
 - For lists and the tags CENTER, BLOCKQUOTE and
-  DIV the CSS styles background-color, border-width/-color,  margin, 
+  DIV the CSS styles background-color, border-width/-color,  margin,
   padding and text-indent
   are supported now.
 

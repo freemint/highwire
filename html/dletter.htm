@@ -33,42 +33,70 @@
             <td width="49%">
             <h3>A Message from the HighWire Development Team</h3>
             <hr>
-            <p><b><i>Welcome to the latest release of HighWire, version 0.2.7</i></b></p>
+            <p><b><i>Welcome to the latest release of HighWire, version 0.3.0</i></b></p>
             <img src="images/twisted.gif"
  alt="HighWire viewing Highwire" align="right" height="131" hspace="4"
  vspace="4" width="161">
-            <p>What would Christmas be without a <EM>New</EM> HighWire release under
-               your virtual Fuji tree.
-            </p>
-            <p>It has been a tradition to do a release at Chistmas and we didn't want
-               to let anyone be disappointed.  Development over the last month has proceded
-               at a vigourous pace, with alot of new supports being added to HighWire.
-               The CSS support is more robust and several small bugs have been eliminated.
-            </p>
-            <p>However all this development, like any DIY project has left some rough edges.
-               You can expect some pages to look better than they have ever looked before,
-               but you can also expect some pages to show problems that weren't there before.
-               We discovered some errors in the CSS parsing routines that are causing some
-               styles not to be applied.  This can cause things like links to be invisible
-               on their background colors or other similar effects.  We have identified
-               what the problem is, but unfortunately we were unable to fix it before this
-               release.
-            </P>
-            <p>All warnings out of the way.  We think you will find
-               this Christmas snapshot version to be a nice update to the browser.  Most notably
-               the often requested ability to save images off of websites has been implemented now
-               via the right pop up menu.  The additions to CSS styles to more tags has quite 
-               dramatically changed to look and feel of many sites.  We hope you will enjoy our
-               small holiday gift and that you find the improvements to outweigh the problems.
-            </p>
+				<p>First you are probably asking why the jump in version numbers.  Wasn't
+				this supposed to be version 0.2.8?  Well it was for awhile, then the decision
+				was made to move the version up for two solid reasons.  The first reason is
+				that there has been substantial work done in the code and some members of the
+				team argued that this validated more than just an incremental increase.  This
+				has some merit, there is also a secondary reason that helped seal the deal as
+				we say in the US.</p>
+				<p>Begining with this release, we will follow a numbering convention
+				close to that used by many other open source projects.  Internal test 
+				versions will have a beginning odd subversion number, external release 
+				versions will have a beginning even subversion number.  Examples for 
+				this would be 0.3.1x (where x would be any other number) a test snapshot 
+				or 0.3.2 which would signify a release version.  This is primarily to
+				facilitate a more regimented testing scheme and will allow us to more easily identify
+				when a bug has entered the code.</p>
+        		<p>Now on the subject of bugs, let me personally apologize to anyone that was frustated by the bugs 
+        		that crept into the 0.2.7 release.  It was accidental and we were unaware at
+        		the time that some of our standard testers were unavailable, a bad assumption
+        		was made that no complaints from them meant that they had encountered no problems.
+        		We will try to be a bit more strident in the future.  If you encounter any 
+        		problems please let us know as soon as possible.
+        		</p>
+        		<p>So what does that mean for this release?</p>
+        		<p>Well the delayed bug reports came in after some major changes were
+        		started in certain sections of the code.  That development was frozen
+        		until such a time as this release was made.  This is mainly of note in
+        		the CSS specificity code (or weighting system).  The new system will 
+        		make some sites look much better with CSS than they ever have before.
+        		However since it's not perfected yet, it also has some strange effects
+        		on more complex sites.  This will be improved in future versions, but
+        		we didn't want to leave half the user base stuck at version 0.2.6 until
+        		this new code was finished.  So don't be surprised when sometimes a font
+        		is much larger than it used to be or is a completely different color than
+        		it should be.</p>
+        		<p>Since we were in a freeze for bug fixes, we got several put in place
+        		for this release.  The first step was the elimination of the bugs that 
+        		came into place with the christmas snapshot, where we were greatly aided
+        		by stghost who put in hours of tracing, testing and coding to help find
+        		and eliminate them.  If you see him online, be sure to thank him!  The 
+        		problematic VA_START was replaced with the correct value, so some users
+        		should finally be able to launch those external applications that never worked.
+        		And the download manager was fixed so that saving from a http1.1 server 
+        		doesn't litter the file with chunk headers.  There were several other small
+        		bugs that caused the occaisional crash squashed as well.
+        		</p>
+        		<p>We hope you will find the end result to be a pleasing upgrade.
+        		</p>
             <p><EM>Main changes and additions in this versions:</EM>
             </p>
             <ul>
-              <li> 'Save As' implemented for Images</li>
-              <li> Css styles applied to many new tags</li>
-			  <li>Numerous improvements on the CSS style supports</li>
-              <li>Percentage Font Size bug fixed</li>
-              <li>Table Cell 'nowrap' bug fixed</li>
+              <li>Various bugs introduced in the 0.2.7 release fixed</li>
+              <li>Downloaded manager handles chunked transfers now</li>
+              <li>One of the long standing bugs in the VA system fixed</li>
+              <li>Table size handling improved</li>
+              <li>Highwire now attempts to interpret unterminated strings</li>
+              <li>PX sizes reduced to more closely match IE/FF display</li>
+              <li>CSS parser has been extended and is a bit more robust</li>
+              <li>CSS speficity system in place, but still not perfect</li>
+              <li>CSS keyword Display: inline has some early first implementation</li>
+              <li>Support for CSS keywords border-top, border-bottom, border-left, border-right on many tags</li>
               <li>Several more (but less obvious) bugs fixed.
               </li>
             </ul>
@@ -96,5 +124,6 @@ explanations of new configuration keywords from the last release!
 </div>
 </body>
 </html>
+
 
 
