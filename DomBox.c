@@ -107,7 +107,11 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 	long x2 = x - This->Margin.Rgt + This->Rect.W -1;
 	long y1 = y + This->Margin.Top;
 	long y2 = y - This->Margin.Bot + This->Rect.H -1;
-	
+
+	/* style display: none */
+	if (This->Hidden)
+		return;
+			
 	if (This->BorderWidth.Top ||
 		This->BorderWidth.Bot ||
 		This->BorderWidth.Lft ||
@@ -240,6 +244,11 @@ vTab_MinWidth (DOMBOX * This)
 	tempminwidth = This->MinWidth;
 	
 	This->MinWidth = (This->SetWidth > 0 ? This->SetWidth : 0);
+
+	/* style display: none */
+	if (This->Hidden)
+			return This->MinWidth;
+
 	while (box) {
 		long width = dombox_MinWidth (box);
 		if (This->MinWidth < width) {
@@ -258,6 +267,9 @@ vTab_MinWidth (DOMBOX * This)
 		This->SetWidth = This->MinWidth;
 	}
 
+/*	if ((This->BoxClass == BC_GROUP) && (This->HtmlCode == 19))
+		printf("Min %ld   \r\n",This->MinWidth);
+*/
 	return This->MinWidth;
 }
 
@@ -518,6 +530,10 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 	DOMBOX * box    = This->ChildBeg;
 	long     clip_y = (long)clip->g_y - y;
 	
+	/* style display: none */
+	if (This->Hidden)
+			return;
+
 	while (box && box->Rect.Y + box->Rect.H <= clip_y) {
 		box = box->Sibling;
 	}
@@ -649,6 +665,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	struct blocking_area t_blocker = *p_blocker;
 	BLOCKER              blocker   = &t_blocker;
 
+	/* style display: none */
+	if (This->Hidden)
+			return;
+
 	if (blocker->L.bottom) {
 		if ((blocker->L.width -= This->Margin.Lft) <= 0) {
 			blocker->L.bottom = blocker->L.width = 0;
@@ -666,6 +686,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	if (This->BoxClass >= BC_GROUP && This->SetWidth) {
 		long gap = width;
+
 		if (This->SetWidth > 0) {
 			width = This->SetWidth;
 		} else if (This->SetWidth > -1024) {
@@ -819,6 +840,11 @@ void
 dombox_format (DOMBOX * This, long width)
 {
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
+
+	/* style display: none */
+	if (This->Hidden)
+			return;
+
 	This->_vtab->format (This, width, &blocker);
 	if (This->Rect.H < blocker.L.bottom - This->Rect.Y) {
 		 This->Rect.H = blocker.L.bottom - This->Rect.Y;
@@ -834,6 +860,11 @@ void
 dombox_stretch (DOMBOX * This, long height, V_ALIGN valign)
 {
 	long offset = height - This->Rect.H;
+
+	/* style display: none */
+	if (This->Hidden)
+			return;
+
 	if (offset > 0) {
 		This->Rect.H = height;
 		if (valign) {
