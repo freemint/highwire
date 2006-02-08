@@ -1,3 +1,10 @@
+Changes since v. 0.3.0 release
+
+- display: none support
+
+- @media parsing
+
+__________________________________________________
 Changes in V. 0.3.0 release  of February 07, 2006:
 
 - Several bugs with bad pointers from the 0.2.7
