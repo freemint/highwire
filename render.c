@@ -700,6 +700,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (get_value (parser, CSS_DISPLAY, out, sizeof(out))) {
 
 		if      (stricmp (out, "inline") == 0) box->Floating = FLT_LEFT;
+		else if (stricmp (out, "none") == 0) box->Hidden = TRUE;
 	}
 
 	box_border (parser, box, CSS_BORDER_TOP);
@@ -1448,10 +1449,19 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 		char out[100];
 		const char * line = *text;
 
-		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+/*		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     strstr (out, "all") || strstr (out, "screen"))) {
+
+This old version was failing on the 'mac slash' website.
+However It's possible that the next version will fail on some sites.
+It needs more testing. - Dan
+*/
+		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
+		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
+		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
+		     (strnicmp (out, "all", 3) == 0) || (strnicmp (out, "screen", 6) == 0))) {
 
 			if (!parser->ResumeSub) { /* initial call */
 				while (isspace (*line)) line++;
@@ -2984,6 +2994,7 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START) {
 		group_box (parser, TAG_DIV, ALN_LEFT);
+
 	} else {
 		DOMBOX * box = leave_box (&parser->Current, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
@@ -2995,7 +3006,7 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 			box->Floating = cld->Floating;
 		}
 	}
-	
+
 	return (flags|PF_SPACE);
 }
 
@@ -3687,7 +3698,7 @@ parse_html (void * arg, long invalidated)
 	ENCODER_W    encoder;
 	UWORD        flags;
 	BOOL         linetoolong;
-	
+
 	if (invalidated || !symbol) {
 		delete_parser (parser);
 		return FALSE;
@@ -3731,6 +3742,7 @@ parse_html (void * arg, long invalidated)
 				new_word (current, TRUE);
 			}
 			tag = parse_tag ((flags & PF_START ? parser : NULL), &symbol);
+
 			if (tag && render[tag]) {
 				flags = (render[tag])(parser, &symbol, flags);
 			}
