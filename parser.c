@@ -878,7 +878,20 @@ parse_css (PARSER parser, const char * p, char * takeover)
 		while (*p) {
 			WORD key = TAG_Unknown;
 			char cid = '\0';
-			
+
+			/* we may have a trailing } left over from media parsing. */
+			if (*p  == '}') {
+				p++; 
+
+				while (isspace (*(++p)));
+
+				if (p == NULL) {
+					break;
+				}
+
+				continue;
+			}
+
 			if (next(&p) == '/') { /*........................ comment */
 				const char * q = p;
 				if (*(++q) == '/') {        /* C++ style */
@@ -894,7 +907,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				done = (!*p && !style);
 				continue;
 			}
-			
+						
 			tok = p;
 			
 			if (*p == '@') { /*............................... special */
@@ -902,6 +915,52 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				if (strnicmp (q +1, "import", 6) == 0) {
 					if ((q = css_import (parser, q)) == NULL) {
 						return NULL;
+					}
+				} else if (strnicmp (q +1, "media", 5) == 0) {					
+					BOOL parse_media = FALSE; /* if we have a screen then parse css rules */
+					/*  http://www.w3.org/TR/REC-CSS2/media.html
+					 */
+					q = q+6;
+					while (isspace (*(++q)));
+					
+					/* could be rewritten a bit better +
+					 * probably needs some error checking
+					 */
+					while (*q != '{') {
+						if (strnicmp (q, "screen", 6) == 0) {
+							parse_media = TRUE;
+							q = q+6;
+						} else if (strnicmp(q,"all",3) == 0) {
+							parse_media = TRUE;
+							q = q+3;
+						}
+						++q;
+					}
+
+					/* get us past opening bracket */
+					q++;
+
+					/* this is designed to walk a complete
+					 * media type that we don't use, for example
+					 * media print
+					 */
+					if (!parse_media) {
+						int bracket_count = 1;
+
+						while(*q) {
+							if (*q == '{') {
+								bracket_count += 1;
+							} else if (*q == '}') {
+								bracket_count -= 1;
+								
+								if (bracket_count < 1) {
+									break;
+								}
+							} 
+							
+							q++;
+						}
+						while (isspace (*(++q)));
 					}
 				} else if (strnicmp (q +1, "font-face", 9) == 0) {
 					/* The same as setting the font family 
@@ -947,7 +1006,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				p = q;
 				continue;
 			}
-			
+					
 			if (*p == '*') { /*................................ joker */
 				if (*(++p) == '.') {
 					key = TAG_LastDefined; /* matches all */
@@ -966,7 +1025,6 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					err = TRUE;
 					break;
 				}
-			
 			} else if (isalpha (*p)) { /*........................ tag */
 				key = scan_tag (&p);
 			}
