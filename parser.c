@@ -548,7 +548,13 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 							link = link->Link;
 						}
 					} else if (link) {
-						box = (!*link->Css.Value ? box->Parent : NULL);
+						/* This next line was problematic as it was aborting some
+						 * valid cases before they could hit when '>' was used
+						 * It's possible we will need to make a special case
+						 * for it - Dan Feb 9, 2006
+						 */
+						/*box = (!*link->Css.Value ? box->Parent : NULL);*/
+						box = box->Parent;
 						continue;
 					}				
 				} else {
@@ -919,7 +925,15 @@ parse_css (PARSER parser, const char * p, char * takeover)
 							q += 3;
 						} else {
 							while (isalpha(*q)) q++;
-							if (!isspace(*q) && *q != '{') break;
+
+							/* we have to do the following or 
+							 *  @media print, all {..} (for example)
+							 * fails - Dan */
+
+							if (*q == ',') q++;
+							
+							if (!isspace(*q) && *q != '{')
+								 break;
 						}
 					}
 					if ((err = (*q != '{')) == TRUE)	break;
