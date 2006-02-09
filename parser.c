@@ -879,19 +879,6 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			WORD key = TAG_Unknown;
 			char cid = '\0';
 
-			/* we may have a trailing } left over from media parsing. */
-			if (*p  == '}') {
-				p++; 
-
-				while (isspace (*(++p)));
-
-				if (p == NULL) {
-					break;
-				}
-
-				continue;
-			}
-
 			if (next(&p) == '/') { /*........................ comment */
 				const char * q = p;
 				if (*(++q) == '/') {        /* C++ style */
@@ -916,38 +903,39 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					if ((q = css_import (parser, q)) == NULL) {
 						return NULL;
 					}
-				} else if (strnicmp (q +1, "media", 5) == 0) {					
-					BOOL parse_media = FALSE; /* if we have a screen then parse css rules */
+				
+				} else if (strnicmp (q +1, "media", 5) == 0) {
+					BOOL parse_media = FALSE; /* if we have a screen  *
+					                           * then parse css rules */
 					/*  http://www.w3.org/TR/REC-CSS2/media.html
 					 */
-					q = q+6;
-					while (isspace (*(++q)));
-					
-					/* could be rewritten a bit better +
-					 * probably needs some error checking
-					 */
-					while (*q != '{') {
+					q += 6;
+					while (next(&q) != '{') {
 						if (strnicmp (q, "screen", 6) == 0) {
 							parse_media = TRUE;
-							q = q+6;
-						} else if (strnicmp(q,"all",3) == 0) {
+							q += 6;
+						} else if (strnicmp (q, "all", 3) == 0) {
 							parse_media = TRUE;
-							q = q+3;
+							q += 3;
+						} else {
+							while (isalpha(*q)) q++;
+							if (!isspace(*q) && *q != '{') break;
 						}
-						++q;
 					}
+					if ((err = (*q != '{')) == TRUE)	break;
 
-					/* get us past opening bracket */
-					q++;
+					if (parse_media) {
+						/* get us past opening bracket */
+						q++;
 
-					/* this is designed to walk a complete
-					 * media type that we don't use, for example
-					 * media print
-					 */
-					if (!parse_media) {
+					} else {
+						/* this is designed to walk a complete
+						 * media type that we don't use, for example
+						 * media print
+						 */
 						int bracket_count = 1;
 
-						while(*q) {
+						while (*(++q)) {
 							if (*q == '{') {
 								bracket_count += 1;
 							} else if (*q == '}') {
@@ -957,44 +945,43 @@ parse_css (PARSER parser, const char * p, char * takeover)
 									break;
 								}
 							} 
-							
-							q++;
 						}
-						while (isspace (*(++q)));
 					}
+				
 				} else if (strnicmp (q +1, "font-face", 9) == 0) {
 					/* The same as setting the font family 
 					 * for the whole document
 					 * http://www.w3.org/TR/REC-CSS2/fonts.html#font-descriptions
 					 */
 					/* dan - just ignore them for the moment? */
-					q = q+10;
-					while (*q != '}') ++q;
-					q = q++;
+					if ((q = strchr (q +10, '}')) != NULL) {
+						q++;
+					}
 				} else if (strnicmp (q +1, "ie", 2) == 0) {
 					/*  Some stupid ie directive?		 */
 					/* dan - just ignore them for the moment? */
-					q = q+3;
-					while (*q != '}') ++q;
-					q = q++;
+					if ((q = strchr (q +3, '}')) != NULL) {
+						q++;
+					}
 				} else if (strnicmp (q +1, "page", 4) == 0) {
 					/* A way to define the size, margins etc 
 					 * for the whole document
 					 * http://www.w3.org/TR/REC-CSS2/page.html#page-box
 					 */
 					/* dan - just ignore them for the moment? */
-					q = q+5;
-					while (*q != '}') ++q;
-					q = q++;
+					if ((q = strchr (q +5, '}')) != NULL) {
+						q++;
+					}
 				} else if (strnicmp (q +1, "charset", 7) == 0) {
 					/* A way to define the charset of the
 					 * css style sheet
 					 * http://www.w3.org/TR/CSS21/syndata.html#x60
 					 */
 					/* dan - just ignore them for the moment? */
-					q = q+8;
-					while (*q != ';') ++q;
-					q = q++;
+					if ((q = strchr (q +8, '}')) != NULL) {
+						q++;
+					}
+				
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
@@ -1004,6 +991,13 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				}
 				if ((err = (q == NULL)) == TRUE) break;
 				p = q;
+				continue;
+			}
+
+			/* we may have a trailing } left over from media parsing. */
+			if (next(&p) == '}') {
+/*printf("media left: ''%.50s''\n", p);*/
+				p++; 
 				continue;
 			}
 					
