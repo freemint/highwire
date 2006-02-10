@@ -413,15 +413,15 @@ if (val && (css != CSS_Unknown)) {
 			ent->weight = 0;
 		} else {
 			printf("KeyValTab overflow\r\n");
-		}         
+		}
 	} else {
-/*		printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
-*/		;
+/*	printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
+*/
 	}
 
-} 
+}
 
-#if 0		
+#if 0
 		if (val && ((css < CSS_Unknown
 		             && (ent = find_key (parser, (HTMLKEY)css)) == NULL)
 		            || css != CSS_Unknown)
@@ -556,7 +556,7 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 						/*box = (!*link->Css.Value ? box->Parent : NULL);*/
 						box = box->Parent;
 						continue;
-					}				
+					}
 				} else {
 					link = link->Link;
 					box  = box->Parent;
@@ -667,7 +667,7 @@ parse_tag (PARSER parser, const char ** pptr)
 
 /* I dumped this once only to find that I need to test with it in place
  * again. Sorry about the mess - Dan
- */  
+ */
 			if 		(*val == 39)	line = strchr (++val, (delim = 39));
 			else if (*val == '"')	line = strchr (++val, (delim = '"'));
 			else					line = strpbrk (val, " >\t\r\n");
@@ -684,16 +684,16 @@ parse_tag (PARSER parser, const char ** pptr)
 					
 					while ((*line != *val)&&(*line != '<')) ++line;
 
-					if (*line == '<')	line = line2; 
+					if (*line == '<')	line = line2;
 				}
 
 				delim = *val;
 				val++;
 			} else {
-				while ((*line!=' ')&&(*line!='>')&&(*line!='\t')&&(*line!='\r')&&(*line!='\n')) ++line;			
+				while (*line && *line != '>' && !isspace(*line)) line++;
 			}
 
-			if (*line == '\0') delim = '\0';			
+			if (*line == '\0') delim = '\0';
 
 		} else {
 			val = NULL;
@@ -900,7 +900,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 				done = (!*p && !style);
 				continue;
 			}
-						
+			
 			tok = p;
 			
 			if (*p == '@') { /*............................... special */
@@ -926,8 +926,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 						} else {
 							while (isalpha(*q)) q++;
 
-							/* we have to do the following or 
-							 *  @media print, all {..} (for example)
+							/* we have to do the following or
+							 * @media print, all {..} (for example)
 							 * fails - Dan */
 
 							if (*q == ',') q++;
@@ -958,12 +958,12 @@ parse_css (PARSER parser, const char * p, char * takeover)
 								if (bracket_count < 1) {
 									break;
 								}
-							} 
+							}
 						}
 					}
 				
 				} else if (strnicmp (q +1, "font-face", 9) == 0) {
-					/* The same as setting the font family 
+					/* The same as setting the font family
 					 * for the whole document
 					 * http://www.w3.org/TR/REC-CSS2/fonts.html#font-descriptions
 					 */
@@ -978,7 +978,7 @@ parse_css (PARSER parser, const char * p, char * takeover)
 						q++;
 					}
 				} else if (strnicmp (q +1, "page", 4) == 0) {
-					/* A way to define the size, margins etc 
+					/* A way to define the size, margins etc
 					 * for the whole document
 					 * http://www.w3.org/TR/REC-CSS2/page.html#page-box
 					 */
@@ -1011,10 +1011,10 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			/* we may have a trailing } left over from media parsing. */
 			if (next(&p) == '}') {
 /*printf("media left: ''%.50s''\n", p);*/
-				p++; 
+				p++;
 				continue;
 			}
-					
+			
 			if (*p == '*') { /*................................ joker */
 				if (*(++p) == '.') {
 					key = TAG_LastDefined; /* matches all */
