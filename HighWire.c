@@ -25,6 +25,11 @@
 #endif
 #include "ovl_sys.h"
 
+#ifdef LATTICE
+	/* set stack size for LATTICE here */
+	unsigned long _STACK = 16384uL;
+#endif
+
 
 extern char *gslongname;
 extern char *gsanswer;
