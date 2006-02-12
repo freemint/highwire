@@ -553,8 +553,8 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 						 * It's possible we will need to make a special case
 						 * for it - Dan Feb 9, 2006
 						 */
-						/*box = (!*link->Css.Value ? box->Parent : NULL);*/
-						box = box->Parent;
+						box = (!*link->Css.Value ? box->Parent : NULL);
+						/*box = box->Parent;*/
 						continue;
 					}
 				} else {
