@@ -56,7 +56,7 @@ HTMLTAG parse_tag (PARSER, const char ** pptr);
 				 * The PARSER argument may be NULL if no KEY storage is needed.
 				*/
 
-const char * parse_css (PARSER, const char * ptr, char * takeover);
+const char * parse_css (PARSER, LOCATION, const char * ptr, char * takeover);
 				/* Parses a whole <style> area from 'ptr' and stores recognized
 				 * style set internallly in the parser structure.  Following
 				 * get_value..() calls will be served from these sets automatically.

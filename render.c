@@ -1478,11 +1478,11 @@ It needs more testing. - Dan
 					if (p) line = p;
 				
 				} else if (*line != '<') {
-					line = parse_css (parser, line, NULL);
+					line = parse_css (parser, NULL, line, NULL);
 				}
 			} else {
 				line = (parser->ResumeErr ? NULL : parser->ResumeSub);
-				line = parse_css (parser, line, NULL);
+				line = parse_css (parser, NULL, line, NULL);
 			}
 			
 			if (!line) {
@@ -1558,7 +1558,6 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 						}
 					}
 					if (file) {
-						free_location (&loc);
 						if (size <= 0) {
 							free (file);
 						} else {
@@ -1571,7 +1570,8 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 					call = TRUE;
 				}
 				
-				if ((call && !parse_css (parser, line, file)) || rsum) {
+				if ((call && !parse_css (parser, loc, line, file)) || rsum) {
+					if (file) free_location (&loc);
 					parser_resume (parser, render_LINK_tag, *text, loc);
 					jump = TRUE;
 				}

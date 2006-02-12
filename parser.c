@@ -40,7 +40,10 @@ WORD weight;
 typedef struct s_style * STYLE;
 
 typedef struct s_parser_priv {
-	const char * Stack[5];
+	struct s_stack {
+		const char * Ptr;
+		LOCATION     Base;
+		}     Stack[5];
 	struct s_own_mem {
 		struct s_own_mem * Next;
 		char             * Mem;
@@ -748,7 +751,7 @@ parse_tag (PARSER parser, const char ** pptr)
 
 /*----------------------------------------------------------------------------*/
 static const char *
-css_import (PARSER parser, const char * ptr)
+css_import (PARSER parser, const char * ptr, LOCATION base)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
 	LOCATION     loc = NULL;
@@ -770,11 +773,11 @@ css_import (PARSER parser, const char * ptr)
 	} else {
 		const char * e = (*p == '"'  ? strchr (++p, '"')  :
 		                  *p == '\'' ? strchr (++p, '\'') : strchr (p, ')'));
-		if (e && e > p && !prsdata->Stack[numberof(prsdata->Stack)-1]) {
+		if (e && e > p && !prsdata->Stack[numberof(prsdata->Stack)-1].Ptr) {
 			char   buf[1024];
 			size_t len = min (e - p, sizeof(buf) -1);
 			((char*)memcpy (buf, p, len))[len] = '\0';
-			loc = new_location (buf, parser->Frame->BaseHref);
+			loc = new_location (buf, (base ? base : parser->Frame->BaseHref));
 		}
 		p = (e ? strchr (++e, ';') : e);
 		p = (p ? ++p : e ? e : strchr (ptr, '\0'));
@@ -800,7 +803,7 @@ css_import (PARSER parser, const char * ptr)
 				parser_resume (parser, NULL, ptr, (res & CR_BUSY ? NULL : loc));
 				ptr  = NULL;
 			}
-			push = (prsdata->Stack[0] != p);
+			push = (prsdata->Stack[0].Ptr != p);
 		}
 		if (file) {
 			struct s_own_mem * own = NULL;
@@ -825,7 +828,8 @@ css_import (PARSER parser, const char * ptr)
 			do {
 				prsdata->Stack[i] = prsdata->Stack[i -1];
 			} while (--i);
-			prsdata->Stack[0] = p;
+			prsdata->Stack[0].Ptr  = p;
+			prsdata->Stack[0].Base = location_share (base);
 		}
 		free_location (&loc);
 	}
@@ -839,7 +843,7 @@ static char next (const char ** pp) {
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - -*/
 const char *
-parse_css (PARSER parser, const char * p, char * takeover)
+parse_css (PARSER parser, LOCATION loc, const char * p, char * takeover)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
 	STYLE  * p_style = &prsdata->Styles;
@@ -856,18 +860,26 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			own->Next = prsdata->OwnMem.Next;
 			prsdata->OwnMem.Next = own;
 		}
-		p = prsdata->OwnMem.Mem = takeover;
+		p   = prsdata->OwnMem.Mem = takeover;
+		loc = location_share (loc ? loc : prsdata->Stack[0].Base);
 	
-	} else if (!p) { /* error case, continue with next in stack */
+	} else if (p) {
+		loc = location_share (loc ? loc : prsdata->Stack[0].Base);
+	
+	} else { /* if (!p)  error case, continue with next in stack */
 		short i;
-		if ((p = prsdata->Stack[0]) == NULL) {
+		p   = prsdata->Stack[0].Ptr;
+		loc = prsdata->Stack[0].Base;
+		if (!p) {
 			puts ("CSS stack underflow!");
 			return parser->ResumePtr;
 		}
+		
 		for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
 			prsdata->Stack[i] = prsdata->Stack[i +1];
 		}
-		prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
+		prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
+		prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
 	}
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
@@ -906,7 +918,8 @@ parse_css (PARSER parser, const char * p, char * takeover)
 			if (*p == '@') { /*............................... special */
 				const char * q = p;
 				if (strnicmp (q +1, "import", 6) == 0) {
-					if ((q = css_import (parser, q)) == NULL) {
+					if ((q = css_import (parser, q, loc)) == NULL) {
+						free_location (&loc);
 						return NULL;
 					}
 				
@@ -1207,17 +1220,22 @@ parse_css (PARSER parser, const char * p, char * takeover)
 					printf("parse_css(): stopped at\n%.*s\n", n, p);
 				}
 			}
-			if (prsdata->Stack[0]) {
+			if (prsdata->Stack[0].Ptr) {
 				short i;
+				free_location (&loc);
 				err = FALSE;
-				p   = prsdata->Stack[0];
+				p   = prsdata->Stack[0].Ptr;
+				loc = prsdata->Stack[0].Base;
 				for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
 					prsdata->Stack[i] = prsdata->Stack[i +1];
 				}
-				prsdata->Stack[numberof(prsdata->Stack)-1] = NULL;
+				prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
+				prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
 			}
 		}
 	} while (*p && !err);
 
+	free_location (&loc);
+	
 	return p;
 }
