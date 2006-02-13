@@ -717,22 +717,82 @@ parse_tag (PARSER parser, const char ** pptr)
 					entry = css_values (parser, val, len,1000);
 				}
 			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
-				entry->Key = key;
+				int temp_count = 1;
+				unsigned tlen = 0, tlen1 = 0;
 
-				if (val && len) {
-					entry->Value = val;
-					entry->Len   = len;
-				} else {
-					entry->Value = NULL;
-					entry->Len   = 0;
+				/* 1st Count classes in val */
+				/* This could probably all be rewritten */
+				
+				if ((val && len) && (key == KEY_CLASS)) {
+					while(tlen < len) {
+						if (isspace(val[tlen])) {
+							temp_count++;
+						}
+						tlen++;
+					}
 				}
-				entry++;
-				prsdata->KeyNum++;
-				if (val && len && prsdata->Styles) {
-					if (key == KEY_CLASS) {
+				
+				/* we have multiple CLASS */
+				if (temp_count > 1) {
+					const char  * tempval = val;
+					tlen1 = 0;
+
+					/* first send the whole thing */
+					entry->Key = key;
+
+						entry->Value = val;
+						entry->Len   = len;
+
+					entry++;
+					prsdata->KeyNum++;
+					if (val && len && prsdata->Styles) {
 						entry = css_filter (parser, tag, '.', entry -1);
-					} else if (key == KEY_ID) {
-						entry = css_filter (parser, tag, '#', entry -1);
+					}
+
+					/* now send it in parts - multiple classes
+					 * a pain and still not done 100% */
+					while (temp_count > 0) {
+						while((!isspace(tempval[tlen1])) && (tlen1 < tlen)) {
+							tlen1++;
+						}
+						entry->Key = key;
+
+						entry->Value = tempval;
+						entry->Len   = tlen1;
+					
+						entry++;
+						prsdata->KeyNum++;
+
+						/* only handling classes at the moment */
+						if (val && len && prsdata->Styles) {
+							entry = css_filter (parser, tag, '.', entry -1);
+						}
+						
+						tempval += tlen1;
+						tempval += 1; /* space */
+						tlen = tlen - tlen1;
+						tlen -= 1; /* space */
+						tlen1 = 0;
+						temp_count -= 1;
+					}
+				} else {
+					entry->Key = key;
+
+					if (val && len) {
+						entry->Value = val;
+						entry->Len   = len;
+					} else {
+						entry->Value = NULL;
+						entry->Len   = 0;
+					}
+					entry++;
+					prsdata->KeyNum++;
+					if (val && len && prsdata->Styles) {
+						if (key == KEY_CLASS) {
+							entry = css_filter (parser, tag, '.', entry -1);
+						} else if (key == KEY_ID) {
+							entry = css_filter (parser, tag, '#', entry -1);
+						}
 					}
 				}
 			}
