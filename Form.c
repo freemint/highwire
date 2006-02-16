@@ -19,7 +19,7 @@ typedef struct s_input * INPUT;
 #include "Location.h"
 #include "parser.h"
 #include "Form.h"
-
+#include "hwWind.h"
 
 typedef struct s_select   * SELECT;
 typedef struct s_slctitem * SLCTITEM;
@@ -61,7 +61,7 @@ struct s_input {
 	FORM     Form;
 	char   * Value;
 	INP_TYPE Type;
-	char     SubType;  /* [S]ubmit, [R]eset, \0 */
+	char     SubType;  /* [S]ubmit, [R]eset, [F]ile, \0 */
 	BOOL     checked;
 	BOOL     disabled;
 	BOOL     readonly;
@@ -298,7 +298,7 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 	} else {
 		input->SubType = sub_type;
 		input->Value   = strdup (value);
-		
+
 		font_byType (-1, -1, -1, word);
 		scan_string_to_16bit (value, encoding, &current->text,
 		                      word->font->Base->Mapping);
@@ -367,7 +367,7 @@ new_input (PARSER parser)
 	
 	if (!get_value (parser, KEY_TYPE, output, sizeof(output))
 	    || stricmp (output, val = "TEXT")     == 0
-	    || stricmp (output, val = "FILE")     == 0
+	    || stricmp (output, val = "FILE")     == 0 
 	    || stricmp (output, val = "PASSWORD") == 0) {
 		UWORD  mlen = get_value_unum (parser, KEY_MAXLENGTH, 0);
 		UWORD  cols = get_value_unum (parser, KEY_SIZE, 0);
@@ -377,11 +377,19 @@ new_input (PARSER parser)
 			if (mlen > 500)  mlen = 500;
 			if (cols > mlen) cols = mlen;
 		}
+		
 		input = form_text (current, name, get_value_str (parser, KEY_VALUE),
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   get_value_exists (parser, KEY_READONLY),
 		                   (toupper (*output) == 'P'));
-		
+
+		/* Add the browse button */
+		if (stricmp (output, val = "FILE") == 0) {
+			FORM curform = current->form;
+			
+			input = form_buttn (current, name, "...", frame->Encoding, 'F');
+curform->Method = METH_PUT;
+		}
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
 		input->Value = get_value_str (parser, KEY_VALUE);
@@ -400,6 +408,7 @@ new_input (PARSER parser)
 	           stricmp (output, val = "Button") == 0 ||
 	           stricmp (output, val = "Image")  == 0) {
 		char sub_type = (*val == 'B' ? '\0' : *val);
+
 		if (sub_type == 'I') {
 			if (get_value (parser, KEY_SRC, output, sizeof(output))) {
 				val = output;
@@ -987,11 +996,13 @@ form_activate (FORM form)
 				realm = NULL;
 			}
 		}
+
 		if (realm && elem && !elem->Next
 		          && elem->Type == IT_BUTTN && elem->SubType == 'S') {
 			ldr->AuthRealm = strdup (realm);
 			ldr->AuthBasic = base64enc (buf, strlen(buf));
 		}
+
 		return;
 	}
 	
@@ -1013,7 +1024,7 @@ form_activate (FORM form)
 			}
 		} while ((elem = elem->Next) != NULL);
 	}
-	
+
 	if (form->Method == METH_POST) {
 		len  = 0;
 		url  = form->Action;
@@ -1080,7 +1091,11 @@ form_activate (FORM form)
 		len = size;
 	}
 	data[len] = '\0';
-	if (form->Method != METH_POST) {
+	
+	if (form->Method == METH_PUT) {
+		/* Here we would link the routine for uploading the file */
+		;
+	}else if (form->Method != METH_POST) {
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
@@ -1097,6 +1112,87 @@ form_activate (FORM form)
 	}
 }
 
+/*============================================================================*/
+/* A routine that could be broken into a wrapper for 2 or 3 small util routines */
+static void
+input_file_handler (INPUT input) {
+	char fsel_file[HW_PATH_MAX] = "";
+	WORD r, butt;  /* file selector exit button */
+
+	FORM form = input->Form;
+	INPUT input2 = (form ? form->InputList : NULL);
+	FRAME frame = form->Frame;
+	HwWIND wind = hwWind_byContainr(frame->Container);
+
+	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
+	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
+		r = fsel_exinput (fsel_path, fsel_file, &butt,
+		                  "HighWire: Select File to Send");
+	} else {
+		r = fsel_input(fsel_path, fsel_file, &butt);
+	}
+	if (r && butt != FSEL_CANCEL) {
+		char * slash = strrchr (fsel_path, '\\');
+		if (slash) {
+			char   file[HW_PATH_MAX];
+			size_t len = slash - fsel_path +1;
+			memcpy (file, fsel_path, len);
+			strcpy (file + len, fsel_file);
+
+			/* we need to match the button name to
+			 * a text input name and fill it out
+			 */
+
+			while (input2) {
+				if (input2->Type == IT_TEXT) {
+					if (strcmp (input2->Name, input->Name) == 0) {
+						WORD     key;
+						GRECT    clip;
+						INPUT	next;
+						size_t len = strlen(file);
+						char *p = file;
+						WORDITEM word = NULL;
+						long  x, y;
+		
+						form->TextActive = input2;
+
+						while (len-- > 0) {
+							if ((key = *(p++)) == '\n') key = '\r';
+							else if (key < ' ')         key = '\0';
+
+							if (key) {
+								WORDITEM w = input_keybrd (input2, key, 0, &clip, &next);
+
+								if (w) word = w;
+								else   break;
+							}
+						}
+
+						if (word) {
+							clip.g_x = 0;
+							clip.g_w = word->word_width;
+							clip.g_y = -word->word_height;
+							clip.g_h = word->word_height + word->word_tail_drop;
+
+							dombox_Offset (&word->line->Paragraph->Box, &x, &y);
+							x += (long)clip.g_x + word->h_offset
+							     + frame->clip.g_x - frame->h_bar.scroll;
+							y += (long)clip.g_y + word->line->OffsetY
+							     + frame->clip.g_y - frame->v_bar.scroll;
+			
+							clip.g_x = x;
+							clip.g_y = y;
+							hwWind_redraw (wind, &clip);
+						}
+					
+						break;					
+					}
+				}
+				input2 = input2->Next;
+			}
+		} 
+	}
+}
 
 /*============================================================================*/
 WORDITEM
@@ -1132,7 +1228,11 @@ input_activate (INPUT input, WORD slct)
 	if (input->Type != IT_BUTTN) {
 		return NULL;
 	}
-	
+
+	if (input->SubType == 'F') {
+		input_file_handler (input);
+	}
+
 	if (input->SubType == 'S' && form->Action) {
 		form_activate (form);
 	}
