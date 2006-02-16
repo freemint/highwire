@@ -55,7 +55,8 @@ typedef enum {
 typedef enum {
 	METH_GET = 0,
 	METH_POST,
-	METH_AUTH /* internal used for HTTP autentication */
+	METH_AUTH, /* internal used for HTTP autentication */
+	METH_PUT	/* internal used for input="file" forms */
 } FORM_METHOD;
 
 typedef enum {  /* HTML:          CSS:          */
