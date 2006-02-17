@@ -1094,7 +1094,8 @@ form_activate (FORM form)
 	
 	if (form->Method == METH_PUT) {
 		/* Here we would link the routine for uploading the file */
-		;
+		ldr = start_page_load (frame->Container, url,loc, TRUE, data);
+		if (!ldr) free (data);
 	}else if (form->Method != METH_POST) {
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
