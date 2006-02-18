@@ -1242,7 +1242,7 @@ init_paths(void)
 		strcat(temp_location,"\\");
 	}
 	strcpy(fsel_path, temp_location);  /* used by the first file selector call */
-	strcat(fsel_path, "html\\*.HTM*");  /* uppercase is for the TOS file selector */
+	strcat(fsel_path, "html\\*.[HJPT]*");  /* uppercase is for the TOS file selector */
 
 	strcpy(help_file, temp_location);  /* used for keyboard F1 or Help */
 	strcat(help_file, "html\\help\\index.htm");
