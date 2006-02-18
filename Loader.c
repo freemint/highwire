@@ -1098,7 +1098,7 @@ find_application (const char * name)
 
 	if (name == NULL && ((name = getenv ("AVSERVER")) == NULL || !*name)) {
 		static const char * list[] = {
-			"AVServer", "Jinnee", "Thing", "MagxDesk", "GEMINI",
+			"AVServer", "Jinnee", "Thing", "DESKTOP ", "MagxDesk", "GEMINI",
 			"StrngSrv", "DIRECT", "EASY",  "KAOS",
 			NULL };
 		const char ** desktop = list;

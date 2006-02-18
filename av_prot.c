@@ -32,6 +32,8 @@ static short get_avserver(void)
 	}
 	else if ((ret = appl_find("AVSERVER")) >= 0)
 		return ret;
+	else if ((ret = appl_find("DESKTOP "))  >= 0)
+		return ret;
 	else if ((ret = appl_find("JINNEE  ")) >= 0)
 		return ret;
 	else if ((ret = appl_find("THING   ")) >= 0)
