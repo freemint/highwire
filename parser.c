@@ -178,19 +178,19 @@ static int
 resume_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
-	PARSER parser = loader->FreeArg;
-	if (loader->Error) {
-		char buf[1024];
-		location_FullName (loader->Location, buf, sizeof(buf));
-		printf ("not found: '%s'\n", buf);
-		if (!invalidated) {
+	if (!invalidated) {
+		PARSER parser = loader->FreeArg;
+		if (loader->Error) {
+			char buf[1024];
+			location_FullName (loader->Location, buf, sizeof(buf));
+			printf ("not found: '%s'\n", buf);
 			if (!parser->ResumeSub) {
 				parser->ResumeFnc = NULL;
 			}
 			parser->ResumeErr = loader->Error;
+		} else {
+			parser->ResumeErr = E_OK;
 		}
-	} else {
-		parser->ResumeErr = E_OK;
 	}
 	delete_loader (&loader);
 	return FALSE;
@@ -211,15 +211,16 @@ parser_resume (PARSER parser, void * func, const char * ptr_sub, LOCATION loc)
 		parser->ResumePtr = NULL;
 		parser->ResumeSub = ptr_sub;
 	}
-	if (!loc || !ptr_sub) {
+	if (!ptr_sub) {
 		parser->ResumeErr = E_OK;
-	} else if (parser->ResumeErr == 2/*EBUSY*/) {
-		puts ("parser_resume(): busy");
-	} else {
-		start_objc_load (parser->Target, NULL, loc, resume_job, parser);
-		parser->ResumeErr = 2/*EBUSY*/;
+	} else if (loc) {
+		if (parser->ResumeErr == 2/*EBUSY*/) {
+			puts ("parser_resume(): busy");
+		} else {
+			start_objc_load (parser->Target, NULL, loc, resume_job, parser);
+			parser->ResumeErr = 2/*EBUSY*/;
+		}
 	}
-	
 	return -2; /*JOB_NOOP */
 }
 
