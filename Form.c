@@ -1149,12 +1149,12 @@ input_file_handler (INPUT input) {
 					if (strcmp (input2->Name, input->Name) == 0) {
 						WORD     key;
 						GRECT    clip;
-						INPUT	next;
-						size_t len = strlen(file);
-						char *p = file;
+						INPUT	   next;
 						WORDITEM word = NULL;
 						long  x, y;
-		
+						char *p = file;
+						len = strlen(file);
+						
 						form->TextActive = input2;
 
 						while (len-- > 0) {
