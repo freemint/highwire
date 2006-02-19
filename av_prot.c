@@ -22,15 +22,23 @@ static short get_avserver(void)
 {
 	short ret;
 	const char *av_env;
+	char av_envname[9];
+
 
 	if ((av_env = getenv("AVSERVER")) != NULL)
 	{
-		ret = appl_find(av_env);
+	strncpy(av_envname,av_env, 8);
+	av_envname[8] = '\0';
+	while (strlen(av_envname) < 8)
+		strcat(av_envname, " ");
+        
+		ret = appl_find(av_envname);
+
 
 		if (ret >= 0)
 			return ret;
 	}
-	else if ((ret = appl_find("AVSERVER")) >= 0)
+/*	else if ((ret = appl_find("AVSERVER")) >= 0)
 		return ret;
 	else if ((ret = appl_find("DESKTOP "))  >= 0)
 		return ret;
@@ -52,7 +60,7 @@ static short get_avserver(void)
 		return ret;
 	else if ((ret = appl_find("CAT     ")) >= 0)
 		return ret;
-
+*/
 	return -100;
 }
 
