@@ -263,7 +263,9 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		while (*p) {
 			long color = -1;
 			
-			if (isdigit (*p)) {
+			/*if (isdigit (*p)) {*/
+
+			if ((isdigit (*p))||(*p == '.')) {
 				char * tail = p;
 			short size = numerical (p, &tail, font_size,
 									(font_size/2));
@@ -633,26 +635,26 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			}
 
 			if (width >= 0) {
-					switch(key) {
-						case CSS_BORDER_TOP:
-							box->BorderWidth.Top = width;
-							break;
-						case CSS_BORDER_BOTTOM:
-							box->BorderWidth.Bot = width;
-							break;
-						case CSS_BORDER_LEFT:
-							box->BorderWidth.Lft = width;
-							break;
-						case CSS_BORDER_RIGHT:
-							box->BorderWidth.Rgt = width;
-							break;
-						case CSS_BORDER:
-							box->BorderWidth.Top = box->BorderWidth.Bot = 
-							  box->BorderWidth.Lft = box->BorderWidth.Rgt = width;
-							break;
-						default:
-							break;
-					}
+				switch(key) {
+					case CSS_BORDER_TOP:
+						box->BorderWidth.Top = width;
+						break;
+					case CSS_BORDER_BOTTOM:
+						box->BorderWidth.Bot = width;
+						break;
+					case CSS_BORDER_LEFT:
+						box->BorderWidth.Lft = width;
+						break;
+					case CSS_BORDER_RIGHT:
+						box->BorderWidth.Rgt = width;
+						break;
+					case CSS_BORDER:
+						box->BorderWidth.Top = box->BorderWidth.Bot = 
+						  box->BorderWidth.Lft = box->BorderWidth.Rgt = width;
+						break;
+					default:
+						break;
+				}
 			}
 
 			if (color >= 0 && !ignore_colours) {
@@ -764,39 +766,61 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	}
 	
 	/* devl stuff, activate in cfg: DEVL_FLAGS = CssPosition */
-	if (box->HtmlCode == TAG_DIV) {
+/*	if (box->HtmlCode == TAG_DIV) {*/
+	if (TRUE) {
 		static BOOL __once = FALSE, _CssPosition = FALSE;
 		if (!__once) {
 			_CssPosition = (devl_flag ("CssPosition") != NULL);
 		}
-	if (_CssPosition &&   get_value (parser, CSS_POSITION, out, sizeof(out))) {
-		UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
-					  stricmp (out, "fixed") == 0 ? 0x103:
-		              stricmp (out, "relative") == 0 ? 0x003 : 0);
+	
+		if (_CssPosition && get_value (parser, CSS_POSITION, out, sizeof(out))) {
+			UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
+						  stricmp (out, "fixed") == 0 ? 0x203:
+			              stricmp (out, "relative") == 0 ? 0x003 : 0);
 
-		if (mask) {
-			if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
-				short lft = numerical (out, NULL, parser->Current.font->Size,
+			if (mask) {
+				if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
+					short lft = numerical (out, NULL, parser->Current.font->Size,
 			                          parser->Current.word->font->SpaceWidth);
-				if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.p_x = lft;
-				else                               mask           &= ~0x001;
-			}
-			if (get_value (parser, CSS_TOP, out, sizeof(out))) {
-				short top = numerical (out, NULL, parser->Current.font->Size,
+
+					if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.Lft = lft;
+					else                               mask           &= ~0x001;
+				} /* end left */
+
+				if (get_value (parser, CSS_RIGHT, out, sizeof(out))) {
+					short rgt = numerical (out, NULL, parser->Current.font->Size,
 			                          parser->Current.word->font->SpaceWidth);
-				if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.p_y = top;
-				else                               mask           &= ~0x002;
-			}
-			if (mask & 0x003) {
-				DOMBOX * parent = box->Parent;
-				box->SetPosMsk  = mask;
-				while (parent) {
-					parent->SetPosCld |= mask;
-					parent = parent->Parent;
-				}
-			}
+
+					if (rgt >= (mask & 0x100 ? 0 : 1)) box->SetPos.Rgt = rgt;
+					else                               mask           &= ~0x001;
+				} /* end right */
+
+				if (get_value (parser, CSS_TOP, out, sizeof(out))) {
+					short top = numerical (out, NULL, parser->Current.font->Size,
+			                          parser->Current.word->font->SpaceWidth);
+
+					if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.Top = top;
+					else                               mask           &= ~0x002;
+				} /* end top */
+
+				if (get_value (parser, CSS_BOTTOM, out, sizeof(out))) {
+					short bot = numerical (out, NULL, parser->Current.font->Size,
+			                          parser->Current.word->font->SpaceWidth);
+
+					if (bot >= (mask & 0x100 ? 0 : 1)) box->SetPos.Bot = bot;
+					else                               mask           &= ~0x002;
+				} /* end bottom */
+
+				if (mask & 0x003) {
+					DOMBOX * parent = box->Parent;
+					box->SetPosMsk  = mask;
+					while (parent) {
+						parent->SetPosCld |= mask;
+						parent = parent->Parent;
+					}
+				} /* end if mask & 0x003 */
+			} /* end mask */
 		}
-	}
 	} /* devl stuff */
 	
 	if (get_value (parser, CSS_FLOAT, out, sizeof(out))) {
@@ -1108,7 +1132,7 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 			parser->Frame->Language
 			                = ((UWORD)toupper(output[0]) <<8) | toupper(output[1]);
 		}
-	
+
 	} else if (!strstr (*text, "</html>") && !strstr (*text, "</HTML>")) {
 		*text = strchr (*text, '\0');
 	}
@@ -1457,6 +1481,8 @@ render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 This old version was failing on the 'mac slash' website.
 However It's possible that the next version will fail on some sites.
 It needs more testing. - Dan
+
+the same problem could occur in render_link_tag() below
 */
 		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
@@ -1541,10 +1567,12 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 				BOOL         call = FALSE;
 				BOOL         rsum = FALSE;
 				BOOL         jump = FALSE;
-				
+
 				if (!parser->ResumeSub) { /* initial call */
 					size_t size = 0;
+					
 					loc = new_location (out, parser->Frame->BaseHref);
+
 					if (PROTO_isLocal (loc->Proto)) {
 						file = load_file (loc, &size, &size);
 					} else {
@@ -1553,6 +1581,7 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 						if (res & CR_LOCAL) {
 							file = load_file (info.Local, &size, &size);
 						} else {
+	
 							rsum = !(res & CR_BUSY);
 							jump = TRUE;
 						}
@@ -1946,9 +1975,11 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
 	if (flags & PF_START) {
+		css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
 		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
