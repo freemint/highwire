@@ -593,7 +593,7 @@ cache_assign (LOCATION src, void * data, size_t size,
 				write (fh, data, size);
 				close (fh);
 				__cache_fid++;
-				citem->Object  = location_share (loc);
+				citem->Object  = loc;
 				citem->Size    = size;
 				citem->Date    = date;
 				citem->Expires = expires;
