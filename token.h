@@ -224,6 +224,7 @@
 		__CSS_ITEM (BORDER_TOP,       0),
 		/*          BORDER_STYLE      */
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
+		__CSS_ITEM (BOTTOM,           0), /* for position */
 		__CSS_ITEM (CLEAR,            0),
 		__CSS_ITEM (COLOR,            KEY_COLOR),
 		__CSS_ITEM (DISPLAY,          0),
@@ -255,6 +256,7 @@
 		__CSS_ITEM (PADDING_RIGHT,    0),
 		__CSS_ITEM (PADDING_TOP,      0),
 		__CSS_ITEM (POSITION,         0),
+		__CSS_ITEM (RIGHT,            0), /* for position */
 		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (TEXT_INDENT,      0),
