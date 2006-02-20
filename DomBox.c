@@ -54,6 +54,11 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	This->BoxClass = class;
 	This->Backgnd  = -1;
 	This->Floating = ALN_NO_FLT;
+
+This->SetPos.Lft = -2000;
+This->SetPos.Rgt = -2000;
+This->SetPos.Top = -2000;
+This->SetPos.Bot = -2000;
 	
 	return This;
 }
@@ -719,15 +724,67 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	while (box) {
 		long set_width = width;
 		BOOL floating  = (box->Floating != ALN_NO_FLT);
-		BOOL absolute  = (box->SetPosMsk > 0x100); /* dan = */
+		BOOL absolute  = (box->SetPosMsk > 0x100);
+		BOOL fixed 	   = (box->SetPosMsk > 0x200);
+		
+		if (fixed) absolute = FALSE;
 		
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
 		
 		if (absolute) {
-			if (box->SetPosMsk & 0x01) box->Rect.X = box->SetPos.p_x;
-			if (box->SetPosMsk & 0x02) box->Rect.Y = box->SetPos.p_y;
+			/*	if (box->SetPosMsk & 0x01)*/
+			if(box->SetPos.Lft > -2000) {
+				box->Rect.X = box->SetPos.Lft;
+			}	
+
+			if(box->SetPos.Rgt > -2000) {
+				if (box->Parent) {
+					box->Rect.X = box->Parent->Rect.W - box->SetPos.Rgt - box->Rect.W;
+				} else {
+					box->Rect.X = box->SetPos.Rgt;
+				}	
+			}
+			
+			/*	if (box->SetPosMsk & 0x02)*/
+			if (box->SetPos.Top > -2000 ) {
+				box->Rect.Y = box->SetPos.Top;
+			}
+
+			if (box->SetPos.Bot > -2000 ) {
+				if (box->Parent) {
+					box->Rect.Y = box->Parent->Rect.H - box->SetPos.Bot;
+				} else {
+					box->Rect.Y = box->SetPos.Bot;
+				}
+			}
 			floating = FALSE;
+		} else if (fixed) {
+			/* These need to be offset on the viewport
+			 * or in laymans terms the window borders
+			 * At the moment they are not
+			 *
+			 * We need a way to find the window that we are working
+			 * in and at the moment I haven't found any easy way of
+			 * doing that.
+			 */
+
+			if(box->SetPos.Lft > -2000) {
+				box->Rect.X = box->SetPos.Lft;
+			}	
+
+			if(box->SetPos.Rgt > -2000) {
+				box->Rect.X = box->SetPos.Rgt;
+			}
+			
+			if (box->SetPos.Top > -2000 ) {
+				box->Rect.Y = box->SetPos.Top;
+			}
+
+			if (box->SetPos.Bot > -2000 ) {
+				box->Rect.Y = box->SetPos.Bot;
+			}
+			floating = FALSE;		
 		} else if (box->ClearFlt) {
 			L_BRK clear = box->ClearFlt & ~BRK_LN;
 			if (blocker->L.bottom && (clear & BRK_LEFT)) {
@@ -743,6 +800,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				blocker->R.bottom = blocker->R.width = 0;
 			}
 			box->Rect.Y = height;
+		} else {
+			/* catch relative positions */
+			/* only left at the moment */
+			if(box->SetPos.Lft > -2000) {
+				box->Rect.X += box->SetPos.Lft;
+			}	
+
 		}
 		
 		if (floating) {
