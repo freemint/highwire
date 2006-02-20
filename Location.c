@@ -52,6 +52,59 @@ static void * dir_entry (const char ** name, DIR_ENT, BOOL local);
 static long path_check (DIR_ENT);
 
 
+#if 0 /*** Debug stuff ********************************************************/
+#define _DEBUG_LOCATION 1
+struct s_dbg_item {
+	struct s_dbg_item * Next;
+	LOCATION            Loc;
+};
+static struct s_dbg_item * __dbg_list = NULL;
+static struct s_dbg_item * __dbg_free = NULL;
+static BOOL                __dbg_exit = FALSE;
+
+/*----------------------------------------------------------------------------*/
+static void
+dbg_exit (void)
+{
+	__dbg_exit = TRUE;
+	if (__dbg_list) {
+		puts ("LOCATION_summary:_______________________________________________");
+		do {
+			struct s_dbg_item * next = __dbg_list->Next;
+ 			char buff[1024];
+			location_FullName (__dbg_list->Loc, buff, sizeof(buff));
+			printf("% 3i: %s\n", __dbg_list->Loc->__reffs, buff);
+			__dbg_list->Loc->__reffs = 0;
+			free_location (&__dbg_list->Loc);
+			free (__dbg_list);
+			__dbg_list = next;
+		} while (__dbg_list);
+	}
+	while (__dbg_free) {
+		struct s_dbg_item * next = __dbg_free->Next;
+#if (_DEBUG_LOCATION >= 1)
+		__dbg_free->Loc->__reffs = 0;
+		free_location (&__dbg_free->Loc);
+#endif
+		free (__dbg_free);
+		__dbg_free = next;
+	}
+	__dbg_exit = FALSE;
+}
+
+/*----------------------------------------------------------------------------*/
+static struct s_dbg_item **
+dbg_find (struct s_dbg_item ** plist, LOCATION loc)
+{
+	while (*plist && (*plist)->Loc != loc) {
+		plist = &(*plist)->Next;
+	}
+	return plist;
+}
+
+#endif /***********************************************************************/
+
+
 /*----------------------------------------------------------------------------*/
 static LOCATION
 _alloc (DIR_ENT dir, const char * file)
@@ -59,6 +112,23 @@ _alloc (DIR_ENT dir, const char * file)
 	size_t   size = (file && *file ? strlen (file) : 0);
 	LOCATION loc  = malloc (sizeof (struct s_location) + dir->Length + size);
 	char   * ptr  = (char*)loc + offsetof (struct s_location, FullName);
+#ifdef _DEBUG_LOCATION
+	struct s_dbg_item * dbg_item = malloc (sizeof (struct s_dbg_item));
+	static BOOL __once = TRUE;
+	if (__once) {
+		__once = FALSE;
+		atexit (dbg_exit);
+	}
+	if (dbg_item && loc) {
+		dbg_item->Loc  = loc;
+		dbg_item->Next = __dbg_list;
+		__dbg_list     = dbg_item;
+	} else {
+		if (dbg_item) free (dbg_item);
+		if (loc)      free (loc);
+		return NULL;
+	}
+#endif
 	loc->__hash   = 0uL;
 	loc->__reffs  = 0;
 	loc->Proto    = PROT_FILE;
@@ -254,6 +324,34 @@ void
 free_location (LOCATION * _loc)
 {
 	LOCATION loc = *_loc;
+#ifdef _DEBUG_LOCATION
+	if (!__dbg_exit && loc) {
+		struct s_dbg_item ** plist = dbg_find (&__dbg_list, loc);
+		if (*plist) {
+			if (loc->__reffs <= 1) {
+				struct s_dbg_item * dbg_item = *plist;
+				*plist = dbg_item->Next;
+				dbg_item->Next = __dbg_free;
+				__dbg_free     = dbg_item;
+#if (_DEBUG_LOCATION >= 1)
+				*_loc = loc = NULL;
+#endif
+			}
+		} else {
+			plist = dbg_find (&__dbg_free, loc);
+			printf ("free_location(%p): %s!\n", loc,
+			        (*plist ? "deleted" : "invalid"));
+#if (_DEBUG_LOCATION >= 1)
+			if (*plist) {
+	 			char buff[1024];
+				location_FullName (loc, buff, sizeof(buff));
+				printf("  -> %s\n", buff);
+			}
+#endif
+			*_loc = loc = NULL;
+		}
+	}
+#endif
 	if (loc) {
 		if ((!loc->__reffs || !--loc->__reffs)
 		    && loc != __base && loc != __local) {
@@ -269,6 +367,21 @@ LOCATION
 location_share  (LOCATION loc)
 {
 	if (loc) {
+#ifdef _DEBUG_LOCATION
+		if (!dbg_find (&__dbg_list, loc)) {
+			BOOL inval = (*dbg_find (&__dbg_free, loc) == NULL);
+			printf ("location_share(%p): %s!\n", loc,
+			        (inval ? "invalid" : "deleted"));
+#if (_DEBUG_LOCATION >= 1)
+			if (!inval) {
+	 			char buff[1024];
+				location_FullName (loc, buff, sizeof(buff));
+				printf("  -> %s\n", buff);
+			}
+#endif
+			return NULL;
+		}
+#endif
 		loc->__reffs++;
 	}
 	return loc;
@@ -280,6 +393,21 @@ ULONG
 _loc_Hash (LOCATION loc)
 {
 	ULONG hash = 0;
+#ifdef _DEBUG_LOCATION
+	if (!dbg_find (&__dbg_list, loc)) {
+		BOOL inval = (*dbg_find (&__dbg_free, loc) == NULL);
+		printf ("_loc_Hash(%p): %s!\n", loc,
+			        (inval ? "invalid" : "deleted"));
+#if (_DEBUG_LOCATION >= 1)
+		if (!inval) {
+ 			char buff[1024];
+			location_FullName (loc, buff, sizeof(buff));
+			printf("  -> %s\n", buff);
+		}
+#endif
+		return 0UL;
+	}
+#endif
 	if (*loc->File) {
 		const char * src = strchr (loc->File, '\0');
 		do {
@@ -301,13 +429,31 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 	DIR_ENT      dir;
 	const char * src;
 	
+#ifdef _DEBUG_LOCATION
+	if (loc) {
+		if (!dbg_find (&__dbg_list, loc)) {
+			BOOL inval = (*dbg_find (&__dbg_free, loc) == NULL);
+			printf ("location_FullName(%p): %s!\n", loc,
+			        (inval ? "invalid" : "deleted"));
+#if (_DEBUG_LOCATION >= 1)
+			if (!inval) {
+	 			char buff[1024];
+				location_FullName (loc, buff, sizeof(buff));
+				printf("  -> %s\n", buff);
+			}
+#endif
+			loc = NULL;
+		}
+	}
+#endif
 	if (!loc) {
 		const char inv[] = "<nil>";
-		size_t     len   = sizeof(inv);
-		if (len > max_len) {
-			len = max_len;
+		size_t     len   = sizeof(inv) -1;
+		if (len > max_len -1) {
+			len = max_len -1;
 		}
 		memcpy (dst, inv, len);
+		dst[len] = '\0';
 		return len;
 	}
 	
@@ -409,6 +555,32 @@ location_Host  (LOCATION loc, UWORD * opt_len)
 BOOL
 location_equal (LOCATION a, LOCATION b)
 {
+#ifdef _DEBUG_LOCATION
+	if (a && !dbg_find (&__dbg_list, a)) {
+		BOOL inval = (*dbg_find (&__dbg_free, a) == NULL);
+		printf ("location_equal(%p,..): %s!\n", a,
+			        (inval ? "invalid" : "deleted"));
+#if (_DEBUG_LOCATION >= 1)
+		if (!inval) {
+ 			char buff[1024];
+			location_FullName (a, buff, sizeof(buff));
+			printf("  -> %s\n", buff);
+		}
+#endif
+	}
+	if (b && !dbg_find (&__dbg_list, b)) {
+		BOOL inval = (*dbg_find (&__dbg_free, b) == NULL);
+		printf ("location_equal(..,%p): %s!\n", a,
+			        (inval ? "invalid" : "deleted"));
+#if (_DEBUG_LOCATION >= 1)
+		if (!inval) {
+ 			char buff[1024];
+			location_FullName (b, buff, sizeof(buff));
+			printf("  -> %s\n", buff);
+		}
+#endif
+	}
+#endif
 	return (a == b || (a && b
 	                   && *(long*)&a->Proto == *(long*)&b->Proto
 	                   && a->Host == b->Host

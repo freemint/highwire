@@ -9,6 +9,9 @@
 #include "Location.h"
 #include "cache.h"
 
+#if 0
+#define _DBG_CACHE
+#endif
 
 #define MAGIC_NUM 0x20040824l /* needs to get updated in case the format of *
                                * the cache.idx file changes                 */
@@ -758,6 +761,18 @@ _exit_flush (void)
 	if (__cache_changed == TRUE) {
 		cache_flush (NULL);
 	}
+	
+#ifdef _DBG_CACHE
+	citem = __cache_beg;
+	while (citem) {
+		if (!item_isMem (citem)) {
+			free_location ((LOCATION*)&citem->Object);
+		}
+		free_location (&citem->Location);
+		citem = citem->NextItem;
+	}
+	free_location (&__cache_dir);
+#endif
 }
 
 /*----------------------------------------------------------------------------*/
@@ -878,9 +893,14 @@ cache_build (void)
 			free_location (&__cache_dir);
 			__cache_changed = FALSE;
 		} else {
+#ifndef _DBG_CACHE
 			atexit (_exit_flush);
+#endif
 		}
 	}
+#ifdef _DBG_CACHE
+	atexit (_exit_flush);
+#endif
 }
 
 /*------------------------------------------------------------------------------
