@@ -68,7 +68,7 @@ dbg_exit (void)
 {
 	__dbg_exit = TRUE;
 	if (__dbg_list) {
-		struct s_dbg_item * item = __dbg_list->Next;
+		struct s_dbg_item * item = __dbg_list;
 		do if (item->Loc == __base || item->Loc == __local) {
 			item = item->Next;
 		} else {
