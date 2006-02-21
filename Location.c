@@ -68,12 +68,25 @@ dbg_exit (void)
 {
 	__dbg_exit = TRUE;
 	if (__dbg_list) {
-		puts ("LOCATION_summary:_______________________________________________");
+		struct s_dbg_item * item = __dbg_list->Next;
+		do if (item->Loc == __base || item->Loc == __local) {
+			item = item->Next;
+		} else {
+			item = NULL;
+			puts ("LOCATION_summary:_______________________"
+			      "________________________________________");
+		} while (item);
 		do {
 			struct s_dbg_item * next = __dbg_list->Next;
- 			char buff[1024];
-			location_FullName (__dbg_list->Loc, buff, sizeof(buff));
-			printf("% 3i: %s\n", __dbg_list->Loc->__reffs, buff);
+			if (__dbg_list->Loc == __base) {
+				__base = NULL;
+			} else if (__dbg_list->Loc == __local) {
+				__local = NULL;
+			} else {
+				char buff[1024];
+				location_FullName (__dbg_list->Loc, buff, sizeof(buff));
+				printf("% 3i: %s\n", __dbg_list->Loc->__reffs, buff);
+			}
 			__dbg_list->Loc->__reffs = 0;
 			free_location (&__dbg_list->Loc);
 			free (__dbg_list);
@@ -343,7 +356,7 @@ free_location (LOCATION * _loc)
 			        (*plist ? "deleted" : "invalid"));
 #if (_DEBUG_LOCATION >= 1)
 			if (*plist) {
-	 			char buff[1024];
+				char buff[1024];
 				location_FullName (loc, buff, sizeof(buff));
 				printf("  -> %s\n", buff);
 			}
@@ -374,7 +387,7 @@ location_share  (LOCATION loc)
 			        (inval ? "invalid" : "deleted"));
 #if (_DEBUG_LOCATION >= 1)
 			if (!inval) {
-	 			char buff[1024];
+				char buff[1024];
 				location_FullName (loc, buff, sizeof(buff));
 				printf("  -> %s\n", buff);
 			}
@@ -400,7 +413,7 @@ _loc_Hash (LOCATION loc)
 			        (inval ? "invalid" : "deleted"));
 #if (_DEBUG_LOCATION >= 1)
 		if (!inval) {
- 			char buff[1024];
+			char buff[1024];
 			location_FullName (loc, buff, sizeof(buff));
 			printf("  -> %s\n", buff);
 		}
@@ -437,7 +450,7 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 			        (inval ? "invalid" : "deleted"));
 #if (_DEBUG_LOCATION >= 1)
 			if (!inval) {
-	 			char buff[1024];
+				char buff[1024];
 				location_FullName (loc, buff, sizeof(buff));
 				printf("  -> %s\n", buff);
 			}
@@ -562,7 +575,7 @@ location_equal (LOCATION a, LOCATION b)
 			        (inval ? "invalid" : "deleted"));
 #if (_DEBUG_LOCATION >= 1)
 		if (!inval) {
- 			char buff[1024];
+			char buff[1024];
 			location_FullName (a, buff, sizeof(buff));
 			printf("  -> %s\n", buff);
 		}
@@ -574,7 +587,7 @@ location_equal (LOCATION a, LOCATION b)
 			        (inval ? "invalid" : "deleted"));
 #if (_DEBUG_LOCATION >= 1)
 		if (!inval) {
- 			char buff[1024];
+			char buff[1024];
 			location_FullName (b, buff, sizeof(buff));
 			printf("  -> %s\n", buff);
 		}
@@ -1035,7 +1048,7 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 					name  += 1;
 					n_len -= 1;
 					delim  = TRUE;
-				} else if (name[0] == '.' && 
+				} else if (name[0] == '.' &&
 				           (n_len == 2 || name[1] == '\\' || name[1] == '/')) {
 					if (slash) {
 						b = slash;
@@ -1095,7 +1108,7 @@ dir_entry (const char ** p_name, DIR_ENT base, BOOL local)
 		} else if ((Fattrib (buf, 0,0) & 0xFF1A) == 0x10) {
 			*p_name = name +1;
 		
-		} else {		
+		} else {
 			b  = slash +1;
 			*b = '\0';
 		}
@@ -1129,7 +1142,7 @@ clear_idx_tags (void)
 }
 
 /*---------------------------------------------------------------------------*/
-static char * 
+static char *
 wr_hex (char * ptr, short len, long val)
 {
 	const char hex[] = "0123456789ABCDEF";
