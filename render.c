@@ -171,7 +171,6 @@ numerical (const char * buf, char ** tail, short em, short ex)
 			 * floating percentages are really valid anyway
 			 * Dan 12/5/05
 			 */
-			 
 			val = size;
 			size = -((val *1024 +50) /100);
 			break;
@@ -267,10 +266,20 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 
 			if ((isdigit (*p))||(*p == '.')) {
 				char * tail = p;
-			short size = numerical (p, &tail, font_size,
-									(font_size/2));
-/*				short size = numerical (p, &tail, current->font->Size,
-			                         	current->word->font->SpaceWidth);
+				short em = 0, ex = 0;
+				short size;
+			
+				/* Ok.  I get a value of 293 in current->parentbox->FontStk->Size when it's
+				 * the root object quite commonly.  I don't know why.  If we fix that then
+				 * fix this test
+				 */
+				em = (current->parentbox->FontStk->Size != 293 ? current->parentbox->FontStk->Size : font_size);
+				em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
+				ex = em/2;
+
+				size = numerical (output, NULL, em, ex);
+									
+/*				short size = numerical (p, &tail, font_size, (font_size/2));
 */
 				if (size > 0) {
 					fontstack_setSize (current, size);
@@ -284,10 +293,10 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 						multiple = -size/1024;
 						mod_val = -(-size%1024);
 				
-						new_size = ((-mod_val +512) /1024)* font_size;
-						new_size += font_size * multiple;
+						new_size = ((-mod_val +512) /1024)* em; /*font_size;*/
+						new_size += em * multiple; /* font_size */
 					} else {				
-						new_size = (-size * font_size +512) /1024;
+						new_size = (-size * em +512) /1024;/* font_size */
 					}
 
 					fontstack_setSize (current, new_size);
@@ -409,12 +418,18 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		/* here em and ex refer to the parents size not current size */
 
 		if ((isdigit (output[0]))||(output[0] == '.')) {
-			short size = numerical (output, NULL, font_size,
-									(font_size/2));
-									/* current->word->font->SpaceWidth);*/
-/*			short size = numerical (output, NULL, current->font->Size,
-									(current->fnt_stack.Size/2));*/
-									/* current->word->font->SpaceWidth);*/
+			short em = 0, ex = 0;
+			short size;
+			
+			/* Ok.  I get a value of 293 in current->parentbox->FontStk->Size when it's
+			 * the root object quite commonly.  I don't know why.  If we fix that then
+			 * fix this test
+			 */
+			em = (current->parentbox->FontStk->Size != 293 ? current->parentbox->FontStk->Size : font_size);
+			em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
+			ex = em/2;
+
+			size = numerical (output, NULL, em, ex);
 
 			if (!fstk) {
 				fstk = fontstack_push (current, -1);
@@ -431,10 +446,10 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 					multiple = -size/1024;
 					mod_val = -(-size%1024);
 				
-					new_size = ((-mod_val +512) /1024)* font_size;
-					new_size += font_size * multiple;
+					new_size = ((-mod_val +512) /1024)* em; /*font_size;*/
+					new_size += multiple * em; /* font_size */
 				} else {				
-					new_size = (-size * font_size +512) /1024;
+					new_size = (-size * em +512) /1024; /* font_size */
 				}
 				fontstack_setSize (current, new_size);
 			}
