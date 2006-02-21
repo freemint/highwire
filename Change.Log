@@ -5,6 +5,22 @@ Changes since v. 0.3.0 release
   redirected files.  This makes also downloading a
   bit faster, as a nice side effect (#0219).
 
+- Font-size handling refined
+
+- Handling of % values in scan_numeric() modified (sourceforge fix)
+
+- Set font size can never be smaller than defined min size
+
+- CSS positioning system modified
+
+- CSS Tokens Bottom & Right added
+
+- CSS specificity or weighting system changed from base 10
+  to base 100.  Avoids rules with 10 tags being more specific
+  than a rule with 1 class.
+
+- AVSERVER detection rewritten (MLUTZ) fixes Teradesk troubles
+
 - display: none support
 
 - @media parsing
