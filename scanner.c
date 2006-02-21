@@ -254,7 +254,7 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 	char * ptr;
 	BOOL   neg;
 	BOOL   lto; /* less than one */
-	long   size;
+	long   size, tmpsize;
 	
 	while (isspace (**pptr)) (*pptr)++;
 	neg  = (**pptr == '-');
@@ -274,19 +274,19 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 		size = -size;
 	}
 
-	/* Scan out % values.  I don't think they can be floats - Dan */
-	if (toupper(*ptr) != '%') {
-		if (*ptr == '.' && isdigit(*(++ptr))) {
-			size = size * 10 + (*ptr - '0');
-			if (!isdigit(*(++ptr))) {
-				size = ((size <<8) +5) /10;
-			} else {
-				size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
-				while (isdigit(*(++ptr)));
-			}
+	/* catch in case it's a float percentage to use later */
+	tmpsize = size;
+
+	if (*ptr == '.' && isdigit(*(++ptr))) {
+		size = size * 10 + (*ptr - '0');
+		if (!isdigit(*(++ptr))) {
+			size = ((size <<8) +5) /10;
 		} else {
-			size <<= 8;
+			size = (((size * 10 + (*ptr - '0')) <<8) +5) /100;
+			while (isdigit(*(++ptr)));
 		}
+	} else {
+		size <<= 8;
 	}
 
 	if (ok) {
@@ -321,7 +321,11 @@ scan_numeric (const char ** pptr, long * num, UWORD * unit)
 			if      (toupper(ptr[1]) == 'N') { *unit = _('I','N'); ptr += 2; }
 			else                               *unit = 0;
 			break;
-		case '%':                           { *unit = _('%',' ');   ptr += 1; }
+		case '%':                           { 
+			*unit = _('%',' ');   
+			ptr += 1; 
+			*num = (neg ? -tmpsize : +tmpsize);
+			}
 			break;
 		default:                              *unit = 0;
 		#undef _
