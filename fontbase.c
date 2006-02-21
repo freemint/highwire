@@ -365,6 +365,10 @@ void
 fontstack_setSize (TEXTBUFF current, WORD size)
 {
 	FNTSTACK fstk = current->font;
+
+	/* keep nasty sites from making the font size too small */
+	if (size < font_minsize) size = font_minsize;
+
 	fstk->Size = size;
 	fstk->Step = font_step2size (-size);
 	word_set_point (current, size);
