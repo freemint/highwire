@@ -22,22 +22,19 @@ struct s_parser {
 	                    /* 10 bytes reserve behind the high watermark       */
 	void       * ResumeFnc; /* fields to store data for the case that a parser */
 	const char * ResumePtr; /* function needs to get a break (eg. for loading  */
-	const char * ResumeSub; /* additional files)                               */
-	short        ResumeErr;
+	short        ResumeErr; /* additional files)                               */
 };
 
 
 PARSER new_parser    (LOADER);
 void   delete_parser (PARSER);
 
-int     parser_resume (PARSER, void * func, const char * ptr_or_sub, LOCATION);
+int     parser_resume (PARSER, void * func, const char * ptr_or_sub);
 				/* Prepares the parser for getting interupted and stores the data
 				 * needed for the later resume.  If the location is not NULL it will
-				 * be used to start a loader job.  If the function pointer 'func' is
-				 * not NULL then 'ptr_or_sub' will be taken as its own data pointer,
-				 * else 'ptr_or_sub' will be taken as owned by some subfunction.
+				 * be used to start a loader job.
 				*/
-#define parser_resumed(parser) parser_resume (parser, NULL,NULL,NULL);
+#define parser_resumed(parser) parser_resume (parser, NULL,NULL);
 				/* Shortcut, resets the resume data fields.
 				*/
 
@@ -56,13 +53,10 @@ HTMLTAG parse_tag (PARSER, const char ** pptr);
 				 * The PARSER argument may be NULL if no KEY storage is needed.
 				*/
 
-const char * parse_css (PARSER, LOCATION, const char * ptr, char * takeover);
+const char * parse_css (PARSER, LOCATION, const char * ptr);
 				/* Parses a whole <style> area from 'ptr' and stores recognized
 				 * style set internallly in the parser structure.  Following
 				 * get_value..() calls will be served from these sets automatically.
-				 * If 'takeover is not NULL it will be used instead of 'ptr' and
-				 * stored internal by the parser to be deleted when the parser get
-				 * invalidated.
 				 * The result value is a pointer to the first not read character
 				 * from 'ptr'.
 				*/

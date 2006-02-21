@@ -75,7 +75,6 @@ new_parser (LOADER loader)
 	parser->Target   = loader->Target;
 	parser->hasStyle = FALSE;
 	parser->ResumePtr = loader->Data;
-	parser->ResumeSub = NULL;
 	parser->ResumeFnc = NULL;
 	parser->ResumeErr = E_OK;
 	memset (prsdata->Stack, 0, sizeof(prsdata->Stack));
@@ -173,6 +172,65 @@ delete_parser (PARSER parser)
 }
 
 
+/*----------------------------------------------------------------------------*/
+static BOOL
+stack_store (PARSPRIV prsdata, char * ptr)
+{
+	struct s_own_mem * own;
+	if (!prsdata->OwnMem.Mem) {
+		own = &prsdata->OwnMem;
+	} else if ((own = malloc (sizeof(struct s_own_mem))) != NULL) {
+		own->Mem  = prsdata->OwnMem.Mem;
+		own->Next = prsdata->OwnMem.Next;
+		prsdata->OwnMem.Next = own;
+	} else {
+		return FALSE;
+	}
+	prsdata->OwnMem.Mem = ptr;
+	return TRUE;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+stack_push (PARSPRIV prsdata, LOCATION loc, const char * ptr)
+{
+	short i = (short)numberof(prsdata->Stack) -1;
+	if (prsdata->Stack[i].Ptr || prsdata->Stack[i].Base) {
+		puts ("CSS stack_push(): overflow");
+		return FALSE;
+	}
+	
+	do {
+		prsdata->Stack[i] = prsdata->Stack[i -1];
+	} while (--i);
+	prsdata->Stack[0].Ptr  = ptr;
+	prsdata->Stack[0].Base = location_share (loc);
+	return TRUE;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+stack_pop (PARSPRIV prsdata, LOCATION * loc, const char ** ptr)
+{
+	short i;
+	if (!prsdata->Stack[0].Ptr && !prsdata->Stack[0].Base) {
+		puts ("CSS stack_pop(): underflow");
+		if (loc) *loc = NULL;
+		if (ptr) *ptr = NULL;
+		return FALSE;
+	}
+	
+	if (ptr) *ptr = prsdata->Stack[0].Ptr;
+	if (loc) *loc = prsdata->Stack[0].Base;
+	else     free_location (&prsdata->Stack[0].Base);
+	for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
+		prsdata->Stack[i] = prsdata->Stack[i +1];
+	}
+	prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
+	prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
+	return TRUE;
+}
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
 resume_job (void * arg, long invalidated)
@@ -184,11 +242,22 @@ resume_job (void * arg, long invalidated)
 			char buf[1024];
 			location_FullName (loader->Location, buf, sizeof(buf));
 			printf ("not found: '%s'\n", buf);
-			if (!parser->ResumeSub) {
-				parser->ResumeFnc = NULL;
-			}
 			parser->ResumeErr = loader->Error;
 		} else {
+			PARSPRIV prsdata = ParserPriv(parser);
+			char * data = loader->Data;
+			if (!data && loader->Cached) {
+				size_t size = 0;
+				data = load_file (loader->Cached, &size, &size);
+			} else {
+				loader->Data = NULL;
+			}
+			if (!stack_push (prsdata, loader->Location, data)) {
+				free (data);
+			} else if (!stack_store (prsdata, data)) {
+				free (data);
+				stack_pop (prsdata, NULL, NULL);
+			}
 			parser->ResumeErr = E_OK;
 		}
 	}
@@ -198,28 +267,15 @@ resume_job (void * arg, long invalidated)
 
 /*============================================================================*/
 int
-parser_resume (PARSER parser, void * func, const char * ptr_sub, LOCATION loc)
+parser_resume (PARSER parser, void * func, const char * ptr_sub)
 {
-	if (func) {
-		parser->ResumeFnc = func;
-		parser->ResumePtr = ptr_sub;
-		if (loc) {
-			parser->ResumeSub = NULL;
-		}
-	} else {
-		parser->ResumeFnc = NULL;
-		parser->ResumePtr = NULL;
-		parser->ResumeSub = ptr_sub;
-	}
-	if (!ptr_sub) {
-		parser->ResumeErr = E_OK;
-	} else if (loc) {
+	parser->ResumeFnc = func;
+	parser->ResumePtr = ptr_sub;
+	if (!func && !ptr_sub) {
 		if (parser->ResumeErr == 2/*EBUSY*/) {
 			puts ("parser_resume(): busy");
-		} else {
-			start_objc_load (parser->Target, NULL, loc, resume_job, parser);
-			parser->ResumeErr = 2/*EBUSY*/;
 		}
+		parser->ResumeErr = E_OK;
 	}
 	return -2; /*JOB_NOOP */
 }
@@ -812,90 +868,88 @@ parse_tag (PARSER parser, const char ** pptr)
 
 /*----------------------------------------------------------------------------*/
 static const char *
-css_import (PARSER parser, const char * ptr, LOCATION base)
+css_import (PARSER parser, const char * ptr, LOCATION * base)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
-	LOCATION     loc = NULL;
-	const char * p   = ptr +7;
+	const char * ret;
+	const char * p;
+	LOCATION     loc;
 	
-	while (isspace (*p)) p++;
-	if (strnicmp (p, "url", 3) == 0) {
-		p += 3;
+	if (!ptr) {
+		p   = "";
+		loc = location_share (*base);
+	
+	} else {
+		p   = ptr;
+		loc = NULL;
 		while (isspace (*p)) p++;
-		if (*p != '(') {
-			p = NULL;
+		if (strnicmp (p, "url", 3) == 0) {
+			p += 3;
+			while (isspace (*p)) p++;
+			if (*p != '(') {
+				p = NULL;
+			} else {
+				while (isspace (*(++p)));
+			}
+		}
+		if (!p) {
+			return ptr;
+			
 		} else {
-			while (isspace (*(++p)));
+			const char * e = (*p == '"'  ? strchr (++p, '"')  :
+			                  *p == '\'' ? strchr (++p, '\'') : strchr (p, ')'));
+			if (e && e > p) {
+				char   buf[1024];
+				size_t len = min (e - p, sizeof(buf) -1);
+				((char*)memcpy (buf, p, len))[len] = '\0';
+				loc = new_location (buf, *base);
+			}
+			p = (e ? strchr (++e, ';') : e);
+			p = (p ? ++p : e ? e : strchr (ptr, '\0'));
 		}
 	}
-	if (!p) {
-		return ptr;
-		
-	} else {
-		const char * e = (*p == '"'  ? strchr (++p, '"')  :
-		                  *p == '\'' ? strchr (++p, '\'') : strchr (p, ')'));
-		if (e && e > p && !prsdata->Stack[numberof(prsdata->Stack)-1].Ptr) {
-			char   buf[1024];
-			size_t len = min (e - p, sizeof(buf) -1);
-			((char*)memcpy (buf, p, len))[len] = '\0';
-			loc = new_location (buf, (base ? base : parser->Frame->BaseHref));
-		}
-		p = (e ? strchr (++e, ';') : e);
-		p = (p ? ++p : e ? e : strchr (ptr, '\0'));
-	}
+	ret = p;
+	
 	if (!loc) {
-		ptr = p; /* invalid syntax or stack exceeded, skip it */
+		/* invalid syntax, skip it */
 	
 	} else {
-		BOOL   push;
 		size_t size = 0;
 		char * file = NULL;
 		if (PROTO_isLocal (loc->Proto)) {
 			file = load_file (loc, &size, &size);
-			push = TRUE;
-			ptr  = p;
 		} else {
 			struct s_cache_info info;
 			CRESULT res = cache_query (loc, 0, &info);
 			if (res & CR_LOCAL) {
 				file = load_file (info.Local, &size, &size);
-				ptr  = p;
-			} else {
-				parser_resume (parser, NULL, ptr, (res & CR_BUSY ? NULL : loc));
-				ptr  = NULL;
+			} else if (res & CR_BUSY) {
+				ret = NULL;
+			} else if (!ptr || stack_push (prsdata, *base, p)) {
+				start_objc_load (parser->Target, NULL, loc, resume_job, parser);
+				parser->ResumeErr = 2/*EBUSY*/;
+				ret = NULL;
 			}
-			push = (prsdata->Stack[0].Ptr != p);
 		}
 		if (file) {
-			struct s_own_mem * own = NULL;
 			if (size > 0) {
-				if (!prsdata->OwnMem.Mem) {
-					own = &prsdata->OwnMem;
-				} else if ((own = malloc (sizeof(struct s_own_mem))) != NULL) {
-					own->Mem  = prsdata->OwnMem.Mem;
-					own->Next = prsdata->OwnMem.Next;
-					prsdata->OwnMem.Next = own;
+				if (!ptr || stack_push (prsdata, *base, p)) {
+					if (stack_store (prsdata, file)) {
+						free_location (base);
+						*base = location_share (loc);
+						ret  =  file;
+						file =  NULL;
+					} else if (ptr) {
+						stack_pop (prsdata, NULL, NULL);
+					}
 				}
 			}
-			if (own) {
-				ptr = prsdata->OwnMem.Mem = file;
-			} else {
-				free (file);
-				push = FALSE;
-			}
-		}
-		if (push) {
-			short i = (short)numberof(prsdata->Stack) -1;
-			do {
-				prsdata->Stack[i] = prsdata->Stack[i -1];
-			} while (--i);
-			prsdata->Stack[0].Ptr  = p;
-			prsdata->Stack[0].Base = location_share (base);
+			if (file) free (file);
 		}
 		free_location (&loc);
 	}
 
-	return ptr;
+	return ret;
 }
 
 /*============================================================================*/
@@ -904,43 +958,35 @@ static char next (const char ** pp) {
 }
 /*- - - - - - - - - - - - - - - - - - - - - - - -*/
 const char *
-parse_css (PARSER parser, LOCATION loc, const char * p, char * takeover)
+parse_css (PARSER parser, LOCATION loc, const char * p)
 {
 	PARSPRIV prsdata = ParserPriv(parser);
 	STYLE  * p_style = &prsdata->Styles;
 	BOOL     err     = FALSE;
 	
-	if (takeover) {
-		if (prsdata->OwnMem.Mem) {
-			struct s_own_mem * own = malloc (sizeof(struct s_own_mem));
-			if (!own) {
-				free (takeover);
-				return NULL;
-			}
-			own->Mem  = prsdata->OwnMem.Mem;
-			own->Next = prsdata->OwnMem.Next;
-			prsdata->OwnMem.Next = own;
+	if (parser->ResumeErr == 2/*EBUSY*/) {
+		puts ("parse_css(): busy");
+		return NULL;
+	}
+	if (loc) {
+		loc = location_share (loc);
+		if (!p && (p = css_import (parser, NULL, &loc)) == NULL) {
+			free_location (&loc);
+			return NULL;
 		}
-		p   = prsdata->OwnMem.Mem = takeover;
-		loc = location_share (loc ? loc : prsdata->Stack[0].Base);
-	
-	} else if (p) {
-		loc = location_share (loc ? loc : prsdata->Stack[0].Base);
 	
 	} else { /* if (!p)  error case, continue with next in stack */
-		short i;
-		p   = prsdata->Stack[0].Ptr;
-		loc = prsdata->Stack[0].Base;
-		if (!p) {
-			puts ("CSS stack underflow!");
+		if (!stack_pop (prsdata, &loc, &p)) {
 			return parser->ResumePtr;
 		}
 		
-		for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
-			prsdata->Stack[i] = prsdata->Stack[i +1];
+		if (!loc || !p) {
+			printf ("parse_css(): loc=%p p=%p\n", loc, p);
+			if (!p) {
+				static const char * empty = "";
+				p = empty;
+			}
 		}
-		prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
-		prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
 	}
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
@@ -979,7 +1025,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p, char * takeover)
 			if (*p == '@') { /*............................... special */
 				const char * q = p;
 				if (strnicmp (q +1, "import", 6) == 0) {
-					if ((q = css_import (parser, q, loc)) == NULL) {
+					if ((q = css_import (parser, q +7, &loc)) == NULL) {
 						free_location (&loc);
 						return NULL;
 					}
@@ -999,19 +1045,12 @@ parse_css (PARSER parser, LOCATION loc, const char * p, char * takeover)
 							q += 3;
 						} else {
 							while (isalpha(*q)) q++;
-
-							/* we have to do the following or
-							 * @media print, all {..} (for example)
-							 * fails - Dan */
-
-							if (*q == ',') q++;
-							
-							if (!isspace(*q) && *q != '{')
-								 break;
+							if (next(&q) == ',') q++;
+							if (!isspace(*q) && !isalpha(*q) && *q != '{') break;
 						}
 					}
 					if ((err = (*q != '{')) == TRUE)	break;
-
+					
 					if (parse_media) {
 						/* get us past opening bracket */
 						q++;
@@ -1282,16 +1321,9 @@ parse_css (PARSER parser, LOCATION loc, const char * p, char * takeover)
 				}
 			}
 			if (prsdata->Stack[0].Ptr) {
-				short i;
 				free_location (&loc);
 				err = FALSE;
-				p   = prsdata->Stack[0].Ptr;
-				loc = prsdata->Stack[0].Base;
-				for (i = 0; i < numberof(prsdata->Stack) -1; i++) {
-					prsdata->Stack[i] = prsdata->Stack[i +1];
-				}
-				prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
-				prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
+				stack_pop (prsdata, &loc, &p);
 			}
 		}
 	} while (*p && !err);

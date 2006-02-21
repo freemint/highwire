@@ -772,7 +772,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if (!__once) {
 			_CssPosition = (devl_flag ("CssPosition") != NULL);
 		}
-	
+		
 		if (_CssPosition && get_value (parser, CSS_POSITION, out, sizeof(out))) {
 			UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
 						  stricmp (out, "fixed") == 0 ? 0x203:
@@ -1132,7 +1132,7 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 			parser->Frame->Language
 			                = ((UWORD)toupper(output[0]) <<8) | toupper(output[1]);
 		}
-
+	
 	} else if (!strstr (*text, "</html>") && !strstr (*text, "</HTML>")) {
 		*text = strchr (*text, '\0');
 	}
@@ -1489,7 +1489,7 @@ the same problem could occur in render_link_tag() below
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     (strnicmp (out, "all", 3) == 0) || (strnicmp (out, "screen", 6) == 0))) {
 
-			if (!parser->ResumeSub) { /* initial call */
+			if (!parser->ResumeFnc) { /* initial call */
 				while (isspace (*line)) line++;
 
 				if (*line == '<') {        /* skip leading '<!--' */
@@ -1504,15 +1504,14 @@ the same problem could occur in render_link_tag() below
 					if (p) line = p;
 				
 				} else if (*line != '<') {
-					line = parse_css (parser, NULL, line, NULL);
+					line = parse_css (parser, parser->Frame->BaseHref, line);
 				}
 			} else {
-				line = (parser->ResumeErr ? NULL : parser->ResumeSub);
-				line = parse_css (parser, NULL, line, NULL);
+				line = parse_css (parser, NULL, NULL);
 			}
 			
 			if (!line) {
-				parser_resume (parser, render_STYLE_tag, *text, NULL);
+				parser_resume (parser, render_STYLE_tag, *text);
 				longjmp (resume_jbuf, 1);
 			}
 
@@ -1561,50 +1560,18 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 			        strstr (out, "all") || strstr (out, "screen"))
 			    && get_value (parser, KEY_HREF, out, sizeof(out))) {
 				
-				LOCATION     loc  = NULL;
-				const char * line = NULL;
-				char       * file = NULL;
-				BOOL         call = FALSE;
-				BOOL         rsum = FALSE;
-				BOOL         jump = FALSE;
-
-				if (!parser->ResumeSub) { /* initial call */
-					size_t size = 0;
-					
+				BOOL     jump = FALSE;
+				LOCATION loc;
+				if (!parser->ResumeFnc) { /* initial call */
 					loc = new_location (out, parser->Frame->BaseHref);
-
-					if (PROTO_isLocal (loc->Proto)) {
-						file = load_file (loc, &size, &size);
-					} else {
-						struct s_cache_info info;
-						CRESULT res = cache_query (loc, 0, &info);
-						if (res & CR_LOCAL) {
-							file = load_file (info.Local, &size, &size);
-						} else {
-	
-							rsum = !(res & CR_BUSY);
-							jump = TRUE;
-						}
-					}
-					if (file) {
-						if (size <= 0) {
-							free (file);
-						} else {
-							call = TRUE;;
-						}
-					}
-				
 				} else {
-					line = (parser->ResumeErr ? NULL : parser->ResumeSub);
-					call = TRUE;
+					loc = NULL;
 				}
-				
-				if ((call && !parse_css (parser, loc, line, file)) || rsum) {
-					if (file) free_location (&loc);
-					parser_resume (parser, render_LINK_tag, *text, loc);
+				if (!parse_css (parser, loc, NULL)) {
+					parser_resume (parser, render_LINK_tag, *text);
 					jump = TRUE;
 				}
-				if (loc)  free_location (&loc);
+				free_location (&loc);
 				if (jump) longjmp (resume_jbuf, 1);
 			}
 		}
@@ -1979,7 +1946,8 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
+		css_box_styles  (parser, &current->paragraph->Box,
+		                 current->paragraph->Box.TextAlign);
 		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
