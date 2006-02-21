@@ -30,11 +30,12 @@
 #else
 # define BF16(t,n)   t     n :16
 #endif
+
 typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 	BF16(HTMLKEY,  Key);
 	BF16(unsigned, Len);
-	const char   * Value;
-WORD weight;
+	const char   	* Value;
+	LONG		 	weight;
 } KEYVALUE;
 
 typedef struct s_style * STYLE;
@@ -435,7 +436,7 @@ get_value_color (PARSER parser, HTMLKEY key)
 
 /*----------------------------------------------------------------------------*/
 static KEYVALUE *
-css_values (PARSER parser, const char * line, size_t len, WORD weight)
+css_values (PARSER parser, const char * line, size_t len, LONG weight)
 {
 	PARSPRIV   prsdata = ParserPriv(parser);
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
@@ -465,21 +466,21 @@ css_values (PARSER parser, const char * line, size_t len, WORD weight)
 			if (ptr < val) val = NULL;
 		}
 
-if (val && (css != CSS_Unknown)) {
-	if ((ent = find_key (parser, (HTMLKEY)css)) == NULL) {
-		if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
-			ent = entry++;
-			prsdata->KeyNum++;
-			ent->weight = 0;
-		} else {
-			printf("KeyValTab overflow\r\n");
+		if (val && (css != CSS_Unknown)) {
+			if ((ent = find_key (parser, (HTMLKEY)css)) == NULL) {
+				if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
+					ent = entry++;
+					prsdata->KeyNum++;
+					ent->weight = 0;
+				} else {
+					printf("KeyValTab overflow\r\n");
+				}
+			} else {
+/*	if (css == 13)
+				printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
+*/				/**/
+			}
 		}
-	} else {
-/*	printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
-*/
-	}
-
-}
 
 #if 0
 		if (val && ((css < CSS_Unknown
@@ -523,7 +524,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
 	STYLE      style   = prsdata->Styles;
 
-	WORD		weight = 0;
+	LONG		weight = 0;
 
 /*if (keyval)
 printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
@@ -548,8 +549,8 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
 /*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);*/
-						weight += 10;
-						if (link && weight > 10 && *link->Css.Value) {
+						weight += 100;
+						if (link && weight > 100 && *link->Css.Value) {
 							box = NULL;
 						}
 					}
@@ -557,8 +558,8 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
 /*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);*/
-						weight += 100;
-						if (link && weight > 100 && *link->Css.Value) {
+						weight += 10000;
+						if (link && weight > 10000 && *link->Css.Value) {
 							box = NULL;
 						}
 					}
@@ -583,15 +584,16 @@ printf("Class = %.*s   \r\n",keyval->Len,keyval->Value);
 						continue;
 					} else {
 /*printf("Class %s   \r\n",box->ClName);*/
-						weight += 10;
+						weight += 100;
 					}
 				} else if (link->ClassId == '#') {
+/*printf("ID %s   \r\n",box->ClName);*/
 					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					} else {
 /*printf("ID %s   \r\n",box->ClName);*/
-						weight += 100;
+						weight += 10000;
 					}
 				}
 				if (link->Css.Key && link->Css.Key != box->HtmlCode) {
@@ -771,7 +773,7 @@ parse_tag (PARSER parser, const char ** pptr)
 			if (key == KEY_STYLE) {
 				if (val && len) {
 					parser->hasStyle = TRUE;
-					entry = css_values (parser, val, len,1000);
+					entry = css_values (parser, val, len,1000000L);
 				}
 			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
 				int temp_count = 1;
