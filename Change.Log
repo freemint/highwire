@@ -1,8 +1,15 @@
 Changes since v. 0.3.0 release
 
+- CSS file loading mechanisms got substantially
+  overhauled to avoid endless loops due to
+  redirected files.  This makes also downloading a
+  bit faster, as a nice side effect (#0219).
+
 - display: none support
 
 - @media parsing
+
+- Bugs #0219 resolved.
 
 __________________________________________________
 Changes in V. 0.3.0 release  of February 07, 2006:
