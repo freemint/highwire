@@ -105,7 +105,7 @@ file_selector (const char * label, const char * patt,
 		strcpy (fsel_path, "C:\\");
 		slash = fsel_path +2;
 	}
-	strcat (fsel_path, (patt ? patt : "*.*"));
+	strcpy (slash, (patt ? patt : "*.*"));
 	if (file) {
 		size_t f_len = strlen (file);
 		if (f_len >= sizeof(fsel_file)) {
