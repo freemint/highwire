@@ -53,8 +53,9 @@ struct s_input {
 	INPUT    Next;
 	union {
 		void * Void;
-		INPUT  Group; /* for radio buttons this points to the group node */
-		SELECT Select;
+		INPUT  Group;  /* radio button: points to the group node             */
+		INPUT  FileEd; /* file upload button: points to its text input field */
+		SELECT Select; /* selection menue                                    */
 	}        u;
 	WORDITEM Word;
 	PARAGRPH Paragraph;
@@ -385,10 +386,11 @@ new_input (PARSER parser)
 
 		/* Add the browse button */
 		if (stricmp (output, val = "FILE") == 0) {
-			FORM curform = current->form;
-			
-			input = form_buttn (current, name, "...", frame->Encoding, 'F');
-curform->Method = METH_PUT;
+			FORM  form = current->form;
+			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
+			form->Method   = METH_PUT;
+			bttn->u.FileEd = input;
+			input          = bttn; /* else disabling wouldn't work */
 		}
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
@@ -1118,80 +1120,38 @@ form_activate (FORM form)
 static void
 input_file_handler (INPUT input) {
 	char fsel_file[HW_PATH_MAX] = "";
-	WORD r, butt;  /* file selector exit button */
-
-	FORM form = input->Form;
-	INPUT input2 = (form ? form->InputList : NULL);
+	FORM   form = input->Form;
 	FRAME frame = form->Frame;
 	HwWIND wind = hwWind_byContainr(frame->Container);
+	
+	if (file_selector ("HighWire: Select File to Upload", NULL,
+	                   fsel_file, fsel_file,sizeof(fsel_file))) {
+		INPUT field = input->u.FileEd;
+		
+		form->TextActive = field;
+		
+		edit_feed (field, frame->Encoding, fsel_file, strchr(fsel_file, '\0'));
+		
+		/* to be overworked, probably the same scheme as for radio buttons */
+		{
+			WORDITEM word = field->Word;
+			GRECT clip;
+			long  x, y;
+			clip.g_x = 0;
+			clip.g_w = word->word_width;
+			clip.g_y = -word->word_height;
+			clip.g_h = word->word_height + word->word_tail_drop;
 
-	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-		r = fsel_exinput (fsel_path, fsel_file, &butt,
-		                  "HighWire: Select File to Send");
-	} else {
-		r = fsel_input(fsel_path, fsel_file, &butt);
-	}
-	if (r && butt != FSEL_CANCEL) {
-		char * slash = strrchr (fsel_path, '\\');
-		if (slash) {
-			char   file[HW_PATH_MAX];
-			size_t len = slash - fsel_path +1;
-			memcpy (file, fsel_path, len);
-			strcpy (file + len, fsel_file);
+			dombox_Offset (&word->line->Paragraph->Box, &x, &y);
+			x += (long)clip.g_x + word->h_offset
+			     + frame->clip.g_x - frame->h_bar.scroll;
+			y += (long)clip.g_y + word->line->OffsetY
+			     + frame->clip.g_y - frame->v_bar.scroll;
 
-			/* we need to match the button name to
-			 * a text input name and fill it out
-			 */
-
-			while (input2) {
-				if (input2->Type == IT_TEXT) {
-					if (strcmp (input2->Name, input->Name) == 0) {
-						WORD     key;
-						GRECT    clip;
-						INPUT	   next;
-						WORDITEM word = NULL;
-						long  x, y;
-						char *p = file;
-						len = strlen(file);
-						
-						form->TextActive = input2;
-
-						while (len-- > 0) {
-							if ((key = *(p++)) == '\n') key = '\r';
-							else if (key < ' ')         key = '\0';
-
-							if (key) {
-								WORDITEM w = input_keybrd (input2, key, 0, &clip, &next);
-
-								if (w) word = w;
-								else   break;
-							}
-						}
-
-						if (word) {
-							clip.g_x = 0;
-							clip.g_w = word->word_width;
-							clip.g_y = -word->word_height;
-							clip.g_h = word->word_height + word->word_tail_drop;
-
-							dombox_Offset (&word->line->Paragraph->Box, &x, &y);
-							x += (long)clip.g_x + word->h_offset
-							     + frame->clip.g_x - frame->h_bar.scroll;
-							y += (long)clip.g_y + word->line->OffsetY
-							     + frame->clip.g_y - frame->v_bar.scroll;
-			
-							clip.g_x = x;
-							clip.g_y = y;
-							hwWind_redraw (wind, &clip);
-						}
-					
-						break;					
-					}
-				}
-				input2 = input2->Next;
-			}
-		} 
+			clip.g_x = x;
+			clip.g_y = y;
+			hwWind_redraw (wind, &clip);
+		}
 	}
 }
 
