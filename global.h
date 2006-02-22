@@ -77,7 +77,8 @@ extern UWORD _systype(void);
 #define sys_NAES()    ((sys_type() & SYS_NAES)  != 0)
 #define sys_XAAES()   ((sys_type() & SYS_XAAES) != 0)
 
-BOOL page_load   (void);
+char * file_selector (const char * label, const char * patt,
+                      const char * file, char * buff, size_t blen);
 void rpopup_open (WORD, WORD);
 void rpoplink_open (WORD, WORD, CONTAINR, void *);
 void rpopilink_open (WORD, WORD, CONTAINR, void *);

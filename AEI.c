@@ -93,43 +93,69 @@ _systype (void)
 }
 
 
-/*==============================================================================
- * page_load()
- *
- * calls the fileselector and loads the selected file
- *
- * added 10-04-01 mj.
- *
- * simplified AltF4 December 26, 2001
- *
- * return modified Rainer Seitel May 2002
-*/
-BOOL
+/*============================================================================*/
+char *
+file_selector (const char * label, const char * patt,
+               const char * file, char * buff, size_t blen)
+{
+	char fsel_file[256] = "";
+	WORD r, butt;
+	char * slash = strrchr (fsel_path, '\\');
+	if (!slash) {
+		strcpy (fsel_path, "C:\\");
+		slash = fsel_path +2;
+	}
+	strcat (fsel_path, (patt ? patt : "*.*"));
+	if (file) {
+		size_t f_len = strlen (file);
+		if (f_len >= sizeof(fsel_file)) {
+			f_len = sizeof(fsel_file) -1;
+		}
+		((char*)memcpy (fsel_file, file, f_len))[f_len] = '\0';
+	}
+	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
+	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
+		r = fsel_exinput (fsel_path, fsel_file, &butt, label);
+	} else {
+		r = fsel_input (fsel_path, fsel_file, &butt);
+	}
+	if (!r || butt == FSEL_CANCEL) {
+		if (buff) {
+			*buff = '\0';
+			buff  = NULL;
+		}
+	} else {
+		size_t f_len = strlen (fsel_file);
+		size_t p_len = strlen (fsel_path);
+		while (p_len && fsel_path[p_len-1] != '\\') p_len--;
+		if (f_len && p_len) {
+			if (!buff) {
+				buff = malloc (f_len + p_len +1);
+			} else if (blen < f_len + p_len +1) {
+				buff = NULL;
+			}
+			if (buff) {
+				memcpy (buff,         fsel_path, p_len);
+				memcpy (buff + p_len, fsel_file, f_len +1);
+			}
+		}
+	}
+	return buff;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static BOOL
 page_load(void)
 {
 	char fsel_file[HW_PATH_MAX] = "";
-	WORD r, butt;  /* file selector exit button */
-
-	if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-	    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-		r = fsel_exinput (fsel_path, fsel_file, &butt,
-		                  "HighWire: Open HTML or text");
+	const char * label = "HighWire: Open HTML or text";
+	if (!file_selector (label, NULL, NULL, fsel_file, sizeof(fsel_file))) {
+		return FALSE;
 	} else {
-		r = fsel_input(fsel_path, fsel_file, &butt);
+		start_cont_load (hwWind_Top->Pane, fsel_file, NULL, TRUE, TRUE);
 	}
-	if (r && butt != FSEL_CANCEL) {
-		char * slash = strrchr (fsel_path, '\\');
-		if (slash) {
-			char   file[HW_PATH_MAX];
-			size_t len = slash - fsel_path +1;
-			memcpy (file, fsel_path, len);
-			strcpy (file + len, fsel_file);
-			start_cont_load (hwWind_Top->Pane, file, NULL, TRUE, TRUE);
-		} else {
-			butt = FALSE;
-		}
-	}
-	return butt;
+	return TRUE;
 }
 
 

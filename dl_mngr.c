@@ -381,57 +381,33 @@ fsel_job (void * arg, long invalidated)
 {
 	SLOT slot = slot_byArg (arg);
 	SDAT data = &slot->Data;
+	char fsel_file[HW_PATH_MAX];
+	size_t len;
 	
 	if (invalidated) {
 		return FALSE;
 	}
 	
-	do {
-		char fsel_file[HW_PATH_MAX];
-		WORD butt = -1;
-		WORD ret  = strlen (data->Location->File);
-		
-		if (ret) {
-			const char * p = memchr (data->Location->File, '?', ret);
-			if (p) ret = (WORD)(p - data->Location->File);
-		}
-		if (ret) {
-			memcpy (fsel_file, data->Location->File, ret);
-		}
-		fsel_file[ret] = '\0';
-		
-		if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-		    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-			ret = fsel_exinput (fsel_path, fsel_file, &butt, "Save Target as...");
-		} else {
-			ret = fsel_input (fsel_path, fsel_file, &butt);
-		}
-		if (!ret || butt != FSEL_OK || !*fsel_file) {
-			arg = NULL;
-		} else {
-			char * p = strrchr (fsel_path, '\\');
-			long   n = p - fsel_path +1;
-			if (n > 0) {
-				memmove (fsel_file + n, fsel_file, strlen (fsel_file) +1);
-				memcpy  (fsel_file,     fsel_path, n);
-			} else {
-				arg = NULL;
-			}
-		}
-		if (arg) {
-			data->Target = open (fsel_file, O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
-			if (data->Target < 0) {
-				hwUi_warn ("Download", "Cannot create target file.");
-			} else {
-				SCHED_FUNC job = (PROTO_isRemote (data->Location->Proto)
-				                  ? recv_job : load_job);
-				sched_insert (job, arg, (long)arg, 20/*PRIO_RECIVE*/);
-				break;
-			}
-		}
-	} while (arg);
+	if ((len = strlen (data->Location->File)) > 0) {
+		const char * p = memchr (data->Location->File, '?', len);
+		if (p) len = (WORD)(p - data->Location->File);
+	}
+	if (len) {
+		memcpy (fsel_file, data->Location->File, len);
+	}
+	fsel_file[len] = '\0';
 	
-	if (!arg) {
+	if (file_selector ("Save Target as...",
+	    NULL, fsel_file, fsel_file, sizeof(fsel_file))) {
+		data->Target = open (fsel_file, O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
+		if (data->Target < 0) {
+			hwUi_warn ("Download", "Cannot create target file.");
+		} else {
+			SCHED_FUNC job = (PROTO_isRemote (data->Location->Proto)
+			                  ? recv_job : load_job);
+			sched_insert (job, arg, (long)arg, 20/*PRIO_RECIVE*/);
+		}
+	} else {
 		slot_remove (slot);
 	}
 	slot_redraw (slot, FALSE);

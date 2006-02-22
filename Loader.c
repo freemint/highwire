@@ -968,7 +968,7 @@ saveas_job (void * arg, long invalidated)
 {
 	LOADER loader = arg;
 	char fsel_file[HW_PATH_MAX] = "";
-	WORD r, butt;  /* file selector exit button */
+/*	WORD r, butt;*/  /* file selector exit button */
 	int    fh1, fh2;
 	long fsize, bsize, rsize, csize = 0, nsize, ssize;
 	char *buffer;
@@ -1011,67 +1011,52 @@ saveas_job (void * arg, long invalidated)
 			
 			/* get our new filename */
 			
-			if ((gl_ap_version >= 0x140 && gl_ap_version < 0x200)
-			    || gl_ap_version >= 0x300 /* || getcookie(FSEL) */) {
-				r = fsel_exinput (fsel_path, fsel_file, &butt,
-			                  "HighWire: Save File as...");
-			} else {
-				r = fsel_input(fsel_path, fsel_file, &butt);
-			}
+			if (file_selector ("HighWire: Save File as...", NULL,
+			                   fsel_file, fsel_file,sizeof(fsel_file))) {
+				if ((fh2 = open (fsel_file, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
+					/* get our cache file name */
+					location_FullName (loc, va_helpbuf, HW_PATH_MAX *2);
 
-			if (r && butt != FSEL_CANCEL) {
-				char * slash = strrchr (fsel_path, '\\');
-				if (slash) {
-					char   file[HW_PATH_MAX];
-					size_t len = slash - fsel_path +1;
-					memcpy (file, fsel_path, len);
-					strcpy (file + len, fsel_file);
-
-					if ((fh2 = open (file, O_RDWR|O_CREAT|O_TRUNC, 0666)) >= 0) {
-						/* get our cache file name */
-						location_FullName (loc, va_helpbuf, HW_PATH_MAX *2);
-
-						/* attempt to open cache file */
-						fh1 = open (va_helpbuf, O_RDONLY);
-						
-						if (fh1 < 0) {
-								printf("saveas_job(): file not found in cache\r\n");
-								close (fh2);
-								goto saveas_bottom;
-							} 
-
-						/* max 32k buffer to read/write */
-						if (fsize < 32000)
-							bsize = fsize;
-						else
-							bsize = 32000;
-											
-						buffer = malloc(bsize);
-
-						if (!buffer) {
-							close (fh1);
+					/* attempt to open cache file */
+					fh1 = open (va_helpbuf, O_RDONLY);
+					
+					if (fh1 < 0) {
+							printf("saveas_job(): file not found in cache\r\n");
 							close (fh2);
-							printf("saveas_job(): memory malloc error\r\n");
 							goto saveas_bottom;
-						}
-															
-						while (csize < fsize)
-						{
-							rsize = read (fh1, buffer, bsize);
-							write (fh2, buffer, rsize);
-							csize += rsize;
-						}
-		
-						/* done so close our files */
+						} 
+
+					/* max 32k buffer to read/write */
+					if (fsize < 32000)
+						bsize = fsize;
+					else
+						bsize = 32000;
+										
+					buffer = malloc(bsize);
+
+					if (!buffer) {
 						close (fh1);
 						close (fh2);
+						printf("saveas_job(): memory malloc error\r\n");
+						goto saveas_bottom;
+					}
+														
+					while (csize < fsize)
+					{
+						rsize = read (fh1, buffer, bsize);
+						write (fh2, buffer, rsize);
+						csize += rsize;
+					}
+	
+					/* done so close our files */
+					close (fh1);
+					close (fh2);
 
-						/* and release our buffer */
-						free(buffer);
-						
-					} else
-						printf("File creation error\r\n");
-						
+					/* and release our buffer */
+					free(buffer);
+					
+				} else {
+					printf("File creation error\r\n");
 				}
 				/* We don't worry about the else as all is done above */
 			}
