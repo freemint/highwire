@@ -273,7 +273,8 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				 * the root object quite commonly.  I don't know why.  If we fix that then
 				 * fix this test
 				 */
-				em = (current->parentbox->FontStk->Size != 293 ? current->parentbox->FontStk->Size : font_size);
+
+				em = (current->parentbox->FontStk ? current->parentbox->FontStk->Size : font_size);
 				em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
 				ex = em/2;
 
@@ -421,11 +422,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			short em = 0, ex = 0;
 			short size;
 			
-			/* Ok.  I get a value of 293 in current->parentbox->FontStk->Size when it's
-			 * the root object quite commonly.  I don't know why.  If we fix that then
-			 * fix this test
-			 */
-			em = (current->parentbox->FontStk->Size != 293 ? current->parentbox->FontStk->Size : font_size);
+			em = (current->parentbox->FontStk ? current->parentbox->FontStk->Size : font_size);
 			em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
 			ex = em/2;
 
@@ -889,6 +886,8 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 	
 	css_text_styles (parser, current->font);
 
+	box->FontStk = current->font;
+	
 	box_anchor (parser, box, TRUE);
 	
 	return box;
@@ -1660,6 +1659,10 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
 			frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
 		}
+
+		/* In case there is no style */
+		frame->Page.FontStk = parser->Current.font;
+
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
 
@@ -2025,6 +2028,8 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 
+/*	word_set_point (current, current->font->Size = font_step2size (current->font->Step = 2));
+*/
 		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
@@ -2180,9 +2185,9 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 			word_set_color (current, frame->link_color);
 
-			if (parser->hasStyle) {
+/*			if (parser->hasStyle) {
+			} dan */
 				css_text_styles (parser, current->font);
-			}
 
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
@@ -2882,19 +2887,20 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED  (text);
 		
 	if (flags & PF_START) {
+		WORD vspace = 0;
 
-		/* Ignore a paragraph start just behind a <LI> tag.
-		 * Else valid <LI><P>...</P><P>...</P></LI> looks bad.
+		/* reworked supression is handled elsewhere */
+		/* You would think there would be an easier way to do this
+		 * however I haven't been able to find one
 		 */
 		if (!current->lst_stack || !current->lst_stack->ListItem ||
 		    current->lst_stack->ListItem->item->next_word->next_word->next_word) {
-			par = add_paragraph (current, 2);
-			par->Box.HtmlCode = TAG_P;
-			if (current->parentbox->BoxClass == BC_LIST) {
-				par->Box.Margin.Lft = current->lst_stack->Hanging;
-			}
+				vspace = 2;
 		}
-		
+
+		par = add_paragraph (current, vspace);
+		par->Box.HtmlCode = TAG_P;
+
 		/* reset fontstack */
 		reset_text_styles(parser);
 
@@ -3241,6 +3247,7 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (!current->lst_stack) {
 		if (flags & PF_START) {
+
 			if (current->prev_wrd) {
 				current->prev_wrd->line_brk = BRK_LN;
 			}
@@ -3426,10 +3433,12 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		             height, width, min_wid,
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border);
+
 		if (parser->hasStyle) {
 			DOMBOX * box = parser->Current.parentbox->ChildEnd;
 			box_frame (parser, &box->Margin, CSS_MARGIN);
-			if (box->BorderWidth.Top) { /* should be all ? */
+			if (box->BorderWidth.Top) 
+			{ 
 				short color = get_value_color (parser, CSS_BORDER_COLOR);
 				if (color >= 0) 
 					box->BorderColor.Top = box->BorderColor.Bot =
