@@ -37,6 +37,8 @@ list_start (PARSER parser, TEXTBUFF current, BULLET bullet, short counter, short
 	css_box_styles  (parser, box, ALN_LEFT);
 	css_text_styles (parser, current->font);
 
+box->FontStk = current->font;
+
 	list->BulletStyle = bullet;
 	list->Counter     = counter;
 
@@ -289,7 +291,9 @@ list_marker (TEXTBUFF current, BULLET bullet, short counter)
 	list->ListItem = par;
 	*(current->text++) = font_Nobrk (current->word->font);
 	new_word (current, TRUE);
-	
+
+	current->paragraph->Box.FontStk = current->font;
+
 	switch (bullet)
 	{
 		case LT_DISC:
