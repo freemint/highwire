@@ -437,16 +437,25 @@ chunked_job (void * arg, long invalidated)
 					if (loader->rdTlen > 2) {
 						data = memchr (loader->rdTemp +2, '\n', loader->rdTlen -2);
 					}
+				} else {
+
+					/* check for connection termination */
+					if (n == -ECONNRESET) {
+						inet_close (loader->rdSocket);
+						loader->rdSocket = -1;
+						loader->rdLeft   = 0;
+						break;
+					}
 				}
 			}
+
 			if (data) {
 				*(data++) = '\0';
 				if ((long)(size = strtoul (loader->rdTemp, NULL, 16)) <= 0) {
 					loader->rdTlen = 0; /* end of chunks */
-				} else {
+				} else {				
 					loader->rdTlen -= data - loader->rdTemp;
 				}
-			
 			} else if (loader->rdTlen == sizeof(loader->rdTemp)) {
 				printf ("rotten chunk header\n");
 				loader->rdDest = NULL;
