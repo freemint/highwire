@@ -357,8 +357,8 @@ new_input (PARSER parser)
 	INPUT    input   = NULL;
 	FRAME    frame   = parser->Frame;
 	TEXTBUFF current = &parser->Current;
+	const char * val = "T"; /* default type is TEXT */
 	char output[100], name[100];
-	const char * val;
 	
 	if (!current->form) {
 		current->form = new_form (frame, NULL, NULL, NULL);
@@ -383,14 +383,13 @@ new_input (PARSER parser)
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   get_value_exists (parser, KEY_READONLY),
 		                   (toupper (*output) == 'P'));
-
+		
 		/* Add the browse button */
-		if (stricmp (output, val = "FILE") == 0) {
+		if (*val == 'F') {
 			FORM  form = current->form;
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
-			form->Method   = METH_PUT;
 			bttn->u.FileEd = input;
-			input          = bttn; /* else disabling wouldn't work */
+			form->Method   = METH_PUT;
 		}
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
@@ -443,7 +442,7 @@ new_input (PARSER parser)
 	}
 	
 	if (input && get_value (parser, KEY_DISABLED, NULL,0)) {
-		input->disabled = TRUE;
+		input_disable (input, TRUE);
 	}
 	
 	return input;
@@ -787,6 +786,18 @@ void
 input_disable (INPUT input, BOOL onNoff)
 {
 	input->disabled = onNoff;
+	/* check for file uploade element to set its correspondind part also */
+	if (input->Type == IT_BUTTN) {
+		INPUT field = (input->SubType == 'F' ? input->u.FileEd : NULL);
+		if (field && field->Next == input) {
+			field->disabled = onNoff;
+		}
+	} else if (input->Type == IT_TEXT) {
+		INPUT buttn = (input->Next->Type == IT_BUTTN ? input->Next : NULL);
+		if (buttn->SubType == 'F' && buttn->u.FileEd == input) {
+			buttn->disabled = onNoff;
+		}
+	}
 }
 
 
