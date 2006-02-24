@@ -647,6 +647,11 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			}
 
 			if (width >= 0) {
+				/* reset top color or things go insane do to limitations 
+				 * in the draw routine.  This mainly applies to tables*/
+				 
+				if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
+
 				switch(key) {
 					case CSS_BORDER_TOP:
 						box->BorderWidth.Top = width;
@@ -670,6 +675,11 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			}
 
 			if (color >= 0 && !ignore_colours) {
+				/* reset top color or things go insane do to limitations 
+				 * in the draw routine.  This mainly applies to tables*/
+
+				if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
+
 				switch(key) {
 					case CSS_BORDER_TOP:
 						box->BorderColor.Top = remap_color (color);
@@ -705,10 +715,6 @@ void
 css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 {
 	char out[100];
-	
-	/* reseting the border */
-	box->BorderWidth.Top = box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = 0;
-	box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = 0;
 	
 	/* This should possibly be down in the base parse_html() routine */
 	if (get_value (parser, CSS_DISPLAY, out, sizeof(out))) {
@@ -1960,12 +1966,16 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	TEXTBUFF current = &parser->Current;
+/*	TEXTBUFF current = &parser->Current;*/
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		css_box_styles  (parser, &current->paragraph->Box,
+		/* I've disabled box_styles for spans at the moment since
+		 * we can not properly handle most of them at the moment
+		 */
+		/*		css_box_styles  (parser, &current->paragraph->Box,
 		                 current->paragraph->Box.TextAlign);
+		*/
 		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
@@ -3473,6 +3483,8 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 			           get_h_align     (parser, ALN_LEFT), 
 			           get_v_align     (parser, ALN_MIDDLE),
 			           get_value_size  (parser, KEY_HEIGHT), TRUE);
+
+
 		} else {
 			table_row (current, -1,0,0,0, FALSE);
 		}
@@ -3511,6 +3523,13 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 
 		current->parentbox->HtmlCode = TAG_TD;
+
+		css_box_styles  (parser, current->parentbox, current->tbl_stack->AlignH);
+		css_text_styles (parser, current->font);
+
+		/* we have to reset the width in case it was set again in css_box_styles */
+		current->parentbox->SetWidth = (tempsize  <= 1024 ? tempsize  : 0);
+
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
 	} else if (current->tbl_stack) {	
@@ -3552,6 +3571,13 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;
+
+		css_box_styles  (parser, current->parentbox, ALN_CENTER);
+		css_text_styles (parser, current->font);
+
+		/* we have to reset the width in case it was set again in css_box_styles */
+		current->parentbox->SetWidth = (tempsize  <= 1024 ? tempsize  : 0);
+
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
 	} else if (current->tbl_stack) {	
