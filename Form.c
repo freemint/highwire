@@ -352,7 +352,7 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 
 /*============================================================================*/
 INPUT
-new_input (PARSER parser)
+new_input (PARSER parser, WORD width)
 {
 	INPUT    input   = NULL;
 	FRAME    frame   = parser->Frame;
@@ -389,7 +389,16 @@ new_input (PARSER parser)
 			FORM  form = current->form;
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
 			bttn->u.FileEd = input;
-			form->Method   = METH_PUT;
+			if (width > 0) {
+				width = (width > bttn->Word->word_width
+				         ? width - bttn->Word->word_width : 1);
+			}
+			form->Method = METH_PUT;
+		}
+		if (width > 0) {
+			WORD cw = (input->Word->word_width -1 -4) / input->VisibleX;
+			input->Word->word_width = max (width, input->Word->word_height *2);
+			input->VisibleX = (input->Word->word_width -1 -4) / cw;
 		}
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);

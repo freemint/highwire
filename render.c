@@ -3602,7 +3602,16 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		if (new_input (parser)) {
+		char out[100];
+		WORD width;
+		if (parser->hasStyle && get_value (parser, KEY_WIDTH, out,sizeof(out))) {
+			short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;
+			width = numerical (out, NULL, em, ex);
+		} else {
+			width = 0;
+		}
+		if (new_input (parser, width)) {
 			flags |= PF_FONT;
 			flags &= ~PF_SPACE;
 		}

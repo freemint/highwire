@@ -5,6 +5,9 @@ Changes since v. 0.3.0 release
   redirected files.  This makes also downloading a
   bit faster, as a nice side effect (#0219).
 
+- CSS width attribute added for formular elements
+  text, file and password.
+
 - Font-size handling refined
 
 - Handling of % values in scan_numeric() modified (sourceforge fix)
