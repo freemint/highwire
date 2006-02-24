@@ -55,10 +55,15 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	This->Backgnd  = -1;
 	This->Floating = ALN_NO_FLT;
 
-This->SetPos.Lft = -2000;
-This->SetPos.Rgt = -2000;
-This->SetPos.Top = -2000;
-This->SetPos.Bot = -2000;
+	/* init the position */
+	
+	This->SetPos.Lft = This->SetPos.Rgt = This->SetPos.Top = This->SetPos.Bot = -2000;
+
+	/* init the border */
+
+	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
+	This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = 0;
+
 	
 	return This;
 }
@@ -133,6 +138,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			b.g_y = y1;
 			b.g_w = x2 - x1 +1;
 			b.g_h = y2 - y1 +1;
+
 			if (This->BorderColor.Top == -1) { /* outset */
 				draw_TBLR_border (&b, G_WHITE, G_LBLACK, This->BorderWidth); /* should be all */
 			} else { /* inset */
