@@ -106,7 +106,7 @@ file_selector (const char * label, const char * patt,
 		slash = fsel_path +2;
 	}
 	strcpy (slash +1, (patt ? patt : "*.*"));
-	if (file) {
+	if (file && *file) {
 		size_t f_len = strlen (file);
 		if (f_len >= sizeof(fsel_file)) {
 			f_len = sizeof(fsel_file) -1;
@@ -150,7 +150,8 @@ page_load(void)
 {
 	char fsel_file[HW_PATH_MAX] = "";
 	const char * label = "HighWire: Open HTML or text";
-	if (!file_selector (label, "*.[HJPT]*", NULL, fsel_file,sizeof(fsel_file))) {
+	const char * patt  = (sys_XAAES() ? "*.[HJPT]*" : NULL);
+	if (!file_selector (label, patt, NULL, fsel_file,sizeof(fsel_file))) {
 		return FALSE;
 	} else {
 		start_cont_load (hwWind_Top->Pane, fsel_file, NULL, TRUE, TRUE);
