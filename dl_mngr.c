@@ -382,6 +382,7 @@ fsel_job (void * arg, long invalidated)
 	SLOT slot = slot_byArg (arg);
 	SDAT data = &slot->Data;
 	char fsel_file[HW_PATH_MAX];
+	char patt[8] = ""; /* enough for "*.xhtml" */
 	size_t len;
 	
 	if (invalidated) {
@@ -394,11 +395,30 @@ fsel_job (void * arg, long invalidated)
 	}
 	if (len) {
 		memcpy (fsel_file, data->Location->File, len);
+		if (len >= 3) {
+			char * src = fsel_file + len;
+			short  anz = 0;
+			do if (--src <= fsel_file) {
+				anz = 0;
+			} else if (*src == '.') {
+				break;
+			} else if (*src == '\\' || *src == '/' || ++anz > sizeof(patt)-3) {
+				anz = 0;
+			} while (anz);
+			if (anz) {
+				char * dst = patt;
+				if (anz > 3 && !sys_XAAES()) anz = 3;
+				*(dst++) = '*';
+				*(dst++) = '.';
+				while (anz--) *(dst++) = toupper (*(++src));
+				*dst = '\0';
+			}
+		}
 	}
 	fsel_file[len] = '\0';
 	
 	if (file_selector ("Save Target as...",
-	    NULL, fsel_file, fsel_file, sizeof(fsel_file))) {
+	    (*patt ? patt : NULL), fsel_file, fsel_file, sizeof(fsel_file))) {
 		data->Target = open (fsel_file, O_WRONLY|O_CREAT|O_TRUNC|O_RAW, 0666);
 		if (data->Target < 0) {
 			hwUi_warn ("Download", "Cannot create target file.");
