@@ -11,14 +11,15 @@
 #include "av_comm.h"
 
 
-static short av_shell_id = -1,     /* Desktop's AES ID */
-             av_shell_status = 0;  /* What AV commands can desktop do? */
-
 /* All GLOBAL memory is merged to one block and allocated in main(). */
 char *va_helpbuf;  /* HW_PATH_MAX byte */
+short av_shell_id = -1,     /* Desktop's AES ID */
+             av_shell_status = 0;  /* What AV commands can desktop do? */
+                       
+short get_avserver(void);
 
-
-static short get_avserver(void)
+/* static short get_avserver(void) */
+short get_avserver(void)
 {
 	short ret;
 	const char *av_env;

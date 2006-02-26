@@ -30,6 +30,14 @@
 #include "cache.h"
 
 
+extern short av_shell_id;     /* Desktop's AES ID */
+extern short av_shell_status;  /* What AV commands can desktop do? */
+             
+extern short get_avserver(void);
+extern const char * cfg_Viewer;
+
+
+
 char fsel_path[HW_PATH_MAX];
 char help_file[HW_PATH_MAX];
 
@@ -1110,37 +1118,78 @@ find_application (const char * name)
 static short
 start_application (const char * appl, LOCATION loc)
 {
-	short id   = (appl ? find_application (appl) : -1);
-	if (id >= 0 || (id = find_application (NULL)) >= 0) {
+	
+	if (av_shell_id < 0) {
+	av_shell_id = get_avserver();
+	}
+
+	if (av_shell_id >= 0) {
 		short msg[8] = { AV_STARTPROG, };
 		msg[1] = gl_apid;
 		msg[2] = msg[5] = msg[6] = msg[7] = 0;
 		*(char**)(msg +3) = va_helpbuf;
 		location_FullName (loc, va_helpbuf, 250); /* changed from HW_PATH_MAX *2 to 250 - MLutz */
-		appl_write (id, 16, msg);
+		appl_write (av_shell_id, 16, msg);
 	}
-	return id;
+	return av_shell_id;
 }
 
 
 /*==============================================================================
- * small routine to call external viewer to view the SRC to
+ * small routine to call external viewer to view the SRC to 
  * a file so that realtime comparisons can be made
  * baldrick August 9, 2002
 */
+/* void
+launch_viewer(const char *name)
+{
+ 	short id = find_application ("Viewer");
+ 
+ 	if (id >= 0 || (id = find_application (NULL)) >= 0) {
+ 		short msg[8];
+ 		msg[0] = (VA_START);
+ 		msg[1] = gl_apid;
+ 		msg[2] = 0;
+ 		*(char**)(msg +3) = strcpy (va_helpbuf, name);
+ 		msg[5] = msg[6] = msg[7] = 0;
+ 		appl_write (id, 16, msg);
+ 	}
+} */
+ 
+ 
+/*==============================================================================
+ * small routine to call external viewer to view the SRC to
+ * a file so that realtime comparisons can be made
+ * mlutz February 26, 2006
+*/
+
 void
 launch_viewer(const char *name)
 {
-	short id = find_application ("Viewer");
+	char *p = 0;
+	
+	if (av_shell_id < 0) {
+	av_shell_id = get_avserver();
+	} 
 
-	if (id >= 0 || (id = find_application (NULL)) >= 0) {
+
+	if (av_shell_id >= 0) {
 		short msg[8];
 		msg[0] = (AV_STARTPROG);
 		msg[1] = gl_apid;
 		msg[2] = 0;
-		*(char**)(msg +3) = strcpy (va_helpbuf, name);
-		msg[5] = msg[6] = msg[7] = 0;
-		appl_write (id, 16, msg);
+		
+		
+		strcpy (va_helpbuf, cfg_Viewer); 	 /* copy full name of the programm */
+		p = va_helpbuf + strlen (va_helpbuf) +1; /* position ater the \0 of string */
+		strcpy (p, name); 			 /* second string in va_helpbuf */
+		
+		*(char**)(msg +3) = va_helpbuf;          /* pointer to program name */
+		*(char**)(msg +5) = p;                   /* pointer to command line for the program */
+
+		msg[7] = 0;
+		
+		appl_write (av_shell_id, 16, msg);
 	}
 }
 

@@ -22,6 +22,7 @@
 WORD         cfg_UptoDate     = -1;
 const char * cfg_File         = NULL;
 const char * cfg_StartPage    = "html\\highwire.htm";
+const char * cfg_Viewer    = "D:\\qed\\qed.app";
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
@@ -209,6 +210,21 @@ cfg_startpage (char * param, long arg)
 	}
 	if (cfg_UptoDate > 0) {
 		cfg_StartPage = strdup (param);
+	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+cfg_viewer (char * param, long arg)
+{
+	(void)arg;
+	if (*param == '!') { /* for debugging only */
+		param++;
+		cfg_UptoDate = TRUE;
+	}
+	if (cfg_UptoDate > 0) {
+		cfg_Viewer = strdup (param);
 	}
 }
 
@@ -575,6 +591,7 @@ read_config(void)
 				{ "URL_09",               cfg_urlhist,   8 },
 				{ "URL_10",               cfg_urlhist,   9 },
 				{ "USE_CSS",              cfg_func,      (long)menu_use_css    },
+				{ "VIEWER",               cfg_viewer, 0 },
 				{ "VIEW_IMAGES",          cfg_func,      (long)menu_images     }
 			};
 			short beg = 0;
