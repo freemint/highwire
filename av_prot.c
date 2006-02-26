@@ -38,29 +38,6 @@ static short get_avserver(void)
 		if (ret >= 0)
 			return ret;
 	}
-/*	else if ((ret = appl_find("AVSERVER")) >= 0)
-		return ret;
-	else if ((ret = appl_find("DESKTOP "))  >= 0)
-		return ret;
-	else if ((ret = appl_find("JINNEE  ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("THING   ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("MAGXDESK")) >= 0)
-		return ret;
-	else if ((ret = appl_find("GEMINI  ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("STRNGSRV")) >= 0)
-		return ret;
-	else if ((ret = appl_find("DIRECT  ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("EASY    ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("KAOS    ")) >= 0)
-		return ret;
-	else if ((ret = appl_find("CAT     ")) >= 0)
-		return ret;
-*/
 	return -100;
 }
 
