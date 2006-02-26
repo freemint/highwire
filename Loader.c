@@ -1092,29 +1092,6 @@ saveas_bottom:
 	return JOB_DONE;
 }
 
-/*----------------------------------------------------------------------------*/
-static short
-find_application (const char * name)
-{
-	short id = -1;
-
-	if (name == NULL && ((name = getenv ("AVSERVER")) == NULL || !*name)) {
-		static const char * list[] = {
-			"AVServer", "Jinnee", "Thing", "DESKTOP ", "MagxDesk", "GEMINI",
-			"StrngSrv", "DIRECT", "EASY",  "KAOS",
-			NULL };
-		const char ** desktop = list;
-		while ((id = find_application (*desktop)) < 0 && *(++desktop));
-
-	} else if (name && *name) {
-		char buf[] = "        ", * p = buf;
-		while (*name && *p) *(p++) = toupper (*(name++));
-		id = appl_find (buf);
-	}
-	return id;
-}
-
-/*----------------------------------------------------------------------------*/
 static short
 start_application (const char * appl, LOCATION loc)
 {
@@ -1136,31 +1113,9 @@ start_application (const char * appl, LOCATION loc)
 
 
 /*==============================================================================
- * small routine to call external viewer to view the SRC to 
- * a file so that realtime comparisons can be made
- * baldrick August 9, 2002
-*/
-/* void
-launch_viewer(const char *name)
-{
- 	short id = find_application ("Viewer");
- 
- 	if (id >= 0 || (id = find_application (NULL)) >= 0) {
- 		short msg[8];
- 		msg[0] = (VA_START);
- 		msg[1] = gl_apid;
- 		msg[2] = 0;
- 		*(char**)(msg +3) = strcpy (va_helpbuf, name);
- 		msg[5] = msg[6] = msg[7] = 0;
- 		appl_write (id, 16, msg);
- 	}
-} */
- 
- 
-/*==============================================================================
  * small routine to call external viewer to view the SRC to
  * a file so that realtime comparisons can be made
- * mlutz February 26, 2006
+ * mlutz February 26, 2006 with the help of Djordje Vukovic
 */
 
 void
