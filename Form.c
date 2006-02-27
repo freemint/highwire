@@ -77,6 +77,7 @@ struct s_input {
 
 struct s_select {
 	SLCTITEM ItemList;
+	WCHAR  * SaveWchr;
 	WORD     NumItems;
 	char   * Array[1];
 };
@@ -153,6 +154,52 @@ form_finish (TEXTBUFF current)
 		input = input->Next;
 	}
 	current->form = NULL;
+}
+
+/*============================================================================*/
+void
+destroy_form (FORM form, BOOL all)
+{
+	while (form) {
+		FORM  next  = form->Next;
+		INPUT input = form->InputList;
+		while (input) {
+			INPUT inxt = input->Next;
+			if (input->Type == IT_SELECT) {
+				SELECT sel = input->u.Select;
+				if (sel) {
+					while (sel->ItemList) {
+						SLCTITEM item = sel->ItemList;
+						sel->ItemList = item->Next;
+						if (item->Value) {
+							free (item->Value);
+						}
+						free (item);
+					}
+					input->Value      = NULL;
+					input->Word->item = sel->SaveWchr;
+					free (sel);
+				}
+			}
+			if (input->Value) {
+				free (input->Value);
+			}
+			if (input->Word) {
+				input->Word->input = NULL;
+			}
+			free (input);
+			input = inxt;
+		}
+		if (form->Target) {
+			free (form->Target);
+		}
+		if (form->Action) {
+			free (form->Action);
+		}
+		free (form);
+		if (!all) break;
+		else      form = next;
+	}
 }
 
 
@@ -519,6 +566,7 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 		}
 		input->disabled = disabled;
 		set_word (current, asc, dsc, asc + dsc);
+		sel->SaveWchr = input->Word->item;
 	}
 	
 	return input;
@@ -614,6 +662,7 @@ finish_selct (INPUT input)
 			SLCTITEM item = sel->ItemList;
 			short    wdth = 0;
 			rdy->ItemList = sel->ItemList;
+			rdy->SaveWchr = sel->SaveWchr;
 			rdy->NumItems = num;
 			rdy->Array[0] = rdy->Array[num] = NULL;
 			do {

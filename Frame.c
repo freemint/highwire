@@ -95,6 +95,7 @@ delete_frame (FRAME * p_frame)
 		if (frame->AuthBasic) {
 			free (frame->AuthBasic);
 		}
+		destroy_form  (frame->FormList, TRUE);
 		free_location (&frame->Location);
 		free_location (&frame->BaseHref);
 		Delete (&frame->Page);

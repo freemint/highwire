@@ -2,8 +2,9 @@
 #define __FORM_H__
 
 
-void * new_form (FRAME, char * target, char * action, const char * method);
-void form_finish (TEXTBUFF);
+void * new_form     (FRAME, char * target, char * action, const char * method);
+void   form_finish  (TEXTBUFF);
+void   destroy_form (FORM, BOOL all);
 
 INPUT new_input (PARSER, WORD width);
 INPUT new_tarea (PARSER, const char * beg, const char * end, UWORD nlines);
