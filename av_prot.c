@@ -18,7 +18,6 @@ short av_shell_id = -1,     /* Desktop's AES ID */
                        
 short get_avserver(void);
 
-/* static short get_avserver(void) */
 short get_avserver(void)
 {
 	short ret;

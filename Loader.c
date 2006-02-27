@@ -1134,15 +1134,21 @@ launch_viewer(const char *name)
 		msg[1] = gl_apid;
 		msg[2] = 0;
 		
-		
+		if (mime_byExtension (name, NULL, NULL) == MIME_TXT_HTML) {
 		strcpy (va_helpbuf, cfg_Viewer); 	 /* copy full name of the programm */
-		p = va_helpbuf + strlen (va_helpbuf) +1; /* position ater the \0 of string */
-		strcpy (p, name); 			 /* second string in va_helpbuf */
+		p = va_helpbuf + strlen (va_helpbuf) +1; /* position after the \0 of string */
+		strcpy (p, name); 			 /* file path copied to va_helpbuf */
 		
 		*(char**)(msg +3) = va_helpbuf;          /* pointer to program name */
-		*(char**)(msg +5) = p;                   /* pointer to command line for the program */
+		*(char**)(msg +5) = p;                   /* pointer to file path for the program */
 
 		msg[7] = 0;
+		} else 
+		{
+		*(char**)(msg +3) = strcpy (va_helpbuf,name);          /* pointer to program name */
+		
+		msg[5] = msg [6] = msg[7] = 0;
+		}		
 		
 		appl_write (av_shell_id, 16, msg);
 	}
