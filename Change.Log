@@ -8,6 +8,10 @@ Changes since v. 0.3.0 release
 - CSS width attribute added for formular elements
   text, file and password.
 
+- New feature implemented:  holding SHIFT+CTRL
+  while clicking a link opens a new window and set
+  it to the bottom.
+
 - Font-size handling refined
 
 - Handling of % values in scan_numeric() modified (sourceforge fix)
