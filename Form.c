@@ -382,18 +382,21 @@ new_input (PARSER parser, WORD width)
 		input = form_text (current, name, get_value_str (parser, KEY_VALUE),
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   get_value_exists (parser, KEY_READONLY),
-		                   (toupper (*output) == 'P'));
+		                   (*val == 'P'));
 		
 		/* Add the browse button */
 		if (*val == 'F') {
-			FORM  form = current->form;
+/*			FORM  form = current->form;*/
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
 			bttn->u.FileEd = input;
 			if (width > 0) {
 				width = (width > bttn->Word->word_width
 				         ? width - bttn->Word->word_width : 1);
 			}
-			form->Method = METH_PUT;
+			
+/* temporary disabled to keep GET/POST working
+*/
+/*			current->form->Method = METH_PUT;*/
 		}
 		if (width > 0) {
 			WORD cw = (input->Word->word_width -1 -4) / input->VisibleX;
