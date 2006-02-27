@@ -262,8 +262,11 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				} else if (link->u.target) {
 					cont = target;
 				}
-				if (!cont) {
-					cont = new_hwWind (addr, NULL, NULL)->Pane;
+				if (!cont && (wind = new_hwWind (addr, NULL, NULL)) != NULL) {
+					if (state & (K_RSHIFT|K_LSHIFT)) {
+						window_raise (&wind->Base, FALSE, NULL);
+					}
+					cont = wind->Pane;
 				}
 				if (cont) {
 					LOCATION ref = (PROTO_isRemote (frame->Location->Proto)
