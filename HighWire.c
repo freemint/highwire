@@ -105,9 +105,9 @@ main (int argc, char **argv)
 	if (Sysconf(-1) != -EINVFN) {
 		short mode = 0x0003  /* prefer TT ram    */
 		           | 0x0020; /* global accesible */
-		gslongname = (char *)Mxalloc (32 + 16 + 2 * HW_PATH_MAX, mode);
+		gslongname = (char *)Mxalloc (32 + 16 + 4 * HW_PATH_MAX, mode);
 	} else {
-		gslongname = (char *)Malloc (32 + 16 + 2 * HW_PATH_MAX);
+		gslongname = (char *)Malloc (32 + 16 + 4 * HW_PATH_MAX);
 	}
 	if (!gslongname) {
 		hwUi_fatal (NULL, _ERROR_NOMEM_);
