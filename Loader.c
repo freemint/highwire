@@ -33,9 +33,7 @@
 extern short av_shell_id;     /* Desktop's AES ID */
 extern short av_shell_status;  /* What AV commands can desktop do? */
              
-extern short get_avserver(void);
 extern const char * cfg_Viewer;
-
 
 
 char fsel_path[HW_PATH_MAX];
@@ -1092,12 +1090,15 @@ saveas_bottom:
 	return JOB_DONE;
 }
 
+
+/*----------------------------------------------------------------------------*/
 static short
 start_application (const char * appl, LOCATION loc)
 {
+	(void) appl;
 	
 	if (av_shell_id < 0) {
-	av_shell_id = get_avserver();
+		av_shell_id = get_avserver();
 	}
 
 	if (av_shell_id >= 0) {
@@ -1117,14 +1118,13 @@ start_application (const char * appl, LOCATION loc)
  * a file so that realtime comparisons can be made
  * mlutz February 26, 2006 with the help of Djordje Vukovic
 */
-
 void
 launch_viewer(const char *name)
 {
 	char *p = 0;
 	
 	if (av_shell_id < 0) {
-	av_shell_id = get_avserver();
+		av_shell_id = get_avserver();
 	} 
 
 
@@ -1135,21 +1135,17 @@ launch_viewer(const char *name)
 		msg[2] = 0;
 		
 		if (mime_byExtension (name, NULL, NULL) == MIME_TXT_HTML) {
-		strcpy (va_helpbuf, cfg_Viewer); 	 /* copy full name of the programm */
-		p = va_helpbuf + strlen (va_helpbuf) +1; /* position after the \0 of string */
-		strcpy (p, name); 			 /* file path copied to va_helpbuf */
-		
-		*(char**)(msg +3) = va_helpbuf;          /* pointer to program name */
-		*(char**)(msg +5) = p;                   /* pointer to file path for the program */
-
-		msg[7] = 0;
-		} else 
-		{
-		*(char**)(msg +3) = strcpy (va_helpbuf,name);          /* pointer to program name */
-		
-		msg[5] = msg [6] = msg[7] = 0;
+			strcpy (va_helpbuf, cfg_Viewer); 	 /* copy full name of the programm */
+			p = va_helpbuf + strlen (va_helpbuf) +1; /* position after the \0 of string */
+			strcpy (p, name); 			 /* file path copied to va_helpbuf */
+			
+			*(char**)(msg +3) = va_helpbuf; /* pointer to program name */
+			*(char**)(msg +5) = p;          /* pointer to file path for the program */
+			msg[7] = 0;
+		} else {
+			*(char**)(msg +3) = strcpy (va_helpbuf,name); /* pointer to program name */
+			msg[5] = msg [6] = msg[7] = 0;
 		}		
-		
 		appl_write (av_shell_id, 16, msg);
 	}
 }

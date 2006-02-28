@@ -207,7 +207,7 @@ MAPAREA  new_maparea (const char * shape, const char * coords,
 
 /* in color.c */
 
-void  save_colors(void);
+void  save_colors  (void);
 WORD  remap_color  (long value);
 ULONG color_lookup (ULONG rgb, WORD * trans);
 
@@ -243,7 +243,7 @@ long word_offset (WORDITEM);
 
 /* in av_prot.c */
 
-void Init_AV_Protocol(void);
-void Exit_AV_Protocol(void);
-BOOL Send_AV(short to_ap_id, short message, const char *data1, const char *data2);
-BOOL Receive_AV(const short msg[8]);
+short get_avserver     (void);
+void  Init_AV_Protocol (void);
+void  Exit_AV_Protocol (void);
+BOOL  Receive_AV       (const short msg[8]);
