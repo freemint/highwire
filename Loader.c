@@ -1143,7 +1143,7 @@ launch_viewer(const char *name)
 			*(char**)(msg +5) = p;          /* pointer to file path for the program */
 			msg[7] = 0;
 		} else {
-			*(char**)(msg +3) = strcpy (va_helpbuf,name); /* pointer to program name */
+			*(char**)(msg +3) = strcpy (va_helpbuf,name); /* pointer to file path, AVSERVER starts the appropiate program */
 			msg[5] = msg [6] = msg[7] = 0;
 		}		
 		appl_write (av_shell_id, 16, msg);
