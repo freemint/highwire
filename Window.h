@@ -44,6 +44,7 @@ void window_evKeybrd  (UWORD key, UWORD kstate);
 
 void window_redraw (WINDOW, const GRECT *);
 
-const char * window_setName (WINDOW, const char *);
-void         window_raise   (WINDOW, BOOL topNbot, const GRECT *);
-void         window_resize  (WINDOW, const GRECT *, BOOL fulled);
+const char * window_setName   (WINDOW, const char *);
+BOOL         window_setBevent (WINDOW);
+void         window_raise     (WINDOW, BOOL topNbot, const GRECT *);
+void         window_resize    (WINDOW, const GRECT *, BOOL fulled);

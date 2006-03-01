@@ -52,7 +52,6 @@ static URLHIST url_hist = NULL;
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
 static WORD  inc_xy = 0;
 static WORD  widget_b, widget_w, widget_h;
-static BOOL  bevent;
 static GRECT desk_area;
 static GRECT curr_area;
 static WORD  tbar_set = +21;
@@ -190,8 +189,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	short  i;
 	
 	if (!inc_xy) {
-		WORD out, u;
-		bevent = (appl_xgetinfo(AES_WINDOW, &out, &u,&u,&u) && (out & 0x20));
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
 		widget_b = desk_area.g_x - curr_area.g_x;
@@ -288,9 +285,8 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	edit->Shift   = 0;
 	edit->Cursor  = 0;
 
-	if (bevent) {
-		wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
-	}
+	window_setBevent (&This->Base);
+	
 	if (info_bgnd & 0x0080) {
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
@@ -644,9 +640,7 @@ vTab_sized (HwWIND This)
 				This->IbarH = widget_h - widget_b -1;
 			}
 			wind_set_str (This->Base.Handle, WF_NAME, This->Base.Name);
-			if (bevent) {
-				wind_set (This->Base.Handle, WF_BEVENT, 0x0001, 0,0,0);
-			}
+			window_setBevent (&This->Base);
 		}
 		
 	} else if (!This->Base.isFull) {

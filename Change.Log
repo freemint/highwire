@@ -8,7 +8,7 @@ Changes since v. 0.3.0 release
 - CSS width attribute added for formular elements
   text, file and password.
 
-- New feature implemented:  holding SHIFT+CTRL
+- New feature implemented:  holding SHIFT+ALT
   while clicking a link opens a new window and set
   it to the bottom.
 

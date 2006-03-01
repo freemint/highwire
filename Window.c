@@ -22,6 +22,7 @@ static void vTab_raised    (WINDOW, BOOL topNbot);
 
 WINDOW window_Top = NULL;
 
+static BOOL  bevent    = -1;
 static GRECT desk_area = { 0,0, 0,0 };
 
 
@@ -343,6 +344,24 @@ window_setName (WINDOW This, const char * name)
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+BOOL
+window_setBevent (WINDOW This)
+{
+	if (bevent < 0) {
+		WORD out, u;
+		bevent = (appl_xgetinfo(AES_WINDOW, &out, &u,&u,&u) && (out & 0x20));
+	}
+	if (bevent > 0) {
+		if (This) {
+			wind_set (This->Handle, WF_BEVENT, 0x0001, 0,0,0);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static BOOL
 vTab_close (WINDOW This, UWORD kstate)
 {
@@ -433,7 +452,15 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 			bot->Next  = This;
 			done       = TRUE;
 		}
-		wind_set (This->Handle, WF_BOTTOM, 0,0,0,0);
+		if (bevent > 0 || (bevent < 0 && window_setBevent (NULL))) {
+			wind_set (This->Handle, WF_BOTTOM, 0,0,0,0);
+		} else {
+			WINDOW prev = This->Prev;
+			while (prev) {
+				wind_set (prev->Handle, WF_TOP, 0,0,0,0);
+				prev = prev->Prev;
+			}
+		}
 	}
 	
 	if (done) {
