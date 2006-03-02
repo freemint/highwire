@@ -647,6 +647,7 @@ scan_color (const char * text, size_t len)
 	long col = -1;
 
 	if (len) {
+
 		if (text[0] == '#') {
 			if (!isspace(text[1])) {
 				char * end;
@@ -697,12 +698,17 @@ scan_color (const char * text, size_t len)
 			int end = (int)numberof(color) - 1;
 			char * p = name;
 
-			while (len--) *(p++) = tolower(*(text++));
+			while (len--){			
+				*(p++) = tolower(*(text++));
+				if (*text == ' ') {	*p = '\0'; break; }
+				if (*text == '!') { *p = '\0'; break; }
+			}
 			*p = '\0';
 
 			do {
 				int i = (end + beg) / 2;
 				int d = strcmp (name, color[i].Name);
+
 				if (d > 0) {
 					beg = i + 1;
 				} else if (d) {
@@ -712,7 +718,7 @@ scan_color (const char * text, size_t len)
 					break;
 				}
 			} while (beg <= end);
-		}
+		} 
 	}
 
 	return col;
