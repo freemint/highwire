@@ -18,6 +18,11 @@
 #include "hwWind.h"
 
 
+#ifdef AVWIND
+extern void send_avwinclose(short);
+#endif
+
+
 /*----------------------------------------------------------------------------*/
 static FRAME
 frame_next (FRAME frame)
@@ -183,6 +188,10 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_info();
 		break;
 	case 0x0015:  /* CTRL+U */
+#ifdef AVWIND
+		send_avwinclose((&(hwWind_Top)->Base)->Handle);
+		printf ("avwinclose: %hi\r\n",(&(hwWind_Top)->Base)->Handle);
+#endif
 		delete_hwWind (hwWind_Top);
 		if (hwWind_Top) {
 			WORD mx, my, u;

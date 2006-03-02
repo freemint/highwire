@@ -18,7 +18,8 @@
 #endif
 
 #include "version.h"
-#include "av_comm.h"
+#include "vaproto.h"
+/* #include "av_comm.h" */
 #include "global.h"
 #include "Location.h"
 #include "Containr.h"
@@ -1333,13 +1334,12 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 	
 	} else switch (msg[0]) {
 	
-		case AV_PROTOKOLL:
 		case VA_PROTOSTATUS:
 			Receive_AV(msg);
 			break;
-		case AV_SENDKEY:
-			window_evKeybrd (msg[4], msg[3]);
-			break;
+		case AV_SENDKEY: 
+			window_evKeybrd (msg[4], msg[3]); 
+			break;   
 		case AV_OPENWIND:
 			state |= K_ALT;
 		case VA_START:

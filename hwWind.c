@@ -19,6 +19,7 @@
 #include "cache.h"
 #include "Logging.h"
 
+
 #define WINDOW_t HwWIND
 #include "hwWind.h"
 static WINDOW vTab_destruct(HwWIND);
@@ -300,6 +301,11 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	
 #ifdef GEM_MENU
 	menu_history (NULL,0,0);
+#endif
+
+#ifdef AVWIND
+	send_avwinopen(This->Base.Handle);
+	printf ("avwinopen: %hi\r\n",This->Base.Handle);
 #endif
 	
 	return This;

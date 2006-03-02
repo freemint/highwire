@@ -247,3 +247,9 @@ short get_avserver     (void);
 void  Init_AV_Protocol (void);
 void  Exit_AV_Protocol (void);
 BOOL  Receive_AV       (const short msg[8]);
+BOOL  Send_AV	       (short message, const char *data1, const char *data2);
+
+#ifdef AVWIND
+void send_avwinopen(short handle);
+void send_avwinclose(short handle);  
+#endif

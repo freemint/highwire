@@ -6,7 +6,9 @@
 #include <gem.h>
 
 #include "global.h"
-#include "av_comm.h"
+#include "vaproto.h"
+
+/* #include "av_comm.h" */
 
 
 /* All GLOBAL memory is merged to one block and allocated in main(). */
@@ -15,6 +17,12 @@ char *va_helpbuf;  /* HW_PATH_MAX byte */
 short av_shell_id     = -1;   /* Desktop's AES ID */
 short av_shell_status = 0;    /* What AV commands can desktop do? */
 
+             
+#ifdef AVWIND
+#include "Window.h" /* cause of window_raise */
+
+BOOL	wind_cycle = TRUE; 
+#endif
 
 /*============================================================================*/
 short
@@ -36,11 +44,13 @@ get_avserver(void)
 
 
 /*============================================================================*/
-static BOOL
-Send_AV (short to_ap_id, short message, const char *data1, const char *data2)
+BOOL Send_AV(short message, const char *data1, const char *data2)
 {
 	short msg[8];
-
+	short to_ap_id;
+	
+	to_ap_id=av_shell_id;
+	
 	(void)data2;  /* unused at the moment, so suppress warning by Pure C */
 
 	/* - 100 to ap id would be no AV server */
@@ -53,28 +63,33 @@ Send_AV (short to_ap_id, short message, const char *data1, const char *data2)
 
 	switch (message)
 	{
-		case PDF_AV_OPEN_FILE:
+/*		case PDF_AV_OPEN_FILE:
 			to_ap_id = appl_find("MYPDF   ");
 
 			*(char **)&msg[3] = strcpy(va_helpbuf, data1);
-			break;
+			break;  */ /* commented out for the moment */
 		case AV_EXIT:
 			msg[3] = gl_apid;
 			break;
 		case AV_PROTOKOLL:
-			msg[3] = (2|16);  /* VA_START, quoting */
+			msg[3] = VV_START | VV_ACC_QUOTING; 
 			/* msg[4] = 0;  initialized above */
 			/* msg[5] = 0;  initialized above */
-			*(char **)&msg[6] = strcpy(va_helpbuf, "HIGHWIRE");
+			printf("send_AV: VA_PROTOKOLL %x, %hi\r\n", msg[0],msg[3]);
+			*(char **)(msg+6) = strcpy(va_helpbuf, "HIGHWIRE");
 			break;
-		case VA_PROTOSTATUS:
-			msg[3] = 0x4011;  /* AV_SENDKEY, AV_OPENWIND, quoting */
-			/* msg[4] = 0;  initialized above */
-			/* msg[5] = 0;  initialized above */
-			*(char **)&msg[6] = strcpy(va_helpbuf, "HIGHWIRE");
+#ifdef AVWIND
+		case AV_ACCWINDOPEN:
+			*(char **)(msg+3) = va_helpbuf;
+			printf ("AV_ACCWINDOPEN: %s\r\n",va_helpbuf);
 			break;
+		case AV_ACCWINDCLOSED:
+			*(char **)(msg+3) = va_helpbuf;
+			printf ("AV_ACCWINDCLOSE: %s\r\n",va_helpbuf);
+			break;
+#endif
 		case VA_START:
-			*(char **)&msg[3] = strcpy(va_helpbuf, data1);
+			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
 			break;
 		default:
 			break;
@@ -86,39 +101,81 @@ Send_AV (short to_ap_id, short message, const char *data1, const char *data2)
 
 /*============================================================================*/
 BOOL
-Receive_AV (const short msg[8])
+Receive_AV(const short msg[8])
 {
-	switch (msg[0])
-	{
-		case AV_PROTOKOLL:
-			Send_AV(msg[1], VA_PROTOSTATUS, NULL, NULL);
-			break;
-		case VA_PROTOSTATUS: {
-			if (msg[1] == av_shell_id)
+	if (msg[0]== VA_PROTOSTATUS) {
+			if (msg[1] == av_shell_id) 
 				av_shell_status = msg[3];
-			break;
-		}
+#ifdef AVWIND
+			if (wind_cycle && !(av_shell_status & AA_ACCWIND))
+				wind_cycle = FALSE;
+			if (av_shell_status & AA_SENDKEY) printf ("SENDKEY, "); else printf("error ");
+			if (av_shell_status & AA_ASKFILEFONT) printf ("ASKFILEFONT, ");else printf("error ");
+			if (av_shell_status & AA_ASKCONFONT) printf ("ASKCONFONT, ");else printf("error ");
+			if (av_shell_status & AA_ASKOBJECT) printf ("ASKOBJECT, ");else printf("ASKOBJEKT error ");
+			if (av_shell_status & AA_OPENWIND) printf ("OPENWIND, ");else printf("error ");
+			if (av_shell_status & AA_STARTPROG) printf ("STARTPROG, ");else printf("error ");
+			if (av_shell_status & AA_ACCWIND) printf ("ACCWIND, ");else printf("error ");
+			if (av_shell_status & AA_STATUS) printf ("STATUS, ");else printf("error ");
+			if (av_shell_status & AA_COPY_DRAGGED) printf ("COPY_DRAGGED, ");else printf("error ");
+			if (av_shell_status & AA_DRAG_ON_WINDOW) printf ("DRAG_ON_WINDOW, ");else printf("error ");
+			if (av_shell_status & AA_EXIT) printf ("EXIT, ");else printf("error ");
+			if (av_shell_status & AA_XWIND) printf ("XWIND, ");else printf("error ");
+			if (av_shell_status & AA_FONTCHANGED) printf ("FONTCHANGED, ");else printf("error ");
+			if (av_shell_status & AA_STARTED) printf ("STARTED, ");else printf("error ");
+			if (av_shell_status & AA_SRV_QUOTING) printf ("SRV_QUOTING, ");else printf("error ");
+			if (av_shell_status & AA_FILE) printf ("FILE");else printf("error ");
+#endif
 	}
+
+#ifdef AVWIND
+	if (msg[0]== AV_SENDKEY) {
+			printf("receive_AV: VA_SENDKEY %x\r\n", msg[0]);
+			if (/*(msg[3] == 4) && */ (msg[4] == 0x0017)) 	/* ^W */
+			{
+				printf ("AV_SENDKEY CTRL-W\r\n"); 
+				window_raise (NULL, TRUE, NULL); 
+			}		
+	}	
+#endif
+
 	return TRUE;
 }
 
 
 /*============================================================================*/
-void
-Init_AV_Protocol(void)
+void Init_AV_Protocol(void)
 {
 	va_helpbuf[0] = '\0';
 
 	av_shell_id = get_avserver();
 
-	Send_AV(av_shell_id, AV_PROTOKOLL, NULL, NULL);
+	Send_AV(AV_PROTOKOLL, NULL, NULL);
 }
 
 
 /*============================================================================*/
-void
-Exit_AV_Protocol(void)
+void Exit_AV_Protocol(void)
 {
-	if (av_shell_status & 1024)  /* AV server knows AV_EXIT */
-		Send_AV(av_shell_id, AV_EXIT, NULL, NULL);
+	if (av_shell_status & AA_EXIT)  /* AV server knows AV_EXIT */
+		Send_AV(AV_EXIT, NULL, NULL);
 }
+
+
+#ifdef AVWIND
+/*============================================================================*/
+void send_avwinopen(short handle)
+{
+	sprintf (va_helpbuf, "%hi", handle);
+	Send_AV(AV_ACCWINDOPEN, NULL, NULL);
+}
+
+
+/*============================================================================*/
+void send_avwinclose(short handle)
+{
+	sprintf (va_helpbuf, "%hi", handle);
+	Send_AV(AV_ACCWINDCLOSED, NULL, NULL);
+
+}
+#endif
