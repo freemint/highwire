@@ -183,6 +183,11 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 		
 		case WM_CLOSED:
 			if ((*wind->close)(wind, kstate)) {
+#ifdef AVWIND
+				send_avwinclose(wind->Handle);
+				printf ("avwinclose: %hi\r\n",wind->Handle);
+
+#endif
 				delete_window (wind);
 			}
 			break;

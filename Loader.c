@@ -19,7 +19,8 @@
 #include "file_sys.h"
 #include "global.h"
 #include "hwWind.h"
-#include "av_comm.h"
+#include "vaproto.h"
+/* #include "av_comm.h" */
 #include "schedule.h"
 #include "Containr.h"
 #include "Location.h"
