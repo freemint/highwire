@@ -75,7 +75,6 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 			msg[3] = VV_START | VV_ACC_QUOTING; 
 			/* msg[4] = 0;  initialized above */
 			/* msg[5] = 0;  initialized above */
-			printf("send_AV: VA_PROTOKOLL %x, %hi\r\n", msg[0],msg[3]);
 			*(char **)(msg+6) = strcpy(va_helpbuf, "HIGHWIRE");
 			break;
 #ifdef AVWIND
