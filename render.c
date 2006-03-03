@@ -1691,7 +1691,7 @@ static UWORD
 render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (parser);
-	
+		
 	if (flags & PF_START) {
 		const char * line = *text;
 		char         quot = '\0', c;
@@ -3230,8 +3230,7 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		list_start (parser, current, LT_DISC, 0, TAG_MENU);
-/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);*/
-/*		css_text_styles (parser, current->font);*/
+
 		box_anchor (parser, current->parentbox, TRUE);
 	
 	} else if (current->lst_stack) {
@@ -3297,10 +3296,6 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		list_start (parser, current, LT_NONE, 0, TAG_DL);
-/*		if (parser->hasStyle) {
-			css_box_styles  (parser, current->parentbox, ALN_LEFT);
-			css_text_styles (parser, current->font);
-		}*/
 
 		box_anchor (parser, current->parentbox, TRUE);
 	
@@ -3388,6 +3383,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
+		
 		if (padding < 0) {
 			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
@@ -3446,6 +3442,8 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (parser->hasStyle) {
 			DOMBOX * box = parser->Current.parentbox->ChildEnd;
+
+		#if 0
 			box_frame (parser, &box->Margin, CSS_MARGIN);
 			if (box->BorderWidth.Top) 
 			{ 
@@ -3454,6 +3452,13 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 					box->BorderColor.Top = box->BorderColor.Bot =
 					box->BorderColor.Lft = box->BorderColor.Rgt = color;
 			}
+		#endif
+
+			css_box_styles  (parser, box, parser->Current.tbl_stack->AlignH);
+			css_text_styles (parser, parser->Current.font);
+
+			/* we have to reset the width in case it was set again in css_box_styles */
+			box->SetWidth = (width  <= 1024 ? width  : 0);			
 		}
 		box_anchor (parser, parser->Current.parentbox->ChildEnd, TRUE);
 	
