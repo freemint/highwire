@@ -132,7 +132,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 		 * with me - Dan 
 		 */		
 
-		if (This->BorderColor.Top < 0) {
+		/* This needs to be refined, I don't like it - Dan */
+		if ((This->BorderColor.Top < 0)&&(This->BorderWidth.Top > 0)) {
 			GRECT b;
 			b.g_x = x1;
 			b.g_y = y1;
