@@ -171,7 +171,7 @@ destroy_form (FORM form, BOOL all)
 					while (sel->ItemList) {
 						SLCTITEM item = sel->ItemList;
 						sel->ItemList = item->Next;
-						if (item->Value) {
+						if (item->Value && item->Value != item->Strng +1) {
 							free (item->Value);
 						}
 						free (item);
@@ -181,7 +181,7 @@ destroy_form (FORM form, BOOL all)
 					free (sel);
 				}
 			}
-			if (input->Value) {
+			if (input->Type != IT_GROUP && input->Value) {
 				free (input->Value);
 			}
 			if (input->Word) {
