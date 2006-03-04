@@ -10,30 +10,38 @@
 
 #include "hw-types.h"
 
-#define CHKBND /* enable memory region boundary check           */
-#define SUMARY /* show orphaned memory blocks after program end */
+#define MD_CHKBND  /* enable memory region boundary check           */
+#define MD_SUMMARY /* show orphaned memory blocks after program end */
 
 
-LONG mvalid (void * mem);
+LONG mvalidate (void * mem);
 
+
+/******************************************************************************/
 
 typedef struct s_mem_item * MEM_ITEM;
 struct s_mem_item {
-	MEM_ITEM Next;
-	void   * Chunk;
-	size_t   Size;
-	ULONG    Created;
-	ULONG    Deleted;
+	void * Chunk;
+	size_t Size;
+	ULONG  Created;
+	ULONG  Deleted;
 };
-static MEM_ITEM actv_lst = NULL;
-static MEM_ITEM free_lst = NULL;
 
 
-#ifdef CHKBND
-#define CANARY     8
-#else
-#define CANARY     0
-#endif
+typedef struct s_tree_node * TREE_NODE;
+typedef struct s_tree_item * TREE_ITEM;
+
+typedef struct {
+	TREE_NODE Node;
+	TREE_ITEM Item;
+} TREE_ITER;
+
+static void * tree_item (TREE_NODE *, TREE_ITEM, long mode);
+static void * tree_next (TREE_ITER *);
+
+static TREE_NODE actv_base = NULL;
+static TREE_NODE free_base = NULL;
+
 
 /*----------------------------------------------------------------------------*/
 static inline ULONG ptr2offs (void * ptr)
@@ -43,38 +51,16 @@ static inline ULONG ptr2offs (void * ptr)
 }
 
 /*----------------------------------------------------------------------------*/
-static MEM_ITEM *
-mem_item (MEM_ITEM * plist, void * chunk)
-{
-	while (*plist && (*plist)->Chunk != chunk) {
-		plist = &(*plist)->Next;
-	}
-	return plist;
-}
-
-/*----------------------------------------------------------------------------*/
-static MEM_ITEM *
-mem_find (MEM_ITEM * plist, void * chunk)
-{
-	while (*plist) {
-		if ((char*)chunk >= (char*)(*plist)->Chunk &&
-		    (char*)chunk <  (char*)(*plist)->Chunk + (*plist)->Size + CANARY *2) {
-			break;
-		}
-		plist = &(*plist)->Next;
-	}
-	return plist;
-}
-
-/*----------------------------------------------------------------------------*/
-#ifdef CHKBND
+#ifdef MD_CHKBND
+#define CANARY     8
 #define CANARY_1   0xA5
 #define CANARY_4   0xA5A5A5A5uL
 #define CHUNKSIZE(s)   (s+CANARY*2)
 #define CHUNK2MEM(c)   ((char*)(c)+CANARY)
 #define MEM2CHUNK(m)   ((char*)(m)-CANARY)
 
-static UWORD canary (MEM_ITEM item)
+/*............................................................................*/
+static UWORD canary_chk (MEM_ITEM item)
 {
 	UWORD  patt = 0x0000;
 	char * can  = item->Chunk;
@@ -97,6 +83,7 @@ static UWORD canary (MEM_ITEM item)
 	return patt;
 }
 
+/*............................................................................*/
 static const char * canary_str (UWORD patt, size_t size)
 {
 	static char buff[40];
@@ -119,47 +106,66 @@ static const char * canary_str (UWORD patt, size_t size)
 	return buff;
 }
 
-#else /*- !CHKBND ------------------------------------------------------------*/
+#else /*- !MD_CHKBND ---------------------------------------------------------*/
+#define CANARY     0
 #define CHUNKSIZE(s)   (s)
 #define CHUNK2MEM(c)   ((char*)c)
 #define MEM2CHUNK(m)   ((char*)m)
 #endif
 
+
 /*----------------------------------------------------------------------------*/
-#if defined(SUMARY) || defined(CHKBND)
-static void sumary (void)
+static MEM_ITEM
+mem_find (TREE_NODE base, void * chunk)
 {
-	size_t   size = 0;
-	ULONG    num  = 0;
-	MEM_ITEM item = actv_lst;
-	while (item) {
-#ifdef CHKBND
-		UWORD  patt = canary (item);
+	TREE_ITER iter = { base, NULL };
+	MEM_ITEM  item;
+	while ((item = tree_next (&iter))) {
+		if ((char*)chunk >= (char*)item->Chunk &&
+		    (char*)chunk <  (char*)item->Chunk + item->Size + CANARY *2) {
+			break;
+		}
+	}
+	return item;
+}
+
+/*----------------------------------------------------------------------------*/
+#if defined(MD_SUMMARY) || defined(MD_CHKBND)
+static void summarize (void)
+{
+#ifdef MD_SUMMARY
+	size_t    size = 0;
+	ULONG     num  = 0;
+#endif
+	TREE_ITER iter = { actv_base, NULL };
+	MEM_ITEM  item;
+	while ((item = tree_next (&iter))) {
+#ifdef MD_CHKBND
+		UWORD patt = canary_chk (item);
 		if (patt) {
 			printf ("canary detected in %p!  %s created @<%05lX>\n",
 			        CHUNK2MEM (item->Chunk), canary_str (patt, item->Size),
 			        item->Created);
 		}
 #endif
+#ifdef MD_SUMMARY
 		size += item->Size;
 		num  += 1;
-		item =  item->Next;
+#endif
 	}
-#ifdef SUMARY
-	puts ("\n_Memory_Sumery__________________________"
+#ifdef MD_SUMMARY
+	puts ("\n_Memory_Summary_________________________"
 	        "________________________________________");
-	while (actv_lst) {
-		MEM_ITEM * pitem = &actv_lst;
-		ULONG      crtd  = actv_lst->Created;
-		size_t     sum   = 0;
-		ULONG      cnt   = 0;
-		while ((item = *pitem)) {
+	while ((item = tree_next (&iter))) if (item->Created) {
+		ULONG     crtd = item->Created;
+		size_t    sum  = item->Size;
+		ULONG     cnt  = 1;
+		TREE_ITER subi = iter;
+		while ((item = tree_next (&subi))) {
 			if (item->Created == crtd) {
-				sum   += item->Size;
-				cnt   += 1;
-				*pitem = item->Next;
-			} else {
-				pitem  = &item->Next;
+				sum     += item->Size;
+				cnt     += 1;
+				item->Created = 0uL;
 			}
 		}
 		printf ("@<%05lX>: %4li (%li)\n", crtd, cnt, sum);
@@ -185,13 +191,18 @@ malloc (size_t size)
 		return NULL;
 	
 	} else {
-		MEM_ITEM * pitem = mem_item (&free_lst, chunk);	
-		if (*pitem) {
-			item = *pitem;
+		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, -1))) {
 /*			printf ("malloc(%li) @<%05lX>: %p duplicate %li.\n",
 			        size, ptr2offs(&size), CHUNK2MEM(chunk), item->Size);
-*/			*pitem = item->Next;
-		} else if (!(item = __malloc (sizeof (struct s_mem_item)))) {
+*/			if (!tree_item (&actv_base, (TREE_ITEM)item, 1)) {
+				__free (item);
+				item = NULL;
+			}
+		} else {
+			item = tree_item (&actv_base, (TREE_ITEM)&chunk,
+			                  sizeof (struct s_mem_item));
+		}
+		if (!item) {
 			__free (chunk);
 			return NULL;
 		} else {
@@ -199,7 +210,7 @@ malloc (size_t size)
 			         size, ptr2offs (&size), CHUNK2MEM(chunk));
 */		}
 	}
-#ifdef CHKBND
+#ifdef MD_CHKBND
 	((ULONG*)chunk)[0] = CANARY_4;
 	((ULONG*)chunk)[1] = CANARY_4;
 	if (!(size & 3)) {
@@ -216,14 +227,12 @@ malloc (size_t size)
 	item->Size    = size;
 	item->Created = ptr2offs (&size);
 	item->Deleted = 0uL;
-	item->Next    = actv_lst;
-	actv_lst      = item;
 	
-#if defined(SUMARY) || defined(CHKBND)
+#if defined(MD_SUMMARY) || defined(MD_CHKBND)
 	{	static BOOL __once = TRUE;
 		if (__once) {
 			__once = FALSE;
-			atexit (sumary);
+			atexit (summarize);
 		}
 	}
 #endif
@@ -238,32 +247,31 @@ free (void * mem)
 	extern void __free(void*);
 	
 	void     * chunk = MEM2CHUNK(mem);
-	MEM_ITEM * pitem = mem_item (&actv_lst, chunk);
-	MEM_ITEM   item  = *pitem;
+	MEM_ITEM   item  = tree_item (&actv_base, (TREE_ITEM)&chunk, -1);
 	if (item) {
-#ifdef CHKBND
-		UWORD  patt = canary (item);
+#ifdef MD_CHKBND
+		UWORD  patt = canary_chk (item);
 		if (patt) {
 			printf ("free(%p) @<%05lX>: canary detected!\n", mem, ptr2offs (&mem));
 			printf ("   %s created @<%05lX>.\n",
 			        canary_str (patt, item->Size), item->Created);
 		}
 #endif
-/*		printf ("free(%p) @<%05lX>: %li.\n", mem, ptr2offs (&mem)), item->Size;*/
-		*pitem        = item->Next;
-		item->Next    = free_lst;
-		free_lst      = item;
-		item->Deleted = ptr2offs (&mem);
-		__free (mem);
-	} else {
-		pitem = mem_item (&free_lst, chunk);
-		item  = *pitem;
-		if (item) {
+/*		printf ("free(%p) @<%05lX>: %li.\n", mem, ptr2offs (&mem), item->Size);*/
+		if (tree_item (&free_base, (TREE_ITEM)item, +1)) {
+			item->Deleted = ptr2offs (&mem);
+		} else {
+			__free (item); /* bad memory */
+		}
+		__free (chunk);
+	} else 
+if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
+	{
+		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
 			printf ("free(%p) @<%05lX>: already deleted!\n", mem, ptr2offs (&mem));
 			printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
 			        item->Size, item->Created, item->Deleted);
 		} else {
-if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
 			printf ("free(%p) @<%05lX>: invalid pointer!\n", mem, ptr2offs (&mem));
 		}
 	}
@@ -271,40 +279,35 @@ if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
 
 /*============================================================================*/
 LONG
-mvalid (void * mem)
+mvalidate (void * mem)
 {
-	char     * chunk = MEM2CHUNK(mem);
-	MEM_ITEM * pitem = mem_item (&actv_lst, chunk);
-	MEM_ITEM   item  = *pitem;
+	BOOL     actv;
+	char   * chunk = MEM2CHUNK(mem);
+	MEM_ITEM item  = tree_item (&actv_base, (TREE_ITEM)&chunk, 0);
 	if (item) {
 		/* everything is fine */
 		return 0;
 	}
-	pitem = mem_item (&free_lst, chunk);
-	item  = *pitem;
-	if (item) {
-		printf ("mvalid(%p) @<%05lX>: already deleted!\n",
+	if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
+		printf ("mvalidate(%p) @<%05lX>: already deleted!\n",
 		        mem, ptr2offs (&mem));
 		printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
 		        item->Size, item->Created, item->Deleted);
 		return -2;
 	}
-	pitem = mem_find (&actv_lst, chunk);
-	item  = *pitem;
-	if (!item && !*mem_find (&free_lst, chunk)) {
-		pitem = NULL;
+puts("A");
+	if ((item = mem_find (actv_base, chunk))) {
+		actv = TRUE;
+	} else {
+puts("B");
+		item = mem_find (free_base, chunk);
+		actv = FALSE;
 	}
-	if (pitem) {
+puts("Z");
+	if (item) {
 		const char * text;
 		long n = 0;
-		BOOL actv;
-		if (item) {
-			actv = TRUE;
-		} else {
-			actv = FALSE;
-			item = *pitem;
-		}
-		chunk = item->Chunk;
+		chunk  = item->Chunk;
 		if ((n = (chunk + CANARY) - (char*)mem) > 0) {
 			text = "before";
 		} else if ((n = (char*)mem - (chunk + CANARY + item->Size -1)) > 0) {
@@ -313,16 +316,182 @@ mvalid (void * mem)
 			n    = (char*)mem - (chunk + CANARY);
 			text = "inside";
 		}
-		printf ("mvalid(%p) @<%05lX>:%s %li bytes %s %p\n",
+		printf ("mvalidate(%p) @<%05lX>:%s %li bytes %s %p\n",
 		        mem, ptr2offs (&mem), (actv ? "" : " invalid,"), n, text, chunk);
 		printf (actv ? "   %li bytes created @<%05lX>.\n"
 		             : "   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
 		        item->Size, item->Created, item->Deleted);
 		return (actv ? -3 : -1);
 	}
-	printf ("mvalid(%p) @<%05lX>: invalid pointer!\n",
+	printf ("mvalidate(%p) @<%05lX>: invalid pointer!\n",
 	        mem, ptr2offs (&mem));
 	return -1;
+}
+
+
+/*******************************************************************************
+ *
+ * Tree stuff
+ *
+*/
+
+struct s_tree_item {
+	ULONG Hash;
+};
+
+typedef union {
+	TREE_NODE Node;
+   TREE_ITEM Item;
+} TREE_SLOT;
+
+struct s_tree_node {
+	TREE_NODE Parent;
+	UWORD     Mask;
+	TREE_SLOT Slot[16];
+};
+
+static TREE_NODE node_pool = NULL; /* free list */
+
+/*----------------------------------------------------------------------------*/
+static void *
+tree_item (TREE_NODE * base, TREE_ITEM item, long mode)
+{
+	/* mode == 0: search only, returns item or NULL
+	 *       < 0: remove item from tree and return it
+	 *      >= 4: create new item of size 'mode' in tree
+	 *      1..3: insert given item in tree
+	*/
+	UWORD     dpth = 0;
+	ULONG     patt = item->Hash;
+	WORD      num  = patt & 0xF;
+	TREE_NODE node = *base;
+	if (!node) {
+		if (mode > 0) {
+			if ((node = node_pool)) node_pool = node->Parent;
+			else                    node = __malloc (sizeof (struct s_tree_node));
+		}
+		if (!node) {
+			return NULL;
+		}
+		*base = memset (node, 0, sizeof (struct s_tree_node));
+	}
+	while (node) {
+		WORD        bit  = 1 << num;
+		TREE_SLOT * slot = &node->Slot[num];
+		
+		if (node->Mask & bit) { /*............................. follow the node */
+			node =  slot->Node;
+			dpth += 1;
+		
+		} else if (!slot->Item) { /*.......................... empty slot found */
+			if (mode <= 0) return NULL;
+			else           break;
+			
+		} else if (slot->Item->Hash == item->Hash) { /*............ match found */
+			if (mode >= 0) return slot->Item;
+			else           break;
+		
+		} else if (mode == 0) { /*............................... nothing found */
+			return NULL;
+		
+		} else { /*.......................................... insert a new node */
+			TREE_NODE prnt = node;
+			if ((node = node_pool)) node_pool = node->Parent;
+			else                    node = __malloc (sizeof (struct s_tree_node));
+			if (node) {
+				memset (node, 0, sizeof (struct s_tree_node));
+				dpth += 1;
+				num  =  (slot->Item->Hash >> (dpth *4)) & 0xF;
+				node->Slot[num].Item = slot->Item;
+				node->Parent         = prnt;
+				slot->Node =  node;
+				prnt->Mask |= bit;
+			}
+			/* else memory exhausted! */
+		}
+		patt >>= 4;
+		num  =   patt & 0xF;
+	}
+	if (!node) { /* memory exhausted or implementation failure */
+		puts ("KRABUMM!!!");
+		return NULL;
+	}
+	if (mode >= 4) { /* new item to create */
+		ULONG hash = item->Hash;
+		if ((item = __malloc (mode))) {
+			item->Hash = hash;
+		} else {
+			mode = -1; /* to remove all recently allocated nodes */
+		}
+	}
+	if (mode > 0) {
+		node->Slot[num].Item = item;
+		
+	} else { /* (mode < 0) */
+		item = node->Slot[num].Item;
+		node->Slot[num].Item = NULL;
+		while (node->Parent && !node->Mask) {
+			TREE_NODE prnt = node->Parent;
+			for (num = 0; num < numberof(node->Slot) && prnt; num++) {
+				if (node->Slot[num].Item) prnt = NULL; /* not empty */
+			}
+			if (!prnt) break;
+			for (num = 0; num < numberof(prnt->Slot) && node; num++) {
+				if (prnt->Slot[num].Node == node) {
+					prnt->Slot[num].Node = NULL;
+					prnt->Mask          &= ~(1 << num);
+					node->Parent = node_pool;
+					node_pool    = node;
+					node         = NULL;
+				}
+			}
+			if (node || !(node = prnt)) break;
+		}
+	}
+	return item;
+}
+
+/*----------------------------------------------------------------------------*/
+static void *
+tree_next (TREE_ITER * iter)
+{
+	TREE_ITEM item;
+	TREE_NODE node;
+	if (!iter || !iter->Node) {
+		return NULL;
+	}
+	
+	item = iter->Item;
+	node = iter->Node;
+	while(1) {
+		WORD num = 0;
+		if (item) {
+			while (item != node->Slot[num++].Item && num < 16);
+		}
+		if (num >= 16) {
+			item = NULL;
+		} else {
+			while (!(item = node->Slot[num].Item) && ++num < 16);
+		}
+		if (!item) {
+			if (!node->Parent) {
+				break;
+			}
+			item = (TREE_ITEM)node;
+			node = node->Parent;
+			
+		} else if (node->Mask & (1 << num)) {
+			item = NULL;
+			node = node->Slot[num].Node;
+		
+		} else {
+			break;
+		}
+	}
+	iter->Item = item;
+	iter->Node = node;
+	
+	return item;
 }
 
 #endif __GNUC__

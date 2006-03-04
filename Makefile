@@ -93,7 +93,8 @@ CFILES = \
 	keyinput.c \
 	Mouse_R.c \
 	AEI.c \
-	HighWire.c
+	HighWire.c \
+#	mem-diag.c
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 
