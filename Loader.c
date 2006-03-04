@@ -1120,11 +1120,6 @@ launch_viewer(const char *name)
 {
 	char *p = 0;
 	
-	if (av_shell_id < 0) {
-		av_shell_id = get_avserver();
-	} 
-
-
 	if (av_shell_id >= 0) {
 		short msg[8];
 		msg[0] = (AV_STARTPROG);
