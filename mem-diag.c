@@ -295,15 +295,12 @@ mvalidate (void * mem)
 		        item->Size, item->Created, item->Deleted);
 		return -2;
 	}
-puts("A");
 	if ((item = mem_find (actv_base, chunk))) {
 		actv = TRUE;
 	} else {
-puts("B");
 		item = mem_find (free_base, chunk);
 		actv = FALSE;
 	}
-puts("Z");
 	if (item) {
 		const char * text;
 		long n = 0;
