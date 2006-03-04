@@ -278,7 +278,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
 				ex = em/2;
 
-				size = numerical (output, NULL, em, ex);
+				size = numerical (tail, NULL, em, ex);
 									
 /*				short size = numerical (p, &tail, font_size, (font_size/2));
 */
