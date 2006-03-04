@@ -102,42 +102,47 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 BOOL
 Receive_AV(const short msg[8])
 {
-	if (msg[0]== VA_PROTOSTATUS) {
+	switch (msg[0]) {
+		case VA_PROTOSTATUS :
 			if (msg[1] == av_shell_id) 
 				av_shell_status = msg[3];
 #ifdef AVWIND
 			if (wind_cycle && !(av_shell_status & AA_ACCWIND))
 				wind_cycle = FALSE;
-			if (av_shell_status & AA_SENDKEY) printf ("SENDKEY, "); else printf("error ");
-			if (av_shell_status & AA_ASKFILEFONT) printf ("ASKFILEFONT, ");else printf("error ");
-			if (av_shell_status & AA_ASKCONFONT) printf ("ASKCONFONT, ");else printf("error ");
-			if (av_shell_status & AA_ASKOBJECT) printf ("ASKOBJECT, ");else printf("ASKOBJEKT error ");
-			if (av_shell_status & AA_OPENWIND) printf ("OPENWIND, ");else printf("error ");
-			if (av_shell_status & AA_STARTPROG) printf ("STARTPROG, ");else printf("error ");
-			if (av_shell_status & AA_ACCWIND) printf ("ACCWIND, ");else printf("error ");
-			if (av_shell_status & AA_STATUS) printf ("STATUS, ");else printf("error ");
-			if (av_shell_status & AA_COPY_DRAGGED) printf ("COPY_DRAGGED, ");else printf("error ");
-			if (av_shell_status & AA_DRAG_ON_WINDOW) printf ("DRAG_ON_WINDOW, ");else printf("error ");
-			if (av_shell_status & AA_EXIT) printf ("EXIT, ");else printf("error ");
-			if (av_shell_status & AA_XWIND) printf ("XWIND, ");else printf("error ");
-			if (av_shell_status & AA_FONTCHANGED) printf ("FONTCHANGED, ");else printf("error ");
-			if (av_shell_status & AA_STARTED) printf ("STARTED, ");else printf("error ");
-			if (av_shell_status & AA_SRV_QUOTING) printf ("SRV_QUOTING, ");else printf("error ");
-			if (av_shell_status & AA_FILE) printf ("FILE");else printf("error ");
 #endif
-	}
+#ifdef AVSERVER_TEST
+			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r"); else puts ("SENDKEY error\r");
+			if (av_shell_status & AA_ASKFILEFONT) puts ("ASKFILEFONT\r");else puts ("ASKFILEFONT error\r");
+			if (av_shell_status & AA_ASKCONFONT) puts ("ASKCONFONT\r");else puts ("ASKCONFONT error\r");
+			if (av_shell_status & AA_ASKOBJECT) puts ("ASKOBJECT\r");else puts ("ASKOBJEKT error\r");
+			if (av_shell_status & AA_OPENWIND) puts ("OPENWIND\r");else puts ("OPENWIND error\r");
+			if (av_shell_status & AA_STARTPROG) puts ("STARTPROG\r");else puts ("STARTPROG error\r");
+			if (av_shell_status & AA_ACCWIND) puts ("ACCWIND\r");else puts ("ACCWIND error\r");
+			if (av_shell_status & AA_STATUS) puts ("STATUS\r");else puts ("STATUS error\r");
+			if (av_shell_status & AA_COPY_DRAGGED) puts ("COPY_DRAGGED\r");else puts ("COPY_DRAGGED error\r");
+			if (av_shell_status & AA_DRAG_ON_WINDOW) puts ("DRAG_ON_WINDOW\r");else puts ("DRAG_ON_WINDOW error\r");
+			if (av_shell_status & AA_EXIT) puts ("EXIT\r");else puts ("EXIT error\r");
+			if (av_shell_status & AA_XWIND) puts ("XWIND\r");else puts ("XWIND error\r");
+			if (av_shell_status & AA_FONTCHANGED) puts ("FONTCHANGED\r");else puts ("FONTCHANGED error\r"); 
+			if (av_shell_status & AA_STARTED) puts ("STARTED\r");else puts ("STARTED error\r");
+			if (av_shell_status & AA_SRV_QUOTING) puts ("SRV_QUOTING\r");else puts ("SRV_QUOTING error\r");
+			if (av_shell_status & AA_FILE) puts ("FILE\r");else puts ("FILE error\r");
+#endif
+			break;
 
+		case AV_SENDKEY :
 #ifdef AVWIND
-	if (msg[0]== AV_SENDKEY) {
-			printf("receive_AV: VA_SENDKEY %x\r\n", msg[0]);
-			if (/*(msg[3] == 4) && */ (msg[4] == 0x0017)) 	/* ^W */
-			{
-				printf ("AV_SENDKEY CTRL-W\r\n"); 
-				window_raise (NULL, TRUE, NULL); 
-			}		
-	}	
-#endif
-
+			if (av_shell_status & AA_SENDKEY) {
+				printf ("receive_AV: VA_SENDKEY %x\r\n", msg[0]);
+				if (/*(msg[3] == 4) && */ (msg[4] == 0x0017)) 	/* ^W */
+				{
+					printf ("AV_SENDKEY CTRL-W\r\n"); 
+					window_raise (NULL, TRUE, NULL);
+				}
+			}
+#endif		
+			break;	
+	}
 	return TRUE;
 }
 

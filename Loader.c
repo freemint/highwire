@@ -1098,10 +1098,6 @@ start_application (const char * appl, LOCATION loc)
 {
 	(void) appl;
 	
-	if (av_shell_id < 0) {
-		av_shell_id = get_avserver();
-	}
-
 	if (av_shell_id >= 0) {
 		short msg[8] = { AV_STARTPROG, };
 		msg[1] = gl_apid;
