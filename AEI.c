@@ -1337,9 +1337,12 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		case VA_PROTOSTATUS:
 			Receive_AV(msg);
 			break;
+#ifdef AVWIND
 		case AV_SENDKEY: 
-			window_evKeybrd (msg[4], msg[3]); 
+			Receive_AV(msg); /* handle it in av_prot.c */
+/*			window_evKeybrd (msg[4], msg[3]); */
 			break;   
+#endif
 		case AV_OPENWIND:
 			state |= K_ALT;
 		case VA_START:

@@ -4,6 +4,7 @@
 #include <gem.h>
 
 #include "global.h"
+#include "vaproto.h"
 
 #define WINDOW_t WINDOW
 #include "Window.h"
@@ -19,6 +20,10 @@ static void vTab_raised    (WINDOW, BOOL topNbot);
 #define     vTab_sized     ((BOOL(*)(WINDOW))dummy_False)
 #define     vTab_iconified ((void(*)(WINDOW))dummy_Void)
 
+#ifdef AVWIND
+extern BOOL wind_cycle;
+extern short av_shell_status;  
+#endif
 
 WINDOW window_Top = NULL;
 
@@ -238,7 +243,7 @@ window_evKeybrd (UWORD key, UWORD kstate)
 	WORD   scan  = key >> 8;
 	WORD   ascii = key & 0xFF;
 	WINDOW wind  = window_Top;
-	
+
 	if (wind && !kstate && scan == 0x44) { /* F10: extreme full screen mode */
 	
 		if (wind->isScrn) {
@@ -285,7 +290,16 @@ window_evKeybrd (UWORD key, UWORD kstate)
 		}
 		
 	} else switch (ascii) {
-		case 0x0017: /* CTRL+W */ window_raise (NULL, TRUE, NULL); break;
+		case 0x0017: /* CTRL+W */ 
+#ifdef AVWIND
+			if (wind_cycle && !Send_AV(AV_SENDKEY,NULL,NULL)) {
+			    window_raise (NULL, TRUE, NULL);
+			break;
+			}
+			else
+#endif	 
+			window_raise (NULL, TRUE, NULL); break;
+			
 		case 0x0011: /* CTRL+Q */ exit (0);
 		default:     if (wind) (*wind->evKeybrd)(wind, scan, ascii, kstate);
 	}

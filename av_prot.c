@@ -7,8 +7,13 @@
 
 #include "global.h"
 #include "vaproto.h"
-
 /* #include "av_comm.h" */
+
+#ifdef AVWIND
+#include "Window.h" /* cause of window_raise */
+
+BOOL	wind_cycle = TRUE; 
+#endif
 
 
 /* All GLOBAL memory is merged to one block and allocated in main(). */
@@ -18,12 +23,6 @@ short av_shell_id     = -1;   /* Desktop's AES ID */
 short av_shell_status = 0;    /* What AV commands can desktop do? */
 
              
-#ifdef AVWIND
-#include "Window.h" /* cause of window_raise */
-
-BOOL	wind_cycle = TRUE; 
-#endif
-
 /*============================================================================*/
 short
 get_avserver(void)
@@ -80,12 +79,17 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 #ifdef AVWIND
 		case AV_ACCWINDOPEN:
 			*(char **)(msg+3) = va_helpbuf;
-			printf ("AV_ACCWINDOPEN: %s\r\n",va_helpbuf);
+/*			printf ("AV_ACCWINDOPEN: %s\r\n",va_helpbuf); */
 			break;
 		case AV_ACCWINDCLOSED:
 			*(char **)(msg+3) = va_helpbuf;
-			printf ("AV_ACCWINDCLOSE: %s\r\n",va_helpbuf);
+/*			printf ("AV_ACCWINDCLOSE: %s\r\n",va_helpbuf); */
 			break;
+		case AV_SENDKEY :
+				msg[3] = 0x0004;
+				msg[4] = 0x1117;	/* ^W */
+/*				window_raise (NULL, FALSE, NULL); */
+			break;	
 #endif
 		case VA_START:
 			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
@@ -132,14 +136,12 @@ Receive_AV(const short msg[8])
 
 		case AV_SENDKEY :
 #ifdef AVWIND
-			if (av_shell_status & AA_SENDKEY) {
-				printf ("receive_AV: VA_SENDKEY %x\r\n", msg[0]);
-				if (/*(msg[3] == 4) && */ (msg[4] == 0x0017)) 	/* ^W */
+				printf ("AV_SENDKEY\r\n");  
+				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) 	/* ^W */
 				{
-					printf ("AV_SENDKEY CTRL-W\r\n"); 
+					printf ("AV_SENDKEY CTRL-W\r\n");  
 					window_raise (NULL, TRUE, NULL);
 				}
-			}
 #endif		
 			break;	
 	}
