@@ -96,6 +96,7 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 			break;
 		default:
 			break;
+			
 	}
 
 	return appl_write(to_ap_id, 16, msg);
@@ -134,13 +135,14 @@ Receive_AV(const short msg[8])
 #endif
 			break;
 
-		case AV_SENDKEY :
+		case AV_SENDKEY :  /* doesn't seem to be necessary at all ??? */
 #ifdef AVWIND
 				printf ("AV_SENDKEY\r\n");  
 				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) 	/* ^W */
 				{
 					printf ("AV_SENDKEY CTRL-W\r\n");  
 					window_raise (NULL, TRUE, NULL);
+			printf("window_raise-av_prot.c\r\n");				
 				}
 #endif		
 			break;	

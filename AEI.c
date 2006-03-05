@@ -32,6 +32,11 @@
 	extern OBJECT * menutree;
 #endif
 
+#ifdef AVWIND
+extern BOOL wind_cycle;
+#endif
+
+
 
 /*==============================================================================
  * Checks if appl_getinfo() exists, and, if possible, calls it.
@@ -1340,8 +1345,12 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 #ifdef AVWIND
 		case AV_SENDKEY: 
 			Receive_AV(msg); /* handle it in av_prot.c */
-/*			window_evKeybrd (msg[4], msg[3]); */
-			break;   
+
+			break; 
+		case 0x15: /* probably only an ugly hack */
+			if (wind_cycle)
+				window_raise (NULL, TRUE, NULL);	
+			break; 
 #endif
 		case AV_OPENWIND:
 			state |= K_ALT;

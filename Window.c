@@ -22,7 +22,6 @@ static void vTab_raised    (WINDOW, BOOL topNbot);
 
 #ifdef AVWIND
 extern BOOL wind_cycle;
-extern short av_shell_status;  
 #endif
 
 WINDOW window_Top = NULL;
@@ -190,7 +189,6 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			if ((*wind->close)(wind, kstate)) {
 #ifdef AVWIND
 				send_avwinclose(wind->Handle);
-				printf ("avwinclose: %hi\r\n",wind->Handle);
 
 #endif
 				delete_window (wind);
@@ -292,13 +290,17 @@ window_evKeybrd (UWORD key, UWORD kstate)
 	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ 
 #ifdef AVWIND
-			if (wind_cycle && !Send_AV(AV_SENDKEY,NULL,NULL)) {
-			    window_raise (NULL, TRUE, NULL);
-			break;
+			if (wind_cycle) {
+				Send_AV(AV_SENDKEY,NULL,NULL);
+				break;
 			}
-			else
+			else {
 #endif	 
-			window_raise (NULL, TRUE, NULL); break;
+			window_raise (NULL, TRUE, NULL); 
+			break;
+#ifdef AVWIND
+			}			
+#endif
 			
 		case 0x0011: /* CTRL+Q */ exit (0);
 		default:     if (wind) (*wind->evKeybrd)(wind, scan, ascii, kstate);

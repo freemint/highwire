@@ -185,7 +185,6 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	case 0x0015:  /* CTRL+U */
 #ifdef AVWIND
 		send_avwinclose((&(hwWind_Top)->Base)->Handle);
-/*		printf ("avwinclose: %hi\r\n",(&(hwWind_Top)->Base)->Handle); */
 #endif
 		delete_hwWind (hwWind_Top);
 		if (hwWind_Top) {

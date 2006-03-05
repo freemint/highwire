@@ -305,7 +305,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 
 #ifdef AVWIND
 	send_avwinopen(This->Base.Handle);
-	printf ("avwinopen: %hi\r\n",This->Base.Handle);
 #endif
 	
 	return This;
