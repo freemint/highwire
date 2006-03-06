@@ -9,6 +9,9 @@
 
 /* ******** Variable Definitions ******************* */
 
+extern const BOOL mem_TidyUp; /* for debugging, to release memory *
+                               * at program end                   */
+
 /* Globals */
 extern VDI_Workstation  vdi_dev;
 #define vdi_handle     (vdi_dev.handle)

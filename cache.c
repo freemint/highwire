@@ -9,8 +9,6 @@
 #include "Location.h"
 #include "cache.h"
 
-#undef _MEM_TIDYUP
-
 
 #define MAGIC_NUM 0x20040824l /* needs to get updated in case the format of *
                                * the cache.idx file changes                 */
@@ -760,19 +758,18 @@ _exit_flush (void)
 	if (__cache_changed == TRUE) {
 		cache_flush (NULL);
 	}
-	
-#ifdef _MEM_TIDYUP
-	citem = __cache_beg;
-	while (citem) {
-		CACHEITEM next = citem->NextItem;
-		if (!item_isMem (citem)) {
-			citem->Cached[0] = '\0';
+	if (mem_TidyUp) { /* usefull for debugging */
+		citem = __cache_beg;
+		while (citem) {
+			CACHEITEM next = citem->NextItem;
+			if (!item_isMem (citem)) {
+				citem->Cached[0] = '\0';
+			}
+			destroy_item (citem);
+			citem = next;
 		}
-		destroy_item (citem);
-		citem = next;
+		free_location (&__cache_dir);
 	}
-	free_location (&__cache_dir);
-#endif
 }
 
 /*----------------------------------------------------------------------------*/
@@ -892,15 +889,13 @@ cache_build (void)
 		if (!cache_flush (NULL)) {
 			free_location (&__cache_dir);
 			__cache_changed = FALSE;
-#ifndef _MEM_TIDYUP
-		} else {
+		} else if (!mem_TidyUp) {
 			atexit (_exit_flush);
-#endif
 		}
 	}
-#ifdef _MEM_TIDYUP
-	atexit (_exit_flush);
-#endif
+	if (mem_TidyUp) { /* usefull for debugging */
+		atexit (_exit_flush);
+	}
 }
 
 /*------------------------------------------------------------------------------

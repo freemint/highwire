@@ -47,6 +47,8 @@ BOOL         location_equal    (LOCATION, LOCATION);
 
 int  location_open (LOCATION, const char ** host_name);
 
+void location_tidyup (BOOL final);
+
 /*--- database ---*/
 const char * location_DBdomain (const char *, UWORD len, ULONG * flags);
 const char * location_DBhost   (const char *, UWORD len, ULONG * flags);

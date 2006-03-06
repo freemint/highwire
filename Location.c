@@ -30,6 +30,7 @@ char * local_web = NULL;
 
 typedef struct s_host_entry {
 	struct s_host_entry * Next;
+	ULONG                 Reffs;
 	ULONG                 IdxTag;
 	ULONG                 Ip;
 	ULONG                 Flags;
@@ -42,6 +43,7 @@ static void * host_entry (const char ** name, UWORD max_len, BOOL resolve);
 
 typedef struct s_dir_entry {
 	struct s_dir_entry * Next;
+	ULONG                Reffs;
 	ULONG                IdxTag;
 	BOOL                 isTos;
 	UWORD                Length;
@@ -163,6 +165,7 @@ _alloc (DIR_ENT dir, const char * file)
 		}
 		loc->Anchor = ptr;
 	}
+	dir->Reffs++;
 	
 	return loc;
 }
@@ -311,6 +314,7 @@ new_location (const char * p_src, LOCATION base)
 	              ? loc_proto : loc->File[0] ? PROT_FILE : PROT_DIR);
 	loc->Port  = loc_port;
 	if (loc_host) {
+		loc_host->Reffs++;
 		loc->Host  = loc_host;
 		loc->Flags = loc_host->Flags;
 	}
@@ -368,6 +372,8 @@ free_location (LOCATION * _loc)
 	if (loc) {
 		if ((!loc->__reffs || !--loc->__reffs)
 		    && loc != __base && loc != __local) {
+			if (loc->Host) ((HOST_ENT)loc->Host)->Reffs--;
+			if (loc->Dir)  ((DIR_ENT)loc->Dir)->Reffs--;
 			free (loc);
 		}
 		*_loc = NULL;
@@ -643,7 +649,7 @@ typedef struct s_domain_entry {
 } * DOMAIN_ENT;
 static        DOMAIN_ENT  domain_base = NULL;
 static        HOST_ENT    host_base   = NULL;
-static struct s_dir_entry dir_base    = { NULL, 0ul, FALSE, 1, "/" };
+static struct s_dir_entry dir_base    = { NULL, 1, 0ul, FALSE, 1, "/" };
 
 
 /*============================================================================*/
@@ -751,6 +757,7 @@ host_store (const char * name, size_t len)
 		}
 	}
 	if (!ent && (ent = malloc (sizeof(struct s_host_entry) + len)) != NULL) {
+		ent->Reffs  = 0;
 		ent->IdxTag = 0uL;
 		ent->Ip     = 0uL;
 		ent->Flags  = 0uL;
@@ -911,6 +918,7 @@ dir_store (const char * name, size_t len)
 		}
 	}
 	if (!dir && (dir = malloc (sizeof(struct s_dir_entry) + len -1)) != NULL) {
+		dir->Reffs  = 0;
 		dir->IdxTag = 0uL;
 		dir->isTos  = (name[1] == ':');
 		dir->Length = len;
@@ -1313,7 +1321,38 @@ location_rdIdx (FILE * file)
 			loc->Port  = port;
 			loc->Host  = host;
 			loc->Flags = host->Flags;
+			host->Reffs++;
 		}
 	}
 	return loc;
+}
+
+
+/*============================================================================*/
+void
+location_tidyup (BOOL final)
+{
+	if (final) {
+		if (__base) {
+			LOCATION loc = __base;
+			__base = NULL; /* fool the delete function */
+			free_location (&loc);
+		}
+		if (__local) {
+			LOCATION loc = __local;
+			__local = NULL; /* fool the delete function */
+			free_location (&loc);
+		}
+	}
+	while (host_base) {
+		HOST_ENT next = host_base->Next;
+		if (!host_base->Reffs) free (host_base);
+		host_base = next;
+	};
+	while (dir_base.Next) {
+		DIR_ENT dir   = dir_base.Next;
+		dir_base.Next = dir->Next;
+		if (dir->Reffs) printf("location: %li=%.255s\n", dir->Reffs, dir->Name);
+		if (!dir->Reffs) free (dir);
+	};
 }

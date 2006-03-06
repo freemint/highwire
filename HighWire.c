@@ -256,6 +256,11 @@ highwire_ex (void)
 
 		appl_exit ();
 	}
+	if (mem_TidyUp) {
+		/*#include "Location.h"*/
+		extern void location_tidyup (BOOL final);
+		location_tidyup (TRUE);
+	}
 	vst_unload_fonts (vdi_handle, 0);
 	v_clsvwk         (vdi_handle);
 }

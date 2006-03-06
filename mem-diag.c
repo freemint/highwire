@@ -231,6 +231,10 @@ malloc (size_t size)
 #if defined(MD_SUMMARY) || defined(MD_CHKBND)
 	{	static BOOL __once = TRUE;
 		if (__once) {
+#ifdef MD_SUMMARY
+			extern BOOL mem_TidyUp;
+			mem_TidyUp = TRUE;
+#endif
 			__once = FALSE;
 			atexit (summarize);
 		}
