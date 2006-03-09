@@ -12,8 +12,9 @@ typedef struct hw_window * HwWIND;
 struct hw_window {
 	WINDOWBASE Base;
 	BOOL    shaded;
-	UWORD   isBusy;
-	UWORD   loading;
+	UWORD   isBusy;  /* number of loading jobs etc. ..*/
+	UWORD   isDone;  /* .. and that many already done */
+	UWORD   loading; /* number of frames to be loaded */
 	GRECT   Work;
 	WORD    IbarH;
 	WORD    TbarH;

@@ -12,6 +12,9 @@ Changes since v. 0.3.0 release
   while clicking a link opens a new window and set
   it to the bottom.
 
+- Reworked the progress bar of browser windows for
+  loading pages.
+
 - Font-size handling refined
 
 - Handling of % values in scan_numeric() modified (sourceforge fix)
