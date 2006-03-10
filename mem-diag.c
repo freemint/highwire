@@ -4,14 +4,16 @@
  *
  *******************************************************************************
 */
+#define MD_CHKBND  /* enable memory region boundary check               */
+#define MD_SUMMARY /* show orphaned memory blocks after program end     */
+#undef MD_KEEPALL /* keeps information about all memory ever allocated */
+
+
 #ifdef __GNUC__
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "hw-types.h"
-
-#define MD_CHKBND  /* enable memory region boundary check           */
-#define MD_SUMMARY /* show orphaned memory blocks after program end */
 
 
 LONG mvalidate (void * mem);
@@ -93,7 +95,7 @@ static const char * canary_str (UWORD patt, size_t size)
 		if      (bit & 0x8000) *(p++) = '|';
 		else if (bit & 0x0808) *(p++) = ':';
 		else if (bit & 0x0080) {
-			sprintf (p, "|%li %04X|", size, patt);
+			sprintf (p, "|%li|", size);
 			while (*(++p));
 		}
 		*(p++) = (patt & bit ? '*' : '.');
@@ -143,7 +145,7 @@ static void summarize (void)
 #ifdef MD_CHKBND
 		UWORD patt = canary_chk (item);
 		if (patt) {
-			printf ("canary detected in %p!  %s created @<%05lX>\n",
+			printf ("canary violated in %p!  %s created @<%05lX>\n",
 			        CHUNK2MEM (item->Chunk), canary_str (patt, item->Size),
 			        item->Created);
 		}
@@ -254,28 +256,34 @@ free (void * mem)
 	MEM_ITEM   item  = tree_item (&actv_base, (TREE_ITEM)&chunk, -1);
 	if (item) {
 #ifdef MD_CHKBND
-		UWORD  patt = canary_chk (item);
+		UWORD patt = canary_chk (item);
 		if (patt) {
-			printf ("free(%p) @<%05lX>: canary detected!\n", mem, ptr2offs (&mem));
+			printf ("free(%p) @<%05lX>: canary violated!\n", mem, ptr2offs (&mem));
 			printf ("   %s created @<%05lX>.\n",
 			        canary_str (patt, item->Size), item->Created);
 		}
 #endif
 /*		printf ("free(%p) @<%05lX>: %li.\n", mem, ptr2offs (&mem), item->Size);*/
+#ifdef MD_KEEPALL
 		if (tree_item (&free_base, (TREE_ITEM)item, +1)) {
 			item->Deleted = ptr2offs (&mem);
-		} else {
+		} else
+#endif
+		{
 			__free (item); /* bad memory */
 		}
 		__free (chunk);
 	} else 
 if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
 	{
+#ifdef MD_CHKBND
 		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
 			printf ("free(%p) @<%05lX>: already deleted!\n", mem, ptr2offs (&mem));
 			printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
 			        item->Size, item->Created, item->Deleted);
-		} else {
+		} else
+#endif
+		{
 			printf ("free(%p) @<%05lX>: invalid pointer!\n", mem, ptr2offs (&mem));
 		}
 	}
