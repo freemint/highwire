@@ -10,9 +10,12 @@
 /* #include "av_comm.h" */
 
 #ifdef AVWIND
-#include "Window.h" /* cause of window_raise */
+/* #include "Window.h" */ /* cause of window_raise */
+#include "hwWind.h" /*new_hwWind */
 
 BOOL	wind_cycle = TRUE; 
+
+void	handle_avdd(short, short, char *);
 #endif
 
 
@@ -78,12 +81,10 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 			break;
 #ifdef AVWIND
 		case AV_ACCWINDOPEN:
-			*(char **)(msg+3) = va_helpbuf;
-/*			printf ("AV_ACCWINDOPEN: %s\r\n",va_helpbuf); */
+			*(const char **)(msg+3) = data1;
 			break;
 		case AV_ACCWINDCLOSED:
-			*(char **)(msg+3) = va_helpbuf;
-/*			printf ("AV_ACCWINDCLOSE: %s\r\n",va_helpbuf); */
+			*(const char **)(msg+3) = data1;
 			break;
 		case AV_SENDKEY :
 				msg[3] = 0x0004;
@@ -105,8 +106,13 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 
 /*============================================================================*/
 BOOL
-Receive_AV(const short msg[8])
+Receive_AV(short msg[8])
 {
+#ifdef AVWIND
+	char *str_p; /* *arg; */
+	short		kstate, d, whandle;
+/*	POSENTRY	*va_list = NULL; */
+#endif
 	switch (msg[0]) {
 		case VA_PROTOSTATUS :
 			if (msg[1] == av_shell_id) 
@@ -137,15 +143,41 @@ Receive_AV(const short msg[8])
 
 		case AV_SENDKEY :  /* doesn't seem to be necessary at all ??? */
 #ifdef AVWIND
-				printf ("AV_SENDKEY\r\n");  
+				printf ("AV_SENDKEY von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);  
 				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) 	/* ^W */
 				{
-					printf ("AV_SENDKEY CTRL-W\r\n");  
-					window_raise (NULL, TRUE, NULL);
-			printf("window_raise-av_prot.c\r\n");				
+					window_raise (NULL, TRUE, NULL);		
 				}
-#endif		
 			break;	
+/*		case VA_DRAG_COMPLETE :
+			if (debug_level & DBG_AV)
+				debug("VA_DRAG_COMPLETE.\n");
+			if (glob_data != NULL)
+			{
+				free(glob_data);
+				glob_data = NULL;
+			}
+			break; */
+
+		case VA_DRAGACCWIND :				/* bei D&D mit glob. Fensterwechsel */
+			str_p = *(char **)(msg+6);
+/*			printf ("VA_DRAGACCWIND von %d: %x, %x\r\n", msg[1], msg[3], msg[4]); */
+			if (str_p != NULL)
+			{
+				graf_mkstate(&d, &d, &d, &kstate);
+				whandle= msg[3];
+				msg[0]= AV_COPY_DRAGGED;
+				msg[1]= gl_apid;
+				msg[2]=msg[3]=msg[4]=msg[5]=msg[6]=msg[7]=0;
+				msg[3]=kstate;
+				*(char **)(msg+4)=strcpy (va_helpbuf, str_p);
+				appl_write(av_shell_id, 16, msg);
+
+				handle_avdd(whandle, kstate, str_p);
+			}
+			break;
+#endif
+			
 	}
 	return TRUE;
 }
@@ -175,7 +207,7 @@ void Exit_AV_Protocol(void)
 void send_avwinopen(short handle)
 {
 	sprintf (va_helpbuf, "%hi", handle);
-	Send_AV(AV_ACCWINDOPEN, NULL, NULL);
+	Send_AV(AV_ACCWINDOPEN, *(char **) &handle, NULL);
 }
 
 
@@ -183,7 +215,21 @@ void send_avwinopen(short handle)
 void send_avwinclose(short handle)
 {
 	sprintf (va_helpbuf, "%hi", handle);
-	Send_AV(AV_ACCWINDCLOSED, NULL, NULL);
+	Send_AV(AV_ACCWINDCLOSED, *(char **) &handle, NULL);
 
 }
+
+void	handle_avdd(short win_handle, short kstate, char *arg)
+{
+	char		*cmdline;
+	
+	if (win_handle)
+	{
+		cmdline = (char *) malloc(strlen(arg));
+		strcpy(cmdline, arg);
+		new_hwWind ("", cmdline, NULL);	
+		free(cmdline);
+	}
+}
+
 #endif

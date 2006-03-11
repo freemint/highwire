@@ -1343,6 +1343,12 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			Receive_AV(msg);
 			break;
 #ifdef AVWIND
+		case VA_DRAGACCWIND:
+/*			printf ("AEI.c - VA_DRAGACCWIND!\r\n"); */
+			Receive_AV(msg); /* handle it in av_prot.c */
+
+			break; 
+
 		case AV_SENDKEY: 
 			Receive_AV(msg); /* handle it in av_prot.c */
 
