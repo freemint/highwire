@@ -142,13 +142,13 @@ Receive_AV(short msg[8])
 			break;
 
 		case AV_SENDKEY :  /* doesn't seem to be necessary at all ??? */
-#ifdef AVWIND
 				printf ("AV_SENDKEY von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);  
 				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) 	/* ^W */
 				{
 					window_raise (NULL, TRUE, NULL);		
 				}
 			break;	
+#ifdef AVWIND
 /*		case VA_DRAG_COMPLETE :
 			if (debug_level & DBG_AV)
 				debug("VA_DRAG_COMPLETE.\n");
