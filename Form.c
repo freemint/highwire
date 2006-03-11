@@ -1601,7 +1601,7 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, UWORD rows, size_t size)
 	
 	size += 1;                 /* space for the trailing 0 */
 	size *= sizeof(WCHAR);
-	size =  (size +3) & ~3uL;  /* aligned to (WCHAR*) boundary */
+	size =  (size +1) & ~1uL;  /* aligned to (WCHAR*) boundary */
 	size += sizeof(WCHAR*) *2;
 	if ((buff = malloc (size)) != NULL) {
 		word->item       = buff;
