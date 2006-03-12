@@ -1103,7 +1103,7 @@ start_application (const char * appl, LOCATION loc)
 		msg[1] = gl_apid;
 		msg[2] = msg[5] = msg[6] = msg[7] = 0;
 		*(char**)(msg +3) = va_helpbuf;
-		location_FullName (loc, va_helpbuf, 250); /* changed from HW_PATH_MAX *2 to 250 - MLutz */
+		location_FullName (loc, va_helpbuf, HW_PATH_MAX *2 );
 		appl_write (av_shell_id, 16, msg);
 	}
 	return av_shell_id;

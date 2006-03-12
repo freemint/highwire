@@ -115,7 +115,7 @@ main (int argc, char **argv)
 	}
 	gsi        = gslongname + 32;
 	gsanswer   = gsi + 16/*sizeof(GS_INFO)*/;
-	va_helpbuf = gsanswer + HW_PATH_MAX;
+	va_helpbuf = gsanswer + 3 * HW_PATH_MAX;
 	Init_AV_Protocol();
 
 	if (ignore_colours) {
