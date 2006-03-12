@@ -8,11 +8,9 @@
 #include "global.h"
 #include "vaproto.h"
 /* #include "av_comm.h" */
+#include "hwWind.h" /* new_hwWind, window_raise */
 
 #ifdef AVWIND
-/* #include "Window.h" */ /* cause of window_raise */
-#include "hwWind.h" /*new_hwWind */
-
 BOOL	wind_cycle = TRUE; 
 
 void	handle_avdd(short, short, char *);
