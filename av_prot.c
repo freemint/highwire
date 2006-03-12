@@ -23,6 +23,7 @@ char *va_helpbuf;  /* HW_PATH_MAX byte */
 short av_shell_id     = -1;   /* Desktop's AES ID */
 short av_shell_status = 0;    /* What AV commands can desktop do? */
 
+extern char *thisapp;
              
 /*============================================================================*/
 short
@@ -75,7 +76,7 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 			msg[3] = VV_START | VV_ACC_QUOTING; 
 			/* msg[4] = 0;  initialized above */
 			/* msg[5] = 0;  initialized above */
-			*(char **)(msg+6) = strcpy(va_helpbuf, "HIGHWIRE");
+			*(char **)(msg+6) = strcpy(va_helpbuf, thisapp );
 			break;
 #ifdef AVWIND
 		case AV_ACCWINDOPEN:

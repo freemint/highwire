@@ -36,6 +36,7 @@ extern char *gsanswer;
 extern char *gsi;  /* extern GS_INFO *gsi; */
 extern char *va_helpbuf;
 
+char *thisapp = "HIGHWIRE";
 
 static void highwire_ex(void);
 static void open_splash(void);
@@ -125,6 +126,8 @@ main (int argc, char **argv)
 		/* set default colour for page background */
 		background_colour = G_LWHITE;
 	}
+	
+	menu_register(-1, thisapp);
 
 	/* identify the AES and issue appropriate initialization calls
 	 */
