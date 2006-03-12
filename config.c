@@ -22,7 +22,7 @@
 WORD         cfg_UptoDate     = -1;
 const char * cfg_File         = NULL;
 const char * cfg_StartPage    = "html\\highwire.htm";
-const char * cfg_Viewer    = "D:\\qed\\qed.app";
+const char * cfg_Viewer    = NULL;
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;

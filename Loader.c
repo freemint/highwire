@@ -1126,7 +1126,7 @@ launch_viewer(const char *name)
 		msg[1] = gl_apid;
 		msg[2] = 0;
 		
-		if (mime_byExtension (name, NULL, NULL) == MIME_TXT_HTML) {
+		if (cfg_Viewer && mime_byExtension (name, NULL, NULL) == MIME_TXT_HTML) {
 			strcpy (va_helpbuf, cfg_Viewer); 	 /* copy full name of the programm */
 			p = va_helpbuf + strlen (va_helpbuf) +1; /* position after the \0 of string */
 			strcpy (p, name); 			 /* file path copied to va_helpbuf */
