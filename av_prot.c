@@ -223,7 +223,7 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 	
 	if (win_handle)
 	{
-		cmdline = (char *) malloc(strlen(arg));
+		cmdline = (char *) malloc(strlen(arg) + 1);
 		strcpy(cmdline, arg);
 		new_hwWind ("", cmdline, NULL);	
 		free(cmdline);
