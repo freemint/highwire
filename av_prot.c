@@ -11,9 +11,12 @@
 #include "hwWind.h" /* new_hwWind, window_raise */
 
 #ifdef AVWIND
+#include "Loader.h"
 BOOL	wind_cycle = TRUE; 
 
 void	handle_avdd(short, short, char *);
+LOADER  start_page_load (CONTAINR, const char *, LOCATION, BOOL, char *);
+
 #endif
 
 
@@ -218,17 +221,36 @@ void send_avwinclose(short handle)
 
 }
 
+/*============================================================================*/
 void	handle_avdd(short win_handle, short kstate, char *arg)
 {
-	char		*cmdline;
+	char filename[HW_PATH_MAX];
+	char	*cmd;
+	BOOL quoted;
+
+	cmd = (char *) malloc( strlen(arg) + 1);
+	strcpy(cmd, arg);
+		
+	quoted = (cmd[0] == '\'' && cmd[1] != '\0'
+	                    && strrchr(&cmd[2], '\'') != NULL && strrchr(&cmd[2], '\'')[1] == '\0');
 	
-	if (win_handle)
-	{
-		cmdline = (char *) malloc(strlen(arg) + 1);
-		strcpy(cmdline, arg);
-		new_hwWind ("", cmdline, NULL);	
-		free(cmdline);
+ 	if (quoted) { 
+		char *p = filename;
+
+		cmd++;
+		while (cmd[0] != '\0') {
+			if (cmd[0] == '\'' && cmd[1] == '\'')
+				cmd++;
+			p++[0] = cmd++[0];
+		}
+		p[-1] = '\0';  /* overwrite closing ' */
+		cmd = filename;
 	}
+	
+	if (win_handle) {
+		new_hwWind ("", cmd, NULL);
+	}
+	free (cmd);
 }
 
 #endif
