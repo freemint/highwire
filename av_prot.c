@@ -225,32 +225,83 @@ void send_avwinclose(short handle)
 void	handle_avdd(short win_handle, short kstate, char *arg)
 {
 	char filename[HW_PATH_MAX];
+	char	*cmd_orig;
 	char	*cmd;
-	BOOL quoted;
+	BOOL quoted; 
 
-	cmd = (char *) malloc( strlen(arg) + 1);
+	cmd_orig = (char *) malloc( strlen(arg) + 1);
+	cmd = cmd_orig;
 	strcpy(cmd, arg);
 		
-	quoted = (cmd[0] == '\'' && cmd[1] != '\0'
-	                    && strrchr(&cmd[2], '\'') != NULL && strrchr(&cmd[2], '\'')[1] == '\0');
-	
- 	if (quoted) { 
-		char *p = filename;
 
-		cmd++;
-		while (cmd[0] != '\0') {
-			if (cmd[0] == '\'' && cmd[1] == '\'')
-				cmd++;
-			p++[0] = cmd++[0];
+ 	if (win_handle) {
+		char *p = filename;
+		char *s;
+		
+		if (cmd[0] == '\'') {
+			quoted = 1;
+			cmd++; 
 		}
-		p[-1] = '\0';  /* overwrite closing ' */
+		else quoted = 0;
+		
+		while (cmd[0] != '\0') {
+			if (cmd[0] == '\'') 
+			{
+				quoted = 1;
+				switch (cmd[1])
+				{
+					case '\'':
+						cmd++;
+						break;
+					case ' ':
+						p[0] = '\0';
+						s= cmd+1;
+						cmd = filename;
+						new_hwWind ("", cmd, NULL);
+						quoted = 0;
+						cmd = s;
+						if (cmd[0] == '\'')
+							cmd++;
+						if (cmd[0] != '\0') {
+							p = filename;
+						}
+						cmd++;
+						if (cmd[0] == '\'') {
+							cmd++;
+							quoted = 1; 
+						}	
+						break;
+					default:
+						break;
+				}
+			}
+			p++[0] = cmd++[0];
+			if (!quoted && cmd[0] == ' ') {
+				p[0] = '\0';
+				s= cmd+1;
+				cmd = filename;
+				new_hwWind ("", cmd, NULL);
+				cmd = s;
+				if (cmd[0] == '\'') {
+					quoted = 1;
+					cmd++;
+				}
+				if (cmd[0] != '\0') {
+					p = filename;
+				}
+				if (cmd[0] == '\'')
+				  cmd++;
+			}			
+		} 
+		if (cmd[-1] == '\'')
+			p[-1] = '\0'; 
+		else p[0] = '\0';
+
 		cmd = filename;
-	}
-	
-	if (win_handle) {
 		new_hwWind ("", cmd, NULL);
-	}
-	free (cmd);
+   
+	} 
+	free (cmd_orig);
 }
 
 #endif
