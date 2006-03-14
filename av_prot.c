@@ -229,25 +229,23 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 	char	*cmd;
 	BOOL quoted; 
 
-	cmd_orig = (char *) malloc( strlen(arg) + 1);
+	cmd_orig = strdup(arg);
 	cmd = cmd_orig;
-	strcpy(cmd, arg);
-		
 
  	if (win_handle) {
 		char *p = filename;
 		char *s;
 		
 		if (cmd[0] == '\'') {
-			quoted = 1;
+			quoted = TRUE;
 			cmd++; 
 		}
-		else quoted = 0;
+		else quoted = FALSE;
 		
 		while (cmd[0] != '\0') {
 			if (cmd[0] == '\'') 
 			{
-				quoted = 1;
+				quoted = TRUE;
 				switch (cmd[1])
 				{
 					case '\'':
@@ -258,7 +256,7 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 						s= cmd+1;
 						cmd = filename;
 						new_hwWind ("", cmd, NULL);
-						quoted = 0;
+						quoted = FALSE;
 						cmd = s;
 						if (cmd[0] == '\'')
 							cmd++;
@@ -268,7 +266,7 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 						cmd++;
 						if (cmd[0] == '\'') {
 							cmd++;
-							quoted = 1; 
+							quoted = TRUE; 
 						}	
 						break;
 					default:
@@ -283,7 +281,7 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 				new_hwWind ("", cmd, NULL);
 				cmd = s;
 				if (cmd[0] == '\'') {
-					quoted = 1;
+					quoted = TRUE;
 					cmd++;
 				}
 				if (cmd[0] != '\0') {
