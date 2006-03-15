@@ -22,16 +22,13 @@
 WORD         cfg_UptoDate     = -1;
 const char * cfg_File         = NULL;
 const char * cfg_StartPage    = "html\\highwire.htm";
-const char * cfg_Viewer    = NULL;
+const char * cfg_Viewer       = NULL;
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
+BOOL         cfg_GlobalCycle  = FALSE;
 WORD         cfg_ConnTout     = 1;
 WORD         cfg_ConnRetry    = 3;
-
-#ifdef AVWIND
-BOOL         cfg_Globalcycle = FALSE;
-#endif
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
@@ -192,6 +189,30 @@ save_config (const char * key, const char * arg)
  * callback functions for config file parsing
 */
 
+/*------------------------------------------------------------------------------
+ * generic function:  'arg' points to a BOOL varaiable which will be set to
+ * TRUE or FALSE according to the numeric value in 'param'.
+*/
+static void
+cfg_BOOL (char * param, long arg)
+{
+	*((BOOL*)arg) = (atol (param) > 0);
+}
+
+/*------------------------------------------------------------------------------
+ * generic function:  'arg' is an external function of the type  void * f (int)
+ * will be called with the argument TRUE or FALSE according to the numeric value
+ * in 'param'.
+*/
+static void
+cfg_Func (char * param, long arg)
+{
+	long n = atol (param);
+	typedef void (*gen_func)(int);
+	(*(gen_func)arg)(n > 0);
+}
+
+
 /*----------------------------------------------------------------------------*/
 static void
 cfg_up2date (char * param, long arg)
@@ -223,13 +244,7 @@ static void
 cfg_viewer (char * param, long arg)
 {
 	(void)arg;
-	if (*param == '!') { /* for debugging only */
-		param++;
-		cfg_UptoDate = TRUE;
-	}
-	if (cfg_UptoDate > 0) {
-		cfg_Viewer = strdup (param);
-	}
+	cfg_Viewer = strdup (param);
 }
 
 
@@ -310,7 +325,7 @@ cfg_infobar (char * param, long arg)
 
 /*----------------------------------------------------------------------------*/
 static void
-cfg_timeout_connect (char * param, long arg)
+cfg_tout_conn (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
@@ -319,7 +334,7 @@ cfg_timeout_connect (char * param, long arg)
 
 /*----------------------------------------------------------------------------*/
 static void
-cfg_timeout_hdr (char * param, long arg)
+cfg_tout_hdr (char * param, long arg)
 {
 	long n = strtoul (param, &param, 10);
 	long m = strtoul (param, &param, 10);
@@ -343,23 +358,6 @@ cfg_localweb (char * param, long arg)
 {
 	(void)arg;
 	local_web = strdup (param);
-}
-
-
-/*----------------------------------------------------------------------------*/
-static void
-cfg_func (char * param, long arg)
-{
-	long n = atol (param);
-	typedef void (*gen_func)(int);
-	(*(gen_func)arg)(n > 0);
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-cfg_BOOL (char * param, long arg)
-{
-	*((BOOL*)arg) = (atol (param) > 0);
 }
 
 
@@ -561,13 +559,13 @@ read_config(void)
 				{ "CACHEDIR",             cfg_cachedir,  0 },
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
 				{ "CACHEMEM",             cfg_cachemem,  0 },
-				{ "COOKIES",              cfg_func,      (long)menu_cookies    },
+				{ "COOKIES",              cfg_Func,      (long)menu_cookies    },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
-				{ "FORCE_FRAMECTRL",      cfg_func,      (long)menu_frm_ctrl   },
-                                { "GLOBAL_WINCYCLE",      cfg_func,      (long)menu_global_wincycle },
+				{ "FORCE_FRAMECTRL",      cfg_Func,      (long)menu_frm_ctrl   },
+				{ "GLOBAL_WINCYCLE",      cfg_BOOL,      (long)&cfg_GlobalCycle },
 				{ "HEADER",               cfg_font,      FA(header_font, 0, 0) },
 				{ "HIGHWIRE",             cfg_up2date,   0 },
 				{ "HTTP_PROXY",           cfg_http_proxy,0 },
@@ -576,15 +574,15 @@ read_config(void)
 				{ "ITALIC_NORMAL",        cfg_font,      FA(normal_font, 0, 1) },
 				{ "ITALIC_TELETYPE",      cfg_font,      FA(pre_font,    0, 1) },
 				{ "LOCAL_WEB",            cfg_localweb,  0 },
-				{ "LOGGING",              cfg_func,      (long)menu_logging    },
+				{ "LOGGING",              cfg_Func,      (long)menu_logging    },
 				{ "NORMAL",               cfg_font,      FA(normal_font, 0, 0) },
 				{ "NO_IMAGE",             cfg_BOOL, (long)&alternative_text_is_on },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
 				{ "START_PAGE",           cfg_startpage, 0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
-				{ "TIMEOUT_CONNECT",      cfg_timeout_connect, 0 },
-				{ "TIMEOUT_HEADER",       cfg_timeout_hdr, 0 },
+				{ "TIMEOUT_CONNECT",      cfg_tout_conn, 0 },
+				{ "TIMEOUT_HEADER",       cfg_tout_hdr,  0 },
 				{ "URL_01",               cfg_urlhist,   0 },
 				{ "URL_02",               cfg_urlhist,   1 },
 				{ "URL_03",               cfg_urlhist,   2 },
@@ -595,9 +593,9 @@ read_config(void)
 				{ "URL_08",               cfg_urlhist,   7 },
 				{ "URL_09",               cfg_urlhist,   8 },
 				{ "URL_10",               cfg_urlhist,   9 },
-				{ "USE_CSS",              cfg_func,      (long)menu_use_css    },
-				{ "VIEWER",               cfg_viewer, 0 },
-				{ "VIEW_IMAGES",          cfg_func,      (long)menu_images     }
+				{ "USE_CSS",              cfg_Func,      (long)menu_use_css    },
+				{ "VIEWER",               cfg_viewer,    0 },
+				{ "VIEW_IMAGES",          cfg_Func,      (long)menu_images     }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;
