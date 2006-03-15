@@ -2522,7 +2522,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		char output[100];
 		char img_file[HW_PATH_MAX];
 	
-		if (alternative_text_is_on) {
+		if (cfg_DropImages) {
 			if (get_value (parser, KEY_ALT, output, sizeof(output))) {
 				scan_string_to_16bit (output, frame->Encoding, &current->text,
 				                      current->word->font->Base->Mapping);

@@ -37,7 +37,6 @@ extern WORD page_margin;
 extern WORD slider_bkg;
 extern WORD slider_col;
 
-extern BOOL alternative_text_is_on;
 extern BOOL force_frame_controls;
 
 extern char	*va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
@@ -146,9 +145,10 @@ extern WORD         cfg_UptoDate;
 extern const char * cfg_File;
 extern const char * cfg_StartPage;
 extern BOOL         cfg_AllowCookies;
-extern BOOL         cfg_ViewImages;
+extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
+extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
 extern BOOL         cfg_UseCSS;
-extern BOOL         cfg_GlobalCycle; /* Global window cycling by AV_SENDKEY */
+extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY */
 extern WORD         cfg_ConnTout;  /* seconds for connection establishing  */
 extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
                                     * couldn't get established immediately */

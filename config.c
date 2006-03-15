@@ -24,6 +24,7 @@ const char * cfg_File         = NULL;
 const char * cfg_StartPage    = "html\\highwire.htm";
 const char * cfg_Viewer       = NULL;
 BOOL         cfg_AllowCookies = FALSE;
+BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
 BOOL         cfg_GlobalCycle  = FALSE;
@@ -200,7 +201,7 @@ cfg_BOOL (char * param, long arg)
 }
 
 /*------------------------------------------------------------------------------
- * generic function:  'arg' is an external function of the type  void * f (int)
+ * generic function:  'arg' is an external function of the type  void f (int)
  * will be called with the argument TRUE or FALSE according to the numeric value
  * in 'param'.
 */
@@ -550,37 +551,37 @@ read_config(void)
 				void       (*func)(char*, long);
 				long         arg;
 			} cfg[] = {
-				{ "BOLD_HEADER",          cfg_font,      FA(header_font, 1, 0) },
-				{ "BOLD_ITALIC_HEADER",   cfg_font,      FA(header_font, 1, 1) },
-				{ "BOLD_ITALIC_NORMAL",   cfg_font,      FA(normal_font, 1, 1) },
-				{ "BOLD_ITALIC_TELETYPE", cfg_font,      FA(pre_font,    1, 1) },
-				{ "BOLD_NORMAL",          cfg_font,      FA(normal_font, 1, 0) },
-				{ "BOLD_TELETYPE",        cfg_font,      FA(pre_font,    1, 0) },
+				{ "BOLD_HEADER",          cfg_font,      FA(header_font, 1, 0)  },
+				{ "BOLD_ITALIC_HEADER",   cfg_font,      FA(header_font, 1, 1)  },
+				{ "BOLD_ITALIC_NORMAL",   cfg_font,      FA(normal_font, 1, 1)  },
+				{ "BOLD_ITALIC_TELETYPE", cfg_font,      FA(pre_font,    1, 1)  },
+				{ "BOLD_NORMAL",          cfg_font,      FA(normal_font, 1, 0)  },
+				{ "BOLD_TELETYPE",        cfg_font,      FA(pre_font,    1, 0)  },
 				{ "CACHEDIR",             cfg_cachedir,  0 },
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
 				{ "CACHEMEM",             cfg_cachemem,  0 },
-				{ "COOKIES",              cfg_Func,      (long)menu_cookies    },
+				{ "COOKIES",              cfg_Func,      (long)menu_cookies     },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
-				{ "FORCE_FRAMECTRL",      cfg_Func,      (long)menu_frm_ctrl   },
+				{ "FORCE_FRAMECTRL",      cfg_Func,      (long)menu_frm_ctrl    },
 				{ "GLOBAL_WINCYCLE",      cfg_BOOL,      (long)&cfg_GlobalCycle },
-				{ "HEADER",               cfg_font,      FA(header_font, 0, 0) },
+				{ "HEADER",               cfg_font,      FA(header_font, 0, 0)  },
 				{ "HIGHWIRE",             cfg_up2date,   0 },
 				{ "HTTP_PROXY",           cfg_http_proxy,0 },
 				{ "INFOBAR",              cfg_infobar,   0 },
-				{ "ITALIC_HEADER",        cfg_font,      FA(header_font, 0, 1) },
-				{ "ITALIC_NORMAL",        cfg_font,      FA(normal_font, 0, 1) },
-				{ "ITALIC_TELETYPE",      cfg_font,      FA(pre_font,    0, 1) },
+				{ "ITALIC_HEADER",        cfg_font,      FA(header_font, 0, 1)  },
+				{ "ITALIC_NORMAL",        cfg_font,      FA(normal_font, 0, 1)  },
+				{ "ITALIC_TELETYPE",      cfg_font,      FA(pre_font,    0, 1)  },
 				{ "LOCAL_WEB",            cfg_localweb,  0 },
-				{ "LOGGING",              cfg_Func,      (long)menu_logging    },
-				{ "NORMAL",               cfg_font,      FA(normal_font, 0, 0) },
-				{ "NO_IMAGE",             cfg_BOOL, (long)&alternative_text_is_on },
+				{ "LOGGING",              cfg_Func,      (long)menu_logging     },
+				{ "NORMAL",               cfg_font,      FA(normal_font, 0, 0)  },
+				{ "NO_IMAGE",             cfg_BOOL,      (long)&cfg_DropImages  },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
 				{ "START_PAGE",           cfg_startpage, 0 },
-				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0) },
+				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0)  },
 				{ "TIMEOUT_CONNECT",      cfg_tout_conn, 0 },
 				{ "TIMEOUT_HEADER",       cfg_tout_hdr,  0 },
 				{ "URL_01",               cfg_urlhist,   0 },
@@ -593,9 +594,9 @@ read_config(void)
 				{ "URL_08",               cfg_urlhist,   7 },
 				{ "URL_09",               cfg_urlhist,   8 },
 				{ "URL_10",               cfg_urlhist,   9 },
-				{ "USE_CSS",              cfg_Func,      (long)menu_use_css    },
+				{ "USE_CSS",              cfg_Func,      (long)menu_use_css     },
 				{ "VIEWER",               cfg_viewer,    0 },
-				{ "VIEW_IMAGES",          cfg_Func,      (long)menu_images     }
+				{ "VIEW_IMAGES",          cfg_Func,      (long)menu_images      }
 			};
 			short beg = 0;
 			short end = (short)numberof(cfg) - 1;

@@ -55,8 +55,7 @@ WORD slider_col = 8;  /* G_LWHITE */
 
 WORD page_margin = 5; 
 
-BOOL alternative_text_is_on = FALSE;
-BOOL force_frame_controls   = FALSE;
+BOOL force_frame_controls = FALSE;
 
 
 /* Globals */
