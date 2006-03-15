@@ -29,6 +29,10 @@ BOOL         cfg_UseCSS       = TRUE;
 WORD         cfg_ConnTout     = 1;
 WORD         cfg_ConnRetry    = 3;
 
+#ifdef AVWIND
+BOOL         cfg_Globalcycle = FALSE;
+#endif
+
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
 
@@ -563,6 +567,7 @@ read_config(void)
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
 				{ "FORCE_FRAMECTRL",      cfg_func,      (long)menu_frm_ctrl   },
+                                { "GLOBAL_WINCYCLE",      cfg_func,      (long)menu_global_wincycle },
 				{ "HEADER",               cfg_font,      FA(header_font, 0, 0) },
 				{ "HIGHWIRE",             cfg_up2date,   0 },
 				{ "HTTP_PROXY",           cfg_http_proxy,0 },

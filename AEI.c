@@ -31,6 +31,9 @@
 #	include "highwire.h"
 	extern OBJECT * menutree;
 #endif
+#ifdef AVWIND
+	extern BOOL         cfg_Globalcycle;
+#endif
 
 
 
@@ -580,6 +583,22 @@ menu_images (int mode)
 #endif
 }
 
+#ifdef AVWIND
+/*============================================================================*/
+void
+menu_global_wincycle (int mode)
+{
+	if (mode < 0)  cfg_Globalcycle = !cfg_Globalcycle;
+	else if (mode) cfg_Globalcycle = TRUE;
+	else           cfg_Globalcycle = FALSE;
+	if (mode < 0) {
+		save_config ("GLOBAL_WINCYCLE", (cfg_Globalcycle ? "1" : "0"));
+	}
+/* #ifdef GEM_MENU
+	menu_icheck (menutree, M_GLOBWIN, cfg_Globalcycle);
+#endif */
+}
+#endif
 
 /*============================================================================*/
 void

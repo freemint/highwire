@@ -20,10 +20,6 @@ static void vTab_raised    (WINDOW, BOOL topNbot);
 #define     vTab_sized     ((BOOL(*)(WINDOW))dummy_False)
 #define     vTab_iconified ((void(*)(WINDOW))dummy_Void)
 
-#ifdef AVWIND
-BOOL    global_cycle = FALSE;
-
-#endif
 
 WINDOW window_Top = NULL;
 
@@ -291,7 +287,7 @@ window_evKeybrd (UWORD key, UWORD kstate)
 	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ 
 #ifdef AVWIND
-			if (global_cycle) {
+			if (cfg_Globalcycle) {
 				Send_AV(AV_SENDKEY,NULL,NULL);
 				break;
 			}

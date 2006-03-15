@@ -100,6 +100,10 @@ void    menu_frm_ctrl (int);
 void    menu_logging  (int);
 WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
 
+#ifdef AVWIND
+void    menu_global_wincycle (int);
+#endif
+
 /* in formwind.c */
 
 #ifdef _GEMLIB_H_
@@ -151,6 +155,10 @@ extern BOOL         cfg_UseCSS;
 extern WORD         cfg_ConnTout;  /* seconds for connection establishing  */
 extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
                                     * couldn't get established immediately */
+                                    
+#ifdef AVWIND
+	extern BOOL         cfg_Globalcycle;
+#endif
 
 BOOL read_config (void);
 BOOL save_config (const char * key, const char * arg);
