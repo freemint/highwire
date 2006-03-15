@@ -12,11 +12,9 @@
 
 #ifdef AVWIND
 #include "Loader.h"
-BOOL	acc_wind_OK = TRUE;
+static BOOL acc_wind_OK = TRUE;
 
-void	handle_avdd(short, short, char *);
-LOADER  start_page_load (CONTAINR, const char *, LOCATION, BOOL, char *);
-
+static void handle_avdd (short win_handle, short kstate, char * arg);
 #endif
 
 
@@ -48,7 +46,8 @@ get_avserver(void)
 
 
 /*============================================================================*/
-BOOL Send_AV(short message, const char *data1, const char *data2)
+BOOL
+Send_AV (short message, const char * data1, const char * data2)
 {
 	short msg[8];
 	short to_ap_id;
@@ -107,7 +106,7 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 
 /*============================================================================*/
 BOOL
-Receive_AV(short msg[8])
+Receive_AV (short msg[8])
 {
 #ifdef AVWIND
 	char *str_p; /* *arg; */
@@ -174,7 +173,7 @@ Receive_AV(short msg[8])
 				*(char **)(msg+4)=strcpy (va_helpbuf, str_p);
 				appl_write(av_shell_id, 16, msg);
 
-				handle_avdd(whandle, kstate, str_p);
+				handle_avdd (whandle, kstate, str_p);
 			}
 			break;
 #endif
@@ -185,7 +184,8 @@ Receive_AV(short msg[8])
 
 
 /*============================================================================*/
-void Init_AV_Protocol(void)
+void
+Init_AV_Protocol(void)
 {
 	va_helpbuf[0] = '\0';
 
@@ -196,7 +196,8 @@ void Init_AV_Protocol(void)
 
 
 /*============================================================================*/
-void Exit_AV_Protocol(void)
+void
+Exit_AV_Protocol(void)
 {
 	if (av_shell_status & AA_EXIT)  /* AV server knows AV_EXIT */
 		Send_AV(AV_EXIT, NULL, NULL);
@@ -205,26 +206,29 @@ void Exit_AV_Protocol(void)
 
 #ifdef AVWIND
 /*============================================================================*/
-void send_avwinopen(short handle)
+void
+send_avwinopen (short handle)
 {
 	if (acc_wind_OK) {
 		sprintf (va_helpbuf, "%hi", handle);
-		Send_AV(AV_ACCWINDOPEN, *(char **) &handle, NULL);
-	}
-}
-
-
-/*============================================================================*/
-void send_avwinclose(short handle)
-{
-	if (acc_wind_OK) {
-		sprintf (va_helpbuf, "%hi", handle);
-		Send_AV(AV_ACCWINDCLOSED, *(char **) &handle, NULL);
+		Send_AV (AV_ACCWINDOPEN, *(char **)&handle, NULL);
 	}
 }
 
 /*============================================================================*/
-void	handle_avdd(short win_handle, short kstate, char *arg)
+void
+send_avwinclose (short handle)
+{
+	if (acc_wind_OK) {
+		sprintf (va_helpbuf, "%hi", handle);
+		Send_AV (AV_ACCWINDCLOSED, *(char **)&handle, NULL);
+	}
+}
+
+
+/*----------------------------------------------------------------------------*/
+static void
+handle_avdd (short win_handle, short kstate, char * arg)
 {
 	char filename[HW_PATH_MAX];
 	char	*cmd_orig;
@@ -239,11 +243,11 @@ void	handle_avdd(short win_handle, short kstate, char *arg)
 		char *s;
 		
 		if (cmd[0] == '\'') {
-			quoted = TRUE;
 			cmd++; 
+			quoted = TRUE;
+		} else {
+			quoted = FALSE;
 		}
-		else quoted = FALSE;
-		
 		while (cmd[0] != '\0') {
 			if (cmd[0] == '\'') 
 			{

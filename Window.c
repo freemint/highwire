@@ -186,7 +186,6 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			if ((*wind->close)(wind, kstate)) {
 #ifdef AVWIND
 				send_avwinclose(wind->Handle);
-
 #endif
 				delete_window (wind);
 			}
@@ -287,17 +286,13 @@ window_evKeybrd (UWORD key, UWORD kstate)
 	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ 
 #ifdef AVWIND
-			if (cfg_Globalcycle) {
+			if (cfg_GlobalCycle) {
 				Send_AV(AV_SENDKEY,NULL,NULL);
 				break;
 			}
-			else {
 #endif	 
 			window_raise (NULL, TRUE, NULL); 
 			break;
-#ifdef AVWIND
-			}			
-#endif
 			
 		case 0x0011: /* CTRL+Q */ exit (0);
 		default:     if (wind) (*wind->evKeybrd)(wind, scan, ascii, kstate);
