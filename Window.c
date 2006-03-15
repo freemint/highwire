@@ -21,7 +21,8 @@ static void vTab_raised    (WINDOW, BOOL topNbot);
 #define     vTab_iconified ((void(*)(WINDOW))dummy_Void)
 
 #ifdef AVWIND
-extern BOOL wind_cycle;
+BOOL    global_cycle = FALSE;
+
 #endif
 
 WINDOW window_Top = NULL;
@@ -290,7 +291,7 @@ window_evKeybrd (UWORD key, UWORD kstate)
 	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ 
 #ifdef AVWIND
-			if (wind_cycle) {
+			if (global_cycle) {
 				Send_AV(AV_SENDKEY,NULL,NULL);
 				break;
 			}

@@ -12,7 +12,7 @@
 
 #ifdef AVWIND
 #include "Loader.h"
-BOOL	wind_cycle = TRUE; 
+BOOL	acc_wind_OK = TRUE;
 
 void	handle_avdd(short, short, char *);
 LOADER  start_page_load (CONTAINR, const char *, LOCATION, BOOL, char *);
@@ -91,7 +91,6 @@ BOOL Send_AV(short message, const char *data1, const char *data2)
 		case AV_SENDKEY :
 				msg[3] = 0x0004;
 				msg[4] = 0x1117;	/* ^W */
-/*				window_raise (NULL, FALSE, NULL); */
 			break;	
 #endif
 		case VA_START:
@@ -120,8 +119,8 @@ Receive_AV(short msg[8])
 			if (msg[1] == av_shell_id) 
 				av_shell_status = msg[3];
 #ifdef AVWIND
-			if (wind_cycle && !(av_shell_status & AA_ACCWIND))
-				wind_cycle = FALSE;
+			if (acc_wind_OK && !(av_shell_status & AA_ACCWIND))
+				acc_wind_OK = FALSE;
 #endif
 #ifdef AVSERVER_TEST
 			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r"); else puts ("SENDKEY error\r");
@@ -208,17 +207,20 @@ void Exit_AV_Protocol(void)
 /*============================================================================*/
 void send_avwinopen(short handle)
 {
-	sprintf (va_helpbuf, "%hi", handle);
-	Send_AV(AV_ACCWINDOPEN, *(char **) &handle, NULL);
+	if (acc_wind_OK) {
+		sprintf (va_helpbuf, "%hi", handle);
+		Send_AV(AV_ACCWINDOPEN, *(char **) &handle, NULL);
+	}
 }
 
 
 /*============================================================================*/
 void send_avwinclose(short handle)
 {
-	sprintf (va_helpbuf, "%hi", handle);
-	Send_AV(AV_ACCWINDCLOSED, *(char **) &handle, NULL);
-
+	if (acc_wind_OK) {
+		sprintf (va_helpbuf, "%hi", handle);
+		Send_AV(AV_ACCWINDCLOSED, *(char **) &handle, NULL);
+	}
 }
 
 /*============================================================================*/

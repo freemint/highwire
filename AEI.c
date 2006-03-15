@@ -32,10 +32,6 @@
 	extern OBJECT * menutree;
 #endif
 
-#ifdef AVWIND
-extern BOOL wind_cycle;
-#endif
-
 
 
 /*==============================================================================
@@ -1354,8 +1350,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 
 			break; 
 		case 0x15: /* probably only an ugly hack */
-			if (wind_cycle)
-				window_raise (NULL, TRUE, NULL);	
+			window_raise (NULL, TRUE, NULL);	
 			break; 
 #endif
 		case AV_OPENWIND:
