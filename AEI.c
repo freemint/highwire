@@ -31,10 +31,6 @@
 #	include "highwire.h"
 	extern OBJECT * menutree;
 #endif
-#ifdef AVWIND
-	extern BOOL         cfg_Globalcycle;
-#endif
-
 
 
 /*==============================================================================
@@ -166,7 +162,7 @@ page_load(void)
 
 
 /*------------------------------------------------------------------------------
- * rewrote by Rainer  May 2002 
+ * rewrote by Rainer  May 2002
 */
 static void
 vastart (const WORD msg[8], PXY mouse, UWORD state)
@@ -583,22 +579,6 @@ menu_images (int mode)
 #endif
 }
 
-#ifdef AVWIND
-/*============================================================================*/
-void
-menu_global_wincycle (int mode)
-{
-	if (mode < 0)  cfg_Globalcycle = !cfg_Globalcycle;
-	else if (mode) cfg_Globalcycle = TRUE;
-	else           cfg_Globalcycle = FALSE;
-	if (mode < 0) {
-		save_config ("GLOBAL_WINCYCLE", (cfg_Globalcycle ? "1" : "0"));
-	}
-/* #ifdef GEM_MENU
-	menu_icheck (menutree, M_GLOBWIN, cfg_Globalcycle);
-#endif */
-}
-#endif
 
 /*============================================================================*/
 void
@@ -805,7 +785,7 @@ update_menu (ENCODING encoding, BOOL raw_text)
 
 /*============================================================================*/
 /* rpopup_open
- * 
+ *
  * I would much rather do this in a non modal manner, however
  * at the moment we haven't seperated the parsing/display from
  * the UI to a satisfying level.  So we have this cheap routine
@@ -950,7 +930,7 @@ rpopup_open (WORD mx, WORD my)
 
 /*============================================================================*/
 /* rpoplink_open
- * 
+ *
  * baldrick April 28, 2004
  */
 void
@@ -1013,7 +993,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	
 	switch (which_obj)
 	{
-		case RLINK_OPEN: 
+		case RLINK_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
 			        ? containr_byName (current, link->u.target) : NULL);
 			if (cont) {
@@ -1160,7 +1140,7 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 
 			wind = new_hwWind (buf, NULL, NULL);
 			cont = (wind ? wind->Pane : NULL);
-			if (cont) 
+			if (cont)
 				start_page_load (cont, NULL, imgloc, TRUE, NULL);
 				
 			} break;
@@ -1257,7 +1237,7 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	
 	switch (which_obj)
 	{
-		case RIMG_OPEN: 
+		case RIMG_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
 			        ? containr_byName (current, link->u.target) : NULL);
 			if (cont) {
@@ -1361,16 +1341,15 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		case VA_DRAGACCWIND:
 /*			printf ("AEI.c - VA_DRAGACCWIND!\r\n"); */
 			Receive_AV(msg); /* handle it in av_prot.c */
+			break;
 
-			break; 
-
-		case AV_SENDKEY: 
+		case AV_SENDKEY:
 			Receive_AV(msg); /* handle it in av_prot.c */
-
-			break; 
-		case 0x15: /* probably only an ugly hack */
-			window_raise (NULL, TRUE, NULL);	
-			break; 
+			break;
+		
+		case WM_TOPPED: /* 0x15: * probably only an ugly hack */
+			window_raise (NULL, TRUE, NULL);
+			break;
 #endif
 		case AV_OPENWIND:
 			state |= K_ALT;
