@@ -76,16 +76,14 @@ Send_AV (short message, const char * data1, const char * data2)
 			break;
 		case AV_PROTOKOLL:
 			msg[3] = VV_START | VV_ACC_QUOTING; 
-			/* msg[4] = 0;  initialized above */
-			/* msg[5] = 0;  initialized above */
-			*(char **)(msg+6) = strcpy(va_helpbuf, thisapp );
+			*(char **)(msg+6) = strcpy (va_helpbuf, thisapp);
 			break;
 #ifdef AVWIND
 		case AV_ACCWINDOPEN:
-			*(const char **)(msg+3) = data1;
+			msg[3] = *(const short *)data1;
 			break;
 		case AV_ACCWINDCLOSED:
-			*(const char **)(msg+3) = data1;
+			msg[3] = *(const short *)data1;
 			break;
 		case AV_SENDKEY :
 				msg[3] = 0x0004;
@@ -96,11 +94,10 @@ Send_AV (short message, const char * data1, const char * data2)
 			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
 			break;
 		default:
-			break;
-			
+			return 0; /* not supported here */
 	}
 
-	return appl_write(to_ap_id, 16, msg);
+	return appl_write (to_ap_id, 16, msg);
 }
 
 
@@ -211,7 +208,7 @@ send_avwinopen (short handle)
 {
 	if (acc_wind_OK) {
 		sprintf (va_helpbuf, "%hi", handle);
-		Send_AV (AV_ACCWINDOPEN, *(char **)&handle, NULL);
+		Send_AV (AV_ACCWINDOPEN, (char*)&handle, NULL);
 	}
 }
 
@@ -221,7 +218,7 @@ send_avwinclose (short handle)
 {
 	if (acc_wind_OK) {
 		sprintf (va_helpbuf, "%hi", handle);
-		Send_AV (AV_ACCWINDCLOSED, *(char **)&handle, NULL);
+		Send_AV (AV_ACCWINDCLOSED, (char*)&handle, NULL);
 	}
 }
 
