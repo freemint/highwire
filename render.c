@@ -3410,11 +3410,11 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 					height = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) >= (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
 					width = val;
 			}
 			if (get_value (parser, CSS_MIN_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) >= (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
 				min_wid = val;
 			}
 		}
