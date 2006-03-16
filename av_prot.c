@@ -207,7 +207,6 @@ void
 send_avwinopen (short handle)
 {
 	if (acc_wind_OK) {
-		sprintf (va_helpbuf, "%hi", handle);
 		Send_AV (AV_ACCWINDOPEN, (char*)&handle, NULL);
 	}
 }
@@ -217,7 +216,6 @@ void
 send_avwinclose (short handle)
 {
 	if (acc_wind_OK) {
-		sprintf (va_helpbuf, "%hi", handle);
 		Send_AV (AV_ACCWINDCLOSED, (char*)&handle, NULL);
 	}
 }
