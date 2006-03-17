@@ -21,7 +21,7 @@ void  sched_init (void (*ctrl_func)(long msec));
 			 * If a job is registered and no other job was in the queue before
 			 * 'ctrl_func' will be called with the number of milliseconds as the
 			 * argument.  Else if the last job of the queue will be unregistered
-			 * these function is called with a '0' argument to signalize that no
+			 * these function is called with a '-1' argument to signalize that no
 			 * more periodical calls are needed at the moment.
 			*/
 

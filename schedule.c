@@ -34,9 +34,9 @@ int current_prio = 0;
 void
 sched_init (void (*func) (long msec))
 {
+	if (on_off) (*on_off) (-1); /* unregister from this */
 	on_off = func;
-	
-	if (on_off && __beg) (*on_off) (0);
+	if (on_off) (*on_off) (__beg ? 0 : -1);
 }
 
 
@@ -110,7 +110,7 @@ sched_insert (SCHED_FUNC func, void * value, long hash, int prio)
 		sched->Hash     = hash;
 		sort_in (sched, TRUE);
 		
-		if (on_off) (*on_off) (1);
+		if (on_off && __cnt == 1) (*on_off) (0);
 		
 		return TRUE;
 	}
@@ -191,7 +191,7 @@ schedule (int max_do)
 		}
 		current_prio = 1;
 		
-		if (on_off && !__beg) (*on_off) (0);
+		if (on_off && !__beg) (*on_off) (-1);
 	}
 	_recursive--;
 	
