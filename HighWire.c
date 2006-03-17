@@ -61,6 +61,15 @@ static EVMULT_IN multi_in = {
 	0,        {  0, 0, 0, 0 },  /* M2 */
 	1, 0                        /* Timer */
 };
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+static void set_timer (long msec)
+{
+	if (msec < 0) {
+		multi_in.emi_flags &= ~MU_TIMER;
+	} else {
+		multi_in.emi_flags  |= MU_TIMER;
+	}
+}
 
 
 /*============================================================================*/
@@ -178,7 +187,7 @@ main (int argc, char **argv)
 	vst_scratch (vdi_handle, SCRATCH_BOTH);
 	vst_kern (vdi_handle, TRACK_NORMAL, PAIR_ON, &u, &u);
 	vswr_mode (vdi_handle, MD_TRANS);
-
+	
 	u = 0;
 	if (argc > 1) {
 		short i = 1;
@@ -196,6 +205,8 @@ main (int argc, char **argv)
 #if 0
 load_sampleovl();
 #endif
+	
+	sched_init (set_timer);
 
 	while (!quit)
 	{
@@ -216,7 +227,9 @@ load_sampleovl();
 		if (event & MU_KEYBD) {
 			window_evKeybrd (out.emo_kreturn, out.emo_kmeta);
 		}
-		schedule (1);
+		if (multi_in.emi_flags & MU_TIMER) {
+			schedule (1);
+		}
 	}
 
 	/* Now the C library calls highwire_ex(). */
