@@ -1,4 +1,4 @@
-Changes since v. 0.3.0 release
+Changes since v. 0.3.0 release (0.3.1 beta3)
 
 - CSS file loading mechanisms got substantially
   overhauled to avoid endless loops due to
@@ -15,21 +15,29 @@ Changes since v. 0.3.0 release
 - Reworked the progress bar of browser windows for
   loading pages.
 
-- Font-size handling refined
+- Scheduler timer functionality brought in place
+  to reduce CPU usage while HighWire is ideling.
+  The related code was already implemented long
+  time ago but forgotten to be used.
 
-- Handling of % values in scan_numeric() modified (sourceforge fix)
+- Font-size handling refined.  Set font size can
+  never be smaller than defined min size.
 
-- Set font size can never be smaller than defined min size
+- Handling of % values in scan_numeric() modified
+  (sourceforge fix)
 
 - CSS positioning system modified
 
 - CSS Tokens Bottom & Right added
 
-- CSS specificity or weighting system changed from base 10
-  to base 100.  Avoids rules with 10 tags being more specific
-  than a rule with 1 class.
+- CSS specificity or weighting system changed from
+  base 10 to base 100.  Avoids rules with 10 tags
+  being more specific than a rule with 1 class.
 
-- AVSERVER detection rewritten (MLUTZ) fixes Teradesk troubles
+- AVSERVER detection rewritten (MLUTZ) fixes
+  Teradesk troubles.  Also global window cycling
+  should work now when enabled in the cfg file
+  with "GLOBAL_WINCYCLE = 1".
 
 - display: none support
 
