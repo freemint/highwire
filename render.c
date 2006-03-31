@@ -1009,7 +1009,7 @@ anc_correct (char * anc)
 }
 
 /*------------------------------------------------------------------------------
- * get rid of html entities in an url
+ * get rid of html entities in an url - and encode spaces with "%20" (ml 31/03/2006)
 */
 static char *
 url_correct (char * url)
@@ -1044,8 +1044,24 @@ url_correct (char * url)
 		*p = '\0';
 	}
 
+	if (strstr(url," ")) {
+		char buf[1024];
+		char * pointer;
+
+		buf[0] = '\0';
+		pointer = strtok (url, " ");
+		while (pointer) {
+			strcat (buf,pointer);
+			pointer=strtok (NULL, " ");
+			if (pointer)
+				strcat (buf,"%20");
+		}
+	strcpy(url,buf);
+	free (buf);
+	}
 	return url;
 }
+
 
 
 /*----------------------------------------------------------------------------*/
@@ -2169,7 +2185,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
 		{
-			char * p = url_correct (output);
+			char * p = output;
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
@@ -2180,6 +2196,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			if (*p && *p != '#') {
 				BOOL  skip = FALSE;
 				char * dst = p;
+				url_correct (output); 		/* moved to this place to avoid changing of anchors */ 
 				do if ((*dst = *(p)) > ' ' || skip) {
 					skip |= (*(dst++) == '#');
 				} while (*(p++));
