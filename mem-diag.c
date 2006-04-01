@@ -145,7 +145,7 @@ static void summarize (void)
 #ifdef MD_CHKBND
 		UWORD patt = canary_chk (item);
 		if (patt) {
-			printf ("canary violated in %p!  %s created @<%05lX>\n",
+			printf ("canary violated in %p!  %s created @<%05lX>\r\n",
 			        CHUNK2MEM (item->Chunk), canary_str (patt, item->Size),
 			        item->Created);
 		}
@@ -156,7 +156,7 @@ static void summarize (void)
 #endif
 	}
 #ifdef MD_SUMMARY
-	puts ("\n_Memory_Summary_________________________"
+	puts ("\r\n_Memory_Summary_________________________"
 	        "________________________________________");
 	while ((item = tree_next (&iter))) if (item->Created) {
 		ULONG     crtd = item->Created;
@@ -170,13 +170,13 @@ static void summarize (void)
 				item->Created = 0uL;
 			}
 		}
-		printf ("@<%05lX>: %4li (%li)\n", crtd, cnt, sum);
+		printf ("@<%05lX>: %4li (%li)\r\n", crtd, cnt, sum);
 	}
 	if (num) {
 		puts ("----------------------------------------"
 		      "----------------------------------------");
 	}
-	printf ("%7li bytes in %li blocks.\n", size, num);
+	printf ("%7li bytes in %li blocks.\r\n", size, num);
 #endif
 }
 #endif
@@ -194,7 +194,7 @@ malloc (size_t size)
 	
 	} else {
 		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, -1))) {
-/*			printf ("malloc(%li) @<%05lX>: %p duplicate %li.\n",
+/*			printf ("malloc(%li) @<%05lX>: %p duplicate %li.\r\n",
 			        size, ptr2offs(&size), CHUNK2MEM(chunk), item->Size);
 */			if (!tree_item (&actv_base, (TREE_ITEM)item, 1)) {
 				__free (item);
@@ -208,7 +208,7 @@ malloc (size_t size)
 			__free (chunk);
 			return NULL;
 		} else {
-/*			printf ("malloc(%li) @<%05lX>: %p.\n",
+/*			printf ("malloc(%li) @<%05lX>: %p.\r\n",
 			         size, ptr2offs (&size), CHUNK2MEM(chunk));
 */		}
 	}
@@ -258,12 +258,12 @@ free (void * mem)
 #ifdef MD_CHKBND
 		UWORD patt = canary_chk (item);
 		if (patt) {
-			printf ("free(%p) @<%05lX>: canary violated!\n", mem, ptr2offs (&mem));
-			printf ("   %s created @<%05lX>.\n",
+			printf ("free(%p) @<%05lX>: canary violated!\r\n", mem, ptr2offs (&mem));
+			printf ("   %s created @<%05lX>.\r\n",
 			        canary_str (patt, item->Size), item->Created);
 		}
 #endif
-/*		printf ("free(%p) @<%05lX>: %li.\n", mem, ptr2offs (&mem), item->Size);*/
+/*		printf ("free(%p) @<%05lX>: %li.\r\n", mem, ptr2offs (&mem), item->Size);*/
 #ifdef MD_KEEPALL
 		if (tree_item (&free_base, (TREE_ITEM)item, +1)) {
 			item->Deleted = ptr2offs (&mem);
@@ -278,13 +278,13 @@ if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
 	{
 #ifdef MD_CHKBND
 		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
-			printf ("free(%p) @<%05lX>: already deleted!\n", mem, ptr2offs (&mem));
-			printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
+			printf ("free(%p) @<%05lX>: already deleted!\r\n", mem, ptr2offs (&mem));
+			printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\r\n",
 			        item->Size, item->Created, item->Deleted);
 		} else
 #endif
 		{
-			printf ("free(%p) @<%05lX>: invalid pointer!\n", mem, ptr2offs (&mem));
+			printf ("free(%p) @<%05lX>: invalid pointer!\r\n", mem, ptr2offs (&mem));
 		}
 	}
 }
@@ -301,9 +301,9 @@ mvalidate (void * mem)
 		return 0;
 	}
 	if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
-		printf ("mvalidate(%p) @<%05lX>: already deleted!\n",
+		printf ("mvalidate(%p) @<%05lX>: already deleted!\r\n",
 		        mem, ptr2offs (&mem));
-		printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
+		printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\r\n",
 		        item->Size, item->Created, item->Deleted);
 		return -2;
 	}
@@ -325,14 +325,14 @@ mvalidate (void * mem)
 			n    = (char*)mem - (chunk + CANARY);
 			text = "inside";
 		}
-		printf ("mvalidate(%p) @<%05lX>:%s %li bytes %s %p\n",
+		printf ("mvalidate(%p) @<%05lX>:%s %li bytes %s %p\r\n",
 		        mem, ptr2offs (&mem), (actv ? "" : " invalid,"), n, text, chunk);
-		printf (actv ? "   %li bytes created @<%05lX>.\n"
-		             : "   %li bytes created @<%05lX>, deleted @<%05lX>.\n",
+		printf (actv ? "   %li bytes created @<%05lX>.\r\n"
+		             : "   %li bytes created @<%05lX>, deleted @<%05lX>.\r\n",
 		        item->Size, item->Created, item->Deleted);
 		return (actv ? -3 : -1);
 	}
-	printf ("mvalidate(%p) @<%05lX>: invalid pointer!\n",
+	printf ("mvalidate(%p) @<%05lX>: invalid pointer!\r\n",
 	        mem, ptr2offs (&mem));
 	return -1;
 }
