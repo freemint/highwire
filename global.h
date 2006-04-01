@@ -110,6 +110,10 @@ WORD formwind_do (OBJECT *, WORD start, const char * title,
 
 void dl_manager (LOCATION what, LOCATION ref);
 
+/* in fntsetup.c */
+
+void fonts_setup (WORD msg[]);
+
 /* in Widget.c */
 
 #ifdef _GEMLIB_H_

@@ -170,17 +170,20 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	case 'U':  /* U: reload with default encoding UTF-8 */
 		menu_reload (ENCODING_UTF8);
 		break;
+	case 0x0006:  /* CTRL+F */
+		fonts_setup (NULL);
+		break;
 	case 0x0012:  /* CTRL+R, F5 (Internet Explorer): reload */
 		menu_reload (ENCODING_Unknown);
-		break;
-	case 0x000E:  /* CTRL+N */
-		new_hwWind ("HighWire", NULL, NULL);
 		break;
 	case 0x000F:  /* CTRL+O */
 		menu_open (!(state & (K_RSHIFT|K_LSHIFT)));
 		break;
 	case 0x0009:  /* CTRL+I */
 		menu_info();
+		break;
+	case 0x000E:  /* CTRL+N */
+		new_hwWind ("HighWire", NULL, NULL);
 		break;
 	case 0x0015:  /* CTRL+U */
 #ifdef AVWIND

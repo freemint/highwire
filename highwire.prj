@@ -35,6 +35,7 @@ Loader.c   (global.h,defs.h,hw-types.h, parser.h,mime.h,av_comm.h,schedule.h,Con
 Redraws.c  (global.h,defs.h,hw-types.h, Form.h,fontbase.h)
 Window.c   (  hw-types.h, Window.h)
 formwind.c (global.h,defs.h,hw-types.h, Window.h)
+fntsetup.c (global.h,defs.h,hw-types.h, highwire.h, Window.h,hwWind.h)
 dl_mngr.c  (global.h,defs.h,hw-types.h, schedule.h,Location.h,Loader.h,Window.h,highwire.h,inet.h)
 Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h)
 hwWind.c   (global.h,defs.h,hw-types.h, hwWind.h,Containr.h,Form.h,mime.h,Loader.h,Logging.h,Location.h,cache.h)

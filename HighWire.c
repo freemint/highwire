@@ -45,7 +45,6 @@ static void open_splash(void);
 VDI_Workstation vdi_dev;
 
 #ifdef GEM_MENU
-OBJECT *about;
 OBJECT *rpopup;
 OBJECT *menutree;
 OBJECT *rpoplink;
@@ -155,12 +154,11 @@ main (int argc, char **argv)
 		hwUi_fatal (NULL, _ERROR_NORSC_);
 	}
 	rsrc_gaddr(R_TREE, MENUTREE, &menutree);
-	rsrc_gaddr(R_TREE, ABOUT, &about);
-	rsrc_gaddr(R_TREE, RPOPUP, &rpopup);
+	rsrc_gaddr(R_TREE, RPOPUP,   &rpopup);
 	rsrc_gaddr(R_TREE, RLINKPOP, &rpoplink);
-	rsrc_gaddr(R_TREE, RIMGPOP, &rpopimg);
+	rsrc_gaddr(R_TREE, RIMGPOP,  &rpopimg);
 
-	menu_bar (menutree, MENU_INSTALL);
+	menu_bar    (menutree, MENU_INSTALL);
 	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
 	menu_icheck (menutree, M_IMAGES,  cfg_ViewImages);
 	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);

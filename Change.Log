@@ -12,6 +12,10 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
   while clicking a link opens a new window and set
   it to the bottom.
 
+- Font Setup dialog implemented to change fonts on
+  the fly.  Works only with selectors supporting
+  the Font Protocol (eg. the Thing desktop).
+
 - Reworked the progress bar of browser windows for
   loading pages.
 

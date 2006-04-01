@@ -83,6 +83,7 @@ CFILES = \
 	\
 	Window.c \
 	formwind.c \
+	fntsetup.c \
 	dl_mngr.c \
 	Widget.c \
 	hwWind.c \

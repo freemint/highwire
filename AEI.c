@@ -737,13 +737,14 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_ATARI_SYS: menu_reload (ENCODING_ATARIST);     break;
 		case M_ATARINVDI: menu_reload (ENCODING_ATARINVDI);   break;
 #endif
-		case M_FONT_INC:  menu_fontsize ('+'); break;
-		case M_FONT_DEC:  menu_fontsize ('-'); break;
-		case M_COOKIES:   menu_cookies  (-1);  break;
-		case M_IMAGES:    menu_images   (-1);  break;
-		case M_USE_CSS:   menu_use_css  (-1);  break;
-		case M_FRM_CTRL:  menu_frm_ctrl (-1);  break;
-		case M_LOGGING:   menu_logging  (-1);  break;
+		case M_FONT_INC:  menu_fontsize ('+');  break;
+		case M_FONT_DEC:  menu_fontsize ('-');  break;
+		case M_COOKIES:   menu_cookies  (-1);   break;
+		case M_IMAGES:    menu_images   (-1);   break;
+		case M_USE_CSS:   menu_use_css  (-1);   break;
+		case M_FRM_CTRL:  menu_frm_ctrl (-1);   break;
+		case M_LOGGING:   menu_logging  (-1);   break;
+		case M_FONTS:     fonts_setup   (NULL); break;
 	}
 	if (title > 0) {
 		menu_tnormal (menutree, title, UNHIGHLIGHT);
@@ -1443,6 +1444,10 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			}
 			break;
 		}
+		
+		case 0x7A18/*FONT_CHANGED*/:
+			fonts_setup (msg);
+			break;
 		
 		case AP_TERM:
 			return (TRUE);
