@@ -1057,7 +1057,6 @@ url_correct (char * url)
 				strcat (buf,"%20");
 		}
 	strcpy(url,buf);
-	free (buf);
 	}
 	return url;
 }
