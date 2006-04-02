@@ -333,6 +333,13 @@ fonts_setup (WORD msg[])
 		setup_font  (actv_font);
 		select_type (-1, FALSE);
 		
+		if (sys_MAGIC()) {
+			fnt_form[FNT_SERF].ob_spec.tedinfo->te_thickness = -2;
+			fnt_form[FNT_SANS].ob_spec.tedinfo->te_thickness = -2;
+			fnt_form[FNT_MONO].ob_spec.tedinfo->te_thickness = -2;
+			fnt_form[FNT_LIST].ob_spec.obspec.framesize      = -2;
+		}
+		
 		if (selector == -1) {
 			const char * env = getenv ("FONTSELECT");
 			if (!env || !*env) {
