@@ -462,10 +462,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			strcpy (p, name);
 			p   += hlen;
 		}
-		len = min (strlen (loc->FullName),
-		           sizeof(buffer) - sizeof(rest) - (p - buffer));
-		strncpy (p, loc->FullName, len);
-		strcpy  (p += len, rest);
+		len = sizeof(buffer) - (p - buffer) - sizeof(rest);
+		len = location_PathFile (loc, p, len);
+		strcpy (p += len, rest);
 		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1)) > 0) {
 			const char * stack = inet_info();
 			len = sprintf (buffer,

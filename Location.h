@@ -40,6 +40,7 @@ LOCATION location_share (LOCATION);
 
 #define      location_Hash(l)  (!l ? 0uL : l->__hash ? l->__hash : _loc_Hash(l))
 size_t       location_FullName (LOCATION, char * buffer, size_t max_len);
+size_t       location_PathFile (LOCATION, char * buffer, size_t max_len);
 const char * location_Path     (LOCATION, UWORD * opt_len);
 const char * location_Host     (LOCATION, UWORD * opt_len);
 BOOL         location_equal    (LOCATION, LOCATION);

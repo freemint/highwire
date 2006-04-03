@@ -508,28 +508,82 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		max_len -= len;
 	}
 	
-	if (max_len && dir) {
-		size_t len = (dir->Length < max_len ? dir->Length : max_len);
-		src        = dir->Name;
+	if (!max_len) {
+		dst[-1] = '\0';
+	
+	} else {
+		dst += location_PathFile (loc, dst, max_len);
+	}
+	
+	return (dst - buffer);
+}
+
+/*============================================================================*/
+size_t
+location_PathFile (LOCATION loc, char * buffer, size_t max_len)
+{
+	char * dst = buffer;
+	BOOL   enc;
+	
+	if (!buffer || !max_len) {
+		return 0;
+	
+	} else if (!loc) {
+		const char inv[] = "<nil>";
+		size_t     len   = sizeof(inv) -1;
+		if (len > max_len -1) {
+			len = max_len -1;
+		}
+		memcpy (dst, inv, len);
+		dst[len] = '\0';
+		return len;
+	}
+	
+	enc = PROTO_isRemote(loc->Proto);
+	
+	if (max_len && loc->Dir) {
+		const char * src = ((DIR_ENT)loc->Dir)->Name;
+		char         c;
 		if (PROTO_isPseudo(loc->Proto) && *src == '/') {
 			src++;
-			len--;
 		}
-		if (len) {
-			memcpy (dst, dir->Name, len);
-			dst     += len;
-			max_len -= len;
+		while ((c = *(src++)) != '\0') {
+			if (enc) {
+				if (c == '%' || c <= ' ') {
+					size_t n = min (3, max_len);
+					char   patt[4];
+					sprintf (patt, "%%%02X", c);
+					memcpy (dst, patt, n);
+					dst     += n;
+					max_len -= n;
+					if (!max_len) break;
+					else          continue;
+				} 
+			}
+			*(dst++) = c;
+			if (!--max_len) break;
 		}
 	}
 	
-	if (max_len && *loc->File) {
-		size_t len = strlen (loc->File);
-		if (len > max_len) {
-			len = max_len;
+	if (max_len && loc->File) {
+		const char * src = loc->File;
+		char         c;
+		while ((c = *(src++)) != '\0') {
+			if (enc) {
+				if (c == '%' || c <= ' ') {
+					size_t n = min (3, max_len);
+					char   patt[4];
+					sprintf (patt, "%%%02X", c);
+					memcpy (dst, patt, n);
+					dst     += n;
+					max_len -= n;
+					if (!max_len) break;
+					else          continue;
+				} 
+			}
+			*(dst++) = c;
+			if (!--max_len) break;
 		}
-		memcpy (dst, loc->File, len);
-		dst     += len;
-		max_len -= len;
 	}
 	
 	dst[max_len ? 0 : -1] = '\0';
