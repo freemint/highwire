@@ -1009,7 +1009,7 @@ anc_correct (char * anc)
 }
 
 /*------------------------------------------------------------------------------
- * get rid of html entities in an url - and encode spaces with "%20" (ml 31/03/2006)
+ * get rid of html entities in an url
 */
 static char *
 url_correct (char * url)
@@ -1043,24 +1043,23 @@ url_correct (char * url)
 	} else if (!anc_correct (p +1)) {
 		*p = '\0';
 	}
-
-	if (strstr(url," ")) {
-		char buf[1024];
-		char * pointer;
-
-		buf[0] = '\0';
-		pointer = strtok (url, " ");
-		while (pointer) {
-			strcat (buf,pointer);
-			pointer=strtok (NULL, " ");
-			if (pointer)
-				strcat (buf,"%20");
+	
+	p = url;
+	if (*p && *p != '#') do {
+		if (p[0] == '%' && isalnum(p[1]) && isalnum(p[2])) {
+			char       * dst = p;
+			const char * src = p +1;
+			char         tmp[4];
+			tmp[0] = *(src++);
+			tmp[1] = *(src++);
+			tmp[2] = '\0';
+			*(dst++) = strtoul (tmp, NULL, 16);
+			while ((*(dst++) = *(src++)) != '\0');
 		}
-	strcpy(url,buf);
-	}
+	} while (*(++p) && *p != '#');
+
 	return url;
 }
-
 
 
 /*----------------------------------------------------------------------------*/
@@ -2182,9 +2181,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		char * output;
 
-		if ((output = get_value_str (parser, KEY_HREF)) != NULL)
-		{
-			char * p = output;
+		if ((output = get_value_str (parser, KEY_HREF)) != NULL) {
 			FRAME frame = parser->Frame;
 			
 			char * target = get_value_str (parser, KEY_TARGET);
@@ -2192,15 +2189,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 				target = strdup (frame->base_target);
 			}
 			
-			if (*p && *p != '#') {
-				BOOL  skip = FALSE;
-				char * dst = p;
-				url_correct (output); 		/* moved to this place to avoid changing of anchors */ 
-				do if ((*dst = *(p)) > ' ' || skip) {
-					skip |= (*(dst++) == '#');
-				} while (*(p++));
-			}
-
 			reset_text_styles(parser);
 			
 			fontstack_push (current, -1);
@@ -2210,11 +2198,10 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 
 			word_set_color (current, frame->link_color);
-
-/*			if (parser->hasStyle) {
-			} dan */
-				css_text_styles (parser, current->font);
-
+			
+			css_text_styles (parser, current->font);
+			
+			url_correct (output);
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
 				if (get_value (parser, KEY_CHARSET, out2, sizeof(out2))) {
@@ -2587,15 +2574,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		
 		if (get_value (parser, KEY_SRC, img_file, sizeof(img_file))) {
-			char * p = url_correct (img_file);
-
-			if (*p && *p != '#') {
-				BOOL  skip = FALSE;
-				char * dst = p;
-				do if ((*dst = *(p)) > ' ' || skip) {
-					skip |= (*(dst++) == '#');
-				} while (*(p++));
-			}
+			url_correct (img_file);
 		}
 		new_image (frame, current, img_file, frame->BaseHref,
 		           get_value_size (parser, KEY_WIDTH),
