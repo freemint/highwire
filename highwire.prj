@@ -40,6 +40,7 @@ dl_mngr.c  (global.h,defs.h,hw-types.h, schedule.h,Location.h,Loader.h,Window.h,
 Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h)
 hwWind.c   (global.h,defs.h,hw-types.h, hwWind.h,Containr.h,Form.h,mime.h,Loader.h,Logging.h,Location.h,cache.h)
 av_prot.c  (global.h,defs.h,hw-types.h, av_comm.h)
+dragdrop.c (global.h,defs.h,hw-types.h, dragdrop.h)
 config.c   (global.h,defs.h,hw-types.h,version.h, cache.h,hwWind.h,scanner.h)
 Variable.c (global.h,defs.h,hw-types.h)
 Nice_VDI.c (global.h,defs.h,hw-types.h)

@@ -27,6 +27,7 @@
 #include "Loader.h"
 #include "cache.h"
 #include "Logging.h"
+#include "dragdrop.h"
 #ifdef GEM_MENU
 #	include "highwire.h"
 	extern OBJECT * menutree;
@@ -1427,23 +1428,8 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			break;
 #endif
 		case AP_DRAGDROP:
-		{
-			#define DD_NAK 1
-			static char pipename[] = "U:\\pipe\\DRAGDROP.AA";
-			long fd;
-
-			pipename[18] = msg[7] & 0x00FF;
-			pipename[17] = (msg[7] & 0xFF00) >> 8;
-
-			fd = Fopen(pipename, 2);
-			if (fd >= 0) {
-				char c = DD_NAK;
-
-				Fwrite((short)fd, 1, &c);
-				Fclose((short)fd);
-			}
+			rec_ddmsg ( msg );
 			break;
-		}
 		
 		case 0x7A18/*FONT_CHANGED*/:
 			fonts_setup (msg);

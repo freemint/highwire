@@ -18,6 +18,7 @@
 #include "Form.h"
 #include "cache.h"
 #include "Logging.h"
+#include "dragdrop.h"
 
 
 #define WINDOW_t HwWIND
@@ -1960,35 +1961,58 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		TBAREDIT * edit = TbarEdit (This);
 		WORD x = This->Work.g_x + This->TbarElem[TBAR_EDIT].Offset;
 		WORD c = edit->Cursor;
-		if (This->Input) {
-			WORDITEM word = input_activate (This->Input, -1);
-			if (word) {
-				GRECT clip;
-				long  lx, ly;
-				FRAME frame = (FRAME)dombox_Offset (&word->line->Paragraph->Box,
-				                                    &lx, &ly);
-				clip.g_x = lx + frame->clip.g_x - frame->h_bar.scroll
-				              + word->h_offset;
-				clip.g_y = ly + frame->clip.g_y - frame->v_bar.scroll
-				              + word->line->OffsetY - word->word_height;
-				clip.g_w = word->word_width;
-				clip.g_h = word->word_height + word->word_tail_drop;
-				hwWind_redraw (This, &clip);
+
+		WORD mx, my, bstate, kstate;
+
+		graf_mkstate(&mx, &my, &bstate, &kstate);
+		if ( bstate & 1 )					/* Ist die Taste noch gedrckt?	*/
+		{
+			WORD d;
+			GRECT pos;
+			
+			pos.g_x = x;
+			pos.g_y = This->Work.g_y;
+			pos.g_w = This->TbarElem[TBAR_EDIT].Width;
+			pos.g_h = This->TbarH;
+			wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
+			graf_mouse ( FLAT_HAND, NULL);
+			graf_dragbox (pos.g_w, pos.g_h, pos.g_x, pos.g_y, desk_area.g_x,
+							  desk_area.g_y, desk_area.g_w, desk_area.g_h, &d, &d);
+			graf_mouse ( ARROW, NULL );
+			graf_mkstate(&mx, &my, &bstate, &kstate);
+			send_ddmsg ( mx, my, kstate, "Text", ".TXT", 
+							 edit->Length, edit->Text );
+		} else {
+			if (This->Input) {
+				WORDITEM word = input_activate (This->Input, -1);
+				if (word) {
+					GRECT clip;
+					long  lx, ly;
+					FRAME frame = (FRAME)dombox_Offset (&word->line->Paragraph->Box,
+					                                    &lx, &ly);
+					clip.g_x = lx + frame->clip.g_x - frame->h_bar.scroll
+					              + word->h_offset;
+					clip.g_y = ly + frame->clip.g_y - frame->v_bar.scroll
+					              + word->line->OffsetY - word->word_height;
+					clip.g_w = word->word_width;
+					clip.g_h = word->word_height + word->word_tail_drop;
+					hwWind_redraw (This, &clip);
+				}
+				This->Input = NULL;
 			}
-			This->Input = NULL;
-		}
-		edit->Cursor = (mx - x) /8 + edit->Shift;
-		if (edit->Cursor > edit->Length) {
-			edit->Cursor = edit->Length;
-		}
-		hwWind_raise (This, TRUE);
-		if (!chng_toolbar (This, 0, 0, TBAR_EDIT) && c != edit->Cursor) {
-			GRECT clip;
-			clip.g_x = x;
-			clip.g_w = This->TbarElem[TBAR_EDIT].Width;
-			clip.g_y = This->Work.g_y;
-			clip.g_h = This->TbarH;
-			draw_toolbar (This, &clip, FALSE);
+			edit->Cursor = (mx - x) /8 + edit->Shift;
+			if (edit->Cursor > edit->Length) {
+				edit->Cursor = edit->Length;
+			}
+			hwWind_raise (This, TRUE);
+			if (!chng_toolbar (This, 0, 0, TBAR_EDIT) && c != edit->Cursor) {
+				GRECT clip;
+				clip.g_x = x;
+				clip.g_w = This->TbarElem[TBAR_EDIT].Width;
+				clip.g_y = This->Work.g_y;
+				clip.g_h = This->TbarH;
+				draw_toolbar (This, &clip, FALSE);
+			}
 		}
 		This = NULL;
 	
