@@ -6,13 +6,13 @@
 
 #define AP_DRAGDROP	63
 
-#define	DD_OK		0
-#define DD_NAK		1
-#define DD_EXT		2
-#define DD_LEN		3
-#define DD_TRASH	4
-#define DD_PRINTER	5
-#define DD_CLIPBOARD	6
+#define DD_OK        0
+#define DD_NAK       1
+#define DD_EXT       2
+#define DD_LEN       3
+#define DD_TRASH     4
+#define DD_PRINTER   5
+#define DD_CLIPBOARD 6
 
 /* timeout in milliseconds */
 #define DD_TIMEOUT	4000
@@ -30,10 +30,6 @@
 /* max length of a drag&drop header */
 #define DD_HDRMAX	(8+DD_NAMEMAX)
 
-#ifndef Word
-#define Word short
-#define Long long
-#endif
-
-void rec_ddmsg(int msg[8] );
-int send_ddmsg(int msx, int msy, int kstate, char *name, char *ext, long size, char *data);
+void rec_ddmsg (WORD msg[8] );
+int send_ddmsg (WORD msx, WORD msy, WORD kstate,
+                char *name, char *ext, long size, char *data);

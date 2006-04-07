@@ -1962,9 +1962,9 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		WORD x = This->Work.g_x + This->TbarElem[TBAR_EDIT].Offset;
 		WORD c = edit->Cursor;
 
-		WORD mx, my, bstate, kstate;
+		WORD bstate;
 
-		graf_mkstate(&mx, &my, &bstate, &kstate);
+		graf_mkstate (&mx, &my, &bstate, &kstate);
 		if ( bstate & 1 )					/* Ist die Taste noch gedrckt?	*/
 		{
 			WORD d;

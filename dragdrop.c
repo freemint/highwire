@@ -23,17 +23,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef __PUREC__
-#include <tos.h>
-
-#else /* LATTICE || __GNUC__ */
-#include <osbind.h>
-#endif
-
 #include <gem.h>
 
+#include "file_sys.h"
 #include "global.h"
-#include "loader.h"
+#include "Loader.h"
 #include "hwWind.h"
 #include "dragdrop.h"
 
@@ -96,10 +90,11 @@ static long oldpipesig;
  * -2 if appl_write fails
  */
 
-int ddcreate(int apid, int winid, int msx, int msy, int kstate, char exts[])
+static int
+ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 {
 	int fd;
-	int msg[8];
+	WORD msg[8];
 	long i;
 	long fd_mask;
 	char c;
@@ -134,7 +129,7 @@ int ddcreate(int apid, int winid, int msx, int msy, int kstate, char exts[])
 	i = appl_write(apid, 16, msg);
 	if (i == 0) {
 		debug_alert(1, "[1][appl_write error][OK]");
-		Fclose( (int) fd);
+		Fclose ((int) fd);
 		return -2;
 	}
 
@@ -189,9 +184,10 @@ abort_dd:
  * DD_NAK	if the receiver aborts
  */
 
-int ddstry(int fd, char *ext, char *name, long size)
+static int
+ddstry(int fd, char *ext, char *name, long size)
 {
-	Word hdrlen, i;
+	WORD hdrlen, i;
 	char c;
 
 /* 4 bytes for extension, 4 bytes for size, 1 byte for
@@ -220,7 +216,8 @@ int ddstry(int fd, char *ext, char *name, long size)
  * close a drag & drop operation
  */
 
-void ddclose( int fd)
+static void
+ddclose (int fd)
 {
 	(void)Psignal(SIGPIPE, (void *)oldpipesig);
 	(void)Fclose(fd);
@@ -250,7 +247,8 @@ void ddclose( int fd)
  * pipe.
  */
 
-int ddopen(int ddnam, char *preferext)
+static int
+ddopen (int ddnam, char *preferext)
 {
 	int fd;
 	char outbuf[DD_EXTSIZE+1];
@@ -295,9 +293,10 @@ int ddopen(int ddnam, char *preferext)
  * send a DD_NAK, DD_EXT, or DD_LEN reply with ddreply().
  */
 
-int ddrtry(int fd, char *name, char *whichext, long *size)
+static int
+ddrtry (int fd, char *name, char *whichext, long *size)
 {
-	Word hdrlen;
+	WORD hdrlen;
 	int i;
 	char buf[80];
 
@@ -352,7 +351,8 @@ int ddrtry(int fd, char *name, char *whichext, long *size)
  * in the latter case the file descriptor is closed
  */
 
-int ddreply(int fd, int ack)
+static int
+ddreply (int fd, int ack)
 {
 	char c = ack;
 
@@ -404,7 +404,8 @@ char ourexts[DD_EXTSIZE] = ".TXT";
  *	The data is assumed to be ASCII text.
  */
 
-void rec_ddmsg(int msg[8] )
+void
+rec_ddmsg (WORD msg[8])
 {
 	int winid;
 	int msx, msy, kstate;
@@ -430,7 +431,7 @@ void rec_ddmsg(int msg[8] )
 			return;
 		}
 		if (!strncmp(ext, ".TXT", 4)) {
-			if ( size == 0 ) {
+			if (size == 0) {
 				ddreply(fd, DD_LEN);
 				continue;
 			}
@@ -443,10 +444,10 @@ void rec_ddmsg(int msg[8] )
 			Fread(fd, size, cmdline);
 			ddclose(fd);
 			cmdline[size] = 0;
-			s = strchr ( cmdline, '\r' );
-			if ( s != NULL )
+			s = strchr (cmdline, '\r');
+			if (s != NULL)
 				*s = '\0';
-			if ( (kstate & K_ALT) )
+			if ((kstate & K_ALT))
 				new_hwWind ("", cmdline, NULL);
 			else
 			{
@@ -491,7 +492,8 @@ void rec_ddmsg(int msg[8] )
  * above
  */
 
-int send_ddmsg(int msx, int msy, int kstate, char *name, char *ext, long size, char *data)
+int
+send_ddmsg (WORD msx, WORD msy, WORD kstate, char *name, char *ext, long size, char *data)
 {
 	int fd;
 	short apid, winid;

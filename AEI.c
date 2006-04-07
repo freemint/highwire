@@ -1428,7 +1428,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			break;
 #endif
 		case AP_DRAGDROP:
-			rec_ddmsg ( msg );
+			rec_ddmsg (msg);
 			break;
 		
 		case 0x7A18/*FONT_CHANGED*/:

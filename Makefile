@@ -88,6 +88,7 @@ CFILES = \
 	Widget.c \
 	hwWind.c \
 	av_prot.c \
+	dragdrop.c \
 	config.c \
 	Variable.c \
 	Nice_VDI.c \
