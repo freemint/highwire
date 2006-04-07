@@ -106,8 +106,8 @@ BOOL
 Receive_AV (short msg[8])
 {
 #ifdef AVWIND
-	char *str_p; /* *arg; */
-	short		kstate, d, whandle;
+	char * str_p; /* *arg; */
+	short  kstate = 0, whandle;
 /*	POSENTRY	*va_list = NULL; */
 #endif
 	switch (msg[0]) {
@@ -119,22 +119,38 @@ Receive_AV (short msg[8])
 				acc_wind_OK = FALSE;
 #endif
 #ifdef AVSERVER_TEST
-			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r"); else puts ("SENDKEY error\r");
-			if (av_shell_status & AA_ASKFILEFONT) puts ("ASKFILEFONT\r");else puts ("ASKFILEFONT error\r");
-			if (av_shell_status & AA_ASKCONFONT) puts ("ASKCONFONT\r");else puts ("ASKCONFONT error\r");
-			if (av_shell_status & AA_ASKOBJECT) puts ("ASKOBJECT\r");else puts ("ASKOBJEKT error\r");
-			if (av_shell_status & AA_OPENWIND) puts ("OPENWIND\r");else puts ("OPENWIND error\r");
-			if (av_shell_status & AA_STARTPROG) puts ("STARTPROG\r");else puts ("STARTPROG error\r");
-			if (av_shell_status & AA_ACCWIND) puts ("ACCWIND\r");else puts ("ACCWIND error\r");
-			if (av_shell_status & AA_STATUS) puts ("STATUS\r");else puts ("STATUS error\r");
-			if (av_shell_status & AA_COPY_DRAGGED) puts ("COPY_DRAGGED\r");else puts ("COPY_DRAGGED error\r");
-			if (av_shell_status & AA_DRAG_ON_WINDOW) puts ("DRAG_ON_WINDOW\r");else puts ("DRAG_ON_WINDOW error\r");
-			if (av_shell_status & AA_EXIT) puts ("EXIT\r");else puts ("EXIT error\r");
-			if (av_shell_status & AA_XWIND) puts ("XWIND\r");else puts ("XWIND error\r");
-			if (av_shell_status & AA_FONTCHANGED) puts ("FONTCHANGED\r");else puts ("FONTCHANGED error\r"); 
-			if (av_shell_status & AA_STARTED) puts ("STARTED\r");else puts ("STARTED error\r");
-			if (av_shell_status & AA_SRV_QUOTING) puts ("SRV_QUOTING\r");else puts ("SRV_QUOTING error\r");
-			if (av_shell_status & AA_FILE) puts ("FILE\r");else puts ("FILE error\r");
+			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r");
+			else                              puts ("SENDKEY error\r");
+			if (av_shell_status & AA_ASKFILEFONT) puts ("ASKFILEFONT\r");
+			else                                  puts ("ASKFILEFONT error\r");
+			if (av_shell_status & AA_ASKCONFONT) puts ("ASKCONFONT\r");
+			else                                 puts ("ASKCONFONT error\r");
+			if (av_shell_status & AA_ASKOBJECT) puts ("ASKOBJECT\r");
+			else                                puts ("ASKOBJEKT error\r");
+			if (av_shell_status & AA_OPENWIND) puts ("OPENWIND\r");
+			else                               puts ("OPENWIND error\r");
+			if (av_shell_status & AA_STARTPROG) puts ("STARTPROG\r");
+			else                                puts ("STARTPROG error\r");
+			if (av_shell_status & AA_ACCWIND) puts ("ACCWIND\r");
+			else                              puts ("ACCWIND error\r");
+			if (av_shell_status & AA_STATUS) puts ("STATUS\r");
+			else                             puts ("STATUS error\r");
+			if (av_shell_status & AA_COPY_DRAGGED) puts ("COPY_DRAGGED\r");
+			else                                   puts ("COPY_DRAGGED error\r");
+			if (av_shell_status & AA_DRAG_ON_WINDOW) puts ("DRAG_ON_WINDOW\r");
+			else                                   puts ("DRAG_ON_WINDOW error\r");
+			if (av_shell_status & AA_EXIT) puts ("EXIT\r");
+			else                           puts ("EXIT error\r");
+			if (av_shell_status & AA_XWIND) puts ("XWIND\r");
+			else                            puts ("XWIND error\r");
+			if (av_shell_status & AA_FONTCHANGED) puts ("FONTCHANGED\r");
+			else                                  puts ("FONTCHANGED error\r"); 
+			if (av_shell_status & AA_STARTED) puts ("STARTED\r");
+			else                              puts ("STARTED error\r");
+			if (av_shell_status & AA_SRV_QUOTING) puts ("SRV_QUOTING\r");
+			else                                  puts ("SRV_QUOTING error\r");
+			if (av_shell_status & AA_FILE) puts ("FILE\r");
+			else                           puts ("FILE error\r");
 #endif
 			break;
 
@@ -157,19 +173,10 @@ Receive_AV (short msg[8])
 			break; */
 
 		case VA_DRAGACCWIND :				/* bei D&D mit glob. Fensterwechsel */
-			str_p = *(char **)(msg+6);
-/*			printf ("VA_DRAGACCWIND von %d: %x, %x\r\n", msg[1], msg[3], msg[4]); */
-			if (str_p != NULL)
-			{
-				graf_mkstate(&d, &d, &d, &kstate);
-				whandle= msg[3];
-				msg[0]= AV_COPY_DRAGGED;
-				msg[1]= gl_apid;
-				msg[2]=msg[3]=msg[4]=msg[5]=msg[6]=msg[7]=0;
-				msg[3]=kstate;
-				*(char **)(msg+4)=strcpy (va_helpbuf, str_p);
-				appl_write(av_shell_id, 16, msg);
-
+			str_p   = *(char **)(msg+6);
+			whandle = msg[3];
+/*			printf ("VA_DRAGACCWIND von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);*/
+			if (str_p != NULL) {
 				handle_avdd (whandle, kstate, str_p);
 			}
 			break;
