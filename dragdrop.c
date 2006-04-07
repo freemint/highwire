@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define __TOS
 #include <gem.h>
+#undef  __TOS
 
 #include "file_sys.h"
 #include "global.h"
@@ -160,7 +162,7 @@ abort_dd:
 		goto abort_dd;
 	}
 
-	oldpipesig = Psignal(SIGPIPE, (void *) SIG_IGN);
+	oldpipesig = Psignal(SIGPIPE, (LONG)SIG_IGN);
 	return fd;
 }
 
@@ -219,7 +221,7 @@ ddstry(int fd, char *ext, char *name, long size)
 static void
 ddclose (int fd)
 {
-	(void)Psignal(SIGPIPE, (void *)oldpipesig);
+	(void)Psignal(SIGPIPE, oldpipesig);
 	(void)Fclose(fd);
 }
 
@@ -262,7 +264,7 @@ ddopen (int ddnam, char *preferext)
 	outbuf[0] = DD_OK;
 	strncpy(outbuf+1, preferext, DD_EXTSIZE);
 
-	oldpipesig = Psignal(SIGPIPE, (void *) SIG_IGN);
+	oldpipesig = Psignal(SIGPIPE, (LONG)SIG_IGN);
 
 	if (Fwrite(fd, (long)DD_EXTSIZE+1, outbuf) != DD_EXTSIZE+1) {
 		ddclose(fd);
