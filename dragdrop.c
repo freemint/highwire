@@ -64,6 +64,59 @@ static long oldpipesig;
 #define debug_alert(x, y)
 #endif
 
+/* 
+ * parseargs(char cmdlin[]):
+ *	Given a null terminated string of arguments, separated
+ *	by spaces, parse it and perform whatever actions are
+ *	appropriate on the arguments (usually file and folder
+ *	names)
+ *
+ * Return:
+ * - The numbers of arguments.
+ * - The str contains the string separated by null
+*/
+
+static WORD parseargs ( BYTE *str)
+{
+	WORD	cnt = 1;
+	BYTE 	*c = str;
+	BOOL	in_quote = FALSE;
+
+	while (*c)
+	{
+		switch (*c)
+		{
+			case ' ' :
+				if ( !in_quote )
+				{
+					*c = '\0';
+					cnt++;
+				}
+				break;
+			case '\'' :
+				strcpy( c, c + 1);
+				if ( !in_quote )
+					in_quote = TRUE;
+				else
+				{
+					if ( *c != '\'' )
+					{
+						in_quote = FALSE;
+						*c = 0;
+						if ( c[1] )
+							cnt++;
+					}
+				}
+				break;
+			default:
+				break;
+		}
+		c += 1;
+	}
+	return cnt;
+}
+
+
 /* Code for originator */
 
 /*
@@ -389,11 +442,6 @@ char ourexts[DD_EXTSIZE] = ".TXT";
  * calls the following functions to actually perform the paste
  * operation:
  *
- * parseargs(char cmdlin[]):
- *	Given a null terminated string of arguments, separated
- *	by spaces, parse it and perform whatever actions are
- *	appropriate on the arguments (usually file and folder
- *	names)
  *
  * paste_rtf(int win, int fd, long size):
  *	Read "size" bytes from the open file descriptor "fd",
@@ -432,7 +480,33 @@ rec_ddmsg (WORD msg[8])
 			ddclose(fd);
 			return;
 		}
-		if (!strncmp(ext, ".TXT", 4)) {
+		if (!strncmp(ext, "ARGS", 4)) {
+			WORD cnt;
+			
+			cmdline = malloc((size_t)size+1);
+			if (!cmdline) {
+				ddreply(fd, DD_LEN);
+				continue;
+			}
+			ddreply(fd, DD_OK);
+			Fread(fd, size, cmdline);
+			ddclose(fd);
+			cmdline[size] = 0;
+			cnt = parseargs(cmdline);
+			if ( cnt > 0 )
+			{
+				if ((kstate & K_ALT))
+					new_hwWind ("", cmdline, NULL);
+				else
+				{
+					HwWIND wind = hwWind_byHandle (winid);
+					start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
+				}
+			}
+			free ( cmdline );
+			return;
+		} 
+		else if (!strncmp(ext, ".TXT", 4)) {
 			if (size == 0) {
 				ddreply(fd, DD_LEN);
 				continue;
@@ -456,6 +530,7 @@ rec_ddmsg (WORD msg[8])
 				HwWIND wind = hwWind_byHandle (winid);
 				start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
 			}
+			free ( cmdline );
 			return;
 		}
 		ddreply(fd, DD_EXT);
