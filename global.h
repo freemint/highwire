@@ -152,6 +152,7 @@ extern BOOL         cfg_AllowCookies;
 extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
 extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
 extern BOOL         cfg_UseCSS;
+extern BOOL         cfg_AVWindow; /* AVSERVER window enables AV-drag&drop */
 extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY */
 extern WORD         cfg_ConnTout;  /* seconds for connection establishing  */
 extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
@@ -256,7 +257,5 @@ void  Exit_AV_Protocol (void);
 BOOL  Receive_AV       (short msg[8]);
 BOOL  Send_AV	       (short message, const char *data1, const char *data2);
 
-#ifdef AVWIND
 void send_avwinopen(short handle);
 void send_avwinclose(short handle);  
-#endif

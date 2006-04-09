@@ -10,12 +10,9 @@
 /* #include "av_comm.h" */
 #include "hwWind.h" /* new_hwWind, window_raise */
 
-#ifdef AVWIND
 #include "Loader.h"
 static BOOL acc_wind_OK = TRUE;
-
 static void handle_avdd (short win_handle, short kstate, char * arg);
-#endif
 
 
 /* All GLOBAL memory is merged to one block and allocated in main(). */
@@ -78,18 +75,22 @@ Send_AV (short message, const char * data1, const char * data2)
 			msg[3] = VV_START | VV_ACC_QUOTING; 
 			*(char **)(msg+6) = strcpy (va_helpbuf, thisapp);
 			break;
-#ifdef AVWIND
 		case AV_ACCWINDOPEN:
-			msg[3] = *(const short *)data1;
+			if (cfg_AVWindow) {
+				msg[3] = *(const short *)data1;
+			}
 			break;
 		case AV_ACCWINDCLOSED:
-			msg[3] = *(const short *)data1;
+			if (cfg_AVWindow) {
+				msg[3] = *(const short *)data1;
+			}
 			break;
 		case AV_SENDKEY :
+			if (cfg_AVWindow) {
 				msg[3] = 0x0004;
 				msg[4] = 0x1117;	/* ^W */
-			break;	
-#endif
+			}
+			break;
 		case VA_START:
 			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
 			break;
@@ -105,20 +106,16 @@ Send_AV (short message, const char * data1, const char * data2)
 BOOL
 Receive_AV (short msg[8])
 {
-#ifdef AVWIND
 	WORD d;
 	char * str_p; /* *arg; */
 	short  kstate = 0, whandle;
 /*	POSENTRY	*va_list = NULL; */
-#endif
 	switch (msg[0]) {
 		case VA_PROTOSTATUS :
 			if (msg[1] == av_shell_id) 
 				av_shell_status = msg[3];
-#ifdef AVWIND
 			if (acc_wind_OK && !(av_shell_status & AA_ACCWIND))
 				acc_wind_OK = FALSE;
-#endif
 #ifdef AVSERVER_TEST
 			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r");
 			else                              puts ("SENDKEY error\r");
@@ -162,7 +159,6 @@ Receive_AV (short msg[8])
 					window_raise (NULL, TRUE, NULL);		
 				}
 			break;	
-#ifdef AVWIND
 /*		case VA_DRAG_COMPLETE :
 			if (debug_level & DBG_AV)
 				debug("VA_DRAG_COMPLETE.\n");
@@ -182,9 +178,7 @@ Receive_AV (short msg[8])
 				handle_avdd (whandle, kstate, str_p);
 			}
 			break;
-#endif
-			
-	}
+		}
 	return TRUE;
 }
 
@@ -210,7 +204,6 @@ Exit_AV_Protocol(void)
 }
 
 
-#ifdef AVWIND
 /*============================================================================*/
 void
 send_avwinopen (short handle)
@@ -323,4 +316,4 @@ handle_avdd (short win_handle, short kstate, char * arg)
    } free (cmd_orig);
 }
 
-#endif
+

@@ -305,9 +305,9 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	menu_history (NULL,0,0);
 #endif
 
-#ifdef AVWIND
-	send_avwinopen(This->Base.Handle);
-#endif
+	if (cfg_AVWindow) {
+		send_avwinopen(This->Base.Handle);
+	}
 	
 	return This;
 }

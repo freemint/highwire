@@ -27,6 +27,7 @@ BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
+BOOL         cfg_AVWindow  = FALSE;
 BOOL         cfg_GlobalCycle  = FALSE;
 WORD         cfg_ConnTout     = 1;
 WORD         cfg_ConnRetry    = 3;
@@ -323,6 +324,19 @@ cfg_infobar (char * param, long arg)
 	hwWind_setup (HWWS_INFOBAR, n);
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+cfg_avwin (char * param, long arg)
+{
+	long n = atol (param);
+	(void)arg;
+	if (n > 0) {
+		cfg_AVWindow  = TRUE;
+		if (n > 1) {
+			cfg_GlobalCycle  = TRUE;
+		}
+	}
+}
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -551,6 +565,7 @@ read_config(void)
 				void       (*func)(char*, long);
 				long         arg;
 			} cfg[] = {
+				{ "AV_WINDOW",             cfg_avwin,    0 },		
 				{ "BOLD_HEADER",          cfg_font,      FA(header_font, 1, 0)  },
 				{ "BOLD_ITALIC_HEADER",   cfg_font,      FA(header_font, 1, 1)  },
 				{ "BOLD_ITALIC_NORMAL",   cfg_font,      FA(normal_font, 1, 1)  },

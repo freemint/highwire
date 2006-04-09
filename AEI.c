@@ -1339,20 +1339,25 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		case VA_PROTOSTATUS:
 			Receive_AV(msg);
 			break;
-#ifdef AVWIND
 		case VA_DRAGACCWIND:
+			if (cfg_AVWindow) {
 /*			printf ("AEI.c - VA_DRAGACCWIND!\r\n"); */
 			Receive_AV(msg); /* handle it in av_prot.c */
+			}
 			break;
 
 		case AV_SENDKEY:
+			if (cfg_AVWindow) {
 			Receive_AV(msg); /* handle it in av_prot.c */
+			}
 			break;
 		
 		case WM_TOPPED: /* 0x15: * probably only an ugly hack */
-			window_raise (NULL, TRUE, NULL);
+			if (cfg_AVWindow) {
+				window_raise (NULL, TRUE, NULL);
+			}
 			break;
-#endif
+
 		case AV_OPENWIND:
 			state |= K_ALT;
 		case VA_START:

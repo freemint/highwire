@@ -285,13 +285,11 @@ window_evKeybrd (UWORD key, UWORD kstate)
 		
 	} else switch (ascii) {
 		case 0x0017: /* CTRL+W */ 
-#ifdef AVWIND
 			if (cfg_GlobalCycle) {
 				Send_AV(AV_SENDKEY,NULL,NULL);
 				break;
 			}
-#endif	 
-			window_raise (NULL, TRUE, NULL); 
+			window_raise (NULL, TRUE, NULL);
 			break;
 			
 		case 0x0011: /* CTRL+Q */ exit (0);

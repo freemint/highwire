@@ -186,9 +186,9 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		new_hwWind ("HighWire", NULL, NULL);
 		break;
 	case 0x0015:  /* CTRL+U */
-#ifdef AVWIND
-		send_avwinclose((&(hwWind_Top)->Base)->Handle);
-#endif
+		if (cfg_AVWindow) {
+			send_avwinclose((&(hwWind_Top)->Base)->Handle);
+		}
 		delete_hwWind (hwWind_Top);
 		if (hwWind_Top) {
 			WORD mx, my, u;
