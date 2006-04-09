@@ -106,6 +106,7 @@ BOOL
 Receive_AV (short msg[8])
 {
 #ifdef AVWIND
+	WORD d;
 	char * str_p; /* *arg; */
 	short  kstate = 0, whandle;
 /*	POSENTRY	*va_list = NULL; */
@@ -175,6 +176,7 @@ Receive_AV (short msg[8])
 		case VA_DRAGACCWIND :				/* bei D&D mit glob. Fensterwechsel */
 			str_p   = *(char **)(msg+6);
 			whandle = msg[3];
+			graf_mkstate(&d, &d, &d, &kstate);
 /*			printf ("VA_DRAGACCWIND von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);*/
 			if (str_p != NULL) {
 				handle_avdd (whandle, kstate, str_p);
@@ -286,7 +288,13 @@ handle_avdd (short win_handle, short kstate, char * arg)
 				p[0] = '\0';
 				s= cmd+1;
 				cmd = filename;
-				new_hwWind ("", cmd, NULL);
+				if ((kstate & K_ALT))
+					new_hwWind ("", cmd, NULL);
+				else
+				{
+					HwWIND wind = hwWind_byHandle (win_handle);
+					start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
+				}
 				cmd = s;
 				if (cmd[0] == '\'') {
 					quoted = TRUE;
@@ -304,10 +312,15 @@ handle_avdd (short win_handle, short kstate, char * arg)
 		else p[0] = '\0';
 
 		cmd = filename;
-		new_hwWind ("", cmd, NULL);
-   
-	} 
-	free (cmd_orig);
+		if ((kstate & K_ALT))
+			new_hwWind ("", cmd, NULL);
+		else
+		{
+			HwWIND wind = hwWind_byHandle (win_handle);
+			start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
+		}
+
+   } free (cmd_orig);
 }
 
 #endif
