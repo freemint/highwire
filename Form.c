@@ -277,7 +277,11 @@ form_check (TEXTBUFF current, const char * name, char * value, BOOL checked)
 	WORD  asc = current->word->word_height - (current->word->word_tail_drop +2);
 	INPUT input = _alloc (IT_CHECK, current, name);
 	
+	if (value) {
 	input->Value   = value;
+	} else {
+	input->Value   = "on";
+	}
 	input->checked = checked;
 	if (asc < 2) asc = 2;
 	set_word (current, asc, -1, asc -1);
