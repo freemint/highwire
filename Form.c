@@ -280,12 +280,14 @@ form_check (TEXTBUFF current, const char * name, char * value, BOOL checked)
 	if (value) {
 	input->Value   = value;
 	} else {
-	input->Value   = "on";
+		char *val = malloc (3);
+		if (val) memcpy (val, "on", 2);	
+		val[2] = '\0'; 
+		input->Value = val;
 	}
 	input->checked = checked;
 	if (asc < 2) asc = 2;
 	set_word (current, asc, -1, asc -1);
-	
 	return input;
 }
 
