@@ -558,7 +558,7 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 					max_len -= n;
 					if (!max_len) break;
 					else          continue;
-				} 
+				}
 			}
 			*(dst++) = c;
 			if (!--max_len) break;
@@ -579,7 +579,9 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 					max_len -= n;
 					if (!max_len) break;
 					else          continue;
-				} 
+				} else if (c == '?') {
+					enc = FALSE;   /* don't encode after a question mark */
+				}
 			}
 			*(dst++) = c;
 			if (!--max_len) break;
