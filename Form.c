@@ -281,8 +281,7 @@ form_check (TEXTBUFF current, const char * name, char * value, BOOL checked)
 	input->Value   = value;
 	} else {
 		char *val = malloc (3);
-		if (val) memcpy (val, "on", 2);	
-		val[2] = '\0'; 
+		if (val) memcpy (val, "on", 3);
 		input->Value = val;
 	}
 	input->checked = checked;
