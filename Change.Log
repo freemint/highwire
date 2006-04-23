@@ -39,9 +39,13 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
   being more specific than a rule with 1 class.
 
 - AVSERVER detection rewritten (MLUTZ) fixes
-  Teradesk troubles.  Also global window cycling
-  should work now when enabled in the cfg file
-  with "GLOBAL_WINCYCLE = 1".
+  Teradesk troubles.
+  Also drag&drop is working via AVSERVER.
+  The behaviour can be changed by AV_WINDOW in
+  highwire.cfg:
+  With AV_WINDOW = 1 drag&drop through AVSERVER
+  is enabled.
+  AV_WINDOW = 2 also enables global window cycling.
 
 - display: none support
 
