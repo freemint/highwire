@@ -28,7 +28,7 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
   never be smaller than defined min size.
 
 - Handling of % values in scan_numeric() modified
-  (sourceforge fix)
+  (sourceforge fix).
 
 - CSS positioning system modified
 
@@ -43,13 +43,14 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
   Also drag&drop is working via AVSERVER.
   The behaviour can be changed by AV_WINDOW in
   highwire.cfg:
-  With AV_WINDOW = 1 drag&drop through AVSERVER
-  is enabled.
-  AV_WINDOW = 2 also enables global window cycling.
+    AV_WINDOW = 1:  drag&drop through AVSERVER
+                    enabled.
+    AV_WINDOW = 2:  also enables global window
+                    cycling.
 
-- display: none support
+- CSS display:none support.
 
-- @media parsing
+- CSS @media parsing improved.
 
 - Bugs #0219 resolved.
 
