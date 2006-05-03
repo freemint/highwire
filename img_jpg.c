@@ -90,10 +90,6 @@ decJpg_start (const char * name, IMGINFO info)
 	jpeg->dct_method = JDCT_IFAST;
 	jpeg->do_fancy_upsampling = FALSE;
 	
-	header = 1;
-	jpeg_start_decompress  (jpeg);
-	header = 2;
-	
 	switch (jpeg->out_color_space) {
 		case JCS_RGB:
 			info->NumComps = 3;
@@ -106,6 +102,10 @@ decJpg_start (const char * name, IMGINFO info)
 			info->NumComps = jpeg->out_color_components = 3;
 			break;
 	}
+	header = 1;
+	jpeg_start_decompress  (jpeg);
+	header = 2;
+	
 	info->_priv_data = jpeg;
 /*	info->_priv_more = NULL; */
 	info->_priv_file = file;
