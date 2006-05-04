@@ -87,8 +87,13 @@ decJpg_start (const char * name, IMGINFO info)
 	jpeg_stdio_src         (jpeg, file);
 	jpeg_read_header       (jpeg, TRUE);
 	
-	jpeg->dct_method = JDCT_IFAST;
+#ifdef __M68881__
+	jpeg->dct_method          = JDCT_FLOAT;
+	jpeg->do_fancy_upsampling = TRUE;
+#else
+	jpeg->dct_method          = JDCT_IFAST;
 	jpeg->do_fancy_upsampling = FALSE;
+#endif
 	
 	switch (jpeg->out_color_space) {
 		case JCS_RGB:
