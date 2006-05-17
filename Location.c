@@ -549,38 +549,47 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 		}
 		while ((c = *(src++)) != '\0') {
 			if (enc) {
-				if (c == '%' || c <= ' ') {
+				if ( c <= ' ') {
 					size_t n = min (3, max_len);
 					char   patt[4];
-					sprintf (patt, "%%%02X", c);
-					memcpy (dst, patt, n);
-					dst     += n;
-					max_len -= n;
-					if (!max_len) break;
-					else          continue;
+					if (c == ' ') {
+						sprintf (patt, "%%%02X", c);
+						memcpy (dst, patt, n);
+						dst     += n;
+						max_len -= n;
+						if (!max_len) break;
+						else          continue;
+					}
+					else { /* (c < ' ') */
+						if (!max_len) break;
+						else          continue;
+					}
 				}
 			}
 			*(dst++) = c;
 			if (!--max_len) break;
 		}
 	}
-	
 	if (max_len && loc->File) {
 		const char * src = loc->File;
 		char         c;
 		while ((c = *(src++)) != '\0') {
 			if (enc) {
-				if (c == '%' || c <= ' ') {
+				if ( c <= ' ') {
 					size_t n = min (3, max_len);
 					char   patt[4];
-					sprintf (patt, "%%%02X", c);
-					memcpy (dst, patt, n);
-					dst     += n;
-					max_len -= n;
-					if (!max_len) break;
-					else          continue;
-				} else if (c == '?') {
-					enc = FALSE;   /* don't encode after a question mark */
+					if (c == ' ') {
+						sprintf (patt, "%%%02X", c);
+						memcpy (dst, patt, n);
+						dst     += n;
+						max_len -= n;
+						if (!max_len) break;
+						else          continue;
+					}
+					else { /* (c < ' ') */ 
+						if (!max_len) break;
+						else          continue;
+					}
 				}
 			}
 			*(dst++) = c;
