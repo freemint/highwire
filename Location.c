@@ -549,10 +549,10 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 		}
 		while ((c = *(src++)) != '\0') {
 			if (enc) {
-				if ( c <= ' ') {
+				if ( c <= ' ' || c >= 160) {
 					size_t n = min (3, max_len);
 					char   patt[4];
-					if (c == ' ') {
+					if (c == ' ' || c >= 160) {
 						sprintf (patt, "%%%02X", c);
 						memcpy (dst, patt, n);
 						dst     += n;
@@ -575,10 +575,10 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 		char         c;
 		while ((c = *(src++)) != '\0') {
 			if (enc) {
-				if ( c <= ' ') {
+				if ( c <= ' ' || c >= 160) {
 					size_t n = min (3, max_len);
 					char   patt[4];
-					if (c == ' ') {
+					if (c == ' ' || c >= 160) {
 						sprintf (patt, "%%%02X", c);
 						memcpy (dst, patt, n);
 						dst     += n;
