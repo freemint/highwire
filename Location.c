@@ -557,13 +557,9 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 						memcpy (dst, patt, n);
 						dst     += n;
 						max_len -= n;
-						if (!max_len) break;
-						else          continue;
 					}
-					else { /* (c < ' ') */
-						if (!max_len) break;
-						else          continue;
-					}
+					if (!max_len) break;
+					else          continue;
 				}
 			}
 			*(dst++) = c;
@@ -583,13 +579,9 @@ location_PathFile (LOCATION loc, char * buffer, size_t max_len)
 						memcpy (dst, patt, n);
 						dst     += n;
 						max_len -= n;
-						if (!max_len) break;
-						else          continue;
 					}
-					else { /* (c < ' ') */ 
-						if (!max_len) break;
-						else          continue;
-					}
+					if (!max_len) break;
+					else          continue;
 				}
 			}
 			*(dst++) = c;
