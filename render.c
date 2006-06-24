@@ -2581,7 +2581,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		           get_value_size (parser, KEY_WIDTH),
 		           get_value_size (parser, KEY_HEIGHT),
 		           get_value_size (parser, KEY_VSPACE),
-		           get_value_size (parser, KEY_HSPACE));
+		           get_value_size (parser, KEY_HSPACE),0);
 		font_switch (current->word->font, NULL);
 		
 		new_word (current, TRUE);
@@ -3384,7 +3384,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
 		if (floating != ALN_NO_FLT) {
-			if (floating != ALN_CENTER) floating |= FLT_MASK;
+		if (floating != ALN_CENTER) floating |= FLT_MASK;
 		} else if (get_v_align (parser, -1) == ALN_MIDDLE) {
 			floating = ALN_CENTER; /* patch for invalid key value */
 		} else if (parser->Current.paragraph->Box.TextAlign == ALN_RIGHT ||
@@ -3393,7 +3393,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
 			        parser->Current.parentbox->TextAlign == ALN_CENTER) {
 			floating = parser->Current.parentbox->TextAlign;
-		} else {
+		} else { 
 			floating = ALN_LEFT;
 		}
 		if (parser->hasStyle) {
@@ -4049,7 +4049,7 @@ parse_image (void * arg, long invalidated)
 	} else {
 		loc = location_share (frame->Location);
 	}
-	new_image (frame, current, NULL, loc, 0,0, 0,0);
+	new_image (frame, current, NULL, loc, 0,0, 0,0,1);
 	free_location (&loc);
 
 	delete_parser (parser);

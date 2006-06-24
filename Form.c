@@ -340,7 +340,7 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 		
 		input->SubType = 'S';
 		
-		new_image (frame, current, value, frame->BaseHref, 0,0, 0,0);
+		new_image (frame, current, value, frame->BaseHref, 0,0, 0,0,0);
 		font_switch (current->word->font, NULL);
 		
 		new_word (current, TRUE);

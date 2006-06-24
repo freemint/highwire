@@ -45,6 +45,7 @@ extern char fsel_path[HW_PATH_MAX];
 extern char help_file[HW_PATH_MAX];
 
 extern char * local_web; /* in Location.c */
+/* extern BOOL cfg_image1; in image.c */
 
 
 /* ****************** Function Defs ******************************** */
@@ -230,7 +231,7 @@ GRECT    paragraph_extend (WORDITEM);
 /* in image.c */
 
 IMAGE new_image    (FRAME, TEXTBUFF, const char * src, LOCATION,
-                    short w, short h, short vspace, short hspace);
+                    short w, short h, short vspace, short hspace, BOOL cfg_image1);
 void  delete_image (IMAGE*);
 void         image_calculate (IMAGE, short par_width);
 const char * image_dispinfo  (void);

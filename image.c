@@ -20,7 +20,6 @@
 #include "Loader.h" /* enables remote access of images */
 #endif
 
-
 typedef struct s_img_info * IMGINFO;
 struct s_img_info {
 	void  * _priv_data; /* decoder private data */
@@ -120,7 +119,7 @@ set_word (IMAGE img)
 /*============================================================================*/
 IMAGE
 new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
-           short w, short h, short vspace, short hspace)
+           short w, short h, short vspace, short hspace, BOOL cfg_image1)
 {
 	LOCATION loc     = new_location (file, base);
 	BOOL     blocked = ((loc->Flags & (1uL << ('I' - 'A'))) != 0);
@@ -208,7 +207,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		set_word (img);
 		
 #if defined(__LOADER_H__)
-		if (!img->u.Data && cfg_ViewImages) {
+		if (!img->u.Data && (cfg_ViewImages || cfg_image1)) {
 #else
 		if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
