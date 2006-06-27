@@ -361,7 +361,9 @@ typedef union {
 
 struct s_tree_node {
 	TREE_NODE Parent;
-	UWORD     Mask;
+	CHAR      Pnum;   /* number of the parent's slot             */
+	CHAR      Used;   /* number of slots in use                  */
+	UWORD     Mask;   /* bit mask for slots pointing to subnodes */
 	TREE_SLOT Slot[16];
 };
 
@@ -414,13 +416,14 @@ tree_item (TREE_NODE * base, TREE_ITEM item, long mode)
 			if ((node = node_pool)) node_pool = node->Parent;
 			else                    node = __malloc (sizeof (struct s_tree_node));
 			if (node) {
+				UWORD n = (slot->Item->Hash >> (++dpth *4)) & 0xF;
 				memset (node, 0, sizeof (struct s_tree_node));
-				dpth += 1;
-				num  =  (slot->Item->Hash >> (dpth *4)) & 0xF;
-				node->Slot[num].Item = slot->Item;
-				node->Parent         = prnt;
+				node->Slot[n].Item = slot->Item;
+				node->Used         = 1;
+				node->Pnum         = num;
+				node->Parent       = prnt;
 				slot->Node =  node;
-				prnt->Mask |= bit;
+				prnt->Mask |= bit;  /* prnt->Used here not changed */
 			}
 			/* else memory exhausted! */
 		}
@@ -441,26 +444,21 @@ tree_item (TREE_NODE * base, TREE_ITEM item, long mode)
 	}
 	if (mode > 0) {
 		node->Slot[num].Item = item;
+		node->Used++;
 		
 	} else { /* (mode < 0) */
 		item = node->Slot[num].Item;
 		node->Slot[num].Item = NULL;
-		while (node->Parent && !node->Mask) {
+		node->Used--;
+		while (node->Parent && !node->Used) {
 			TREE_NODE prnt = node->Parent;
-			for (num = 0; num < numberof(node->Slot) && prnt; num++) {
-				if (node->Slot[num].Item) prnt = NULL; /* not empty */
-			}
-			if (!prnt) break;
-			for (num = 0; num < numberof(prnt->Slot) && node; num++) {
-				if (prnt->Slot[num].Node == node) {
-					prnt->Slot[num].Node = NULL;
-					prnt->Mask          &= ~(1 << num);
-					node->Parent = node_pool;
-					node_pool    = node;
-					node         = NULL;
-				}
-			}
-			if (node || !(node = prnt)) break;
+			num = node->Pnum;
+			prnt->Slot[num].Node = NULL;
+			prnt->Used          -= 1;
+			prnt->Mask          &= ~(1 << num);
+			node->Parent = node_pool;
+			node_pool    = node;
+			node         = prnt;
 		}
 	}
 	return item;
