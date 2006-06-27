@@ -62,6 +62,23 @@ static inline ULONG ptr2offs (void * ptr)
 #define MEM2CHUNK(m)   ((char*)(m)-CANARY)
 
 /*............................................................................*/
+static void * canary_set (void * chunk, size_t size)
+{
+	((ULONG*)chunk)[0] = CANARY_4;
+	((ULONG*)chunk)[1] = CANARY_4;
+	if (!(size & 3)) {
+		char * can = CHUNK2MEM(chunk) + size;
+		((ULONG*)can)[0] = CANARY_4;
+		((ULONG*)can)[1] = CANARY_4;
+	} else {
+		char * can = CHUNK2MEM(chunk) + size;
+		short  i;
+		for (i = 0; i < CANARY; can[i++] = CANARY_1);
+	}
+	return chunk;
+}
+
+/*............................................................................*/
 static UWORD canary_chk (MEM_ITEM item)
 {
 	UWORD  patt = 0x0000;
@@ -113,6 +130,8 @@ static const char * canary_str (UWORD patt, size_t size)
 #define CHUNKSIZE(s)   (s)
 #define CHUNK2MEM(c)   ((char*)c)
 #define MEM2CHUNK(m)   ((char*)m)
+
+#define canary_set(c,s) (c)
 #endif
 
 
@@ -212,20 +231,7 @@ malloc (size_t size)
 			         size, ptr2offs (&size), CHUNK2MEM(chunk));
 */		}
 	}
-#ifdef MD_CHKBND
-	((ULONG*)chunk)[0] = CANARY_4;
-	((ULONG*)chunk)[1] = CANARY_4;
-	if (!(size & 3)) {
-		char * can = CHUNK2MEM(chunk) + size;
-		((ULONG*)can)[0] = CANARY_4;
-		((ULONG*)can)[1] = CANARY_4;
-	} else {
-		char * can = CHUNK2MEM(chunk) + size;
-		short  i;
-		for (i = 0; i < CANARY; can[i++] = CANARY_1);
-	}
-#endif
-	item->Chunk   = chunk;
+	item->Chunk   = canary_set (chunk, size);
 	item->Size    = size;
 	item->Created = ptr2offs (&size);
 	item->Deleted = 0uL;
