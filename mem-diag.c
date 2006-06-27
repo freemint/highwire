@@ -276,7 +276,7 @@ free (void * mem)
 	} else 
 if (ptr2offs (&mem) < 0x3F000)  /* don't show known bugs in libungif */
 	{
-#ifdef MD_CHKBND
+#ifdef MD_KEEPALL
 		if ((item = tree_item (&free_base, (TREE_ITEM)&chunk, 0))) {
 			printf ("free(%p) @<%05lX>: already deleted!\r\n", mem, ptr2offs (&mem));
 			printf ("   %li bytes created @<%05lX>, deleted @<%05lX>.\r\n",
