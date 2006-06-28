@@ -92,8 +92,12 @@ decPng_start (const char * name, IMGINFO info)
 	info->Interlace  = 0;
 	
 	if (info_ptr->interlace_type == PNG_INTERLACE_ADAM7) {
+		png_set_interlace_handling (png_ptr);
+		png_read_update_info (png_ptr, info_ptr);
 		info->RowBytes = png_get_rowbytes (png_ptr, info_ptr);
 		info->read     = decPng_readi;
+	} else {
+		png_read_update_info (png_ptr, info_ptr);
 	}
 	return TRUE;
 }
@@ -123,15 +127,12 @@ decPng_readi (IMGINFO info, char * buffer)
 	}
 	
 	if (!png_ptr->row_number) {
-		png_infop   info_ptr      = info->_priv_more;
 		ULONG       rowbytes      = info->RowBytes;	
 		png_bytep * rowptrs       = info->RowMem;
 		png_bytep   row           = info->RowBuf;
 		int         number_passes = png_set_interlace_handling (png_ptr), pass, y;
 		
-		png_read_update_info (png_ptr, info_ptr);
-		
-		/* setup row pinter array */
+		/* setup row pointer array */
 		for (y = 0; y < info->ImgHeight; rowptrs[y++] = row, row += rowbytes);
 		
 		for (pass = 0; pass < number_passes -1; pass++) {

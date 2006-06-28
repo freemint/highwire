@@ -32,7 +32,8 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
 
 - CSS positioning system modified
 
-- CSS Tokens Bottom & Right added
+- CSS Tokens Bottom & Right added, display:none
+  support added.  @media parsing improved.
 
 - CSS specificity or weighting system changed from
   base 10 to base 100.  Avoids rules with 10 tags
@@ -48,9 +49,8 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
     AV_WINDOW = 2:  also enables global window
                     cycling.
 
-- CSS display:none support.
-
-- CSS @media parsing improved.
+- Bugfix for interlaced monochrome PNGs, a buffer
+  was calculated too small.
 
 - Bugs #0181, #0219 resolved.
 
