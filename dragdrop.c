@@ -76,10 +76,10 @@ static long oldpipesig;
  * - The str contains the string separated by null
 */
 
-static WORD parseargs ( BYTE *str)
+static WORD parseargs ( char * str)
 {
 	WORD	cnt = 1;
-	BYTE 	*c = str;
+	char 	*c = str;
 	BOOL	in_quote = FALSE;
 
 	while (*c)
@@ -458,7 +458,7 @@ void
 rec_ddmsg (WORD msg[8])
 {
 	int winid;
-	int msx, msy, kstate;
+	int /*msx, msy,*/ kstate;
 	int fd, pnam;
 	int i;
 	char txtname[DD_NAMEMAX], ext[5];
@@ -466,8 +466,8 @@ rec_ddmsg (WORD msg[8])
 	long size;
 
 	winid  = msg[3];
-	msx    = msg[4];
-	msy    = msg[5];
+/*	msx    = msg[4];*/
+/*	msy    = msg[5];*/
 	kstate = msg[6];
 	pnam   = msg[7];
 
