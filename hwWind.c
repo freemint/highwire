@@ -1964,10 +1964,9 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 
 		WORD bstate;
 
-		graf_mkstate (&mx, &my, &bstate, &kstate);
-		if ( bstate & 1 )					/* Ist die Taste noch gedrckt?	*/
-		{
-			WORD d;
+		graf_mkstate (&mx, &my, &bstate, (WORD*)&kstate);
+		if (bstate & 1) {   /* key still pressed? */
+			WORD  d;
 			GRECT pos;
 			
 			pos.g_x = x;
@@ -1979,7 +1978,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			graf_dragbox (pos.g_w, pos.g_h, pos.g_x, pos.g_y, desk_area.g_x,
 							  desk_area.g_y, desk_area.g_w, desk_area.g_h, &d, &d);
 			graf_mouse ( ARROW, NULL );
-			graf_mkstate(&mx, &my, &bstate, &kstate);
+			graf_mkstate(&mx, &my, &bstate, (WORD*)&kstate);
 			send_ddmsg ( mx, my, kstate, "Text", ".TXT", 
 							 edit->Length, edit->Text );
 		} else {
