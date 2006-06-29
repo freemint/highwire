@@ -231,7 +231,7 @@ GRECT    paragraph_extend (WORDITEM);
 /* in image.c */
 
 IMAGE new_image    (FRAME, TEXTBUFF, const char * src, LOCATION,
-                    short w, short h, short vspace, short hspace, BOOL cfg_image1);
+                    short w, short h, short vspace, short hspace, BOOL win_image);
 void  delete_image (IMAGE*);
 void         image_calculate (IMAGE, short par_width);
 const char * image_dispinfo  (void);

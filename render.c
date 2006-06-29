@@ -2581,7 +2581,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		           get_value_size (parser, KEY_WIDTH),
 		           get_value_size (parser, KEY_HEIGHT),
 		           get_value_size (parser, KEY_VSPACE),
-		           get_value_size (parser, KEY_HSPACE),0);
+		           get_value_size (parser, KEY_HSPACE),FALSE);
 		font_switch (current->word->font, NULL);
 		
 		new_word (current, TRUE);
@@ -4049,7 +4049,7 @@ parse_image (void * arg, long invalidated)
 	} else {
 		loc = location_share (frame->Location);
 	}
-	new_image (frame, current, NULL, loc, 0,0, 0,0,1);
+	new_image (frame, current, NULL, loc, 0,0, 0,0,TRUE);
 	free_location (&loc);
 
 	delete_parser (parser);

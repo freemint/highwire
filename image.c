@@ -119,7 +119,7 @@ set_word (IMAGE img)
 /*============================================================================*/
 IMAGE
 new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
-           short w, short h, short vspace, short hspace, BOOL cfg_image1)
+           short w, short h, short vspace, short hspace, BOOL win_image)
 {
 	LOCATION loc     = new_location (file, base);
 	BOOL     blocked = ((loc->Flags & (1uL << ('I' - 'A'))) != 0);
