@@ -207,7 +207,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		set_word (img);
 		
 #if defined(__LOADER_H__)
-		if (!img->u.Data && (cfg_ViewImages || cfg_image1)) {
+		if (!img->u.Data && (cfg_ViewImages || win_image)) {
 #else
 		if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
 #endif
