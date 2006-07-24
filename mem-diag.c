@@ -303,6 +303,16 @@ mvalidate (void * mem)
 	char   * chunk = MEM2CHUNK(mem);
 	MEM_ITEM item  = tree_item (&actv_base, (TREE_ITEM)&chunk, 0);
 	if (item) {
+#ifdef MD_CHKBND
+		UWORD patt = canary_chk (item);
+		if (patt) {
+			printf ("mvalidate(%p) @<%05lX>: canary violated!\r\n",
+			        mem, ptr2offs (&mem));
+			printf ("   %s created @<%05lX>.\r\n",
+			        canary_str (patt, item->Size), item->Created);
+			return patt;
+		}
+#endif
 		/* everything is fine */
 		return 0;
 	}
