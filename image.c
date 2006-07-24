@@ -2283,7 +2283,10 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 				(*raster) (info, dst);
 				dst   += info->LnSize;
 				scale += info->IncYfx;
-				if (!--y_dst) break;
+				if (!--y_dst) {
+					scale = (long)img_h <<16; /* don't write below target bottom */
+					break;
+				}
 			}
 		}
 	
