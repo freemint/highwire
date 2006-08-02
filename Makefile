@@ -64,6 +64,7 @@ CFILES = \
 	O_Struct.c \
 	fontbase.c \
 	W_Struct.c \
+	raster.c \
 	image.c \
 	Paragrph.c \
 	list.c \
