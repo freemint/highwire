@@ -108,7 +108,9 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	if (cached) {
 		cIMGDATA data = cached;
 		if (!h) {
-			h = img->set_h = data->img_h;
+/*			h = img->set_h = data->img_h; */
+			h = data->img_h;
+
 		}
 		if (w < 0) {
 			w = data->fd_w;
@@ -119,10 +121,13 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 			}
 		} else {
 			if (!w) {
-				w = img->set_w = data->img_w;
+/*				w = img->set_w = data->img_w; */
+				w = data->img_w;
+
 			}
 			if (h < 0) {
-				h = img->set_h = ((long)data->img_h * -h +512) /1024;
+/*				h = img->set_h = ((long)data->img_h * -h +512) /1024; */
+				h = ((long)data->img_h * -h +512) /1024;
 			}
 			if (w != data->fd_w || h != data->fd_h || hash != img->backgnd) {
 				cached = cache_lookup (loc, img_hash (w, h, img->backgnd), NULL);
@@ -133,8 +138,11 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		}
 	
 	} else if (hash) {
-		if (!w) w = img->set_w = (hash >>12) & 0x0FFF;
-		if (!h) h = img->set_h = (hash     ) & 0x0FFF;
+/*		if (!w) w = img->set_w = (hash >>12) & 0x0FFF;
+		if (!h) h = img->set_h = (hash     ) & 0x0FFF; */
+		if (!w) w = (hash >>12) & 0x0FFF;
+		if (!h) h = (hash     ) & 0x0FFF;
+
 	}
 	
 	if (blocked) {
@@ -195,30 +203,49 @@ delete_image (IMAGE * _img)
 static void
 img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 {
-	size_t  scale_x, scale_y;
+	size_t  scale_x = 0x10000uL; /* to avoid a  */
+	size_t  scale_y = 0x10000uL; /* gcc warning */
 
 	/* calculate scaling steps (32bit fix point) */
 	
-	if (!img->set_w) {
-		scale_x     = 0x10000uL;
-		img->disp_w = img->set_w = img_w;
-	} else if (img_w != img->disp_w) {
-		scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+	if (!img->set_w && !img->set_h) {		
+		scale_x     = scale_y = 0x10000uL;
 	} else {
-		scale_x     = 0x10000uL;
-	}
-	
-	if (img->set_h < 0) {
-		scale_y     = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
-		img->disp_h = ((size_t)img_h <<16) / scale_y;
-	} else if (!img->set_h) {
-		scale_y     = 0x10000uL;
-		img->disp_h = img->set_h = img_h;
-	} else if (img_h != img->disp_h) {
-		scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+	if (img->set_w  && !img->set_h) {
+		if (img_w != img->disp_w) {
+			scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+			scale_y	= scale_x;
+		} else {
+			scale_y= scale_x     = 0x10000uL;
+		}
 	} else {
-		scale_y     = 0x10000uL;
+	if (!img->set_w && img->set_h) {
+		if (img->set_h < 0) {
+			scale_x=  scale_y = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+		} else if (img_h != img->disp_h) {
+			scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+			scale_x = scale_y;
+		} else {
+			scale_x= scale_y     = 0x10000uL;
+		}
+	} else {
+		if (img_w != img->disp_w) {
+			scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+		} else {
+			scale_x     = 0x10000uL;
+		}
+		if (img->set_h < 0) {
+			scale_y     = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+		} else if (img_h != img->disp_h) {
+			scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+		} else {
+			scale_y     = 0x10000uL;
+		}
+             }
+	  }
 	}
+	img->disp_h = ((size_t)img_h <<16) / scale_y;
+	img->disp_w = ((size_t)img_w <<16) / scale_x;
 	
 	if (info) {
 		info->IncXfx = scale_x;
@@ -266,21 +293,13 @@ image_calculate (IMAGE img, short par_width)
 		long     hash = 0;
 		cIMGDATA data = cache_lookup (img->source, -1, &hash);
 		if (data) {
-			if (!img->set_w) {
-				img->set_w = img->disp_w = data->img_w;
-			}
-			if (!img->set_h) {
-				img->set_h = img->disp_h = data->img_h;
-			} else if (img->set_h < 0) {
-				img->set_h = img->disp_h = ((long)data->img_h * -img->set_h +512)
-				                         / 1024;
-			}
+			img_scale (img, data->img_w, data->img_h, NULL);
 			if ((char)(hash >>24) == 0xFF) {
 				img->backgnd = -1;
 			}
 			set_word (img);
 		}
-	
+		
 	} else if (img->word->vertical_align == ALN_TOP) {
 		set_word (img);
 	}
