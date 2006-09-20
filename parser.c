@@ -286,21 +286,25 @@ parser_resume (PARSER parser, void * func, const char * ptr_sub)
 static KEYVALUE *
 find_key (PARSER parser, HTMLKEY key)
 {
-	PARSPRIV prsdata = ParserPriv(parser);
-	UWORD        num = prsdata->KeyNum;
-	KEYVALUE   * ent = prsdata->KeyValTab + num;
+	PARSPRIV prsdata   = ParserPriv(parser);
+	UWORD    num 	   = 0; 
+	UWORD	 num_max = prsdata->KeyNum;
+	KEYVALUE * ent   = prsdata->KeyValTab;
 
-	while (num--) {
-		if ((--ent)->Key == key) {
+	while (num++ < num_max) {
+		if ((ent)->Key == key) {
 			return ent;
 		}
+		ent++;
 	}
 	return NULL;
 }
 
 
+
+
 /*==============================================================================
- * Finds the VALUE of 'key' that was read while the last parse() call.
+ * Finds the VALUE of 'key' that was read while the first parse() call.
  * If successful the VALUE will be copied to 'output' up to 'max_len' character
  * (including the trailing '\0') and a TRUE will be returned.
  * Else a FALSE will be returned.
@@ -327,7 +331,7 @@ get_value (PARSER parser, HTMLKEY key, char * output, const size_t max_len)
 
 
 /*==============================================================================
- * Returns the VALUE of 'key' that was read while the last parse() call as a
+ * Returns the VALUE of 'key' that was read while the first parse() call as a
  * malloc'ed zero terminated character string.
  * If not successful the result is a NULL pointer.
  */
@@ -351,7 +355,7 @@ get_value_str (PARSER parser, HTMLKEY key)
 
 /*==============================================================================
  * Returns the first character of the VALUE of 'key' that was read while the
- * last parse() call.
+ * first parse() call.
  * If not successful a '\0' will be returned.
  */
 char
@@ -363,7 +367,7 @@ get_value_char (PARSER parser, HTMLKEY key)
 
 
 /*==============================================================================
- * Returns the VALUE of 'key' that was read while the last parse() call as a
+ * Returns the VALUE of 'key' that was read while the first parse() call as a
  * unsigned short.
  * If not successful the value of 'dflt' will be returned instead, which may
  * also be negative.
@@ -385,7 +389,7 @@ get_value_unum (PARSER parser, HTMLKEY key, WORD dflt)
 
 
 /*==============================================================================
- * Returns the VALUE of 'key' that was read while the last parse() call as a
+ * Returns the VALUE of 'key' that was read while the first parse() call as a
  * signed short.
  * On success the return value is either a positive absolute number or a
  * negative fractional of -1024 if a trailing '%' was found.
@@ -415,7 +419,7 @@ get_value_size (PARSER parser, HTMLKEY key)
 
 
 /*==============================================================================
- * Returns the VDI color VALUE of 'key' that was read while the last parse()
+ * Returns the VDI color VALUE of 'key' that was read while the first parse()
  * call.
  * If not successful a negative number will be returned.
  */
