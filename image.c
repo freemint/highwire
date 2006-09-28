@@ -213,7 +213,7 @@ img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 	} else {
 		if (img->set_w  && !img->set_h) { /* only width */
 			if (img_w != img->disp_w) {
-				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2) ) / img->disp_w;
 				scale_y	= scale_x;
 
 			} else {
@@ -224,33 +224,33 @@ img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 		} else {
 		if (!img->set_w && img->set_h) { /* only height */
 			if (img->set_h < 0) {
-				scale_x=  scale_y = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+				scale_x=  scale_y = (scale_x * 1024 +(-img->set_h /2) ) / -img->set_h;
 			} else if (img_h != img->disp_h) {
-				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2) ) / img->disp_h;
 				scale_x = scale_y;
 			} else {
 				scale_x= scale_y     = 0x10000uL;
 			}
 		} else {
 			if (img_w != img->disp_w) { /* width and height */
-				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2) ) / img->disp_w;
 			}
 			if (img->set_h < 0) {
-				scale_y     = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+				scale_y     = (scale_x * 1024 +(-img->set_h /2) ) / -img->set_h;
 			} else if (img_h != img->disp_h) {
-				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2) ) / img->disp_h;
 				}
 		        
 			}
 		}
 	}
 	if (scale_x != 0x10000uL) {
-		img->disp_w = (((size_t)img_w <<16 ) + (scale_x / 2)) / scale_x;
+		img->disp_w = (((size_t)img_w <<16 )  + (scale_x / 2) ) / scale_x;
 	} else {
 		img->disp_w = img_w;
 	}
 	if (scale_y != 0x10000uL) {
-		img->disp_h = (((size_t)img_h <<16 ) +  (scale_y / 2)) / scale_y;
+		img->disp_h = (((size_t)img_h <<16 ) +  (scale_y / 2) ) / scale_y;
 	} else {
 		img->disp_h = img_h;
 	}
@@ -305,6 +305,7 @@ image_calculate (IMAGE img, short par_width)
 			if ((char)(hash >>24) == 0xFF) {
 				img->backgnd = -1;
 			}
+			img_scale (img, data->img_w, data->img_h, NULL);
 			set_word (img);
 		}
 		
