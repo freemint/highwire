@@ -208,45 +208,53 @@ img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 
 	/* calculate scaling steps (32bit fix point) */
 	
-	if (!img->set_w && !img->set_h) {		
+	if (!img->set_w && !img->set_h) { /* neither width nor height */	
 		scale_x     = scale_y = 0x10000uL;
 	} else {
-	if (img->set_w  && !img->set_h) {
-		if (img_w != img->disp_w) {
-			scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
-			scale_y	= scale_x;
+		if (img->set_w  && !img->set_h) { /* only width */
+			if (img_w != img->disp_w) {
+				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+				scale_y	= scale_x;
+
+			} else {
+				scale_y= scale_x     = 0x10000uL;
+			}
+
+
 		} else {
-			scale_y= scale_x     = 0x10000uL;
-		}
-	} else {
-	if (!img->set_w && img->set_h) {
-		if (img->set_h < 0) {
-			scale_x=  scale_y = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
-		} else if (img_h != img->disp_h) {
-			scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
-			scale_x = scale_y;
+		if (!img->set_w && img->set_h) { /* only height */
+			if (img->set_h < 0) {
+				scale_x=  scale_y = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+			} else if (img_h != img->disp_h) {
+				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+				scale_x = scale_y;
+			} else {
+				scale_x= scale_y     = 0x10000uL;
+			}
 		} else {
-			scale_x= scale_y     = 0x10000uL;
+			if (img_w != img->disp_w) { /* width and height */
+				scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
+			}
+			if (img->set_h < 0) {
+				scale_y     = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
+			} else if (img_h != img->disp_h) {
+				scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
+				}
+		        
+			}
 		}
-	} else {
-		if (img_w != img->disp_w) {
-			scale_x     = (((size_t)img_w <<16) + (img->disp_w /2)) / img->disp_w;
-		} else {
-			scale_x     = 0x10000uL;
-		}
-		if (img->set_h < 0) {
-			scale_y     = (scale_x * 1024 +(-img->set_h /2)) / -img->set_h;
-		} else if (img_h != img->disp_h) {
-			scale_y     = (((size_t)img_h <<16) + (img->disp_h /2)) / img->disp_h;
-		} else {
-			scale_y     = 0x10000uL;
-		}
-             }
-	  }
 	}
-	img->disp_h = ((size_t)img_h <<16) / scale_y;
-	img->disp_w = ((size_t)img_w <<16) / scale_x;
-	
+	if (scale_x != 0x10000uL) {
+		img->disp_w = (((size_t)img_w <<16 ) + (scale_x /2)) / scale_x;
+	} else {
+		img->disp_w = img_w;
+	}
+	if (scale_y != 0x10000uL) {
+		img->disp_h = (((size_t)img_h <<16 ) +  (scale_y /2)) / scale_y;
+	} else {
+		img->disp_h = img_h;
+	}
+		
 	if (info) {
 		info->IncXfx = scale_x;
 		info->IncYfx = scale_y;
@@ -257,7 +265,7 @@ img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 void
 image_calculate (IMAGE img, short par_width)
 {
-	if (img->set_w < 0) {
+	if (img->set_w < 0 ) {
 		short width = ((long)par_width * -img->set_w +512) /1024 - img->hspace *2;
 		if (width <= 0) width = 1;
 		if (img->disp_w != width || !img->u.Data) {
@@ -293,7 +301,6 @@ image_calculate (IMAGE img, short par_width)
 		long     hash = 0;
 		cIMGDATA data = cache_lookup (img->source, -1, &hash);
 		if (data) {
-			img_scale (img, data->img_w, data->img_h, NULL);
 			if ((char)(hash >>24) == 0xFF) {
 				img->backgnd = -1;
 			}
@@ -302,7 +309,7 @@ image_calculate (IMAGE img, short par_width)
 		
 	} else if (img->word->vertical_align == ALN_TOP) {
 		set_word (img);
-	}
+	} 
 }
 
 
