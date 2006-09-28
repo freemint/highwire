@@ -254,8 +254,6 @@ img_scale (IMAGE img, short img_w, short img_h, IMGINFO info)
 	} else {
 		img->disp_h = img_h;
 	}
-	printf ("img_w = %i, img->disp_w = %i, scale_x = %li\r\n",img_w, img->disp_w, scale_x);
-	printf ("img_h = %i, img->disp_h = %i, scale_y = %li\r\n",img_h, img->disp_h, scale_y);
 		
 	if (info) {
 		info->IncXfx = scale_x;
@@ -269,7 +267,6 @@ image_calculate (IMAGE img, short par_width)
 {
 	if (img->set_w < 0 ) {
 		short width = ((long)par_width * -img->set_w +512) /1024 - img->hspace *2;
-			printf ("image_calc: width = %i, img->disp_w = %i\r\n",width, img->disp_w);
 
 		if (width <= 0) width = 1;
 		if (/*img->disp_w != width || */ !img->u.Data) {
