@@ -506,7 +506,13 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			        stricmp (output, "bolder") == 0);
 		}
 		/* n/i: lighter, medium, 100..300 */
-		if (bold) fontstack_setBold (current);
+		/* but we need to be certain that normal is working */
+		
+		if (bold) { 
+			fontstack_setBold (current); 
+		} else 
+			word_set_bold (current, FALSE);
+
 	}
 	
 	if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
