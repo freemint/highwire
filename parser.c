@@ -300,9 +300,6 @@ find_key (PARSER parser, HTMLKEY key)
 	return NULL;
 }
 
-
-
-
 /*==============================================================================
  * Finds the VALUE of 'key' that was read while the first parse() call.
  * If successful the VALUE will be copied to 'output' up to 'max_len' character
@@ -515,9 +512,9 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 					ent->weight += 10000000L;
 					important = FALSE;
 
-					/*if ( ent->Key == 13)
+/*					if ( ent->Key == 13)
 						printf("\nin   %.*s %ld\n",ent->Len,ent->Value,ent->weight);
-					*/
+*/					
 				}
 
 			}
@@ -564,18 +561,20 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 				if (style->ClassId == '.') {
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
-/*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);*/
+/*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);
+*/
 						weight += 100;
-						if (link && weight > 100 && *link->Css.Value) {
+						if (link && weight >= 100 && *link->Css.Value) {
 							box = NULL;
 						}
 					}
 				} else if (style->ClassId == '#') {
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
-/*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);*/
+/*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);
+*/
 						weight += 10000;
-						if (link && weight > 10000 && *link->Css.Value) {
+						if (link && weight >= 10000 && *link->Css.Value) {
 							box = NULL;
 						}
 					}
@@ -1185,11 +1184,11 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				/* if ((err = (!isalpha (*p))) == TRUE)	break; */
 
 				if (!isalpha (*p)) skip = TRUE;
-
 				beg = p;
 				while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
 
 				end = p;
+
 				if (beg == end) cid = '\0';
 			} else {
 				beg = end = NULL;
@@ -1289,11 +1288,37 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			while (isspace (*(++p)));
 			beg = p;
 			while (*p && *p != '}') {
-				if (*p == '\'' || *p == '"') {
+				/* a not beautiful test to filter internal { } pairs in a rule set */
+				if (*p == '{') {
+					while(1 && *p) {
+						if (*p == '\'' || *p == '"') { 
+							char q = *p;
+							while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
+	
+							if (*p) p++;
+							end = NULL;
+						}
+
+						if (!isspace (*p)) {
+							end = NULL;
+						} else if (!end) {
+							end = p;
+						}
+					
+						p++;
+						
+						if (*p == '}')
+							break;
+					}
+				}
+
+				if (*p == '\'' || *p == '"') { 
 					char q = *p;
 					while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
+
 					if (*p) p++;
 					end = NULL;
+					
 					continue;
 				}
 				if (!isspace (*p)) {
@@ -1301,14 +1326,18 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				} else if (!end) {
 					end = p;
 				}
+				
 				p++;
-			}
+			} /* end while (*p && *p != '}') */
+			
 			if (!end) {
 				end = p;
 			}
+			
 			if (end[-1] == ';') {
 				end--; /* cut off trailing semicolon to detect empty rules */
 			}
+
 			if (*p) while (isspace (*(++p)));
 		}
 		
