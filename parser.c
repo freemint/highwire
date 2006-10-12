@@ -1174,16 +1174,32 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			#endif
 
 			} else if (isalpha (*p)) { /*........................ tag */
+				const char * q = p;
+
 				key = scan_tag (&p);
+				
+				/* This could be a tag we don't support or
+				 * it could be a typo on a class or id
+				 *
+				 * for the moment we will ignore it, but if it's a
+				 * typo on a class, we need to filter out more possible
+				 * characters than would be caught in scan_tag()
+				 */
+
+				if (key == TAG_Unknown) {
+					p = q;
+
+					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
+				}
+
 			}
 			
 			if (*p == '.' || *p == '#') { /*............. class or id */
 				cid = *(p++);
 
 				/* can't start with numbers */
-				/* if ((err = (!isalpha (*p))) == TRUE)	break; */
-
 				if (!isalpha (*p)) skip = TRUE;
+
 				beg = p;
 				while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
 
