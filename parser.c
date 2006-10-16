@@ -493,16 +493,15 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 		}
 
 		if (ent) {
-			/*if (important && ent->Key == 13)
-					printf("in   %.*s %ld vs %ld\n",(unsigned)(ptr - val +1),val,weight,ent->weight);
-			*/
-
+/*			if (important && ent->Key == 13)
+					printf("in   %.*s %ld vs %ld _______________\n",(unsigned)(ptr - val +1),val,weight,ent->weight);
+*/
 			if ((weight >= ent->weight)
-				||(important && ((weight + 1000000L) >= ent->weight))) {
+				||(important && ((weight + 10000000L) >= ent->weight))) {
 
-				/*if (ent->Key == 13)
+/*				if (ent->Key == 13)
 					printf("new ent %d val %.*s %ld old %.*s %ld \r\n",css,(unsigned)(ptr - val +1),val,weight,ent->Len,ent->Value,ent->weight);
-				*/		
+*/						
 				ent->Key   = css;
 				ent->Value = val;
 				ent->Len   = (unsigned)(ptr - val +1);
