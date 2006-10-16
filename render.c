@@ -2781,6 +2781,13 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		}
 		
 	} else {
+		/* If we have a seperate non terminated tag inside of
+		 * our H tag, then pop the fontstack */
+		if (current->paragraph->Box.HtmlCode < TAG_H1 ||
+		current->paragraph->Box.HtmlCode > TAG_H6) {
+			fontstack_pop (current);
+		}
+
 		par = add_paragraph (current, 0);
 
 		par->Box.TextAlign = current->parentbox->TextAlign;
@@ -2929,7 +2936,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		fontstack_push (current, -1);
 		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
 		css_text_styles (parser, current->font);
-				
+
 		box_anchor (parser, &par->Box, FALSE);
 
 	} else {
