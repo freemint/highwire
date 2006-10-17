@@ -1300,31 +1300,19 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			p         = tok;
 			beg = end = NULL;
 		} else /* if (*p == '{') */ {
+			int bracket_count = 1;
+
 			while (isspace (*(++p)));
 			beg = p;
-			while (*p && *p != '}') {
-				/* a not beautiful test to filter internal { } pairs in a rule set */
-				if (*p == '{') {
-					while(1 && *p) {
-						if (*p == '\'' || *p == '"') { 
-							char q = *p;
-							while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
-	
-							if (*p) p++;
-							end = NULL;
-						}
 
-						if (!isspace (*p)) {
-							end = NULL;
-						} else if (!end) {
-							end = p;
-						}
+			while (*p) {
+				/* a not beautiful test to filter internal { } pairs in a rule set */
+
+				if (*p == '{') { 
+					bracket_count += 1;
+					p++;
 					
-						p++;
-						
-						if (*p == '}')
-							break;
-					}
+					continue;
 				}
 
 				if (*p == '\'' || *p == '"') { 
@@ -1341,9 +1329,16 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				} else if (!end) {
 					end = p;
 				}
+
+				if (*p == '}') { 
+					bracket_count -= 1;
+					
+					if (bracket_count < 1)
+						break;
+				}
 				
 				p++;
-			} /* end while (*p && *p != '}') */
+			} /* end while (*p) */
 			
 			if (!end) {
 				end = p;
