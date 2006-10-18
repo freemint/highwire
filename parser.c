@@ -1137,7 +1137,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 			/* we may have a trailing } left over from media parsing. */
 			if (next(&p) == '}') {
-/*printf("media left: ''%.50s''\n", p);*/
+				/*printf("media left: ''%.50s''\n", p);*/
 				p++;
 				done = (!*p && !style);
 				continue;
@@ -1148,6 +1148,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				universal = TRUE;
 				unvsel = p;
 				p++;
+				/*printf("Hit a * %.*s _____\r\n",10,p);*/
 				
 			#if 0
 			/* old code to probably be deleted */
@@ -1264,7 +1265,13 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			if (isalpha (next(&p)) || *p == '.' || *p == '#') {
 				if (style) style->Css.Value = "";
 				continue;
-			} else if (*p == '>' || *p == '+' || *p == '*') {
+			} else if (*p == '*') {
+				/* I'm not certain if this is correct or if it should be the old
+				 * way and something else is wrong
+				 */
+				if (style) style->Css.Value = "";
+				continue;
+			} else if (*p == '>' || *p == '+' ) { /* || *p == '*') { */
 				if (style) style->Css.Value = p;
 				p++;
 				continue;
@@ -1306,7 +1313,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			beg = p;
 
 			while (*p) {
-				/* a not beautiful test to filter internal { } pairs in a rule set */
 
 				if (*p == '{') { 
 					bracket_count += 1;
