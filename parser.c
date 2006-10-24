@@ -1265,13 +1265,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			if (isalpha (next(&p)) || *p == '.' || *p == '#') {
 				if (style) style->Css.Value = "";
 				continue;
-			} else if (*p == '*') {
-				/* I'm not certain if this is correct or if it should be the old
-				 * way and something else is wrong
-				 */
-				if (style) style->Css.Value = "";
-				continue;
-			} else if (*p == '>' || *p == '+' ) { /* || *p == '*') { */
+			} else if (*p == '>' || *p == '+' || *p == '*') {
 				if (style) style->Css.Value = p;
 				p++;
 				continue;
