@@ -50,6 +50,7 @@
 		__TAG_ITEM (H4),
 		__TAG_ITEM (H5),
 		__TAG_ITEM (H6),
+		__TAG_ITEM (HEAD),
 		__TAG_ITEM (HR),
 		__TAG_ITEM (HTML),
 		__TAG_ITEM (I),
