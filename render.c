@@ -1180,6 +1180,26 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
+ * HEAD tag parsing ... do nothing?
+ * hear to avoid some bad css parsing mainly
+ */
+ 
+static UWORD
+render_HEAD_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+
+	if (flags & PF_START) {
+		/* don't know */
+		;
+	} else {
+		;
+	}
+
+	return flags;
+}
+
+/*------------------------------------------------------------------------------
  * Title
  *
  * parses a title tag from a file 
