@@ -1057,6 +1057,31 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 						} else if (strnicmp (q, "all", 3) == 0) {
 							parse_media = TRUE;
 							q += 3;
+
+							/* They have added conditional rules so
+							 * an author can declare this style is
+							 * for all when the case is true
+							 * ex. @media all and (min-width:0px) {
+							 *
+							 * I'm testing on slashdot for anyone interested
+							 * This needs to be handled for all cases, so
+							 * this is just a cheap hack to begin - Dan
+							 */
+							if (strnicmp (q, " and", 4) == 0) {
+								q += 4;
+
+								if (isspace(*q))
+									while (isspace(*q)) q++;
+
+								if (isalpha(*q))
+									while (isalpha(*q)) q++;
+									
+								if (*q == '(') {
+									while (*q != ')')
+										q++;
+									q++;
+								}								
+							}
 						} else {
 							while (isalpha(*q)) q++;
 							if (next(&q) == ',') q++;
@@ -1068,7 +1093,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					if (parse_media) {
 						/* get us past opening bracket */
 						q++;
-
 					} else {
 						/* this is designed to walk a complete
 						 * media type that we don't use, for example
@@ -1143,6 +1167,22 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				continue;
 			}
 			
+			/*ignore netscape css rules *|*: */
+			if (strnicmp (p, "*|*:", 4) == 0) {
+				int bracket_count = 0;
+
+				while (*(++p)) {
+					if (*p == '{') {
+						bracket_count += 1;
+					} else if (*p == '}') {
+						bracket_count -= 1;
+						
+						if (bracket_count < 1) break;
+					}
+				}
+				p++;
+			}
+
 			if (*p == '*') { /*................................ joker */
 				key = TAG_LastDefined; /* matches all */
 				universal = TRUE;
@@ -1189,9 +1229,8 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if (key == TAG_Unknown) {
 					p = q;
 
-					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
+					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&') ;
 				}
-
 			}
 			
 			if (*p == '.' || *p == '#') { /*............. class or id */
@@ -1227,6 +1266,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				skip = TRUE; /* ignore */
 			}
 			
+
 			if (key > TAG_Unknown || cid) { /* store */
 				size_t len = end - beg;
 				STYLE  tmp = malloc (sizeof (struct s_style) + len);
@@ -1269,9 +1309,17 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if (style) style->Css.Value = p;
 				p++;
 				continue;
+			} else if (*p == '~') { 
+				/* ........ WTF  ???  I can't find this but Slashdot uses it */
+				/* so I'm treating it like it was a normal alpha char seems to work */
+				
+				if (style) style->Css.Value = "";
+				p++;
+				continue;
 			} else if (*p == ':') { /* pseudo format, to be ignored */
 				continue;
 			}
+
 						
 			if (skip) {
 				if (style) {
