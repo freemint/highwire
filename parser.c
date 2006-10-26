@@ -1188,7 +1188,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				universal = TRUE;
 				unvsel = p;
 				p++;
-				/*printf("Hit a * %.*s _____\r\n",10,p);*/
 				
 			#if 0
 			/* old code to probably be deleted */
@@ -1354,12 +1353,11 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			while (isspace (*(++p)));
 			beg = p;
 
-			while (*p) {
+			while (*p && *p != '<') {
 
 				if (*p == '{') { 
 					bracket_count += 1;
 					p++;
-					
 					continue;
 				}
 
@@ -1367,15 +1365,20 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					char q = *p;
 					while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
 
+					/* Ok the error with some pages not rendering with CSS
+					 * is at least sometimes because of the previous while loop
+					 *
+					 * A quick check for if p != '{' will cause it to break more
+					 * appropriately on some of these pages, but also is in itself
+					 * not entirely correct.
+					 * http://www.talkingpointsmemo.com line 214 is the start of a
+					 * CSS rule that breaks in the above while.
+					 */
+
 					if (*p) p++;
 					end = NULL;
-					
+
 					continue;
-				}
-				if (!isspace (*p)) {
-					end = NULL;
-				} else if (!end) {
-					end = p;
 				}
 
 				if (*p == '}') { 
@@ -1384,9 +1387,15 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					if (bracket_count < 1)
 						break;
 				}
+
+				if (!isspace (*p)) {
+					end = NULL;
+				} else if (!end) {
+					end = p;
+				}
 				
 				p++;
-			} /* end while (*p) */
+			} /* end while (*p && *p != '<') */
 			
 			if (!end) {
 				end = p;
@@ -1397,7 +1406,8 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			}
 
 			if (*p) while (isspace (*(++p)));
-		}
+
+		} /* end else if (*p == '{') */
 		
 		if (style) {
 			style = *p_style;
