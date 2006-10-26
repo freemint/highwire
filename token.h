@@ -17,6 +17,7 @@
 #define __TOKEN_TAG
 	__BEG_TAGS
 		__TAG_ITEM (A),
+		__TAG_ITEM (ADDRESS),
 		__TAG_ITEM (AREA),  /* inside MAP */
 		__TAG_ITEM (B),
 		__TAG_ITEM (BASE),
@@ -27,6 +28,7 @@
 		__TAG_ITEM (BODY),
 		__TAG_ITEM (BR),
 		__TAG_ITEM (C),
+		__TAG_ITEM (CAPTION),
 		__TAG_ITEM (CENTER),
 		__TAG_ITEM (CITE),
 		__TAG_ITEM (CODE),
@@ -39,6 +41,7 @@
 		__TAG_ITEM (DT),
 		__TAG_ITEM (EM),
 		__TAG_ITEM (EMBED),
+		__TAG_ITEM (FIELDSET),
 		__TAG_ITEM (FONT),
 #		undef       FORM
 		__TAG_ITEM (FORM),
@@ -60,6 +63,8 @@
 		__TAG_ITEM (INS),
 		__TAG_ITEM (IOD),
 		__TAG_ITEM (KBD),
+		__TAG_ITEM (LABEL),
+		__TAG_ITEM (LEGEND),
 		__TAG_ITEM (LI),
 		__TAG_ITEM (LINK),
 		__TAG_ITEM (LISTING),
@@ -87,9 +92,12 @@
 		__TAG_ITEM (SUB),
 		__TAG_ITEM (SUP),
 		__TAG_ITEM (TABLE),
+		__TAG_ITEM (TBODY),
 		__TAG_ITEM (TD),
 		__TAG_ITEM (TEXTAREA),
+		__TAG_ITEM (TFOOT),
 		__TAG_ITEM (TH),
+		__TAG_ITEM (THEAD),
 		__TAG_ITEM (TITLE),
 		__TAG_ITEM (TR),
 		__TAG_ITEM (TT),
