@@ -1181,7 +1181,7 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * HEAD tag parsing ... do nothing?
- * hear to avoid some bad css parsing mainly
+ * here to avoid some bad css parsing mainly
  */
  
 static UWORD
@@ -1599,6 +1599,7 @@ the same problem could occur in render_link_tag() below
 			*text = line;
 		}
 	}
+
 	return flags;
 }
 
@@ -1735,7 +1736,7 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		const char * line = *text;
 		char         quot = '\0', c;
-		
+
 		while ((c = *line) != '\0') {
 			line++;
 			
@@ -3150,6 +3151,22 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 	return (flags|PF_SPACE);
 }
 
+/*------------------------------------------------------------------------------
+ * Address - information about author
+*/
+static UWORD
+render_ADDRESS_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render ADDRESS tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
 
 /*******************************************************************************
  *
@@ -3502,6 +3519,70 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
+ * Caption Item
+*/
+static UWORD
+render_CAPTION_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render caption tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Thead Item
+*/
+static UWORD
+render_THEAD_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render THEAD tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Tbody Item
+*/
+static UWORD
+render_TBODY_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render TBODY tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Tfoot Item
+*/
+static UWORD
+render_TFOOT_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render TFOOT tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
  * Table Row
 */
 static UWORD
@@ -3707,6 +3788,55 @@ render_TEXTAREA_tag (PARSER parser, const char ** text, UWORD flags)
 
 	return flags;
 }
+
+/*------------------------------------------------------------------------------
+ * Fieldset Item
+*/
+static UWORD
+render_FIELDSET_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render fieldset tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Legend Item
+*/
+static UWORD
+render_LEGEND_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render legend tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
+/*------------------------------------------------------------------------------
+ * Label Item
+*/
+static UWORD
+render_LABEL_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	UNUSED (text);
+	
+	if (flags & PF_START) {
+	/* this is just the stub of a routine to keep CSS happy so far */
+	/*	printf("In render label tag\n");*/
+		;
+	}
+	return (flags|PF_SPACE);
+}
+
 
 /*------------------------------------------------------------------------------
  * Selection List
