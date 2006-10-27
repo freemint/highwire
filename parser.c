@@ -1225,7 +1225,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				 * characters than would be caught in scan_tag()
 				 */
 
-				if (key == TAG_Unknown) {
+				if ((key == TAG_Unknown) || (*p == '_')) {
 					p = q;
 
 					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&') ;
@@ -1353,7 +1353,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			while (isspace (*(++p)));
 			beg = p;
 
-			while (*p && *p != '<') {
+			while (*p ) {
 
 				if (*p == '{') { 
 					bracket_count += 1;
@@ -1363,29 +1363,19 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 				if (*p == '\'' || *p == '"') { 
 					char q = *p;
-					while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));
-
-					/* Ok the error with some pages not rendering with CSS
-					 * is at least sometimes because of the previous while loop
-					 *
-					 * A quick check for if p != '{' will cause it to break more
-					 * appropriately on some of these pages, but also is in itself
-					 * not entirely correct.
-					 * http://www.talkingpointsmemo.com line 214 is the start of a
-					 * CSS rule that breaks in the above while.
+					
+					/* old line for reference */
+					/*while (*(++p) && *p != q && !(*p == '\\' && !*(++p)));*/
+					
+					/* does the following routine do everything it is supposed to?
+					 * definately doesn't have the bug the old line had
 					 */
+					while (*(++p) && *p != q && *p != '\\');
 
 					if (*p) p++;
 					end = NULL;
 
 					continue;
-				}
-
-				if (*p == '}') { 
-					bracket_count -= 1;
-					
-					if (bracket_count < 1)
-						break;
 				}
 
 				if (!isspace (*p)) {
@@ -1394,8 +1384,15 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					end = p;
 				}
 				
+				if (*p == '}') { 
+					bracket_count -= 1;
+					
+					if (bracket_count < 1)
+						break;
+				}
+
 				p++;
-			} /* end while (*p && *p != '<') */
+			} /* end while (*p) */
 			
 			if (!end) {
 				end = p;
@@ -1430,7 +1427,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				free (style);
 			} while ((style = *p_style) != NULL);
 		}
-		
+
 		if (!*p || err) {
 			if (err && *p != '-' && *p != '<') {
 				int n  = 0, ln = 0, cn = 0;
