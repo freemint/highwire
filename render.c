@@ -2014,9 +2014,9 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 		/* I've disabled box_styles for spans at the moment since
 		 * we can not properly handle most of them at the moment
 		 */
-		/*		css_box_styles  (parser, &current->paragraph->Box,
+/*				css_box_styles  (parser, &current->paragraph->Box,
 		                 current->paragraph->Box.TextAlign);
-		*/
+*/		
 		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
@@ -3614,25 +3614,49 @@ static UWORD
 render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
-	WORD tempsize;
+	WORD tempwid, temphgt;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
-		tempsize = get_value_size  (parser, KEY_WIDTH);
+		if (parser->hasStyle) {
+			short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;
+			char  out[100];
+			short val;
+			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+					temphgt = val;
+			}
+			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+					tempwid = val;
+			}
+		} else {
+			temphgt = get_value_size  (parser, KEY_HEIGHT);
+			tempwid = get_value_size  (parser, KEY_WIDTH);
+		}
 
+		/* Table routines don't like values < -1024 */
+		if (temphgt < -1024) {
+			temphgt = -1024;
+		}
+		if (tempwid < -1024) {
+			tempwid = -1024;
+		}
+		
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
 			         get_h_align     (parser, current->tbl_stack->AlignH),
 			         get_v_align     (parser, current->tbl_stack->AlignV),
-			         get_value_size  (parser, KEY_HEIGHT),
-			         tempsize,
+			         temphgt,
+			         tempwid,
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
 
 		/* if the table has a fixed width ignore a nowrap value
 		 * seems to be the standard method
 		 */
-		if (tempsize <= 0) {
+		if (tempwid <= 0) {
 			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
 			current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		}
@@ -3643,7 +3667,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 		css_text_styles (parser, current->font);
 
 		/* we have to reset the width in case it was set again in css_box_styles */
-		current->parentbox->SetWidth = (tempsize  <= 1024 ? tempsize  : 0);
+		current->parentbox->SetWidth = (tempwid  <= 1024 ? tempwid  : 0);
 
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
@@ -3661,25 +3685,49 @@ static UWORD
 render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
-	WORD tempsize;
+	WORD tempwid, temphgt;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
-		tempsize = get_value_size  (parser, KEY_WIDTH);
-		
+		if (parser->hasStyle) {
+			short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;
+			char  out[100];
+			short val;
+			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+					temphgt = val;
+			}
+			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+					tempwid = val;
+			}
+		} else {
+			temphgt = get_value_size  (parser, KEY_HEIGHT);
+			tempwid = get_value_size  (parser, KEY_WIDTH);
+		}
+
+		/* Table routines don't like values < -1024 */
+		if (temphgt < -1024) {
+			temphgt = -1024;
+		}
+		if (tempwid < -1024) {
+			tempwid = -1024;
+		}
+				
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
 			         get_h_align     (parser, ALN_CENTER),
 			         get_v_align     (parser, current->tbl_stack->AlignV),
-			         get_value_size  (parser, KEY_HEIGHT),
-			         tempsize,
+			         temphgt,
+			         tempwid,
 			         get_value_unum  (parser, KEY_ROWSPAN, 1),
 			         get_value_unum  (parser, KEY_COLSPAN, 1));
 
 		/* if the table has a fixed width ignore a nowrap value
 		 * seems to be the standard method
 		 */
-		if (tempsize <= 0) {
+		if (tempwid <= 0) {
 			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
 			current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		}
@@ -3691,7 +3739,7 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 		css_text_styles (parser, current->font);
 
 		/* we have to reset the width in case it was set again in css_box_styles */
-		current->parentbox->SetWidth = (tempsize  <= 1024 ? tempsize  : 0);
+		current->parentbox->SetWidth = (tempwid  <= 1024 ? tempwid  : 0);
 
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
