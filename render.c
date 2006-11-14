@@ -763,6 +763,10 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		short  indent = numerical (out, &tail, parser->Current.font->Size,
 		                           parser->Current.word->font->SpaceWidth);
 		if (tail > out) {
+
+			/* This could be buggy needs more research */
+			if (indent < -1024) indent = 0;
+				
 			box->TextIndent = indent;
 		}
 	}
