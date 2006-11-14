@@ -3614,7 +3614,8 @@ static UWORD
 render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
-	WORD tempwid, temphgt;
+	WORD tempwid = 0;
+	WORD temphgt = 0;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
@@ -3685,7 +3686,8 @@ static UWORD
 render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
-	WORD tempwid, temphgt;
+	WORD tempwid = 0;
+	WORD temphgt = 0;
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
