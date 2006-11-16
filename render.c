@@ -602,6 +602,7 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 	short ex = parser->Current.font->Size/2; 
 	char  out[100];
 	short width = -1;
+	BORDER_LINE tempborder = BORDER_NOTSET;
 
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * p = out;
@@ -641,6 +642,16 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 						width = 2;					
 					} else if (strnicmp (p, "thick",  len) == 0) {
 						width = 4;					
+					} else if (strnicmp (p, "none",  len) == 0) {
+						 tempborder = BORDER_NONE;
+					} else if (strnicmp (p, "hidden",  len) == 0) {
+						tempborder = BORDER_HIDDEN;
+					} else if (strnicmp (p, "dotted",  len) == 0) {
+						tempborder = BORDER_DOTTED;
+					} else if (strnicmp (p, "dashed",  len) == 0) {
+						tempborder = BORDER_DASHED;
+					} else {
+						tempborder = BORDER_SOLID;		
 					}
 
 					if (*tail != ',') {
@@ -652,12 +663,30 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				p = tail;
 			}
 
-			if (width >= 0) {
-				/* reset top color or things go insane do to limitations 
-				 * in the draw routine.  This mainly applies to tables*/
-				 
-				if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
+			if (tempborder > BORDER_NOTSET) {
+				switch(key) {
+					case CSS_BORDER_TOP:
+						box->BorderStyle.Top = tempborder;
+						break;
+					case CSS_BORDER_BOTTOM:
+						box->BorderStyle.Bot = tempborder;
+						break;
+					case CSS_BORDER_LEFT:
+						box->BorderStyle.Lft = tempborder;
+						break;
+					case CSS_BORDER_RIGHT:
+						box->BorderStyle.Rgt = tempborder;
+						break;
+					case CSS_BORDER:
+						box->BorderStyle.Top = box->BorderStyle.Bot = 
+						  box->BorderStyle.Lft = box->BorderStyle.Rgt = tempborder;
+						break;
+					default:
+						break;
+				}
+			}
 
+			if (width >= 0) {
 				switch(key) {
 					case CSS_BORDER_TOP:
 						box->BorderWidth.Top = width;
@@ -716,6 +745,54 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 }
 
 /*----------------------------------------------------------------------------*/
+static void
+css_border_color (PARSER parser, DOMBOX * box, HTMLCSS key)
+{
+	WORD color;
+	
+	if ((color = get_value_color (parser, key)) >= 0) {
+		switch(key) {
+			case CSS_BORDER_TOP_COLOR:
+				box->BorderColor.Top = color;
+
+				if (box->BorderWidth.Top == 0) 
+					box->BorderWidth.Top = 2;
+
+				break;
+
+			case CSS_BORDER_BOTTOM_COLOR:
+				box->BorderColor.Bot = color;
+
+				if (box->BorderWidth.Bot == 0) 
+					box->BorderWidth.Bot = 2;
+
+				break;
+
+			case CSS_BORDER_LEFT_COLOR:
+				box->BorderColor.Lft = color;
+
+				if (box->BorderWidth.Lft == 0) 
+					box->BorderWidth.Lft = 2;
+
+				break;
+				
+			case CSS_BORDER_RIGHT_COLOR:
+				box->BorderColor.Rgt = color;
+
+				if (box->BorderWidth.Rgt == 0) 
+					box->BorderWidth.Rgt = 2;
+
+				break;
+
+			default:
+				break;
+		}
+	}
+	
+}
+
+
+/*----------------------------------------------------------------------------*/
 /*static */
 void
 css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
@@ -743,14 +820,51 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if ((color = get_value_color (parser, CSS_BORDER_COLOR)) >= 0) {
 				box->BorderColor.Top = box->BorderColor.Bot =
 				box->BorderColor.Lft = box->BorderColor.Rgt = color;
+
 		}
+
+		css_border_color (parser, box, CSS_BORDER_TOP_COLOR);
+		css_border_color (parser, box, CSS_BORDER_BOTTOM_COLOR);
+		css_border_color (parser, box, CSS_BORDER_LEFT_COLOR);
+		css_border_color (parser, box, CSS_BORDER_RIGHT_COLOR);
 	}
+	
+	if (get_value (parser, CSS_BORDER_STYLE, out, sizeof(out))) {
+	
+		if      (stricmp (out, "none") == 0) {
+			box->BorderStyle.Top = box->BorderStyle.Bot = 
+			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_NONE;
+		} else if (stricmp (out, "hidden") == 0) {
+			box->BorderStyle.Top = box->BorderStyle.Bot = 
+			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_HIDDEN;
+		} else if (stricmp (out, "dotted") == 0) {
+			box->BorderStyle.Top = box->BorderStyle.Bot = 
+			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_DOTTED;
+
+			box->BorderWidth.Top = box->BorderWidth.Bot = 
+			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
+
+		} else if (stricmp (out, "dashed") == 0) {
+			box->BorderStyle.Top = box->BorderStyle.Bot = 
+			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_DASHED;
+
+			box->BorderWidth.Top = box->BorderWidth.Bot = 
+			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
+
+		} else {
+			box->BorderStyle.Top = box->BorderStyle.Bot = 
+			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_SOLID;
+
+			box->BorderWidth.Top = box->BorderWidth.Bot = 
+			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
+		}
+	} 
 
 	if (get_value (parser, KEY_BORDER, out, sizeof(out))) {
 		box->BorderWidth.Top = get_value_unum (parser, KEY_BORDER, box->BorderWidth.Top);
 		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top;
 	}
-	
+			
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
 
@@ -762,8 +876,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		char * tail   = out;
 		short  indent = numerical (out, &tail, parser->Current.font->Size,
 		                           parser->Current.word->font->SpaceWidth);
-		if (tail > out) {
 
+		if (tail > out) {
 			/* This could be buggy needs more research */
 			if (indent < -1024) indent = 0;
 				
