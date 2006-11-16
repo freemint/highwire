@@ -62,8 +62,8 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	/* init the border */
 
 	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
-	This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = 0;
-
+	This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
+	This->BorderStyle.Top = This->BorderStyle.Bot = This->BorderStyle.Lft = This->BorderStyle.Rgt = BORDER_NONE;
 	
 	return This;
 }
@@ -119,9 +119,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 	long y2 = y - This->Margin.Bot + This->Rect.H -1;
 
 	/* style display: none */
-	if (This->Hidden)
-		return;
+	if (This->Hidden) return;
 			
+	vsl_type (vdi_handle, 0); /* reset the line type */
+
 	if (This->BorderWidth.Top ||
 		This->BorderWidth.Bot ||
 		This->BorderWidth.Lft ||
@@ -149,7 +150,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			short n;
 			PXY b[5];
 
-			if (This->BorderColor.Top >= 0 && This->BorderWidth.Top > 0) {
+			if (This->BorderColor.Top >= 0 && This->BorderStyle.Top > BORDER_HIDDEN 
+			  && This->BorderWidth.Top > 0) {
 				n = This->BorderWidth.Top;
 
 				b[3].p_x = b[0].p_x = x1;
@@ -157,6 +159,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				b[1].p_y = b[0].p_y = y1;
 				b[3].p_y = b[2].p_y = y1;
 				vsl_color (vdi_handle, This->BorderColor.Top);
+
+				switch (This->BorderStyle.Top) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
 				while(1) {
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
@@ -165,7 +179,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				}
 			}
 
-			if (This->BorderColor.Bot >= 0 && This->BorderWidth.Bot > 0) {
+			if (This->BorderColor.Bot >= 0  && This->BorderStyle.Bot > BORDER_HIDDEN 
+			  && This->BorderWidth.Bot > 0) {
 				n = This->BorderWidth.Bot;
 
 				b[3].p_x = b[0].p_x = x1;
@@ -173,6 +188,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				b[1].p_y = b[0].p_y = y2;
 				b[3].p_y = b[2].p_y = y2;
 				vsl_color (vdi_handle, This->BorderColor.Bot);
+
+				switch (This->BorderStyle.Bot) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
 				while(1) {
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
@@ -181,7 +208,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				}
 			}
 
-			if (This->BorderColor.Lft >= 0 && This->BorderWidth.Lft > 0) {
+			if (This->BorderColor.Lft >= 0  && This->BorderStyle.Lft > BORDER_HIDDEN 
+			  && This->BorderWidth.Lft > 0) {
 				n = This->BorderWidth.Lft;
 
 				b[3].p_x = b[0].p_x = x1;
@@ -189,6 +217,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				b[1].p_y = b[0].p_y = y1;
 				b[3].p_y = b[2].p_y = y2;
 				vsl_color (vdi_handle, This->BorderColor.Lft);
+
+				switch (This->BorderStyle.Lft) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
 				while(1) {
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
@@ -197,7 +237,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				}
 			}
 
-			if (This->BorderColor.Rgt >= 0 && This->BorderWidth.Rgt > 0) {
+			if (This->BorderColor.Rgt >= 0  && This->BorderStyle.Rgt > BORDER_HIDDEN 
+			  && This->BorderWidth.Rgt > 0) {
 				n = This->BorderWidth.Rgt;
 
 				b[3].p_x = b[0].p_x = x2;
@@ -205,6 +246,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				b[1].p_y = b[0].p_y = y1;
 				b[3].p_y = b[2].p_y = y2;
 				vsl_color (vdi_handle, This->BorderColor.Rgt);
+
+				switch (This->BorderStyle.Rgt) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
 				while(1) {
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
@@ -254,7 +307,7 @@ vTab_MinWidth (DOMBOX * This)
 	LONG tempminwidth;
 
 	tempminwidth = This->MinWidth;
-	
+
 	This->MinWidth = (This->SetWidth > 0 ? This->SetWidth : 0);
 
 	/* style display: none */
@@ -263,17 +316,19 @@ vTab_MinWidth (DOMBOX * This)
 
 	while (box) {
 		long width = dombox_MinWidth (box);
+
 		if (This->MinWidth < width) {
 			 This->MinWidth = width;
 		}
 		box = box->Sibling;
 	}
-	
+
 	/* This tracks if the size has already been calculated and
 	 * tries to keep the system from growing the DOMBOX unnecisarily
 	 */
-	if (tempminwidth != This->MinWidth)
+	if (tempminwidth != This->MinWidth) {
 		This->MinWidth += dombox_LftDist (This) + dombox_RgtDist (This);
+	}
 	
 	if (This->SetWidth > 0 && This->SetWidth < This->MinWidth) {
 		This->SetWidth = This->MinWidth;
@@ -282,6 +337,7 @@ vTab_MinWidth (DOMBOX * This)
 /*	if ((This->BoxClass == BC_GROUP) && (This->HtmlCode == 19))
 		printf("Min %ld   \r\n",This->MinWidth);
 */
+
 	return This->MinWidth;
 }
 
@@ -726,6 +782,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	}
 
 	This->Rect.W = width;
+
 	width -= dombox_LftDist (This) + dombox_RgtDist (This);
 
 	while (box) {
@@ -832,6 +889,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		if ((box->Floating & FLT_MASK) && !box->SetWidth &&
 		    (box->BoxClass >= BC_GROUP && box->BoxClass != BC_SINGLE)) {
 			long max_width = dombox_MaxWidth (box);
+
 			if (set_width > max_width) {
 				set_width = max_width;
 			}
@@ -913,8 +971,7 @@ dombox_format (DOMBOX * This, long width)
 	struct blocking_area blocker = { {0, 0}, {0, 0} };
 
 	/* style display: none */
-	if (This->Hidden)
-			return;
+	if (This->Hidden) return;
 
 	This->_vtab->format (This, width, &blocker);
 	if (This->Rect.H < blocker.L.bottom - This->Rect.Y) {
