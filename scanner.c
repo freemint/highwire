@@ -177,8 +177,7 @@ scan_css (const char ** pptr, size_t length)
 	short        key  = CSS_Unknown;
 	const char * line = *pptr;
 	size_t       len  = 0;
-	char buf[18];
-
+	char buf[20]; /* watch when putting new CSS tokens in*/
 
 	while (len < length) {
 		char c = *line;
