@@ -218,6 +218,9 @@
 # define HTMLCSS HTMLCSS
 #endif
 
+/* When adding new CSS tokens, if they are longer than any existing
+ * tokens, the size of buf[] in scan_css() needs to be increased
+ */
 #ifndef __TOKEN_CSS
 #define __TOKEN_CSS
 	__BEG_CSSS
@@ -226,12 +229,16 @@
 		__CSS_ITEM (BACKGROUND_COLOR, KEY_BGCOLOR),
 		__CSS_ITEM (BORDER,           0),
 		__CSS_ITEM (BORDER_BOTTOM,    0),
+		__CSS_ITEM (BORDER_BOTTOM_COLOR,    0),
 		__CSS_ITEM (BORDER_COLOR,     0),
 		__CSS_ITEM (BORDER_LEFT,      0),
+		__CSS_ITEM (BORDER_LEFT_COLOR,      0),
 		__CSS_ITEM (BORDER_RIGHT,     0),
+		__CSS_ITEM (BORDER_RIGHT_COLOR,     0),
 		__CSS_ITEM (BORDER_SPACING,   KEY_CELLSPACING),
+		__CSS_ITEM (BORDER_STYLE,     0),
 		__CSS_ITEM (BORDER_TOP,       0),
-		/*          BORDER_STYLE      */
+		__CSS_ITEM (BORDER_TOP_COLOR,     0),
 		__CSS_ITEM (BORDER_WIDTH,     KEY_BORDER),
 		__CSS_ITEM (BOTTOM,           0), /* for position */
 		__CSS_ITEM (CLEAR,            0),
