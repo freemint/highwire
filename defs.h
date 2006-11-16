@@ -76,6 +76,21 @@ typedef enum {  /* HTML:          CSS:          */
 */
 } BULLET;
 
+/* Css 2.1 section 8.5.3 */
+typedef enum {
+	BORDER_NOTSET = 0,
+	BORDER_NONE, 
+	BORDER_HIDDEN, 
+	BORDER_DOTTED,
+	BORDER_DASHED,
+	BORDER_SOLID,
+	BORDER_DOUBLE,
+	BORDER_GROOVE,
+	BORDER_RIDGE,
+	BORDER_INSET,
+	BORDER_OUTSET
+} BORDER_LINE;
+
 
 /* http://www.indigo.ie/egt/standards/iso639/iso639-2-en.html
  * http://selfhtml.teamone.de/diverses/sprachenkuerzel.html
@@ -278,6 +293,11 @@ typedef struct {
 	WORD Lft, Rgt;
 } TBLR;
 
+typedef struct {
+	BORDER_LINE Top, Bot;
+	BORDER_LINE Lft, Rgt;
+} BRDR;
+
 typedef enum {
 	BC_MAIN = 0, /* BODY                        */
 	BC_TABLE,    /* TABLE                       */
@@ -304,7 +324,7 @@ struct s_dombox {
 	DOMBOX * Parent, * Sibling;
 	DOMBOX * ChildBeg, * ChildEnd;
 	DOMBOX *real_parent;
-BOOL Hidden;
+	BOOL Hidden;
 	LRECT    Rect;
 	LONG     MaxWidth;
 	LONG     MinWidth;  /* smallest width where the content fits in          */
@@ -323,6 +343,7 @@ BOOL Hidden;
 	TBLR     Padding;
 	TBLR     BorderWidth;
 	TBLR     BorderColor;
+	BRDR     BorderStyle;
 	H_ALIGN  Floating;
 	L_BRK    ClearFlt;
 	H_ALIGN  TextAlign;
