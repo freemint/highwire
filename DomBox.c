@@ -175,7 +175,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
 					if (!--n) break;
-					b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+					/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+					b[1].p_y = ++b[0].p_y;  b[3].p_y = ++b[2].p_y;
 				}
 			}
 
@@ -204,7 +205,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
 					if (!--n) break;
-					b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+					/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+					b[1].p_y = ++b[0].p_y;  b[3].p_y = ++b[2].p_y;
 				}
 			}
 
@@ -233,7 +235,9 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
 					if (!--n) break;
-					b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+					/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+					b[3].p_x = ++b[0].p_x;  b[1].p_x = ++b[2].p_x;
+
 				}
 			}
 
@@ -262,7 +266,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					b[4] = b[0];
 					v_pline (vdi_handle, 5, (short*)b);
 					if (!--n) break;
-					b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+					/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+					b[3].p_x = ++b[0].p_x;  b[1].p_x = ++b[2].p_x;
 				}
 			}
 		} 
