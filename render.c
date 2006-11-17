@@ -604,6 +604,10 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 	short width = -1;
 	BORDER_LINE tempborder = BORDER_NOTSET;
 
+	TBLR colors = {-1,-1,-1,-1};
+	TBLR widths = {-1,-1,-1,-1};
+	BRDR styles = {BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET};
+
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * p = out;
 		while (*p) {
@@ -611,6 +615,16 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			if (isdigit (*p)) {
 				char * tail = p;
 				width = numerical (p, &tail, em, ex);
+
+				if (widths.Top == -1) {
+					widths.Top = width;
+				} else if (widths.Bot == -1) {
+					widths.Bot = width;
+				} else if (widths.Lft == -1) {
+					widths.Lft = width;
+				} else if (widths.Rgt == -1) {
+					widths.Rgt = width;
+				}
 
 				if ( tail > p) {
 					p = tail;
@@ -622,6 +636,16 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				while (isxdigit (p[++len]));
 				if ((color = scan_color (p, len)) >= 0) {
 					p += len;
+
+					if (colors.Top == -1) {
+						colors.Top = remap_color(color);
+					} else if (colors.Bot == -1) {
+						colors.Bot = remap_color(color);
+					} else if (colors.Lft == -1) {
+						colors.Lft = remap_color(color);
+					} else if (colors.Rgt == -1) {
+						colors.Rgt = remap_color(color);
+					}
 				} else {
 					break;
 				}
@@ -636,6 +660,9 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 					tail = p + len;
 				}
 				if ((color = scan_color (p, len)) < 0) {
+					width = -1;
+					tempborder = 0;
+					
 					if (strnicmp (p, "thin",  len) == 0) {
 						width = 1;					
 					} else if (strnicmp (p, "medium",  len) == 0) {
@@ -654,143 +681,242 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 						tempborder = BORDER_SOLID;		
 					}
 
+					if (width > -1) {
+						if (widths.Top == -1) {
+							widths.Top = width;
+						} else if (widths.Bot == -1) {
+							widths.Bot = width;
+						} else if (widths.Lft == -1) {
+							widths.Lft = width;
+						} else if (widths.Rgt == -1) {
+							widths.Rgt = width;
+						}
+					}
+
+					if (tempborder > BORDER_NOTSET) {
+						if (styles.Top == BORDER_NOTSET) {
+							styles.Top = tempborder;
+						} else if (styles.Bot == BORDER_NOTSET) {
+							styles.Bot = tempborder;
+						} else if (styles.Lft == BORDER_NOTSET) {
+							styles.Lft = tempborder;
+						} else if (styles.Rgt == BORDER_NOTSET) {
+							styles.Rgt = tempborder;
+						}
+					}
+
 					if (*tail != ',') {
 						p = tail;
 						while (isspace (*p)) p++;
 						if (*p == ',') tail = p;
 					}
+				} else {
+					if (colors.Top == -1) {
+						colors.Top = remap_color(color);
+					} else if (colors.Bot == -1) {
+						colors.Bot = remap_color(color);
+					} else if (colors.Lft == -1) {
+						colors.Lft = remap_color(color);
+					} else if (colors.Rgt == -1) {
+						colors.Rgt = remap_color(color);
+					}
 				}
+								
 				p = tail;
 			}
 
-			if (tempborder > BORDER_NOTSET) {
-				switch(key) {
-					case CSS_BORDER_TOP:
-						box->BorderStyle.Top = tempborder;
-						break;
-					case CSS_BORDER_BOTTOM:
-						box->BorderStyle.Bot = tempborder;
-						break;
-					case CSS_BORDER_LEFT:
-						box->BorderStyle.Lft = tempborder;
-						break;
-					case CSS_BORDER_RIGHT:
-						box->BorderStyle.Rgt = tempborder;
-						break;
-					case CSS_BORDER:
-						box->BorderStyle.Top = box->BorderStyle.Bot = 
-						  box->BorderStyle.Lft = box->BorderStyle.Rgt = tempborder;
-						break;
-					default:
-						break;
-				}
-			}
-
-			if (width >= 0) {
-				switch(key) {
-					case CSS_BORDER_TOP:
-						box->BorderWidth.Top = width;
-						break;
-					case CSS_BORDER_BOTTOM:
-						box->BorderWidth.Bot = width;
-						break;
-					case CSS_BORDER_LEFT:
-						box->BorderWidth.Lft = width;
-						break;
-					case CSS_BORDER_RIGHT:
-						box->BorderWidth.Rgt = width;
-						break;
-					case CSS_BORDER:
-						box->BorderWidth.Top = box->BorderWidth.Bot = 
-						  box->BorderWidth.Lft = box->BorderWidth.Rgt = width;
-						break;
-					default:
-						break;
-				}
-			}
-
-			if (color >= 0 && !ignore_colours) {
-				/* reset top color or things go insane do to limitations 
-				 * in the draw routine.  This mainly applies to tables*/
-
-				if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
-
-				switch(key) {
-					case CSS_BORDER_TOP:
-						box->BorderColor.Top = remap_color (color);
-						break;
-					case CSS_BORDER_BOTTOM:
-						box->BorderColor.Bot = remap_color (color);
-						break;
-					case CSS_BORDER_LEFT:
-						box->BorderColor.Lft = remap_color (color);
-						break;
-					case CSS_BORDER_RIGHT:
-						box->BorderColor.Rgt = remap_color (color);
-						break;
-					case CSS_BORDER:
-						box->BorderColor.Top = box->BorderColor.Bot = 
-						  box->BorderColor.Lft = box->BorderColor.Rgt = remap_color (color);
-						break;
-					default:
-						break;
-				}
-			}
+			
 			if (!isspace (*p)) {
 				break;
 			}
 			while (isspace (*(++p)));
 		}
 	}
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-css_border_color (PARSER parser, DOMBOX * box, HTMLCSS key)
-{
-	WORD color;
-	
-	if ((color = get_value_color (parser, key)) >= 0) {
+		
+	if (styles.Top > BORDER_NOTSET) {
 		switch(key) {
+			case CSS_BORDER_TOP:
+				box->BorderStyle.Top = styles.Top;
+				break;
+			case CSS_BORDER_BOTTOM:
+				box->BorderStyle.Bot = styles.Top;
+				break;
+			case CSS_BORDER_LEFT:
+				box->BorderStyle.Lft = styles.Top;
+				break;
+			case CSS_BORDER_RIGHT:
+				box->BorderStyle.Rgt = styles.Top;
+				break;
+			case CSS_BORDER:
+				box->BorderStyle.Top = box->BorderStyle.Bot = 
+				  box->BorderStyle.Lft = box->BorderStyle.Rgt = styles.Top;
+
+				if (styles.Bot > BORDER_NOTSET) {
+					box->BorderStyle.Rgt = styles.Bot;
+					box->BorderStyle.Lft = styles.Bot;
+				}
+	
+				if (styles.Lft > BORDER_NOTSET)
+					box->BorderStyle.Bot = styles.Lft;
+  
+				if (styles.Rgt > BORDER_NOTSET)
+					box->BorderStyle.Lft = styles.Rgt;
+				break;
+
+			case CSS_BORDER_TOP_STYLE:
+				box->BorderStyle.Top = styles.Top;
+				break;
+			case CSS_BORDER_BOTTOM_STYLE:
+				box->BorderStyle.Bot = styles.Top;
+				break;
+			case CSS_BORDER_LEFT_STYLE:
+				box->BorderStyle.Lft = styles.Top;
+				break;
+			case CSS_BORDER_RIGHT_STYLE:
+				box->BorderStyle.Rgt = styles.Top;
+				break;
+			case CSS_BORDER_STYLE:
+				box->BorderStyle.Top = box->BorderStyle.Bot = 
+				  box->BorderStyle.Lft = box->BorderStyle.Rgt = styles.Top;
+
+				if (styles.Bot > BORDER_NOTSET) {
+					box->BorderStyle.Rgt = styles.Bot;
+					box->BorderStyle.Lft = styles.Bot;
+				}
+	
+				if (styles.Lft > BORDER_NOTSET)
+					box->BorderStyle.Bot = styles.Lft;
+ 
+				if (styles.Rgt > BORDER_NOTSET)
+					box->BorderStyle.Lft = styles.Rgt;
+
+				break;
+			default:
+				break;
+		}
+
+		if (box->BorderWidth.Top == 0) 
+			box->BorderWidth.Top = 2;
+
+		if (box->BorderWidth.Bot == 0) 
+			box->BorderWidth.Bot = 2;
+
+		if (box->BorderWidth.Lft == 0) 
+			box->BorderWidth.Lft = 2;
+
+		if (box->BorderWidth.Rgt == 0) 
+			box->BorderWidth.Rgt = 2;
+	}
+
+	if ((colors.Top > -1) && (!ignore_colours)) {
+		/* reset top color or things go insane do to limitations 
+		 * in the draw routine.  This mainly applies to tables*/
+
+		if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
+
+		switch(key) {
+			case CSS_BORDER_TOP:
+				box->BorderColor.Top = colors.Top;
+				break;
+			case CSS_BORDER_BOTTOM:
+				box->BorderColor.Bot = colors.Top;
+				break;
+			case CSS_BORDER_LEFT:
+				box->BorderColor.Lft = colors.Top;
+				break;
+			case CSS_BORDER_RIGHT:
+				box->BorderColor.Rgt = colors.Top;
+				break;
+			case CSS_BORDER:
+				box->BorderColor.Top = box->BorderColor.Bot = 
+				  box->BorderColor.Lft = box->BorderColor.Rgt = colors.Top;
+
+				if (colors.Bot > -1) {
+					box->BorderColor.Rgt = colors.Bot;
+					box->BorderColor.Lft = colors.Bot;
+				}
+	
+				if (colors.Lft > -1)
+					box->BorderColor.Bot = colors.Lft;
+  
+				if (colors.Rgt > -1)
+					box->BorderColor.Lft = colors.Rgt;
+		
+				break;
+
 			case CSS_BORDER_TOP_COLOR:
-				box->BorderColor.Top = color;
-
-				if (box->BorderWidth.Top == 0) 
-					box->BorderWidth.Top = 2;
-
+				box->BorderColor.Top = colors.Top;
 				break;
-
 			case CSS_BORDER_BOTTOM_COLOR:
-				box->BorderColor.Bot = color;
-
-				if (box->BorderWidth.Bot == 0) 
-					box->BorderWidth.Bot = 2;
-
+				box->BorderColor.Bot = colors.Top;
 				break;
-
 			case CSS_BORDER_LEFT_COLOR:
-				box->BorderColor.Lft = color;
-
-				if (box->BorderWidth.Lft == 0) 
-					box->BorderWidth.Lft = 2;
-
+				box->BorderColor.Lft = colors.Top;
 				break;
-				
 			case CSS_BORDER_RIGHT_COLOR:
-				box->BorderColor.Rgt = color;
-
-				if (box->BorderWidth.Rgt == 0) 
-					box->BorderWidth.Rgt = 2;
-
+				box->BorderColor.Rgt = colors.Top;
 				break;
+			case CSS_BORDER_COLOR:
+				box->BorderColor.Top = box->BorderColor.Bot = 
+				  box->BorderColor.Lft = box->BorderColor.Rgt = colors.Top;
 
+				if (colors.Bot > -1) {
+					box->BorderColor.Rgt = colors.Bot;
+					box->BorderColor.Lft = colors.Bot;
+				}
+	
+				if (colors.Lft > -1)
+					box->BorderColor.Bot = colors.Lft;
+ 
+				if (colors.Rgt > -1)
+					box->BorderColor.Lft = colors.Rgt;
+					break;
 			default:
 				break;
 		}
 	}
-	
-}
 
+	if (widths.Top > -1) {
+		switch(key) {
+			case CSS_BORDER_TOP:
+			case CSS_BORDER_TOP_WIDTH:
+				box->BorderWidth.Top = widths.Top;
+				break;
+			case CSS_BORDER_BOTTOM:
+			case CSS_BORDER_BOTTOM_WIDTH:
+				box->BorderWidth.Bot = widths.Top;
+				break;
+			case CSS_BORDER_LEFT:
+			case CSS_BORDER_LEFT_WIDTH:
+				box->BorderWidth.Lft = widths.Top;
+				break;
+			case CSS_BORDER_RIGHT:
+			case CSS_BORDER_RIGHT_WIDTH:
+				box->BorderWidth.Rgt = widths.Top;
+				break;
+
+			case CSS_BORDER:
+			case CSS_BORDER_WIDTH:
+				box->BorderWidth.Top = box->BorderWidth.Bot = 
+				  box->BorderWidth.Lft = box->BorderWidth.Rgt = widths.Top;
+
+				if (widths.Bot > -1) {
+					box->BorderWidth.Rgt = widths.Bot;
+					box->BorderWidth.Lft = widths.Bot;
+				}
+	
+				if (widths.Lft > -1)
+					box->BorderWidth.Bot = widths.Lft;
+  
+				if (widths.Rgt > -1)
+					box->BorderWidth.Lft = widths.Rgt;
+
+				break;
+			default:
+				break;
+		}
+	}
+}
 
 /*----------------------------------------------------------------------------*/
 /*static */
@@ -805,64 +931,57 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if      (stricmp (out, "inline") == 0) box->Floating = FLT_LEFT;
 		else if (stricmp (out, "none") == 0) box->Hidden = TRUE;
 	}
-
-	box_border (parser, box, CSS_BORDER_TOP);
-	box_border (parser, box, CSS_BORDER_BOTTOM);
-	box_border (parser, box, CSS_BORDER_LEFT);
-	box_border (parser, box, CSS_BORDER_RIGHT);
-	box_border (parser, box, CSS_BORDER);
 		
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
 		if (color >= 0 && color != parser->Current.backgnd) {
 			box->Backgnd = parser->Current.backgnd = color;
 		}
-		if ((color = get_value_color (parser, CSS_BORDER_COLOR)) >= 0) {
-				box->BorderColor.Top = box->BorderColor.Bot =
-				box->BorderColor.Lft = box->BorderColor.Rgt = color;
-
-		}
-
-		css_border_color (parser, box, CSS_BORDER_TOP_COLOR);
-		css_border_color (parser, box, CSS_BORDER_BOTTOM_COLOR);
-		css_border_color (parser, box, CSS_BORDER_LEFT_COLOR);
-		css_border_color (parser, box, CSS_BORDER_RIGHT_COLOR);
 	}
+
+	box_border (parser, box, CSS_BORDER_COLOR);
+	box_border (parser, box, CSS_BORDER_TOP_COLOR);
+	box_border (parser, box, CSS_BORDER_BOTTOM_COLOR);
+	box_border (parser, box, CSS_BORDER_LEFT_COLOR);
+	box_border (parser, box, CSS_BORDER_RIGHT_COLOR);
 	
-	if (get_value (parser, CSS_BORDER_STYLE, out, sizeof(out))) {
-	
-		if      (stricmp (out, "none") == 0) {
-			box->BorderStyle.Top = box->BorderStyle.Bot = 
-			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_NONE;
-		} else if (stricmp (out, "hidden") == 0) {
-			box->BorderStyle.Top = box->BorderStyle.Bot = 
-			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_HIDDEN;
-		} else if (stricmp (out, "dotted") == 0) {
-			box->BorderStyle.Top = box->BorderStyle.Bot = 
-			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_DOTTED;
+	box_border (parser, box, CSS_BORDER_TOP_STYLE);
+	box_border (parser, box, CSS_BORDER_BOTTOM_STYLE);
+	box_border (parser, box, CSS_BORDER_LEFT_STYLE);
+	box_border (parser, box, CSS_BORDER_RIGHT_STYLE);
+	box_border (parser, box, CSS_BORDER_STYLE);
 
-			box->BorderWidth.Top = box->BorderWidth.Bot = 
-			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
+	box_border (parser, box, CSS_BORDER_TOP_WIDTH);
+	box_border (parser, box, CSS_BORDER_BOTTOM_WIDTH);
+	box_border (parser, box, CSS_BORDER_LEFT_WIDTH);
+	box_border (parser, box, CSS_BORDER_RIGHT_WIDTH);
+	box_border (parser, box, CSS_BORDER_WIDTH);
 
-		} else if (stricmp (out, "dashed") == 0) {
-			box->BorderStyle.Top = box->BorderStyle.Bot = 
-			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_DASHED;
-
-			box->BorderWidth.Top = box->BorderWidth.Bot = 
-			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
-
-		} else {
-			box->BorderStyle.Top = box->BorderStyle.Bot = 
-			  box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_SOLID;
-
-			box->BorderWidth.Top = box->BorderWidth.Bot = 
-			  box->BorderWidth.Lft = box->BorderWidth.Rgt = 2;
-		}
-	} 
+	box_border (parser, box, CSS_BORDER_TOP);
+	box_border (parser, box, CSS_BORDER_BOTTOM);
+	box_border (parser, box, CSS_BORDER_LEFT);
+	box_border (parser, box, CSS_BORDER_RIGHT);
+	box_border (parser, box, CSS_BORDER);
 
 	if (get_value (parser, KEY_BORDER, out, sizeof(out))) {
-		box->BorderWidth.Top = get_value_unum (parser, KEY_BORDER, box->BorderWidth.Top);
-		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top;
+		WORD width = 2; /* default width */
+		
+		if (isalpha (*out)) {
+			if (stricmp (out, "thin") == 0) {
+				width = 1;					
+			} else if (stricmp (out, "medium") == 0) {
+				width = 2;					
+			} else if (stricmp (out, "thick") == 0) {
+				width = 4;					
+			}		
+		} else {
+			width = get_value_unum (parser, KEY_BORDER, width);
+
+			if (width < 0)
+				width = 2; /* default width */
+		}
+
+		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top = width;
 	}
 			
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
