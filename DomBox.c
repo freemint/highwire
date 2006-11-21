@@ -928,6 +928,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
 					 This->Rect.H = box->Rect.Y + box->Rect.H;
 				}
+				
+				/* Bug note for links that aren't accessible
+				 * for example atari-forums list
+				 *
+				 * Here we need code similar to what is in 
+				 * case_ALN_NO_FLT, but not the same
+				 */
 				break;
 			
 			case ALN_CENTER:
