@@ -616,6 +616,8 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				char * tail = p;
 				width = numerical (p, &tail, em, ex);
 
+				if (width < 0) width = 2; /* negative not allowed so default */
+
 				if (widths.Top == -1) {
 					widths.Top = width;
 				} else if (widths.Bot == -1) {
@@ -794,18 +796,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			default:
 				break;
 		}
-
-		if (box->BorderWidth.Top == 0) 
-			box->BorderWidth.Top = 2;
-
-		if (box->BorderWidth.Bot == 0) 
-			box->BorderWidth.Bot = 2;
-
-		if (box->BorderWidth.Lft == 0) 
-			box->BorderWidth.Lft = 2;
-
-		if (box->BorderWidth.Rgt == 0) 
-			box->BorderWidth.Rgt = 2;
 	}
 
 	if ((colors.Top > -1) && (!ignore_colours)) {
@@ -898,7 +888,7 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			case CSS_BORDER:
 			case CSS_BORDER_WIDTH:
 				box->BorderWidth.Top = box->BorderWidth.Bot = 
-				  box->BorderWidth.Lft = box->BorderWidth.Rgt = widths.Top;
+				  box->BorderWidth.Lft = box->BorderWidth.Rgt = widths.Top;				  
 
 				if (widths.Bot > -1) {
 					box->BorderWidth.Rgt = widths.Bot;
@@ -939,30 +929,6 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		}
 	}
 
-	box_border (parser, box, CSS_BORDER_COLOR);
-	box_border (parser, box, CSS_BORDER_TOP_COLOR);
-	box_border (parser, box, CSS_BORDER_BOTTOM_COLOR);
-	box_border (parser, box, CSS_BORDER_LEFT_COLOR);
-	box_border (parser, box, CSS_BORDER_RIGHT_COLOR);
-	
-	box_border (parser, box, CSS_BORDER_TOP_STYLE);
-	box_border (parser, box, CSS_BORDER_BOTTOM_STYLE);
-	box_border (parser, box, CSS_BORDER_LEFT_STYLE);
-	box_border (parser, box, CSS_BORDER_RIGHT_STYLE);
-	box_border (parser, box, CSS_BORDER_STYLE);
-
-	box_border (parser, box, CSS_BORDER_TOP_WIDTH);
-	box_border (parser, box, CSS_BORDER_BOTTOM_WIDTH);
-	box_border (parser, box, CSS_BORDER_LEFT_WIDTH);
-	box_border (parser, box, CSS_BORDER_RIGHT_WIDTH);
-	box_border (parser, box, CSS_BORDER_WIDTH);
-
-	box_border (parser, box, CSS_BORDER_TOP);
-	box_border (parser, box, CSS_BORDER_BOTTOM);
-	box_border (parser, box, CSS_BORDER_LEFT);
-	box_border (parser, box, CSS_BORDER_RIGHT);
-	box_border (parser, box, CSS_BORDER);
-
 	if (get_value (parser, KEY_BORDER, out, sizeof(out))) {
 		WORD width = 2; /* default width */
 		
@@ -983,6 +949,62 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 
 		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top = width;
 	}
+
+
+	/* The order on the following is important
+	 * the generic calls need to be first
+	 */
+	box_border (parser, box, CSS_BORDER_COLOR);
+	box_border (parser, box, CSS_BORDER_TOP_COLOR);
+	box_border (parser, box, CSS_BORDER_BOTTOM_COLOR);
+	box_border (parser, box, CSS_BORDER_LEFT_COLOR);
+	box_border (parser, box, CSS_BORDER_RIGHT_COLOR);
+	
+	box_border (parser, box, CSS_BORDER_STYLE);
+	box_border (parser, box, CSS_BORDER_TOP_STYLE);
+	box_border (parser, box, CSS_BORDER_BOTTOM_STYLE);
+	box_border (parser, box, CSS_BORDER_LEFT_STYLE);
+	box_border (parser, box, CSS_BORDER_RIGHT_STYLE);
+
+	box_border (parser, box, CSS_BORDER_WIDTH);
+	box_border (parser, box, CSS_BORDER_TOP_WIDTH);
+	box_border (parser, box, CSS_BORDER_BOTTOM_WIDTH);
+	box_border (parser, box, CSS_BORDER_LEFT_WIDTH);
+	box_border (parser, box, CSS_BORDER_RIGHT_WIDTH);
+
+	box_border (parser, box, CSS_BORDER);
+	box_border (parser, box, CSS_BORDER_TOP);
+	box_border (parser, box, CSS_BORDER_BOTTOM);
+	box_border (parser, box, CSS_BORDER_LEFT);
+	box_border (parser, box, CSS_BORDER_RIGHT);
+
+
+	if (box->BorderWidth.Top == -1) 
+		if (box->BorderStyle.Top > BORDER_NONE)
+			box->BorderWidth.Top = 2;
+		else
+			box->BorderWidth.Top = 0;
+
+	if (box->BorderWidth.Bot == -1) 
+		if (box->BorderStyle.Bot > BORDER_NONE) {
+			box->BorderWidth.Bot = 2;
+		} else {
+			box->BorderWidth.Bot = 0;
+		}
+
+	if (box->BorderWidth.Lft == -1) 
+		if (box->BorderStyle.Lft > BORDER_NONE) {
+			box->BorderWidth.Lft = 2;
+		} else {
+			box->BorderWidth.Lft = 0;
+		}
+
+	if (box->BorderWidth.Rgt == -1) 
+		if (box->BorderStyle.Rgt > BORDER_NONE) {
+			box->BorderWidth.Rgt = 2;
+		} else {
+			box->BorderWidth.Rgt = 0;
+		}
 			
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
