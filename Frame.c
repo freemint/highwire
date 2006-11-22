@@ -25,9 +25,6 @@ new_frame (LOCATION loc, TEXTBUFF current,
 
 	current->parentbox    = dombox_ctor (&frame->Page, NULL, BC_MAIN);
 
-	/* Frames don't like the new -1 default width value */
-	current->parentbox->BorderWidth.Top = current->parentbox->BorderWidth.Bot = current->parentbox->BorderWidth.Lft = current->parentbox->BorderWidth.Rgt = 0;
-
 	frame->Page.Backgnd   = current->backgnd = background_colour;
 	frame->Page.TextAlign = ALN_LEFT;
 	if (margin_w >= 0) {
