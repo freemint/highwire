@@ -61,7 +61,7 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 
 	/* init the border */
 
-	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = -1; /* 0 */
+	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
 	This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
 	This->BorderStyle.Top = This->BorderStyle.Bot = This->BorderStyle.Lft = This->BorderStyle.Rgt = BORDER_NONE;
 	
