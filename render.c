@@ -979,33 +979,34 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	box_border (parser, box, CSS_BORDER_RIGHT);
 
 
-	if (box->BorderWidth.Top == -1) 
-		if (box->BorderStyle.Top > BORDER_NONE)
+	if (box->BorderWidth.Top == -1) {
+		if (box->BorderStyle.Top > BORDER_NONE) {
 			box->BorderWidth.Top = 2;
-		else
+		} else {
 			box->BorderWidth.Top = 0;
-
-	if (box->BorderWidth.Bot == -1) 
+		}
+	}
+	if (box->BorderWidth.Bot == -1) {
 		if (box->BorderStyle.Bot > BORDER_NONE) {
 			box->BorderWidth.Bot = 2;
 		} else {
 			box->BorderWidth.Bot = 0;
 		}
-
-	if (box->BorderWidth.Lft == -1) 
+	}
+	if (box->BorderWidth.Lft == -1) {
 		if (box->BorderStyle.Lft > BORDER_NONE) {
 			box->BorderWidth.Lft = 2;
 		} else {
 			box->BorderWidth.Lft = 0;
 		}
-
-	if (box->BorderWidth.Rgt == -1) 
+	}
+	if (box->BorderWidth.Rgt == -1) {
 		if (box->BorderStyle.Rgt > BORDER_NONE) {
 			box->BorderWidth.Rgt = 2;
 		} else {
 			box->BorderWidth.Rgt = 0;
 		}
-			
+	}		
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
 
