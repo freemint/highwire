@@ -742,8 +742,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	BLOCKER              blocker   = &t_blocker;
 
 	/* style display: none */
-	if (This->Hidden)
-			return;
+	if (This->Hidden)	return;
 
 	if (blocker->L.bottom) {
 		if ((blocker->L.width -= This->Margin.Lft) <= 0) {
@@ -798,12 +797,12 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		BOOL floating  = (box->Floating != ALN_NO_FLT);
 		BOOL absolute  = (box->SetPosMsk > 0x100);
 		BOOL fixed 	   = (box->SetPosMsk > 0x200);
-		
+
 		if (fixed) absolute = FALSE;
 		
 		box->Rect.X = dombox_LftDist (This);
 		box->Rect.Y = height;
-		
+
 		if (absolute) {
 			/*	if (box->SetPosMsk & 0x01)*/
 			if(box->SetPos.Lft > -2000) {
@@ -879,8 +878,9 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				box->Rect.X += box->SetPos.Lft;
 			}	
 
+				
 		}
-		
+
 		if (floating) {
 			long blk_width = width - blocker->L.width - blocker->R.width;
 			if (box->MinWidth > blk_width) {
@@ -903,7 +903,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			}
 		}
 		
-		if (floating || absolute) {
+		if (floating || absolute) { 
 			struct blocking_area empty = { {0, 0}, {0, 0} };
 			box->_vtab->format (box, set_width, &empty);
 		} else {
@@ -911,24 +911,33 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			box->_vtab->format (box, set_width, blocker);
 		}
 
+		
 		if (!absolute) switch (box->Floating) {
 			case FLT_RIGHT:
 				box->Rect.X += width - box->Rect.W;
 				if (blocker->R.bottom < height + box->Rect.H)
 					 blocker->R.bottom = height + box->Rect.H;
 				blocker->R.width += box->Rect.W;
+
+				if (box->BoxClass == BC_TABLE) {
+					height += box->Rect.H;
+				}
 				goto case_FLT_MASK;
 			case FLT_LEFT:
 				box->Rect.X += blocker->L.width;
 				if (blocker->L.bottom < height + box->Rect.H)
 					 blocker->L.bottom = height + box->Rect.H;
 				blocker->L.width += box->Rect.W;
+
+				if (box->BoxClass == BC_TABLE) {
+					height += box->Rect.H;	
+				}
 				goto case_FLT_MASK;
 			case_FLT_MASK:
 				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
 					 This->Rect.H = box->Rect.Y + box->Rect.H;
 				}
-				
+
 				/* Bug note for links that aren't accessible
 				 * for example atari-forums list
 				 *
