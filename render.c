@@ -679,6 +679,10 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 						tempborder = BORDER_DOTTED;
 					} else if (strnicmp (p, "dashed",  len) == 0) {
 						tempborder = BORDER_DASHED;
+					} else if (strnicmp (p, "inset",  len) == 0) {
+						tempborder = BORDER_INSET;
+					} else if (strnicmp (p, "outset",  len) == 0) {
+						tempborder = BORDER_OUTSET;
 					} else {
 						tempborder = BORDER_SOLID;		
 					}
