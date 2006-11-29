@@ -148,16 +148,12 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			}
 		} else {
 			short n;
-			PXY b[5];
+			PXY p[2];
 
 			if (This->BorderStyle.Top > BORDER_HIDDEN) {
 				n = This->BorderWidth.Top;
 
 				if (n > 0) {
-					b[3].p_x = b[0].p_x = x1;
-					b[1].p_x = b[2].p_x = x2;
-					b[1].p_y = b[0].p_y = y1;
-					b[3].p_y = b[2].p_y = y1;
 					vsl_color (vdi_handle, This->BorderColor.Top);
 
 					switch (This->BorderStyle.Top) {
@@ -167,16 +163,24 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						case BORDER_DASHED:
 							vsl_type (vdi_handle, 5);
 							break;
+						case BORDER_INSET:
+							vsl_color (vdi_handle, G_LBLACK);
+							break;
+						case BORDER_OUTSET:
+							vsl_color (vdi_handle, G_WHITE);
+							break;
 						default:
 							vsl_type (vdi_handle, 0);
 					}
 
+					p[0].p_x = x1; p[1].p_x = x2;
+					p[0].p_y = y1; p[1].p_y = p[0].p_y;
+
 					while(1) {
-						b[4] = b[0];
-						v_pline (vdi_handle, 5, (short*)b);
+						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
 						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
-						b[1].p_y = ++b[0].p_y;  b[3].p_y = ++b[2].p_y;
+						p[0].p_y++;  p[1].p_y++;
 					}
 				}
 			}
@@ -185,10 +189,6 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				n = This->BorderWidth.Bot;
 
 				if (n > 0) {
-					b[3].p_x = b[0].p_x = x1;
-					b[1].p_x = b[2].p_x = x2;	
-					b[1].p_y = b[0].p_y = y2;
-					b[3].p_y = b[2].p_y = y2;
 					vsl_color (vdi_handle, This->BorderColor.Bot);
 
 					switch (This->BorderStyle.Bot) {
@@ -198,16 +198,24 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						case BORDER_DASHED:
 							vsl_type (vdi_handle, 5);
 							break;
+						case BORDER_INSET:
+							vsl_color (vdi_handle, G_WHITE);
+							break;
+						case BORDER_OUTSET:
+							vsl_color (vdi_handle, G_LBLACK);
+							break;
 						default:
 							vsl_type (vdi_handle, 0);
 					}
 
+					p[0].p_x = x1; p[1].p_x = x2;
+					p[0].p_y = y2; p[1].p_y = p[0].p_y;
+
 					while(1) {
-						b[4] = b[0];
-						v_pline (vdi_handle, 5, (short*)b);
+						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
 						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
-						b[1].p_y = ++b[0].p_y;  b[3].p_y = ++b[2].p_y;
+						p[0].p_y--;  p[1].p_y--;
 					}
 				}
 			}
@@ -216,10 +224,6 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				n = This->BorderWidth.Lft;
 
 				if (n > 0) {
-					b[3].p_x = b[0].p_x = x1;
-					b[1].p_x = b[2].p_x = x1;
-					b[1].p_y = b[0].p_y = y1;
-					b[3].p_y = b[2].p_y = y2;
 					vsl_color (vdi_handle, This->BorderColor.Lft);
 
 					switch (This->BorderStyle.Lft) {
@@ -229,16 +233,24 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						case BORDER_DASHED:
 							vsl_type (vdi_handle, 5);
 							break;
+						case BORDER_INSET:
+							vsl_color (vdi_handle, G_LBLACK);
+							break;
+						case BORDER_OUTSET:
+							vsl_color (vdi_handle, G_WHITE);
+							break;
 						default:
 							vsl_type (vdi_handle, 0);
 					}
 
+					p[0].p_x = x1; p[1].p_x = p[0].p_x;
+					p[0].p_y = y1; p[1].p_y = y2;
+
 					while(1) {
-						b[4] = b[0];
-						v_pline (vdi_handle, 5, (short*)b);
+						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
 						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-						b[3].p_x = ++b[0].p_x;  b[1].p_x = ++b[2].p_x;
+						p[0].p_x++;  p[1].p_x++;
 					}
 				}
 			}
@@ -247,10 +259,6 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				n = This->BorderWidth.Rgt;
 
 				if (n > 0) {
-					b[3].p_x = b[0].p_x = x2;
-					b[1].p_x = b[2].p_x = x2;
-					b[1].p_y = b[0].p_y = y1;
-					b[3].p_y = b[2].p_y = y2;
 					vsl_color (vdi_handle, This->BorderColor.Rgt);
 	
 					switch (This->BorderStyle.Rgt) {
@@ -260,16 +268,24 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						case BORDER_DASHED:
 							vsl_type (vdi_handle, 5);
 							break;
+						case BORDER_INSET:
+							vsl_color (vdi_handle, G_WHITE);
+							break;
+						case BORDER_OUTSET:
+							vsl_color (vdi_handle, G_LBLACK);
+							break;
 						default:
 							vsl_type (vdi_handle, 0);
 					}
+
+					p[0].p_x = x2; p[1].p_x = p[0].p_x;
+					p[0].p_y = y1; p[1].p_y = y2;
 	
 					while(1) {
-						b[4] = b[0];
-						v_pline (vdi_handle, 5, (short*)b);
+						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
 						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-						b[3].p_x = --b[0].p_x;  b[1].p_x = --b[2].p_x;
+						p[0].p_x--;  p[1].p_x--;
 					}
 				}
 			}
