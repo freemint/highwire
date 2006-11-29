@@ -1,4 +1,4 @@
-Changes since v. 0.3.0 release (0.3.1 beta3)
+Changes since v. 0.3.0 release (0.3.1 beta7)
 
 - CSS file loading mechanisms got substantially
   overhauled to avoid endless loops due to
@@ -12,6 +12,9 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
   while clicking a link opens a new window and set
   it to the bottom.
 
+- New feature implemented:  SHIFT+TAB now navigates
+  backwards in a FORM.
+  
 - Font Setup dialog implemented to change fonts on
   the fly.  Works only with selectors supporting
   the Font Protocol (eg. the Thing desktop).
@@ -32,12 +35,33 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
 
 - CSS positioning system modified
 
-- CSS Tokens Bottom & Right added, display:none
-  support added.  @media parsing improved.
+- CSS border system CSS2 compliant. Styles None, 
+  Hidden,  Dotted, Dashed, Solid, Inset, Outset 
+  support.
+ 
+- CSS display:none support added.  @media parsing 
+  improved. !important rules support added.
 
 - CSS specificity or weighting system changed from
   base 10 to base 100.  Avoids rules with 10 tags
   being more specific than a rule with 1 class.
+
+- CSS Tokens added: 
+  Bottom
+  Right
+  Border-bottom-color
+  Border-bottom-style
+  Border-bottom-width
+  Border-top-color
+  Border-top-style
+  Border-top-width
+  Border-left-color
+  Border-left-style
+  Border-left-width
+  Border-right-color
+  Border-right-style
+  Border-right-width
+  Border-style
 
 - AVSERVER detection rewritten (MLUTZ) fixes
   Teradesk troubles.
@@ -52,7 +76,24 @@ Changes since v. 0.3.0 release (0.3.1 beta3)
 - Bugfix for interlaced monochrome PNGs, a buffer
   was calculated too small.
 
-- Bugs #0181, #0219 resolved.
+- Bugfix Images now scaled properly if only height
+  or width provided
+
+- Bugfix TH & TD tag CSS Text style em & ex support.
+  (google bug fix)
+
+- Bugfix catch unterminated tags inside of H# tags
+    
+- Bugfix some bad Text indent values caught.
+
+- Bugfix CSS text weight bold reset
+  
+- Bugfix Control-N now opens Highwire start page
+
+- Bugfix Open Image in new window possible when view
+  images is disabled
+    
+- Bugs #174, #0181, #0219 resolved.
 
 __________________________________________________
 Changes in V. 0.3.0 release  of February 07, 2006:
