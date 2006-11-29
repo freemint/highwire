@@ -183,7 +183,8 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_info();
 		break;
 	case 0x000E:  /* CTRL+N */
-		new_hwWind ("HighWire", NULL, NULL);
+		/* new_hwWind ("HighWire", NULL, NULL); what was this? */
+		new_hwWind ("", cfg_StartPage, NULL);
 		break;
 	case 0x0015:  /* CTRL+U */
 		if (cfg_AVWindow) {
