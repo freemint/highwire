@@ -153,6 +153,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			if (This->BorderStyle.Top > BORDER_HIDDEN) {
 				n = This->BorderWidth.Top;
 
+
 				if (n > 0) {
 					vsl_color (vdi_handle, This->BorderColor.Top);
 
@@ -251,6 +252,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--n) break;
 						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
 						p[0].p_x++;  p[1].p_x++;
+						p[0].p_y++;  p[1].p_y--;
 					}
 				}
 			}
@@ -286,6 +288,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--n) break;
 						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
 						p[0].p_x--;  p[1].p_x--;
+						p[0].p_y++;  p[1].p_y--;
 					}
 				}
 			}
