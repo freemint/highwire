@@ -50,7 +50,7 @@ typedef enum {
 } INP_TYPE;
 
 struct s_input {
-	INPUT    Next;
+	INPUT	Next;
 	union {
 		void * Void;
 		INPUT  Group;  /* radio button: points to the group node             */
@@ -1368,6 +1368,38 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			if (state & K_CTRL) {
 				form->TextActive = NULL;
 				*next            = NULL;
+			} else if ((state & K_LSHIFT)||(state & K_RSHIFT)) {
+				INPUT srch = form->InputList;
+				INPUT last = NULL;
+				
+				if (srch) {
+					while (1) {
+						while ((srch->disabled) && (srch = srch->Next) != NULL) ;
+						
+						if (srch->Next == input) {
+							if (srch->Type == IT_TEXT) {
+								last = srch;
+							}
+							break;
+						} else {
+							if (srch->Type == IT_TEXT) {
+								last = srch;
+							}
+							srch = srch->Next;
+						}
+					}
+				}
+
+				if (!last) {
+					srch = input->Next;
+					
+					while ((srch = srch->Next) != NULL) {
+						if (!srch->disabled && srch->Type == IT_TEXT) {
+							last = srch;
+						}
+					}					
+				} 
+				*next = last; 
 			} else {
 				INPUT srch = input->Next;
 				if (srch) {
