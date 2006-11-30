@@ -668,9 +668,9 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 					if (strnicmp (p, "thin",  len) == 0) {
 						width = 1;					
 					} else if (strnicmp (p, "medium",  len) == 0) {
-						width = 2;					
+						width = 3;					
 					} else if (strnicmp (p, "thick",  len) == 0) {
-						width = 4;					
+						width = 5;					
 					} else if (strnicmp (p, "none",  len) == 0) {
 						 tempborder = BORDER_NONE;
 					} else if (strnicmp (p, "hidden",  len) == 0) {
@@ -679,6 +679,8 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 						tempborder = BORDER_DOTTED;
 					} else if (strnicmp (p, "dashed",  len) == 0) {
 						tempborder = BORDER_DASHED;
+					} else if (strnicmp (p, "double",  len) == 0) {
+						tempborder = BORDER_DOUBLE;
 					} else if (strnicmp (p, "inset",  len) == 0) {
 						tempborder = BORDER_INSET;
 					} else if (strnicmp (p, "outset",  len) == 0) {
@@ -943,9 +945,9 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			if (stricmp (out, "thin") == 0) {
 				width = 1;					
 			} else if (stricmp (out, "medium") == 0) {
-				width = 2;					
+				width = 3;					
 			} else if (stricmp (out, "thick") == 0) {
-				width = 4;					
+				width = 5;					
 			}		
 		} else {
 			width = get_value_unum (parser, KEY_BORDER, width);
