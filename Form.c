@@ -1288,7 +1288,6 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
 	WCHAR ** text = input->TextArray;
-	WCHAR  * last = text[input->TextRows];
 	WORD     asc  = key & 0xFF;
 	WORD     scrl = 0;
 	WORD     lift = 0;
@@ -1311,7 +1310,8 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		
 	} else if (asc) switch (asc) {
 			
-		case 27: /* escape */
+		case 27: /* escape */ {
+			WCHAR  * last = text[input->TextRows];
 			if (!input->readonly && text[0] < last -1 && edit_zero (input)) {
 				form->TextCursrX = 0;
 				form->TextCursrY = 0;
@@ -1320,7 +1320,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 			} else {
 				word = NULL;
 			}
-			break;
+		}	break;
 		
 		case 52: /* shift+left */
 			scrl = -form->TextCursrX;
