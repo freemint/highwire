@@ -273,7 +273,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		This->IbarH = widget_h - widget_b -1;
 	}
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
-	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0);
+	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0) | TBAR_OPEN_MASK;
 	This->TbarActv = (This->TbarH && !url && !loc ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons)-1; i++) {
 		This->TbarElem[i].Offset = hw_buttons[i].Offset;
