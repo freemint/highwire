@@ -461,6 +461,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 		vsf_color (vdi_handle, This->Backgnd);
 		v_bar     (vdi_handle, (short*)p);
 	}
+
+	vsl_type (vdi_handle, 0); /* reset the line type */
 	
 	(*This->_vtab->draw)(This, x, y, clip, hl);
 }
