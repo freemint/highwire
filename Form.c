@@ -1399,6 +1399,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 						}
 					}					
 				} 
+
+				/* on google it would move out of the form */
+				if (!last) last = input;
+				
 				*next = last; 
 			} else {
 				INPUT srch = input->Next;
@@ -1411,6 +1415,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 					while ((srch->disabled || srch->Type < IT_TEXT)
 					       && (srch = srch->Next) != NULL);
 				}
+				
 				*next = srch; 
 			}
 			break;
