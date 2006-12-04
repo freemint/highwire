@@ -21,6 +21,14 @@
 #include "dragdrop.h"
 
 
+/* From config.c - could be put in global.h  */
+/* starting coordinates for start window     */
+extern WORD         cfg_Start_X; 
+extern WORD         cfg_Start_Y;
+extern WORD         cfg_Start_W;
+extern WORD         cfg_Start_H;
+
+
 #define WINDOW_t HwWIND
 #include "hwWind.h"
 static WINDOW vTab_destruct(HwWIND);
@@ -189,6 +197,26 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
 	short  i;
+	
+	/* Check for config start position values */
+	if (cfg_Start_W) {
+		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
+		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
+		widget_b = desk_area.g_x - curr_area.g_x;
+		widget_w = curr_area.g_w - desk_area.g_w;
+		widget_h = curr_area.g_h - desk_area.g_h;
+
+		inc_xy   = max (widget_w, widget_h) - widget_b;
+
+		curr_area.g_x = cfg_Start_X;
+		curr_area.g_y = cfg_Start_Y;
+		curr_area.g_w = cfg_Start_W;
+		curr_area.g_h = cfg_Start_H;	
+
+		if (!ignore_colours) {
+			info_bgnd = G_LWHITE;
+		}
+	}
 	
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
