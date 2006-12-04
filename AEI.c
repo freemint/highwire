@@ -33,6 +33,14 @@
 	extern OBJECT * menutree;
 #endif
 
+/* From config.c - could be put in global.h  */
+/* starting coordinates for start window     */
+extern WORD         cfg_Start_X; 
+extern WORD         cfg_Start_Y;
+extern WORD         cfg_Start_W;
+extern WORD         cfg_Start_H;
+
+
 
 /*==============================================================================
  * Checks if appl_getinfo() exists, and, if possible, calls it.
@@ -725,7 +733,21 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_ABOUT:     menu_about(); break;
 		case M_OPEN:      menu_open (!(state & (K_RSHIFT|K_LSHIFT))); break;
 		case M_INFO:      menu_info();  break;
-		case M_QUIT:      menu_quit();  break;
+		case M_QUIT:
+			{
+				char tempout[10];
+				sprintf(tempout,"%d",cfg_Start_X);
+				save_config ("START_X", tempout);
+				sprintf(tempout,"%d",cfg_Start_Y);
+				save_config ("START_Y", tempout);
+				sprintf(tempout,"%d",cfg_Start_W);
+				save_config ("START_W", tempout);
+				sprintf(tempout,"%d",cfg_Start_H);
+				save_config ("START_H", tempout);
+
+				menu_quit();  
+				break;
+			}
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);     break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
