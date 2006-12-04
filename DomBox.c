@@ -30,7 +30,7 @@ DOMBOX *
 dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 {
 	memset (This, 0, sizeof (struct s_dombox));
-	
+
 	This->_vtab = &DomBox_vTab;
 	
 	if (This == parent) {
@@ -62,7 +62,12 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	/* init the border */
 
 	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
-	This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
+
+	if (parent && parent->FontStk)	{
+		This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
+	} else {
+		This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = G_BLACK;
+	}
 	This->BorderStyle.Top = This->BorderStyle.Bot = This->BorderStyle.Lft = This->BorderStyle.Rgt = BORDER_NONE;
 	
 	return This;
