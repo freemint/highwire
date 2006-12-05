@@ -213,6 +213,18 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		curr_area.g_w = cfg_Start_W;
 		curr_area.g_h = cfg_Start_H;	
 
+		/* a few tests to make certain that the window is on the
+		 * screen and that it fits on the screen
+		 */
+		if ((curr_area.g_x < 0) || (curr_area.g_x > desk_area.g_w))
+			inc_xy = 0;
+		
+		if ((curr_area.g_y < desk_area.g_y) || (curr_area.g_y > desk_area.g_h))
+			inc_xy = 0;
+
+		if ((curr_area.g_w > desk_area.g_w) || (curr_area.g_h > desk_area.g_h))
+			inc_xy = 0;
+
 		if (!ignore_colours) {
 			info_bgnd = G_LWHITE;
 		}
