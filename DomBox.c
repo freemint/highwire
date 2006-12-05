@@ -24,6 +24,7 @@ struct s_dombox_vtab DomBox_vTab = {
 	vTab_format
 };
 
+#define NO_SET_POSITION -2000
 
 /*============================================================================*/
 DOMBOX *
@@ -57,7 +58,7 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 
 	/* init the position */
 	
-	This->SetPos.Lft = This->SetPos.Rgt = This->SetPos.Top = This->SetPos.Bot = -2000;
+	This->SetPos.Lft = This->SetPos.Rgt = This->SetPos.Top = This->SetPos.Bot = NO_SET_POSITION;
 
 	/* init the border */
 
@@ -981,24 +982,16 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 
 		if (absolute) {
 			/*	if (box->SetPosMsk & 0x01)*/
-			if(box->SetPos.Lft > -2000) {
+			if(box->SetPos.Lft > NO_SET_POSITION) {
 				box->Rect.X = box->SetPos.Lft;
 			}	
 
-			if(box->SetPos.Rgt > -2000) {
-				if (box->Parent) {
-					box->Rect.X = box->Parent->Rect.W - box->SetPos.Rgt - box->Rect.W;
-				} else {
-					box->Rect.X = box->SetPos.Rgt;
-				}	
-			}
-			
 			/*	if (box->SetPosMsk & 0x02)*/
-			if (box->SetPos.Top > -2000 ) {
+			if (box->SetPos.Top > NO_SET_POSITION ) {
 				box->Rect.Y = box->SetPos.Top;
 			}
 
-			if (box->SetPos.Bot > -2000 ) {
+			if (box->SetPos.Bot > NO_SET_POSITION ) {
 				if (box->Parent) {
 					box->Rect.Y = box->Parent->Rect.H - box->SetPos.Bot;
 				} else {
@@ -1016,19 +1009,19 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			 * doing that.
 			 */
 
-			if(box->SetPos.Lft > -2000) {
+			if(box->SetPos.Lft > NO_SET_POSITION) {
 				box->Rect.X = box->SetPos.Lft;
 			}	
 
-			if(box->SetPos.Rgt > -2000) {
+			if(box->SetPos.Rgt > NO_SET_POSITION) {
 				box->Rect.X = box->SetPos.Rgt;
 			}
 			
-			if (box->SetPos.Top > -2000 ) {
+			if (box->SetPos.Top > NO_SET_POSITION ) {
 				box->Rect.Y = box->SetPos.Top;
 			}
 
-			if (box->SetPos.Bot > -2000 ) {
+			if (box->SetPos.Bot > NO_SET_POSITION ) {
 				box->Rect.Y = box->SetPos.Bot;
 			}
 			floating = FALSE;		
@@ -1050,7 +1043,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		} else {
 			/* catch relative positions */
 			/* only left at the moment */
-			if(box->SetPos.Lft > -2000) {
+			if(box->SetPos.Lft > NO_SET_POSITION) {
 				box->Rect.X += box->SetPos.Lft;
 			}	
 
@@ -1087,6 +1080,20 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			box->_vtab->format (box, set_width, blocker);
 		}
 
+		if (absolute) {
+			if(box->SetPos.Rgt > NO_SET_POSITION) {
+				if (box->Parent) {
+					if(box->SetPos.Lft == NO_SET_POSITION) {
+						box->Rect.X = box->Parent->Rect.W - box->SetPos.Rgt - box->Rect.W;
+					} else {
+						/* we need something here, but I haven't figured it out yet */
+						;
+					}
+				} else {
+					box->Rect.X = box->SetPos.Rgt;
+				}	
+			}
+		}
 		
 		if (!absolute) switch (box->Floating) {
 			case FLT_RIGHT:
@@ -1100,7 +1107,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (box->BoxClass == BC_TABLE) {
 					height += box->Rect.H;
 				}
-
 				goto case_FLT_MASK;
 			case FLT_LEFT:
 				box->Rect.X += blocker->L.width;
@@ -1111,7 +1117,6 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (box->BoxClass == BC_TABLE) {
 					height += box->Rect.H;	
 				}
-
 				goto case_FLT_MASK;
 			case_FLT_MASK:
 				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
