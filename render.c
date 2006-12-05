@@ -2903,6 +2903,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		
+		/* This might need to be moved */
+		css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
+
 		if (floating == ALN_NO_FLT) {
 			if (!current->nowrap) {
 				if (current->prev_wrd) {
