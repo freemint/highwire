@@ -225,6 +225,9 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		if ((curr_area.g_w > desk_area.g_w) || (curr_area.g_h > desk_area.g_h))
 			inc_xy = 0;
 
+		curr_area.g_x -= inc_xy;
+		curr_area.g_y -= inc_xy;
+
 		if (!ignore_colours) {
 			info_bgnd = G_LWHITE;
 		}
