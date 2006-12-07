@@ -1074,37 +1074,87 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 						  stricmp (out, "fixed") == 0 ? 0x203:
 			              stricmp (out, "relative") == 0 ? 0x003 : 0);
 
+			short em = parser->Current.font->Size;
+			short ex = parser->Current.font->Size/2;
+
 			if (mask) {
 				if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
-					short lft = numerical (out, NULL, parser->Current.font->Size,
-			                          parser->Current.word->font->SpaceWidth);
+					short lft = numerical (out, NULL, em, ex);
 
-					if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.Lft = lft;
-					else                               mask           &= ~0x001;
+					if (lft == (short)0x8000) {
+						/* occurs inherit or auto n/i */
+						lft = 0;
+					}
+
+					/* flag it as negative */
+					if (out[0] == '-') mask |= 0x010;
+						
+					box->SetPos.Lft = lft;
+
+					/*  Negative values are allowed
+					
+						if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.Lft = lft;
+						else                               mask           &= ~0x001;
+					*/
 				} /* end left */
 
 				if (get_value (parser, CSS_RIGHT, out, sizeof(out))) {
-					short rgt = numerical (out, NULL, parser->Current.font->Size,
-			                          parser->Current.word->font->SpaceWidth);
+					short rgt = numerical (out, NULL, em, ex);
 
-					if (rgt >= (mask & 0x100 ? 0 : 1)) box->SetPos.Rgt = rgt;
-					else                               mask           &= ~0x001;
+					if (rgt == (short)0x8000) {
+						/* occurs inherit or auto n/i */
+						rgt = 0;
+					}
+
+					/* flag it as negative */
+					if (out[0] == '-') mask |= 0x020;
+						
+					box->SetPos.Rgt = rgt;
+
+					/*  Negative values are allowed
+						if (rgt >= (mask & 0x100 ? 0 : 1)) box->SetPos.Rgt = rgt;
+						else                               mask           &= ~0x001;
+					*/
 				} /* end right */
 
 				if (get_value (parser, CSS_TOP, out, sizeof(out))) {
-					short top = numerical (out, NULL, parser->Current.font->Size,
-			                          parser->Current.word->font->SpaceWidth);
+					short top = numerical (out, NULL, em, ex);
 
-					if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.Top = top;
-					else                               mask           &= ~0x002;
+					if (top == (short)0x8000) {
+						/* occurs inherit or auto n/i */
+						top = 0;
+					}
+
+					/* flag it as negative */
+					if (out[0] == '-') mask |= 0x030;
+						
+					box->SetPos.Top = top;
+
+					/*  Negative values are allowed
+					
+						if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.Top = top;
+						else                               mask           &= ~0x002;
+					*/
 				} /* end top */
 
 				if (get_value (parser, CSS_BOTTOM, out, sizeof(out))) {
-					short bot = numerical (out, NULL, parser->Current.font->Size,
-			                          parser->Current.word->font->SpaceWidth);
+					short bot = numerical (out, NULL, em, ex);
 
-					if (bot >= (mask & 0x100 ? 0 : 1)) box->SetPos.Bot = bot;
-					else                               mask           &= ~0x002;
+					if (bot == (short)0x8000) {
+						/* occurs inherit or auto n/i */
+						bot = 0;
+					}
+
+					/* flag it as negative */
+					if (out[0] == '-') mask |= 0x030;
+						
+					box->SetPos.Bot = bot;
+
+					/*  Negative values are allowed
+					
+						if (bot >= (mask & 0x100 ? 0 : 1)) box->SetPos.Bot = bot;
+						else                               mask           &= ~0x002;
+					*/
 				} /* end bottom */
 
 				if (mask & 0x003) {
@@ -2903,8 +2953,6 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		
-		/* This might need to be moved */
-		css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
 
 		if (floating == ALN_NO_FLT) {
 			if (!current->nowrap) {
@@ -2917,6 +2965,10 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		} else {
 			add_paragraph (current, 0);
 			current->paragraph->Box.TextAlign = current->prev_par->Box.TextAlign;
+
+			/* This might need to be moved */
+			css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
+
 			flags |= PF_SPACE;
 		}
 	}
