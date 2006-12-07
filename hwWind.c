@@ -199,7 +199,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	short  i;
 	
 	/* Check for config start position values */
-	if (cfg_Start_W) {
+	if (!inc_xy && cfg_Start_W) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
 		widget_b = desk_area.g_x - curr_area.g_x;
