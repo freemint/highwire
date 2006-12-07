@@ -974,6 +974,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		BOOL floating  = (box->Floating != ALN_NO_FLT);
 		BOOL absolute  = (box->SetPosMsk > 0x100);
 		BOOL fixed 	   = (box->SetPosMsk > 0x200);
+		DOMBOX *parent_box = NULL;
 
 		if (fixed) absolute = FALSE;
 		
@@ -981,23 +982,79 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 		box->Rect.Y = height;
 
 		if (absolute) {
+
+			/* I think there needs to be a determination
+			 * on if the parent meets certain criteria
+			 * If met then we bound on those values
+			 * If not then we bound on the page
+			 */
+
+			/* containing box for offset calculations */
+			if (box->Parent) {
+				parent_box = box->Parent;
+
+				/* we should check for
+				 * if (box->real_parent) {
+				 * as well, but that was returning
+				 * bad values too often 
+				 * So we will need to debug that code
+				 */		
+			} else {
+				parent_box = NULL;
+			}
+
 			/*	if (box->SetPosMsk & 0x01)*/
-			if(box->SetPos.Lft > NO_SET_POSITION) {
-				box->Rect.X = box->SetPos.Lft;
-			}	
+			if (box->SetPos.Lft > NO_SET_POSITION) {
+	
+				/* Negative 0x010 or Percentage */
+				if (box->SetPos.Lft < 0) {
+					if (parent_box) {
+						if (box->SetPosMsk & 0x010) {
+							box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
+						} else {
+							box->Rect.X = (parent_box->Rect.W * -box->SetPos.Lft +512) /1024;				
+						}
+					} else {
+						if (box->SetPosMsk & 0x010) {
+							box->Rect.X = box->SetPos.Lft;
+						} else {
+							box->Rect.X = (set_width * -box->SetPos.Lft +512) /1024;
+						}
+					}
+				} else {
+					if (parent_box) {
+						box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
+					} else {
+						box->Rect.X = box->SetPos.Lft;
+					}				
+				} 
+			}
+
 
 			/*	if (box->SetPosMsk & 0x02)*/
 			if (box->SetPos.Top > NO_SET_POSITION ) {
-				box->Rect.Y = box->SetPos.Top;
-			}
-
-			if (box->SetPos.Bot > NO_SET_POSITION ) {
-				if (box->Parent) {
-					box->Rect.Y = box->Parent->Rect.H - box->SetPos.Bot;
+				if (box->SetPos.Top < 0) {
+					if (box->SetPosMsk & 0x030) {
+						box->Rect.Y -= box->SetPos.Top; /* Not exactly correct */
+					} else {
+						/* There should be an else to handle percentage
+						 * values, but that will take some work to implement
+						 */
+						 ;
+					}
 				} else {
-					box->Rect.Y = box->SetPos.Bot;
+					if (parent_box) {
+						box->Rect.Y = box->SetPos.Top;
+						/* This really needs the following, but it only
+						 * works on some pages...
+						 */
+						/*box->Rect.Y = parent_box->Rect.H + box->SetPos.Top;*/
+					} else {
+						box->Rect.Y = box->SetPos.Top;
+					}
 				}
 			}
+
 			floating = FALSE;
 		} else if (fixed) {
 			/* These need to be offset on the viewport
@@ -1080,18 +1137,54 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			box->_vtab->format (box, set_width, blocker);
 		}
 
+		/* these could probably be simplified */
 		if (absolute) {
-			if(box->SetPos.Rgt > NO_SET_POSITION) {
-				if (box->Parent) {
-					if(box->SetPos.Lft == NO_SET_POSITION) {
-						box->Rect.X = box->Parent->Rect.W - box->SetPos.Rgt - box->Rect.W;
+			/* containing box for offset calculations */
+			if (box->Parent) {
+				parent_box = box->Parent;
+
+				/* we should check for
+				 * if (box->real_parent) {
+				 * as well, but that was returning
+				 * bad values too often 
+				 * So we will need to debug that code
+				 */		
+			} else {
+				parent_box = NULL;
+			}
+
+			if (box->SetPos.Rgt > NO_SET_POSITION) {	
+				/* Negative 0x020 or Percentage */
+				if (box->SetPos.Rgt < 0) {
+					if (parent_box) {
+						if (box->SetPosMsk & 0x020) {
+							box->Rect.X = parent_box->Rect.W + box->SetPos.Rgt;
+						} else {
+							printf("Right: Percentage value\r\n");
+							box->Rect.X = parent_box->Rect.W - ((parent_box->Rect.W * -box->SetPos.Rgt +512) /1024);
+						}
 					} else {
-						/* we need something here, but I haven't figured it out yet */
-						;
+						if (box->SetPosMsk & 0x020) {
+							box->Rect.X = set_width + box->SetPos.Rgt;
+						} else {
+							box->Rect.X = set_width - ((set_width * -box->SetPos.Rgt +512) /1024);
+						}
 					}
 				} else {
-					box->Rect.X = box->SetPos.Rgt;
-				}	
+					if (parent_box) {
+						/* If we move this to the top then it needs
+						 * to watch parent_box.Rect.W
+						 */
+						box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
+						/* box->Rect.X = parent_box->Rect.W - (box->Rect.W + box->SetPos.Rgt);*/
+					} else {
+						box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
+					}				
+				} 
+			}
+
+			if (box->SetPos.Bot > NO_SET_POSITION ) {
+				box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);
 			}
 		}
 		
