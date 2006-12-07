@@ -1,4 +1,4 @@
-Changes since v. 0.3.0 release (0.3.1 beta7)
+Changes since v. 0.3.0 release (0.3.1 beta8)
 
 - CSS file loading mechanisms got substantially
   overhauled to avoid endless loops due to
@@ -14,7 +14,11 @@ Changes since v. 0.3.0 release (0.3.1 beta7)
 
 - New feature implemented:  SHIFT+TAB now navigates
   backwards in a FORM.
-  
+
+- New feature implemented:  Starting Window position
+  now stored in CFG file.  Saved when program exited
+  with 'Quit' from menu bar
+    
 - Font Setup dialog implemented to change fonts on
   the fly.  Works only with selectors supporting
   the Font Protocol (eg. the Thing desktop).
@@ -36,7 +40,7 @@ Changes since v. 0.3.0 release (0.3.1 beta7)
 - CSS positioning system modified
 
 - CSS border system CSS2 compliant. Styles None, 
-  Hidden,  Dotted, Dashed, Solid, Inset, Outset 
+  Hidden, Double, Dotted, Dashed, Solid, Inset, Outset 
   support.
  
 - CSS display:none support added.  @media parsing 
@@ -89,11 +93,12 @@ Changes since v. 0.3.0 release (0.3.1 beta7)
 - Bugfix CSS text weight bold reset
   
 - Bugfix Control-N now opens Highwire start page
+    Shift Control N opens an Empty New Window
 
 - Bugfix Open Image in new window possible when view
   images is disabled
     
-- Bugs #174, #0181, #0219 resolved.
+- Bugs #174, #0181, #0219, #0220 resolved.
 
 __________________________________________________
 Changes in V. 0.3.0 release  of February 07, 2006:
