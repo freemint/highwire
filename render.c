@@ -1146,7 +1146,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 					}
 
 					/* flag it as negative */
-					if (out[0] == '-') mask |= 0x030;
+					if (out[0] == '-') mask |= 0x040;
 						
 					box->SetPos.Bot = bot;
 
