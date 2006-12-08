@@ -1184,7 +1184,10 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			}
 
 			if (box->SetPos.Bot > NO_SET_POSITION ) {
-				box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);
+				if (box->SetPos.Top == NO_SET_POSITION) {
+					 /* This isn't right.  If we have a top then we should extend the height of the object */
+					box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);
+				}
 			}
 		}
 		
