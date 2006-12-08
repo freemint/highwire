@@ -993,6 +993,21 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (box->Parent) {
 				parent_box = box->Parent;
 
+				while (TRUE) {
+					if ((parent_box->SetPos.Lft > NO_SET_POSITION)||
+						(parent_box->SetPos.Rgt > NO_SET_POSITION)||
+						(parent_box->SetPos.Lft > NO_SET_POSITION)||
+						(parent_box->SetPos.Lft > NO_SET_POSITION)) {
+						break;
+					} else {
+						if (parent_box->Parent) {
+							parent_box = parent_box->Parent;
+						} else {
+							parent_box = NULL;
+							break;
+						}
+					}
+				}
 				/* we should check for
 				 * if (box->real_parent) {
 				 * as well, but that was returning
@@ -1099,11 +1114,53 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			box->Rect.Y = height;
 		} else {
 			/* catch relative positions */
-			/* only left at the moment */
 			if(box->SetPos.Lft > NO_SET_POSITION) {
-				box->Rect.X += box->SetPos.Lft;
+				if (box->SetPos.Lft < 0) {
+					if (box->SetPosMsk & 0x010) {
+						box->Rect.X += box->SetPos.Lft;
+					} else {
+						box->Rect.X += (box->Rect.W * -box->SetPos.Lft +512) /1024;				
+					}
+				} else {
+					box->Rect.X += box->SetPos.Lft;
+				}
 			}	
 
+			if(box->SetPos.Rgt > NO_SET_POSITION) {
+				if (box->SetPos.Rgt < 0) {
+					if (box->SetPosMsk & 0x020) {
+						box->Rect.X -= box->SetPos.Rgt;
+					} else {
+						box->Rect.X -= (box->Rect.W * -box->SetPos.Rgt +512) /1024;				
+					}
+				} else {
+					box->Rect.X -= box->SetPos.Rgt;
+				}
+			}	
+
+			if(box->SetPos.Top > NO_SET_POSITION) {
+				if (box->SetPos.Top < 0) {
+					if (box->SetPosMsk & 0x030) {
+						box->Rect.Y += box->SetPos.Top;
+					} else {
+						box->Rect.Y += (box->Rect.H * -box->SetPos.Top +512) /1024;				
+					}
+				} else {
+					box->Rect.Y += box->SetPos.Top;
+				}
+			}	
+
+			if(box->SetPos.Bot > NO_SET_POSITION) {
+				if (box->SetPos.Bot < 0) {
+					if (box->SetPosMsk & 0x040) {
+						box->Rect.Y -= box->SetPos.Bot;
+					} else {
+						box->Rect.Y -= (box->Rect.H * -box->SetPos.Bot +512) /1024;				
+					}
+				} else {
+					box->Rect.Y -= box->SetPos.Bot;
+				}
+			}	
 				
 		}
 
@@ -1143,6 +1200,22 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (box->Parent) {
 				parent_box = box->Parent;
 
+				while (TRUE) {
+					if ((parent_box->SetPos.Lft > NO_SET_POSITION)||
+						(parent_box->SetPos.Rgt > NO_SET_POSITION)||
+						(parent_box->SetPos.Lft > NO_SET_POSITION)||
+						(parent_box->SetPos.Lft > NO_SET_POSITION)) {
+						break;
+					} else {
+						if (parent_box->Parent) {
+							parent_box = parent_box->Parent;
+						} else {
+							parent_box = NULL;
+							break;
+						}
+					}
+				}
+
 				/* we should check for
 				 * if (box->real_parent) {
 				 * as well, but that was returning
@@ -1154,33 +1227,37 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			}
 
 			if (box->SetPos.Rgt > NO_SET_POSITION) {	
-				/* Negative 0x020 or Percentage */
-				if (box->SetPos.Rgt < 0) {
-					if (parent_box) {
-						if (box->SetPosMsk & 0x020) {
-							box->Rect.X = parent_box->Rect.W + box->SetPos.Rgt;
+				if (box->SetPos.Lft == NO_SET_POSITION) {
+					 /* This isn't right.  If we have a Lft then we should extend the width of the object */
+
+					/* Negative 0x020 or Percentage */
+					if (box->SetPos.Rgt < 0) {
+						if (parent_box) {
+							if (box->SetPosMsk & 0x020) {
+								box->Rect.X = parent_box->Rect.W + box->SetPos.Rgt;
+							} else {
+								printf("Right: Percentage value\r\n");
+								box->Rect.X = parent_box->Rect.W - ((parent_box->Rect.W * -box->SetPos.Rgt +512) /1024);
+							}
 						} else {
-							printf("Right: Percentage value\r\n");
-							box->Rect.X = parent_box->Rect.W - ((parent_box->Rect.W * -box->SetPos.Rgt +512) /1024);
+							if (box->SetPosMsk & 0x020) {
+								box->Rect.X = set_width + box->SetPos.Rgt;
+							} else {
+								box->Rect.X = set_width - ((set_width * -box->SetPos.Rgt +512) /1024);
+							}
 						}
 					} else {
-						if (box->SetPosMsk & 0x020) {
-							box->Rect.X = set_width + box->SetPos.Rgt;
+						if (parent_box) {
+							/* If we move this to the top then it needs
+							 * to watch parent_box.Rect.W
+							 */
+						 	box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
+							/* box->Rect.X = parent_box->Rect.W - (box->Rect.W + box->SetPos.Rgt);*/
 						} else {
-							box->Rect.X = set_width - ((set_width * -box->SetPos.Rgt +512) /1024);
-						}
-					}
-				} else {
-					if (parent_box) {
-						/* If we move this to the top then it needs
-						 * to watch parent_box.Rect.W
-						 */
-						box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
-						/* box->Rect.X = parent_box->Rect.W - (box->Rect.W + box->SetPos.Rgt);*/
-					} else {
-						box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
-					}				
-				} 
+							box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
+						}				
+					} 
+				}
 			}
 
 			if (box->SetPos.Bot > NO_SET_POSITION ) {
@@ -1188,7 +1265,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 					 /* This isn't right.  If we have a top then we should extend the height of the object */
 					box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);
 				}
-			}
+			} 
 		}
 		
 		if (!absolute) switch (box->Floating) {
@@ -1203,6 +1280,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (box->BoxClass == BC_TABLE) {
 					height += box->Rect.H;
 				}
+
 				goto case_FLT_MASK;
 			case FLT_LEFT:
 				box->Rect.X += blocker->L.width;
@@ -1213,6 +1291,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				if (box->BoxClass == BC_TABLE) {
 					height += box->Rect.H;	
 				}
+
 				goto case_FLT_MASK;
 			case_FLT_MASK:
 				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
