@@ -197,18 +197,14 @@ new_loader (LOCATION loc, CONTAINR target, BOOL lookup)
 	loader->rdList    = loader->rdCurr = NULL;
 
 	/* copy Authorization */
-	if (target->u.Frame->AuthRealm  && target->u.Frame->AuthBasic) {
-		loader->AuthRealm = target->u.Frame->AuthRealm;
-		loader->AuthBasic = target->u.Frame->AuthBasic;
-
-	/*  I would think the following would be better
-	    but it definately crashes when I do it
-	    
-		loader->AuthRealm = strdup (target->u.Frame->AuthRealm);
-		loader->AuthBasic = strdup (target->u.Frame->AuthBasic);
-	*/
+	if (target) {
+		FRAME frame = containr_Frame (target);
+		if (frame && frame->AuthRealm  && frame->AuthBasic) {
+			loader->AuthRealm = strdup (frame->AuthRealm);
+			loader->AuthBasic = strdup (frame->AuthBasic);
+		}
 	}
-		
+	
 	if (loc->Proto == PROT_FILE || PROTO_isRemote (loc->Proto)) {
 		loader->MimeType = mime_byExtension (loc->File, &appl, loader->FileExt);
 	}
