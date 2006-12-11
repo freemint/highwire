@@ -2560,7 +2560,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 			
 			reset_text_styles(parser);
-			
 			fontstack_push (current, -1);
 
 			if (!word->link) {
@@ -4631,7 +4630,9 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	DOMBOX * box = dombox_ctor (malloc (sizeof (DOMBOX)),
 	                            current->parentbox, BC_SINGLE);
 	box->HtmlCode = TAG_HR;
-	
+
+	box->HasBorder = TRUE;
+		
 	if (shade) {
 		box->BorderWidth.Top = 1;
 		box->BorderWidth.Bot = 1;
