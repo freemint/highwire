@@ -134,7 +134,7 @@ font_face (char * buf, short dflt)
 
 /*----------------------------------------------------------------------------*/
 static short
-numerical (const char * buf, char ** tail, short em, short ex)
+numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 {
 	UWORD  unit;
 	long   size, val;
@@ -158,11 +158,15 @@ numerical (const char * buf, char ** tail, short em, short ex)
 		case 0x5058: /* PX, pixel */
 			val = (size + 128) >> 8;
 			
-			if (val > 1) 
-				size = (val * 9)/10;
-			else
+			if (font) {
+				if (val > 1) 
+					size = (val * 9)/10;
+				else
+					size = val;
+			} else {
 				size = val;
-
+			}
+			
 			break;
 			
 		case 0x2520: /* % */
@@ -278,10 +282,8 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
 				ex = em/2;
 
-				size = numerical (tail, NULL, em, ex);
+				size = numerical (tail, NULL, em, ex, TRUE);
 									
-/*				short size = numerical (p, &tail, font_size, (font_size/2));
-*/
 				if (size > 0) {
 					fontstack_setSize (current, size);
 					p = tail;
@@ -426,7 +428,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
 			ex = em/2;
 
-			size = numerical (output, NULL, em, ex);
+			size = numerical (output, NULL, em, ex, TRUE);
 
 			if (!fstk) {
 				fstk = fontstack_push (current, -1);
@@ -563,13 +565,13 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	short val;
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * ptr = out;
-		if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+		if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 			bf->Top = bf->Rgt = bf->Bot = bf->Lft = val;
-			if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+			if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 				bf->Rgt = bf->Lft = val;
-				if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+				if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 					bf->Bot = val;
-					if ((val = numerical (ptr, &ptr, em, ex)) >= 0) {
+					if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 						bf->Lft = val;
 					}
 				}
@@ -577,19 +579,19 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 		}
 	}
 	if (get_value (parser, key+1, out, sizeof(out)) &&
-	    (val = numerical (out, NULL, em, ex)) >= 0) {
+	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Bot = val;
 	}
 	if (get_value (parser, key+2, out, sizeof(out)) &&
-	    (val = numerical (out, NULL, em, ex)) >= 0) {
+	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Lft = val;
 	}
 	if (get_value (parser, key+3, out, sizeof(out)) &&
-	    (val = numerical (out, NULL, em, ex)) >= 0) {
+	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Rgt = val;
 	}
 	if (get_value (parser, key+4, out, sizeof(out)) &&
-	    (val = numerical (out, NULL, em, ex)) >= 0) {
+	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Top = val;
 	}
 }
@@ -614,7 +616,7 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			long color = -1;
 			if (isdigit (*p)) {
 				char * tail = p;
-				width = numerical (p, &tail, em, ex);
+				width = numerical (p, &tail, em, ex, FALSE);
 
 				if (width < 0) width = 2; /* negative not allowed so default */
 
@@ -990,34 +992,46 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (box->BorderWidth.Top == -1) {
 		if (box->BorderStyle.Top > BORDER_NONE) {
 			box->BorderWidth.Top = 2;
+			box->HasBorder = TRUE;
 		} else {
 			box->BorderWidth.Top = 0;
 		}
-	}		
+	} else {
+		box->HasBorder = TRUE;
+	}	
 
 	if (box->BorderWidth.Bot == -1) {
 		if (box->BorderStyle.Bot > BORDER_NONE) {
 			box->BorderWidth.Bot = 2;
+			box->HasBorder = TRUE;
 		} else {
 			box->BorderWidth.Bot = 0;
 		}
+	} else {
+		box->HasBorder = TRUE;
 	}		
 
 	if (box->BorderWidth.Lft == -1) {
 		if (box->BorderStyle.Lft > BORDER_NONE) {
 			box->BorderWidth.Lft = 2;
+			box->HasBorder = TRUE;
 		} else {
 			box->BorderWidth.Lft = 0;
 		}
+	} else {
+		box->HasBorder = TRUE;
 	}		
 	
 	if (box->BorderWidth.Rgt == -1) {
 		if (box->BorderStyle.Rgt > BORDER_NONE) {
 			box->BorderWidth.Rgt = 2;
+			box->HasBorder = TRUE;
 		} else {
 			box->BorderWidth.Rgt = 0;
 		}
-	}		
+	} else {
+		box->HasBorder = TRUE;
+	}	
 
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
@@ -1029,7 +1043,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
 		char * tail   = out;
 		short  indent = numerical (out, &tail, parser->Current.font->Size,
-		                           parser->Current.word->font->SpaceWidth);
+		                           parser->Current.word->font->SpaceWidth, FALSE);
 
 		if (tail > out) {
 			/* This could be buggy needs more research */
@@ -1040,20 +1054,23 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	}
 	if (get_value (parser, KEY_WIDTH, out, sizeof(out))) {
 		short width = numerical (out, NULL, parser->Current.font->Size,
-		                         parser->Current.word->font->SpaceWidth);
+		                         parser->Current.word->font->SpaceWidth, FALSE);
 		if (width != (short)0x8000) {
 			box->SetWidth = width;
+			box->ConBlock = TRUE;
 		}
 
+		/* isn't this reversed? shouldn't it be above setting box value */
 		if (width < -1024) {
 			width = -1024;
 		}
 	}
 	if (get_value (parser, KEY_HEIGHT, out, sizeof(out))) {
 		short height = numerical (out, NULL, parser->Current.font->Size,
-		                          parser->Current.word->font->SpaceWidth);
-		if (height > 0) {
+		                          parser->Current.word->font->SpaceWidth, FALSE);
+		if (height != (short)0x8000) {
 			box->SetHeight = height;
+			box->ConBlock = TRUE;
 		}
 		
 		if (height < -1024) {
@@ -1078,8 +1095,10 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			short ex = parser->Current.font->Size/2;
 
 			if (mask) {
+				box->ConBlock = TRUE;
+
 				if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
-					short lft = numerical (out, NULL, em, ex);
+					short lft = numerical (out, NULL, em, ex, FALSE);
 
 					if (lft == (short)0x8000) {
 						/* occurs inherit or auto n/i */
@@ -1099,7 +1118,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 				} /* end left */
 
 				if (get_value (parser, CSS_RIGHT, out, sizeof(out))) {
-					short rgt = numerical (out, NULL, em, ex);
+					short rgt = numerical (out, NULL, em, ex, FALSE);
 
 					if (rgt == (short)0x8000) {
 						/* occurs inherit or auto n/i */
@@ -1110,7 +1129,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 					if (out[0] == '-') mask |= 0x020;
 						
 					box->SetPos.Rgt = rgt;
-
+	
 					/*  Negative values are allowed
 						if (rgt >= (mask & 0x100 ? 0 : 1)) box->SetPos.Rgt = rgt;
 						else                               mask           &= ~0x001;
@@ -1118,7 +1137,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 				} /* end right */
 
 				if (get_value (parser, CSS_TOP, out, sizeof(out))) {
-					short top = numerical (out, NULL, em, ex);
+					short top = numerical (out, NULL, em, ex, FALSE);
 
 					if (top == (short)0x8000) {
 						/* occurs inherit or auto n/i */
@@ -1138,7 +1157,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 				} /* end top */
 
 				if (get_value (parser, CSS_BOTTOM, out, sizeof(out))) {
-					short bot = numerical (out, NULL, em, ex);
+					short bot = numerical (out, NULL, em, ex, FALSE);
 
 					if (bot == (short)0x8000) {
 						/* occurs inherit or auto n/i */
@@ -1232,11 +1251,11 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 DOMBOX *
 create_box (TEXTBUFF current, BOXCLASS bc, WORD par_top)
 {
-DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
+	DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
 	DOMBOX * box = dombox_ctor (malloc (sizeof(DOMBOX)), current->parentbox, bc);
 	PARAGRPH par = add_paragraph (current, par_top);
 
-box->real_parent = rparent;
+	box->real_parent = rparent;
 
 	box->Margin.Top = par->Box.Margin.Top;
 	par->Box.Margin.Top = 0;
@@ -2901,7 +2920,11 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			} else {
 				par->Box.Floating = floating|FLT_MASK;
 			}
-			box_frame  (parser, &par->Box.Margin, CSS_MARGIN);
+/*			box_frame  (parser, &par->Box.Margin, CSS_MARGIN);
+*/
+			/* This might need to be moved */
+			css_box_styles  (parser, &par->Box, current->paragraph->Box.TextAlign);
+
 			box_anchor (parser, &par->Box, TRUE);
 		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
@@ -2966,8 +2989,6 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			add_paragraph (current, 0);
 			current->paragraph->Box.TextAlign = current->prev_par->Box.TextAlign;
 
-			/* This might need to be moved */
-			css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
 
 			flags |= PF_SPACE;
 		}
@@ -3016,7 +3037,7 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 			if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))
 			    && isdigit (output[0])) {
 				size = numerical (output, NULL, current->font->Size,
-			                     current->word->font->SpaceWidth);
+			                     current->word->font->SpaceWidth, FALSE);
 			}
 			if (size > 0) {
 				if (current->prev_wrd) {
@@ -3382,7 +3403,6 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 
 	if (flags & PF_START) {
 		group_box (parser, TAG_DIV, ALN_LEFT);
-
 	} else {
 		DOMBOX * box = leave_box (&parser->Current, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
@@ -3780,15 +3800,15 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			char  out[100];
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 					height = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					width = val;
 			}
 			if (get_value (parser, CSS_MIN_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 				min_wid = val;
 			}
 		}
@@ -3834,6 +3854,10 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			/* we have to reset the width in case it was set again in css_box_styles */
 			box->SetWidth = (width  <= 1024 ? width  : 0);			
 		}
+		
+		/* Tables always Containg blocks ??? */
+		parser->Current.parentbox->ChildEnd->ConBlock = TRUE;
+		
 		box_anchor (parser, parser->Current.parentbox->ChildEnd, TRUE);
 	
 	} else {
@@ -3953,11 +3977,11 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			char  out[100];
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 					temphgt = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					tempwid = val;
 			}
 		} else {
@@ -4025,11 +4049,11 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			char  out[100];
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 					temphgt = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex)) != (short)0x8000) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					tempwid = val;
 			}
 		} else {
@@ -4126,7 +4150,7 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 		if (parser->hasStyle && get_value (parser, KEY_WIDTH, out,sizeof(out))) {
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
-			width = numerical (out, NULL, em, ex);
+			width = numerical (out, NULL, em, ex, FALSE);
 		} else {
 			width = 0;
 		}
