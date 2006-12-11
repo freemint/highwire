@@ -25,6 +25,8 @@ new_frame (LOCATION loc, TEXTBUFF current,
 
 	current->parentbox    = dombox_ctor (&frame->Page, NULL, BC_MAIN);
 
+	current->parentbox->ConBlock = TRUE; /* A frame is always a containing block */
+
 	frame->Page.Backgnd   = current->backgnd = background_colour;
 	frame->Page.TextAlign = ALN_LEFT;
 	if (margin_w >= 0) {
