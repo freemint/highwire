@@ -520,11 +520,10 @@ static LONG
 vTab_MaxWidth (DOMBOX * This)
 {
 	if (This->SetWidth > 0) {
-		This->MaxWidth = This->SetWidth;
-	
+		This->MaxWidth = This->SetWidth;	
 	} else {
 		DOMBOX * box = This->ChildBeg;
-		
+
 		This->MaxWidth = 0;
 		while (box) {
 			long width = dombox_MaxWidth (box);
@@ -1002,12 +1001,12 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 * So we will need to debug that code
 				 */		
 			} else {
+printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 				parent_box = NULL;
 			}
 
 			/*	if (box->SetPosMsk & 0x01)*/
 			if (box->SetPos.Lft > NO_SET_POSITION) {
-	
 				/* Negative 0x010 or Percentage */
 				if (box->SetPos.Lft < 0) {
 					if (parent_box) {
@@ -1015,6 +1014,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 							box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
 						} else {
 							box->Rect.X = (parent_box->Rect.W * -box->SetPos.Lft +512) /1024;				
+							set_width = parent_box->Rect.W - box->Rect.X;
 						}
 					} else {
 						if (box->SetPosMsk & 0x010) {
@@ -1026,6 +1026,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				} else {
 					if (parent_box) {
 						box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
+						set_width = parent_box->Rect.W - box->Rect.X; 
 					} else {
 						box->Rect.X = box->SetPos.Lft;
 					}				
@@ -1313,10 +1314,12 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 This->Rect.H = box->Rect.Y + box->Rect.H;
 			}
 
+		#if 0
 			/* override the page minwidth in absolute positions */
 			if (This->MinWidth < box->Rect.X + box->Rect.W) {
 				This->MinWidth = box->Rect.X + box->Rect.W;
 			}
+		#endif
 		}
 		
 		box = box->Sibling;
