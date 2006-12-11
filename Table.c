@@ -28,6 +28,7 @@
 #define t_Backgnd    Box.Backgnd
 #define t_BorderW    Box.BorderWidth
 #define t_BorderC    Box.BorderColor
+#define t_HasBorder  Box.HasBorder
 
 #define c_OffsetX  Box.Rect.X
 #define c_OffsetY  Box.Rect.Y
@@ -130,6 +131,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->ColWidth  = NULL;
 
 	table->t_Backgnd = (color != current->backgnd ? color : -1);
+
+	if (border != -1) table->t_HasBorder = TRUE;
 
 	table->t_BorderW.Top = table->t_BorderW.Bot = 
 	table->t_BorderW.Lft = table->t_BorderW.Rgt = border;
@@ -240,11 +243,17 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 		cell->Box.Padding.Top = cell->Box.Padding.Bot =
 		cell->Box.Padding.Lft = cell->Box.Padding.Rgt = padding;
 	}
+
+	/* Table Cells always Containg blocks ??? */
+	cell->Box.ConBlock = TRUE;
+
+	if (parent->HasBorder) cell->Box.HasBorder = TRUE;	
+	
 	cell->Box.BorderWidth.Top = (parent->BorderWidth.Top ? 1 : 0);
 	cell->Box.BorderWidth.Bot = (parent->BorderWidth.Bot ? 1 : 0);
 	cell->Box.BorderWidth.Lft = (parent->BorderWidth.Lft ? 1 : 0);
 	cell->Box.BorderWidth.Rgt = (parent->BorderWidth.Rgt ? 1 : 0);
-	
+		
 	/* 3D inset */
 	cell->Box.BorderColor.Top = cell->Box.BorderColor.Bot =
 	cell->Box.BorderColor.Lft =cell->Box.BorderColor.Rgt = -2; 

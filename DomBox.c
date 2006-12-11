@@ -57,11 +57,11 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	This->Floating = ALN_NO_FLT;
 
 	/* init the position */
-	
+	This->ConBlock = FALSE; /* Set to true if it's a containg block */	
 	This->SetPos.Lft = This->SetPos.Rgt = This->SetPos.Top = This->SetPos.Bot = NO_SET_POSITION;
 
 	/* init the border */
-
+	This->HasBorder = FALSE;
 	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
 
 	if (parent && parent->FontStk)	{
@@ -129,17 +129,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 			
 	vsl_type (vdi_handle, 0); /* reset the line type */
 
-	if (This->BorderWidth.Top ||
-		This->BorderWidth.Bot ||
-		This->BorderWidth.Lft ||
-		This->BorderWidth.Rgt ) {
-
-		/* This should all be reordered into some better test
-		 * however the New Years champagne is still catching up
-		 * with me - Dan 
-		 */		
-
-		/* This needs to be refined, I don't like it - Dan */
+	if (This->HasBorder) {
 		if ((This->BorderColor.Top < 0)&&(This->BorderWidth.Top > 0)) {
 			GRECT b;
 			b.g_x = x1;
@@ -994,10 +984,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				parent_box = box->Parent;
 
 				while (TRUE) {
-					if ((parent_box->SetPos.Lft > NO_SET_POSITION)||
-						(parent_box->SetPos.Rgt > NO_SET_POSITION)||
-						(parent_box->SetPos.Lft > NO_SET_POSITION)||
-						(parent_box->SetPos.Lft > NO_SET_POSITION)) {
+					if (parent_box->ConBlock) {
 						break;
 					} else {
 						if (parent_box->Parent) {
@@ -1201,10 +1188,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				parent_box = box->Parent;
 
 				while (TRUE) {
-					if ((parent_box->SetPos.Lft > NO_SET_POSITION)||
-						(parent_box->SetPos.Rgt > NO_SET_POSITION)||
-						(parent_box->SetPos.Lft > NO_SET_POSITION)||
-						(parent_box->SetPos.Lft > NO_SET_POSITION)) {
+					if (parent_box->ConBlock) {
 						break;
 					} else {
 						if (parent_box->Parent) {

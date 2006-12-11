@@ -338,9 +338,11 @@ struct s_dombox {
 	char   * ClName;    /* from class="<CL>" attribute, refferenced by "#CL" */
 	BOXCLASS BoxClass;
 	WORD     HtmlCode;
+	BOOL	 ConBlock;	/* Is this a containing block for position?          */
 	WORD     Backgnd;   /* -1 for transparency, else colour value            */
 	TBLR     Margin;
 	TBLR     Padding;
+	BOOL	 HasBorder;   /* To speed up the Dombox routines                 */
 	TBLR     BorderWidth;
 	TBLR     BorderColor;
 	BRDR     BorderStyle;
