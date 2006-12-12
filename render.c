@@ -997,7 +997,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->BorderWidth.Top = 0;
 		}
 	} else {
-		box->HasBorder = TRUE;
+		if (box->BorderWidth.Top > 0)
+			box->HasBorder = TRUE;
 	}	
 
 	if (box->BorderWidth.Bot == -1) {
@@ -1008,7 +1009,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->BorderWidth.Bot = 0;
 		}
 	} else {
-		box->HasBorder = TRUE;
+		if (box->BorderWidth.Bot > 0)
+			box->HasBorder = TRUE;
 	}		
 
 	if (box->BorderWidth.Lft == -1) {
@@ -1019,7 +1021,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->BorderWidth.Lft = 0;
 		}
 	} else {
-		box->HasBorder = TRUE;
+		if (box->BorderWidth.Lft > 0)
+			box->HasBorder = TRUE;
 	}		
 	
 	if (box->BorderWidth.Rgt == -1) {
@@ -1030,7 +1033,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			box->BorderWidth.Rgt = 0;
 		}
 	} else {
-		box->HasBorder = TRUE;
+		if (box->BorderWidth.Rgt > 0)
+			box->HasBorder = TRUE;
 	}	
 
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
@@ -3831,6 +3835,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (width < -1024) {
 			width = -1024;
 		}
+
 		table_start (parser,
 		             get_value_color (parser, KEY_BGCOLOR), floating,
 		             height, width, min_wid,
