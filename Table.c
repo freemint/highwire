@@ -28,6 +28,7 @@
 #define t_Backgnd    Box.Backgnd
 #define t_BorderW    Box.BorderWidth
 #define t_BorderC    Box.BorderColor
+#define t_BorderS    Box.BorderStyle
 #define t_HasBorder  Box.HasBorder
 
 #define c_OffsetX  Box.Rect.X
@@ -132,14 +133,20 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 
 	table->t_Backgnd = (color != current->backgnd ? color : -1);
 
-	if (border != -1) table->t_HasBorder = TRUE;
+	if (border > 0) {
+		table->t_HasBorder = TRUE;
 
+		table->t_BorderS.Top = table->t_BorderS.Bot = 
+		table->t_BorderS.Lft = table->t_BorderS.Rgt = BORDER_OUTSET;
+	}
+	
 	table->t_BorderW.Top = table->t_BorderW.Bot = 
 	table->t_BorderW.Lft = table->t_BorderW.Rgt = border;
 
 	/* 3D outset */
-	table->t_BorderC.Top = table->t_BorderC.Bot =
+/*	table->t_BorderC.Top = table->t_BorderC.Bot =
 	table->t_BorderC.Lft = table->t_BorderC.Rgt = -1;
+*/
 
 	table->Spacing   = spacing;
 	table->Padding   = padding + (border ? 1 : 0);
@@ -246,18 +253,30 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 
 	/* Table Cells always Containg blocks ??? */
 	cell->Box.ConBlock = TRUE;
-
-	if (parent->HasBorder) cell->Box.HasBorder = TRUE;	
 	
+	if (parent->HasBorder) {
+		cell->Box.BorderStyle.Top = cell->Box.BorderStyle.Bot = 
+		cell->Box.BorderStyle.Lft = cell->Box.BorderStyle.Rgt = BORDER_INSET;
+	} 
+	
+	/* problem appears here */
 	cell->Box.BorderWidth.Top = (parent->BorderWidth.Top ? 1 : 0);
 	cell->Box.BorderWidth.Bot = (parent->BorderWidth.Bot ? 1 : 0);
 	cell->Box.BorderWidth.Lft = (parent->BorderWidth.Lft ? 1 : 0);
 	cell->Box.BorderWidth.Rgt = (parent->BorderWidth.Rgt ? 1 : 0);
-		
-	/* 3D inset */
-	cell->Box.BorderColor.Top = cell->Box.BorderColor.Bot =
-	cell->Box.BorderColor.Lft =cell->Box.BorderColor.Rgt = -2; 
 
+	if ((cell->Box.BorderWidth.Top > 0) ||
+		(cell->Box.BorderWidth.Top > 0) ||
+		(cell->Box.BorderWidth.Top > 0) ||
+		(cell->Box.BorderWidth.Top > 0)) {
+
+		cell->Box.HasBorder = TRUE;
+	}
+			
+	/* 3D inset */
+/*	cell->Box.BorderColor.Top = cell->Box.BorderColor.Bot =
+	cell->Box.BorderColor.Lft =cell->Box.BorderColor.Rgt = -2; 
+*/
 	cell->ColSpan   = 1;
 	cell->RowSpan   = 1;
 	cell->DummyFor  = NULL;
