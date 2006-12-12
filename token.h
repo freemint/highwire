@@ -57,6 +57,7 @@
 		__TAG_ITEM (HR),
 		__TAG_ITEM (HTML),
 		__TAG_ITEM (I),
+		__TAG_ITEM (IMAGE),
 		__TAG_ITEM (IMG),
 #		undef       INPUT
 		__TAG_ITEM (INPUT),

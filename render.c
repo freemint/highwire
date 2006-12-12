@@ -2874,6 +2874,7 @@ render_IOD_tag (PARSER parser, const char ** text, UWORD flags)
 /*------------------------------------------------------------------------------
  * Image
 */
+
 static UWORD
 render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2995,6 +2996,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	return flags;
 }
+
+#define render_IMAGE_tag   render_IMG_tag
+
 
 /*------------------------------------------------------------------------------
  * Line BReak
