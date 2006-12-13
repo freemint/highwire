@@ -4643,12 +4643,12 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	box->HasBorder = TRUE;
 		
 	if (shade) {
-		box->BorderWidth.Top = 1;
-		box->BorderWidth.Bot = 1;
-		box->BorderWidth.Lft = 1;
-		box->BorderWidth.Rgt = 1;
-		box->BorderColor.Top = box->BorderColor.Bot =
-		box->BorderColor.Lft = box->BorderColor.Rgt = -2;
+		box->BorderWidth.Top = box->BorderWidth.Bot = 
+		box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
+
+		box->BorderStyle.Top = box->BorderStyle.Bot = 
+		box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_INSET;
+
 		size -= 2;
 	}
 	box->Padding.Top = size;
