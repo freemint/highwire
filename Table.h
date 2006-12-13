@@ -23,6 +23,7 @@ struct s_table_stack {
 
 struct s_table {
 	DOMBOX   Box;
+	BOOL	 NonCssBorder;
 	short    Spacing;
 	short    Padding;
 	TAB_ROW  Rows;

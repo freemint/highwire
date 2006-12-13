@@ -134,10 +134,12 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	table->t_Backgnd = (color != current->backgnd ? color : -1);
 
 	if (border > 0) {
-		table->t_HasBorder = TRUE;
+		table->NonCssBorder = TRUE; /* Non Css border flag */
 
 		table->t_BorderS.Top = table->t_BorderS.Bot = 
 		table->t_BorderS.Lft = table->t_BorderS.Rgt = BORDER_OUTSET;
+	} else {
+		table->NonCssBorder = FALSE;
 	}
 	
 	table->t_BorderW.Top = table->t_BorderW.Bot = 
@@ -238,7 +240,7 @@ table_row (TEXTBUFF current, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 
 /*----------------------------------------------------------------------------*/
 static TAB_CELL
-new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
+new_cell (DOMBOX * parent, TAB_CELL left_side, short padding, BOOL border)
 {
 	TAB_CELL cell = malloc (sizeof (struct s_table_cell));
 
@@ -254,7 +256,9 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 	/* Table Cells always Containg blocks ??? */
 	cell->Box.ConBlock = TRUE;
 	
-	if (parent->HasBorder) {
+	if (border) {
+		cell->Box.HasBorder = TRUE;
+
 		cell->Box.BorderStyle.Top = cell->Box.BorderStyle.Bot = 
 		cell->Box.BorderStyle.Lft = cell->Box.BorderStyle.Rgt = BORDER_INSET;
 	} 
@@ -265,14 +269,6 @@ new_cell (DOMBOX * parent, TAB_CELL left_side, short padding)
 	cell->Box.BorderWidth.Lft = (parent->BorderWidth.Lft ? 1 : 0);
 	cell->Box.BorderWidth.Rgt = (parent->BorderWidth.Rgt ? 1 : 0);
 
-	if ((cell->Box.BorderWidth.Top > 0) ||
-		(cell->Box.BorderWidth.Top > 0) ||
-		(cell->Box.BorderWidth.Top > 0) ||
-		(cell->Box.BorderWidth.Top > 0)) {
-
-		cell->Box.HasBorder = TRUE;
-	}
-			
 	/* 3D inset */
 /*	cell->Box.BorderColor.Top = cell->Box.BorderColor.Bot =
 	cell->Box.BorderColor.Lft =cell->Box.BorderColor.Rgt = -2; 
@@ -334,11 +330,11 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		if (stack->PrevRow) {
 			TAB_CELL prev = stack->PrevRow->Cells;
 			if (!prev) {
-				prev = stack->PrevRow->Cells = new_cell (box, NULL, table->Padding);
+				prev = stack->PrevRow->Cells = new_cell (box, NULL, table->Padding, table->NonCssBorder);
 			}
 			cell = NULL;
 			do {
-				prev->BelowCell = cell = new_cell (box, cell, table->Padding);
+				prev->BelowCell = cell = new_cell (box, cell, table->Padding, table->NonCssBorder);
 				if (prev->RowSpan > 1) {
 					cell->DummyFor = prev;
 					cell->RowSpan  = 2 - prev->RowSpan;
@@ -370,7 +366,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 	/* if we haven't a cell here we need to create a new one
 	 */
 	if (!cell) {
-		cell = new_cell (box, stack->WorkCell, table->Padding);
+		cell = new_cell (box, stack->WorkCell, table->Padding, table->NonCssBorder);
 		if (!row->Cells) {
 			row->Cells = cell;
 		}
@@ -418,7 +414,7 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		do {
 			TAB_CELL next = (stack->WorkCell->RightCell
 			                 ? stack->WorkCell->RightCell
-			                 : new_cell (box, stack->WorkCell, table->Padding));
+			                 : new_cell (box, stack->WorkCell, table->Padding, table->NonCssBorder));
 			next->RowSpan = stack->WorkCell->RowSpan;
 			stack->WorkCell = next;
 			if (!stack->WorkCell->DummyFor) {
@@ -441,9 +437,9 @@ table_cell (PARSER parser, WORD color, H_ALIGN h_align, V_ALIGN v_align,
 		while (last->RightCell) last = last->RightCell;
 		do {
 			TAB_CELL prev = last->BelowCell;
-			TAB_CELL next = new_cell (box, last, table->Padding);
+			TAB_CELL next = new_cell (box, last, table->Padding, table->NonCssBorder);
 			while (!prev->RightCell) {
-				next = next->BelowCell = new_cell (box, prev, table->Padding);
+				next = next->BelowCell = new_cell (box, prev, table->Padding, table->NonCssBorder);
 				prev = prev->BelowCell;
 			}
 			next->BelowCell = prev->RightCell;
