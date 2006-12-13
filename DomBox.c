@@ -130,6 +130,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 	vsl_type (vdi_handle, 0); /* reset the line type */
 
 	if (This->HasBorder) {
+#if 0
 		if ((This->BorderColor.Top < 0)&&(This->BorderWidth.Top > 0)) {
 			GRECT b;
 			b.g_x = x1;
@@ -143,6 +144,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 				draw_TBLR_border (&b, G_LBLACK, G_WHITE, This->BorderWidth); /* should be all */
 			}
 		} else {
+#endif
 			short n;
 			PXY p[2];
 			short dark1, dark2, light;
@@ -437,7 +439,9 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					}
 				}
 			}
+#if 0
 		} 
+#endif
 
 		x1 += This->BorderWidth.Lft;
 		x2 -= This->BorderWidth.Rgt;
