@@ -2174,7 +2174,18 @@ render_B_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	
-	word_set_bold (&parser->Current, (flags & PF_START));
+	if (flags & PF_START) {
+		word_set_bold (&parser->Current, (flags & PF_START));
+
+		if (parser->hasStyle) {
+			css_text_styles (parser, parser->Current.font);
+		}
+	} else {
+		word_set_bold (&parser->Current, (flags & PF_START));
+
+		fontstack_pop (&parser->Current);
+	}
+		
 	return flags;
 }
 
@@ -2383,7 +2394,10 @@ render_I_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		fontstack_push (current, -1);
 		word_set_italic (&parser->Current, TRUE);
-		css_text_styles (parser, current->font);
+
+		if (parser->hasStyle) {
+			css_text_styles (parser, current->font);
+		}
 	} else {
 		word_set_italic (&parser->Current, FALSE);
 		fontstack_pop (&parser->Current);
@@ -3267,6 +3281,9 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 				box->Backgnd = color;
 			}
 		}
+
+		css_box_styles  (parser, box, box->TextAlign);
+
 		flags |= PF_SPACE;
 	}
 	return flags;
@@ -3318,6 +3335,8 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 
 	} else {
 		par = add_paragraph (current, 2);
+
+reset_text_styles(parser);
 
 		par->Box.TextAlign = current->parentbox->TextAlign;
 
