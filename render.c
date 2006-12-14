@@ -185,7 +185,8 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 			size = (size + 128) >> 8;
 			break;
 		default:
-			size = 0;
+			/*size = 0;*/
+			size = 0x8000; /* flag as an error ? */
 	}
 	if (tail) {
 		union { const char * c; char * v; } ptr;
@@ -3825,8 +3826,10 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			short ex = parser->Current.word->font->SpaceWidth;
 			char  out[100];
 			short val;
+
+			/* check on legal height values */
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE))!= (short)0x8000) {
 					height = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
@@ -3998,22 +4001,23 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
+
+		temphgt = get_value_size  (parser, KEY_HEIGHT);
+		tempwid = get_value_size  (parser, KEY_WIDTH);
+
 		if (parser->hasStyle) {
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
 			char  out[100];
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					temphgt = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					tempwid = val;
 			}
-		} else {
-			temphgt = get_value_size  (parser, KEY_HEIGHT);
-			tempwid = get_value_size  (parser, KEY_WIDTH);
 		}
 
 		/* Table routines don't like values < -1024 */
@@ -4070,22 +4074,22 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
+		temphgt = get_value_size  (parser, KEY_HEIGHT);
+		tempwid = get_value_size  (parser, KEY_WIDTH);
+
 		if (parser->hasStyle) {
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
 			char  out[100];
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
-			    && (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					temphgt = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					tempwid = val;
 			}
-		} else {
-			temphgt = get_value_size  (parser, KEY_HEIGHT);
-			tempwid = get_value_size  (parser, KEY_WIDTH);
 		}
 
 		/* Table routines don't like values < -1024 */
