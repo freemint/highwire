@@ -568,8 +568,13 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	short ex = parser->Current.font->Size/2;
 	char  out[100];
 	short val;
+
+/* negative values are legal for CSS_MARGIN */
+/* as are percentages, so this code will need to be reworked */
+
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * ptr = out;
+
 		if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 			bf->Top = bf->Rgt = bf->Bot = bf->Lft = val;
 
@@ -2922,7 +2927,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		short word_height    = current->word->word_height;
 		short word_tail_drop = current->word->word_tail_drop;
 		short word_v_align   = current->word->vertical_align;
-		
+		short height = 0;
+		short width = 0;
+				
 		WORDITEM word;
 		char output[100];
 		char img_file[HW_PATH_MAX];
@@ -2983,9 +2990,61 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			url_correct (img_file);
 		}
 
+		if (parser->hasStyle) {
+			short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;
+			char  out[100];
+			short val;
+
+			/* width and height aren't allowed negative */
+			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
+					height = val;
+			}
+			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
+			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
+					width = val;
+			}
+		}
+
+		/* could be percentage or illegal negative? */
+		if (height < 0) {
+			if (current->paragraph->Box.Parent->ConBlock) {
+				if (current->paragraph->Box.Parent->SetHeight) {
+					height = (current->paragraph->Box.Parent->SetHeight * -height +512) /1024;
+				} else {
+					height = 0;
+				}
+			} else {
+				height = 0;
+			}
+		}
+
+		/* could be percentage or illegal negative? */
+		if (width < 0) {
+			if (current->paragraph->Box.Parent->ConBlock) {
+				if (current->paragraph->Box.Parent->SetWidth) {
+					width = (current->paragraph->Box.Parent->SetWidth * -width +512) /1024;
+				} else {
+					width = 0;
+				}
+			} else {
+				width = 0;
+			}
+		}
+
+		if ((height == 0) || (height == (short)0x8000))
+			height = get_value_size  (parser, KEY_HEIGHT);
+
+
+		if ((width == 0) || (width == (short)0x8000))
+			width = get_value_size  (parser, KEY_WIDTH);
+		
 		new_image (frame, current, img_file, frame->BaseHref,
-		           get_value_size (parser, KEY_WIDTH),
+width, height,
+/*		           get_value_size (parser, KEY_WIDTH),
 		           get_value_size (parser, KEY_HEIGHT),
+*/
 		           get_value_size (parser, KEY_VSPACE),
 		           get_value_size (parser, KEY_HSPACE),FALSE);
 		font_switch (current->word->font, NULL);
@@ -3354,8 +3413,6 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 	} else {
 		par = add_paragraph (current, 2);
 
-reset_text_styles(parser);
-
 		par->Box.TextAlign = current->parentbox->TextAlign;
 
 		if (!ignore_colours) {
@@ -3387,6 +3444,7 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	} else {
 		leave_box (&parser->Current, TAG_CENTER);
+
 	}
 	
 	return (flags|PF_SPACE);
@@ -3844,7 +3902,10 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			char  out[100];
 			short val;
 
-			/* width and height aren't allowed negative */
+			/* width and height aren't allowed negative 
+			 * but they can be percentages which would be negative in our
+			 * classifications.  Some more work needed on all of these
+			 */
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					height = val;
@@ -3992,11 +4053,28 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (current->tbl_stack) {
 		if (flags & PF_START) {
+			short height = 0;
+			
+			if (parser->hasStyle) {
+				short em = parser->Current.word->font->Ascend;
+				short ex = parser->Current.word->font->SpaceWidth;
+				char  out[100];
+				short val;
+
+				if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
+				    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
+						height = val;
+				}
+			}
+
+			if ((height == 0) || (height == (short)0x8000))
+				height = get_value_size  (parser, KEY_HEIGHT);
+
 			table_row (current,
 			           get_value_color (parser, KEY_BGCOLOR),
 			           get_h_align     (parser, ALN_LEFT), 
 			           get_v_align     (parser, ALN_MIDDLE),
-			           get_value_size  (parser, KEY_HEIGHT), TRUE);
+			           height, TRUE);
 
 
 		} else {
