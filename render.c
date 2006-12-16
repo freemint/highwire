@@ -2991,8 +2991,10 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 
 		if (parser->hasStyle) {
-			short em = parser->Current.word->font->Ascend;
-			short ex = parser->Current.word->font->SpaceWidth;
+			/*short em = parser->Current.word->font->Ascend;
+			short ex = parser->Current.word->font->SpaceWidth;*/
+			short em = parser->Current.font->Size;
+			short ex = parser->Current.font->Size/2; 
 			char  out[100];
 			short val;
 
