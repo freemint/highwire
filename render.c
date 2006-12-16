@@ -185,8 +185,8 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 			size = (size + 128) >> 8;
 			break;
 		default:
-			/*size = 0;*/
-			size = 0x8000; /* flag as an error ? */
+			size = 0;
+			/*size = 0x8000;*/ /* flag as an error ? */
 	}
 	if (tail) {
 		union { const char * c; char * v; } ptr;
@@ -571,19 +571,15 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * ptr = out;
 		if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
-			if (val == (short)0x8000) val = 0;
 			bf->Top = bf->Rgt = bf->Bot = bf->Lft = val;
 
 			if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
-				if (val == (short)0x8000) val = 0;
 				bf->Rgt = bf->Lft = val;
 
 				if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
-					if (val == (short)0x8000) val = 0;
 					bf->Bot = val;
 
 					if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
-						if (val == (short)0x8000) val = 0;
 						bf->Lft = val;
 					}
 				}
@@ -592,22 +588,18 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	}
 	if (get_value (parser, key+1, out, sizeof(out)) &&
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
-		if (val == (short)0x8000) val = 0;
 		bf->Bot = val;
 	}
 	if (get_value (parser, key+2, out, sizeof(out)) &&
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
-		if (val == (short)0x8000) val = 0;
 		bf->Lft = val;
 	}
 	if (get_value (parser, key+3, out, sizeof(out)) &&
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
-		if (val == (short)0x8000) val = 0;
 		bf->Rgt = val;
 	}
 	if (get_value (parser, key+4, out, sizeof(out)) &&
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
-		if (val == (short)0x8000) val = 0;
 		bf->Top = val;
 	}
 }
@@ -1079,12 +1071,13 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (get_value (parser, KEY_WIDTH, out, sizeof(out))) {
 		short width = numerical (out, NULL, parser->Current.font->Size,
 		                         parser->Current.word->font->SpaceWidth, FALSE);
+
+		/* n/i auto */
 		if (width != (short)0x8000) {
 			box->SetWidth = width;
 			box->ConBlock = TRUE;
 		}
 
-		/* isn't this reversed? shouldn't it be above setting box value */
 		if (width < -1024) {
 			width = -1024;
 		}
@@ -1092,6 +1085,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (get_value (parser, KEY_HEIGHT, out, sizeof(out))) {
 		short height = numerical (out, NULL, parser->Current.font->Size,
 		                          parser->Current.word->font->SpaceWidth, FALSE);
+
+		/* n/i auto */
 		if (height != (short)0x8000) {
 			box->SetHeight = height;
 			box->ConBlock = TRUE;
@@ -3079,9 +3074,9 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 			    && isdigit (output[0])) {
 				size = numerical (output, NULL, current->font->Size,
 			                     current->word->font->SpaceWidth, FALSE);
-			}
 
-			if (size == (short)0x8000) size = 0;
+				if (size == (short)0x8000) size = 0;
+			}
 
 			if (size > 0) {
 				if (current->prev_wrd) {
@@ -3849,7 +3844,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			char  out[100];
 			short val;
 
-			/* check on legal height values */
+			/* width and height aren't allowed negative */
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
 					height = val;
@@ -3863,13 +3858,13 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				min_wid = val;
 			}
 		}
-		if (!height) {
+
+		if ((height == 0) || (height == (short)0x8000))
 			height = get_value_size  (parser, KEY_HEIGHT);
-		}
-		if (!width) {
+
+		if ((width == 0) || (width == (short)0x8000))
 			width = get_value_size  (parser, KEY_WIDTH);
-		}
-		
+
 		/* double check height & width since I made it possible for 
 		 * values like 200% to work for other functions
 		 */
@@ -4023,10 +4018,6 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
-
-		temphgt = get_value_size  (parser, KEY_HEIGHT);
-		tempwid = get_value_size  (parser, KEY_WIDTH);
-
 		if (parser->hasStyle) {
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
@@ -4041,6 +4032,12 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 					tempwid = val;
 			}
 		}
+
+		if ((temphgt == 0) || (temphgt == (short)0x8000))
+			temphgt = get_value_size  (parser, KEY_HEIGHT);
+
+		if ((tempwid == 0) || (tempwid == (short)0x8000))
+			tempwid = get_value_size  (parser, KEY_WIDTH);
 
 		/* Table routines don't like values < -1024 */
 		if (temphgt < -1024) {
@@ -4096,9 +4093,6 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START && current->tbl_stack) {
-		temphgt = get_value_size  (parser, KEY_HEIGHT);
-		tempwid = get_value_size  (parser, KEY_WIDTH);
-
 		if (parser->hasStyle) {
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
@@ -4113,6 +4107,12 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 					tempwid = val;
 			}
 		}
+
+		if ((temphgt == 0) || (temphgt == (short)0x8000))
+			temphgt = get_value_size  (parser, KEY_HEIGHT);
+
+		if ((tempwid == 0) || (tempwid == (short)0x8000))
+			tempwid = get_value_size  (parser, KEY_WIDTH);
 
 		/* Table routines don't like values < -1024 */
 		if (temphgt < -1024) {
