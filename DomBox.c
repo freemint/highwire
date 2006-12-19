@@ -130,318 +130,299 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 	vsl_type (vdi_handle, 0); /* reset the line type */
 
 	if (This->HasBorder) {
-#if 0
-		if ((This->BorderColor.Top < 0)&&(This->BorderWidth.Top > 0)) {
-			GRECT b;
-			b.g_x = x1;
-			b.g_y = y1;
-			b.g_w = x2 - x1 +1;
-			b.g_h = y2 - y1 +1;
+		short n;
+		PXY p[2];
+		short dark1, dark2, light;
+		BOOL FlatTop = FALSE;
+		BOOL FlatBot = FALSE;
 
-			if (This->BorderColor.Top == -1) { /* outset */
-				draw_TBLR_border (&b, G_WHITE, G_LBLACK, This->BorderWidth); /* should be all */
-			} else { /* inset */
-				draw_TBLR_border (&b, G_LBLACK, G_WHITE, This->BorderWidth); /* should be all */
-			}
-		} else {
-#endif
-			short n;
-			PXY p[2];
-			short dark1, dark2, light;
-			BOOL FlatTop = FALSE;
-			BOOL FlatBot = FALSE;
+		if (This->BorderStyle.Top > BORDER_HIDDEN) {
+			n = This->BorderWidth.Top;
 
-			if (This->BorderStyle.Top > BORDER_HIDDEN) {
-				n = This->BorderWidth.Top;
+			if (n > 0) {
+				vsl_color (vdi_handle, This->BorderColor.Top);
 
-				if (n > 0) {
-					vsl_color (vdi_handle, This->BorderColor.Top);
+				switch (This->BorderStyle.Top) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					case BORDER_DOUBLE:
+						if (n < 3) {
+							This->BorderStyle.Top = BORDER_SOLID;
+						}
+						break;
+					case BORDER_INSET:
+						vsl_color (vdi_handle, G_LBLACK);
+						break;
+					case BORDER_OUTSET:
+						vsl_color (vdi_handle, G_WHITE);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
 
-					switch (This->BorderStyle.Top) {
-						case BORDER_DOTTED:
-							vsl_type (vdi_handle, 3);
-							break;
-						case BORDER_DASHED:
-							vsl_type (vdi_handle, 5);
-							break;
-						case BORDER_DOUBLE:
-							if (n < 3) {
-								This->BorderStyle.Top = BORDER_SOLID;
-							}
-							break;
-						case BORDER_INSET:
-							vsl_color (vdi_handle, G_LBLACK);
-							break;
-						case BORDER_OUTSET:
-							vsl_color (vdi_handle, G_WHITE);
-							break;
-						default:
-							vsl_type (vdi_handle, 0);
+				p[0].p_x = x1; p[1].p_x = x2;
+				p[0].p_y = y1; p[1].p_y = p[0].p_y;
+
+				if (This->BorderStyle.Top == BORDER_DOUBLE) {
+					dark1 = (n+1)/3;
+					light = n - (dark1 * 2);
+					dark2 = dark1;
+
+					while(1) {
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark1) break;
+						p[0].p_y++; p[1].p_y++;
 					}
-
-					p[0].p_x = x1; p[1].p_x = x2;
-					p[0].p_y = y1; p[1].p_y = p[0].p_y;
-
-					if (This->BorderStyle.Top == BORDER_DOUBLE) {
-						dark1 = (n+1)/3;
-						light = n - (dark1 * 2);
-						dark2 = dark1;
-
-						while(1) {
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark1) break;
-							p[0].p_y++; p[1].p_y++;
-						}
-						while(1) {
-							p[0].p_y++; p[1].p_y++;
-							if (!--light) break;
-						}		
-						while(1) {
-							p[0].p_y++; p[1].p_y++;
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark2) break;
-						}
-					} else {
-						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
-							if (!--n) break;
-							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
-							p[0].p_y++;  p[1].p_y++;
-						}
+					while(1) {
+						p[0].p_y++; p[1].p_y++;
+						if (!--light) break;
+					}		
+					while(1) {
+						p[0].p_y++; p[1].p_y++;
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark2) break;
 					}
 				} else {
-					FlatTop = TRUE;
+					while(1) {
+						v_pline (vdi_handle, 2, (short*)p);
+						if (!--n) break;
+						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+						p[0].p_y++;  p[1].p_y++;
+					}
 				}
 			} else {
 				FlatTop = TRUE;
 			}
+		} else {
+			FlatTop = TRUE;
+		}
 
-			if (This->BorderStyle.Bot > BORDER_HIDDEN) {
-				n = This->BorderWidth.Bot;
+		if (This->BorderStyle.Bot > BORDER_HIDDEN) {
+			n = This->BorderWidth.Bot;
 
-				if (n > 0) {
-					vsl_color (vdi_handle, This->BorderColor.Bot);
+			if (n > 0) {
+				vsl_color (vdi_handle, This->BorderColor.Bot);
 
-					switch (This->BorderStyle.Bot) {
-						case BORDER_DOTTED:
-							vsl_type (vdi_handle, 3);
-							break;
-						case BORDER_DASHED:
-							vsl_type (vdi_handle, 5);
-							break;
-						case BORDER_DOUBLE:
-							if (n < 3) {
-								This->BorderStyle.Bot = BORDER_SOLID;
-							}
-							break;
-						case BORDER_INSET:
-							vsl_color (vdi_handle, G_WHITE);
-							break;
-						case BORDER_OUTSET:
-							vsl_color (vdi_handle, G_LBLACK);
-							break;
-						default:
-							vsl_type (vdi_handle, 0);
+				switch (This->BorderStyle.Bot) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					case BORDER_DOUBLE:
+						if (n < 3) {
+							This->BorderStyle.Bot = BORDER_SOLID;
+						}
+						break;
+					case BORDER_INSET:
+						vsl_color (vdi_handle, G_WHITE);
+						break;
+					case BORDER_OUTSET:
+						vsl_color (vdi_handle, G_LBLACK);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
+				p[0].p_x = x1; p[1].p_x = x2;
+				p[0].p_y = y2; p[1].p_y = p[0].p_y;
+
+				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
+					dark1 = (n+1)/3;
+					light = n - (dark1 * 2);
+					dark2 = dark1;
+
+					while(1) {
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark1) break;
+						p[0].p_y--;  p[1].p_y--;
 					}
-
-					p[0].p_x = x1; p[1].p_x = x2;
-					p[0].p_y = y2; p[1].p_y = p[0].p_y;
-
-					if (This->BorderStyle.Bot == BORDER_DOUBLE) {
-						dark1 = (n+1)/3;
-						light = n - (dark1 * 2);
-						dark2 = dark1;
-
-						while(1) {
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark1) break;
-							p[0].p_y--;  p[1].p_y--;
-						}
-						while(1) {
-							p[0].p_y--;  p[1].p_y--;
-							if (!--light) break;
-						}		
-						while(1) {
-							p[0].p_y--;  p[1].p_y--;
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark2) break;
-						}
-					} else {
-						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
-							if (!--n) break;
-							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
-							p[0].p_y--;  p[1].p_y--;
-						}
+					while(1) {
+						p[0].p_y--;  p[1].p_y--;
+						if (!--light) break;
+					}		
+					while(1) {
+						p[0].p_y--;  p[1].p_y--;
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark2) break;
 					}
 				} else {
-					FlatBot = TRUE;
+					while(1) {
+						v_pline (vdi_handle, 2, (short*)p);
+						if (!--n) break;
+						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+						p[0].p_y--;  p[1].p_y--;
+					}
 				}
 			} else {
 				FlatBot = TRUE;
 			}
+		} else {
+			FlatBot = TRUE;
+		}
 
-			if (This->BorderStyle.Lft > BORDER_HIDDEN) {
-				n = This->BorderWidth.Lft;
+		if (This->BorderStyle.Lft > BORDER_HIDDEN) {
+			n = This->BorderWidth.Lft;
 
-				if (n > 0) {
+			if (n > 0) {
+				vsl_color (vdi_handle, This->BorderColor.Lft);
+
+				switch (This->BorderStyle.Lft) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					case BORDER_DOUBLE:
+						if (n < 3) {
+							This->BorderStyle.Lft = BORDER_SOLID;
+						}
+						break;
+					case BORDER_INSET:
+						vsl_color (vdi_handle, G_LBLACK);
+						break;
+					case BORDER_OUTSET:
+						vsl_color (vdi_handle, G_WHITE);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
+				p[0].p_x = x1; p[1].p_x = p[0].p_x;
+				p[0].p_y = y1; p[1].p_y = y2;
+
+				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
+					dark1 = (n+1)/3;
+					light = n - (dark1 * 2);
+					dark2 = dark1;
+
+					while(1) {
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark1) break;
+						p[0].p_x++;  p[1].p_x++;
+
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+					}
+
+					/* be nice to find the parent background color for this */
+					vsl_color (vdi_handle, G_WHITE);
+
+					while(1) {
+						p[0].p_x++;  p[1].p_x++;
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+						v_pline(vdi_handle, 2, (short*)p);
+
+						if (!--light) break;
+					}		
+
 					vsl_color (vdi_handle, This->BorderColor.Lft);
 
-					switch (This->BorderStyle.Lft) {
-						case BORDER_DOTTED:
-							vsl_type (vdi_handle, 3);
-							break;
-						case BORDER_DASHED:
-							vsl_type (vdi_handle, 5);
-							break;
-						case BORDER_DOUBLE:
-							if (n < 3) {
-								This->BorderStyle.Lft = BORDER_SOLID;
-							}
-							break;
-						case BORDER_INSET:
-							vsl_color (vdi_handle, G_LBLACK);
-							break;
-						case BORDER_OUTSET:
-							vsl_color (vdi_handle, G_WHITE);
-							break;
-						default:
-							vsl_type (vdi_handle, 0);
+					while(1) {
+						p[0].p_x++;  p[1].p_x++;
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark2) break;
 					}
-
-					p[0].p_x = x1; p[1].p_x = p[0].p_x;
-					p[0].p_y = y1; p[1].p_y = y2;
-
-					if (This->BorderStyle.Bot == BORDER_DOUBLE) {
-						dark1 = (n+1)/3;
-						light = n - (dark1 * 2);
-						dark2 = dark1;
-
-						while(1) {
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark1) break;
-							p[0].p_x++;  p[1].p_x++;
-
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-						}
-
-						/* be nice to find the parent background color for this */
-						vsl_color (vdi_handle, G_WHITE);
-
-						while(1) {
-							p[0].p_x++;  p[1].p_x++;
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-							v_pline(vdi_handle, 2, (short*)p);
-
-							if (!--light) break;
-						}		
-
-						vsl_color (vdi_handle, This->BorderColor.Lft);
-
-						while(1) {
-							p[0].p_x++;  p[1].p_x++;
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark2) break;
-						}
-					} else {
-						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
-							if (!--n) break;
-							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-							p[0].p_x++;  p[1].p_x++;
-						
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-						}
+				} else {
+					while(1) {
+						v_pline (vdi_handle, 2, (short*)p);
+						if (!--n) break;
+						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+						p[0].p_x++;  p[1].p_x++;
+					
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
 					}
 				}
 			}
+		}
 
-			if (This->BorderStyle.Rgt > BORDER_HIDDEN) {
-				n = This->BorderWidth.Rgt;
+		if (This->BorderStyle.Rgt > BORDER_HIDDEN) {
+			n = This->BorderWidth.Rgt;
 
-				if (n > 0) {
-					vsl_color (vdi_handle, This->BorderColor.Rgt);
+			if (n > 0) {
+				vsl_color (vdi_handle, This->BorderColor.Rgt);
 	
-					switch (This->BorderStyle.Rgt) {
-						case BORDER_DOTTED:
-							vsl_type (vdi_handle, 3);
-							break;
-						case BORDER_DASHED:
-							vsl_type (vdi_handle, 5);
-							break;
-						case BORDER_DOUBLE:
-							if (n < 3) {
-								This->BorderStyle.Rgt = BORDER_SOLID;
-							}
-							break;
-						case BORDER_INSET:
-							vsl_color (vdi_handle, G_WHITE);
-							break;
-						case BORDER_OUTSET:
-							vsl_color (vdi_handle, G_LBLACK);
-							break;
-						default:
-							vsl_type (vdi_handle, 0);
+				switch (This->BorderStyle.Rgt) {
+					case BORDER_DOTTED:
+						vsl_type (vdi_handle, 3);
+						break;
+					case BORDER_DASHED:
+						vsl_type (vdi_handle, 5);
+						break;
+					case BORDER_DOUBLE:
+						if (n < 3) {
+							This->BorderStyle.Rgt = BORDER_SOLID;
+						}
+						break;
+					case BORDER_INSET:
+						vsl_color (vdi_handle, G_WHITE);
+						break;
+					case BORDER_OUTSET:
+						vsl_color (vdi_handle, G_LBLACK);
+						break;
+					default:
+						vsl_type (vdi_handle, 0);
+				}
+
+				p[0].p_x = x2; p[1].p_x = p[0].p_x;
+				p[0].p_y = y1; p[1].p_y = y2;
+	
+				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
+					dark1 = (n+1)/3;
+					light = n - (dark1 * 2);
+					dark2 = dark1;
+
+					while(1) {
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark1) break;
+						p[0].p_x--;  p[1].p_x--;
+
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
 					}
 
-					p[0].p_x = x2; p[1].p_x = p[0].p_x;
-					p[0].p_y = y1; p[1].p_y = y2;
-	
-					if (This->BorderStyle.Bot == BORDER_DOUBLE) {
-						dark1 = (n+1)/3;
-						light = n - (dark1 * 2);
-						dark2 = dark1;
+					/* be nice to find the parent background color for this */
+					vsl_color (vdi_handle, G_WHITE);
 
-						while(1) {
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark1) break;
-							p[0].p_x--;  p[1].p_x--;
+					while(1) {
+						p[0].p_x--;  p[1].p_x--;
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--light) break;
+					}		
 
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-						}
+					vsl_color (vdi_handle, This->BorderColor.Lft);
 
-						/* be nice to find the parent background color for this */
-						vsl_color (vdi_handle, G_WHITE);
-
-						while(1) {
-							p[0].p_x--;  p[1].p_x--;
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-							v_pline(vdi_handle, 2, (short*)p);
-
-							if (!--light) break;
-						}		
-
-						vsl_color (vdi_handle, This->BorderColor.Lft);
-
-						while(1) {
-							p[0].p_x--;  p[1].p_x--;
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-							v_pline(vdi_handle, 2, (short*)p);
-							if (!--dark2) break;
-						}
-					} else {
-						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
-							if (!--n) break;
-							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-							p[0].p_x--;  p[1].p_x--;
-							if (!FlatTop) p[0].p_y++;  
-							if (!FlatBot) p[1].p_y--;
-						}
+					while(1) {
+						p[0].p_x--;  p[1].p_x--;
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+						v_pline(vdi_handle, 2, (short*)p);
+						if (!--dark2) break;
+					}
+				} else {
+					while(1) {
+						v_pline (vdi_handle, 2, (short*)p);
+						if (!--n) break;
+						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+						p[0].p_x--;  p[1].p_x--;
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
 					}
 				}
 			}
-#if 0
-		} 
-#endif
+		}
 
 		x1 += This->BorderWidth.Lft;
 		x2 -= This->BorderWidth.Rgt;
