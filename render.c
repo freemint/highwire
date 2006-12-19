@@ -3349,6 +3349,9 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		box = render_hrule (&parser->Current, get_h_align (parser, ALN_CENTER),
 		                    get_value_size (parser, KEY_WIDTH), size, !noshade);
+
+		css_box_styles  (parser, box, box->TextAlign);
+
 		if (noshade || size >= 2) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color < 0) {
@@ -3359,9 +3362,13 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 			} else if (color != parser->Current.backgnd) {
 				box->Backgnd = color;
 			}
-		}
 
-		css_box_styles  (parser, box, box->TextAlign);
+			box->BorderWidth.Top = 1;
+
+			box->BorderWidth.Bot = 
+			box->BorderWidth.Lft = box->BorderWidth.Rgt = 0;
+
+		} 
 
 		flags |= PF_SPACE;
 	}
@@ -4769,10 +4776,11 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	box->HtmlCode = TAG_HR;
 
 	box->HasBorder = TRUE;
-		
+
 	if (shade) {
-		box->BorderWidth.Top = box->BorderWidth.Bot = 
-		box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
+		box->BorderWidth.Top = 1;
+		box->BorderWidth.Bot = 
+		box->BorderWidth.Lft = box->BorderWidth.Rgt = 0;
 
 		box->BorderStyle.Top = box->BorderStyle.Bot = 
 		box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_INSET;
