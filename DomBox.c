@@ -1247,10 +1247,13 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 
 				blocker->R.width += box->Rect.W;
 
+				/* The following is bad but stored here as
+				 * a clue to the real culprit
+				 
 				if (box->BoxClass == BC_TABLE) {
-					height += box->Rect.H;
+					height += box->Rect.H;	
 				}
-
+				*/
 				goto case_FLT_MASK;
 			case FLT_LEFT:
 				box->Rect.X += blocker->L.width;
@@ -1258,10 +1261,14 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 					 blocker->L.bottom = height + box->Rect.H;
 				blocker->L.width += box->Rect.W;
 
+				/* The following is bad but stored here as
+				 * a clue to the real culprit
+				 
 				if (box->BoxClass == BC_TABLE) {
 					height += box->Rect.H;	
 				}
-
+				*/
+				
 				goto case_FLT_MASK;
 			case_FLT_MASK:
 				if (This->Rect.H < box->Rect.Y + box->Rect.H) {
