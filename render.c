@@ -3347,6 +3347,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		} else if (size == 1) {
 			noshade = TRUE;
 		}
+
 		box = render_hrule (&parser->Current, get_h_align (parser, ALN_CENTER),
 		                    get_value_size (parser, KEY_WIDTH), size, !noshade);
 
@@ -3357,18 +3358,21 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 			if (color < 0) {
 				color = get_value_color (parser, KEY_BGCOLOR);
 			}
+
 			if (color < 0 && noshade) {
 				box->Backgnd = G_LBLACK;
 			} else if (color != parser->Current.backgnd) {
+				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = color;
 				box->Backgnd = color;
+			} 
+
+			if (!noshade && (box->BorderColor.Bot == G_BLACK)) {
+				box->BorderColor.Rgt = box->BorderColor.Bot = G_LBLACK;
 			}
-
-			box->BorderWidth.Top = 1;
-
-			box->BorderWidth.Bot = 
-			box->BorderWidth.Lft = box->BorderWidth.Rgt = 0;
-
 		} 
+
+		/* over ride css default value? */
+		box->BorderWidth.Top = box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
 
 		flags |= PF_SPACE;
 	}
@@ -4780,10 +4784,10 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	if (shade) {
 		box->BorderWidth.Top = 1;
 		box->BorderWidth.Bot = 
-		box->BorderWidth.Lft = box->BorderWidth.Rgt = 0;
+		box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
 
 		box->BorderStyle.Top = box->BorderStyle.Bot = 
-		box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_INSET;
+		box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_SOLID; /*BORDER_INSET;*/
 
 		size -= 2;
 	}
