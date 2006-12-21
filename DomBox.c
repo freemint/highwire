@@ -1010,7 +1010,8 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 					}
 				} else {
 					if (parent_box) {
-						box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
+						/*box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;*/
+						box->Rect.X = parent_box->Padding.Lft + parent_box->Margin.Lft + box->SetPos.Lft;
 						set_width = parent_box->Rect.W - box->Rect.X; 
 					} else {
 						box->Rect.X = box->SetPos.Lft;
@@ -1029,14 +1030,12 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 						 * values, but that will take some work to implement
 						 */
 						 ;
+printf("percentage top %ld\r\n",box->SetPos.Top);
 					}
 				} else {
 					if (parent_box) {
-						box->Rect.Y = box->SetPos.Top;
-						/* This really needs the following, but it only
-						 * works on some pages...
-						 */
-						/*box->Rect.Y = parent_box->Rect.H + box->SetPos.Top;*/
+						box->Rect.Y = parent_box->Padding.Top + parent_box->Margin.Top + box->SetPos.Top;
+/*printf("parent M Top %d P Top %d   \r\n",parent_box->Margin.Top,parent_box->Padding.Top);*/
 					} else {
 						box->Rect.Y = box->SetPos.Top;
 					}
@@ -1233,7 +1232,8 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 			if (box->SetPos.Bot > NO_SET_POSITION ) {
 				if (box->SetPos.Top == NO_SET_POSITION) {
 					 /* This isn't right.  If we have a top then we should extend the height of the object */
-					box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);
+					/*box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);*/
+					box->Rect.Y -= (box->SetPos.Bot + parent_box->Padding.Bot + parent_box->Margin.Bot + box->Rect.H);
 				}
 			} 
 		}
