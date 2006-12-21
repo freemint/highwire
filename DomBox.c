@@ -1030,7 +1030,7 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 						 * values, but that will take some work to implement
 						 */
 						 ;
-printf("percentage top %ld\r\n",box->SetPos.Top);
+printf("percentage top %d\r\n",box->SetPos.Top);
 					}
 				} else {
 					if (parent_box) {
