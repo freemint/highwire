@@ -1552,7 +1552,7 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_HEAD_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 
 	if (flags & PF_START) {
 		/* don't know */
@@ -3620,7 +3620,7 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_ADDRESS_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -3997,7 +3997,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_CAPTION_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4013,7 +4013,7 @@ render_CAPTION_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_THEAD_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4029,7 +4029,7 @@ render_THEAD_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TBODY_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4045,7 +4045,7 @@ render_TBODY_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_TFOOT_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4344,7 +4344,7 @@ render_TEXTAREA_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_FIELDSET_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4360,7 +4360,7 @@ render_FIELDSET_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_LEGEND_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
@@ -4376,7 +4376,7 @@ render_LEGEND_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_LABEL_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	UNUSED (text);
+	(void)parser; (void)text;
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
