@@ -286,7 +286,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				size = numerical (tail, NULL, em, ex, TRUE);
 
 				if (size == (short)0x8000) size = 0;
-									
+
 				if (size > 0) {
 					fontstack_setSize (current, size);
 					p = tail;
@@ -607,6 +607,7 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Top = val;
 	}
+
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1306,7 +1307,7 @@ leave_box (TEXTBUFF current, WORD tag)
 		par->Box.TextAlign = box->Parent->TextAlign;
 		
 		fontstack_pop (current);
-		
+
 		{	/* find the next box below with valid background color */
 			DOMBOX * tmp = box;
 			do if (tmp->Backgnd >= 0) {
@@ -2393,7 +2394,9 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 /*				css_box_styles  (parser, &current->paragraph->Box,
 		                 current->paragraph->Box.TextAlign);
 */		
-		css_text_styles (parser, NULL);
+		if (parser->hasStyle) {
+			css_text_styles (parser, NULL);
+		}
 	} else {
 		fontstack_pop (&parser->Current);
 	}
@@ -3366,8 +3369,10 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 				box->Backgnd = color;
 			} 
 
-			if (!noshade && (box->BorderColor.Bot == G_BLACK)) {
-				box->BorderColor.Rgt = box->BorderColor.Bot = G_LBLACK;
+			if (!noshade) {
+				if ((box->BorderColor.Bot == -1) || (box->BorderColor.Bot == G_BLACK)) {
+					box->BorderColor.Rgt = box->BorderColor.Bot = G_LBLACK;
+				}
 			}
 		} 
 
@@ -3415,12 +3420,14 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_color (current, current->parentbox->FontStk->Color);
 			}
 		}
-
-		/* watch if this causes problems */
-		fontstack_push (current, -1);
-		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
-		css_text_styles (parser, current->font);
-
+		
+		if (parser->hasStyle) {
+			/* watch if this causes problems */
+			fontstack_push (current, -1);
+			css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
+			css_text_styles (parser, current->font);
+		}
+		
 		box_anchor (parser, &par->Box, FALSE);
 
 	} else {
