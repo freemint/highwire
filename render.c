@@ -2198,9 +2198,7 @@ render_B_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		word_set_bold (&parser->Current, (flags & PF_START));
 
-		if (parser->hasStyle) {
-			css_text_styles (parser, parser->Current.font);
-		}
+		css_text_styles (parser, parser->Current.font);
 	} else {
 		word_set_bold (&parser->Current, (flags & PF_START));
 
@@ -2394,9 +2392,7 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 /*				css_box_styles  (parser, &current->paragraph->Box,
 		                 current->paragraph->Box.TextAlign);
 */		
-		if (parser->hasStyle) {
-			css_text_styles (parser, NULL);
-		}
+		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
 	}
@@ -2418,9 +2414,7 @@ render_I_tag (PARSER parser, const char ** text, UWORD flags)
 		fontstack_push (current, -1);
 		word_set_italic (&parser->Current, TRUE);
 
-		if (parser->hasStyle) {
-			css_text_styles (parser, current->font);
-		}
+		css_text_styles (parser, current->font);
 	} else {
 		word_set_italic (&parser->Current, FALSE);
 		fontstack_pop (&parser->Current);
@@ -3421,12 +3415,10 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		
-		if (parser->hasStyle) {
-			/* watch if this causes problems */
-			fontstack_push (current, -1);
-			css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
-			css_text_styles (parser, current->font);
-		}
+		/* watch if this causes problems */
+		fontstack_push (current, -1);
+		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
+		css_text_styles (parser, current->font);
 		
 		box_anchor (parser, &par->Box, FALSE);
 
