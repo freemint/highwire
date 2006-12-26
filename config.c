@@ -27,14 +27,10 @@ BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_UseCSS       = TRUE;
-BOOL         cfg_AVWindow  = FALSE;
+BOOL         cfg_AVWindow     = FALSE;
 BOOL         cfg_GlobalCycle  = FALSE;
 WORD         cfg_ConnTout     = 1;
 WORD         cfg_ConnRetry    = 3;
-WORD         cfg_Start_X      = 0;
-WORD         cfg_Start_Y      = 0;
-WORD         cfg_Start_W      = 0;
-WORD         cfg_Start_H      = 0;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
@@ -246,38 +242,10 @@ cfg_startpage (char * param, long arg)
 
 /*----------------------------------------------------------------------------*/
 static void
-cfg_start_x (char * param, long arg)
+cfg_brwsr_geo (char * param, long arg)
 {
-	long n = atol (param);
 	(void)arg;
-	if (n > 0) cfg_Start_X = n;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-cfg_start_y (char * param, long arg)
-{
-	long n = atol (param);
-	(void)arg;
-	if (n > 0) cfg_Start_Y = n;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-cfg_start_w (char * param, long arg)
-{
-	long n = atol (param);
-	(void)arg;
-	if (n > 0) cfg_Start_W = n;
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-cfg_start_h (char * param, long arg)
-{
-	long n = atol (param);
-	(void)arg;
-	if (n > 0) cfg_Start_H = n;
+	hwWind_setup (HWWS_GEOMETRY, (long)param);
 }
 
 
@@ -605,13 +573,14 @@ read_config(void)
 				void       (*func)(char*, long);
 				long         arg;
 			} cfg[] = {
-				{ "AV_WINDOW",             cfg_avwin,    0 },		
+				{ "AV_WINDOW",            cfg_avwin,    0 },		
 				{ "BOLD_HEADER",          cfg_font,      FA(header_font, 1, 0)  },
 				{ "BOLD_ITALIC_HEADER",   cfg_font,      FA(header_font, 1, 1)  },
 				{ "BOLD_ITALIC_NORMAL",   cfg_font,      FA(normal_font, 1, 1)  },
 				{ "BOLD_ITALIC_TELETYPE", cfg_font,      FA(pre_font,    1, 1)  },
 				{ "BOLD_NORMAL",          cfg_font,      FA(normal_font, 1, 0)  },
 				{ "BOLD_TELETYPE",        cfg_font,      FA(pre_font,    1, 0)  },
+				{ "BRWSR_GEO",            cfg_brwsr_geo, 0 },
 				{ "CACHEDIR",             cfg_cachedir,  0 },
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
 				{ "CACHEMEM",             cfg_cachemem,  0 },
@@ -635,11 +604,7 @@ read_config(void)
 				{ "NO_IMAGE",             cfg_BOOL,      (long)&cfg_DropImages  },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
-				{ "START_H",              cfg_start_h,   0 },
 				{ "START_PAGE",           cfg_startpage, 0 },
-				{ "START_W",              cfg_start_w,   0 },
-				{ "START_X",              cfg_start_x,   0 },
-				{ "START_Y",              cfg_start_y,   0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0)  },
 				{ "TIMEOUT_CONNECT",      cfg_tout_conn, 0 },
 				{ "TIMEOUT_HEADER",       cfg_tout_hdr,  0 },

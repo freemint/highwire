@@ -21,14 +21,6 @@
 #include "dragdrop.h"
 
 
-/* From config.c - could be put in global.h  */
-/* starting coordinates for start window     */
-extern WORD         cfg_Start_X; 
-extern WORD         cfg_Start_Y;
-extern WORD         cfg_Start_W;
-extern WORD         cfg_Start_H;
-
-
 #define WINDOW_t HwWIND
 #include "hwWind.h"
 static WINDOW vTab_destruct(HwWIND);
@@ -64,6 +56,7 @@ static WORD  inc_xy = 0;
 static WORD  widget_b, widget_w, widget_h;
 static GRECT desk_area;
 static GRECT curr_area;
+static GRECT save_area = { -1, -1, 0, 0 };
 static WORD  tbar_set = +21;
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
@@ -184,6 +177,65 @@ hwWind_setup (HWWIND_SET set, long arg)
 			else if (arg < 0) tbar_set = -21;
 			else              tbar_set = 0;
 			break;
+		
+		case HWWS_GEOMETRY: {
+			char* str = (char*)arg;
+			if (*str != '+') {
+				WORD w = strtol (str, &str, 16);
+				if (*str == 'x' && (long)str > arg) {
+					WORD h = strtol (++str, &str, 16);
+					if ((long)str > arg) {
+						save_area.g_w = w;
+						save_area.g_h = h;
+						arg = (long)str;
+					}
+				}
+			}
+			if (*str == '+') {
+				WORD x = strtol (++str, &str, 16);
+				if (*str == '+' && (long)str > arg +1) {
+					WORD y = strtol (++str, &str, 16);
+					if ((long)str > arg +2) {
+						save_area.g_x = x;
+						save_area.g_y = y;
+						arg = (long)str;
+					}
+				}
+			}
+		}	break;
+	}
+}
+
+/*============================================================================*/
+void
+hwWind_store (HWWIND_SET set)
+{
+	switch (set) {
+		
+		case HWWS_INFOBAR:
+		case HWWS_TOOLBAR:
+			break;   /* not in use yet */
+		
+		case HWWS_GEOMETRY: {
+			char buff[30], * p = buff;
+			if (save_area.g_w > 0 && save_area.g_h > 0) {
+				WORD w = ((long)save_area.g_w * 0x7FFF) / desk_area.g_w;
+				WORD h = ((long)save_area.g_h * 0x7FFF) / desk_area.g_h;
+				sprintf (p, "%04hXx%04hX", w, h);
+				p = strchr (p, '\0');
+			}
+			if (save_area.g_x > 0 && save_area.g_y > 0) {
+				WORD x = ((long)(save_area.g_x - desk_area.g_x) * 0x7FFF)
+				         / (desk_area.g_w - desk_area.g_x);
+				WORD y = ((long)(save_area.g_y - desk_area.g_y) * 0x7FFF)
+				         / (desk_area.g_h - desk_area.g_y);
+				sprintf (p, "+%04hX+%04hX", x, y);
+				p = strchr (p, '\0');
+			}
+			if (p > buff) {
+				save_config ("BRWSR_GEO", buff);
+			}
+		}	break;
 	}
 }
 
@@ -197,41 +249,6 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
 	short  i;
-	
-	/* Check for config start position values */
-	if (!inc_xy && cfg_Start_W) {
-		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
-		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
-		widget_b = desk_area.g_x - curr_area.g_x;
-		widget_w = curr_area.g_w - desk_area.g_w;
-		widget_h = curr_area.g_h - desk_area.g_h;
-
-		inc_xy   = max (widget_w, widget_h) - widget_b;
-
-		curr_area.g_x = cfg_Start_X;
-		curr_area.g_y = cfg_Start_Y;
-		curr_area.g_w = cfg_Start_W;
-		curr_area.g_h = cfg_Start_H;	
-
-		/* a few tests to make certain that the window is on the
-		 * screen and that it fits on the screen
-		 */
-		if ((curr_area.g_x < 0) || (curr_area.g_x > desk_area.g_w))
-			inc_xy = 0;
-		
-		if ((curr_area.g_y < desk_area.g_y) || (curr_area.g_y > desk_area.g_h))
-			inc_xy = 0;
-
-		if ((curr_area.g_w > desk_area.g_w) || (curr_area.g_h > desk_area.g_h))
-			inc_xy = 0;
-
-		curr_area.g_x -= inc_xy;
-		curr_area.g_y -= inc_xy;
-
-		if (!ignore_colours) {
-			info_bgnd = G_LWHITE;
-		}
-	}
 	
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
@@ -248,6 +265,41 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 			curr_area.g_y = desk_area.g_y + inc_xy;
 			curr_area.g_w = (desk_area.g_w *3) /4;
 			curr_area.g_h = (desk_area.g_h *3) /4;
+		}
+		if (save_area.g_w > 0 && save_area.g_h > 0) {
+			WORD w = ((long)save_area.g_w * desk_area.g_w) / 0x7FFFu;
+			WORD h = ((long)save_area.g_h * desk_area.g_h) / 0x7FFFu;
+			curr_area.g_w = max (w, inc_xy *7);
+			curr_area.g_h = max (h, inc_xy *6);
+			if (curr_area.g_w != w || curr_area.g_h != h) {
+				save_area.g_w = curr_area.g_w;
+				save_area.g_h = curr_area.g_h;
+			} else {
+				save_area.g_w = save_area.g_w = 0;
+			}
+		}
+		if (save_area.g_x >= 0 && save_area.g_y >= 0) {
+			BOOL ok = TRUE;
+			curr_area.g_x = ((long)save_area.g_x * (desk_area.g_w - desk_area.g_x))
+			                / 0x7FFFu + desk_area.g_x;
+			curr_area.g_y = ((long)save_area.g_y * (desk_area.g_h - desk_area.g_y))
+			                / 0x7FFFu + desk_area.g_y;
+			if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
+				curr_area.g_x = desk_area.g_x + desk_area.g_w - curr_area.g_w;
+				if (curr_area.g_x < desk_area.g_x) curr_area.g_x = desk_area.g_x;
+				ok = FALSE;
+			}
+			if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
+				curr_area.g_y = desk_area.g_y + desk_area.g_h - curr_area.g_h;
+				if (curr_area.g_y < desk_area.g_y) curr_area.g_y = desk_area.g_y;
+				ok = FALSE;
+			}
+			if (!ok) {
+				save_area.g_x = curr_area.g_x;
+				save_area.g_y = curr_area.g_y;
+			} else {
+				save_area.g_x = save_area.g_y = -1;
+			}
 		}
 		if (!ignore_colours) {
 #if 0 /* this doesn't work with MagiC yet */
@@ -268,13 +320,13 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 		
 	} else {
 		curr_area.g_x += inc_xy;
-		if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
-			curr_area.g_x = desk_area.g_x;
-		}
+   	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
+   		curr_area.g_x = desk_area.g_x;
+   	}
 		curr_area.g_y += inc_xy;
-		if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
-			curr_area.g_y = desk_area.g_y;
-		}
+   	if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
+   		curr_area.g_y = desk_area.g_y;
+   	}
 	}
 	
 	window_ctor (This, wind_kind, (name && *name ? name : url), NULL, FALSE);
@@ -670,6 +722,8 @@ vTab_moved (HwWIND This)
 {
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 	containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y + This->TbarH);
+	save_area.g_x = This->Curr.g_x;
+	save_area.g_y = This->Curr.g_y;
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -698,8 +752,8 @@ vTab_sized (HwWIND This)
 		}
 		
 	} else if (!This->Base.isFull) {
-		curr_area.g_w = This->Curr.g_w;
-		curr_area.g_h = This->Curr.g_h;
+		save_area.g_w = curr_area.g_w = This->Curr.g_w;
+		save_area.g_h = curr_area.g_h = This->Curr.g_h;
 	}
 	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);

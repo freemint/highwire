@@ -26,13 +26,6 @@ WINDOW window_Top = NULL;
 static BOOL  bevent    = -1;
 static GRECT desk_area = { 0,0, 0,0 };
 
-/* From config.c - could be put in global.h  */
-/* starting coordinates for start window     */
-extern WORD         cfg_Start_X; 
-extern WORD         cfg_Start_Y;
-extern WORD         cfg_Start_W;
-extern WORD         cfg_Start_H;
-
 
 /*============================================================================*/
 WINDOW
@@ -154,9 +147,6 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 				wind_set_grect (wind->Handle, WF_CURRXYWH, &wind->Curr);
 				wind->isFull = FALSE;
 				(*wind->moved)(wind);
-
-				cfg_Start_X = wind->Curr.g_x;
-				cfg_Start_Y = wind->Curr.g_y;
 			}
 			break;
 		
@@ -497,11 +487,6 @@ window_resize (WINDOW This, const GRECT * curr, BOOL fulled)
 	wind_set_grect (This->Handle, WF_CURRXYWH, curr);
 	wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr);
 	This->isFull = fulled;
-
-	cfg_Start_X = This->Curr.g_x;
-	cfg_Start_Y = This->Curr.g_y;
-	cfg_Start_W = This->Curr.g_w;
-	cfg_Start_H = This->Curr.g_h;
 
 	if ((*This->sized)(This)) {
 		if (sys_XAAES()) {

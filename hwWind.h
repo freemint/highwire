@@ -68,13 +68,16 @@ typedef enum {
 	                     * 2: only output to the hslider area
 	                     * 3: both methods (default setting)
 	                     * 4: application widget infobar, no realtime resizing */
-	HWWS_TOOLBAR = 0x7462u  /* 'tb' toolbar setting, arg means:
+	HWWS_TOOLBAR = 0x7462u, /* 'tb' toolbar setting, arg means:
 	                     * 0:  disabled
 	                     * >0: enabled and visible
 	                     * <0: enabled but invisible by default */
+	HWWS_GEOMETRY = 0x7767u /* 'wg' window geometry, arg points to a string
+	                     * containing the values in the format <W>x<H>+<X>+<Y> */
 } HWWIND_SET;
 
 void hwWind_setup   (HWWIND_SET, long arg);
+void hwWind_store   (HWWIND_SET);
 void hwWind_urlhist (HwWIND, const char *);
 
 void init_icons(void);
