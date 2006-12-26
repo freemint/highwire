@@ -241,6 +241,9 @@ fontsel_handler (OBJECT * tree, WORD obj)
 /*		msg[3] = fnt_wind->Handle;*/
 		msg[4] = local_font[actv_font][actv_type&1][actv_type>>1];
 		msg[5] = font_size;
+		if (actv_type==2) {			/* FNT_MONO */
+			msg[7] = 0x1000;        /* monospaced */
+		}
 		appl_write (selector, 16, msg);
 	}
 	
@@ -280,18 +283,20 @@ vTab_evMessage (WINDOW This, WORD msg[], PXY mouse, UWORD kstate)
 				select_type (-1, TRUE);
 				select_type (type, FALSE);
 			}
-			local_font[actv_font][type&1][type>>1] = msg[4];
-			set_entry (type, msg[4]);
-			objc_offset (fnt_form, obj, &rect.g_x, &rect.g_y);
-			rect.g_x -= 3;
-			rect.g_y -= 3;
-			rect.g_w =  fnt_form[obj].ob_width  +6;
-			rect.g_h =  fnt_form[obj].ob_height +3 +16;
-			window_redraw (fnt_wind, &rect);
+			if (msg[4]>0) {
+				local_font[actv_font][type&1][type>>1] = msg[4];
+				set_entry (type, msg[4]);
+				objc_offset (fnt_form, obj, &rect.g_x, &rect.g_y);
+				rect.g_x -= 3;
+				rect.g_y -= 3;
+				rect.g_w =  fnt_form[obj].ob_width  +6;
+				rect.g_h =  fnt_form[obj].ob_height +3 +16;
+				window_redraw (fnt_wind, &rect);
+			}
 		}
 		return TRUE;
 	}
-/*	printf("msg = 0x%04X\n", msg[0]);*/
+/*	printf("msg = 0x%04X\n", msg[0]); */
 	return FALSE;
 }
 
@@ -346,13 +351,45 @@ fonts_setup (WORD msg[])
 				selector = -2;
 			} else {
 				char buff[9];
-				strncpy (buff, env, 8);
-				buff[8] = '\0';
-				while (strlen (buff) < 8) {
-					strcat (buff, " ");
+				WORD i, id, len;
+				const char *p, *pathend;
+				char path[HW_PATH_MAX];
+
+				pathend = env;
+				id = -1;
+				while (pathend != NULL && id < 0)
+				{
+					p = strchr(pathend, ';');
+					if (p == NULL)
+						p = strchr(pathend, ',');
+					if (p == NULL)
+					{
+						strcpy(path, pathend);
+						pathend = NULL;
+					} else
+					{
+						len = p - pathend + 1;
+						if (len > sizeof(path))
+							len = sizeof(path);
+						strcpy(path, pathend);
+						pathend = p + 1;
+					}
+					if ((p = strrchr(path, '\\')) != NULL)
+						p++;
+					else
+						p = path;
+					for (i = 0; i < 8 && p[i] != '\0' && p[i] != '.'; i++)
+					{
+						buff[i] = p[i];
+					}
+					for (; i < 8; i++)
+						buff[i] = ' ';
+					buff[8] = '\0';
+					strupr ( buff ); 
+					id = appl_find (buff);
 				}
-				if ((n = appl_find (buff)) >= 0) {
-					selector = n;
+				if (id >= 0) {
+					selector = id;
 				}
 			}
 		}

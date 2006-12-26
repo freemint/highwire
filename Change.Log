@@ -77,6 +77,8 @@ Changes since v. 0.3.0 release (0.3.1 beta8)
     AV_WINDOW = 2:  also enables global window
                     cycling.
 
+- Drag and Drop for the URL input field
+
 - Bugfix for interlaced monochrome PNGs, a buffer
   was calculated too small.
 
