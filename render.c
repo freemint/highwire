@@ -3368,10 +3368,10 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 
 			if (!noshade) {
 				if (box->BorderColor.Bot == G_LBLACK) {
-					if (parser->Current.backgnd == G_LWHITE) {
-						box->BorderColor.Rgt = box->BorderColor.Bot = G_WHITE;
-					} else {
+					if (parser->Current.backgnd == G_WHITE) {
 						box->BorderColor.Rgt = box->BorderColor.Bot = G_LWHITE;
+					} else {
+						box->BorderColor.Rgt = box->BorderColor.Bot = G_WHITE;
 					}
 				}
 			}
