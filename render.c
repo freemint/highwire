@@ -3357,6 +3357,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 
 			if (color < 0 && noshade) {
+				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = G_LBLACK;
 				box->Backgnd = G_LBLACK;
 			} else if (color != parser->Current.backgnd) {
 				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = color;
@@ -3365,7 +3366,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 
 			if (!noshade) {
 				if ((box->BorderColor.Bot == -1) || (box->BorderColor.Bot == G_BLACK)) {
-					box->BorderColor.Rgt = box->BorderColor.Bot = G_LBLACK;
+					box->BorderColor.Rgt = box->BorderColor.Bot = G_WHITE;
 				}
 			}
 		} 
