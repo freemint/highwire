@@ -3337,6 +3337,7 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		short size    = get_value_unum   (parser, KEY_SIZE, 0);
 		BOOL  noshade = get_value_exists (parser, KEY_NOSHADE);
+		long  width = 0;
 		DOMBOX * box;
 		
 		if (size == 0 && (size = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
@@ -3348,8 +3349,16 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		box = render_hrule (&parser->Current, get_h_align (parser, ALN_CENTER),
 		                    get_value_size (parser, KEY_WIDTH), size, !noshade);
 
+		/* Track non css value */
+		width = box->SetWidth;
+		
 		css_box_styles  (parser, box, box->TextAlign);
 
+		/* reset to non css value if css changed it to 0 */
+		if ((width > 0)&&(box->SetWidth == 0)) {
+			box->SetWidth = width;
+		}
+		
 		if (noshade || size >= 2) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color < 0) {
