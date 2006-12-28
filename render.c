@@ -3360,13 +3360,19 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = G_LBLACK;
 				box->Backgnd = G_LBLACK;
 			} else if (color != parser->Current.backgnd) {
-				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = color;
 				box->Backgnd = color;
+
+				if (color < 0) color = G_LBLACK;
+				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = color;
 			} 
 
 			if (!noshade) {
-				if ((box->BorderColor.Bot == -1) || (box->BorderColor.Bot == G_BLACK)) {
-					box->BorderColor.Rgt = box->BorderColor.Bot = G_WHITE;
+				if (box->BorderColor.Bot == G_LBLACK) {
+					if (parser->Current.backgnd == G_LWHITE) {
+						box->BorderColor.Rgt = box->BorderColor.Bot = G_WHITE;
+					} else {
+						box->BorderColor.Rgt = box->BorderColor.Bot = G_LWHITE;
+					}
 				}
 			}
 		} 
