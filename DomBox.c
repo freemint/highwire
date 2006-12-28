@@ -986,7 +986,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 * So we will need to debug that code
 				 */		
 			} else {
-printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
+				printf("ERROR: THIS SHOULD NOT HAPPEN !parent_box\r\n");
 				parent_box = NULL;
 			}
 
@@ -1030,7 +1030,8 @@ printf("THIS SHOULD NOT HAPPEN !parent_box\r\n");
 						 * values, but that will take some work to implement
 						 */
 						 ;
-printf("percentage top %d\r\n",box->SetPos.Top);
+/*printf("percentage top %d\r\n",box->SetPos.Top);*/
+						box->Rect.Y = parent_box->Rect.Y + (parent_box->Rect.H * -box->SetPos.Top +512) /1024;				
 					}
 				} else {
 					if (parent_box) {
@@ -1205,7 +1206,7 @@ printf("percentage top %d\r\n",box->SetPos.Top);
 							if (box->SetPosMsk & 0x020) {
 								box->Rect.X = parent_box->Rect.W + box->SetPos.Rgt;
 							} else {
-								printf("Right: Percentage value\r\n");
+/* printf("Right: Percentage value\r\n"); */
 								box->Rect.X = parent_box->Rect.W - ((parent_box->Rect.W * -box->SetPos.Rgt +512) /1024);
 							}
 						} else {
