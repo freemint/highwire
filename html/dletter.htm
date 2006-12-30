@@ -33,72 +33,60 @@
             <td width="49%">
             <h3>A Message from the HighWire Development Team</h3>
             <hr>
-            <p><b><i>Welcome to the latest release of HighWire, version 0.3.0</i></b></p>
+            <p><b><i>Welcome to the latest release of HighWire, version 0.3.2</i></b></p>
             <img src="images/twisted.gif"
  alt="HighWire viewing Highwire" align="right" height="131" hspace="4"
  vspace="4" width="161">
-				<p>First you are probably asking why the jump in version numbers.  Wasn't
-				this supposed to be version 0.2.8?  Well it was for awhile, then the decision
-				was made to move the version up for two solid reasons.  The first reason is
-				that there has been substantial work done in the code and some members of the
-				team argued that this validated more than just an incremental increase.  This
-				has some merit, there is also a secondary reason that helped seal the deal as
-				we say in the US.</p>
-				<p>Begining with this release, we will follow a numbering convention
-				close to that used by many other open source projects.  Internal test 
-				versions will have a beginning odd subversion number, external release 
-				versions will have a beginning even subversion number.  Examples for 
-				this would be 0.3.1x (where x would be any other number) a test snapshot 
-				or 0.3.2 which would signify a release version.  This is primarily to
-				facilitate a more regimented testing scheme and will allow us to more easily identify
-				when a bug has entered the code.</p>
-        		<p>Now on the subject of bugs, let me personally apologize to anyone that was frustated by the bugs 
-        		that crept into the 0.2.7 release.  It was accidental and we were unaware at
-        		the time that some of our standard testers were unavailable, a bad assumption
-        		was made that no complaints from them meant that they had encountered no problems.
-        		We will try to be a bit more strident in the future.  If you encounter any 
-        		problems please let us know as soon as possible.
+				<p>Almost exactly five years ago, we released version 0.01 of HighWire.  It
+				was rough, with no online access, no forms, no graphics and almost no user
+				interface.  Sometimes that five years seems like a million years and sometimes it seems
+				like just yesterday.  A lot of things have changed along the way in the world,
+				and in our lives, but HighWire like Atarians just keeps on moving along.  While releases
+				this year were fewer than we planned, development did not end.  Consequently there are a 
+				lot of good new treats awaiting you in this release. So we hope you enjoy this our Fifth Christmas release. 
         		</p>
-        		<p>So what does that mean for this release?</p>
-        		<p>Well the delayed bug reports came in after some major changes were
-        		started in certain sections of the code.  That development was frozen
-        		until such a time as this release was made.  This is mainly of note in
-        		the CSS specificity code (or weighting system).  The new system will 
-        		make some sites look much better with CSS than they ever have before.
-        		However since it's not perfected yet, it also has some strange effects
-        		on more complex sites.  This will be improved in future versions, but
-        		we didn't want to leave half the user base stuck at version 0.2.6 until
-        		this new code was finished.  So don't be surprised when sometimes a font
-        		is much larger than it used to be or is a completely different color than
-        		it should be.</p>
-        		<p>Since we were in a freeze for bug fixes, we got several put in place
-        		for this release.  The first step was the elimination of the bugs that 
-        		came into place with the christmas snapshot, where we were greatly aided
-        		by stghost who put in hours of tracing, testing and coding to help find
-        		and eliminate them.  If you see him online, be sure to thank him!  The 
-        		problematic VA_START was replaced with the correct value, so some users
-        		should finally be able to launch those external applications that never worked.
-        		And the download manager was fixed so that saving from a http1.1 server 
-        		doesn't litter the file with chunk headers.  There were several other small
-        		bugs that caused the occaisional crash squashed as well.
+        		<p>So what is <i>New</i> in this release?</p>
+        		<p>User requests were not ignored and a lot of requested items were added in 
+        		this release. Among these were an built-in Font Setup dialog that is compatible with
+        		the Font Protocol (Thing Desktop, FontSel are a couple).  So now you can change your
+        		HighWire fonts with a simple Drag &amp; Drop.  Speaking of Drag &amp; Drop, the AVSERVER code
+        		was rewritten and as a bonus the Drag &amp; Drop protocol was implemented. AV-Global window
+        		cycling is also now available and configurable in the highwire.cfg file.  
+        		</p>
+        		<p>We have also added several new key combinations for browser windows in HighWire.  Shift-Control-N
+        		now opens a completely empty browser window (with Open button) and Control-N has been modified
+        		to open a new browser window the the default startup page.  Hold Shift-Alt while clicking on a link,
+        		and it will open in a new window and be sent to the bottom. While on the subject of windows, I'll 
+        		mention that the progress bar for windows while processing has been improved and the much requested
+        		starting window position is now saved in the highwire.cfg file.
+        		</p>
+        		<p>A few of the other highlights, the request for Shift-Tab to navigate backwards in Forms, which has been implemented
+        		to a limited extent, it can be problematic on some complex forms. The idle time schedule timer was
+        		fixed and background CPU usage has been greatly reduced.  Finally a lot of the rest of the coding was
+        		on the CSS support, from positioning, specificity, border handling and implementation of CSS
+        		styles on more tags.  
         		</p>
         		<p>We hope you will find the end result to be a pleasing upgrade.
         		</p>
-            <p><EM>Main changes and additions in this versions:</EM>
+            <p><EM>Other main changes and additions in this versions:</EM>
             </p>
             <ul>
-              <li>Various bugs introduced in the 0.2.7 release fixed</li>
-              <li>Downloaded manager handles chunked transfers now</li>
-              <li>One of the long standing bugs in the VA system fixed</li>
-              <li>Table size handling improved</li>
-              <li>Highwire now attempts to interpret unterminated strings</li>
-              <li>PX sizes reduced to more closely match IE/FF display</li>
+              <li>CSS file loading mechanisms got substantially overhauled to avoid endless loops due to redirected files. This makes also downloading a bit faster, as a nice side effect (#0219)</li>
+              <li>Font-size handling refined.  Set font size can never be smaller than defined min size.</li>
+              <li>Bugfix for interlaced monochrome PNGs, a buffer was calculated too small.</li>
+              <li>Bugfix Images now scaled properly if only height or width provided.</li>
+              <li>Bugfix TH &amp; TD tag CSS Text style em &amp; ex support. (google bug fix)</li>
+              <li>Bugfix catch unterminated tags inside of H# tags</li>
+              <li>Bugfix some bad Text indent values caught.</li>
+              <li>Bugfix CSS text weight bold reset</li>
+              <li>Bugfix Open Image in new window possible when view images is disabled</li>
+              <li>Bugs #174, #0181, #0219, #0220 resolved.</li>
               <li>CSS parser has been extended and is a bit more robust</li>
-              <li>CSS speficity system in place, but still not perfect</li>
-              <li>CSS keyword Display: inline has some early first implementation</li>
-              <li>Support for CSS keywords border-top, border-bottom, border-left, border-right on many tags</li>
-              <li>Several more (but less obvious) bugs fixed.
-              </li>
+              <li>CSS speficity system improved with !important support</li>
+              <li>CSS keyword Display: none implementation</li>
+              <li>CSS border system CSS2 compliant. Styles None, Hidden, Double, Dotted, Dashed, Solid, Inset, Outset support</li>
+              <li>Support for CSS keywords Bottom, Right, Border-bottom-color, Border-bottom-style, Border-bottom-width, Border-top-color, Border-top-style, Border-top-width, Border-left-color, Border-left-style, Border-left-width, Border-right-color, Border-right-style, Border-right-width, Border-style
+              <li>Several more (but less obvious) bugs fixed.</li>
             </ul>
 As usual, more details of changes can be seen in the
             <a href="../Change.Log">Change.Log</a> file.
@@ -124,6 +112,7 @@ explanations of new configuration keywords from the last release!
 </div>
 </body>
 </html>
+
 
 
 

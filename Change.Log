@@ -1,4 +1,5 @@
-Changes since v. 0.3.0 release (0.3.1 beta8)
+__________________________________________________
+Changes in V. 0.3.2 release  of December 29, 2006:
 
 - CSS file loading mechanisms got substantially
   overhauled to avoid endless loops due to
@@ -12,13 +13,13 @@ Changes since v. 0.3.0 release (0.3.1 beta8)
   while clicking a link opens a new window and set
   it to the bottom.
 
-- New feature implemented:  SHIFT+TAB now navigates
+- New feature implemented: SHIFT+TAB now navigates
   backwards in a FORM.
 
-- New feature implemented:  Starting Window position
-  now stored in CFG file.  Saved when program exited
-  with 'Quit' from menu bar
-    
+- New feature implemented:  Starting Window
+  position now stored in CFG file.  Saved when
+  program exited with 'Quit' from menu bar.
+
 - Font Setup dialog implemented to change fonts on
   the fly.  Works only with selectors supporting
   the Font Protocol (eg. the Thing desktop).
@@ -37,35 +38,35 @@ Changes since v. 0.3.0 release (0.3.1 beta8)
 - Handling of % values in scan_numeric() modified
   (sourceforge fix).
 
-- CSS positioning system modified
+- CSS positioning system modified.
 
-- CSS border system CSS2 compliant. Styles None, 
-  Hidden, Double, Dotted, Dashed, Solid, Inset, Outset 
-  support.
- 
-- CSS display:none support added.  @media parsing 
-  improved. !important rules support added.
+- CSS border system CSS2 compliant.  Styles None,
+  Hidden, Double, Dotted, Dashed, Solid, Inset,
+  Outset support.
+
+- CSS display:none support added.  @media parsing
+  improved.  !important rules support added.
 
 - CSS specificity or weighting system changed from
   base 10 to base 100.  Avoids rules with 10 tags
   being more specific than a rule with 1 class.
 
-- CSS Tokens added: 
-  Bottom
-  Right
-  Border-bottom-color
-  Border-bottom-style
-  Border-bottom-width
-  Border-top-color
-  Border-top-style
-  Border-top-width
-  Border-left-color
-  Border-left-style
-  Border-left-width
-  Border-right-color
-  Border-right-style
-  Border-right-width
-  Border-style
+- CSS Tokens added:
+    Bottom
+    Right
+    Border-bottom-color
+    Border-bottom-style
+    Border-bottom-width
+    Border-top-color
+    Border-top-style
+    Border-top-width
+    Border-left-color
+    Border-left-style
+    Border-left-width
+    Border-right-color
+    Border-right-style
+    Border-right-width
+    Border-style
 
 - AVSERVER detection rewritten (MLUTZ) fixes
   Teradesk troubles.
@@ -77,29 +78,30 @@ Changes since v. 0.3.0 release (0.3.1 beta8)
     AV_WINDOW = 2:  also enables global window
                     cycling.
 
-- Drag and Drop for the URL input field
+- Drag and Drop for the URL input field.
 
 - Bugfix for interlaced monochrome PNGs, a buffer
   was calculated too small.
 
 - Bugfix Images now scaled properly if only height
-  or width provided
+  or width provided.
 
-- Bugfix TH & TD tag CSS Text style em & ex support.
-  (google bug fix)
+- Bugfix TH & TD tag CSS Text style em & ex
+  support (google bug fix).
 
-- Bugfix catch unterminated tags inside of H# tags
-    
+- Bugfix catch unterminated tags inside of H#
+  tags.
+
 - Bugfix some bad Text indent values caught.
 
-- Bugfix CSS text weight bold reset
-  
-- Bugfix Control-N now opens Highwire start page
-    Shift Control N opens an Empty New Window
+- Bugfix CSS text weight bold reset.
 
-- Bugfix Open Image in new window possible when view
-  images is disabled
-    
+- Bugfix CTRL+N now opens Highwire start page,
+  SHIFT+CTRL+N opens an empty New Window.
+
+- Bugfix Open Image in new window possible when
+  view images is disabled.
+
 - Bugs #174, #0181, #0219, #0220 resolved.
 
 __________________________________________________
@@ -128,7 +130,7 @@ Changes in V. 0.3.0 release  of February 07, 2006:
   before theit units;  PX sizes reduced to more
   closely match FF,IE display.
 
-- New CSS keywords implemented: border-top,
+- New CSS keywords implemented:  border-top,
   border-bottom, border-left, border-right,
   display:inline.
 
