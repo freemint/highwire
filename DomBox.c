@@ -158,7 +158,11 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_color (vdi_handle, G_LBLACK);
 						break;
 					case BORDER_OUTSET:
-						vsl_color (vdi_handle, G_WHITE);
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
 						break;
 					default:
 						vsl_type (vdi_handle, 0);
@@ -187,6 +191,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
+						v_pline (vdi_handle, 2, (short*)p);
+						n--;
+						p[0].p_y++;  p[1].p_y++;
+						vsl_color (vdi_handle, G_LBLACK);
+					}
+										
 					while(1) {
 						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
@@ -220,7 +236,11 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						}
 						break;
 					case BORDER_INSET:
-						vsl_color (vdi_handle, G_WHITE);
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
 						break;
 					case BORDER_OUTSET:
 						vsl_color (vdi_handle, G_LBLACK);
@@ -252,6 +272,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+						vsl_color (vdi_handle, G_LBLACK);
+						v_pline (vdi_handle, 2, (short*)p);
+						n--;
+						p[0].p_y--;  p[1].p_y--;
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
+					}
+
 					while(1) {
 						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
@@ -288,7 +320,11 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_color (vdi_handle, G_LBLACK);
 						break;
 					case BORDER_OUTSET:
-						vsl_color (vdi_handle, G_WHITE);
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
 						break;
 					default:
 						vsl_type (vdi_handle, 0);
@@ -312,7 +348,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					}
 
 					/* be nice to find the parent background color for this */
-					vsl_color (vdi_handle, G_WHITE);
+					/*	vsl_color (vdi_handle, G_WHITE);*/
+					vsl_color (vdi_handle, This->Parent->Backgnd);
 
 					while(1) {
 						p[0].p_x++;  p[1].p_x++;
@@ -333,6 +370,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
+						v_pline (vdi_handle, 2, (short*)p);
+						n--;
+						p[0].p_x++;  p[1].p_x++;
+						vsl_color (vdi_handle, G_LBLACK);
+					}
+
 					while(1) {
 						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
@@ -365,7 +414,11 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						}
 						break;
 					case BORDER_INSET:
-						vsl_color (vdi_handle, G_WHITE);
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
 						break;
 					case BORDER_OUTSET:
 						vsl_color (vdi_handle, G_LBLACK);
@@ -392,7 +445,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					}
 
 					/* be nice to find the parent background color for this */
-					vsl_color (vdi_handle, G_WHITE);
+					/*vsl_color (vdi_handle, G_WHITE);*/
+					vsl_color (vdi_handle, This->Parent->Backgnd);
 
 					while(1) {
 						p[0].p_x--;  p[1].p_x--;
@@ -412,6 +466,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+						vsl_color (vdi_handle, G_LBLACK);
+						v_pline (vdi_handle, 2, (short*)p);
+						n--;
+						p[0].p_x--;  p[1].p_x--;
+						if (This->Backgnd == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}
+					}
+
 					while(1) {
 						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
