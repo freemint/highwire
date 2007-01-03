@@ -3430,12 +3430,12 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 				word_set_color (current, current->parentbox->FontStk->Color);
 			}
 		}
-		
+
 		/* watch if this causes problems */
 		fontstack_push (current, -1);
 		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
 		css_text_styles (parser, current->font);
-		
+
 		box_anchor (parser, &par->Box, FALSE);
 
 	} else {
@@ -3728,11 +3728,7 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 		BULLET bullet = (current->lst_stack
 		                 ? current->lst_stack->BulletStyle %3 +1 : LT_DISC);
 		list_start (parser, current, list_bullet (parser, bullet), 0, TAG_UL);
-/*		css_box_styles  (parser, current->parentbox, ALN_LEFT);
-		css_text_styles (parser, current->font);
-*/
-		box_anchor (parser, current->parentbox, TRUE);
-	
+		box_anchor (parser, current->parentbox, TRUE);	
 	} else if (current->lst_stack) {
 		list_finish (current);
 	}
@@ -3754,9 +3750,7 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		list_start (parser, current, LT_DISC, 0, TAG_MENU);
-
 		box_anchor (parser, current->parentbox, TRUE);
-	
 	} else if (current->lst_stack) {
 		list_finish (current);
 	}
@@ -3972,17 +3966,6 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 
 		if (parser->hasStyle) {
 			DOMBOX * box = parser->Current.parentbox->ChildEnd;
-
-		#if 0
-			box_frame (parser, &box->Margin, CSS_MARGIN);
-			if (box->BorderWidth.Top) 
-			{ 
-				short color = get_value_color (parser, CSS_BORDER_COLOR);
-				if (color >= 0) 
-					box->BorderColor.Top = box->BorderColor.Bot =
-					box->BorderColor.Lft = box->BorderColor.Rgt = color;
-			}
-		#endif
 
 			css_box_styles  (parser, box, parser->Current.tbl_stack->AlignH);
 			css_text_styles (parser, parser->Current.font);
