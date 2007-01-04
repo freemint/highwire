@@ -136,6 +136,8 @@ table_start (PARSER parser, WORD color, H_ALIGN floating, WORD height,
 	if (border > 0) {
 		table->NonCssBorder = TRUE; /* Non Css border flag */
 
+		table->t_HasBorder = TRUE;
+		
 		table->t_BorderS.Top = table->t_BorderS.Bot = 
 		table->t_BorderS.Lft = table->t_BorderS.Rgt = BORDER_OUTSET;
 	} else {
