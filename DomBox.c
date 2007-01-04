@@ -272,7 +272,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Bot == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -282,8 +282,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
 						}
-					}
-
+					} 
+					
 					while(1) {
 						v_pline (vdi_handle, 2, (short*)p);
 						if (!--n) break;
@@ -370,7 +370,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Lft == BORDER_INSET)) {
 						if (This->Backgnd == G_WHITE) {
 							vsl_color (vdi_handle, G_LWHITE);
 						} else {
@@ -466,7 +466,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Rgt == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -1090,6 +1090,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (box->SetPos.Top > NO_SET_POSITION ) {
 				if (box->SetPos.Top < 0) {
 					if (box->SetPosMsk & 0x030) {
+/*printf("negative top %d\r\n",box->SetPos.Top);*/
 						box->Rect.Y -= box->SetPos.Top; /* Not exactly correct */
 					} else {
 						/* There should be an else to handle percentage
