@@ -217,13 +217,25 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						n--;
 						p[0].p_y++;  p[1].p_y++;
 						vsl_color (vdi_handle, G_LBLACK);
-					}
-										
-					while(1) {
+					} else if ((This->BoxClass == BC_TABLE) && (This->BorderStyle.Top == BORDER_OUTSET)) {
+						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
-						if (!--n) break;
-						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+						n--;
 						p[0].p_y++;  p[1].p_y++;
+						if (realbkg == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}		
+					}
+						
+					if (n > 0) {				
+						while(1) {
+							v_pline (vdi_handle, 2, (short*)p);
+							if (!--n) break;
+							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+							p[0].p_y++;  p[1].p_y++;
+						}
 					}
 				}
 			} else {
@@ -300,11 +312,13 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						}
 					} 
 					
-					while(1) {
-						v_pline (vdi_handle, 2, (short*)p);
-						if (!--n) break;
-						/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
-						p[0].p_y--;  p[1].p_y--;
+					if (n > 0) {				
+						while(1) {
+							v_pline (vdi_handle, 2, (short*)p);
+							if (!--n) break;
+							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+							p[0].p_y--;  p[1].p_y--;
+						}
 					}
 				}
 			} else {
@@ -363,9 +377,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!FlatBot) p[1].p_y--;
 					}
 
-					/* be nice to find the parent background color for this */
-					/*	vsl_color (vdi_handle, G_WHITE);*/
-					vsl_color (vdi_handle, This->Parent->Backgnd);
+					vsl_color (vdi_handle, realbkg);
 
 					while(1) {
 						p[0].p_x++;  p[1].p_x++;
@@ -396,16 +408,32 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						n--;
 						p[0].p_x++;  p[1].p_x++;
 						vsl_color (vdi_handle, G_LBLACK);
-					}
-
-					while(1) {
-						v_pline (vdi_handle, 2, (short*)p);
-						if (!--n) break;
-						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-						p[0].p_x++;  p[1].p_x++;
-					
 						if (!FlatTop) p[0].p_y++;  
 						if (!FlatBot) p[1].p_y--;
+					} else if ((This->BoxClass == BC_TABLE) && (This->BorderStyle.Lft == BORDER_OUTSET)) {
+						vsl_color (vdi_handle, G_LBLACK);
+						v_pline (vdi_handle, 2, (short*)p);
+						n--;
+						p[0].p_x++;  p[1].p_x++;
+						if (realbkg == G_WHITE) {
+							vsl_color (vdi_handle, G_LWHITE);
+						} else {
+							vsl_color (vdi_handle, G_WHITE);
+						}		
+						if (!FlatTop) p[0].p_y++;  
+						if (!FlatBot) p[1].p_y--;
+					}
+
+					if (n > 0) {				
+						while(1) {
+							v_pline (vdi_handle, 2, (short*)p);
+							if (!--n) break;
+							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+							p[0].p_x++;  p[1].p_x++;
+					
+							if (!FlatTop) p[0].p_y++;  
+							if (!FlatBot) p[1].p_y--;
+						}
 					}
 				}
 			}
@@ -460,9 +488,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!FlatBot) p[1].p_y--;
 					}
 
-					/* be nice to find the parent background color for this */
-					/*vsl_color (vdi_handle, G_WHITE);*/
-					vsl_color (vdi_handle, This->Parent->Backgnd);
+					vsl_color (vdi_handle, realbkg);
 
 					while(1) {
 						p[0].p_x--;  p[1].p_x--;
@@ -492,15 +518,20 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
 						}
-					}
-
-					while(1) {
-						v_pline (vdi_handle, 2, (short*)p);
-						if (!--n) break;
-						/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
-						p[0].p_x--;  p[1].p_x--;
+						
 						if (!FlatTop) p[0].p_y++;  
 						if (!FlatBot) p[1].p_y--;
+					}
+
+					if (n > 0) {				
+						while(1) {
+							v_pline (vdi_handle, 2, (short*)p);
+							if (!--n) break;
+							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+							p[0].p_x--;  p[1].p_x--;
+							if (!FlatTop) p[0].p_y++;  
+							if (!FlatBot) p[1].p_y--;
+						}
 					}
 				}
 			}
