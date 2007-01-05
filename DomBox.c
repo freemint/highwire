@@ -1421,15 +1421,19 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 This->Rect.H = box->Rect.Y + box->Rect.H;
 			}
 
-		#if 0
 			/* override the page minwidth in absolute positions */
 			if (This->MinWidth < box->Rect.X + box->Rect.W) {
 				This->MinWidth = box->Rect.X + box->Rect.W;
 			}
+		#if 0
 		#endif
 		}
 		
 		box = box->Sibling;
+	}
+
+	if (This->Rect.W < This->MinWidth) {
+		This->Rect.W = This->MinWidth;
 	}
 
 	if (This->Rect.H < height) {
