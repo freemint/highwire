@@ -164,6 +164,10 @@ main (int argc, char **argv)
 	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);
 #endif
 
+	/* init paths and load config */
+	init_paths();
+	read_config();
+
 	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8)) {
 /*	if (appl_xgetinfo(AES_MESSAGE, &info, &u, &u, &u) && (info & 8))*/
 		/* we know about AP_TERM message */
@@ -176,10 +180,6 @@ main (int argc, char **argv)
 		init_logging();
 	}
 	
-	/* init paths and load config */
-	init_paths();
-	read_config();
-
 	vst_load_fonts (vdi_handle, 0);
 
 	vst_scratch (vdi_handle, SCRATCH_BOTH);
