@@ -59,6 +59,9 @@ typedef struct graphic_rectangle {
 # define GRECT GRECT
 #endif
 
+#ifndef COLORS_CHANGED
+#	define COLORS_CHANGED 84   /* for shel_write(SWM_BROADCAST, ..) */
+#endif
 
 /*--- HighWire specific stuff ---*/
 
