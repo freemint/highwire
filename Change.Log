@@ -1,3 +1,12 @@
+Changes in V. 0.3.3 beta
+
+- New config keyword FIXED_CMAP for using an
+  optimized color palette and COLORS_CHANGED
+  messaging in 8 planes screen mode for speeding
+  up color remapping and better color results.
+  This palette is also always used for plane modes
+  > 8.
+
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:
 
