@@ -25,7 +25,7 @@ WINDOW window_Top = NULL;
 
 static BOOL  bevent    = -1;
 static GRECT desk_area = { 0,0, 0,0 };
-
+static BOOL  remap_pal = FALSE;
 
 /*============================================================================*/
 WINDOW
@@ -126,6 +126,12 @@ BOOL
 window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 {
 	WINDOW wind = window_byHandle (msg[3]);
+	
+	if (msg[0] == COLORS_CHANGED) {
+		remap_pal = (color_FixedMap && (planes == 8));
+		return TRUE;
+	}
+		
 	if (!wind) {
 		return FALSE;
 	}
@@ -133,6 +139,13 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 		case WM_REDRAW:   window_redraw (wind, (GRECT*)(msg + 4)); break;
 		case WM_TOPPED:   window_raise  (wind, TRUE,  NULL);       break;
 		case WM_BOTTOMED: window_raise  (wind, FALSE, NULL);       break;
+		
+		case WM_NEWTOP: case WM_ONTOP:
+			if (remap_pal) {
+				color_mapsetup();
+				remap_pal = FALSE;
+			}
+			break;
 		
 		case WM_MOVED:
 			if (wind->isIcon) {
@@ -415,6 +428,10 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	}
 	
 	if (topNbot) {
+		if (remap_pal) {
+			color_mapsetup();
+			remap_pal = FALSE;
+		}
 		if (This->Prev) {
 			if ((This->Prev->Next = This->Next) != NULL) {
 				This->Next->Prev = This->Prev;

@@ -26,6 +26,7 @@ const char * cfg_Viewer       = NULL;
 BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
+BOOL         cfg_FixedCmap    = FALSE;
 BOOL         cfg_UseCSS       = TRUE;
 BOOL         cfg_AVWindow     = FALSE;
 BOOL         cfg_GlobalCycle  = FALSE;
@@ -587,6 +588,7 @@ read_config(void)
 				{ "COOKIES",              cfg_Func,      (long)menu_cookies     },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
+				{ "FIXED_CMAP",           cfg_BOOL,      (long)&cfg_FixedCmap   },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
 				{ "FORCE_FRAMECTRL",      cfg_Func,      (long)menu_frm_ctrl    },

@@ -152,6 +152,7 @@ extern const char * cfg_StartPage;
 extern BOOL         cfg_AllowCookies;
 extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
 extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
+extern BOOL         cfg_FixedCmap;
 extern BOOL         cfg_UseCSS;
 extern BOOL         cfg_AVWindow; /* AVSERVER window enables AV-drag&drop */
 extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY */
@@ -216,9 +217,12 @@ MAPAREA  new_maparea (const char * shape, const char * coords,
 
 /* in color.c */
 
-void  save_colors  (void);
-WORD  remap_color  (long value);
-ULONG color_lookup (ULONG rgb, WORD * trans);
+extern BOOL color_FixedMap;
+void  color_mapsetup(void);
+void  save_colors   (void);
+WORD  remap_color   (long value);
+ULONG color_lookup  (WORD idx);
+void  color_tables  (ULONG cube[216], ULONG gray[32], WORD pixel_val[256]);
 
 /* in Paragrph.c */
 

@@ -1387,18 +1387,13 @@ cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
-#if 1 /* store original RGB values for dithering */
+		/* store original RGB values for dithering */
 		if (!t--) {
-			*(pal++) = color_lookup ((~0xFFuL|backgnd), pixel_val);
+			*(pal++) = color_lookup (backgnd) | ((long)pixel_val[backgnd] <<24);
 		} else {
 			ULONG rgb = ((((long)*r <<8) | *g) <<8) | *b;
 			*(pal++)  = rgb | ((long)pixel_val[remap_color (rgb)] <<24);
 		}
-#else
-		*(pal++) = color_lookup (!t-- ? (~0xFFuL|backgnd)
-                                    : (((((long)*r <<8) | *g) <<8) | *b),
-                               pixel_val);
-#endif
 		r += info->PalStep;
 		g += info->PalStep;
 		b += info->PalStep;
@@ -1417,7 +1412,7 @@ cnvpal_15 (IMGINFO info, ULONG backgnd)
 	short   n   = info->NumColors;
 	do {
 		if (!t--) {
-			ULONG  z = color_lookup ((~0xFFuL|backgnd), NULL);
+			ULONG  z = color_lookup (backgnd);
 			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<7)
 			         | ((short)(((CHAR*)&z)[2] & 0xF8) <<2)
 			         |         (((CHAR*)&z)[3]         >>3);
@@ -1444,7 +1439,7 @@ cnvpal_high (IMGINFO info, ULONG backgnd)
 	short   n   = info->NumColors;
 	do {
 		if (!t--) {
-			ULONG  z = color_lookup ((~0xFFuL|backgnd), NULL);
+			ULONG  z = color_lookup (backgnd);
 			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<8)
 			         | ((short)(((CHAR*)&z)[2] & 0xFC) <<3)
 			         |         (((CHAR*)&z)[3]         >>3);
@@ -1470,8 +1465,7 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 	    info->PalRpos == 1 && info->PalGpos == 2 && info->PalBpos == 3) {
 		ULONG * rgb = (ULONG*)info->Palette;
 		do {
-			*(pal++) = (!t-- ? color_lookup ((~0xFFuL|backgnd), NULL) & 0x00FFFFFFL
-			                 : *rgb);
+			*(pal++) = (!t-- ? color_lookup (backgnd) : *rgb);
 			rgb++;
 		} while (--n);
 	} else {
@@ -1479,7 +1473,7 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 		char  * g   = info->Palette + info->PalGpos;
 		char  * b   = info->Palette + info->PalBpos;
 		do {
-			*(pal++) = (!t-- ? color_lookup ((~0xFFuL|backgnd), NULL) & 0x00FFFFFFL
+			*(pal++) = (!t-- ? color_lookup (backgnd)
 			                 : ((((long)*r <<8) | *g) <<8) | *b);
 			r += info->PalStep;
 			g += info->PalStep;
@@ -1619,20 +1613,7 @@ rasterizer (UWORD depth, UWORD comps)
 		}
 		
 		if (sdepth == 4 || sdepth == 8) {
-			ULONG * dst;
-			ULONG   r, g, b;
-			dst = cube216;
-			for (r = 0x000000uL; r <= 0xFF0000uL; r += 0x330000uL) {
-				for (g = 0x000000uL; g <= 0x00FF00uL; g += 0x003300uL) {
-					for (b = 0x000000uL; b <= 0x0000FFuL; b += 0x000033uL) {
-						*(dst++) = color_lookup (r | g | b, pixel_val);
-					}
-				}
-			}
-			dst = graymap;
-			for (g = 0x000000uL; g <= 0xF8F8F8uL; g += 0x080808uL) {
-				*(dst++) = color_lookup (g | ((g >>5) & 0x030303uL), pixel_val);
-			}
+			color_tables (cube216, graymap, pixel_val);
 		}
 		
 		raster.DispInfo = disp_info;
