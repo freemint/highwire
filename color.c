@@ -150,14 +150,11 @@ remap_color (long value)
 	WORD best_fit = 0;
 	
 	if (color_FixedMap) {
-		if (satur < 25) { /* gray value, half of the Cube216's steps */
-			best_fit = color_GrayMap[green>>3];
-		} else {
-			WORD r = (red   *5 +127) /255;
-			WORD g = (green *5 +127) /255;
-			WORD b = (blue  *5 +127) /255;
-			best_fit = color_Cube216[(r *6 + g) *6 +b];
-		}
+		WORD r = (red   *5 +127) /255;
+		WORD g = (green *5 +127) /255;
+		WORD b = (blue  *5 +127) /255;
+		best_fit = (r == g && g == b ? color_GrayMap[(red + green + blue) /24]
+		                             : color_Cube216[(r *6 + g) *6 +b]);
 	
 	} else {
 		UWORD best_err  = 0xFFFFu;
