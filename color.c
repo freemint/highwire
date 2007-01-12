@@ -229,13 +229,13 @@ color_tables (ULONG cube[216], ULONG gray[32], WORD pixel_val[256])
 	for (i = 0; i < numberof(color_Cube216); i++) {
 		WORD  idx = color_Cube216[i];
 		ULONG rgb = *(long*)&screen_colortab[idx];
-		cube[i]   = (pixel_val[i] <<24) | (rgb & 0x00FFFFFFuL);
+		cube[i]   = ((long)pixel_val[idx] <<24) | (rgb & 0x00FFFFFFuL);
 	}
 	
 	/* copy 32 gray values */
 	for (i = 0; i < numberof(color_GrayMap); i++) {
 		WORD idx = color_GrayMap[i];
 		ULONG rgb = *(long*)&screen_colortab[idx];
-		gray[i]   = (pixel_val[i] <<24) | (rgb & 0x00FFFFFFuL);
+		gray[i]   = ((long)pixel_val[idx] <<24) | (rgb & 0x00FFFFFFuL);
 	}
 }
