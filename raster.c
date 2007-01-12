@@ -502,8 +502,12 @@ dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
 	                            <= 42 ? 0 : err[1] >= 213 ? 5 : (err[1] *3) >>7);
 	UWORD  b    = ((err[2] += (WORD)dth[2] + rgb[2])
 	                            <= 42 ? 0 : err[2] >= 213 ? 5 : (err[2] *3) >>7);
-	CHAR * irgb = (CHAR*)&cube216[(r *6 + g) *6 + b];
-	
+	CHAR * irgb;
+	if (r == g && g == b) {
+		irgb = (CHAR*)&graymap[(err[0] + err[1] + err[2]) /24];
+	} else {
+		irgb = (CHAR*)&cube216[(r *6 + g) *6 + b];
+	}
 	err[0] -= irgb[1];
 	dth[0] =  (err[0] <= -254 ? (err[0] = -127) :
 	           err[0] >= +254 ? (err[0] = +127) : (err[0] /= 2));
