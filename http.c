@@ -399,7 +399,7 @@ set_cookie (const char * beg, long len, HTTP_HDR * hdr)
 short
 http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
              short * keep_alive, long tout_msec,
-             LOCATION referer, const char * auth, const char * post_buf)
+             LOCATION referer, const char * auth, POSTDATA post_buf)
 {
 	static char buffer[2048];
 	size_t left  = sizeof(buffer) -4;
@@ -516,12 +516,13 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			}
 		}
 		if ((long)len > 0 && post_buf) {
-			long n = strlen (post_buf);
+			long n = post_buf->BufLength;
 			len = sprintf (buffer,
-			               "Content-type: application/x-www-form-urlencoded\r\n"
-			               "Content-length: %li\r\n\r\n", n);
+			               "Content-type: %s\r\n"
+			               "Content-length: %li\r\n\r\n",
+						   post_buf->ContentType, n);
 			if ((long)(len = inet_send (sock, buffer, len)) > 0 && n) {
-				len = inet_send (sock, post_buf, n);
+				len = inet_send (sock, post_buf->Buffer, n);
 			}
 		}
 		if ((long)len < 0 || (long)(len = inet_send (sock, "\r\n", 2)) < 0) {

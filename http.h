@@ -1,6 +1,7 @@
 #ifndef __HTTP_H__
 #define __HTTP_H__
 
+#include "Loader.h"
 
 typedef struct {
 	short    Version;   /* which HTTP */
@@ -23,7 +24,7 @@ void hhtp_proxy (const char * host, short port);
 
 short http_header (LOCATION, HTTP_HDR *, size_t blk_size,
                    short * keep_alive, long tout_msec,
-                   LOCATION referer, const char * auth, const char * post_buf);
+                   LOCATION referer, const char * auth, POSTDATA post_buf);
 
 long     http_date    (const char * buf);
 ENCODING http_charset (const char * buf, size_t len, MIMETYPE *);

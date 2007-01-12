@@ -46,7 +46,8 @@ typedef enum {
 	IT_BUTTN,
 	IT_SELECT,
 	IT_TEXT,
-	IT_TAREA
+	IT_TAREA,
+	IT_FILE
 } INP_TYPE;
 
 struct s_input {
@@ -99,11 +100,79 @@ static void    edit_feed (INPUT, ENCODING, const char * beg, const char * end);
 static BOOL    edit_crlf (INPUT, WORD col, WORD row);
 static BOOL    edit_char (INPUT, WORD col, WORD row, WORD chr);
 static BOOL    edit_delc (INPUT, WORD col, WORD row);
+static void form_activate_multipart (FORM form);
 #define        __edit_len(inp,a,b)   ((inp)->TextArray[b]-(inp)->TextArray[a]-1)
 #define        edit_rowln(inp,row)   __edit_len (inp, row, row +1)
 #define        __edit_r_0(inp)       ((inp)->TextArray[0])
 #define        __edit_r_r(inp)       ((inp)->TextArray[(inp)->TextRows])
 #define        edit_space(inp)       ((WCHAR*)&__edit_r_0(inp)-__edit_r_r(inp))
+
+/* Memo: UTF-8 ranges
+00-7F : 1 byte
+	( 0bbbaaaa = 7 bits )
+80-1FFF   : 2 bytes
+	( 10dccccb 0bbbaaaa = 13 bits) 
+2000-3FFFF : 3 bytes
+	( 110eeddd 10dccccb 0bbbaaaa = 18 bits)
+40000-7FFFFF : 4 bytes
+	( 1110fffe 10eeeddd 10dccccb 0bbbaaaa = 23 bits)
+800000-FFFFFFF : 5 bytes
+	( 11110ggg 10gffffe 10eeeddd 10dccccb 0bbbaaaa = 28 bits)
+10000000-1FFFFFFFF : 6 bytes
+	( 111110ih 10hhhggg 10gffffe 10eeeddd 10dccccb 0bbbaaaa = 33 bits)
+*/
+/* here's a little helper for multipart POST
+ only supporting unicode values on 16bits, thus 3 bytes utf8 sequence */
+char * unicode_to_utf8(WCHAR *src)
+{
+	int len = 0;
+	char *ret;
+	char *outptr;
+	char out;
+	WCHAR *inptr = src;
+	WCHAR in;
+	if (src == NULL)
+	{
+		return NULL;
+	}
+	while((in = *inptr++) != 0)
+	{
+		if (in < 128)	{ len++; }
+		else if (in < 0x1fff) { len += 2; }
+		else { len += 3; }
+	}
+	ret = (char*) malloc(len+1);
+	if (ret != NULL)
+	{
+		outptr = ret;
+		inptr = src;
+		while((in = *inptr++) != 0)
+		{
+			if (in < 128)
+			{
+				*outptr++ = (char)in;
+			}
+			else if (in < 0x1fff)
+			{
+				out = (char)((in >> 7) & 0x3f) | 0x80;
+				*outptr++ = out;
+				out = (char)(in & 0x7f);
+				*outptr++ = out;
+			}
+			else
+			{
+				out = (char)((in >> 13) & 0x07) | 0xc0;
+				*outptr++ = out;
+				out = (char)((in >> 7) & 0x3f) | 0x80;
+				*outptr++ = out;
+				out = (char)(in & 0x7f);
+				*outptr++ = out;
+			}
+		}
+		*outptr = 0;
+	}
+	return ret;
+}
 
 
 /*============================================================================*/
@@ -431,16 +500,24 @@ new_input (PARSER parser, WORD width)
 			if (cols > mlen) cols = mlen;
 		}
 		
+		if (*val == 'F') {
+			input = form_text (current, name,
+					   	get_value_exists (parser, KEY_READONLY) ? get_value_str (parser, KEY_VALUE) : "",
+		                   mlen, frame->Encoding, (cols ? cols : 20),
+		                   1, (*val == 'P'));
+		} else {
 		input = form_text (current, name, get_value_str (parser, KEY_VALUE),
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   get_value_exists (parser, KEY_READONLY),
 		                   (*val == 'P'));
+		}
 		
 		/* Add the browse button */
 		if (*val == 'F') {
 /*			FORM  form = current->form;*/
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
 			bttn->u.FileEd = input;
+			input->Type = IT_FILE;
 			if (width > 0) {
 				width = (width > bttn->Word->word_width
 				         ? width - bttn->Word->word_width : 1);
@@ -923,6 +1000,7 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 			}
 			break;
 		
+		case IT_FILE:
 		case IT_TAREA:
 		case IT_TEXT: {
 			FORM form = input->Form;
@@ -1036,8 +1114,10 @@ form_activate (FORM form)
 	INPUT    elem  = form->InputList;
 	LOCATION loc   = frame->Location;
 	LOADER   ldr   = NULL;
-	size_t   size  = 0, len;
-	char   * data, * url;
+	size_t	size  = 0;
+	size_t	len;
+	char 	*data;
+	char	*url;
 	
 	if (form->Method == METH_AUTH) { /* special case, internal created *
 	                                  * for HTTP Authentication        */
@@ -1085,7 +1165,40 @@ form_activate (FORM form)
 		return;
 	}
 	
-	if (elem) {
+	if (elem)
+	{
+		int nbvar = 0;
+		int nbfile = 0;
+		/* pre-check list of inputs for a type IT_FILE */
+		do
+		{
+			if (*elem->Name && elem->checked)
+			{
+				nbvar++;
+				if (elem->Type == IT_FILE)
+				{
+					nbfile++;
+				}
+			}
+			elem = elem->Next;
+		} while(elem != NULL);
+		if (nbfile > 0)
+		{
+			/* PUT only possible if single file and single item */
+			if (form->Method == METH_PUT && ((nbvar > 1) || (nbfile > 1)))
+			{
+				form->Method = METH_POST;
+			}
+			if (form->Method == METH_POST)
+			{
+				/* if file input used, switch to "multipart/form-data" enc */
+				form_activate_multipart(form);
+				return;
+			}
+		}
+		/* go back to 1st input */
+		elem = form->InputList;
+
 		do if (elem->checked && *elem->Name) {
 			size += 2 + strlen (elem->Name);
 			if (elem->Value) {
@@ -1173,14 +1286,22 @@ form_activate (FORM form)
 	
 	if (form->Method == METH_PUT) {
 		/* Here we would link the routine for uploading the file */
-		ldr = start_page_load (frame->Container, url,loc, TRUE, data);
+		POSTDATA post = NULL;
+		/* -> Call new_post with a buffer containing the content of file to upload, its length, and content type for this file */
+		/* post = new_post(?,?,?); */
+		ldr = start_page_load (frame->Container, url,loc, TRUE, post);
 		if (!ldr) free (data);
 	}else if (form->Method != METH_POST) {
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
-		ldr = start_page_load (frame->Container, url,loc, TRUE, data);
-		if (!ldr) free (data);
+		POSTDATA post = new_post(data, strlen(data), strdup("Content-Type: application/x-www-url-encoded"));
+		if (post)
+		{
+			ldr = start_page_load (frame->Container, url,loc, TRUE, post);
+			if (!ldr) delete_post (post);
+		}
+		/* TODO: add an else with an error message for user */
 	}
 	if (ldr) {
 		if (location_equalHost (loc, ldr->Location)
@@ -1192,6 +1313,226 @@ form_activate (FORM form)
 	}
 }
 
+/*============================================================================*/
+static void
+form_activate_multipart (FORM form)
+{
+	FRAME  frame = form->Frame;
+	INPUT  elem  = form->InputList;
+	LOADER   ldr   = NULL;
+	POSTDATA post  = NULL;
+	FILE *current = NULL;
+	size_t size  = 0;
+	size_t len;
+	size_t boundlen;
+	size_t flen;
+	char *data;
+	char *url;
+	char boundary[39];
+	char minihex[16] = "0123456789ABCDEF";
+	ULONG randomized;
+	WORD i;
+	char *ptr;
+	char *cnvstr;
+	char *atari;
+	WCHAR *wptr;
+	char *type;
+
+	/* build our own multipart boundary for this submitting */
+	randomized = (ULONG)Random();	/* Xbios(17) -> 24bit random value */
+	memset(boundary, '-', 38);
+	boundary[38] = 0;
+	for (i=0; i<6; i++)
+	{
+		boundary[32+i] = minihex[randomized & 0x0F];
+		randomized >>= 4;
+	}
+	boundary[30] = 'H';
+	boundary[31] = 'W';
+	boundlen = 38;
+
+	/* multipart posting is MIME-like formatted */
+	/* it's a list of bodies containing the value of each variable */
+	/* contents are not encoded, and charset of texts should be same as page */
+	i = 0;
+	do
+	{
+		if (elem->checked && *elem->Name)
+		{
+			if ((elem->Type == IT_FILE) && (elem->TextArray[0]))
+			{
+				cnvstr = unicode_to_utf8(elem->TextArray[0]);
+				if (cnvstr)
+				{
+					if (elem->Value) free(elem->Value);
+					elem->Value = cnvstr;
+				}
+				/* quick hack to get filename */
+				len = 0;
+				wptr = elem->TextArray[0];
+				while(*wptr++) len++;
+				atari = malloc(len+1);
+				len = 0;
+				wptr = elem->TextArray[0];
+				while(*wptr) { atari[len] = (char)(*wptr++); len++; }
+				atari[len] = 0;
+				/* "--" + boundary + CRLF */
+				size += 2 + boundlen + 2;
+				/* "Content-Disposition: form-data; name=\"" + Name + "\"" */
+				size += 38 + strlen(elem->Name) + 1;
+				/* "; filename=\"" + value + "\"" + CRLF */
+				size += 12 + strlen(elem->Value) + 1 + 2;
+				/* guess content-type, use "application/octet-stream" (24) now... */
+				/* then add line "Content-Type: " (14) + strlen(cnttype) + CRLF + CRLF */
+				size += 14 + 24 + 2 + 2;
+				/* then add file content (raw) + CRLF */
+				current = fopen(atari, "rb");
+				flen = 0;
+				if (current)
+				{
+					fseek (current, 0, SEEK_END);
+					flen = ftell(current);
+					fclose(current);
+				}
+				size += flen + 2;
+				free(atari);
+			}
+			else
+			{
+				/* "--" + boundary + CRLF */
+				size += 2 + boundlen + 2;
+				/* "Content-Disposition: form-data; name=\"" + Name + "\"" */
+				size += 38 + strlen(elem->Name) + 1;
+				/* CRLF + CRLF + value + CRLF */
+				size += 2;
+				/* body is the value if not a file */
+				if (elem->Value)
+				{
+					size += strlen(elem->Value);
+				}
+				else if (elem->TextArray)
+				{
+					WCHAR * beg = elem->TextArray[0];
+					WCHAR * end = elem->TextArray[elem->TextRows] -1;
+					size += (end-beg);	/* the - gives a number of entry, not byte */
+					/*while (beg < end) {
+						char c = *(beg++);
+						size += (c == ' ' || isalnum (c) ? 1 : 3);
+					}*/
+				}
+				size += 2;
+			}
+		}
+		elem = elem->Next;
+	}
+	while (elem != NULL);
+	/* "--" + boundary + "--" */
+	size += 2 + boundlen + 2;
+	/* end of post data size computing */
+
+	/* now malloc the buffer */
+	len  = 0;
+	url  = form->Action;
+	data = malloc (size +1);
+	if (data == 0)
+	{
+		/* bad luck, cannot post because not enough ram */
+		return;
+	}
+
+	/* now fill that post buffer */
+	elem = form->InputList;
+	ptr = data;
+	do
+	{
+		if (elem->checked && *elem->Name)
+		{
+			/* "--" + boundary + CRLF */
+			sprintf(ptr, "--%s\r\n", boundary);
+			ptr += 2 + boundlen + 2;
+			/* "Content-Disposition: form-data; name=\"" + Name + "\"" */
+			sprintf(ptr, "Content-Disposition: form-data; name=\"%s\"", elem->Name);
+			ptr += 38 + strlen(elem->Name) + 1;
+			if ((elem->Type == IT_FILE) && (elem->Value))
+			{
+				/* "; filename=\"" + value + "\"" + CRLF */
+				sprintf(ptr, "; filename=\"%s\"\r\n", elem->Value);
+				ptr += 12 + strlen(elem->Value) + 1 + 2;
+				/* guess content-type, use "application/octet-stream" (24) now... */
+				/* then add line "Content-Type: " (14) + strlen(cnttype) + CRLF + CRLF */
+				sprintf(ptr, "Content-Type: application/octet-stream\r\n\r\n");
+				ptr += 14 + 24 + 2 + 2;
+				/* then add file content (raw) + CRLF */
+				current = fopen(elem->Value, "rb");
+				/* quick hack to get filename */
+				len = 0;
+				wptr = elem->TextArray[0];
+				while(*wptr++) len++;
+				atari = malloc(len+1);
+				len = 0;
+				wptr = elem->TextArray[0];
+				while(*wptr) { atari[len] = (char)(*wptr++); len++; }
+				atari[len] = 0;
+				if (current)
+				{
+					fseek (current, 0, SEEK_END);
+					flen = ftell(current);
+					fseek (current, 0, SEEK_SET);
+					fread(ptr, 1, flen, current);
+					fclose(current);
+					ptr += flen;
+				}
+				*ptr++ = '\r';
+				*ptr++ = '\n';
+			}
+			else
+			{
+				/* CRLF + CRLF + value + CRLF */
+				*ptr++ = '\r';
+				*ptr++ = '\n';
+				/* body is the value if not a file */
+				if (elem->Value)
+				{
+					strcpy(ptr, elem->Value);
+					ptr += strlen(elem->Value);
+				}
+				else if (elem->TextArray)
+				{
+					WCHAR * beg = elem->TextArray[0];
+					WCHAR * end = elem->TextArray[elem->TextRows] -1;
+					char c;
+					while (beg < end) {
+						c = (char)*beg++;
+						*ptr++ = c;
+					}
+				}
+				*ptr++ = '\r';
+				*ptr++ = '\n';
+			}
+		}
+		elem = elem->Next;
+	}
+	while (elem != NULL);
+	/* "--" + boundary + "--" */
+	sprintf(ptr, "--%s--", boundary);
+	ptr += 4 + boundlen;
+	size = ptr - data;
+	/* new send request with Content-Length: %ld\r\nContent-Type: multipart/form-data; boundary=%s\r\n */
+	form->Method = METH_POST; /* with file, nothing else possible */
+
+	type = malloc(50+strlen(boundary));
+	if (type)
+	{
+		sprintf(type, "Content-Type: multipart/form-data; boundary=%s", boundary);
+	}
+	post = new_post(data, size, type);
+	ldr = start_page_load (frame->Container, url, frame->Location, TRUE, post);
+	if (!ldr)
+	{
+		/* post already deleted in start_page_load */
+	}
+	return;
+}
 /*============================================================================*/
 /* A routine that could be broken into a wrapper for 2 or 3 small util routines */
 static void
@@ -1693,7 +2034,7 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 {
 	WCHAR ** line = input->TextArray +1;
 	WCHAR *  ptr  = input->TextArray[0];
-	BOOL     crlf = (input->Type != IT_TEXT);
+	BOOL     crlf = (input->Type == IT_TAREA);
 	*line = ptr;
 	while (beg < end) {
 		if (ptr >= (WCHAR*)&input->TextArray[0] -1) {

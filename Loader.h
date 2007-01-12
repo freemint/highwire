@@ -7,6 +7,12 @@
 #include "mime.h"
 
 
+typedef struct s_post {
+	char *Buffer;
+	size_t	BufLength;
+	char *ContentType;
+} * POSTDATA;
+
 typedef struct s_loader {
 	LOCATION Location;   /* where the data come from ... */
 	CONTAINR Target;     /* ... and where they should go to */
@@ -15,7 +21,7 @@ typedef struct s_loader {
 	LOCATION Referer;    /* resource from which the Request-URI was obtained */
 	char   * AuthRealm;
 	char   * AuthBasic;
-	char   * PostBuf;
+	POSTDATA PostBuf;
 	char     FileExt[4];
 	char   * ExtAppl;
 	short    MarginW, MarginH;
@@ -49,7 +55,7 @@ LOADER new_loader    (LOCATION, CONTAINR target, BOOL lookup);
 void   delete_loader (LOADER *);
 
 LOADER start_page_load (CONTAINR target, const char * url, LOCATION base,
-                        BOOL user_action, char * post_buff);
+                        BOOL user_action, POSTDATA post);
 LOADER start_cont_load (CONTAINR target, const char * url, LOCATION base,
                         BOOL user_action, BOOL use_cache);
 LOADER start_objc_load (CONTAINR target, const char * url, LOCATION base,
@@ -59,6 +65,9 @@ int saveas_job (void * arg, long invalidated);
 
 long file_size (const LOCATION);
 char * load_file (const LOCATION, size_t * expected, size_t * loaded);
+
+POSTDATA new_post(char *buffer, size_t length, char *type);
+void delete_post(POSTDATA post);
 
 
 #endif /* __LOADER_H__ */

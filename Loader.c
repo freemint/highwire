@@ -263,7 +263,7 @@ delete_loader (LOADER * p_loader)
 			cache_release ((CACHED*)&loader->Cached, FALSE);
 		}
 		if (loader->PostBuf) {
-			free (loader->PostBuf);
+			delete_post (loader->PostBuf);
 		}
 		if (loader->AuthRealm) {
 			free (loader->AuthRealm);
@@ -282,7 +282,7 @@ delete_loader (LOADER * p_loader)
 /*============================================================================*/
 LOADER
 start_page_load (CONTAINR target, const char * url, LOCATION base,
-                 BOOL u_act, char * post_buff)
+                 BOOL u_act, POSTDATA post_buff)
 {
 	LOCATION loc    = (url ? new_location (url, base) : location_share (base));
 	LOADER   loader = NULL;
@@ -295,7 +295,7 @@ start_page_load (CONTAINR target, const char * url, LOCATION base,
 		if (loader) {
 			loader->PostBuf = post_buff;
 		} else {
-			free (post_buff);
+			delete_post (post_buff);
 		}
 	}
 	free_location (&loc);
@@ -1247,4 +1247,41 @@ init_paths(void)
 
 	strcpy(help_file, temp_location);  /* used for keyboard F1 or Help */
 	strcat(help_file, "html\\help\\index.htm");
+}
+
+/*============================================================================*/
+/* new_post:
+ * allocates a new POSTDATA struct with given buffer, length and type
+ * delete_post:
+ * detroys the POSTDATA along with its content
+ */
+POSTDATA
+new_post(char *buffer, size_t length, char *type)
+{
+	POSTDATA post = (POSTDATA) malloc(sizeof(struct s_post));
+	if (post != NULL)
+	{
+		post->Buffer = buffer;
+		post->BufLength = length;
+		post->ContentType = type;
+	}
+	return post;
+}
+
+void
+delete_post(POSTDATA post)
+{
+	if (post)
+	{
+		if (post->Buffer)
+		{
+			free(post->Buffer);
+		}
+		if (post->ContentType)
+		{
+			free(post->ContentType);
+		}
+		free(post);
+	}
+	return;
 }
