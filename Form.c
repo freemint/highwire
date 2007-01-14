@@ -2,6 +2,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifndef __PUREC__
+#  include <osbind.h>
+#else
+#  include <tos.h>
+#endif
+
 #include "token.h"
 #include <gemx.h>
 
@@ -107,7 +113,8 @@ static void form_activate_multipart (FORM form);
 #define        __edit_r_r(inp)       ((inp)->TextArray[(inp)->TextRows])
 #define        edit_space(inp)       ((WCHAR*)&__edit_r_0(inp)-__edit_r_r(inp))
 
-/* Memo: UTF-8 ranges
+/*------------------------------------------------------------------------------
+ * Memo: UTF-8 ranges
 00-7F : 1 byte
 	( 0bbbaaaa = 7 bits )
 80-1FFF   : 2 bytes
@@ -123,7 +130,8 @@ static void form_activate_multipart (FORM form);
 */
 /* here's a little helper for multipart POST
  only supporting unicode values on 16bits, thus 3 bytes utf8 sequence */
-char * unicode_to_utf8(WCHAR *src)
+static char *
+unicode_to_utf8 (WCHAR *src)
 {
 	int len = 0;
 	char *ret;
