@@ -1298,7 +1298,7 @@ form_activate (FORM form)
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
-		POSTDATA post = new_post(data, strlen(data), strdup("Content-Type: application/x-www-url-encoded"));
+		POSTDATA post = new_post(data, strlen(data), strdup("application/x-www-url-encoded"));
 		if (post)
 		{
 			ldr = start_page_load (frame->Container, url,loc, TRUE, post);
@@ -1526,7 +1526,7 @@ form_activate_multipart (FORM form)
 	type = malloc(50+strlen(boundary));
 	if (type)
 	{
-		sprintf(type, "Content-Type: multipart/form-data; boundary=%s", boundary);
+		sprintf(type, "multipart/form-data; boundary=%s", boundary);
 	}
 	post = new_post(data, size, type);
 	ldr = start_page_load (frame->Container, url, frame->Location, TRUE, post);
