@@ -509,32 +509,27 @@ new_input (PARSER parser, WORD width)
 		}
 		
 		if (*val == 'F') {
+			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
+
 			input = form_text (current, name,
 					   	get_value_exists (parser, KEY_READONLY) ? get_value_str (parser, KEY_VALUE) : "",
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   1, (*val == 'P'));
-		} else {
-		input = form_text (current, name, get_value_str (parser, KEY_VALUE),
-		                   mlen, frame->Encoding, (cols ? cols : 20),
-		                   get_value_exists (parser, KEY_READONLY),
-		                   (*val == 'P'));
-		}
-		
-		/* Add the browse button */
-		if (*val == 'F') {
-/*			FORM  form = current->form;*/
-			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
+
+			/* Add the browse button */
 			bttn->u.FileEd = input;
 			input->Type = IT_FILE;
 			if (width > 0) {
 				width = (width > bttn->Word->word_width
 				         ? width - bttn->Word->word_width : 1);
 			}
-			
-/* temporary disabled to keep GET/POST working
-*/
-/*			current->form->Method = METH_PUT;*/
+		} else {
+			input = form_text (current, name, get_value_str (parser, KEY_VALUE),
+		                   mlen, frame->Encoding, (cols ? cols : 20),
+		                   get_value_exists (parser, KEY_READONLY),
+		                   (*val == 'P'));
 		}
+
 		if (width > 0) {
 			WORD cw = (input->Word->word_width -1 -4) / input->VisibleX;
 			input->Word->word_width = max (width, input->Word->word_height *2);
