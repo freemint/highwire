@@ -1287,14 +1287,7 @@ form_activate (FORM form)
 	}
 	data[len] = '\0';
 	
-	if (form->Method == METH_PUT) {
-		/* Here we would link the routine for uploading the file */
-		POSTDATA post = NULL;
-		/* -> Call new_post with a buffer containing the content of file to upload, its length, and content type for this file */
-		/* post = new_post(?,?,?); */
-		ldr = start_page_load (frame->Container, url,loc, TRUE, post);
-		if (!ldr) free (data);
-	}else if (form->Method != METH_POST) {
+	if (form->Method != METH_POST) {
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
