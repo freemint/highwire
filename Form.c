@@ -1298,7 +1298,7 @@ form_activate (FORM form)
 		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
 		free (url);
 	} else {
-		POSTDATA post = new_post(data, strlen(data), strdup("application/x-www-form-url-encoded"));
+		POSTDATA post = new_post(data, strlen(data), strdup("application/x-www-form-urlencoded"));
 		if (post)
 		{
 			ldr = start_page_load (frame->Container, url,loc, TRUE, post);
