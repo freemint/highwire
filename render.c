@@ -4421,6 +4421,10 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 		char   * value    = get_value_str    (parser, KEY_VALUE);
 		char     out[90];
 		*text = enc_to_sys (out, sizeof(out), *text, encoding, TAG_OPTION, FALSE);
+
+		/* override empty value to keep item in list */
+		if (out[0] == '\0') strncpy(out,"_\0",2);
+
 		selct_option (&parser->Current, out, disabled, encoding, value, selected);
 	}
 	return (flags|PF_SPACE);
