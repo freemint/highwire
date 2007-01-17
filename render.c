@@ -4423,7 +4423,7 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 		*text = enc_to_sys (out, sizeof(out), *text, encoding, TAG_OPTION, FALSE);
 
 		/* override empty value to keep item in list */
-		if (out[0] == '\0') strncpy(out,"_\0",2);
+		if (out[0] == '\0') strcpy(out,"_\0");
 
 		selct_option (&parser->Current, out, disabled, encoding, value, selected);
 	}
