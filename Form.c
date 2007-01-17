@@ -1400,7 +1400,7 @@ form_activate_multipart (FORM form)
 				/* "Content-Disposition: form-data; name=\"" + Name + "\"" */
 				size += 38 + strlen(elem->Name) + 1;
 				/* CRLF + CRLF + value + CRLF */
-				size += 2;
+				size += 4;
 				/* body is the value if not a file */
 				if (elem->Value)
 				{
@@ -1484,8 +1484,8 @@ form_activate_multipart (FORM form)
 			else
 			{
 				/* CRLF + CRLF + value + CRLF */
-				*ptr++ = '\r';
-				*ptr++ = '\n';
+				sprintf(ptr,"\r\n\r\n");
+				ptr += 4;
 				/* body is the value if not a file */
 				if (elem->Value)
 				{
