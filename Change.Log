@@ -1,11 +1,18 @@
 Changes in V. 0.3.3 beta
 
+- New Feature implemented:  Initial Support for
+  file method FORMs (file upload via forms)
+
 - New config keyword FIXED_CMAP for using an
   optimized color palette and COLORS_CHANGED
   messaging in 8 planes screen mode for speeding
   up color remapping and better color results.
   This palette is also always used for plane modes
   > 8.
+  
+- Table Border code overhauled
+
+- Force empty Option tags to be '_'
 
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:
