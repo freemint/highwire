@@ -85,12 +85,16 @@ read_bookmarks (void) {
 	} else if ((file = open_bookmarks ("w")) != NULL) {
 		fputs ("<html>\n", file);
 		fputs("<!DOCTYPE HighWire-Bookmark-file-1>\n", file);
-		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=UTF-8\">\n",file);
+		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=Atari\">\n",file);
 		fputs("<TITLE>Bookmarks</TITLE>\n",file);
+		fputs("<style>\n", file);
+		fputs("dt { white-space:nowrap }\n", file);
+		fputs("dt.open { background-color:#1E90FF }\n", file); 
+		fputs("</style>\n",file);
 		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
 		fputs ("<HR>\n", file);
 		fputs ("<DL>\n", file);
-		fprintf (file, "<DT><H3 ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</H3>\n", now);
+		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
 		fputs ("<DL>\n", file);
 		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0);
 		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0);
@@ -111,6 +115,8 @@ read_bookmarks (void) {
 BOOL
 save_bookmarks (const char * key)
 {
+	(void) key;
+	
 	/* If we store the URL's internally we will need to save when we close */
 	return TRUE;
 }
@@ -132,7 +138,7 @@ add_bookmark_group (const char * group)
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
 		fseek (file, (flen - 16), SEEK_SET);
-		fprintf (file, "<DT><H3 ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</H3>\n", now,group,group);
+		fprintf (file, "<DT>&#9658;<A href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</A>\n", now,group,group);
 		fputs ("<DL>\n", file);
 
 		fputs ("</DL>\n", file);
