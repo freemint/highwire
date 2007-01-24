@@ -168,6 +168,9 @@ main (int argc, char **argv)
 	init_paths();
 	read_config();
 
+	/* load/create bookmark.htm file */
+	read_bookmarks();
+
 	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8)) {
 /*	if (appl_xgetinfo(AES_MESSAGE, &info, &u, &u, &u) && (info & 8))*/
 		/* we know about AP_TERM message */

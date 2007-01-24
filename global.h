@@ -144,6 +144,11 @@ long draw_paragraph (PARAGRPH, WORD x, long y, const GRECT *, void * highlight);
 void draw_border    (const GRECT *, short lu, short rd, short width);
 void draw_TBLR_border (const GRECT *, short lu, short rd, TBLR width);
 
+/* in Bookmark.c */
+
+BOOL read_bookmarks (void);
+BOOL add_bookmark (const char * bookmark_url, const char *bookmark_title);
+
 /* in Config.c */
 
 extern WORD         cfg_UptoDate;
