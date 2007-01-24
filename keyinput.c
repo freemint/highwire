@@ -170,6 +170,21 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	case 'U':  /* U: reload with default encoding UTF-8 */
 		menu_reload (ENCODING_UTF8);
 		break;
+	case 0x0004:  /* CTRL+D */
+		{
+			char buf[2 * HW_PATH_MAX];
+			void * hash  = NULL;	
+			struct url_link * link = hash;
+			const char      * addr = link->address;
+			LOCATION loc = new_location (addr, active->BaseHref);
+
+			location_FullName (loc, buf, sizeof(buf));
+
+			add_bookmark (buf,hwWind_Top->Base.Name);
+
+			free_location (&loc);
+		}
+		break;
 	case 0x0006:  /* CTRL+F */
 		fonts_setup (NULL);
 		break;
