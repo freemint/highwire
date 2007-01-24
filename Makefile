@@ -17,8 +17,8 @@ CPU = 68030
 
 DEFS = -DUSE_OVL -DUSE_INET -DLIBGIF -DLIBPNG -DLIBJPG -DIMG_XMP
 
-OPTS = $(CPU:%=-m%) -fomit-frame-pointer -funsigned-char \
-       -O2 -fstrength-reduce
+OPTS = $(CPU:%=-m%) -funsigned-char \
+       -fomit-frame-pointer -O2 -fstrength-reduce
 
 WARN = \
 	-Wall \
