@@ -222,6 +222,15 @@ cfg_up2date (char * param, long arg)
 {
 	(void)arg;
 	if (cfg_UptoDate < 0) {
+		char buff[20];
+		sprintf (buff, "%hu.%hu.%hu",
+		         _HIGHWIRE_MAJOR_, _HIGHWIRE_MINOR_, _HIGHWIRE_REVISION_);
+		if (strcmp (buff, _HIGHWIRE_VERSION_) != E_OK) {
+			hwUi_warn ("version.h",
+			          "Inconsistency error:\n"
+			          "- Version{num} = %s\n- Version{str} = %s",
+			          buff, _HIGHWIRE_VERSION_);
+		}
 		cfg_UptoDate = (strcmp (param, cfg_magic) == 0);
 	}
 }
