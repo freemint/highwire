@@ -65,6 +65,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
 	long  sx = 0, sy = 0;
+	char buf[2 * HW_PATH_MAX];
 	
 	switch (scan) {
 	
@@ -171,19 +172,8 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_reload (ENCODING_UTF8);
 		break;
 	case 0x0004:  /* CTRL+D */
-		{
-			char buf[2 * HW_PATH_MAX];
-			void * hash  = NULL;	
-			struct url_link * link = hash;
-			const char      * addr = link->address;
-			LOCATION loc = new_location (addr, active->BaseHref);
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			add_bookmark (buf,hwWind_Top->Base.Name);
-
-			free_location (&loc);
-		}
+		location_FullName (active->Location, buf, sizeof(buf));
+		add_bookmark (buf,hwWind_Top->Base.Name);
 		break;
 	case 0x0006:  /* CTRL+F */
 		fonts_setup (NULL);
