@@ -91,6 +91,7 @@ CFILES = \
 	av_prot.c \
 	dragdrop.c \
 	config.c \
+	bookmark.c \
 	Variable.c \
 	Nice_VDI.c \
 	keyinput.c \
