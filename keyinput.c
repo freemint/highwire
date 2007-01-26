@@ -171,7 +171,10 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	case 'U':  /* U: reload with default encoding UTF-8 */
 		menu_reload (ENCODING_UTF8);
 		break;
-	case 0x0004:  /* CTRL+D */
+	case 0x0002:  /* CTRL+B, Open Bookmarks */
+		new_hwWind ("", bkm_File, NULL);
+		break;
+	case 0x0004:  /* CTRL+D, Add page to bookmarks */
 		location_FullName (active->Location, buf, sizeof(buf));
 		add_bookmark (buf,hwWind_Top->Base.Name);
 		break;
