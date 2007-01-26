@@ -96,11 +96,11 @@ read_bookmarks (void) {
 		fputs ("<DL>\n", file);
 		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
 		fputs ("<DL>\n", file);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0);
+		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
+		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
+		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
 		fputs ("</DL>\n", file);
