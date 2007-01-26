@@ -2883,6 +2883,20 @@ render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 	return flags;
 }
 
+/*------------------------------------------------------------------------------
+ * OBJECT element - Generic Inclusion
+ */
+static UWORD
+render_OBJECT_tag (PARSER parser, const char ** text, UWORD flags)
+{
+	(void)parser; (void)text;
+	
+	if (flags & PF_START) {
+		/* printf("In render object tag\n"); */
+		;
+	}
+	return (flags|PF_SPACE);
+}
 
 /*------------------------------------------------------------------------------
  * Proprietary IOD4 Browser Tag
