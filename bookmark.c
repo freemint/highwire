@@ -96,18 +96,18 @@ read_bookmarks (void) {
 		fputs ("<DL>\n", file);
 		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
 		fputs ("<DL>\n", file);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
 		fputs ("</DL>\n", file);
 		fputs ("</html>\n", file);
 		fclose(file);
 	} 
-	
+
 	return TRUE;
 }
 
@@ -167,7 +167,7 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 		flen = ftell(file);
 		fseek (file, (flen - 16), SEEK_SET);
 
-		fprintf (file, "<DT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", now, now, bookmark_url, bookmark_title);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", now, now, bookmark_url, bookmark_title);
 
 		fputs ("</DL>\n", file);
 		fputs ("</html>\n", file);
