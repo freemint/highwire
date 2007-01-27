@@ -137,7 +137,7 @@ add_bookmark_group (const char * group)
 	if ((file = open_bookmarks ("r+")) != NULL) {
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
-		fseek (file, (flen - 16), SEEK_SET);
+		fseek (file, (flen - 14), SEEK_SET);
 		fprintf (file, "<DT>&#9658;<A href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</A>\n", now,group,group);
 		fputs ("<DL>\n", file);
 
@@ -165,7 +165,7 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 	if ((file = open_bookmarks ("r+")) != NULL) {
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
-		fseek (file, (flen - 16), SEEK_SET);
+		fseek (file, (flen - 14), SEEK_SET);
 
 		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", now, now, bookmark_url, bookmark_title);
 
