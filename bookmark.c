@@ -83,28 +83,28 @@ read_bookmarks (void) {
 
 		fclose(file);
 	} else if ((file = open_bookmarks ("w")) != NULL) {
-		fputs ("<html>\n", file);
-		fputs("<!DOCTYPE HighWire-Bookmark-file-1>\n", file);
-		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=Atari\">\n",file);
-		fputs("<TITLE>Bookmarks</TITLE>\n",file);
-		fputs("<style>\n", file);
+		fputs ("<html>\r\n", file);
+		fputs("<!DOCTYPE HighWire-Bookmark-file-1>\r\n", file);
+		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=Atari\">\r\n",file);
+		fputs("<TITLE>Bookmarks</TITLE>\r\n",file);
+		fputs("<style>\r\n", file);
 		fputs("dt { white-space:nowrap }\n", file);
 		fputs("dt.open { background-color:#1E90FF }\n", file); 
-		fputs("</style>\n",file);
-		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
-		fputs ("<HR>\n", file);
-		fputs ("<DL>\n", file);
-		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
-		fputs ("<DL>\n", file);
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
-		fputs ("</DL>\n", file);
-		fputs ("<HR>\n", file);
-		fputs ("</DL>\n", file);
-		fputs ("</html>\n", file);
+		fputs("</style>\r\n",file);
+		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\r\n",now);
+		fputs ("<HR>\r\n", file);
+		fputs ("<DL>\r\n", file);
+		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\r\n", now);
+		fputs ("<DL>\r\n", file);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\r\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\r\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\r\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\r\n", now, 0L);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\r\n", now, 0L);
+		fputs ("</DL>\r\n", file);
+		fputs ("<HR>\r\n", file);
+		fputs ("</DL>\r\n", file);
+		fputs ("</html>", file);
 		fclose(file);
 	} 
 
@@ -138,14 +138,14 @@ add_bookmark_group (const char * group)
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
 		fseek (file, (flen - 14), SEEK_SET);
-		fprintf (file, "<DT>&#9658;<A href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</A>\n", now,group,group);
-		fputs ("<DL>\n", file);
+		fprintf (file, "<DT>&#9658;<A href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</A>\r\n", now,group,group);
+		fputs ("<DL>\r\n", file);
 
-		fputs ("</DL>\n", file);
-		fputs ("<HR>\n", file);
+		fputs ("</DL>\r\n", file);
+		fputs ("<HR>\r\n", file);
 
-		fputs ("</DL>\n", file);
-		fputs ("</html>\n", file);
+		fputs ("</DL>\r\n", file);
+		fputs ("</html>", file);
 		fclose(file);
 		return TRUE;
 	} else {
@@ -167,10 +167,10 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 		flen = ftell(file);
 		fseek (file, (flen - 14), SEEK_SET);
 
-		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", now, now, bookmark_url, bookmark_title);
+		fprintf (file, "<DT><OBJECT DATA=\"data:\"></OBJECT><a target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\r\n", now, now, bookmark_url, bookmark_title);
 
-		fputs ("</DL>\n", file);
-		fputs ("</html>\n", file);
+		fputs ("</DL>\r\n", file);
+		fputs ("</html>", file);
 		fclose(file);
 
 		return TRUE;
