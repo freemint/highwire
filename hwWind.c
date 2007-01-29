@@ -242,7 +242,7 @@ hwWind_store (HWWIND_SET set)
 
 /*============================================================================*/
 HwWIND
-new_hwWind (const char * name, const char * url, LOCATION loc)
+new_hwWind (const char * name, const char * url)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST +
@@ -369,7 +369,7 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	}
 	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
 	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0) | TBAR_OPEN_MASK;
-	This->TbarActv = (This->TbarH && !url && !loc ? TBAR_EDIT : -1);
+	This->TbarActv = (This->TbarH && !url ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons)-1; i++) {
 		This->TbarElem[i].Offset = hw_buttons[i].Offset;
 		This->TbarElem[i].Width  = 21;
@@ -392,8 +392,8 @@ new_hwWind (const char * name, const char * url, LOCATION loc)
 	window_raise (&This->Base, TRUE, &curr_area);
 	hwWind_redraw (This, NULL);
 
-	if ((url && *url) || loc) {
-		start_page_load (This->Pane, url, loc, TRUE, NULL);
+	if (url && *url) {
+		start_page_load (This->Pane, url, NULL, TRUE, NULL);
 	}
 	
 #ifdef GEM_MENU

@@ -193,12 +193,12 @@ main (int argc, char **argv)
 	if (argc > 1) {
 		short i = 1;
 		do {
-			if (argv[i][0] != '-' && new_hwWind ("", argv[i], NULL)) {
+			if (argv[i][0] != '-' && new_hwWind ("", argv[i])) {
 				u++;
 			}
 		} while (++i < argc);
 	}
-	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage, NULL)) {
+	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage)) {
 		hwUi_fatal (NULL, "Can't open main window.");
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);

@@ -35,7 +35,7 @@ struct hw_window {
 };
 
 
-HwWIND  new_hwWind   (const char * name, const char * url, LOCATION);
+HwWIND  new_hwWind   (const char * name, const char * url);
 #define delete_hwWind(HwWIND)   delete_window (&(HwWIND)->Base)
 
 #define hwWind_setName(HwWIND, name)    window_setName (&HwWIND->Base, name)

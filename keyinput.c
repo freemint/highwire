@@ -172,7 +172,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_reload (ENCODING_UTF8);
 		break;
 	case 0x0002:  /* CTRL+B, Open Bookmarks */
-		new_hwWind ("", bkm_File, NULL);
+		new_hwWind ("", bkm_File);
 		break;
 	case 0x0004:  /* CTRL+D, Add page to bookmarks */
 		location_FullName (active->Location, buf, sizeof(buf));
@@ -192,9 +192,9 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		break;
 	case 0x000E:  /* CTRL+N */
 		if (state & (K_RSHIFT|K_LSHIFT)) {
-			new_hwWind ("HighWire", NULL, NULL);
+			new_hwWind ("HighWire", NULL);
 		} else {
-			new_hwWind ("", cfg_StartPage, NULL);
+			new_hwWind ("", cfg_StartPage);
 		}
 		break;
 	case 0x0015:  /* CTRL+U */

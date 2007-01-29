@@ -194,7 +194,7 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 	if (wind) {
 		start_page_load (wind->Pane, cmd, NULL, TRUE, NULL);
 	} else {
-		new_hwWind ("", cmd, NULL);
+		new_hwWind ("", cmd);
 	}
 
 	answ[0] = (msg[0] == VA_START)? AV_STARTED : VA_WINDOPEN;
@@ -332,7 +332,7 @@ doGSCommand(const WORD msg[8])
 		else if (!stricmp(cmd, "Open"))
 		{
 			cmd = nextToken(cmd);
-			new_hwWind ("", cmd, NULL);
+			new_hwWind ("", cmd);
 			answ[7] = GSACK_OK;
 		}
 		else if (!stricmp(cmd, "AppGetLongName"))
@@ -504,7 +504,7 @@ menu_info (void)
 	                enc_ln,  enc_ptr);
 	switch (form_alert (1, text)) {
 		case 2:
-			new_hwWind ("About", "about:", NULL);
+			new_hwWind ("About", "about:");
 			break;
 		case 3:
 			menu_about();
@@ -904,7 +904,7 @@ rpopup_open (WORD mx, WORD my)
 
 			location_FullName (loc, buf, sizeof(buf));
 
-			cont = new_hwWind (buf, NULL, NULL)->Pane;
+			cont = new_hwWind (buf, NULL)->Pane;
 			if (cont) {
 				LOADER ldr = start_objc_load (cont, buf,
 				                              frame->BaseHref, saveas_job, NULL);
@@ -1026,7 +1026,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			} /* else fall through */
 			
 		case RLINK_NEW:
-			wind = new_hwWind (addr, NULL, NULL);
+			wind = new_hwWind (addr, NULL);
 			cont = (wind ? wind->Pane : NULL);
 			if (cont) {
 				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
@@ -1140,7 +1140,7 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 
 			location_FullName (imgloc, buf, sizeof(buf));
 
-			wind = new_hwWind (buf, NULL, NULL);
+			wind = new_hwWind (buf, NULL);
 			cont = (wind ? wind->Pane : NULL);
 			if (cont)
 				start_page_load (cont, NULL, imgloc, TRUE, NULL);
@@ -1270,7 +1270,7 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			} /* else fall through */
 			
 		case RIMG_NEW:
-			wind = new_hwWind (addr, NULL, NULL);
+			wind = new_hwWind (addr, NULL);
 			cont = (wind ? wind->Pane : NULL);
 			if (cont) {
 				LOADER ldr = start_page_load (cont, NULL, loc, TRUE, NULL);
