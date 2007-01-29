@@ -21,6 +21,12 @@
 
 const char * bkm_File         = NULL;
 
+
+/* these later to be added to global.h, to make gcc finally happy */
+BOOL save_bookmarks     (const char *);
+BOOL add_bookmark_group (const char *);
+
+
 /****************************
 	I'm implementing a file only method of storing the hotlist
 however, I am also trying to spec out an internal storage of the hostlist
@@ -30,7 +36,7 @@ the LAST_VISIT= timestamp, it's because I'd like to fix it in the future
 
 
 /*----------------------------------------------------------------------------*/
-FILE *
+static FILE *
 open_bookmarks (const char * mode)
 {
 	FILE * file = NULL;
