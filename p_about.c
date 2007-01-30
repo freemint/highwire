@@ -318,12 +318,12 @@ parse_about (void * arg, long invalidated)
 	font_byType (normal_font, 0x0000, font_step2size (3), current->word);
 	
 	if (mode <= 1) {
-		current->form = new_form (frame, NULL, strdup ("about:cache"), "GET");
+		current->form = new_form (frame, NULL, strdup ("about:cache"), "GET", NULL);
 		c_num = cache_info (&c_mem, (mode == 1 ? &info : NULL));
 	}
 	switch (mode) {
 		case 2:
-			current->form = new_form (frame, NULL, strdup("about:modules"), "GET");
+			current->form = new_form (frame, NULL, strdup("about:modules"), "GET", NULL);
 			about_modules (current, frame->Encoding);
 			break;
 		case 1:

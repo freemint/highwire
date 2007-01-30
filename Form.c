@@ -35,6 +35,7 @@ struct s_form {
 	FORM        Next;
 	char      * Target;
 	char      * Action;
+	char      * Enctype;
 	INPUT       TextActive;
 	WORD        TextCursrX;
 	WORD        TextCursrY;
@@ -185,7 +186,7 @@ unicode_to_utf8 (WCHAR *src)
 
 /*============================================================================*/
 void *
-new_form (FRAME frame, char * target, char * action, const char * method)
+new_form (FRAME frame, char * target, char * action, const char * method, char *enctype)
 {
 	FORM form = malloc (sizeof (struct s_form));
 	
@@ -208,6 +209,14 @@ new_form (FRAME frame, char * target, char * action, const char * method)
 	form->Method = (method && strcmp  (method, "AUTH") == 0 ? METH_AUTH :
 	                method && stricmp (method, "post") == 0 ? METH_POST :
 	                                                          METH_GET);
+	if (enctype != NULL)
+	{
+		form->Enctype = enctype;
+	}
+	else
+	{
+		form->Enctype = strdup("application/x-www-form-urlencoded");
+	}
 	form->TextActive = NULL;
 	form->TextCursrX = 0;
 	form->TextCursrY = 0;
@@ -266,6 +275,9 @@ destroy_form (FORM form, BOOL all)
 			}
 			free (input);
 			input = inxt;
+		}
+		if (form->Enctype) {
+			free (form->Enctype);
 		}
 		if (form->Target) {
 			free (form->Target);
@@ -490,7 +502,7 @@ new_input (PARSER parser, WORD width)
 	char output[100], name[100];
 	
 	if (!current->form) {
-		current->form = new_form (frame, NULL, NULL, NULL);
+		current->form = new_form (frame, NULL, NULL, NULL, NULL);
 	}
 	
 	get_value (parser, KEY_NAME, name, sizeof(name));
@@ -606,7 +618,7 @@ new_tarea (PARSER parser, const char * beg, const char * end, UWORD nlines)
 	char   name[100];
 	
 	if (!current->form) {
-		current->form = new_form (frame, NULL, NULL, NULL);
+		current->form = new_form (frame, NULL, NULL, NULL, NULL);
 	}
 	get_value (parser, KEY_NAME, name, sizeof(name));
 	input = _alloc (IT_TAREA, current, name);
@@ -1198,6 +1210,12 @@ form_activate (FORM form)
 				form_activate_multipart(form);
 				return;
 			}
+		}
+		if (form->Enctype && stricmp(form->Enctype, "multipart/form-data")==0)
+		{
+			form->Method = METH_POST;
+			form_activate_multipart(form);
+			return;
 		}
 		/* go back to 1st input */
 		elem = form->InputList;

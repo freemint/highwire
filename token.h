@@ -153,6 +153,7 @@
 		__KEY_ITEM (CONTENT),      /* META */
 		__KEY_ITEM (COORDS),       /* AREA */
 		__KEY_ITEM (DISABLED),     /* INPUT,SELECT,OPTION */
+		__KEY_ITEM (ENCTYPE),      /* FORM */
 		__KEY_ITEM (FACE),         /* FONT, CSS:font-family */
 		__KEY_ITEM (FRAMEBORDER),  /* FRAMESET   -- IE proprietary */
 		__KEY_ITEM (FRAMESPACING), /* FRAMESET   -- IE proprietary */

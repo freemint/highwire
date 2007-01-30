@@ -4285,7 +4285,9 @@ render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 
 		current->form = new_form (parser->Frame,
 		                          get_value_str (parser, KEY_TARGET),
-		                          get_value_str (parser, KEY_ACTION), method);
+		                          get_value_str (parser, KEY_ACTION),
+					  method,
+					  get_value_str (parser, KEY_ENCTYPE) );
 
 	}
 		

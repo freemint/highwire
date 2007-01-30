@@ -2,7 +2,7 @@
 #define __FORM_H__
 
 
-void * new_form     (FRAME, char * target, char * action, const char * method);
+void * new_form     (FRAME, char * target, char * action, const char * method, char *enctype);
 void   form_finish  (TEXTBUFF);
 void   destroy_form (FORM, BOOL all);
 
