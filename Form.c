@@ -188,6 +188,7 @@ unicode_to_utf8 (WCHAR *src)
 void *
 new_form (FRAME frame, char * target, char * action, const char * method, char *enctype)
 {
+	char *ptr;
 	FORM form = malloc (sizeof (struct s_form));
 	
 	if (!action) {
@@ -203,7 +204,19 @@ new_form (FRAME frame, char * target, char * action, const char * method, char *
 	form->Frame     = frame;
 	form->Next      = frame->FormList;
 	frame->FormList = form;
-	
+
+	/* clean up action */
+	if (action != NULL)
+	{
+		ptr = strstr(action,"&amp;");
+		while(ptr != NULL)
+		{
+			ptr++;
+			strcpy(ptr,ptr+4);
+			ptr = strstr(ptr,"&amp;");
+		}
+	}
+
 	form->Target = target;
 	form->Action = action;
 	form->Method = (method && strcmp  (method, "AUTH") == 0 ? METH_AUTH :
@@ -524,7 +537,7 @@ new_input (PARSER parser, WORD width)
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
 
 			input = form_text (current, name,
-					   	get_value_exists (parser, KEY_READONLY) ? get_value_str (parser, KEY_VALUE) : "",
+					   	get_value_exists (parser, KEY_READONLY) ? get_value_str (parser, KEY_VALUE) : strdup(""),
 		                   mlen, frame->Encoding, (cols ? cols : 20),
 		                   1, (*val == 'P'));
 
