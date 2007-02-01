@@ -418,13 +418,13 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	} else if (curr && !This->Next && !This->Prev) {
 		topNbot    = TRUE;
 		done       = TRUE;
+		wind_open_grect (This->Handle, curr);
 		wind_set_grect (This->Handle, WF_CURRXYWH, curr);
 		if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
 		    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
 			This->Curr = *curr; /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
 		}                      /* if the window was created but not opend       */
 		(*This->sized)(This);
-		wind_open_grect (This->Handle, curr);
 	}
 	
 	if (topNbot) {
