@@ -1266,6 +1266,26 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			}
 			
 
+			/* invalid token ignore the rule as per CSS2 */
+			if (*p == '&') {
+				int bracket_count = 0;
+				p++;
+
+				while (*(++p)) {
+					if (*p == '{') {
+						bracket_count += 1;
+					} else if (*p == '}') {
+						bracket_count -= 1;
+						
+						if (bracket_count < 1) break;
+					}
+				}
+				p++;
+
+				skip = TRUE; /* ignore */
+				done = (!*p && !style);
+			}
+
 			if (key > TAG_Unknown || cid) { /* store */
 				size_t len = end - beg;
 				STYLE  tmp = malloc (sizeof (struct s_style) + len);
