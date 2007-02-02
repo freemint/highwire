@@ -484,6 +484,7 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 					ent->weight = 0;
 				} else {
 					printf("KeyValTab overflow\r\n");
+					/*printf("val %.*s  ent %d \r\n",10,val,css);*/
 				}
 			} else {
 				/*	if (css == 13) printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
@@ -1183,6 +1184,22 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				p++;
 			}
 
+			/*ignore escaped css idents and their rules */
+			if (*p == '\\') {
+				int bracket_count = 0;
+
+				while (*(++p)) {
+					if (*p == '{') {
+						bracket_count += 1;
+					} else if (*p == '}') {
+						bracket_count -= 1;
+						
+						if (bracket_count < 1) break;
+					}
+				}
+				p++;
+			}
+			
 			if (*p == '*') { /*................................ joker */
 				key = TAG_LastDefined; /* matches all */
 				universal = TRUE;
@@ -1391,7 +1408,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					 * definately doesn't have the bug the old line had
 					 */
 					while (*(++p) && *p != q && *p != '\\');
-
+					
 					if (*p) p++;
 					end = NULL;
 
@@ -1475,6 +1492,11 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				err = FALSE;
 				stack_pop (prsdata, &loc, &p);
 			}
+		}
+
+		/* ignore erroneous trailing ';' */
+		if (*p == ';') {
+			p++;
 		}
 	} while (*p && !err);
 
