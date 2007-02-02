@@ -3,17 +3,28 @@ Changes in V. 0.3.3 beta
 - New Feature implemented:  Initial Support for
   file method FORMs (file upload via forms)
 
+- New Feature implemented:  Basic Bookmark support (still in development)
+
 - New config keyword FIXED_CMAP for using an
   optimized color palette and COLORS_CHANGED
   messaging in 8 planes screen mode for speeding
   up color remapping and better color results.
   This palette is also always used for plane modes
   > 8.
+
+- Bug Fix: Highwire now gets form data encoding from the form
   
 - Table Border code overhauled
 
 - Force empty Option tags to be '_'
 
+- Invalid '&' CSS token and corresponding rules ignored
+
+- Invalid trailing ';' in CSS ignored
+
+- Invalid '\' escaped CSS tokens and identifiers ignored
+
+- Bugs #179, #217 resolved
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:
 
