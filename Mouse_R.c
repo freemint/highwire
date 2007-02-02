@@ -257,17 +257,28 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 					check_mouse_position (mouse.p_x, mouse.p_y);
 				}
 			} else {
+				char buf[2 * HW_PATH_MAX];
+
 				if (state & K_ALT) {
 					cont = NULL;
 				} else if (link->u.target) {
 					cont = target;
 				}
+
+				if (*addr == '?') {
+					location_FullName (frame->Location, buf, sizeof(buf));
+					strcat(buf, addr);
+
+					addr = buf;
+				}
+				
 				if (!cont && (wind = new_hwWind (addr, NULL)) != NULL) {
 					if (state & (K_RSHIFT|K_LSHIFT)) {
 						window_raise (&wind->Base, FALSE, NULL);
 					}
 					cont = wind->Pane;
 				}
+
 				if (cont) {
 					LOCATION ref = (PROTO_isRemote (frame->Location->Proto)
 					                ? location_share (frame->Location) : NULL);
