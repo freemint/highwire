@@ -266,7 +266,17 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				}
 
 				if (*addr == '?') {
+					char * p;
+					size_t buf_len, p_len;
+
 					location_FullName (frame->Location, buf, sizeof(buf));
+
+					buf_len = strlen(buf);
+
+					if ((p = strchr (buf, '?')) != NULL) {
+						p_len = strlen(p);
+						buf[(buf_len - p_len)] = '\0';
+					}
 					strcat(buf, addr);
 
 					addr = buf;
