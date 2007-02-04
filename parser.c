@@ -56,7 +56,7 @@ typedef struct s_parser_priv {
 		char     ClassId; /* '.'Class '#'Id */
 		char     Ident[1];
 	}      * Styles;
-	KEYVALUE KeyValTab[25];
+	KEYVALUE KeyValTab[50];
 	UWORD    KeyNum;
 	WCHAR    Buffer[505]; /* 500 is enough for 124 UTF-8 characters, */
 } * PARSPRIV;            /* if the encoding is unrecognized, parsed */
