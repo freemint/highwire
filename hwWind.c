@@ -248,8 +248,9 @@ new_hwWind (const char * name, const char * url)
 	                      sizeof (HISTORY) * HISTORY_LAST +
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
-	short  i;
-	
+	short      i;
+	BOOL       bookmarks = (url && url == bkm_File);
+	                                       /* special case for bookmark window */
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
 		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
@@ -367,7 +368,7 @@ new_hwWind (const char * name, const char * url)
 	} else {
 		This->IbarH = widget_h - widget_b -1;
 	}
-	This->TbarH    = (tbar_set > 0 ? tbar_set : 0);
+	This->TbarH    = (tbar_set > 0 && !bookmarks ? tbar_set : 0);
 	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0) | TBAR_OPEN_MASK;
 	This->TbarActv = (This->TbarH && !url ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons)-1; i++) {
