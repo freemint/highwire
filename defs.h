@@ -8,6 +8,7 @@
 #define _HIGHWIRE_RSC_       "highwire.rsc"
 #define _HIGHWIRE_CFG_       "highwire.cfg"
 #define _HIGHWIRE_BOOKMARK_  "bookmark.htm"
+#define _HIGHWIRE_BKM_CSS_   "bookmark.css"
 
 #define _ERROR_SPEEDO_   "needs SpeedoGDOS or NVDI ò 3!"
 #define _ERROR_NOMEM_    "got no GLOBAL memory!"
