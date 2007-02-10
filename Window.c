@@ -29,7 +29,7 @@ static BOOL  remap_pal = FALSE;
 
 /*============================================================================*/
 WINDOW
-window_ctor (WINDOW This, WORD widgets,
+window_ctor (WINDOW This, WORD widgets, ULONG  ident,
              const char * name, GRECT * curr, BOOL modal)
 {
 	if (!desk_area.g_w || !desk_area.g_h) {
@@ -44,6 +44,7 @@ window_ctor (WINDOW This, WORD widgets,
 	}
 	if (This) {
 		This->Widgets = widgets;
+		This->Ident   = ident;
 		This->isModal = modal;
 		This->isIcon  = FALSE;
 		This->isFull  = FALSE;
@@ -105,6 +106,17 @@ window_byHandle (WORD hdl)
 {
 	WINDOW wind = window_Top;
 	while (wind && wind->Handle != hdl) {
+		wind = wind->Next;
+	}
+	return wind;
+}
+
+/*============================================================================*/
+WINDOW
+window_byIdent (ULONG ident)
+{
+	WINDOW wind = window_Top;
+	while (wind && wind->Ident != ident) {
 		wind = wind->Next;
 	}
 	return wind;

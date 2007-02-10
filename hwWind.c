@@ -24,6 +24,8 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
+#define IDENT_BRWS   ((((((((ULONG)'B')<<8)|'R')<<8)|'W')<<8)|'S')
+#define IDENT_BMRK   ((((((((ULONG)'B')<<8)|'M')<<8)|'R')<<8)|'K')
 static WINDOW vTab_destruct(HwWIND);
 static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
 static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
@@ -250,7 +252,7 @@ new_hwWind (const char * name, const char * url)
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
 	short      i;
-	BOOL       bookmarks = (url && url == bkm_File);
+	ULONG      ident = (url && url == bkm_File ? IDENT_BMRK : IDENT_BRWS);
 	                                       /* special case for bookmark window */
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
@@ -331,7 +333,8 @@ new_hwWind (const char * name, const char * url)
    	}
 	}
 	
-	window_ctor (This, wind_kind, (name && *name ? name : url), NULL, FALSE);
+	window_ctor (This, wind_kind, ident,
+	             (name && *name ? name : url), NULL, FALSE);
 	This->Base.destruct  = vTab_destruct;
 	This->Base.evMessage = vTab_evMessage;
 	This->Base.evButton  = vTab_evButton;
@@ -369,7 +372,7 @@ new_hwWind (const char * name, const char * url)
 	} else {
 		This->IbarH = widget_h - widget_b -1;
 	}
-	This->TbarH    = (tbar_set > 0 && !bookmarks ? tbar_set : 0);
+	This->TbarH    = (tbar_set > 0 && ident == IDENT_BRWS ? tbar_set : 0);
 	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0) | TBAR_OPEN_MASK;
 	This->TbarActv = (This->TbarH && !url ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons)-1; i++) {
@@ -810,7 +813,7 @@ vTab_iconified (HwWIND This)
 static BOOL
 vTab_close (HwWIND This, UWORD state)
 {
-	if (!(state & K_ALT)) {
+	if (!(state & K_ALT) || This->Base.Ident != IDENT_BRWS) {
 		return TRUE; /* to be deleted */
 	
 	} else if (tbar_set) {

@@ -9,6 +9,7 @@ typedef struct form_window * FORMWIND;
 #define WINDOW_t             FORMWIND
 #include "Window.h"
 
+#define IDENT_FORM   ((((((((ULONG)'F')<<8)|'O')<<8)|'R')<<8)|'M')
 struct form_window {
 	WINDOWBASE Base;
 	OBJECT * Tree;
@@ -36,7 +37,7 @@ new_formWind (OBJECT * tree, const char * title, BOOL modal)
 		(void)title;
 		
 		tree->ob_flags |= OF_FLAG15;
-		window_ctor (This, MOVER|CLOSER, title, NULL, modal);
+		window_ctor (This, MOVER|CLOSER, IDENT_FORM, title, NULL, modal);
 		This->Tree = tree;
 		This->Work = (GRECT*)&tree->ob_x;
 		wind_calc_grect (WC_BORDER, This->Base.Widgets,

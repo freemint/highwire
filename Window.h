@@ -4,13 +4,14 @@ typedef struct s_window * WINDOW;
 #define WINDOW_t WINDOW
 
 #else
-WINDOW_t window_ctor (WINDOW_t, WORD widgets,
+WINDOW_t window_ctor (WINDOW_t, WORD widgets, ULONG  ident,
                                 const char * name, GRECT *, BOOL modal);
 WINDOW   window_dtor (WINDOW_t);
 #endif
 typedef struct s_window {   /* all of the following are private attributes, */
 	WORD   Handle;           /* only to be read, by foreign modules          */
 	WORD   Widgets;    /* as in wind_create (kind, ...):  mover,  sizer, etc. */
+	ULONG  Ident;      /* four characters as runtime type information */
 	WINDOW Prev, Next; /* still private, keep away */
 	BOOL   isModal;
 	BOOL   isIcon;
@@ -37,6 +38,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 #define delete_window(WINDOW) {if (WINDOW) free((*(WINDOW)->destruct)(WINDOW));}
 
 WINDOW window_byHandle (WORD);
+WINDOW window_byIdent  (ULONG);
 
 BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 void window_evButton  (WORD bmask, PXY mouse, UWORD kstate, WORD clicks);

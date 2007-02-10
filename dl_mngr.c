@@ -584,6 +584,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 		n = formwind_do (dlm_form, 0, "Download Manager", FALSE, dlmngr_handler);
 		dlm_wind = window_byHandle (n);
 		if (!dlm_wind) return;  /* something went wrong */
+		dlm_wind->Ident = (((((((ULONG)'D')<<8)|'M')<<8)|'G')<<8)|'R';
 	} else {
 		window_raise (dlm_wind, TRUE, NULL);
 	}
