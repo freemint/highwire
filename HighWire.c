@@ -24,6 +24,7 @@
 # include "highwire.h"
 #endif
 #include "ovl_sys.h"
+#include "bookmark.h"
 
 #ifdef LATTICE
 	/* set stack size for LATTICE here */

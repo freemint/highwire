@@ -19,6 +19,7 @@
 #include "cache.h"
 #include "Logging.h"
 #include "dragdrop.h"
+#include "bookmark.h"
 
 
 #define WINDOW_t HwWIND

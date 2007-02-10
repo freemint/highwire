@@ -82,10 +82,10 @@ extern UWORD _systype(void);
 
 char * file_selector (const char * label, const char * patt,
                       const char * file, char * buff, size_t blen);
-void rpopup_open (WORD, WORD);
-void rpoplink_open (WORD, WORD, CONTAINR, void *);
+void rpopup_open    (WORD, WORD);
+void rpoplink_open  (WORD, WORD, CONTAINR, void *);
 void rpopilink_open (WORD, WORD, CONTAINR, void *);
-void rpopimg_open (WORD, WORD, CONTAINR);
+void rpopimg_open   (WORD, WORD, CONTAINR);
 void update_menu (ENCODING, BOOL raw_text);
 BOOL process_messages (WORD msg[], PXY, UWORD state);
 void    menu_open     (BOOL fsel);
@@ -144,12 +144,6 @@ long draw_paragraph (PARAGRPH, WORD x, long y, const GRECT *, void * highlight);
 void draw_border    (const GRECT *, short lu, short rd, short width);
 void draw_TBLR_border (const GRECT *, short lu, short rd, TBLR width);
 
-/* in Bookmark.c */
-extern const char * bkm_File;
-
-BOOL read_bookmarks (void);
-BOOL add_bookmark (const char * bookmark_url, const char *bookmark_title);
-
 /* in Config.c */
 
 extern WORD         cfg_UptoDate;
@@ -187,7 +181,7 @@ void key_pressed (WORD scan, WORD ascii, UWORD state);
 /* in Loader.c */
 
 void init_paths(void);
-void launch_viewer(const char *name);
+void launch_viewer (const char *name);
 
 /* in render.c */
 
@@ -266,7 +260,7 @@ short get_avserver     (void);
 void  Init_AV_Protocol (void);
 void  Exit_AV_Protocol (void);
 BOOL  Receive_AV       (short msg[8]);
-BOOL  Send_AV	       (short message, const char *data1, const char *data2);
+BOOL  Send_AV	        (short message, const char *data1, const char *data2);
 
-void send_avwinopen(short handle);
-void send_avwinclose(short handle);  
+void send_avwinopen  (short handle);
+void send_avwinclose (short handle);  

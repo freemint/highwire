@@ -2,25 +2,17 @@
  * Bookmark.C
  *
  */
-#include <stdlib.h> /* for atol etc */
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <time.h>
 
-#include "version.h"
 #include "file_sys.h"
-#include "global.h"
-#include "Location.h"
-#include "mime.h"
-#include "http.h"
-#include "hwWind.h"
-#include "fontbase.h"
-#include "cache.h"
+#include "defs.h"
+#include "bookmark.h"
 
-#include "scanner.h"
-
-const char * bkm_File         = NULL;
-const char * bkm_CSS          = NULL;
+const char * bkm_File = NULL;
+const char * bkm_CSS  = NULL;
 
 int Num_Bookmarks;
 
