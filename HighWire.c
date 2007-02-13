@@ -392,8 +392,7 @@ open_splash (void)
 	curr.g_w =  w;
 	curr.g_h =  h;
 	splash = window_ctor (malloc (sizeof (WINDOWBASE)),
-	                      0, (((((((ULONG)'S')<<8)|'P')<<8)|'L')<<8)|'S',
-	                      NULL, &curr, TRUE);
+	                      0, WINDOW_IDENT('S','P','L','S'), NULL, &curr, TRUE);
 	splash->evButton = vTab_evButton;
 	splash->evKeybrd = vTab_evKeybrd;
 	splash->drawWork = vTab_draw;

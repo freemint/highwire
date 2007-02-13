@@ -9,7 +9,7 @@ typedef struct form_window * FORMWIND;
 #define WINDOW_t             FORMWIND
 #include "Window.h"
 
-#define IDENT_FORM   ((((((((ULONG)'F')<<8)|'O')<<8)|'R')<<8)|'M')
+#define IDENT_FORM   WINDOW_IDENT('F','O','R','M')
 struct form_window {
 	WINDOWBASE Base;
 	OBJECT * Tree;

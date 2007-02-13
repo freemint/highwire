@@ -39,6 +39,7 @@ typedef struct s_window {   /* all of the following are private attributes, */
 
 WINDOW window_byHandle (WORD);
 WINDOW window_byIdent  (ULONG);
+#define WINDOW_IDENT(a,b,c,d)   ((((((((ULONG)a)<<8)|b)<<8)|c)<<8)|d)
 
 BOOL window_evMessage (WORD msg[], PXY mouse, UWORD kstate);
 void window_evButton  (WORD bmask, PXY mouse, UWORD kstate, WORD clicks);
