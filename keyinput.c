@@ -172,13 +172,17 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	case 'U':  /* U: reload with default encoding UTF-8 */
 		menu_reload (ENCODING_UTF8);
 		break;
-	case 0x0002:  /* CTRL+B, Open Bookmarks */
-		new_hwWind ("", bkm_File);
-		break;
-	case 0x0004:  /* CTRL+D, Add page to bookmarks */
+	case 0x0002: { /* CTRL+B, Open Bookmarks */
+		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+		if (wind) hwWind_raise (wind, TRUE);
+		else      new_hwWind ("", bkm_File);
+	}	break;
+	case 0x0004: { /* CTRL+D, Add page to bookmarks */
+		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
 		location_FullName (active->Location, buf, sizeof(buf));
 		add_bookmark (buf,hwWind_Top->Base.Name);
-		break;
+		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+	}	break;
 	case 0x0006:  /* CTRL+F */
 		fonts_setup (NULL);
 		break;

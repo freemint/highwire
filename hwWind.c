@@ -24,8 +24,8 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
-#define IDENT_BRWS   ((((((((ULONG)'B')<<8)|'R')<<8)|'W')<<8)|'S')
-#define IDENT_BMRK   ((((((((ULONG)'B')<<8)|'M')<<8)|'R')<<8)|'K')
+#define IDENT_BRWS   WINDOW_IDENT('B','R','W','S')
+#define IDENT_BMRK   WINDOW_IDENT('B','M','R','K')
 static WINDOW vTab_destruct(HwWIND);
 static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
 static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
@@ -252,6 +252,7 @@ new_hwWind (const char * name, const char * url)
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
 	short      i;
+	GRECT      curr;
 	ULONG      ident = (url && url == bkm_File ? IDENT_BMRK : IDENT_BRWS);
 	                                       /* special case for bookmark window */
 	if (!inc_xy) {
@@ -305,6 +306,8 @@ new_hwWind (const char * name, const char * url)
 				save_area.g_x = save_area.g_y = -1;
 			}
 		}
+		curr = curr_area;
+		
 		if (!ignore_colours) {
 #if 0 /* this doesn't work with MagiC yet */
 			u   = W_HELEV;
@@ -322,6 +325,12 @@ new_hwWind (const char * name, const char * url)
 #endif
 		}
 		
+	} else if (ident == IDENT_BMRK) {
+		curr.g_h = desk_area.g_h;
+		curr.g_y = desk_area.g_y;
+		curr.g_w = max (curr.g_h /2, 200);
+		curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
+		
 	} else {
 		curr_area.g_x += inc_xy;
    	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
@@ -331,6 +340,7 @@ new_hwWind (const char * name, const char * url)
    	if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
    		curr_area.g_y = desk_area.g_y;
    	}
+		curr = curr_area;
 	}
 	
 	window_ctor (This, wind_kind, ident,
@@ -394,7 +404,7 @@ new_hwWind (const char * name, const char * url)
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
-	window_raise (&This->Base, TRUE, &curr_area);
+	window_raise (&This->Base, TRUE, &curr);
 	hwWind_redraw (This, NULL);
 
 	if (url && *url) {
@@ -756,7 +766,7 @@ vTab_sized (HwWIND This)
 			window_setBevent (&This->Base);
 		}
 		
-	} else if (!This->Base.isFull) {
+	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BRWS) {
 		save_area.g_w = curr_area.g_w = This->Curr.g_w;
 		save_area.g_h = curr_area.g_h = This->Curr.g_h;
 	}
