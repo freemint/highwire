@@ -308,11 +308,11 @@ cfg_backgnd (char * param, long arg)
 {
 	(void)arg;
 	if (!ignore_colours) {
-	
+		
 		if (isalpha(*param)) { /* named colour */
 			long n = scan_color (param, strlen(param));
 			if (n >= 0) {
-				background_colour = remap_color (n);
+				*(long*)arg = n;
 			}
 		
 		} else if (param[0] != '0' || !param[1]) { /* VDI colour index */
@@ -326,7 +326,7 @@ cfg_backgnd (char * param, long arg)
 			char * tail = param;
 			long   n    = strtoul (param, &tail, 16);
 			if (tail > param && n <= 0xFFFFFFL) {
-				background_colour = remap_color (n);
+				*(long*)arg = n;
 			}
 		}
 	}
@@ -544,6 +544,8 @@ devl_flag (const char * name)
 BOOL
 read_config(void)
 {
+	static long backgnd = -1;
+	
 	char l[HW_PATH_MAX], * p, * d;
 	FILE   * fp = open_cfg ("r");
 	
@@ -596,7 +598,7 @@ read_config(void)
 				{ "CACHEMEM",             cfg_cachemem,  0 },
 				{ "COOKIES",              cfg_Func,      (long)menu_cookies     },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
-				{ "DFLT_BACKGND",         cfg_backgnd,   0 },
+				{ "DFLT_BACKGND",         cfg_backgnd,   (long)&backgnd },
 				{ "FIXED_CMAP",           cfg_BOOL,      (long)&cfg_FixedCmap   },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },
@@ -654,6 +656,11 @@ read_config(void)
 		}
 	}
 	fclose (fp);
+	
+	if (backgnd >= 0) { /* must be set after cfg_FixedCmap */
+		save_colors();
+		background_colour = remap_color (backgnd);
+	}
 	
 	if (cfg_UptoDate <= 0) {
 		save_config (NULL, NULL);
