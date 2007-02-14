@@ -60,6 +60,7 @@ static WORD  widget_b, widget_w, widget_h;
 static GRECT desk_area;
 static GRECT curr_area;
 static GRECT save_area = { -1, -1, 0, 0 };
+static GRECT bkm_area = { -1, -1, 0, 0 };
 static WORD  tbar_set = +21;
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
@@ -206,6 +207,33 @@ hwWind_setup (HWWIND_SET set, long arg)
 				}
 			}
 		}	break;
+
+		case HWWS_BOOKMGEO: {
+			char* str = (char*)arg;
+			if (*str != '+') {
+				WORD w = strtol (str, &str, 16);
+				if (*str == 'x' && (long)str > arg) {
+					WORD h = strtol (++str, &str, 16);
+					if ((long)str > arg) {
+						bkm_area.g_w = w;
+						bkm_area.g_h = h;
+						arg = (long)str;
+					}
+				}
+			}
+			if (*str == '+') {
+				WORD x = strtol (++str, &str, 16);
+				if (*str == '+' && (long)str > arg +1) {
+					WORD y = strtol (++str, &str, 16);
+					if ((long)str > arg +2) {
+						bkm_area.g_x = x;
+						bkm_area.g_y = y;
+						arg = (long)str;
+					}
+				}
+			}
+		}	break;
+
 	}
 }
 
@@ -237,6 +265,27 @@ hwWind_store (HWWIND_SET set)
 			}
 			if (p > buff) {
 				save_config ("BRWSR_GEO", buff);
+			}
+		}	break;
+
+		case HWWS_BOOKMGEO: {
+			char buff[30], * p = buff;
+			if (bkm_area.g_w > 0 && bkm_area.g_h > 0) {
+				WORD w = ((long)bkm_area.g_w * 0x7FFF) / desk_area.g_w;
+				WORD h = ((long)bkm_area.g_h * 0x7FFF) / desk_area.g_h;
+				sprintf (p, "%04hXx%04hX", w, h);
+				p = strchr (p, '\0');
+			}
+			if (save_area.g_x > 0 && save_area.g_y > 0) {
+				WORD x = ((long)(bkm_area.g_x - desk_area.g_x) * 0x7FFF)
+				         / (desk_area.g_w - desk_area.g_x);
+				WORD y = ((long)(bkm_area.g_y - desk_area.g_y) * 0x7FFF)
+				         / (desk_area.g_h - desk_area.g_y);
+				sprintf (p, "+%04hX+%04hX", x, y);
+				p = strchr (p, '\0');
+			}
+			if (p > buff) {
+				save_config ("BOOKM_GEO", buff);
 			}
 		}	break;
 	}
@@ -271,6 +320,7 @@ new_hwWind (const char * name, const char * url)
 			curr_area.g_w = (desk_area.g_w *3) /4;
 			curr_area.g_h = (desk_area.g_h *3) /4;
 		}
+
 		if (save_area.g_w > 0 && save_area.g_h > 0) {
 			WORD w = ((long)save_area.g_w * desk_area.g_w) / 0x7FFFu;
 			WORD h = ((long)save_area.g_h * desk_area.g_h) / 0x7FFFu;
@@ -326,11 +376,21 @@ new_hwWind (const char * name, const char * url)
 		}
 		
 	} else if (ident == IDENT_BMRK) {
-		curr.g_h = desk_area.g_h;
-		curr.g_y = desk_area.g_y;
-		curr.g_w = max (curr.g_h /2, 200);
-		curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
-		
+		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
+
+		if (bkm_area.g_w == 0) {
+			curr.g_h = desk_area.g_h;
+			curr.g_y = desk_area.g_y;
+			curr.g_w = max (curr.g_h /2, 200);
+			curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
+		} else {
+			curr.g_w = ((long)bkm_area.g_w * desk_area.g_w) / 0x7FFFu;
+			curr.g_h = ((long)bkm_area.g_h * desk_area.g_h) / 0x7FFFu;
+			curr.g_x = ((long)bkm_area.g_x * (desk_area.g_w - desk_area.g_x))
+			                / 0x7FFFu + desk_area.g_x;
+			curr.g_y = ((long)bkm_area.g_y * (desk_area.g_h - desk_area.g_y))
+			                / 0x7FFFu + desk_area.g_y;
+		}	
 	} else {
 		curr_area.g_x += inc_xy;
    	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
@@ -737,8 +797,14 @@ vTab_moved (HwWIND This)
 {
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 	containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y + This->TbarH);
-	save_area.g_x = This->Curr.g_x;
-	save_area.g_y = This->Curr.g_y;
+
+	if (This->Base.Ident == IDENT_BRWS) {
+		save_area.g_x = This->Curr.g_x;
+		save_area.g_y = This->Curr.g_y;
+	} else { /* IDENT_BMRK */
+		bkm_area.g_x = This->Curr.g_x;
+		bkm_area.g_y = This->Curr.g_y;
+	}
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -769,6 +835,9 @@ vTab_sized (HwWIND This)
 	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BRWS) {
 		save_area.g_w = curr_area.g_w = This->Curr.g_w;
 		save_area.g_h = curr_area.g_h = This->Curr.g_h;
+	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BMRK) {
+		bkm_area.g_w = curr_area.g_w = This->Curr.g_w;
+		bkm_area.g_h = curr_area.g_h = This->Curr.g_h;
 	}
 	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
