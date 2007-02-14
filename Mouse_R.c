@@ -239,8 +239,11 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 			CONTAINR target = NULL;
 
 			if (link->u.target && stricmp(link->u.target, "_hw_top") == 0) {
-				window_raise (NULL, TRUE, NULL);
-				cont = hwWind_Top->Pane;
+				HwWIND this = hwWind_byType (0);
+
+				hwWind_raise (this, TRUE);
+
+				cont = this->Pane;
 				target = containr_byName (cont, "_top");
 			} else {
 				target = (link->u.target &&
