@@ -393,13 +393,15 @@ new_hwWind (const char * name, const char * url)
 		}	
 	} else {
 		curr_area.g_x += inc_xy;
-   	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
-   		curr_area.g_x = desk_area.g_x;
-   	}
+
+	  	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
+   			curr_area.g_x = desk_area.g_x;
+   		}
 		curr_area.g_y += inc_xy;
-   	if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
-   		curr_area.g_y = desk_area.g_y;
-   	}
+
+	   	if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
+	   		curr_area.g_y = desk_area.g_y;
+	   	}
 		curr = curr_area;
 	}
 	
@@ -836,8 +838,8 @@ vTab_sized (HwWIND This)
 		save_area.g_w = curr_area.g_w = This->Curr.g_w;
 		save_area.g_h = curr_area.g_h = This->Curr.g_h;
 	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BMRK) {
-		bkm_area.g_w = curr_area.g_w = This->Curr.g_w;
-		bkm_area.g_h = curr_area.g_h = This->Curr.g_h;
+		bkm_area.g_w = This->Curr.g_w;
+		bkm_area.g_h = This->Curr.g_h;
 	}
 	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
