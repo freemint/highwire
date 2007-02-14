@@ -72,7 +72,9 @@ typedef enum {
 	                     * 0:  disabled
 	                     * >0: enabled and visible
 	                     * <0: enabled but invisible by default */
-	HWWS_GEOMETRY = 0x7767u /* 'wg' window geometry, arg points to a string
+	HWWS_GEOMETRY = 0x7767u, /* 'wg' window geometry, arg points to a string
+	                     * containing the values in the format <W>x<H>+<X>+<Y> */
+	HWWS_BOOKMGEO = 0x6267u /* 'bg' bookmark window geometry, arg points to a string
 	                     * containing the values in the format <W>x<H>+<X>+<Y> */
 } HWWIND_SET;
 
