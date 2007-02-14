@@ -146,11 +146,11 @@ read_bookmarks (void) {
 		fputs ("<DL>\n", file);
 		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
 		fputs ("<DL CLASS=\"INTPRJ\">\n", file);
-		fprintf (file, "<DT><A ID=\"00000001\" CLASS=\"INTPRJ\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000002\" CLASS=\"INTPRJ\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000003\" CLASS=\"INTPRJ\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000004\" CLASS=\"INTPRJ\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000005\" CLASS=\"INTPRJ\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
+		fprintf (file, "<DT><A ID=\"00000001\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
+		fprintf (file, "<DT><A ID=\"00000002\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
+		fprintf (file, "<DT><A ID=\"00000003\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><A ID=\"00000004\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
+		fprintf (file, "<DT><A ID=\"00000005\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
 		fputs ("</DL>\n", file);
@@ -253,7 +253,7 @@ I've modified this all, but maybe we need something like the following?
 */
 		fseek (file, (flen - 14), SEEK_SET);
 
-		fprintf (file, "<DT><A ID=\"%s\" CLASS=\"USR_ROOT\" target=\"_blank\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", buf, now, now, bookmark_url, bookmark_title);
+		fprintf (file, "<DT><A ID=\"%s\" CLASS=\"USR_ROOT\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", buf, now, now, bookmark_url, bookmark_title);
 
 		fputs ("</DL>\n", file);
 		fputs ("</html>", file);
