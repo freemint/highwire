@@ -236,9 +236,18 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 			WORD dmy;
 			struct url_link * link = hash;
 			const char      * addr = link->address;
-			CONTAINR target = (link->u.target &&
+			CONTAINR target = NULL;
+
+			if (link->u.target && stricmp(link->u.target, "_hw_top") == 0) {
+				window_raise (NULL, TRUE, NULL);
+				cont = hwWind_Top->Pane;
+				target = containr_byName (cont, "_top");
+			} else {
+				target = (link->u.target &&
 			                   stricmp (link->u.target, "_blank") != 0
 			                   ? containr_byName (cont, link->u.target) : NULL);
+			}
+			
 			if (target) {
 				const char * p = strchr (addr, '#');
 				FRAME  t_frame = containr_Frame (target);
