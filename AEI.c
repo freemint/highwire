@@ -725,7 +725,7 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_ABOUT:     menu_about(); break;
 		case M_OPEN:      menu_open (!(state & (K_RSHIFT|K_LSHIFT))); break;
 		case M_INFO:      menu_info();  break;
-		case M_QUIT:      hwWind_store (HWWS_GEOMETRY); menu_quit(); break;
+		case M_QUIT:      hwWind_store (HWWS_GEOMETRY); hwWind_store (HWWS_BOOKMGEO); menu_quit(); break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);     break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
