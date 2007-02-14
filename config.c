@@ -252,6 +252,14 @@ cfg_startpage (char * param, long arg)
 
 /*----------------------------------------------------------------------------*/
 static void
+cfg_bookm_geo (char * param, long arg)
+{
+	(void)arg;
+	hwWind_setup (HWWS_BOOKMGEO, (long)param);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
 cfg_brwsr_geo (char * param, long arg)
 {
 	(void)arg;
@@ -592,6 +600,7 @@ read_config(void)
 				{ "BOLD_ITALIC_TELETYPE", cfg_font,      FA(pre_font,    1, 1)  },
 				{ "BOLD_NORMAL",          cfg_font,      FA(normal_font, 1, 0)  },
 				{ "BOLD_TELETYPE",        cfg_font,      FA(pre_font,    1, 0)  },
+				{ "BOOKM_GEO",            cfg_bookm_geo, 0 },
 				{ "BRWSR_GEO",            cfg_brwsr_geo, 0 },
 				{ "CACHEDIR",             cfg_cachedir,  0 },
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
