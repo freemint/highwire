@@ -113,6 +113,10 @@ save_colors(void)
 	WORD res_colors = (planes >= 8 ? 256 : 1 << planes);
 	int  i;
 	
+	static BOOL _once = TRUE;
+	if (!_once) return;
+	_once = FALSE;
+	
 	if ((cfg_FixedCmap && planes == 8) || planes > 8) {
 		color_mapsetup();
 		color_FixedMap = TRUE;
