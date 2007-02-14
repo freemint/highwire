@@ -51,6 +51,7 @@ extern HwWIND hwWind_Focus;
 HwWIND  hwWind_Next     (HwWIND);
 HwWIND  hwWind_byValue  (long);
 HwWIND  hwWind_byHandle (WORD);
+HwWIND  hwWind_byType   (WORD);
 #define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
 HwWIND  hwWind_byContainr (CONTAINR);
 

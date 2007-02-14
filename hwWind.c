@@ -1127,6 +1127,23 @@ hwWind_byContainr (CONTAINR cont)
 	return wind;
 }
 
+/*============================================================================*/
+HwWIND
+hwWind_byType (WORD val)
+{
+	HwWIND wind = hwWind_Top;
+	ULONG  ident;
+	
+	if (val == 0) {
+		ident = IDENT_BRWS;
+	} else {
+		ident = IDENT_BMRK;
+	}
+	while (wind && wind->Base.Ident != ident) {
+		wind = hwWind_Next (wind);
+	}
+	return wind;
+}
 
 /*----------------------------------------------------------------------------*/
 static void
