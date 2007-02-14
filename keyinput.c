@@ -179,9 +179,16 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	}	break;
 	case 0x0004: { /* CTRL+D, Add page to bookmarks */
 		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+		HwWIND old = hwWind_Top;
+		
 		location_FullName (active->Location, buf, sizeof(buf));
 		add_bookmark (buf,hwWind_Top->Base.Name);
-		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+		if (wind) {
+			hwWind_history (wind, wind->HistMenu, TRUE);
+			hwWind_raise (wind, TRUE);
+			menu_reload (ENCODING_ATARIST);
+			hwWind_raise (old, TRUE);
+		}
 	}	break;
 	case 0x0006:  /* CTRL+F */
 		fonts_setup (NULL);
