@@ -515,7 +515,7 @@ menu_info (void)
 
 /*============================================================================*/
 void
-menu_bookmark_url (	LOCATION *loc)
+menu_bookmark_url (LOCATION loc)
 {
 	char buf[2 * HW_PATH_MAX];
 	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
@@ -960,16 +960,16 @@ rpopup_open (WORD mx, WORD my)
 
 		case RPOP_BOOKM: {
 			char buf[2 * HW_PATH_MAX];
-			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND bmrk = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
 			HwWIND old = hwWind_Top;
 		
 			location_FullName (loc, buf, sizeof(buf));
 
 			/* we need a method to grab the name of the link */
 			add_bookmark (buf, hwWind_Top->Base.Name);
-			if (wind) {
-				hwWind_history (wind, wind->HistMenu, TRUE);
-				hwWind_raise (wind, TRUE);
+			if (bmrk) {
+				hwWind_history (bmrk, wind->HistMenu, TRUE);
+				hwWind_raise (bmrk, TRUE);
 				menu_reload (ENCODING_ATARIST);
 				hwWind_raise (old, TRUE);
 			}
@@ -1108,16 +1108,16 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RLINK_BOOKM: {
 			char buf[2 * HW_PATH_MAX];
-			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND bmrk = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
 			HwWIND old = hwWind_Top;
 		
 			location_FullName (loc, buf, sizeof(buf));
 
 			/* we need a method to grab the name of the link */
 			add_bookmark (buf,addr); /*hwWind_Top->Base.Name);*/
-			if (wind) {
-				hwWind_history (wind, wind->HistMenu, TRUE);
-				hwWind_raise (wind, TRUE);
+			if (bmrk) {
+				hwWind_history (bmrk, wind->HistMenu, TRUE);
+				hwWind_raise (bmrk, TRUE);
 				menu_reload (ENCODING_ATARIST);
 				hwWind_raise (old, TRUE);
 			}
@@ -1384,16 +1384,16 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RIMG_BOOKM: {
 			char buf[2 * HW_PATH_MAX];
-			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND bmrk = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
 			HwWIND old = hwWind_Top;
 		
 			location_FullName (loc, buf, sizeof(buf));
 
 			/* we need a method to grab the name of the link */
 			add_bookmark (buf,addr); /*hwWind_Top->Base.Name);*/
-			if (wind) {
-				hwWind_history (wind, wind->HistMenu, TRUE);
-				hwWind_raise (wind, TRUE);
+			if (bmrk) {
+				hwWind_history (bmrk, wind->HistMenu, TRUE);
+				hwWind_raise (bmrk, TRUE);
 				menu_reload (ENCODING_ATARIST);
 				hwWind_raise (old, TRUE);
 			}

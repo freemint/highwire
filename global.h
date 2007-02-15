@@ -92,7 +92,7 @@ void    menu_open     (BOOL fsel);
 void    menu_info     (void);
 #define menu_quit()   exit(EXIT_SUCCESS)
 void    menu_reload   (ENCODING);
-void	menu_bookmark_url (	LOCATION *);
+void	menu_bookmark_url  (LOCATION);
 void	menu_openbookmarks (void);
 void    menu_fontsize (char plus_minus);
 void    menu_cookies  (int);
