@@ -66,7 +66,6 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
 	long  sx = 0, sy = 0;
-	char buf[2 * HW_PATH_MAX];
 	
 	switch (scan) {
 	
