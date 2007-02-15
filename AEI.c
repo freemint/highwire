@@ -21,6 +21,7 @@
 #include "vaproto.h"
 /* #include "av_comm.h" */
 #include "global.h"
+#include "bookmark.h"
 #include "Location.h"
 #include "Containr.h"
 #include "hwWind.h"
@@ -512,6 +513,33 @@ menu_info (void)
 	}
 }
 
+/*============================================================================*/
+void
+menu_bookmark_url (	LOCATION *loc)
+{
+	char buf[2 * HW_PATH_MAX];
+	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+	HwWIND old = hwWind_Top;
+		
+	location_FullName (loc, buf, sizeof(buf));
+	add_bookmark (buf,hwWind_Top->Base.Name);
+	if (wind) {
+		hwWind_history (wind, wind->HistMenu, TRUE);
+		hwWind_raise (wind, TRUE);
+		menu_reload (ENCODING_ATARIST);
+		hwWind_raise (old, TRUE);
+	}
+}
+
+/*============================================================================*/
+void
+menu_openbookmarks (void)
+{
+	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+
+	if (wind) hwWind_raise (wind, TRUE);
+	else      new_hwWind ("", bkm_File);
+}
 
 /*============================================================================*/
 void
@@ -727,6 +755,8 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_INFO:      menu_info();  break;
 		case M_QUIT:      hwWind_store (HWWS_GEOMETRY); hwWind_store (HWWS_BOOKMGEO); menu_quit(); break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);     break;
+		case M_OPEN_BOOKMARKS: menu_openbookmarks(); break;
+		case M_BOOKMARK_URL:   menu_bookmark_url ( (hwWind_ActiveFrame (hwWind_Top))->Location); break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
 		case M_I8859_2:   menu_reload (ENCODING_ISO8859_2);   break;
@@ -927,6 +957,24 @@ rpopup_open (WORD mx, WORD my)
 			}
 
 			} break;
+
+		case RPOP_BOOKM: {
+			char buf[2 * HW_PATH_MAX];
+			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND old = hwWind_Top;
+		
+			location_FullName (loc, buf, sizeof(buf));
+
+			/* we need a method to grab the name of the link */
+			add_bookmark (buf, hwWind_Top->Base.Name);
+			if (wind) {
+				hwWind_history (wind, wind->HistMenu, TRUE);
+				hwWind_raise (wind, TRUE);
+				menu_reload (ENCODING_ATARIST);
+				hwWind_raise (old, TRUE);
+			}
+		}	break;
+
 	}
 }
 
@@ -1057,6 +1105,23 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		case RLINK_INFO:
 			menu_info();
 			break;
+
+		case RLINK_BOOKM: {
+			char buf[2 * HW_PATH_MAX];
+			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND old = hwWind_Top;
+		
+			location_FullName (loc, buf, sizeof(buf));
+
+			/* we need a method to grab the name of the link */
+			add_bookmark (buf,addr); /*hwWind_Top->Base.Name);*/
+			if (wind) {
+				hwWind_history (wind, wind->HistMenu, TRUE);
+				hwWind_raise (wind, TRUE);
+				menu_reload (ENCODING_ATARIST);
+				hwWind_raise (old, TRUE);
+			}
+		}	break;
 	}
 	
 	free_location (&loc);
@@ -1164,6 +1229,7 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 			}
 
 			} break;
+
 
 		case RIMG_INFO:
 			menu_info();
@@ -1315,6 +1381,23 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			}
 
 			} break;
+
+		case RIMG_BOOKM: {
+			char buf[2 * HW_PATH_MAX];
+			HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+			HwWIND old = hwWind_Top;
+		
+			location_FullName (loc, buf, sizeof(buf));
+
+			/* we need a method to grab the name of the link */
+			add_bookmark (buf,addr); /*hwWind_Top->Base.Name);*/
+			if (wind) {
+				hwWind_history (wind, wind->HistMenu, TRUE);
+				hwWind_raise (wind, TRUE);
+				menu_reload (ENCODING_ATARIST);
+				hwWind_raise (old, TRUE);
+			}
+		}	break;
 
 		case RIMG_INFO:
 			menu_info();
