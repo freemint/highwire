@@ -2933,6 +2933,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		FRAME    frame    = parser->Frame;
 		TEXTBUFF current  = &parser->Current;
 		H_ALIGN  floating = get_h_align (parser, ALN_NO_FLT);
+		H_ALIGN  old_value = current->paragraph->Box.TextAlign;
 		V_ALIGN  v_align  = ALN_BOTTOM;
 		TEXTATTR word_attr   = current->word->attr;
 		short word_height    = current->word->word_height;
@@ -3054,10 +3055,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			width = get_value_size  (parser, KEY_WIDTH);
 		
 		new_image (frame, current, img_file, frame->BaseHref,
-width, height,
-/*		           get_value_size (parser, KEY_WIDTH),
-		           get_value_size (parser, KEY_HEIGHT),
-*/
+				   width, height,
 		           get_value_size (parser, KEY_VSPACE),
 		           get_value_size (parser, KEY_HSPACE),FALSE);
 		font_switch (current->word->font, NULL);
@@ -3092,12 +3090,11 @@ width, height,
 			flags &= ~PF_SPACE;
 		} else {
 			add_paragraph (current, 0);
-			current->paragraph->Box.TextAlign = current->prev_par->Box.TextAlign;
-
+			current->paragraph->Box.TextAlign = old_value;
 
 			flags |= PF_SPACE;
 		}
-	}
+	} 
 	
 	return flags;
 }
