@@ -4,6 +4,9 @@ Changes in V. 0.3.3 beta
   file method FORMs (file upload via forms)
 
 - New Feature implemented:  Basic Bookmark support (still in development)
+   Bookmark GEO stored in Config file
+   Ability to open Bookmark window from menu and with Control+B
+   Ability to bookmark a window from menu, popups and with Control+D
 
 - New config keyword FIXED_CMAP for using an
   optimized color palette and COLORS_CHANGED
@@ -13,6 +16,10 @@ Changes in V. 0.3.3 beta
   > 8.
 
 - Bug Fix: Highwire now gets form data encoding from the form
+
+- Bug Fix for background colors
+
+- Bug Fix for text following floating images
   
 - Table Border code overhauled
 
