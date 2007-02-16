@@ -428,31 +428,6 @@ menu_open (BOOL fsel)
 	}
 }
 
-
-/*============================================================================*/
-void
-menu_reload (ENCODING encoding)
-{
-	if (encoding > ENCODING_Unknown) {
-		/* if an encoding is given (!=ENCODING_Unknown) set bit 7 to instruct
-		 * the parser not to switch it.
-		 */
-		FRAME frame = hwWind_ActiveFrame (NULL);
-		if (frame) {
-			LOADER ldr = start_cont_load (frame->Container,
-			                              NULL, frame->Location, TRUE, TRUE);
-			if (ldr) {
-				ldr->Encoding = (encoding | 0x80u);
-				ldr->MarginW  = frame->Page.Margin.Lft;
-				ldr->MarginH  = frame->Page.Margin.Top;
-			}
-		}
-	} else {
-		hwWind_history (hwWind_Top, hwWind_Top->HistMenu, TRUE);
-	}
-}
-
-
 /*============================================================================*/
 void
 menu_info (void)
@@ -515,31 +490,13 @@ menu_info (void)
 
 /*============================================================================*/
 void
-menu_bookmark_url (LOCATION loc)
+menu_quit (void)
 {
-	char buf[2 * HW_PATH_MAX];
-	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-	HwWIND old = hwWind_Top;
-		
-	location_FullName (loc, buf, sizeof(buf));
-	add_bookmark (buf,hwWind_Top->Base.Name);
-	if (wind) {
-		hwWind_history (wind, wind->HistMenu, TRUE);
-		hwWind_raise (wind, TRUE);
-		menu_reload (ENCODING_ATARIST);
-		hwWind_raise (old, TRUE);
-	}
+	hwWind_store (HWWS_GEOMETRY);
+	hwWind_store (HWWS_BOOKMGEO);
+	exit (EXIT_SUCCESS);
 }
 
-/*============================================================================*/
-void
-menu_openbookmarks (void)
-{
-	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-
-	if (wind) hwWind_raise (wind, TRUE);
-	else      new_hwWind ("", bkm_File);
-}
 
 /*============================================================================*/
 void
@@ -579,77 +536,53 @@ menu_fontsize (char plus_minus)
 
 /*============================================================================*/
 void
-menu_cookies (int mode)
+menu_reload (ENCODING encoding)
 {
-	if (mode < 0)  cfg_AllowCookies = !cfg_AllowCookies;
-	else if (mode) cfg_AllowCookies = TRUE;
-	else           cfg_AllowCookies = FALSE;
-	if (mode < 0) {
-		save_config ("COOKIES", (cfg_AllowCookies ? "1" : "0"));
+	if (encoding > ENCODING_Unknown) {
+		/* if an encoding is given (!=ENCODING_Unknown) set bit 7 to instruct
+		 * the parser not to switch it.
+		 */
+		FRAME frame = hwWind_ActiveFrame (NULL);
+		if (frame) {
+			LOADER ldr = start_cont_load (frame->Container,
+			                              NULL, frame->Location, TRUE, TRUE);
+			if (ldr) {
+				ldr->Encoding = (encoding | 0x80u);
+				ldr->MarginW  = frame->Page.Margin.Lft;
+				ldr->MarginH  = frame->Page.Margin.Top;
+			}
+		}
+	} else {
+		hwWind_history (hwWind_Top, hwWind_Top->HistMenu, TRUE);
 	}
-#ifdef GEM_MENU
-	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
-#endif
 }
-
 
 /*============================================================================*/
 void
-menu_images (int mode)
+menu_bookmark_url (LOCATION loc)
 {
-	if (mode < 0)  cfg_ViewImages = !cfg_ViewImages;
-	else if (mode) cfg_ViewImages = TRUE;
-	else           cfg_ViewImages = FALSE;
-	if (mode < 0) {
-		save_config ("VIEW_IMAGES", (cfg_ViewImages ? "1" : "0"));
+	char buf[2 * HW_PATH_MAX];
+	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+	HwWIND old = hwWind_Top;
+		
+	location_FullName (loc, buf, sizeof(buf));
+	add_bookmark (buf,hwWind_Top->Base.Name);
+	if (wind) {
+		hwWind_history (wind, wind->HistMenu, TRUE);
+		hwWind_raise (wind, TRUE);
+		menu_reload (ENCODING_ATARIST);
+		hwWind_raise (old, TRUE);
 	}
-#ifdef GEM_MENU
-	menu_icheck (menutree, M_IMAGES, cfg_ViewImages);
-#endif
 }
-
 
 /*============================================================================*/
 void
-menu_use_css (int mode)
+menu_openbookmarks (void)
 {
-	if (mode < 0)  cfg_UseCSS = !cfg_UseCSS;
-	else if (mode) cfg_UseCSS = TRUE;
-	else           cfg_UseCSS = FALSE;
-	if (mode < 0) {
-		save_config ("USE_CSS", (cfg_UseCSS ? "1" : "0"));
-	}
-#ifdef GEM_MENU
-	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);
-#endif
-}
+	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
 
-
-/*============================================================================*/
-void
-menu_frm_ctrl (int mode)
-{
-	if (mode < 0)  mode = !force_frame_controls;
-	else if (mode) mode = TRUE;
-	else           mode = FALSE;
-	force_frame_controls = mode;
-#ifdef GEM_MENU
-	menu_icheck (menutree, M_FRM_CTRL, force_frame_controls);
-#endif
-}
-
-
-/*============================================================================*/
-void
-menu_logging (int mode)
-{
-	if (mode < 0)  mode = !logging_is_on;
-	else if (mode) mode = TRUE;
-	else           mode = FALSE;
-	logging_is_on = mode;
-#ifdef GEM_MENU
-	menu_icheck (menutree, M_LOGGING, logging_is_on);
-#endif
+	if (wind) hwWind_raise (wind, TRUE);
+	else      new_hwWind ("", bkm_File);
 }
 
 
@@ -741,6 +674,78 @@ menu_history (HISTORY hist[], UWORD used, WORD check)
 #endif
 
 
+/*============================================================================*/
+void
+menu_cookies (int mode)
+{
+	if (mode < 0)  cfg_AllowCookies = !cfg_AllowCookies;
+	else if (mode) cfg_AllowCookies = TRUE;
+	else           cfg_AllowCookies = FALSE;
+	if (mode < 0) {
+		save_config ("COOKIES", (cfg_AllowCookies ? "1" : "0"));
+	}
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
+#endif
+}
+
+/*============================================================================*/
+void
+menu_images (int mode)
+{
+	if (mode < 0)  cfg_ViewImages = !cfg_ViewImages;
+	else if (mode) cfg_ViewImages = TRUE;
+	else           cfg_ViewImages = FALSE;
+	if (mode < 0) {
+		save_config ("VIEW_IMAGES", (cfg_ViewImages ? "1" : "0"));
+	}
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_IMAGES, cfg_ViewImages);
+#endif
+}
+
+/*============================================================================*/
+void
+menu_use_css (int mode)
+{
+	if (mode < 0)  cfg_UseCSS = !cfg_UseCSS;
+	else if (mode) cfg_UseCSS = TRUE;
+	else           cfg_UseCSS = FALSE;
+	if (mode < 0) {
+		save_config ("USE_CSS", (cfg_UseCSS ? "1" : "0"));
+	}
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_USE_CSS, cfg_UseCSS);
+#endif
+}
+
+/*============================================================================*/
+void
+menu_frm_ctrl (int mode)
+{
+	if (mode < 0)  mode = !force_frame_controls;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	force_frame_controls = mode;
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_FRM_CTRL, force_frame_controls);
+#endif
+}
+
+/*============================================================================*/
+void
+menu_logging (int mode)
+{
+	if (mode < 0)  mode = !logging_is_on;
+	else if (mode) mode = TRUE;
+	else           mode = FALSE;
+	logging_is_on = mode;
+#ifdef GEM_MENU
+	menu_icheck (menutree, M_LOGGING, logging_is_on);
+#endif
+}
+
+
 /*----------------------------------------------------------------------------*/
 #ifdef GEM_MENU
 static void
@@ -750,13 +755,13 @@ handle_menu (WORD title, WORD item, UWORD state)
 		hwWind_history (hwWind_Top, item - M_HIST_BEG, FALSE);
 	
 	} else switch (item) {
-		case M_ABOUT:     menu_about(); break;
+		case M_ABOUT:     menu_about();                               break;
 		case M_OPEN:      menu_open (!(state & (K_RSHIFT|K_LSHIFT))); break;
-		case M_INFO:      menu_info();  break;
-		case M_QUIT:      hwWind_store (HWWS_GEOMETRY); hwWind_store (HWWS_BOOKMGEO); menu_quit(); break;
-		case M_RELOAD:    menu_reload (ENCODING_Unknown);     break;
+		case M_INFO:      menu_info();                                break;
+		case M_QUIT:      menu_quit();                                break;
+		case M_RELOAD:    menu_reload (ENCODING_Unknown);             break;
 		case M_OPEN_BOOKMARKS: menu_openbookmarks(); break;
-		case M_BOOKMARK_URL:   menu_bookmark_url ( (hwWind_ActiveFrame (hwWind_Top))->Location); break;
+		case M_BOOKMARK_URL:   menu_bookmark_url (hwWind_ActiveFrame(hwWind_Top)->Location); break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
 		case M_I8859_2:   menu_reload (ENCODING_ISO8859_2);   break;

@@ -88,19 +88,19 @@ void rpopilink_open (WORD, WORD, CONTAINR, void *);
 void rpopimg_open   (WORD, WORD, CONTAINR);
 void update_menu (ENCODING, BOOL raw_text);
 BOOL process_messages (WORD msg[], PXY, UWORD state);
-void    menu_open     (BOOL fsel);
-void    menu_info     (void);
-#define menu_quit()   exit(EXIT_SUCCESS)
-void    menu_reload   (ENCODING);
-void	menu_bookmark_url  (LOCATION);
-void	menu_openbookmarks (void);
-void    menu_fontsize (char plus_minus);
-void    menu_cookies  (int);
-void    menu_images   (int);
-void    menu_use_css  (int);
-void    menu_frm_ctrl (int);
-void    menu_logging  (int);
-WORD    menu_history  (HISTORY hist[], UWORD used, WORD check);
+void    menu_open         (BOOL fsel);
+void    menu_info         (void);
+void    menu_quit         (void);
+void    menu_reload       (ENCODING);
+void    menu_fontsize     (char plus_minus);
+void	  menu_bookmark_url (LOCATION);
+void	  menu_openbookmarks(void);
+WORD    menu_history      (HISTORY hist[], UWORD used, WORD check);
+void    menu_cookies      (int);
+void    menu_images       (int);
+void    menu_use_css      (int);
+void    menu_frm_ctrl     (int);
+void    menu_logging      (int);
 
 /* in formwind.c */
 
