@@ -821,6 +821,26 @@ update_menu (ENCODING encoding, BOOL raw_text)
 
 
 /*============================================================================*/
+/* copy_url_2_scrap()
+ *  Just a small utility routine, since it was duplicated in several
+ * places.
+ */ 
+void
+copy_url_2_scrap (LOCATION loc)
+{
+	FILE * file;
+	char buf[2 * HW_PATH_MAX];
+
+	location_FullName (loc, buf, sizeof(buf));
+
+	file = open_scrap (FALSE);
+	if (file) {
+		fwrite (buf, 1, strlen(buf), file);
+		fclose (file);
+	}
+}
+
+/*============================================================================*/
 /* rpopup_open
  *
  * I would much rather do this in a non modal manner, however
@@ -949,19 +969,9 @@ rpopup_open (WORD mx, WORD my)
 			}
 			
 			} break;
-		case RPOP_COPY: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
+		case RPOP_COPY: 
+			copy_url_2_scrap (loc);
+			break;
 
 		case RPOP_BOOKM: {
 			char buf[2 * HW_PATH_MAX];
@@ -1093,19 +1103,9 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			dl_manager (loc, frame->Location);
 			break;
 
-		case RLINK_COPY: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
+		case RLINK_COPY: 
+			copy_url_2_scrap (loc);
+			break;
 
 		case RLINK_INFO:
 			menu_info();
@@ -1221,20 +1221,9 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 			dl_manager (imgloc, frame->Location);
 			break;
 
-		case RIMG_COPYIMGURL: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-
-			location_FullName (imgloc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
-
+		case RIMG_COPYIMGURL: 
+			copy_url_2_scrap (imgloc);
+			break;
 
 		case RIMG_INFO:
 			menu_info();
@@ -1355,37 +1344,17 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			dl_manager (loc, frame->Location);
 			break;
 
-		case RIMG_COPY: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-
-			location_FullName (loc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
+		case RIMG_COPY: 
+			copy_url_2_scrap (loc);
+			break;
 
 		case RIMG_SAVEIMG:
 			dl_manager (imgloc, frame->Location);
 			break;
 
-		case RIMG_COPYIMGURL: {
-			FILE * file;
-			char buf[2 * HW_PATH_MAX];
-
-			location_FullName (imgloc, buf, sizeof(buf));
-
-			file = open_scrap (FALSE);
-			if (file) {
-				fwrite (buf, 1, strlen(buf), file);
-				fclose (file);
-			}
-
-			} break;
+		case RIMG_COPYIMGURL: 
+			copy_url_2_scrap (imgloc);
+			break;
 
 		case RIMG_BOOKM: {
 			char buf[2 * HW_PATH_MAX];
