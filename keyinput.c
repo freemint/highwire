@@ -175,7 +175,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_openbookmarks();
 		break;
 	case 0x0004: /* CTRL+D, Add page to bookmarks */
-		menu_bookmark_url (active->Location);
+		menu_bookmark_url (active->Location, hwWind_Top->Base.Name);
 		break;
 	case 0x0006:  /* CTRL+F */
 		fonts_setup (NULL);

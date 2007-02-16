@@ -93,7 +93,7 @@ void    menu_info         (void);
 void    menu_quit         (void);
 void    menu_reload       (ENCODING);
 void    menu_fontsize     (char plus_minus);
-void	  menu_bookmark_url (LOCATION);
+void	menu_bookmark_url (LOCATION loc, const char *b_title);
 void	  menu_openbookmarks(void);
 WORD    menu_history      (HISTORY hist[], UWORD used, WORD check);
 void    menu_cookies      (int);
