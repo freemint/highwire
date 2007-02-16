@@ -825,7 +825,7 @@ update_menu (ENCODING encoding, BOOL raw_text)
  *  Just a small utility routine, since it was duplicated in several
  * places.
  */ 
-void
+static void
 copy_url_2_scrap (LOCATION loc)
 {
 	FILE * file;
