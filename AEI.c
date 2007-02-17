@@ -563,16 +563,10 @@ menu_bookmark_url (LOCATION loc, const char *b_title)
 {
 	char buf[2 * HW_PATH_MAX];
 	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-	HwWIND old = hwWind_Top;
 		
 	location_FullName (loc, buf, sizeof(buf));
 	add_bookmark (buf, b_title);
-	if (wind) {
-		hwWind_history (wind, wind->HistMenu, TRUE);
-		hwWind_raise (wind, TRUE);
-		menu_reload (ENCODING_ATARIST);
-		hwWind_raise (old, TRUE);
-	}
+	if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
 }
 
 /*============================================================================*/
@@ -978,7 +972,7 @@ rpopup_open (WORD mx, WORD my)
 			/* we need a method to grab the name of the link */
 			/* this fails if the window we are grabbing the URL from
 			 * is not the top window */
-			menu_bookmark_url (loc, hwWind_Top->Base.Name);		
+			menu_bookmark_url (loc, wind->Base.Name);		
 			break;
 	}
 }
