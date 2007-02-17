@@ -138,7 +138,7 @@ read_bookmarks (void) {
 	} else if ((file = open_bookmarks ("w")) != NULL) {
 		fputs ("<html>\n", file);
 		fputs("<!DOCTYPE HighWire-Bookmark-file-1>\n", file);
-		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=Atari\">\n",file);
+		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=atarist\">\n",file);
 		fputs("<TITLE>Bookmarks</TITLE>\n",file);
 		fputs("<link rel=\"stylesheet\" href=\"bookmark.css\" type=\"text/css\" media=\"screen\">\n",file);
 		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
