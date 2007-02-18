@@ -14,7 +14,24 @@
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
 
-int Num_Bookmarks;
+static int Num_Bookmarks = 0;
+
+
+static const char tmpl_head[] =
+	"<!DOCTYPE HighWire-Bookmark-file-1>\n"
+	"<html><head>\n"
+	"  <META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html;"
+	         " charset=atarist\">\n"
+	"  <TITLE>Bookmarks</TITLE>\n"
+	"  <link rel=\"stylesheet\" href=\"bookmark.css\" type=\"text/css\""
+	         "  media=\"screen\">\n"
+	"</head><body>\n";
+static const char tmpl_tail[] =
+	 "</DL>\n"
+	 "</body></html>\n";
+static const char m_dt_grp[] = "DT CLASS='GRP'";
+static const char m_dt_lnk[] = "DT CLASS='LNK'";
+
 
 /****************************
 	I'm implementing a file only method of storing the hotlist
@@ -115,11 +132,31 @@ open_bookmarks (const char * mode)
 	return file;
 }
 
+/*----------------------------------------------------------------------------*/
+static void
+wr_grp (FILE * file, const char * id_class,
+        long add, const char * url, const char * title)
+{
+	fprintf (file, "<%s>&#9658; <A ID=\"%s\" ADD_DATE=\"%ld\""
+	               " HREF=\"%s\">%s</a>\n", m_dt_grp, id_class, add, url, title);
+	fprintf (file, "<DL CLASS=\"%s\">\n",   id_class);
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+wr_lnk (FILE * file, int * id, const char * class,
+        long add, long visit, const char * url, const char * title)
+{
+	fprintf (file, "<%s><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
+	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a>\n",
+	               m_dt_lnk, 8, ++(*id), class, add, visit, url, title);
+}
+
 /*============================================================================*/
 BOOL
 read_bookmarks (void) {
 	FILE * file = NULL;
-	long   now = time (NULL);
+	
 	Num_Bookmarks = 0;
 
 	/* Bookmarks exists, read or parse or load? */
@@ -127,42 +164,43 @@ read_bookmarks (void) {
 		char        buff[1024];
 
 		while (fgets (buff, (int)sizeof(buff), file)) {
-			if (strnicmp(buff, "<DT><A",6) == 0 ) {
+			if (*buff == '<'
+			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
 				Num_Bookmarks += 1;
 			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
 				break;
 			}
 		}
-		
 		fclose(file);
-	} else if ((file = open_bookmarks ("w")) != NULL) {
-		fputs ("<html>\n", file);
-		fputs("<!DOCTYPE HighWire-Bookmark-file-1>\n", file);
-		fputs("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=atarist\">\n",file);
-		fputs("<TITLE>Bookmarks</TITLE>\n",file);
-		fputs("<link rel=\"stylesheet\" href=\"bookmark.css\" type=\"text/css\" media=\"screen\">\n",file);
+		
+	} else if ((file = open_bookmarks ("wb")) != NULL) {
+		long now = time (NULL);
+		fputs (tmpl_head, file);
 		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
 		fputs ("<HR>\n", file);
 		fputs ("<DL>\n", file);
-		fprintf (file, "<DT>&#9658; <a href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"INTPRJ\">HighWire Project</a>\n", now);
-		fputs ("<DL CLASS=\"INTPRJ\">\n", file);
-		fprintf (file, "<DT><A ID=\"00000001\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net\">HighWire Homepage</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000002\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atariforums.com/index.php?f=20\">HighWire Forum</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000003\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire\">Developers Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000004\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://www.atari-users.net/mailman/listinfo/highwire-users\">Users Mailing lists</a>\n", now, 0L);
-		fprintf (file, "<DT><A ID=\"00000005\" CLASS=\"INTPRJ\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"http://highwire.atari-users.net/mantis/\">Bugtracker</a>\n", now, 0L);
+		wr_grp (file, "INTPRJ", now, "bookmark.htm", "HighWire Project");
+		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		        "http://highwire.atari-users.net", "HighWire Homepage");
+		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		        "http://www.atariforums.com/index.php?f=20", "HighWire Forum");
+		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		        "http://www.atari-users.net/mailman/listinfo/highwire",
+		        "Developers Mailing lists");
+		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		        "http://www.atari-users.net/mailman/listinfo/highwire-users",
+		        "Users Mailing lists");
+		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		        "http://highwire.atari-users.net/mantis/", "Bugtracker");
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
-		fputs ("</DL>\n", file);
-		fputs ("</html>", file);
+		fputs (tmpl_tail, file);
 		fclose(file);
-
-		Num_Bookmarks = 5;
-
+		
 		if ((file = open_bookmarkCss ("r")) != NULL) {
 			/* Bookmarks CSS exists, read or parse or load? */
-
 			fclose(file);
+		
 		} else if ((file = open_bookmarkCss ("w")) != NULL) {
 			/* Not exciting but want something in file */
 			fputs ("A { text-decoration: none; }\n", file);
@@ -171,7 +209,7 @@ read_bookmarks (void) {
 			fclose(file);
 		}
 	} 
-
+	
 	return TRUE;
 }
 
@@ -200,12 +238,14 @@ add_bookmark_group (const char * group)
 	long    now = time (NULL);
 	long	flen;
 
-	if ((file = open_bookmarks ("r+")) != NULL) {
+	if ((file = open_bookmarks ("rb+")) != NULL) {
+		char id_class[45];
+		sprintf (id_class, "USR_%s", group);
+		
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
 		fseek (file, (flen - 16), SEEK_SET);
-		fprintf (file, "<DT>&#9658;<A href=\"bookmark.htm\" ADD_DATE=\"%ld\" ID=\"USR_%s\">%s</A>\n", now,group,group);
-		fprintf (file, "<DL  CLASS=\"USR_%s\">\n", group);
+		wr_grp (file, id_class, now, "bookmark.htm", group);
 
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
@@ -229,37 +269,17 @@ add_bookmark_group (const char * group)
 BOOL
 add_bookmark (const char * bookmark_url, const char *bookmark_title)
 {
-	FILE *  file = NULL;
-	long    now = time (NULL);
-	long	flen;
-	char    buf[10];
-
-	/* generate an ID for the URL */
-	Num_Bookmarks += 1;
-
-	sprintf(buf,"%.*d",8,Num_Bookmarks);
-
-	if ((file = open_bookmarks ("r+")) != NULL) {
-		fseek (file, 0, SEEK_END);
-		flen = ftell(file);
-/*
-I've modified this all, but maybe we need something like the following?
-
-#if defined (__PUREC__)
-		fseek (file, (flen - 16), SEEK_SET);
-#else
-		fseek (file, (flen - 14), SEEK_SET);
-#endif
-*/
-		fseek (file, (flen - 14), SEEK_SET);
-
-		fprintf (file, "<DT><A ID=\"%s\" CLASS=\"USR_ROOT\" target=\"_hw_top\" ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" href=\"%s\">%s</a>\n", buf, now, now, bookmark_url, bookmark_title);
-
-		fputs ("</DL>\n", file);
-		fputs ("</html>", file);
+	FILE * file = open_bookmarks ("rb+");
+	if (file) {
+		long now = time (NULL);
+		fseek (file, -(sizeof(tmpl_tail) -1), SEEK_END);
+		wr_lnk (file, &Num_Bookmarks, "USR_ROOT",
+		              now, now, bookmark_url, bookmark_title);
+		fputs (tmpl_tail, file);
 		fclose(file);
-
+		
 		return TRUE;
+		
 	} else {
 		printf("Bookmark file lost?!? \n");
 		return FALSE;
