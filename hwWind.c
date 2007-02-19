@@ -365,12 +365,24 @@ new_hwWind (const char * name, const char * url)
 		}
 		
 	} else if (ident == IDENT_BMRK) {
-		curr.g_h = desk_area.g_h;
-		curr.g_y = desk_area.g_y;
-		curr.g_w = max (curr.g_h /2, 200);
-		curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
-		wgeo_calc (&bkm_area, &desk_area, &curr);
-		
+		static BOOL __once = TRUE;
+		if (__once) {
+			__once = FALSE;
+			curr.g_h = desk_area.g_h;
+			curr.g_y = desk_area.g_y;
+			curr.g_w = max (curr.g_h /2, 200);
+			curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
+			wgeo_calc (&bkm_area, &desk_area, &curr);
+		} else {
+			curr = bkm_area;
+			/* to avoid bad crashes with N.AES -- problem not solved yet !!! */
+			if (curr.g_y < desk_area.g_y) {
+				curr.g_y = desk_area.g_y;
+			}
+			if (curr.g_x < desk_area.g_x) {
+				curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
+			}
+		}
 	} else {
 		curr_area.g_x += inc_xy;
 
