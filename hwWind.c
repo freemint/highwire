@@ -2636,7 +2636,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			
 			case 13: /* enter/return */
 				if (edit->Length) {
-					LOADER ldr;
+					LOCATION loc;
 					if (edit->Text[0] != '/' && strchr (edit->Text, ':') == NULL) {
 						/*
 						 * if no protocol, drive letter or local path is given
@@ -2649,13 +2649,21 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 							memcpy  (edit->Text,       http,       gap);
 						}
 					}
-					ldr = start_page_load (This->Pane, edit->Text, NULL, TRUE, NULL);
-					if (ldr) {
-						char link[1024];
-						location_FullName (ldr->Location, link, sizeof(link));
-						hwWind_urlhist (This, link);
+					loc = new_location (edit->Text, NULL);
+					if (loc->Proto == PROT_ABOUT
+					    && strncmp ("bookmarks", loc->File, 9) == 0) {
+						menu_openbookmarks();
+					} else {
+						LOADER ldr = start_page_load (This->Pane,
+						                              NULL, loc, TRUE, NULL);
+						if (ldr) {
+							char link[1024];
+							location_FullName (ldr->Location, link, sizeof(link));
+							hwWind_urlhist (This, link);
+						}
+						chng_toolbar (This, 0, 0, -1);
 					}
-					chng_toolbar (This, 0, 0, -1);
+					free_location (&loc);
 					break;
 				}
 			case 9: /* tab */
