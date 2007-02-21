@@ -53,14 +53,18 @@ static URLHIST url_hist = NULL;
 #define        URL_HIST_MAX 10
 
 
-
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
 static WORD  inc_xy = 0;
 static WORD  widget_b, widget_w, widget_h;
 static GRECT desk_area;
-static GRECT curr_area;
-static GRECT save_area = { -1, -1, 0, 0 };
-static GRECT bkm_area  = { -1, -1, 0, 0 };
+static GRECT brws_curr = { -1, -1, 0, 0 };
+static GRECT bmrk_curr = { -1, -1, 0, 0 };
+static UWORD brws_gmsk = 0x0000u;
+static UWORD bmrk_gmsk = 0x0000u;
+#define GEO_CFG_XY 0xF000u /* XY read from config */
+#define GEO_USR_XY 0x00F0u /* XY modified by user */
+#define GEO_CFG_WH 0x0F00u /* WH read from config */
+#define GEO_USR_WH 0x000Fu /* WH modified by user */
 static WORD  tbar_set  = +21;
 #if (_HIGHWIRE_INFOLINE_ == 0)
 static WORD wind_kind = NAME|CLOSER|FULLER|MOVER|SMALLER|SIZER;
@@ -192,62 +196,63 @@ wgeo_read (char * buff, GRECT * rect)
 }
 
 /*----------------------------------------------------------------------------*/
-static void
-wgeo_calc (GRECT * rect, const GRECT * desk, GRECT * curr)
+static UWORD
+wgeo_calc (GRECT * rect, GRECT * curr)
 {
+	UWORD mask = 0x0000u;
+	
 	if (rect->g_w > 0 && rect->g_h > 0) {
-		WORD w = ((long)rect->g_w * desk->g_w) / 0x7FFFu;
-		WORD h = ((long)rect->g_h * desk->g_h) / 0x7FFFu;
-		curr->g_w = max (w, inc_xy *7);
-		curr->g_h = max (h, inc_xy *6);
+		WORD w = ((long)rect->g_w * desk_area.g_w) / 0x7FFFu;
+		WORD h = ((long)rect->g_h * desk_area.g_h) / 0x7FFFu;
+		if ((curr->g_w = max (w, inc_xy *7)) > desk_area.g_w) {
+			curr->g_w = desk_area.g_w;
+		}
+		if ((curr->g_h = max (h, inc_xy *6)) > desk_area.g_h) {
+			curr->g_h = desk_area.g_h;
+		}
+		mask     |= GEO_CFG_WH;
 		if (curr->g_w != w || curr->g_h != h) {
-			rect->g_w = curr->g_w;
-			rect->g_h = curr->g_h;
-		} else {
-			rect->g_w = rect->g_w = 0;
+			mask  |= GEO_USR_WH;
 		}
 	}
 	if (rect->g_x >= 0 && rect->g_y >= 0) {
-		BOOL ok = TRUE;
-		curr->g_x = ((long)rect->g_x * (desk->g_w - desk->g_x))
-		            / 0x7FFFu + desk->g_x;
-		curr->g_y = ((long)rect->g_y * (desk->g_h - desk->g_y))
-		            / 0x7FFFu + desk->g_y;
-		if (curr->g_x + curr->g_w > desk->g_x + desk->g_w) {
-			curr->g_x = desk->g_x + desk->g_w - curr->g_w;
-			if (curr->g_x < desk->g_x) curr->g_x = desk->g_x;
-			ok = FALSE;
+		curr->g_x = ((long)rect->g_x * (desk_area.g_w - desk_area.g_x))
+		            / 0x7FFFu + desk_area.g_x;
+		curr->g_y = ((long)rect->g_y * (desk_area.g_h - desk_area.g_y))
+		            / 0x7FFFu + desk_area.g_y;
+		mask     |= GEO_CFG_XY;
+		if (curr->g_x + curr->g_w > desk_area.g_x + desk_area.g_w) {
+			curr->g_x = desk_area.g_x + desk_area.g_w - curr->g_w;
+			if (curr->g_x < desk_area.g_x) curr->g_x = desk_area.g_x;
+			mask  |= GEO_USR_XY;
 		}
-		if (curr->g_y + curr->g_h > desk->g_y + desk->g_h) {
-			curr->g_y = desk->g_y + desk->g_h - curr->g_h;
-			if (curr->g_y < desk->g_y) curr->g_y = desk->g_y;
-			ok = FALSE;
-		}
-		if (!ok) {
-			rect->g_x = curr->g_x;
-			rect->g_y = curr->g_y;
-		} else {
-			rect->g_x = rect->g_y = -1;
+		if (curr->g_y + curr->g_h > desk_area.g_y + desk_area.g_h) {
+			curr->g_y = desk_area.g_y + desk_area.g_h - curr->g_h;
+			if (curr->g_y < desk_area.g_y) curr->g_y = desk_area.g_y;
+			mask  |= GEO_USR_XY;
 		}
 	}
+	*rect = *curr;
+	
+	return mask;
 }
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-wgeo_write (const GRECT * rect, const GRECT * desk, char * buff)
+wgeo_write (const GRECT * rect, UWORD mask, char * buff)
 {
 	char * p = buff;
-	if (rect->g_w > 0 && rect->g_h > 0) {
-		WORD w = ((long)rect->g_w * 0x7FFF) / desk->g_w;
-		WORD h = ((long)rect->g_h * 0x7FFF) / desk->g_h;
+	if ((mask & GEO_USR_WH) || ((mask & GEO_CFG_WH) && (mask & GEO_USR_XY))) {
+		WORD w = ((long)rect->g_w * 0x7FFF) / desk_area.g_w;
+		WORD h = ((long)rect->g_h * 0x7FFF) / desk_area.g_h;
 		sprintf (p, "%04hXx%04hX", w, h);
 		p = strchr (p, '\0');
 	}
-	if (rect->g_x > 0 && rect->g_y > 0) {
-		WORD x = ((long)(rect->g_x - desk->g_x) * 0x7FFF)
-		         / (desk->g_w - desk->g_x);
-		WORD y = ((long)(rect->g_y - desk->g_y) * 0x7FFF)
-		         / (desk->g_h - desk->g_y);
+	if ((mask & GEO_USR_XY) || ((mask & GEO_CFG_XY) && (mask & GEO_USR_WH))) {
+		WORD x = ((long)(rect->g_x - desk_area.g_x) * 0x7FFF)
+		         / (desk_area.g_w - desk_area.g_x);
+		WORD y = ((long)(rect->g_y - desk_area.g_y) * 0x7FFF)
+		         / (desk_area.g_h - desk_area.g_y);
 		sprintf (p, "+%04hX+%04hX", x, y);
 		p = strchr (p, '\0');
 	}
@@ -280,11 +285,11 @@ hwWind_setup (HWWIND_SET set, long arg)
 			break;
 		
 		case HWWS_GEOMETRY:
-			wgeo_read ((char*)arg, &save_area);
+			wgeo_read ((char*)arg, &brws_curr);
 			break;
 
 		case HWWS_BOOKMGEO:
-			wgeo_read ((char*)arg, &bkm_area);
+			wgeo_read ((char*)arg, &bmrk_curr);
 			break;
 	}
 }
@@ -301,14 +306,14 @@ hwWind_store (HWWIND_SET set)
 		
 		case HWWS_GEOMETRY: {
 			char buff[30];
-			if (wgeo_write (&save_area, &desk_area, buff)) {
+			if (wgeo_write (&brws_curr, brws_gmsk, buff)) {
 				save_config ("BRWSR_GEO", buff);
 			}
 		}	break;
 
 		case HWWS_BOOKMGEO: {
 			char buff[30];
-			if (wgeo_write (&bkm_area, &desk_area, buff)) {
+			if (wgeo_write (&bmrk_curr, bmrk_gmsk, buff)) {
 				save_config ("BOOKM_GEO", buff);
 			}
 		}	break;
@@ -330,22 +335,21 @@ new_hwWind (const char * name, const char * url)
 	                                       /* special case for bookmark window */
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
-		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr_area);
-		widget_b = desk_area.g_x - curr_area.g_x;
-		widget_w = curr_area.g_w - desk_area.g_w;
-		widget_h = curr_area.g_h - desk_area.g_h;
+		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr);
+		widget_b = desk_area.g_x - curr.g_x;
+		widget_w = curr.g_w - desk_area.g_w;
+		widget_h = curr.g_h - desk_area.g_h;
 		inc_xy   = max (widget_w, widget_h) - widget_b;
 		if (desk_area.g_w < 800) {
-			curr_area = desk_area;
-			curr_area.g_w = (desk_area.g_w *2) /3;
+			curr = desk_area;
+			curr.g_w = (desk_area.g_w *2) /3;
 		} else {
-			curr_area.g_x = desk_area.g_x + inc_xy;
-			curr_area.g_y = desk_area.g_y + inc_xy;
-			curr_area.g_w = (desk_area.g_w *3) /4;
-			curr_area.g_h = (desk_area.g_h *3) /4;
+			curr.g_x = desk_area.g_x + inc_xy;
+			curr.g_y = desk_area.g_y + inc_xy;
+			curr.g_w = (desk_area.g_w *3) /4;
+			curr.g_h = (desk_area.g_h *3) /4;
 		}
-		wgeo_calc (&save_area, &desk_area, &curr_area);
-		curr = curr_area;
+		brws_gmsk = wgeo_calc (&brws_curr, &curr);
 		
 		if (!ignore_colours) {
 #if 0 /* this doesn't work with MagiC yet */
@@ -372,29 +376,20 @@ new_hwWind (const char * name, const char * url)
 			curr.g_y = desk_area.g_y;
 			curr.g_w = max (curr.g_h /2, 200);
 			curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
-			wgeo_calc (&bkm_area, &desk_area, &curr);
+			bmrk_gmsk = wgeo_calc (&bmrk_curr, &curr);
 		} else {
-			curr = bkm_area;
-			/* to avoid bad crashes with N.AES -- problem not solved yet !!! */
-			if (curr.g_y < desk_area.g_y) {
-				curr.g_y = desk_area.g_y;
-			}
-			if (curr.g_x < desk_area.g_x) {
-				curr.g_x = desk_area.g_x + desk_area.g_w - curr.g_w;
-			}
+			curr = bmrk_curr;
 		}
 	} else {
-		curr_area.g_x += inc_xy;
-
-	  	if (curr_area.g_x + curr_area.g_w > desk_area.g_x + desk_area.g_w) {
-   			curr_area.g_x = desk_area.g_x;
-   		}
-		curr_area.g_y += inc_xy;
-
-	   	if (curr_area.g_y + curr_area.g_h > desk_area.g_y + desk_area.g_h) {
-	   		curr_area.g_y = desk_area.g_y;
-	   	}
-		curr = curr_area;
+		brws_curr.g_x += inc_xy;
+	  	if (brws_curr.g_x + brws_curr.g_w > desk_area.g_x + desk_area.g_w) {
+  			brws_curr.g_x = desk_area.g_x;
+  		}
+		brws_curr.g_y += inc_xy;
+	   if (brws_curr.g_y + brws_curr.g_h > desk_area.g_y + desk_area.g_h) {
+	   	brws_curr.g_y = desk_area.g_y;
+	   }
+		curr = brws_curr;
 	}
 	
 	window_ctor (This, wind_kind, ident,
@@ -458,6 +453,7 @@ new_hwWind (const char * name, const char * url)
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
+	This->Work.g_w = This->Work.g_h = 0; /* mark for inital resize */
 	window_raise (&This->Base, TRUE, &curr);
 	hwWind_redraw (This, NULL);
 
@@ -793,11 +789,13 @@ vTab_moved (HwWIND This)
 	containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y + This->TbarH);
 
 	if (This->Base.Ident == IDENT_BRWS) {
-		save_area.g_x = This->Curr.g_x;
-		save_area.g_y = This->Curr.g_y;
+		brws_curr.g_x = This->Curr.g_x;
+		brws_curr.g_y = This->Curr.g_y;
+		brws_gmsk    |= GEO_USR_XY;
 	} else { /* IDENT_BMRK */
-		bkm_area.g_x = This->Curr.g_x;
-		bkm_area.g_y = This->Curr.g_y;
+		bmrk_curr.g_x = This->Curr.g_x;
+		bmrk_curr.g_y = This->Curr.g_y;
+		bmrk_gmsk    |= GEO_USR_XY;
 	}
 }
 
@@ -806,7 +804,7 @@ static BOOL
 vTab_sized (HwWIND This)
 {
 	TBAREDIT * edit = TbarEdit (This);
-	GRECT work;
+	GRECT      work;
 	
 	if (This->Base.isScrn) {
 		if (This->Base.isFull) { /* set to mode */
@@ -826,14 +824,18 @@ vTab_sized (HwWIND This)
 			window_setBevent (&This->Base);
 		}
 		
-	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BRWS) {
-		save_area.g_w = curr_area.g_w = This->Curr.g_w;
-		save_area.g_h = curr_area.g_h = This->Curr.g_h;
-	} else if (!This->Base.isFull && This->Base.Ident == IDENT_BMRK) {
-		bkm_area.g_w = This->Curr.g_w;
-		bkm_area.g_h = This->Curr.g_h;
+	} else if (!This->Base.isFull) {
+		BOOL mask = (This->Work.g_w > 0 && This->Work.g_h > 0 ? GEO_USR_WH : 0);
+		if (This->Base.Ident == IDENT_BRWS) {
+			brws_curr.g_w = This->Curr.g_w;
+			brws_curr.g_h = This->Curr.g_h;
+			brws_gmsk    |= mask;
+		} else if (This->Base.Ident == IDENT_BMRK) {
+			bmrk_curr.g_w = This->Curr.g_w;
+			bmrk_curr.g_h = This->Curr.g_h;
+			bmrk_gmsk    |= mask;
+		}
 	}
-	
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 	work = This->Work;
 	work.g_y += This->TbarH;
