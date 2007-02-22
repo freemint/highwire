@@ -151,7 +151,7 @@ new_maparea (const char * shape, const char * coords, char * href,
 			area->u.Extent.g_h = (area->u.Circ.Radius = n[2]) * 2 +1;
 		}
 	
-	} else if (stricmp (shape, "poly") == 0) {
+	} else if (strnicmp (shape, "poly", 4) == 0) {
 		WORD         n = 0;
 		const char * p = coords;
 		while (isdigit(*(p++))) {
