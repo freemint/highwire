@@ -103,6 +103,26 @@ destroy_imagemap (IMAGEMAP * list, BOOL all)
 	}
 }
 
+/*----------------------------------------------------------------------------*/
+static size_t
+read_coords (const char * buff, WORD * coord, size_t maxnum)
+{
+	size_t n = 0;
+	
+	while (isspace (*buff)) buff++;
+	
+	while (*buff && n < maxnum) {
+		char * b = NULL;
+		coord[n] = strtol (buff, &b, 10);
+		if (!b || b == buff) break;
+		buff = b;
+		n   += 1;
+		while (*buff == ',' || isspace (*buff)) buff++;
+	}
+	
+	return n;
+}
+
 /*============================================================================*/
 MAPAREA
 new_maparea (const char * shape, const char * coords, char * href,
@@ -111,24 +131,24 @@ new_maparea (const char * shape, const char * coords, char * href,
 	MAPAREA area = NULL;
 	
 	if (stricmp (shape, "rect") == 0) {
-		WORD x1, y1, x2, y2;
-		if (sscanf (coords, "%hu,%hu,%hu,%hu", &x1, &y1, &x2, &y2) == 4
-		    && x1 <= x2 && y1 <= y2
+		WORD n[4]; /* x1,y1, x2,y2 */
+		if (read_coords (coords, n, numberof(n)) == 4
+		    && n[0]/*x1*/ <= n[2]/*x2*/ && n[1]/*y1*/ <= n[3]/*y2*/
 		    && (area = malloc (sizeof(struct s_map_area))) != NULL) {
 			area->Type = 'R';
-			area->u.Extent.g_w = x2 - (area->u.Extent.g_x = x1) +1;
-			area->u.Extent.g_h = y2 - (area->u.Extent.g_y = y1) +1;
+			area->u.Extent.g_w = n[2] - (area->u.Extent.g_x = n[0]) +1;
+			area->u.Extent.g_h = n[3] - (area->u.Extent.g_y = n[1]) +1;
 		}
 	
 	} else if (stricmp (shape, "circle") == 0) {
-		WORD xc, yc, r;
-		if (sscanf (coords, "%hu,%hu,%hu", &xc, &yc, &r) == 3 && r >= 1
+		WORD n[3]; /* xc, yc, r; */
+		if (read_coords (coords, n, numberof(n)) == 3 && n[2]/*r*/ >= 1
 		    && (area = malloc (sizeof(struct s_map_area))) != NULL) {
 			area->Type = 'C';
-			area->u.Extent.g_x = (area->u.Circ.Centre.p_x = xc) - r;
-			area->u.Extent.g_y = (area->u.Circ.Centre.p_y = yc) - r;
+			area->u.Extent.g_x = (area->u.Circ.Centre.p_x = n[0]) - n[2];
+			area->u.Extent.g_y = (area->u.Circ.Centre.p_y = n[1]) - n[2];
 			area->u.Extent.g_w =
-			area->u.Extent.g_h = (area->u.Circ.Radius = r) * 2 +1;
+			area->u.Extent.g_h = (area->u.Circ.Radius = n[2]) * 2 +1;
 		}
 	
 	} else if (stricmp (shape, "poly") == 0) {
