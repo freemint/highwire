@@ -137,6 +137,8 @@ static void
 wr_grp (FILE * file, const char * id_class,
         long add, const char * url, const char * title)
 {
+	/* Should have a call to the bkm_group_ctor() routine */
+
 	fprintf (file, "<%s>&#9658; <A ID=\"%s\" ADD_DATE=\"%ld\""
 	               " HREF=\"%s\">%s</a>\n", m_dt_grp, id_class, add, url, title);
 	fprintf (file, "<DL CLASS=\"%s\">\n",   id_class);
@@ -147,6 +149,8 @@ static void
 wr_lnk (FILE * file, int * id, const char * class,
         long add, long visit, const char * url, const char * title)
 {
+	/* Should have a call to the bkm_url_ctor() routine */
+
 	fprintf (file, "<%s><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
 	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a>\n",
 	               m_dt_lnk, 8, ++(*id), class, add, visit, url, title);
@@ -167,6 +171,10 @@ read_bookmarks (void) {
 			if (*buff == '<'
 			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
 				Num_Bookmarks += 1;
+
+				/* Here we would need a test determining if it was group or a link
+				 * then route it to the proper parsing and memory storing routine
+				 */
 			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
 				break;
 			}
@@ -286,4 +294,82 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 	}
 }
 
+/*============================================================================*/
+B_GRP *
+bkm_group_ctor (B_GRP * This, B_GRP * Next)
+{
+	memset (This, 0, sizeof (struct bkm_group));
+	
+	if (This == Next) {
+		puts ("bkm_group_ctor(): This and Next are equal!");
+		return This;
+	}
+	
+	This->Next = Next;
+	
+	return This;
+}
 
+/*============================================================================*/
+B_GRP *
+bkm_group_dtor (B_GRP * This)
+{
+	if (This->Next) {
+		This->Next = NULL;
+	}
+	
+
+/*
+	if (This->IdName) {
+		free (This->IdName);
+		This->IdName = NULL;
+	}
+	if (This->ClName) {
+		free (This->ClName);
+		This->ClName = NULL;
+	}
+*/
+	return This;	
+}
+
+/*============================================================================*/
+B_URL *
+bkm_url_ctor (B_URL * This, B_URL * Next)
+{
+	memset (This, 0, sizeof (struct bkm_url));
+	
+	if (This == Next) {
+		puts ("bkm_url_ctor(): This and next are equal!");
+		return This;
+	}
+	
+	This->Next = Next;
+
+	return This;
+}
+
+/*============================================================================*/
+B_URL *
+bkm_url_dtor (B_URL * This)
+{
+	if (This->Parent) {
+		This->Parent = NULL;
+	}
+	
+	if (This->Next) {
+		This->Next = NULL;
+	}
+
+/*
+	if (This->IdName) {
+		free (This->IdName);
+		This->IdName = NULL;
+	}
+	if (This->ClName) {
+		free (This->ClName);
+		This->ClName = NULL;
+	}
+*/
+	
+	return This;
+}
