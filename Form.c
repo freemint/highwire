@@ -21,6 +21,7 @@ typedef struct s_input * INPUT;
 #include "global.h"
 #include "fontbase.h"
 #include "scanner.h"
+#include "Containr.h"
 #include "Loader.h"
 #include "Location.h"
 #include "parser.h"
@@ -1256,7 +1257,7 @@ form_activate (FORM form)
 		url  = form->Action;
 		data = malloc (size +1);
 		if (size) size--;
-	} else {
+	} else {	
 		len  = strlen (form->Action);
 		url  = strcpy (malloc (len + size +1), form->Action);
 		data = url;
@@ -1319,7 +1320,33 @@ form_activate (FORM form)
 	data[len] = '\0';
 	
 	if (form->Method != METH_POST) {
-		ldr = start_page_load (frame->Container, url,loc, TRUE, NULL);
+		CONTAINR target = NULL;
+		CONTAINR cont = NULL;
+
+		if (form->Target && stricmp(form->Target, "_hw_top") == 0) {
+			HwWIND this = hwWind_byType (0);
+
+			if (this != NULL) {
+				hwWind_raise (this, TRUE);
+
+				cont = this->Pane;
+				target = containr_byName (cont, "_top");
+			} else {
+				target = NULL;
+			}		
+		} else {
+			target = (form->Target &&
+		                   stricmp (form->Target, "_blank") != 0
+		                   ? containr_byName (frame->Container, form->Target) : NULL);
+		}
+
+		if (target) {
+			cont = target;
+		} else {
+			cont = frame->Container;
+		}
+		
+		ldr = start_page_load (cont, url,loc, TRUE, NULL);
 		free (url);
 	} else {
 		POSTDATA post = new_post(data, strlen(data), strdup("application/x-www-form-urlencoded"));
