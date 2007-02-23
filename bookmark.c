@@ -11,6 +11,11 @@
 #include "defs.h"
 #include "bookmark.h"
 
+B_GRP *	group_list  = NULL;
+B_GRP *	current_grp = NULL;
+B_URL *	url_list    = NULL;
+B_URL *	current_url = NULL;
+
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
 
@@ -32,18 +37,37 @@ static const char tmpl_tail[] =
 static const char m_dt_grp[] = "DT CLASS='GRP'";
 static const char m_dt_lnk[] = "DT CLASS='LNK'";
 
-
-/****************************
-	I'm implementing a file only method of storing the hotlist
-however, I am also trying to spec out an internal storage of the hostlist
-in memory.  So if some things don't make sense at the moment, like
-the LAST_VISIT= timestamp, it's because I'd like to fix it in the future
-******************************/
-
 /*  ID & CLASS distictions
  *  Url's have ID's and CLASS's
  *  The CLASS is the ID of the Group it is a member of
  */
+
+/*============================================================================*/
+void
+test_bookmarks(void)
+{
+	B_URL * url = url_list;
+	B_GRP * group = group_list;
+	
+	while (url != NULL) {
+		printf("URL ID %s  \r\n",url->ID);
+		printf("URL Class = %s    \r\n",url->Class);
+		printf("URL Target = %s    \r\n",url->Target);
+		printf("URL Added %ld   \r\n",url->Time_Added);
+		printf("URL Last %ld   \r\n",url->Last_Visit);
+		printf("URL Address = %s    \r\n",url->Address);
+		printf("URL Title = %s    \r\n",url->Title);
+
+		url = url->Next;
+	}
+	while (group != NULL) {
+		printf("ID = %s\r\n",group->ID);
+		printf("Added = %d\r\n",group->Time_Added);
+		printf("Title = %s\r\n",group->Title);
+	
+		group = group->Next;
+	}
+}
 
 /*----------------------------------------------------------------------------*/
 static FILE *
@@ -160,21 +184,202 @@ wr_lnk (FILE * file, int * id, const char * class,
 BOOL
 read_bookmarks (void) {
 	FILE * file = NULL;
+	B_GRP * group = NULL;
+	B_URL * url = NULL;
 	
 	Num_Bookmarks = 0;
 
 	/* Bookmarks exists, read or parse or load? */
 	if ((file = open_bookmarks ("r")) != NULL) { 
-		char        buff[1024];
+		char  buff[1024];
+		char  out[1024];
+		char *p;
+		int   offset = 0;
+		int   len = 0;
 
 		while (fgets (buff, (int)sizeof(buff), file)) {
 			if (*buff == '<'
 			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
 				Num_Bookmarks += 1;
+				len = 0;
 
-				/* Here we would need a test determining if it was group or a link
-				 * then route it to the proper parsing and memory storing routine
-				 */
+				p = (char *)buff;
+
+				/* advance past all the junk */
+				offset = (int)sizeof(m_dt_lnk);
+				offset += 4;
+
+				if (url_list == NULL) {
+					url = bkm_url_ctor (malloc (sizeof(B_URL)), url_list);
+					url_list = url;
+				} else {
+					url = bkm_url_ctor (malloc (sizeof(B_URL)), current_url);
+				}
+
+				offset += 4; /* advance past ID=" */
+
+				memset (out, 0, 1024);
+
+				strncpy (out,buff+offset,8);
+				url->ID = strdup(out);
+
+				offset += 8; /* len of ID */
+				offset += 9; /* advance past CLASS=" */
+				
+				p += offset;
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Class = strdup(out);
+				
+				offset += len;
+				offset += 10; /* advance past TARGET=" */
+				p += 10;
+				len = 0;
+
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Target = strdup(out);
+
+				offset += len;
+				offset += 12; /* advance past ADD_DATE=" */
+				p += 12;
+				len = 0;
+
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+				
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Time_Added = atol(out);
+
+				offset += len;
+				offset += 14; /* advance past LAST_VIST=" */
+				p += 14;
+				len = 0;
+
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Last_Visit = atol(out);
+
+				offset += len;
+				offset += 8; /* advance past HREF=" */
+				p += 8;
+				len = 0;
+
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Address = strdup(out);
+
+				offset += len;
+				offset += 2; /* advance past "> */
+				p += 2;
+				len = 0;
+
+				while (*p != '<') {
+					len += 1;
+					p++;
+				}	
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				url->Title = strdup(out);
+
+				/* We need some method to find the parent from the Class ?*/
+				url->Parent = NULL;  /* just Null it for the moment */
+
+				current_url->Next = url;
+				current_url = url;
+			} else if (*buff == '<'
+			    && strnicmp (buff +1, m_dt_grp, sizeof(m_dt_grp) -1) == 0 ) {
+				len = 0;
+
+				p = (char *)buff;
+
+				/* advance past all the junk */
+				offset = (int)sizeof(m_dt_grp);
+				offset += 12;
+
+				if (group_list == NULL) {
+					group = bkm_group_ctor (malloc (sizeof(B_GRP)), group_list);
+					group_list = group;
+				} else {
+					group = bkm_group_ctor (malloc (sizeof(B_GRP)), current_grp);
+				}
+				offset += 4; /* advance past ID=" */
+
+				p += offset;
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+				memset (out, 0, len+1);
+
+				strncpy (out,buff+offset,len);
+				group->ID = strdup(out);
+
+				offset += len;
+				offset += 12; /* advance past ID and " CLASS=" */
+				p += 12;
+				len = 0;
+				
+				while (*p != '"') {
+					len += 1;
+					p++;
+				}
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				group->Time_Added = atol(out);
+
+				offset += len;
+				len = 0;
+
+				while (*p != '>') {
+					len += 1;
+					p++;
+				}	
+				offset += len;
+				len = 0;
+
+				offset += 1; /* advance past > */
+				p += 1;
+
+				while (*p != '<') {
+					len += 1;
+					p++;
+				}	
+				memset (out, 0, len+1);
+
+				strncpy (out, buff+offset,len);
+				group->Title = strdup(out);
+
+				current_grp->Next = group;
+				current_grp = group;
 			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
 				break;
 			}
@@ -218,6 +423,9 @@ read_bookmarks (void) {
 		}
 	} 
 	
+	/* enable to dump bookmarks structs to screen */
+	/* test_bookmarks(); */
+
 	return TRUE;
 }
 
@@ -232,6 +440,7 @@ save_bookmarks (const char * key)
 	/* If we store the URL's internally we will need to save when we close */
 	return TRUE;
 }
+
 
 /*============================================================================*/
 /* 
@@ -304,9 +513,7 @@ bkm_group_ctor (B_GRP * This, B_GRP * Next)
 		puts ("bkm_group_ctor(): This and Next are equal!");
 		return This;
 	}
-	
-	This->Next = Next;
-	
+		
 	return This;
 }
 
@@ -314,12 +521,11 @@ bkm_group_ctor (B_GRP * This, B_GRP * Next)
 B_GRP *
 bkm_group_dtor (B_GRP * This)
 {
+/*
 	if (This->Next) {
 		This->Next = NULL;
 	}
 	
-
-/*
 	if (This->IdName) {
 		free (This->IdName);
 		This->IdName = NULL;
@@ -343,8 +549,6 @@ bkm_url_ctor (B_URL * This, B_URL * Next)
 		return This;
 	}
 	
-	This->Next = Next;
-
 	return This;
 }
 
@@ -352,6 +556,7 @@ bkm_url_ctor (B_URL * This, B_URL * Next)
 B_URL *
 bkm_url_dtor (B_URL * This)
 {
+/*
 	if (This->Parent) {
 		This->Parent = NULL;
 	}
@@ -360,7 +565,6 @@ bkm_url_dtor (B_URL * This)
 		This->Next = NULL;
 	}
 
-/*
 	if (This->IdName) {
 		free (This->IdName);
 		This->IdName = NULL;

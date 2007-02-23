@@ -10,16 +10,18 @@ typedef struct bkm_url	 B_URL;
 struct bkm_group {
 	char *  ID;
 	long	Time_Added;
+	char *  Title;
 	B_GRP *	Next;	
 };
 
 struct bkm_url {
-	int     ID;
+	char *  ID;
 	char *  Class;
 	char *  Target; 
 	long    Time_Added;
 	long    Last_Visit;
 	char *  Address;
+	char *  Title;
 	B_GRP *	Parent;
 	B_URL *	Next;
 };
