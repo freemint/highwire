@@ -21,10 +21,15 @@ Changes in V. 0.3.3 beta
 
 - Bug Fix for text following floating images
   
+- Bug Fix for window geo code and constantly reseting values
+
 - Table Border code overhauled
 
 - Force empty Option tags to be '_'
 
+- Invalid 'polygon' map areas supported, as well as a few
+  other wonderful errors brought to the world by IE.
+  
 - Invalid '&' CSS token and corresponding rules ignored
 
 - Invalid trailing ';' in CSS ignored
