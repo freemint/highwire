@@ -43,6 +43,8 @@ static const char m_dt_lnk[] = "DT CLASS='LNK'";
  */
 
 /*============================================================================*/
+void test_bookmarks(void);
+
 void
 test_bookmarks(void)
 {
@@ -62,7 +64,7 @@ test_bookmarks(void)
 	}
 	while (group != NULL) {
 		printf("ID = %s\r\n",group->ID);
-		printf("Added = %d\r\n",group->Time_Added);
+		printf("Added = %ld\r\n",group->Time_Added);
 		printf("Title = %s\r\n",group->Title);
 	
 		group = group->Next;
