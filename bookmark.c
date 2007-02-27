@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h> /* isspace() */
 
 #include "file_sys.h"
 #include "defs.h"
@@ -166,13 +167,12 @@ open_bookmarks (const char * mode)
 
 /*----------------------------------------------------------------------------*/
 static void
-wr_grp (FILE * file, const char * id_class,
-        long add, const char * url, const char * title)
+wr_grp (FILE * file, const char * id_class, long add, const char * title)
 {
 	/* Should have a call to the bkm_group_ctor() routine */
 
-	fprintf (file, "<%s>&#9658; <A ID=\"%s\" ADD_DATE=\"%ld\""
-	               " HREF=\"%s\">%s</a>\n", m_dt_grp, id_class, add, url, title);
+	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DL>\n",
+	                m_dt_grp, id_class, add, title);
 	fprintf (file, "<DL CLASS=\"%s\">\n",   id_class);
 }
 
@@ -182,10 +182,11 @@ wr_lnk (FILE * file, int * id, const char * class,
         long add, long visit, const char * url, const char * title)
 {
 	/* Should have a call to the bkm_url_ctor() routine */
-
-	fprintf (file, "<%s><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
-	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a>\n",
-	               m_dt_lnk, 8, ++(*id), class, add, visit, url, title);
+	(*id)++;
+	fprintf (file, "<%s ID='%.*d'><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
+	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a></DL>"
+	               "\n",
+	               m_dt_lnk, 8,*id, 8,*id, class, add, visit, url, title);
 }
 
 /*============================================================================*/
@@ -418,7 +419,7 @@ read_bookmarks (void) {
 		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
 		fputs ("<HR>\n", file);
 		fputs ("<DL>\n", file);
-		wr_grp (file, "INTPRJ", now, "bookmark.htm", "HighWire Project");
+		wr_grp (file, "INTPRJ", now, "HighWire Project");
 		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
 		        "http://highwire.atari-users.net", "HighWire Homepage");
 		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
@@ -442,7 +443,7 @@ read_bookmarks (void) {
 		
 		} else if ((file = open_bookmarkCss ("w")) != NULL) {
 			/* Not exciting but want something in file */
-			fputs ("A { text-decoration: none; }\n", file);
+			fputs ("A { text-decoration: none; }\n\n", file);
 			/* The idea is that we can put a display none in to hide DL sets */
 			/*fputs (".INTPRJ { display: inline; }\n", file); */
 			fclose(file);
@@ -490,7 +491,7 @@ add_bookmark_group (const char * group)
 		fseek (file, 0, SEEK_END);
 		flen = ftell(file);
 		fseek (file, (flen - 16), SEEK_SET);
-		wr_grp (file, id_class, now, "bookmark.htm", group);
+		wr_grp (file, id_class, now, group);
 
 		fputs ("</DL>\n", file);
 		fputs ("<HR>\n", file);
@@ -610,3 +611,68 @@ bkm_url_dtor (B_URL * This)
 }
 
 #endif /* USE_MEM_LISTS */
+
+
+/*============================================================================*/
+BOOL
+set_bookmark_group (const char * grp, BOOL openNclose)
+{
+	BOOL   done = FALSE;
+	FILE * file = open_bookmarkCss ("rb+");
+	if (file) {
+		char mark[1024];
+		int  b_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
+		struct s_line {
+			struct s_line * Next;
+			char            Text[1];
+		} * list = NULL, ** pptr = &list;
+		char buff[1024];
+		while (fgets (buff, (int)sizeof(buff), file)) {
+			char * p = buff;
+			while (isspace(*p)) p++;
+			if (strncmp (p, mark, b_ln) == 0 && isspace (p[b_ln])) {
+				/* skip this */
+				done = TRUE;
+			} else {
+				size_t          len  = strlen (buff);
+				struct s_line * line = malloc (sizeof (struct s_line) + len);
+				if (line) {
+					memcpy (line->Text, buff, len +1);
+					line->Next = NULL;
+					*pptr      = line;
+					pptr       = &line->Next;
+				} else {
+					fclose (file);
+					file = NULL;
+					done = FALSE; /* error case */
+				}
+			}
+		}
+		if (done && file) {   /* rewrite the file */
+			fclose (file);
+			if ((file = open_bookmarkCss ("w")) != NULL) {
+				struct s_line * line = list;
+				while (line) {
+					fputs (line->Text, file);
+					line = line->Next;
+				}
+			} else {
+				done = FALSE; /* error case */
+			}
+		}
+		while (list) {
+			struct s_line * next = list->Next;
+			free (next);
+			list = next;
+		}
+		if (file) {	
+			if (!openNclose) {	
+				fputs (mark, file);
+				fputs ("\t{ display: none; }\n", file);
+				done = TRUE;
+			}
+			fclose (file);
+		}
+	}
+	return done;
+}
