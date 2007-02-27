@@ -976,7 +976,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 			}
 			
 			if (!word) {
-				type = PE_PARAGRPH;
+				type  = PE_PARAGRPH;
+				*hash = par;
 			
 			} else if (word->input) {
 				type  = (input_isEdit (word->input) ? PE_EDITABLE : PE_INPUT);
@@ -986,7 +987,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				if (word->image) {
 					type = PE_IMAGE;
 				} else {
-					type = PE_TEXT;
+					type  = PE_TEXT;
+					*hash = word;
 				}
 			} else if (word->image) {
 				type = PE_ILINK;
