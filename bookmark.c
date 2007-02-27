@@ -11,10 +11,13 @@
 #include "defs.h"
 #include "bookmark.h"
 
-B_GRP *	group_list  = NULL;
-B_GRP *	current_grp = NULL;
-B_URL *	url_list    = NULL;
-B_URL *	current_url = NULL;
+#if 0
+#define USE_MEM_LISTS
+static B_GRP *	group_list  = NULL;
+static B_GRP *	current_grp = NULL;
+static B_URL *	url_list    = NULL;
+static B_URL *	current_url = NULL;
+#endif
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
@@ -37,6 +40,8 @@ static const char tmpl_tail[] =
 static const char m_dt_grp[] = "DT CLASS='GRP'";
 static const char m_dt_lnk[] = "DT CLASS='LNK'";
 
+
+#ifdef USE_MEM_LISTS
 /*  ID & CLASS distictions
  *  Url's have ID's and CLASS's
  *  The CLASS is the ID of the Group it is a member of
@@ -70,6 +75,7 @@ test_bookmarks(void)
 		group = group->Next;
 	}
 }
+#endif /* USE_MEM_LISTS */
 
 /*----------------------------------------------------------------------------*/
 static FILE *
@@ -186,6 +192,7 @@ wr_lnk (FILE * file, int * id, const char * class,
 BOOL
 read_bookmarks (void) {
 	FILE * file = NULL;
+#ifdef USE_MEM_LISTS
 	B_GRP * group = NULL;
 	B_URL * url = NULL;
 	
@@ -386,6 +393,23 @@ read_bookmarks (void) {
 				break;
 			}
 		}
+#else /* !USE_MEM_LISTS */
+	
+	Num_Bookmarks = 0;
+
+	/* Bookmarks exists, read or parse or load? */
+	if ((file = open_bookmarks ("r")) != NULL) { 
+		char        buff[1024];
+
+		while (fgets (buff, (int)sizeof(buff), file)) {
+			if (*buff == '<'
+			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
+				Num_Bookmarks += 1;
+			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
+				break;
+			}
+		}
+#endif /* !USE_MEM_LISTS */
 		fclose(file);
 		
 	} else if ((file = open_bookmarks ("wb")) != NULL) {
@@ -423,11 +447,13 @@ read_bookmarks (void) {
 			/*fputs (".INTPRJ { display: inline; }\n", file); */
 			fclose(file);
 		}
-	} 
+	}
 	
+#ifdef USE_MEM_LISTS
 	/* enable to dump bookmarks structs to screen */
 	/* test_bookmarks(); */
-
+#endif /* USE_MEM_LISTS */
+	
 	return TRUE;
 }
 
@@ -505,6 +531,9 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 	}
 }
 
+
+#ifdef USE_MEM_LISTS
+
 /*============================================================================*/
 B_GRP *
 bkm_group_ctor (B_GRP * This, B_GRP * Next)
@@ -579,3 +608,5 @@ bkm_url_dtor (B_URL * This)
 	
 	return This;
 }
+
+#endif /* USE_MEM_LISTS */
