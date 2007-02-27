@@ -18,6 +18,85 @@
 #include "hwWind.h"
 
 
+/*============================================================================*/
+#include "token.h"
+#include "bookmark.h"
+static void
+rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
+{
+	char * menu[] = {
+		" Collaps",
+		" Expand",
+		" Add Group",
+		" Remove",
+		" Copy URL",
+		NULL
+	};
+	
+	BOOL reload = FALSE;
+	
+	const char * lnk = (*box->ClName == 'L' && *box->IdName
+	                    ? box->IdName : NULL);
+	const char * grp = (*box->ClName == 'G' && *box->IdName
+	                    ? box->IdName : NULL);
+	if (!grp && box->Parent) {
+		box = box->Parent;
+		grp = (box->ClName && *box->ClName ? box->ClName : NULL);
+	}
+	
+/*	printf ("%i/%i -> LNK = '%s' GRP = '%s'   %p\n",
+	        box->BoxClass, box->HtmlCode, lnk, grp, word);*/
+	if (grp) {
+		DOMBOX * next = box->Sibling;
+		while (next && next->HtmlCode != TAG_DL) {
+			next = next->Sibling;
+		}
+		if (!next || strcmp (next->ClName, grp) != 0) {
+			menu[0][0] = '!';
+			menu[1][0] = '!';
+		} else if (next->Hidden) {
+			menu[0][0] = '!';
+			menu[1][0] = ' ';
+		} else {
+			menu[0][0] = ' ';
+			menu[1][0] = '!';
+		}
+		menu[2][0] = '!';
+	} else {
+		menu[0][0] = '!';
+		menu[1][0] = '!';
+		menu[2][0] = ' ';
+	}
+	if (lnk && word && word->link) {
+		menu[4][0] = ' ';
+	} else {
+		menu[4][0] = '!';
+	}
+	switch (HW_form_popup (menu, mouse.p_x, mouse.p_y, TRUE)) {
+		case 0:
+			reload = set_bookmark_group (grp, FALSE);
+			break;
+		case 1:
+			reload = set_bookmark_group (grp, TRUE);
+			break;
+		case 2:
+			printf ("add_bookmark_group (%s)\n", lnk);
+			break;
+		case 3:
+			if(lnk) printf ("del_bookmark (%s)\n", lnk);
+			else    printf ("del_bookmark_group (%s)\n", grp);
+			break;
+		case 4:
+			printf ("copy_url (%s)\n", word->link->address);
+			break;
+	}
+	if (reload) {
+		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+	}
+}
+
+
 /*==============================================================================
  *
  * handles mouse interaction with a frame
@@ -49,15 +128,46 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 	if ((button & RIGHT_BUTTON) &&
 	    (elem >= PE_PARAGRPH || elem == PE_EMPTY || elem == PE_FRAME)) {
 #if (_HIGHWIRE_RPOP_ == 1)
-
-		if (elem == PE_ILINK)
+		if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')) {
+			WORDITEM word = NULL;
+			DOMBOX * box  = NULL;
+			if (elem == PE_TLINK) {
+				struct url_link * link = hash;
+				word = link->start;
+			} else if (elem == PE_TEXT) {
+				word = hash;
+			} else if (elem == PE_PARAGRPH) {
+				PARAGRPH par = hash;
+				if (par) {
+					box = &par->Box;
+				}
+			}
+/*			printf ("BMRK = %04X (%p)\n", elem, hash);*/
+			if (word) {
+				WORDLINE line = word->line;
+				PARAGRPH par  = (line ? line->Paragraph : NULL);
+				if (par) {
+					box = &par->Box;
+				}
+			}
+			if (box && box->IdName
+			    && (strcmp (box->ClName, "LNK") == 0 ||
+			        strcmp (box->ClName, "GRP") == 0)) {
+				rpop_bmrk (mouse, box, word);
+			}
+			
+			
+			
+		
+		} else if (elem == PE_ILINK) {
 			rpopilink_open (mouse.p_x, mouse.p_y, cont, hash);			
-		else if (elem == PE_IMAGE)
+		} else if (elem == PE_IMAGE) {
 			rpopimg_open (mouse.p_x, mouse.p_y, cont);			
-		else if (elem > PE_IMAGE && elem < PE_INPUT)
+		} else if (elem > PE_IMAGE && elem < PE_INPUT) {
 			rpoplink_open (mouse.p_x, mouse.p_y, cont, hash);	
-		else
+		} else {
 			rpopup_open (mouse.p_x, mouse.p_y);
+		}
 #endif
 	
 	} else switch (PE_Type (elem)) {
