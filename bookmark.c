@@ -171,7 +171,7 @@ wr_grp (FILE * file, const char * id_class, long add, const char * title)
 {
 	/* Should have a call to the bkm_group_ctor() routine */
 
-	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DL>\n",
+	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DTL>\n",
 	                m_dt_grp, id_class, add, title);
 	fprintf (file, "<DL CLASS=\"%s\">\n",   id_class);
 }
@@ -184,7 +184,7 @@ wr_lnk (FILE * file, int * id, const char * class,
 	/* Should have a call to the bkm_url_ctor() routine */
 	(*id)++;
 	fprintf (file, "<%s ID='%.*d'><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
-	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a></DL>"
+	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a></DT>"
 	               "\n",
 	               m_dt_lnk, 8,*id, 8,*id, class, add, visit, url, title);
 }
