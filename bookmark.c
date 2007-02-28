@@ -171,7 +171,7 @@ wr_grp (FILE * file, const char * id_class, long add, const char * title)
 {
 	/* Should have a call to the bkm_group_ctor() routine */
 
-	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DTL>\n",
+	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DT>\n",
 	                m_dt_grp, id_class, add, title);
 	fprintf (file, "<DL CLASS=\"%s\">\n",   id_class);
 }
