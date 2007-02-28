@@ -613,7 +613,24 @@ bkm_url_dtor (B_URL * This)
 #endif /* USE_MEM_LISTS */
 
 
-/*============================================================================*/
+/*------------------------------------------------------------------------------
+ * read normalized line from file
+*/
+static char *
+getline (FILE * file, char * buff, size_t b_sz)
+{
+	char * p = fgets (buff, (int)b_sz, file);
+	if (p) {
+		size_t len = strlen (p);
+		while (len && isspace (p[--len])) p[len] = '\0';
+		while (isspace(*p)) p++;
+	}
+	return p;
+}
+
+/*==============================================================================
+ * collaps/expand a bookmark group
+*/
 BOOL
 set_bookmark_group (const char * grp, BOOL openNclose)
 {
@@ -626,10 +643,8 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 			struct s_line * Next;
 			char            Text[1];
 		} * list = NULL, ** pptr = &list;
-		char buff[1024];
-		while (fgets (buff, (int)sizeof(buff), file)) {
-			char * p = buff;
-			while (isspace(*p)) p++;
+		char buff[1024], * p;
+		while ((p = getline (file, buff, (int)sizeof(buff))) != NULL) {
 			if (strncmp (p, mark, b_ln) == 0 && isspace (p[b_ln])) {
 				/* skip this */
 				done = TRUE;
@@ -650,10 +665,10 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 		}
 		if (done && file) {   /* rewrite the file */
 			fclose (file);
-			if ((file = open_bookmarkCss ("w")) != NULL) {
+			if ((file = open_bookmarkCss ("wb")) != NULL) {
 				struct s_line * line = list;
 				while (line) {
-					fputs (line->Text, file);
+					fprintf (file, "%s\n", line->Text);
 					line = line->Next;
 				}
 			} else {
