@@ -614,10 +614,10 @@ bkm_url_dtor (B_URL * This)
 
 
 /*----------------------------------------------------------------------------*/
-typedef struct s_line * LINE;
-struct s_line {
-	LINE Next;
-	char Text[1];
+typedef struct s_fline * FLINE;
+struct s_fline {
+	FLINE Next;
+	char  Text[1];
 };
 
 /*------------------------------------------------------------------------------
@@ -637,10 +637,10 @@ get_line (FILE * file, char * buff, size_t b_sz)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-add_line (LINE ** base, char * buff)
+add_line (FLINE ** base, char * buff)
 {
 	size_t len  = strlen (buff);
-	LINE   line = malloc (sizeof (struct s_line) + len);
+	FLINE  line = malloc (sizeof (struct s_fline) + len);
 	if (line) {
 		memcpy (line->Text, buff, len +1);
 		line->Next = NULL;
@@ -659,7 +659,7 @@ del_bookmark_group (const char * grp)
 	BOOL   done = FALSE;
 	FILE * file = open_bookmarks ("rb");
 	if (file) {
-		LINE list    = NULL, * pptr = &list;
+		FLINE  list  = NULL, * pptr = &list;
 		size_t len   = strlen (grp);
 		int    stage = 0;
 		char   buff[1024], * p;
@@ -713,7 +713,7 @@ puts ("del_bookmark_group(): 2 done");
 		if (done) {   /* rewrite the file */
 			fclose (file);
 			if ((file = open_bookmarks ("wb")) != NULL) {
-				LINE line = list;
+				FLINE line = list;
 				while (line) {
 					fprintf (file, "%s\n", line->Text);
 					line = line->Next;
@@ -723,7 +723,7 @@ puts ("del_bookmark_group(): 2 done");
 			}
 		}
 		while (list) {
-			LINE next = list->Next;
+			FLINE next = list->Next;
 			free (next);
 			list = next;
 		}
@@ -744,8 +744,8 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 	FILE * file = open_bookmarkCss ("rb+");
 	if (file) {
 		char mark[1024];
-		int  m_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
-		LINE list = NULL, * pptr = &list;
+		int   m_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
+		FLINE list = NULL, * pptr = &list;
 		char buff[1024], * p;
 		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
 			if (strncmp (p, mark, m_ln) == 0 && isspace (p[m_ln])) {
@@ -760,7 +760,7 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 		if (done && file) {   /* rewrite the file */
 			fclose (file);
 			if ((file = open_bookmarkCss ("wb")) != NULL) {
-				LINE line = list;
+				FLINE line = list;
 				while (line) {
 					fprintf (file, "%s\n", line->Text);
 					line = line->Next;
@@ -770,7 +770,7 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 			}
 		}
 		while (list) {
-			LINE next = list->Next;
+			FLINE next = list->Next;
 			free (next);
 			list = next;
 		}
