@@ -83,8 +83,8 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 			printf ("add_bookmark_group (%s)\n", lnk);
 			break;
 		case 3:
-			if(lnk) printf ("del_bookmark (%s)\n", lnk);
-			else    printf ("del_bookmark_group (%s)\n", grp);
+			if(lnk)  printf ("del_bookmark (%s)\n", grp);
+			else     reload = del_bookmark_group (grp);
 			break;
 		case 4:
 			printf ("copy_url (%s)\n", word->link->address);
