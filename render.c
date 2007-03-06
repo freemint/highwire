@@ -3476,14 +3476,16 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 static UWORD
 render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 {
+	TEXTBUFF current = &parser->Current;
 	(void)text;
 	
 	if (flags & PF_START) {
-		group_box (parser, TAG_CENTER, ALN_CENTER);
+		if (!current->lst_stack)
+			group_box (parser, TAG_CENTER, ALN_CENTER);
 	
 	} else {
-		leave_box (&parser->Current, TAG_CENTER);
-
+		if (!current->lst_stack)
+			leave_box (&parser->Current, TAG_CENTER);
 	}
 	
 	return (flags|PF_SPACE);
