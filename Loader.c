@@ -951,9 +951,15 @@ loader_job (void * arg, long invalidated)
 	
 	loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
 	if (!loader->Data) {
+		char   buf[1024]  = "<html><head><title>Error</title></head>"
+		                    "<body><h1>Page not found!</h1>\n<u><pre>";
+		size_t n          = strlen (buf);
+		const char tail[] = "</pre></u>\n</body></html>";
+		n += location_FullName (loc, buf + n, sizeof(buf) - n - sizeof(tail));
+		strcpy (buf + n, tail);
+		
 		loader->Error    = -ENOENT;
-		loader->Data     = strdup ("<html><head><title>Error</title></head>"
-		                           "<body><h1>Page not found!</h1></body></html>");
+		loader->Data     = strdup (buf);
 		loader->MimeType = MIME_TXT_HTML;
 	}
 	/* registers a parser job with the scheduler */
