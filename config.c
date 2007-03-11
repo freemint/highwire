@@ -37,14 +37,14 @@ static const char * cfg_magic = _HIGHWIRE_VERSION_ _HIGHWIRE_BETATAG_
                                 " [" __DATE__ "]";
 
 
-/*----------------------------------------------------------------------------*/
-static FILE *
-open_cfg (const char * mode)
+/*============================================================================*/
+FILE *
+open_default (const char ** path, const char * name, const char * mode)
 {
 	FILE * file = NULL;
 	
-	if (cfg_File) {
-		file = fopen (cfg_File, mode);
+	if (*path) {
+		file = fopen (*path, mode);
 		
 	} else {
 		char buff[1024], * p;
@@ -54,11 +54,11 @@ open_cfg (const char * mode)
 			if (p[-1] != slash) *(p++) = slash;
 			strcpy (p, "defaults");
 			p[8] = slash;
-			strcpy (p +9, _HIGHWIRE_CFG_);
+			strcpy (p +9, name);
 			file = fopen (buff, mode);
 			
 			if (!file) {
-				strcpy (p, _HIGHWIRE_CFG_);
+				strcpy (p, name);
 				file = fopen (buff, mode);
 			}
 		}
@@ -69,16 +69,19 @@ open_cfg (const char * mode)
 			Dgetpath (buff + 2, 0);
 			p = strchr (buff, '\0');
 			if (p[-1] != '\\') *(p++) = '\\';
-			strcpy (p, _HIGHWIRE_CFG_);
+			strcpy (p, name);
 			file = fopen (buff, mode);
 		}
 		if (file) {
-			cfg_File = strdup (buff);
+			*path = strdup (buff);
 		}
 	}
 	
 	return file;
 }
+
+/*----------------------------------------------------------------------------*/
+#define open_cfg(mode)   open_default (&cfg_File, _HIGHWIRE_CFG_, mode)
 
 
 /*============================================================================*/

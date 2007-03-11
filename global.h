@@ -39,7 +39,7 @@ extern WORD slider_col;
 
 extern BOOL force_frame_controls;
 
-extern char	*va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
+extern char *va_helpbuf;  /* [HW_PATH_MAX] GLOBAL memory buffer for AV */
 
 extern char fsel_path[HW_PATH_MAX];
 extern char help_file[HW_PATH_MAX];
@@ -93,8 +93,8 @@ void    menu_info         (void);
 void    menu_quit         (void);
 void    menu_reload       (ENCODING);
 void    menu_fontsize     (char plus_minus);
-void	menu_bookmark_url (LOCATION loc, const char *b_title);
-void	  menu_openbookmarks(void);
+void    menu_bookmark_url (LOCATION loc, const char *b_title);
+void    menu_openbookmarks(void);
 WORD    menu_history      (HISTORY hist[], UWORD used, WORD check);
 void    menu_cookies      (int);
 void    menu_images       (int);
@@ -156,13 +156,14 @@ extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
 extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
 extern BOOL         cfg_FixedCmap;
 extern BOOL         cfg_UseCSS;
-extern BOOL         cfg_AVWindow; /* AVSERVER window enables AV-drag&drop */
-extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY */
-extern WORD         cfg_ConnTout;  /* seconds for connection establishing  */
-extern WORD         cfg_ConnRetry; /* number of tries for connection that  *
-                                    * couldn't get established immediately */
-BOOL read_config (void);
-BOOL save_config (const char * key, const char * arg);
+extern BOOL         cfg_AVWindow;    /* AVSERVER window enables AV-drag&drop */
+extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY  */
+extern WORD         cfg_ConnTout;    /* seconds for connection establishing  */
+extern WORD         cfg_ConnRetry;   /* number of tries for connection that  *
+                                      * couldn't get established immediately */
+FILE * open_default (const char ** path, const char * name, const char * mode);
+BOOL   read_config (void);
+BOOL   save_config (const char * key, const char * arg);
 const char * devl_flag (const char * flag);
 
 
@@ -237,7 +238,8 @@ GRECT    paragraph_extend (WORDITEM);
 /* in image.c */
 
 IMAGE new_image    (FRAME, TEXTBUFF, const char * src, LOCATION,
-                    short w, short h, short vspace, short hspace, BOOL win_image);
+                    short w, short h, short vspace, short hspace,
+                    BOOL win_image);
 void  delete_image (IMAGE*);
 void         image_calculate (IMAGE, short par_width);
 const char * image_dispinfo  (void);
@@ -251,9 +253,9 @@ void word_set_bold      (TEXTBUFF, BOOL onNoff);
 void word_set_italic    (TEXTBUFF, BOOL onNoff);
 void word_set_strike    (TEXTBUFF, BOOL onNoff);
 void word_set_underline (TEXTBUFF, BOOL onNoff);
-#define word_set_color(textbuff, color) {TA_Color((textbuff)->word->attr)=color;}
-#define word_set_point(textbuff, point) {TA_Size ((textbuff)->word->attr)=point;}
-#define word_set_font( textbuff, font)  {TAsetFont((textbuff)->word->attr,font);}
+#define word_set_color(textbuff,color) {TA_Color((textbuff)->word->attr)=color;}
+#define word_set_point(textbuff,point) {TA_Size ((textbuff)->word->attr)=point;}
+#define word_set_font( textbuff,font)  {TAsetFont((textbuff)->word->attr,font);}
 long word_offset (WORDITEM);
 
 /* in av_prot.c */
@@ -262,7 +264,7 @@ short get_avserver     (void);
 void  Init_AV_Protocol (void);
 void  Exit_AV_Protocol (void);
 BOOL  Receive_AV       (short msg[8]);
-BOOL  Send_AV	        (short message, const char *data1, const char *data2);
+BOOL  Send_AV          (short message, const char *data1, const char *data2);
 
 void send_avwinopen  (short handle);
 void send_avwinclose (short handle);  

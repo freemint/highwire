@@ -9,7 +9,7 @@
 #include <ctype.h> /* isspace() */
 
 #include "file_sys.h"
-#include "defs.h"
+#include "global.h"
 #include "bookmark.h"
 
 #if 0
@@ -79,91 +79,9 @@ test_bookmarks(void)
 #endif /* USE_MEM_LISTS */
 
 /*----------------------------------------------------------------------------*/
-static FILE *
-open_bookmarkCss (const char * mode)
-{
-	FILE * file = NULL;
-	
-	if (bkm_CSS) {
-		file = fopen (bkm_CSS, mode);
-		
-	} else {
-		char buff[1024], * p;
-		if ((p = getenv ("HOME")) != NULL && *p) {
-			char slash = (p[1] == ':' ? '\\' : '/');
-			p = strchr (strcpy (buff, p), '\0');
-			if (p[-1] != slash) *(p++) = slash;
-			strcpy (p, "defaults");
-			p[8] = slash;
-			strcpy (p +9, _HIGHWIRE_BKM_CSS_);
-			file = fopen (buff, mode);
-			
-			if (!file) {
-				strcpy (p, _HIGHWIRE_BKM_CSS_);
-				file = fopen (buff, mode);
-			}
-		}
-		if (!file) {
-			buff[0] = Dgetdrv();
-			buff[0] += (buff[0] < 26 ? 'A' : -26 + '1');
-			buff[1] = ':';
-			Dgetpath (buff + 2, 0);
-			p = strchr (buff, '\0');
-			if (p[-1] != '\\') *(p++) = '\\';
-			strcpy (p, _HIGHWIRE_BKM_CSS_);
-			file = fopen (buff, mode);
-		}
-		if (file) {
-			bkm_CSS = strdup (buff);
-		}
-	}
-	
-	return file;
-}
- 
- 
-/*----------------------------------------------------------------------------*/
-static FILE *
-open_bookmarks (const char * mode)
-{
-	FILE * file = NULL;
-	
-	if (bkm_File) {
-		file = fopen (bkm_File, mode);
-		
-	} else {
-		char buff[1024], * p;
-		if ((p = getenv ("HOME")) != NULL && *p) {
-			char slash = (p[1] == ':' ? '\\' : '/');
-			p = strchr (strcpy (buff, p), '\0');
-			if (p[-1] != slash) *(p++) = slash;
-			strcpy (p, "defaults");
-			p[8] = slash;
-			strcpy (p +9, _HIGHWIRE_BOOKMARK_);
-			file = fopen (buff, mode);
-			
-			if (!file) {
-				strcpy (p, _HIGHWIRE_BOOKMARK_);
-				file = fopen (buff, mode);
-			}
-		}
-		if (!file) {
-			buff[0] = Dgetdrv();
-			buff[0] += (buff[0] < 26 ? 'A' : -26 + '1');
-			buff[1] = ':';
-			Dgetpath (buff + 2, 0);
-			p = strchr (buff, '\0');
-			if (p[-1] != '\\') *(p++) = '\\';
-			strcpy (p, _HIGHWIRE_BOOKMARK_);
-			file = fopen (buff, mode);
-		}
-		if (file) {
-			bkm_File = strdup (buff);
-		}
-	}
-	
-	return file;
-}
+#define open_bookmarkCss(mode) open_default (&bkm_CSS, _HIGHWIRE_BKM_CSS_, mode)
+#define open_bookmarks(mode)   open_default (&bkm_File,_HIGHWIRE_BOOKMARK_,mode)
+
 
 /*----------------------------------------------------------------------------*/
 static void
