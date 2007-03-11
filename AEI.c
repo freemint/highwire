@@ -814,74 +814,13 @@ update_menu (ENCODING encoding, BOOL raw_text)
 #endif
 
 
-/*============================================================================*/
-/* copy_url_2_scrap()
- *  Just a small utility routine, since it was duplicated in several
- * places.
- */ 
-static void
-copy_url_2_scrap (LOCATION loc)
+/*----------------------------------------------------------------------------*/
+static WORD
+rpop_do (OBJECT * rpopup, WORD mx, WORD my)
 {
-	FILE * file;
-	char buf[2 * HW_PATH_MAX];
-
-	location_FullName (loc, buf, sizeof(buf));
-
-	file = open_scrap (FALSE);
-	if (file) {
-		fwrite (buf, 1, strlen(buf), file);
-		fclose (file);
-	}
-}
-
-/*============================================================================*/
-/* rpopup_open
- *
- * I would much rather do this in a non modal manner, however
- * at the moment we haven't seperated the parsing/display from
- * the UI to a satisfying level.  So we have this cheap routine
- *
- * also there are several bits of experimentation going on in here
- *
- * baldrick August 9, 2002
- */
-#if defined(GEM_MENU) && (_HIGHWIRE_RPOP_ == 1)
-void
-rpopup_open (WORD mx, WORD my)
-{
-	extern OBJECT *rpopup;
-	
-	HwWIND wind  = hwWind_byCoord (mx, my);
-	FRAME  frame = hwWind_ActiveFrame (wind);
-	LOCATION loc = (frame ? frame->Location : NULL);
-	short x, y, w, h, which_obj;
+	WORD  which_obj;
+	short x, y, w, h;
 	GRECT desk;
-
-	if (!frame) {   /* empty window, nearly no action possible */
-		short i;
-		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
-			if (rpopup[i].ob_flags & OF_SELECTABLE && i != RPOP_INFO) {
-				objc_change (rpopup, i, 0, 0,0,0,0, OS_DISABLED, 0);
-			}
-		}
-	} else {
-		short i;
-		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
-			if (rpopup[i].ob_flags & OF_SELECTABLE) {
-				objc_change (rpopup, i, 0, 0,0,0,0, OS_NORMAL, 0);
-			}
-		}
-		if (wind->HistMenu <= 0) {
-			objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0, OS_DISABLED, 0);
-		}
-		if (wind->HistMenu >= wind->HistUsed -1) {
-			objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0, OS_DISABLED, 0);
-		}
-		if (loc->Proto != PROT_FILE && !cache_lookup (loc, 0, NULL)) {
-			objc_change (rpopup, RPOP_VIEWSRC, 0, 0,0,0,0, OS_DISABLED, 0);
-			objc_change (rpopup, RPOP_SAVE,    0, 0,0,0,0, OS_DISABLED, 0);
-		}
-	}
 	
 	form_center (rpopup, &x, &y, &w, &h);
 	x -= rpopup->ob_x;
@@ -911,8 +850,6 @@ rpopup_open (WORD mx, WORD my)
 	objc_draw   (rpopup, ROOT, MAX_DEPTH, x, y, w, h);
 
 	which_obj = HW_form_do (rpopup, 0);
-/*	which_obj = form_do (rpopup, 0);*/
-/*	which_obj = form_popup (rpopup, 0,0);*/
 	
 	if (which_obj > 0) {
 		objc_change (rpopup, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
@@ -920,8 +857,61 @@ rpopup_open (WORD mx, WORD my)
 	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 	wind_update (END_MCTRL);
 	
-	switch (which_obj)
-	{
+	return which_obj;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+copy_url_2_scrap (LOCATION loc)
+{
+	FILE * file = open_scrap (FALSE);
+	if (file) {
+		char buf[2 * HW_PATH_MAX];
+		location_FullName (loc, buf, sizeof(buf));
+		fwrite (buf, 1, strlen(buf), file);
+		fclose (file);
+	}
+}
+
+/*============================================================================*/
+#if defined(GEM_MENU) && (_HIGHWIRE_RPOP_ == 1)
+void
+rpopup_open (WORD mx, WORD my)
+{
+	extern OBJECT *rpopup;
+	
+	HwWIND wind  = hwWind_byCoord (mx, my);
+	FRAME  frame = hwWind_ActiveFrame (wind);
+	LOCATION loc = (frame ? frame->Location : NULL);
+
+	if (!frame) {   /* empty window, nearly no action possible */
+		short i;
+		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
+			if (rpopup[i].ob_flags & OF_SELECTABLE && i != RPOP_INFO) {
+				objc_change (rpopup, i, 0, 0,0,0,0, OS_DISABLED, 0);
+			}
+		}
+	} else {
+		short i;
+		for (i = rpopup->ob_head; i > 0; i = rpopup[i].ob_next) {
+			if (rpopup[i].ob_flags & OF_SELECTABLE) {
+				objc_change (rpopup, i, 0, 0,0,0,0, OS_NORMAL, 0);
+			}
+		}
+		if (wind->HistMenu <= 0) {
+			objc_change (rpopup, RPOP_BACK,    0, 0,0,0,0, OS_DISABLED, 0);
+		}
+		if (wind->HistMenu >= wind->HistUsed -1) {
+			objc_change (rpopup, RPOP_FORWARD, 0, 0,0,0,0, OS_DISABLED, 0);
+		}
+		if (loc->Proto != PROT_FILE && !cache_lookup (loc, 0, NULL)) {
+			objc_change (rpopup, RPOP_VIEWSRC, 0, 0,0,0,0, OS_DISABLED, 0);
+			objc_change (rpopup, RPOP_SAVE,    0, 0,0,0,0, OS_DISABLED, 0);
+		}
+	}
+	
+	switch (rpop_do (rpopup, mx, my)) {
+	
 		case RPOP_BACK:
 			hwWind_undo (wind, FALSE);
 			break;
@@ -978,10 +968,6 @@ rpopup_open (WORD mx, WORD my)
 }
 
 /*============================================================================*/
-/* rpoplink_open
- *
- * baldrick April 28, 2004
- */
 void
 rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 {
@@ -994,8 +980,6 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	HwWIND wind  = hwWind_byContainr (current);
 	FRAME  frame = hwWind_ActiveFrame (wind);
 	LOCATION loc = new_location (addr, frame->BaseHref);
-	short x, y, w, h, which_obj;
-	GRECT desk;
 	
 	if (loc->Proto != PROT_FILE && loc->Proto != PROT_HTTP) {
 		objc_change (rpoplink, RLINK_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
@@ -1003,45 +987,8 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		objc_change (rpoplink, RLINK_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	
-	form_center (rpoplink, &x, &y, &w, &h);
-	x -= rpoplink->ob_x;
-	x += rpoplink->ob_x = mx -2;
-	y -= rpoplink->ob_y;
-	y += rpoplink->ob_y = my -2;
-	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
-	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
-		rpoplink->ob_x += desk.g_w;
-		x            += desk.g_w;
-	}
-	if ((desk.g_x -= x) > 0) {
-		rpoplink->ob_x += desk.g_x;
-		x            += desk.g_x;
-	}
-	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
-		rpoplink->ob_y += desk.g_h;
-		y            += desk.g_h;
-	}
-	if ((desk.g_y -= y) > 0) {
-		rpoplink->ob_y += desk.g_y;
-		y              += desk.g_y;
-	}
+	switch (rpop_do (rpoplink, mx, my)) {
 	
-	wind_update (BEG_MCTRL);
-	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
-	objc_draw   (rpoplink, ROOT, MAX_DEPTH, x, y, w, h);
-
-	which_obj = HW_form_do (rpoplink, 0);
-/*	which_obj = form_do (rpoplink, 0);*/
-/*	which_obj = form_popup (rpoplink, 0,0);*/
-	
-	if (which_obj > 0) {
-		objc_change (rpoplink, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
-	}
-	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
-	wind_update (END_MCTRL);
-	
-	switch (which_obj)
-	{
 		case RLINK_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
 			        ? containr_byName (current, link->u.target) : NULL);
@@ -1129,49 +1076,12 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 	FRAME    frame  = hwWind_ActiveFrame (wind);
 	WORDITEM word   = find_word (frame, mx, my);
 	LOCATION imgloc = word->image->source;
-	short x, y, w, h, which_obj;
-	GRECT desk;
 	
 	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
 	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_DISABLED, 0);
 	
-	form_center (rpopimg, &x, &y, &w, &h);
-	x -= rpopimg->ob_x;
-	x += rpopimg->ob_x = mx -2;
-	y -= rpopimg->ob_y;
-	y += rpopimg->ob_y = my -2;
-	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
-	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
-		rpopimg->ob_x += desk.g_w;
-		x            += desk.g_w;
-	}
-	if ((desk.g_x -= x) > 0) {
-		rpopimg->ob_x += desk.g_x;
-		x            += desk.g_x;
-	}
-	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
-		rpopimg->ob_y += desk.g_h;
-		y            += desk.g_h;
-	}
-	if ((desk.g_y -= y) > 0) {
-		rpopimg->ob_y += desk.g_y;
-		y              += desk.g_y;
-	}
+	switch (rpop_do (rpopimg, mx, my)) {
 	
-	wind_update (BEG_MCTRL);
-	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
-	objc_draw   (rpopimg, ROOT, MAX_DEPTH, x, y, w, h);
-
-	which_obj = HW_form_do (rpopimg, 0);
-	
-	if (which_obj > 0) {
-		objc_change (rpopimg, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
-	}
-	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
-	wind_update (END_MCTRL);
-	
-	switch (which_obj)
-	{
 		case RIMG_OPEN: {
 			start_page_load (current, NULL, imgloc, TRUE, NULL);
 
@@ -1207,8 +1117,6 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 }
 
 /*============================================================================*/
-/* rpopimg_open
- */
 void
 rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 {
@@ -1223,8 +1131,6 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	LOCATION loc    = new_location (addr, frame->BaseHref);
 	WORDITEM word   = (link->start ? link->start : find_word (frame, mx, my));
 	LOCATION imgloc = word->image->source;
-	short x, y, w, h, which_obj;
-	GRECT desk;
 	
 	if (loc->Proto != PROT_FILE && loc->Proto != PROT_HTTP) {
 		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
@@ -1232,45 +1138,8 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	
-	form_center (rpopimg, &x, &y, &w, &h);
-	x -= rpopimg->ob_x;
-	x += rpopimg->ob_x = mx -2;
-	y -= rpopimg->ob_y;
-	y += rpopimg->ob_y = my -2;
-	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
-	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
-		rpopimg->ob_x += desk.g_w;
-		x            += desk.g_w;
-	}
-	if ((desk.g_x -= x) > 0) {
-		rpopimg->ob_x += desk.g_x;
-		x            += desk.g_x;
-	}
-	if ((desk.g_h += desk.g_y - (y + h)) < 0) {
-		rpopimg->ob_y += desk.g_h;
-		y            += desk.g_h;
-	}
-	if ((desk.g_y -= y) > 0) {
-		rpopimg->ob_y += desk.g_y;
-		y              += desk.g_y;
-	}
+	switch (rpop_do (rpopimg, mx, my)) {
 	
-	wind_update (BEG_MCTRL);
-	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
-	objc_draw   (rpopimg, ROOT, MAX_DEPTH, x, y, w, h);
-
-	which_obj = HW_form_do (rpopimg, 0);
-/*	which_obj = form_do (rpopimg, 0);*/
-/*	which_obj = form_popup (rpopimg, 0,0);*/
-	
-	if (which_obj > 0) {
-		objc_change (rpopimg, which_obj, 0, 0,0,0,0, OS_NORMAL, 0);
-	}
-	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
-	wind_update (END_MCTRL);
-	
-	switch (which_obj)
-	{
 		case RIMG_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
 			        ? containr_byName (current, link->u.target) : NULL);
