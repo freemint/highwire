@@ -816,7 +816,7 @@ update_menu (ENCODING encoding, BOOL raw_text)
 
 /*----------------------------------------------------------------------------*/
 static WORD
-rpop_do (OBJECT * rpopup, WORD mx, WORD my)
+rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 {
 	WORD  which_obj;
 	short x, y, w, h;
@@ -857,7 +857,18 @@ rpop_do (OBJECT * rpopup, WORD mx, WORD my)
 	form_dial   (FMD_FINISH, x, y, w, h, x, y, w, h);
 	wind_update (END_MCTRL);
 	
-	return which_obj;
+#	define _(idx, obj)   ((idx <<8) | obj)
+	switch (_(tree,which_obj)) {
+		case _(RPOPUP,  RPOP_INFO):
+		case _(RLINKPOP,RLINK_INFO):
+		case _(RIMGPOP, RIMG_INFO):
+			menu_info();
+			break;
+		default:
+			return which_obj; /* to be handled by the caller */
+	}
+#	undef _
+	return -1; /* already hadled by te switch() */
 }
 
 /*----------------------------------------------------------------------------*/
@@ -910,17 +921,20 @@ rpopup_open (WORD mx, WORD my)
 		}
 	}
 	
-	switch (rpop_do (rpopup, mx, my)) {
+	switch (rpop_do (rpopup, RPOPUP, mx, my)) {
 	
 		case RPOP_BACK:
 			hwWind_undo (wind, FALSE);
 			break;
+		
 		case RPOP_FORWARD:
 			hwWind_undo (wind, TRUE);
 			break;
+		
 		case RPOP_RELOAD:
 			hwWind_history (wind, wind->HistMenu, TRUE);
 			break;
+		
 		case RPOP_VIEWSRC: {
 			char buf[2 * HW_PATH_MAX];
 			if (PROTO_isRemote (loc->Proto)) {
@@ -934,9 +948,7 @@ rpopup_open (WORD mx, WORD my)
 			location_FullName (loc, buf, sizeof(buf));
 			launch_viewer (buf);
 		}	break;
-		case RPOP_INFO:
-			menu_info();
-			break;
+		
 		case RPOP_SAVE: {
 			CONTAINR cont = NULL;
 			char buf[2 * HW_PATH_MAX];
@@ -987,7 +999,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		objc_change (rpoplink, RLINK_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	
-	switch (rpop_do (rpoplink, mx, my)) {
+	switch (rpop_do (rpoplink, RLINKPOP, mx, my)) {
 	
 		case RLINK_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
@@ -1038,10 +1050,6 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 			copy_url_2_scrap (loc);
 			break;
 
-		case RLINK_INFO:
-			menu_info();
-			break;
-
 		case RLINK_BOOKM:
 			/* we need a method to grab the name of the link */
 			menu_bookmark_url (loc, addr);
@@ -1080,7 +1088,7 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
 	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_DISABLED, 0);
 	
-	switch (rpop_do (rpopimg, mx, my)) {
+	switch (rpop_do (rpopimg, RIMGPOP, mx, my)) {
 	
 		case RIMG_OPEN: {
 			start_page_load (current, NULL, imgloc, TRUE, NULL);
@@ -1105,10 +1113,6 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 
 		case RIMG_COPYIMGURL: 
 			copy_url_2_scrap (imgloc);
-			break;
-
-		case RIMG_INFO:
-			menu_info();
 			break;
 	}
 	
@@ -1138,7 +1142,7 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	
-	switch (rpop_do (rpopimg, mx, my)) {
+	switch (rpop_do (rpopimg, RIMGPOP, mx, my)) {
 	
 		case RIMG_OPEN:
 			cont = (!link->u.target || stricmp (link->u.target, "_blank") != 0
@@ -1200,10 +1204,6 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 		case RIMG_BOOKM: 
 			/* we need a method to grab the name of the link */
 			menu_bookmark_url (loc, addr);
-			break;
-
-		case RIMG_INFO:
-			menu_info();
 			break;
 	}
 	
