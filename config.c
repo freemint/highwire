@@ -49,11 +49,23 @@ open_default (const char ** path, const char * name, const char * mode)
 	} else {
 		char buff[1024], * p;
 		if ((p = getenv ("HOME")) != NULL && *p) {
-			char slash = (p[1] == ':' ? '\\' : '/');
-			p = strchr (strcpy (buff, p), '\0');
-			if (p[-1] != slash) *(p++) = slash;
+			if (p[1] == ':') {
+				buff[0] = toupper (p[0]);
+				p = strchr (strcpy (buff +1, p +1), '\0');
+			} else {
+				char * q = buff;
+				*(q++) = 'U';
+				*(q++) = ':';
+				while (*p) {
+					if (*p == '/') *(q++) = '\\';
+					else           *(q++) = *p;
+					p++;
+				}
+				p = q;
+			}
+			if (p[-1] != '\\') *(p++) = '\\';
 			strcpy (p, "defaults");
-			p[8] = slash;
+			p[8] = '\\';
 			strcpy (p +9, name);
 			file = fopen (buff, mode);
 			
