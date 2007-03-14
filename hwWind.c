@@ -1870,8 +1870,8 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageUpdated:
-			if (!wind->Base.isIcon) {
-				hwWind_redraw  (wind, gen_ptr);
+			if (!wind->Base.isIcon && wind->Base.Ident != IDENT_BMRK) {
+				hwWind_redraw (wind, gen_ptr);
 			}
 			break;
 		
