@@ -429,6 +429,54 @@ add_bookmark_group (const char * group)
  */
 
 
+/*----------------------------------------------------------------------------*/
+typedef struct s_fline * FLINE;
+struct s_fline {
+	FLINE Next;
+	char  Text[1];
+};
+
+/*------------------------------------------------------------------------------
+ * read normalized line from file
+*/
+static char *
+get_line (FILE * file, char * buff, size_t b_sz)
+{
+	char * p = fgets (buff, (int)b_sz, file);
+	if (p) {
+		size_t len = strlen (p);
+		while (len && isspace (p[--len])) p[len] = '\0';
+		while (isspace(*p)) p++;
+	}
+	return p;
+}
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+add_line (FLINE ** base, char * buff)
+{
+	size_t len  = strlen (buff);
+	FLINE  line = malloc (sizeof (struct s_fline) + len);
+	if (line) {
+		memcpy (line->Text, buff, len +1);
+		line->Next = NULL;
+		**base     = line;
+		*base      = &line->Next;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+cmp_id (const char * ptr, const char * id, size_t len)
+{
+	return (strncmp (ptr, "ID='", 4) == 0 &&
+	        strncmp (ptr +4, id, len) == 0 && ptr[4 + len] == '\'');
+}
+
+
 /*============================================================================*/
 BOOL
 add_bookmark (const char * bookmark_url, const char *bookmark_title)
@@ -448,6 +496,188 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 		printf("Bookmark file lost?!? \n");
 		return FALSE;
 	}
+}
+
+/*============================================================================*/
+BOOL
+del_bookmark (const char * lnk)
+{
+	BOOL   done = FALSE;
+	FILE * file = open_bookmarks ("rb");
+	if (file) {
+		FLINE  list  = NULL, * pptr = &list;
+		size_t len   = strlen (lnk);
+		char   buff[1024], * p;
+		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
+			if (*p == '<' && strncmp (p +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0) {
+				char * q = p +1 + sizeof(m_dt_lnk);
+				while (isspace(*q)) q++;
+				if (cmp_id (q, lnk, len)) {
+					done = TRUE;
+					p    = NULL;
+				}
+			}
+			if (p && !add_line (&pptr, buff)) {
+				done  = FALSE; /* error case */
+				break;
+			}
+		}
+		fclose (file);
+		
+		if (done) {   /* rewrite the file */
+			if ((file = open_bookmarks ("wb")) != NULL) {
+				FLINE line = list;
+				while (line) {
+					fprintf (file, "%s\n", line->Text);
+					line = line->Next;
+				}
+				fclose (file);
+			
+			} else {
+				done = FALSE; /* error case */
+			}
+		}
+		while (list) {
+			FLINE next = list->Next;
+			free (next);
+			list = next;
+		}
+	}
+	return done;
+}
+
+
+/*============================================================================*/
+BOOL
+del_bookmark_group (const char * grp)
+{
+	BOOL   done = FALSE;
+	FILE * file = open_bookmarks ("rb");
+	if (file) {
+		FLINE  list  = NULL, * pptr = &list;
+		size_t len   = strlen (grp);
+		int    stage = 0;
+		char   buff[1024], * p;
+		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
+			switch (stage) {
+				case 0: /* nothing found yet, search for the right <DT ..> */
+					if (*p == '<'
+					    && strncmp (p +1, m_dt_grp, sizeof(m_dt_grp) -1) == 0) {
+						char * q = p +1 + sizeof(m_dt_grp);
+						while (isspace(*q)) q++;
+						if (cmp_id (q, grp, len)) {
+puts ("del_bookmark_group(): 0 -> 1");
+							stage = 1;
+							break;
+						}
+					}
+					goto default_;
+					
+				case 1: /* correct <DT ..> found, now we need the <DL .> */
+					if (strncmp (p, "<DL CLASS='", 11) == 0
+					    && strncmp (p +11, grp, len) == 0 && p[11 + len] == '\'') {
+puts ("del_bookmark_group(): 1 -> 2");
+						stage = 2;
+						break;
+					}
+					/* else file structure damaged */
+puts ("del_bookmark_group(): 1 structure");
+					goto case_error;
+					
+				case 2: /* find te closing </DL> */
+					if (strcmp (p, "</DL>") == 0) {
+puts ("del_bookmark_group(): 2 done");
+						stage = 3;
+						done  = TRUE;
+						break;
+					}
+					goto default_;
+				
+				default:
+				default_:
+					if (add_line (&pptr, buff)) {
+						break;
+					}
+				case_error:
+					stage = -1;
+					done  = FALSE;
+					fseek (file, 0, SEEK_END);
+			}
+		}
+		fclose (file);
+		
+		if (done) {   /* rewrite the file */
+			if ((file = open_bookmarks ("wb")) != NULL) {
+				FLINE line = list;
+				while (line) {
+					fprintf (file, "%s\n", line->Text);
+					line = line->Next;
+				}
+				fclose (file);
+			
+			} else {
+				done = FALSE; /* error case */
+			}
+		}
+		while (list) {
+			FLINE next = list->Next;
+			free (next);
+			list = next;
+		}
+	}
+	return done;
+}
+
+/*==============================================================================
+ * collaps/expand a bookmark group
+*/
+BOOL
+set_bookmark_group (const char * grp, BOOL openNclose)
+{
+	BOOL   done = FALSE;
+	FILE * file = open_bookmarkCss ("rb+");
+	if (file) {
+		char mark[1024];
+		int   m_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
+		FLINE list = NULL, * pptr = &list;
+		char buff[1024], * p;
+		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
+			if (strncmp (p, mark, m_ln) == 0 && isspace (p[m_ln])) {
+				/* skip this */
+				done = TRUE;
+			} else if (!add_line (&pptr, buff)) {
+				fclose (file);
+				file = NULL;
+				done = FALSE; /* error case */
+			}
+		}
+		if (done && file) {   /* rewrite the file */
+			fclose (file);
+			if ((file = open_bookmarkCss ("wb")) != NULL) {
+				FLINE line = list;
+				while (line) {
+					fprintf (file, "%s\n", line->Text);
+					line = line->Next;
+				}
+			} else {
+				done = FALSE; /* error case */
+			}
+		}
+		while (list) {
+			FLINE next = list->Next;
+			free (next);
+			list = next;
+		}
+		if (file) {	
+			if (!openNclose) {	
+				fputs (mark, file);
+				fputs ("\t{ display: none; }\n", file);
+				done = TRUE;
+			}
+			fclose (file);
+		}
+	}
+	return done;
 }
 
 
@@ -529,177 +759,3 @@ bkm_url_dtor (B_URL * This)
 }
 
 #endif /* USE_MEM_LISTS */
-
-
-/*----------------------------------------------------------------------------*/
-typedef struct s_fline * FLINE;
-struct s_fline {
-	FLINE Next;
-	char  Text[1];
-};
-
-/*------------------------------------------------------------------------------
- * read normalized line from file
-*/
-static char *
-get_line (FILE * file, char * buff, size_t b_sz)
-{
-	char * p = fgets (buff, (int)b_sz, file);
-	if (p) {
-		size_t len = strlen (p);
-		while (len && isspace (p[--len])) p[len] = '\0';
-		while (isspace(*p)) p++;
-	}
-	return p;
-}
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-add_line (FLINE ** base, char * buff)
-{
-	size_t len  = strlen (buff);
-	FLINE  line = malloc (sizeof (struct s_fline) + len);
-	if (line) {
-		memcpy (line->Text, buff, len +1);
-		line->Next = NULL;
-		**base     = line;
-		*base      = &line->Next;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-
-/*============================================================================*/
-BOOL
-del_bookmark_group (const char * grp)
-{
-	BOOL   done = FALSE;
-	FILE * file = open_bookmarks ("rb");
-	if (file) {
-		FLINE  list  = NULL, * pptr = &list;
-		size_t len   = strlen (grp);
-		int    stage = 0;
-		char   buff[1024], * p;
-		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-			switch (stage) {
-				case 0: /* nothing found yet, search for the right <DT ..> */
-					if (*p == '<'
-					    && strncmp (p +1, m_dt_grp, sizeof(m_dt_grp) -1) == 0) {
-						char * q = p +1 + sizeof(m_dt_grp);
-						while (isspace(*q)) q++;
-						if (strncmp (q, "ID='", 4) == 0
-						    && strncmp (q +4, grp, len) == 0 && p[4 + len] == '\'') {
-puts ("del_bookmark_group(): 0 -> 1");
-							stage = 1;
-							break;
-						}
-					}
-					goto default_;
-					
-				case 1: /* correct <DT ..> found, now we need the <DL .> */
-					if (strncmp (p, "<DL CLASS='", 11) == 0
-					    && strncmp (p +11, grp, len) == 0 && p[11 + len] == '\'') {
-puts ("del_bookmark_group(): 1 -> 2");
-						stage = 2;
-						break;
-					}
-					/* else file structure damaged */
-puts ("del_bookmark_group(): 1 structure");
-					goto case_error;
-					
-				case 2: /* find te closing </DL> */
-					if (strcmp (p, "</DL>") == 0) {
-puts ("del_bookmark_group(): 2 done");
-						stage = 3;
-						done  = TRUE;
-						break;
-					}
-					goto default_;
-				
-				default:
-				default_:
-					if (add_line (&pptr, buff)) {
-						break;
-					}
-				case_error:
-					stage = -1;
-					done  = FALSE;
-					fseek (file, 0, SEEK_END);
-			}
-		}
-		if (done) {   /* rewrite the file */
-			fclose (file);
-			if ((file = open_bookmarks ("wb")) != NULL) {
-				FLINE line = list;
-				while (line) {
-					fprintf (file, "%s\n", line->Text);
-					line = line->Next;
-				}
-			} else {
-				done = FALSE; /* error case */
-			}
-		}
-		while (list) {
-			FLINE next = list->Next;
-			free (next);
-			list = next;
-		}
-		if (file) {
-			fclose (file);
-		}
-	}
-	return done;
-}
-
-/*==============================================================================
- * collaps/expand a bookmark group
-*/
-BOOL
-set_bookmark_group (const char * grp, BOOL openNclose)
-{
-	BOOL   done = FALSE;
-	FILE * file = open_bookmarkCss ("rb+");
-	if (file) {
-		char mark[1024];
-		int   m_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
-		FLINE list = NULL, * pptr = &list;
-		char buff[1024], * p;
-		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-			if (strncmp (p, mark, m_ln) == 0 && isspace (p[m_ln])) {
-				/* skip this */
-				done = TRUE;
-			} else if (!add_line (&pptr, buff)) {
-				fclose (file);
-				file = NULL;
-				done = FALSE; /* error case */
-			}
-		}
-		if (done && file) {   /* rewrite the file */
-			fclose (file);
-			if ((file = open_bookmarkCss ("wb")) != NULL) {
-				FLINE line = list;
-				while (line) {
-					fprintf (file, "%s\n", line->Text);
-					line = line->Next;
-				}
-			} else {
-				done = FALSE; /* error case */
-			}
-		}
-		while (list) {
-			FLINE next = list->Next;
-			free (next);
-			list = next;
-		}
-		if (file) {	
-			if (!openNclose) {	
-				fputs (mark, file);
-				fputs ("\t{ display: none; }\n", file);
-				done = TRUE;
-			}
-			fclose (file);
-		}
-	}
-	return done;
-}

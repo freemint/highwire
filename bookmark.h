@@ -27,7 +27,8 @@ struct bkm_url {
 };
 
 BOOL read_bookmarks (void);
-BOOL add_bookmark (const char * bookmark_url, const char *bookmark_title);
+BOOL add_bookmark (const char * url, const char *title);
+BOOL del_bookmark (const char * lnk);
 BOOL save_bookmarks     (const char *);
 BOOL add_bookmark_group (const char *);
 BOOL del_bookmark_group (const char * grp);
