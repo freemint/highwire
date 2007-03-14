@@ -1256,7 +1256,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if (!isalpha (*p)) skip = TRUE;
 
 				beg = p;
-				while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
+				while (isalnum (*(++p)) || strchr ("-_.:&", *p));
 
 				end = p;
 
