@@ -83,12 +83,17 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 			printf ("add_bookmark_group (%s)\n", lnk);
 			break;
 		case 3:
-			if(lnk)  printf ("del_bookmark (%s)\n", grp);
+			if(lnk)  reload = del_bookmark       (lnk);
 			else     reload = del_bookmark_group (grp);
 			break;
-		case 4:
-			printf ("copy_url (%s)\n", word->link->address);
-			break;
+		case 4: {
+			FILE * file = open_scrap (FALSE);
+			if (file) {
+				char * url = word->link->address;
+				fwrite (url, 1, strlen(url), file);
+				fclose (file);
+			}
+		}	break;
 	}
 	if (reload) {
 		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
