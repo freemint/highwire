@@ -389,41 +389,6 @@ save_bookmarks (const char * key)
 }
 
 
-/*============================================================================*/
-/* 
- * THIS IS JUNK!  This really needs to be rewritten
- * This just over writes the end of the file
- */
-
-BOOL
-add_bookmark_group (const char * group)
-{
-	FILE *  file = NULL;
-	long    now = time (NULL);
-	long	flen;
-
-	if ((file = open_bookmarks ("rb+")) != NULL) {
-		char id_class[45];
-		sprintf (id_class, "USR_%s", group);
-		
-		fseek (file, 0, SEEK_END);
-		flen = ftell(file);
-		fseek (file, (flen - 16), SEEK_SET);
-		wr_grp (file, id_class, now, group);
-
-		fputs ("</DL>\n", file);
-		fputs ("<HR>\n", file);
-
-		fputs ("</DL>\n", file);
-		fputs ("</html>\n", file);
-		fclose(file);
-		return TRUE;
-	} else {
-		printf("Bookmark file lost?!? \n");
-		return FALSE;
-	}
-}
-
 /* we need a method to add a bookmark to a group and delete a bookmark
  * from a group
  */
@@ -452,7 +417,7 @@ get_line (FILE * file, char * buff, size_t b_sz)
 }
 
 /*----------------------------------------------------------------------------*/
-static BOOL
+static FLINE
 add_line (FLINE ** base, char * buff)
 {
 	size_t len  = strlen (buff);
@@ -462,11 +427,13 @@ add_line (FLINE ** base, char * buff)
 		line->Next = NULL;
 		**base     = line;
 		*base      = &line->Next;
-		return TRUE;
 	}
-	return FALSE;
+	return line;
 }
 
+
+/*----------------------------------------------------------------------------*/
+#define chk_lnk(p)   (*p=='<' && strncmp(p+1,m_dt_lnk,sizeof(m_dt_lnk)-1)==0)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
@@ -505,11 +472,11 @@ del_bookmark (const char * lnk)
 	BOOL   done = FALSE;
 	FILE * file = open_bookmarks ("rb");
 	if (file) {
-		FLINE  list  = NULL, * pptr = &list;
-		size_t len   = strlen (lnk);
+		FLINE  list = NULL, * pptr = &list;
+		size_t len  = strlen (lnk);
 		char   buff[1024], * p;
 		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-			if (*p == '<' && strncmp (p +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0) {
+			if (chk_lnk(p)) {
 				char * q = p +1 + sizeof(m_dt_lnk);
 				while (isspace(*q)) q++;
 				if (cmp_id (q, lnk, len)) {
@@ -549,6 +516,70 @@ del_bookmark (const char * lnk)
 
 /*============================================================================*/
 BOOL
+add_bookmark_group (const char * lnk)
+{
+	BOOL   done = FALSE;
+	FILE * file = open_bookmarks ("rb+");
+	if (file) {
+		FLINE list = NULL;
+		
+		if (!lnk || !*lnk) {
+			fseek (file, -(sizeof(tmpl_tail) -1), SEEK_END);
+			done  = TRUE;
+	
+		} else {
+			FLINE * pptr = &list;
+			size_t  len  = strlen (lnk);
+			long    fpos = fpos = ftell (file);
+			char    buff[1024], * p;
+			while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
+				if (!done && chk_lnk(p)) {
+					char * q = p +1 + sizeof(m_dt_lnk);
+					while (isspace(*q)) q++;
+					done = cmp_id (q, lnk, len);
+				}
+				if (!done) {
+					fpos = ftell (file);
+				} else if (!add_line (&pptr, buff)) {
+					done  = FALSE; /* error case */
+					break;
+				}
+			}
+			if (done) {
+				fseek (file, fpos, SEEK_SET);
+			}
+		}
+		if (done) {
+			FLINE line = list;
+			long  now  = time (NULL);
+			char  id[12];
+			sprintf (id, "G_%08lX", now);
+			wr_grp (file, id, now, id);
+			if (line) {
+				fprintf (file, "%s\n", line->Text);
+				line = line->Next;
+			}
+			fputs ("</DL>\n", file);
+			if (!line) {
+				fputs (tmpl_tail, file);
+			} else do {
+				fprintf (file, "%s\n", line->Text);
+				line = line->Next;
+			} while (line);
+		}
+		fclose(file);
+		
+		while (list) {
+			FLINE next = list->Next;
+			free (next);
+			list = next;
+		}
+	}
+	return done;
+}
+
+/*============================================================================*/
+BOOL
 del_bookmark_group (const char * grp)
 {
 	BOOL   done = FALSE;
@@ -566,7 +597,6 @@ del_bookmark_group (const char * grp)
 						char * q = p +1 + sizeof(m_dt_grp);
 						while (isspace(*q)) q++;
 						if (cmp_id (q, grp, len)) {
-puts ("del_bookmark_group(): 0 -> 1");
 							stage = 1;
 							break;
 						}
@@ -576,17 +606,14 @@ puts ("del_bookmark_group(): 0 -> 1");
 				case 1: /* correct <DT ..> found, now we need the <DL .> */
 					if (strncmp (p, "<DL CLASS='", 11) == 0
 					    && strncmp (p +11, grp, len) == 0 && p[11 + len] == '\'') {
-puts ("del_bookmark_group(): 1 -> 2");
 						stage = 2;
 						break;
 					}
 					/* else file structure damaged */
-puts ("del_bookmark_group(): 1 structure");
 					goto case_error;
 					
-				case 2: /* find te closing </DL> */
+				case 2: /* find the closing </DL> */
 					if (strcmp (p, "</DL>") == 0) {
-puts ("del_bookmark_group(): 2 done");
 						stage = 3;
 						done  = TRUE;
 						break;

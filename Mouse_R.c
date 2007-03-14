@@ -25,68 +25,80 @@ static void
 rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 {
 	char * menu[] = {
+#define RBKM_COLLAPS 0
 		" Collaps",
+#define RBKM_EXPAND  1
 		" Expand",
-		" Add Group",
+		"---------",/* 2 */
+#define RBKM_REMOVE  3
 		" Remove",
+		"---------",/* 4 */
+#define RBKM_ADDGRP  5
+		" Add Group",
+#define RBKM_COPY    6
 		" Copy URL",
 		NULL
 	};
 	
-	BOOL reload = FALSE;
-	
-	const char * lnk = (*box->ClName == 'L' && *box->IdName
+	BOOL      reload = FALSE;
+	const char * lnk = NULL;
+	const char * grp = NULL;
+/*	const char * lnk = (*box->ClName == 'L' && *box->IdName
 	                    ? box->IdName : NULL);
 	const char * grp = (*box->ClName == 'G' && *box->IdName
-	                    ? box->IdName : NULL);
-	if (!grp && box->Parent) {
-		box = box->Parent;
-		grp = (box->ClName && *box->ClName ? box->ClName : NULL);
-	}
-	
+	                    ? box->IdName : NULL);*/
+	if (box) {
+		if (*box->ClName == 'L') lnk = box->IdName;
+		else               /*G*/ grp = box->IdName;
+		if (!grp && box->Parent) {
+			box = box->Parent;
+			grp = (box->ClName ? box->ClName : NULL);
+		}
 /*	printf ("%i/%i -> LNK = '%s' GRP = '%s'   %p\n",
 	        box->BoxClass, box->HtmlCode, lnk, grp, word);*/
+	}
+	
 	if (grp) {
 		DOMBOX * next = box->Sibling;
 		while (next && next->HtmlCode != TAG_DL) {
 			next = next->Sibling;
 		}
 		if (!next || strcmp (next->ClName, grp) != 0) {
-			menu[0][0] = '!';
-			menu[1][0] = '!';
+			menu[RBKM_COLLAPS][0] = '!';
+			menu[RBKM_EXPAND][0]  = '!';
 		} else if (next->Hidden) {
-			menu[0][0] = '!';
-			menu[1][0] = ' ';
+			menu[RBKM_COLLAPS][0] = '!';
+			menu[RBKM_EXPAND][0]  = ' ';
 		} else {
-			menu[0][0] = ' ';
-			menu[1][0] = '!';
+			menu[RBKM_COLLAPS][0] = ' ';
+			menu[RBKM_EXPAND][0]  = '!';
 		}
-		menu[2][0] = '!';
+		menu[RBKM_ADDGRP][0]  = '!';
 	} else {
-		menu[0][0] = '!';
-		menu[1][0] = '!';
-		menu[2][0] = ' ';
+		menu[RBKM_COLLAPS][0] = '!';
+		menu[RBKM_EXPAND][0]  = '!';
+		menu[RBKM_ADDGRP][0]  = ' ';
 	}
 	if (lnk && word && word->link) {
-		menu[4][0] = ' ';
+		menu[RBKM_COPY][0] = ' ';
 	} else {
-		menu[4][0] = '!';
+		menu[RBKM_COPY][0] = '!';
 	}
 	switch (HW_form_popup (menu, mouse.p_x, mouse.p_y, TRUE)) {
-		case 0:
+		case RBKM_COLLAPS:
 			reload = set_bookmark_group (grp, FALSE);
 			break;
-		case 1:
+		case RBKM_EXPAND:
 			reload = set_bookmark_group (grp, TRUE);
 			break;
-		case 2:
-			printf ("add_bookmark_group (%s)\n", lnk);
+		case RBKM_ADDGRP:
+			reload = add_bookmark_group (lnk);
 			break;
-		case 3:
+		case RBKM_REMOVE:
 			if(lnk)  reload = del_bookmark       (lnk);
 			else     reload = del_bookmark_group (grp);
 			break;
-		case 4: {
+		case RBKM_COPY: {
 			FILE * file = open_scrap (FALSE);
 			if (file) {
 				char * url = word->link->address;
@@ -136,6 +148,7 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')) {
 			WORDITEM word = NULL;
 			DOMBOX * box  = NULL;
+			BOOL     ok   = FALSE;
 			if (elem == PE_TLINK) {
 				struct url_link * link = hash;
 				word = link->start;
@@ -146,8 +159,10 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				if (par) {
 					box = &par->Box;
 				}
+			} else if (elem == PE_FRAME) {
+				ok = TRUE;
 			}
-/*			printf ("BMRK = %04X (%p)\n", elem, hash);*/
+/*printf ("BMRK = %04X (%p)\n", elem, hash);*/
 			if (word) {
 				WORDLINE line = word->line;
 				PARAGRPH par  = (line ? line->Paragraph : NULL);
@@ -158,6 +173,9 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 			if (box && box->IdName
 			    && (strcmp (box->ClName, "LNK") == 0 ||
 			        strcmp (box->ClName, "GRP") == 0)) {
+				ok = TRUE;
+			}
+			if (ok) {
 				rpop_bmrk (mouse, box, word);
 			}
 			
