@@ -18,28 +18,40 @@ static B_GRP *	group_list  = NULL;
 static B_GRP *	current_grp = NULL;
 static B_URL *	url_list    = NULL;
 static B_URL *	current_url = NULL;
+
+static int Num_Bookmarks = 0;
 #endif
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
 
-static int Num_Bookmarks = 0;
-
 
 static const char tmpl_head[] =
-	"<!DOCTYPE HighWire-Bookmark-file-1>\n"
-	"<html><head>\n"
+	"<!DOCTYPE HighWire-Bookmark-file-2>\n"
+	"<HTML><HEAD>\n"
 	"  <META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html;"
 	         " charset=atarist\">\n"
 	"  <TITLE>Bookmarks</TITLE>\n"
-	"  <link rel=\"stylesheet\" href=\"bookmark.css\" type=\"text/css\""
-	         "  media=\"screen\">\n"
-	"</head><body>\n";
+	"  <LINK REL=\"stylesheet\" HREF=\"bookmark.css\" TYPE=\"text/css\""
+	         "  MEDIA=\"screen\">\n"
+	"</HEAD>\n";
 static const char tmpl_tail[] =
 	 "</DL>\n"
-	 "</body></html>\n";
+	 "</BODY></HTML>\n";
 static const char m_dt_grp[] = "DT CLASS='GRP'";
 static const char m_dt_lnk[] = "DT CLASS='LNK'";
+
+static const char tmpl_css[] =
+	"BODY   { background-color: white; }\n"
+	"DL DL  { border-width: 0px 1px 1px; border-color: A0A0A0;"
+	        " border-style: solid;\n"
+	"         margin-bottom: 1px; margin-left: 1em; padding: 0px 3px; }\n"
+	"DT.GRP { white-space:nowrap; background-color: E0E0E0;"
+	        " padding: 0px 3px 1px 3px;\n"
+	"         border-width: 1px; border-style: solid; }\n"
+	"DT.LNK { text-indent: -2em }\n"
+	"A      { text-decoration: none; }\n"
+	"\n";
 
 
 #ifdef USE_MEM_LISTS
@@ -85,26 +97,24 @@ test_bookmarks(void)
 
 /*----------------------------------------------------------------------------*/
 static void
-wr_grp (FILE * file, const char * id_class, long add, const char * title)
+wr_grp (FILE * file, long id_class, const char * title)
 {
 	/* Should have a call to the bkm_group_ctor() routine */
 
-	fprintf (file, "<%s ID='%s' ADD_DATE='%ld'>&#9658; <B>%s</B></DT>\n",
-	                m_dt_grp, id_class, add, title);
-	fprintf (file, "<DL CLASS='%s'>\n", id_class);
+	fprintf (file, "<%s ID='G:%08lX'><B>%s</B></DT>\n",
+	                m_dt_grp, id_class, title);
+	fprintf (file, "<DL CLASS='G:%08lX'>\n", id_class);
 }
 
 /*----------------------------------------------------------------------------*/
 static void
-wr_lnk (FILE * file, int * id, const char * class,
-        long add, long visit, const char * url, const char * title)
+wr_lnk (FILE * file, long id, long visit, const char * url, const char * title)
 {
 	/* Should have a call to the bkm_url_ctor() routine */
-	(*id)++;
-	fprintf (file, "<%s ID='%.*d'><A ID=\"%.*d\" CLASS=\"%s\" TARGET=\"_hw_top\""
-	               " ADD_DATE=\"%ld\" LAST_VISIT=\"%ld\" HREF=\"%s\">%s</a></DT>"
-	               "\n",
-	               m_dt_lnk, 8,*id, 8,*id, class, add, visit, url, title);
+	
+	fprintf (file, "<%s ID='L:%08lX'><A TARGET='_hw_top'"
+	               " LAST_VISIT='%08lX' HREF='%s'>%s </A></DT>\n",
+	               m_dt_lnk, id, visit, url, title);
 }
 
 /*============================================================================*/
@@ -312,46 +322,69 @@ read_bookmarks (void) {
 				break;
 			}
 		}
+		fclose (file);
 #else /* !USE_MEM_LISTS */
 	
-	Num_Bookmarks = 0;
-
 	/* Bookmarks exists, read or parse or load? */
 	if ((file = open_bookmarks ("r")) != NULL) { 
-		char        buff[1024];
-
-		while (fgets (buff, (int)sizeof(buff), file)) {
-			if (*buff == '<'
-			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
-				Num_Bookmarks += 1;
-			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
-				break;
+		size_t len = strchr (tmpl_head, '>') - tmpl_head +1;
+		char   buff[1024];
+		if (!fgets (buff, (int)sizeof(buff), file)) {
+			buff[0] = '\n';
+		}
+		fclose (file);
+		if (strncmp (buff, tmpl_head, len) != 0) {
+			char * bak_file = (bkm_File ? strdup (bkm_File) : NULL);
+			if (bak_file) {
+				const char * bak_name = "book-old.htm";
+				char       * ptr      = strrchr (bak_file, '\\');
+				if (ptr) {
+					strcpy (++ptr, bak_name);
+					unlink (bak_file);
+					if (rename (bkm_File, bak_file) == E_OK) {
+						union { const char * c; char * v; } u;
+						u.c = bkm_File;
+						free (u.v);
+						bkm_File = NULL;
+						if ((file = open_bookmarkCss ("r")) != NULL) {
+							fclose (file);
+						}
+						if (bkm_CSS) {
+							unlink (bkm_CSS);
+							u.c = bkm_CSS;
+							free (u.v);
+							bkm_CSS = NULL;
+						}
+						hwUi_info (NULL, "Outdated '%s'\nsaved as '%s'",
+						           _HIGHWIRE_BOOKMARK_, bak_name);
+					}
+				}
+				free (bak_file);
 			}
+			file = NULL;
 		}
 #endif /* !USE_MEM_LISTS */
-		fclose(file);
 		
-	} else if ((file = open_bookmarks ("wb")) != NULL) {
-		long now = time (NULL);
+	}
+	if (!file && (file = open_bookmarks ("wb")) != NULL) {
+		long now = time (NULL) -5;
 		fputs (tmpl_head, file);
-		fprintf (file, "<H1 LAST_MODIFIED=\"%ld\">Bookmarks</H1>\n",now);
-		fputs ("<HR>\n", file);
+		fprintf (file, "<BODY ID='%08lX'>\n", now -1);
 		fputs ("<DL>\n", file);
-		wr_grp (file, "INTPRJ", now, "HighWire Project");
-		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		wr_grp (file, now++, "HighWire Project");
+		wr_lnk (file, now++, 0L,
 		        "http://highwire.atari-users.net", "HighWire Homepage");
-		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
-		        "http://www.atariforums.com/index.php?f=20", "HighWire Forum");
-		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		wr_lnk (file, now++, 0L,
+		        "http://www.atariforums.com/index.php?20", "HighWire Forum");
+		wr_lnk (file, now++, 0L,
 		        "http://www.atari-users.net/mailman/listinfo/highwire",
 		        "Developers Mailing lists");
-		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		wr_lnk (file, now++, 0L,
 		        "http://www.atari-users.net/mailman/listinfo/highwire-users",
 		        "Users Mailing lists");
-		wr_lnk (file, &Num_Bookmarks, "INTPRJ", now, 0L,
+		wr_lnk (file, now++, 0L,
 		        "http://highwire.atari-users.net/mantis/", "Bugtracker");
 		fputs ("</DL>\n", file);
-		fputs ("<HR>\n", file);
 		fputs (tmpl_tail, file);
 		fclose(file);
 		
@@ -360,10 +393,8 @@ read_bookmarks (void) {
 			fclose(file);
 		
 		} else if ((file = open_bookmarkCss ("w")) != NULL) {
-			/* Not exciting but want something in file */
-			fputs ("A { text-decoration: none; }\n\n", file);
 			/* The idea is that we can put a display none in to hide DL sets */
-			/*fputs (".INTPRJ { display: inline; }\n", file); */
+			fputs (tmpl_css, file);
 			fclose(file);
 		}
 	}
@@ -452,8 +483,7 @@ add_bookmark (const char * bookmark_url, const char *bookmark_title)
 	if (file) {
 		long now = time (NULL);
 		fseek (file, -(sizeof(tmpl_tail) -1), SEEK_END);
-		wr_lnk (file, &Num_Bookmarks, "USR_ROOT",
-		              now, now, bookmark_url, bookmark_title);
+		wr_lnk (file, now, now, bookmark_url, bookmark_title);
 		fputs (tmpl_tail, file);
 		fclose(file);
 		
@@ -553,8 +583,8 @@ add_bookmark_group (const char * lnk)
 			FLINE line = list;
 			long  now  = time (NULL);
 			char  id[12];
-			sprintf (id, "G_%08lX", now);
-			wr_grp (file, id, now, id);
+			sprintf (id, "G:%08lX", now);
+			wr_grp (file, now, id);
 			if (line) {
 				fprintf (file, "%s\n", line->Text);
 				line = line->Next;
