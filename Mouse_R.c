@@ -92,7 +92,7 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 			reload = set_bookmark_group (grp, TRUE);
 			break;
 		case RBKM_ADDGRP:
-			reload = add_bookmark_group (lnk);
+			reload = add_bookmark_group (lnk, NULL);
 			break;
 		case RBKM_REMOVE:
 			if(lnk)  reload = del_bookmark       (lnk);
