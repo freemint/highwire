@@ -546,7 +546,7 @@ del_bookmark (const char * lnk)
 
 /*============================================================================*/
 BOOL
-add_bookmark_group (const char * lnk)
+add_bookmark_group (const char * lnk, const char *title)
 {
 	BOOL   done = FALSE;
 	FILE * file = open_bookmarks ("rb+");
@@ -583,8 +583,11 @@ add_bookmark_group (const char * lnk)
 			FLINE line = list;
 			long  now  = time (NULL);
 			char  id[12];
-			sprintf (id, "G:%08lX", now);
-			wr_grp (file, now, id);
+			if (!title) {
+				sprintf (id, "G:%08lX", now);
+				title = id;
+			}
+			wr_grp (file, now, title);
 			if (line) {
 				fprintf (file, "%s\n", line->Text);
 				line = line->Next;
