@@ -7,27 +7,324 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h> /* isspace() */
+#if defined (__PUREC__)
+# include <ext.h>
+#else
+# include <sys/stat.h>
+#endif
 
 #include "file_sys.h"
 #include "global.h"
 #include "bookmark.h"
 
-#if 0
-#define USE_MEM_LISTS
-static B_GRP *	group_list  = NULL;
-static B_GRP *	current_grp = NULL;
-static B_URL *	url_list    = NULL;
-static B_URL *	current_url = NULL;
 
-static int Num_Bookmarks = 0;
-#endif
+#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-file-2>\n"
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
 
 
+/*----------------------------------------------------------------------------*/
+#define open_bookmarkCss(mode) open_default (&bkm_CSS, _HIGHWIRE_BKM_CSS_, mode)
+#define open_bookmarks(mode)   open_default (&bkm_File,_HIGHWIRE_BOOKMARK_,mode)
+
+/*----------------------------------------------------------------------------*/
+static char *
+wr_grp (char * buff, long id_class, const char * title)
+{
+	sprintf (buff, "<DT CLASS='GRP' ID='G:%08lX'><B>%s</B></DT>\n"
+	               "<DL CLASS='G:%08lX'>", 
+	               id_class, title,   id_class);
+	return buff;
+}
+
+/*----------------------------------------------------------------------------*/
+static char *
+wr_lnk (char * buff, long id, long visit, const char * url, const char * title)
+{
+	sprintf (buff, "<DT CLASS='LNK' ID='L:%08lX'><A TARGET='_hw_top'"
+	               " LAST_VISIT='%08lX' HREF='%s'>%s</A></DT>",
+	               id, visit, url, title);
+	return buff;
+}
+
+
+/******************************************************************************/
+
+typedef struct s_bkm_line * BKM_LINE;
+struct s_bkm_line {
+	BKM_LINE Next, Prev;
+	char   * Id;
+	size_t   Id_ln;
+	char   * Class;
+	size_t   Class_ln;
+	char   * Text;
+	size_t   Text_ln;
+	char     Type;   /* '\0' unchecked, 'B'ookmark, 'G'roup, '*' someting else */
+	char     Buff[2];
+};
+static BKM_LINE bkm_list_beg = NULL;
+static BKM_LINE bkm_list_end = NULL;
+static time_t   bkm_list_tm  = 0;
+
+/*----------------------------------------------------------------------------*/
+static BKM_LINE
+bkm_create (BKM_LINE prev, const char * text)
+{
+	size_t   len  = (text ? strlen (text) : 0);
+	BKM_LINE line;
+	while (len && isspace (text[len-1])) {
+		len--;
+	}
+	if ((line = malloc (sizeof (struct s_bkm_line) + len)) != NULL) {
+		if (len) {
+			memcpy (line->Buff, text, len);
+			line->Buff[len++] = '\n';
+			line->Buff[len]   = '\0';
+			line->Text = line->Buff;
+			while (isspace (*line->Text)) {
+				line->Text++;
+				len--;
+			}
+			line->Text_ln = len;
+			line->Type    = (*line->Text == '<' ? '\0' : '*');
+		} else {
+			line->Buff[0] = '\n';
+			line->Buff[1] = '\0';
+			line->Text    = line->Buff +1;
+			line->Text_ln = len;
+			line->Type    = '*';
+		}
+		line->Id       = NULL;
+		line->Id_ln    = 0;
+		line->Class    = NULL;
+		line->Class_ln = 0;
+		if (prev) {
+			line->Prev   = prev;
+			line->Next   = prev->Next;
+			prev->Next   = line;
+		} else {
+			line->Prev   = NULL;
+			line->Next   = bkm_list_beg;
+			bkm_list_beg = line;
+		}
+		if (line->Next) {
+			line->Next->Prev = line;
+		} else {
+			bkm_list_end     = line;
+		}
+	}
+	return line;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+bkm_delete (BKM_LINE line)
+{
+	if (line) {
+		if (line->Prev) line->Prev->Next = line->Next;
+		else            bkm_list_beg     = line->Next;
+		if (line->Next) line->Next->Prev = line->Prev;
+		else            bkm_list_end     = line->Prev;
+		free (line);
+	} 
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+bkm_clear (void)
+{
+	 while (bkm_list_beg) {
+		BKM_LINE next = bkm_list_beg->Next;
+		free (bkm_list_beg);
+		bkm_list_beg = next;
+	}
+	bkm_list_end = NULL;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+bkm_flush (void)
+{
+	FILE * file = (bkm_list_beg ? open_bookmarks ("wb") : NULL);
+	if (file) {
+		struct stat st;
+		union { const char * c; char * v; } u;
+		BKM_LINE line = bkm_list_beg;
+		while (line) {
+			fputs (line->Buff, file);
+			line = line->Next;
+		}
+		fclose (file);
+		u.c = bkm_File;
+		stat (u.v, &st);
+		bkm_list_tm = st.st_mtime;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+bkm_check (BKM_LINE line)
+{
+	char * p = line->Text;
+	
+	if (strncmp (p, "</DL>\n", 6) == 0) {
+		line->Id    = line->Text;
+		line->Id_ln = 5;
+		line->Type  = '*';
+		return;
+	}
+	
+	if (*(p++) != '<' || *(p++) != 'D' || (*p != 'T' && *p != 'L')
+	                  || strncmp (++p, " CLASS='", 8) != 0) {
+		line->Type  = '*';
+		return;
+	}
+	
+	line->Class = p += 8;
+	while (*p && *p != '\'') {
+		p++;
+	}
+	if ((line->Class_ln = p - line->Class) == 0) {
+		line->Class = NULL;
+	}
+	if (!line->Class || line->Text[2] != 'T'
+	                 || strncmp (p, "' ID='", 6) != 0) {
+	
+		line->Type  = '*';
+		return;
+	}
+	
+	line->Id = p += 6;
+	while (*p && *p != '\'') {
+		p++;
+	}
+	if ((line->Id_ln = p - line->Id) == 0) {
+		line->Id   = NULL;
+		line->Type = '*';
+		return;
+	}
+	
+	if (strncmp (line->Class, "LNK'", 4) == 0) {
+	    if ((p = strchr (p +1, '>'))   != NULL &&
+	        (p = strstr (p +1, "<A ")) != NULL &&
+	        (p = strchr (p +3, '>'))   != NULL) {
+	    	char * q = strchr (p += 1, '<');
+	    	if (q > p) {
+	    		line->Text    = p;
+	    		line->Text_ln = q - p;
+	    		line->Type    = 'B';
+	    		return;
+		    }
+	    }
+	
+	} else if (strncmp (line->Class, "GRP'", 4) == 0) {
+	    if ((p = strchr (p +1, '>'))   != NULL &&
+	        (p = strstr (p +1, "<B>")) != NULL) {
+	    	char * q = strchr (p += 3, '<');
+	    	if (q > p) {
+	    		line->Text    = p;
+	    		line->Text_ln = q - p;
+	    		line->Type    = 'G';
+	    		return;
+		    }
+	    }
+	}
+	
+	line->Type = '*';
+}
+
+/*----------------------------------------------------------------------------*/
+static BKM_LINE
+bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
+{
+	size_t len = strlen (id ? id : (id = "</DL>"));
+	
+	if (bkm_File && !line && (bkm_list_beg || !bkm_list_tm)) {
+		struct stat st;
+		union { const char * c; char * v; } u;
+		u.c = bkm_File;
+		stat  (u.v, &st);
+		if (bkm_list_tm != st.st_mtime) {
+			bkm_list_tm = st.st_mtime;
+			bkm_clear();
+		}
+	}
+	if (!bkm_list_beg) {
+		FILE * file = open_bookmarks ("rb");
+/*puts("!bkm_list_beg");*/
+		if (file) {
+			char buff[1024];
+			BKM_LINE temp = NULL;
+			while (fgets (buff, (int)sizeof(buff), file)) {
+				if ((temp = bkm_create (temp, buff)) == NULL) {
+					bkm_clear();
+					puts ("bkm_search(): memory exhausted!");
+					break;
+				}
+			}
+			fclose (file);
+		}
+		line = NULL;
+	}
+	if (!line) {
+		line = (dnNup ? bkm_list_beg : bkm_list_end);
+	}
+	while (line) {
+		if (!line->Type) {
+			bkm_check (line);
+		}
+		if (line->Id && line->Id_ln == len && strncmp (line->Id, id, len) == 0) {
+/*printf ("%c", (line->Type ? line->Type : '?'));
+if (line->Class_ln&&line->Class)
+	printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
+if (line->Id_ln&&line->Id)
+	printf (" id='%.*s'", (int)line->Id_ln, line->Id);
+printf ("\n");*/
+			return line;
+		}
+		line = (dnNup ? line->Next : line->Prev);
+	}
+	return NULL;
+}
+
+/*----------------------------------------------------------------------------*/
+#if 0
+static void
+bkm_dump_ (const char * func)
+{
+	BKM_LINE line = bkm_list_beg;
+	puts ("________________________________________"
+	      "________________________________________");
+	if (func) {
+		puts(func);
+		printf ("%.*s\n", (int)strlen(func)+1, "-------------------------------");
+	}
+	while (line) {
+		BOOL ci = FALSE;
+		int len = line->Text_ln;
+		while (line->Text[len-1] == '\n') len--;
+		printf ("%c", (line->Type ? line->Type : '?'));
+		if (line->Class_ln&&line->Class)
+			ci |= printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
+		if (line->Id_ln&&line->Id)
+			ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
+		printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
+		line = line->Next;
+	}
+}
+#define bkm_dump(func) bkm_dump_(func)
+
+#else
+#define bkm_dump(func)
+#endif
+
+
+/******************************************************************************/
+
+
 static const char tmpl_head[] =
-	"<!DOCTYPE HighWire-Bookmark-file-2>\n"
+	BKM_MAGIC "\n"
 	"<HTML><HEAD>\n"
 	"  <META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html;"
 	         " charset=atarist\">\n"
@@ -38,8 +335,6 @@ static const char tmpl_head[] =
 static const char tmpl_tail[] =
 	 "</DL>\n"
 	 "</BODY></HTML>\n";
-static const char m_dt_grp[] = "DT CLASS='GRP'";
-static const char m_dt_lnk[] = "DT CLASS='LNK'";
 
 static const char tmpl_css[] =
 	"BODY   { background-color: white; }\n"
@@ -53,279 +348,10 @@ static const char tmpl_css[] =
 	"A      { text-decoration: none; }\n"
 	"\n";
 
-
-#ifdef USE_MEM_LISTS
-/*  ID & CLASS distictions
- *  Url's have ID's and CLASS's
- *  The CLASS is the ID of the Group it is a member of
- */
-
-/*============================================================================*/
-void test_bookmarks(void);
-
-void
-test_bookmarks(void)
-{
-	B_URL * url = url_list;
-	B_GRP * group = group_list;
-	
-	while (url != NULL) {
-		printf("URL ID %s  \r\n",url->ID);
-		printf("URL Class = %s    \r\n",url->Class);
-		printf("URL Target = %s    \r\n",url->Target);
-		printf("URL Added %ld   \r\n",url->Time_Added);
-		printf("URL Last %ld   \r\n",url->Last_Visit);
-		printf("URL Address = %s    \r\n",url->Address);
-		printf("URL Title = %s    \r\n",url->Title);
-
-		url = url->Next;
-	}
-	while (group != NULL) {
-		printf("ID = %s\r\n",group->ID);
-		printf("Added = %ld\r\n",group->Time_Added);
-		printf("Title = %s\r\n",group->Title);
-	
-		group = group->Next;
-	}
-}
-#endif /* USE_MEM_LISTS */
-
-/*----------------------------------------------------------------------------*/
-#define open_bookmarkCss(mode) open_default (&bkm_CSS, _HIGHWIRE_BKM_CSS_, mode)
-#define open_bookmarks(mode)   open_default (&bkm_File,_HIGHWIRE_BOOKMARK_,mode)
-
-
-/*----------------------------------------------------------------------------*/
-static void
-wr_grp (FILE * file, long id_class, const char * title)
-{
-	/* Should have a call to the bkm_group_ctor() routine */
-
-	fprintf (file, "<%s ID='G:%08lX'><B>%s</B></DT>\n",
-	                m_dt_grp, id_class, title);
-	fprintf (file, "<DL CLASS='G:%08lX'>\n", id_class);
-}
-
-/*----------------------------------------------------------------------------*/
-static void
-wr_lnk (FILE * file, long id, long visit, const char * url, const char * title)
-{
-	/* Should have a call to the bkm_url_ctor() routine */
-	
-	fprintf (file, "<%s ID='L:%08lX'><A TARGET='_hw_top'"
-	               " LAST_VISIT='%08lX' HREF='%s'>%s </A></DT>\n",
-	               m_dt_lnk, id, visit, url, title);
-}
-
 /*============================================================================*/
 BOOL
 read_bookmarks (void) {
 	FILE * file = NULL;
-#ifdef USE_MEM_LISTS
-	B_GRP * group = NULL;
-	B_URL * url = NULL;
-	
-	Num_Bookmarks = 0;
-
-	/* Bookmarks exists, read or parse or load? */
-	if ((file = open_bookmarks ("r")) != NULL) { 
-		char  buff[1024];
-		char  out[1024];
-		char *p;
-		int   offset = 0;
-		int   len = 0;
-
-		while (fgets (buff, (int)sizeof(buff), file)) {
-			if (*buff == '<'
-			    && strnicmp (buff +1, m_dt_lnk, sizeof(m_dt_lnk) -1) == 0 ) {
-				Num_Bookmarks += 1;
-				len = 0;
-
-				p = (char *)buff;
-
-				/* advance past all the junk */
-				offset = (int)sizeof(m_dt_lnk);
-				offset += 4;
-
-				if (url_list == NULL) {
-					url = bkm_url_ctor (malloc (sizeof(B_URL)), url_list);
-					url_list = url;
-				} else {
-					url = bkm_url_ctor (malloc (sizeof(B_URL)), current_url);
-				}
-
-				offset += 4; /* advance past ID=" */
-
-				memset (out, 0, 1024);
-
-				strncpy (out,buff+offset,8);
-				url->ID = strdup(out);
-
-				offset += 8; /* len of ID */
-				offset += 9; /* advance past CLASS=" */
-				
-				p += offset;
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Class = strdup(out);
-				
-				offset += len;
-				offset += 10; /* advance past TARGET=" */
-				p += 10;
-				len = 0;
-
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Target = strdup(out);
-
-				offset += len;
-				offset += 12; /* advance past ADD_DATE=" */
-				p += 12;
-				len = 0;
-
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-				
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Time_Added = atol(out);
-
-				offset += len;
-				offset += 14; /* advance past LAST_VIST=" */
-				p += 14;
-				len = 0;
-
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Last_Visit = atol(out);
-
-				offset += len;
-				offset += 8; /* advance past HREF=" */
-				p += 8;
-				len = 0;
-
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Address = strdup(out);
-
-				offset += len;
-				offset += 2; /* advance past "> */
-				p += 2;
-				len = 0;
-
-				while (*p != '<') {
-					len += 1;
-					p++;
-				}	
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				url->Title = strdup(out);
-
-				/* We need some method to find the parent from the Class ?*/
-				url->Parent = NULL;  /* just Null it for the moment */
-
-				current_url->Next = url;
-				current_url = url;
-			} else if (*buff == '<'
-			    && strnicmp (buff +1, m_dt_grp, sizeof(m_dt_grp) -1) == 0 ) {
-				len = 0;
-
-				p = (char *)buff;
-
-				/* advance past all the junk */
-				offset = (int)sizeof(m_dt_grp);
-				offset += 12;
-
-				if (group_list == NULL) {
-					group = bkm_group_ctor (malloc (sizeof(B_GRP)), group_list);
-					group_list = group;
-				} else {
-					group = bkm_group_ctor (malloc (sizeof(B_GRP)), current_grp);
-				}
-				offset += 4; /* advance past ID=" */
-
-				p += offset;
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-				memset (out, 0, len+1);
-
-				strncpy (out,buff+offset,len);
-				group->ID = strdup(out);
-
-				offset += len;
-				offset += 12; /* advance past ID and " CLASS=" */
-				p += 12;
-				len = 0;
-				
-				while (*p != '"') {
-					len += 1;
-					p++;
-				}
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				group->Time_Added = atol(out);
-
-				offset += len;
-				len = 0;
-
-				while (*p != '>') {
-					len += 1;
-					p++;
-				}	
-				offset += len;
-				len = 0;
-
-				offset += 1; /* advance past > */
-				p += 1;
-
-				while (*p != '<') {
-					len += 1;
-					p++;
-				}	
-				memset (out, 0, len+1);
-
-				strncpy (out, buff+offset,len);
-				group->Title = strdup(out);
-
-				current_grp->Next = group;
-				current_grp = group;
-			} else if (strnicmp(buff, "</HTML>", 7) == 0 ) {
-				break;
-			}
-		}
-		fclose (file);
-#else /* !USE_MEM_LISTS */
-	
-	/* Bookmarks exists, read or parse or load? */
 	if ((file = open_bookmarks ("r")) != NULL) { 
 		size_t len = strchr (tmpl_head, '>') - tmpl_head +1;
 		char   buff[1024];
@@ -363,27 +389,29 @@ read_bookmarks (void) {
 			}
 			file = NULL;
 		}
-#endif /* !USE_MEM_LISTS */
-		
 	}
 	if (!file && (file = open_bookmarks ("wb")) != NULL) {
 		long now = time (NULL) -5;
+		char buff[1024];
 		fputs (tmpl_head, file);
 		fprintf (file, "<BODY ID='%08lX'>\n", now -1);
 		fputs ("<DL>\n", file);
-		wr_grp (file, now++, "HighWire Project");
-		wr_lnk (file, now++, 0L,
-		        "http://highwire.atari-users.net", "HighWire Homepage");
-		wr_lnk (file, now++, 0L,
-		        "http://www.atariforums.com/index.php?20", "HighWire Forum");
-		wr_lnk (file, now++, 0L,
-		        "http://www.atari-users.net/mailman/listinfo/highwire",
-		        "Developers Mailing lists");
-		wr_lnk (file, now++, 0L,
-		        "http://www.atari-users.net/mailman/listinfo/highwire-users",
-		        "Users Mailing lists");
-		wr_lnk (file, now++, 0L,
-		        "http://highwire.atari-users.net/mantis/", "Bugtracker");
+		fputs (strcat (wr_grp (buff, now++, "HighWire Project"), "\n"), file);
+		fputs (strcat (wr_lnk (buff, now++, 0L,
+		       "http://highwire.atari-users.net", "HighWire Homepage"),
+		       "\n"), file);
+		fputs (strcat (wr_lnk (buff, now++, 0L,
+		       "http://www.atariforums.com/index.php?20", "HighWire Forum"),
+		       "\n"), file);
+		fputs (strcat (wr_lnk (buff, now++, 0L,
+		       "http://www.atari-users.net/mailman/listinfo/highwire",
+		       "Developers Mailing lists"), "\n"), file);
+		fputs (strcat (wr_lnk (buff, now++, 0L,
+		       "http://www.atari-users.net/mailman/listinfo/highwire-users",
+		       "Users Mailing lists"), "\n"), file);
+		fputs (strcat (wr_lnk (buff, now++, 0L,
+		       "http://highwire.atari-users.net/mantis/", "Bugtracker"),
+		       "\n"), file);
 		fputs ("</DL>\n", file);
 		fputs (tmpl_tail, file);
 		fclose(file);
@@ -398,16 +426,8 @@ read_bookmarks (void) {
 			fclose(file);
 		}
 	}
-	
-#ifdef USE_MEM_LISTS
-	/* enable to dump bookmarks structs to screen */
-	/* test_bookmarks(); */
-#endif /* USE_MEM_LISTS */
-	
 	return TRUE;
 }
-
-/* <OBJECT DATA=\"data:\"></OBJECT> */
 
 /*============================================================================*/
 BOOL
@@ -425,120 +445,33 @@ save_bookmarks (const char * key)
  */
 
 
-/*----------------------------------------------------------------------------*/
-typedef struct s_fline * FLINE;
-struct s_fline {
-	FLINE Next;
-	char  Text[1];
-};
-
-/*------------------------------------------------------------------------------
- * read normalized line from file
-*/
-static char *
-get_line (FILE * file, char * buff, size_t b_sz)
-{
-	char * p = fgets (buff, (int)b_sz, file);
-	if (p) {
-		size_t len = strlen (p);
-		while (len && isspace (p[--len])) p[len] = '\0';
-		while (isspace(*p)) p++;
-	}
-	return p;
-}
-
-/*----------------------------------------------------------------------------*/
-static FLINE
-add_line (FLINE ** base, char * buff)
-{
-	size_t len  = strlen (buff);
-	FLINE  line = malloc (sizeof (struct s_fline) + len);
-	if (line) {
-		memcpy (line->Text, buff, len +1);
-		line->Next = NULL;
-		**base     = line;
-		*base      = &line->Next;
-	}
-	return line;
-}
-
-
-/*----------------------------------------------------------------------------*/
-#define chk_lnk(p)   (*p=='<' && strncmp(p+1,m_dt_lnk,sizeof(m_dt_lnk)-1)==0)
-
-/*----------------------------------------------------------------------------*/
-static BOOL
-cmp_id (const char * ptr, const char * id, size_t len)
-{
-	return (strncmp (ptr, "ID='", 4) == 0 &&
-	        strncmp (ptr +4, id, len) == 0 && ptr[4 + len] == '\'');
-}
-
-
 /*============================================================================*/
 BOOL
-add_bookmark (const char * bookmark_url, const char *bookmark_title)
+add_bookmark (const char * url, const char * title)
 {
-	FILE * file = open_bookmarks ("rb+");
-	if (file) {
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, NULL, FALSE);
+	if (line) {
 		long now = time (NULL);
-		fseek (file, -(sizeof(tmpl_tail) -1), SEEK_END);
-		wr_lnk (file, now, now, bookmark_url, bookmark_title);
-		fputs (tmpl_tail, file);
-		fclose(file);
-		
-		return TRUE;
-		
-	} else {
-		printf("Bookmark file lost?!? \n");
-		return FALSE;
+		char buff[1024];
+		if (bkm_create (line->Prev, wr_lnk (buff, now, now, url, title))) {
+			bkm_flush();
+			done = TRUE;
+		}
 	}
+	return done;
 }
 
 /*============================================================================*/
 BOOL
 del_bookmark (const char * lnk)
 {
-	BOOL   done = FALSE;
-	FILE * file = open_bookmarks ("rb");
-	if (file) {
-		FLINE  list = NULL, * pptr = &list;
-		size_t len  = strlen (lnk);
-		char   buff[1024], * p;
-		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-			if (chk_lnk(p)) {
-				char * q = p +1 + sizeof(m_dt_lnk);
-				while (isspace(*q)) q++;
-				if (cmp_id (q, lnk, len)) {
-					done = TRUE;
-					p    = NULL;
-				}
-			}
-			if (p && !add_line (&pptr, buff)) {
-				done  = FALSE; /* error case */
-				break;
-			}
-		}
-		fclose (file);
-		
-		if (done) {   /* rewrite the file */
-			if ((file = open_bookmarks ("wb")) != NULL) {
-				FLINE line = list;
-				while (line) {
-					fprintf (file, "%s\n", line->Text);
-					line = line->Next;
-				}
-				fclose (file);
-			
-			} else {
-				done = FALSE; /* error case */
-			}
-		}
-		while (list) {
-			FLINE next = list->Next;
-			free (next);
-			list = next;
-		}
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, lnk, TRUE);
+	if (line) {
+		bkm_delete (line);
+		bkm_flush();
+		done = TRUE;
 	}
 	return done;
 }
@@ -548,65 +481,35 @@ del_bookmark (const char * lnk)
 BOOL
 add_bookmark_group (const char * lnk, const char *title)
 {
-	BOOL   done = FALSE;
-	FILE * file = open_bookmarks ("rb+");
-	if (file) {
-		FLINE list = NULL;
-		
-		if (!lnk || !*lnk) {
-			fseek (file, -(sizeof(tmpl_tail) -1), SEEK_END);
-			done  = TRUE;
-	
-		} else {
-			FLINE * pptr = &list;
-			size_t  len  = strlen (lnk);
-			long    fpos = fpos = ftell (file);
-			char    buff[1024], * p;
-			while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-				if (!done && chk_lnk(p)) {
-					char * q = p +1 + sizeof(m_dt_lnk);
-					while (isspace(*q)) q++;
-					done = cmp_id (q, lnk, len);
+	BOOL     done = FALSE;
+	BOOL     ins  = (lnk && *lnk);
+	BKM_LINE line = (ins ? bkm_search (NULL, lnk,  TRUE)
+	                     : bkm_search (NULL, NULL, FALSE));
+	if (line) {
+		long now = time (NULL);
+		char buff[1024], * p;
+		BKM_LINE group;
+		char     id[12];
+		if (!title) {
+			sprintf (id, "G:%08lX", now);
+			title = id;
+		}
+		if ((p = strchr (wr_grp (buff, now, title), '\n')) != NULL) {
+			*(p++) = '\0';
+		}
+		if ((group = bkm_create (line->Prev, buff)) != NULL) {
+			BKM_LINE beg = (p ? bkm_create (line->Prev, p) : group);
+			if (bkm_create ((ins ? line : beg), "</DL>")) {
+				bkm_flush();
+				done = TRUE;
+			} else {
+				if (beg != group) {
+					bkm_delete (beg);
 				}
-				if (!done) {
-					fpos = ftell (file);
-				} else if (!add_line (&pptr, buff)) {
-					done  = FALSE; /* error case */
-					break;
-				}
-			}
-			if (done) {
-				fseek (file, fpos, SEEK_SET);
+				bkm_delete (group);
 			}
 		}
-		if (done) {
-			FLINE line = list;
-			long  now  = time (NULL);
-			char  id[12];
-			if (!title) {
-				sprintf (id, "G:%08lX", now);
-				title = id;
-			}
-			wr_grp (file, now, title);
-			if (line) {
-				fprintf (file, "%s\n", line->Text);
-				line = line->Next;
-			}
-			fputs ("</DL>\n", file);
-			if (!line) {
-				fputs (tmpl_tail, file);
-			} else do {
-				fprintf (file, "%s\n", line->Text);
-				line = line->Next;
-			} while (line);
-		}
-		fclose(file);
-		
-		while (list) {
-			FLINE next = list->Next;
-			free (next);
-			list = next;
-		}
+		bkm_dump ("add_bookmark_group");
 	}
 	return done;
 }
@@ -615,77 +518,48 @@ add_bookmark_group (const char * lnk, const char *title)
 BOOL
 del_bookmark_group (const char * grp)
 {
-	BOOL   done = FALSE;
-	FILE * file = open_bookmarks ("rb");
-	if (file) {
-		FLINE  list  = NULL, * pptr = &list;
-		size_t len   = strlen (grp);
-		int    stage = 0;
-		char   buff[1024], * p;
-		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
-			switch (stage) {
-				case 0: /* nothing found yet, search for the right <DT ..> */
-					if (*p == '<'
-					    && strncmp (p +1, m_dt_grp, sizeof(m_dt_grp) -1) == 0) {
-						char * q = p +1 + sizeof(m_dt_grp);
-						while (isspace(*q)) q++;
-						if (cmp_id (q, grp, len)) {
-							stage = 1;
-							break;
-						}
-					}
-					goto default_;
-					
-				case 1: /* correct <DT ..> found, now we need the <DL .> */
-					if (strncmp (p, "<DL CLASS='", 11) == 0
-					    && strncmp (p +11, grp, len) == 0 && p[11 + len] == '\'') {
-						stage = 2;
-						break;
-					}
-					/* else file structure damaged */
-					goto case_error;
-					
-				case 2: /* find the closing </DL> */
-					if (strcmp (p, "</DL>") == 0) {
-						stage = 3;
-						done  = TRUE;
-						break;
-					}
-					goto default_;
-				
-				default:
-				default_:
-					if (add_line (&pptr, buff)) {
-						break;
-					}
-				case_error:
-					stage = -1;
-					done  = FALSE;
-					fseek (file, 0, SEEK_END);
-			}
+	BOOL     done = FALSE;
+	size_t   len  = (grp ? strlen (grp) : 0l);
+	BKM_LINE line = (len ? bkm_search (NULL, grp, TRUE) : NULL);
+	if (line && line->Next) {
+		BKM_LINE beg = line->Next;
+		BKM_LINE end = (beg ? bkm_search (beg, NULL, TRUE) : NULL);
+/*printf ("%p %p  %li|%.*s| %li|%.*s| %li|%.*s|%c\n", beg,end, len,(int)len,grp,
+        line->Id_ln, (int)line->Id_ln, line->Id,
+        beg->Class_ln, (int)beg->Class_ln, beg->Class, beg->Type);*/
+/*printf ("   %li|%.*s|\n", beg->Text_ln, (int)beg->Text_ln-1, beg->Text);*/
+		if (end && beg->Class_ln == len && strncmp (beg->Class, grp, len) == 0) {
+			bkm_delete (line);
+			bkm_delete (beg);
+			bkm_delete (end);
+			set_bookmark_group (grp, TRUE);
+			bkm_flush();
+			done = TRUE;
 		}
-		fclose (file);
-		
-		if (done) {   /* rewrite the file */
-			if ((file = open_bookmarks ("wb")) != NULL) {
-				FLINE line = list;
-				while (line) {
-					fprintf (file, "%s\n", line->Text);
-					line = line->Next;
-				}
-				fclose (file);
-			
-			} else {
-				done = FALSE; /* error case */
-			}
-		}
-		while (list) {
-			FLINE next = list->Next;
-			free (next);
-			list = next;
-		}
+		bkm_dump ("del_bookmark_group");
 	}
 	return done;
+}
+
+/*----------------------------------------------------------------------------*/
+typedef struct s_fline * FLINE;
+struct s_fline {
+	FLINE Next;
+	char  Text[1];
+};
+/* - - - - - - - - - - - - - - - - - - - - - */
+static FLINE
+add_line (FLINE ** base, char * buff)
+{
+	size_t len  = strlen (buff);
+	FLINE  line = malloc (sizeof (struct s_fline) + len);
+	if (line) {
+		memcpy (line->Text, buff, len +1);
+		line->Next = **base;
+		**base     = line;
+		*base      = &line->Next;
+	}
+	return line;
 }
 
 /*==============================================================================
@@ -701,7 +575,10 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 		int   m_ln = sprintf (mark, "DL.%.*s", (int)sizeof(mark) -4, grp);
 		FLINE list = NULL, * pptr = &list;
 		char buff[1024], * p;
-		while ((p = get_line (file, buff, (int)sizeof(buff))) != NULL) {
+		while ((p = fgets (buff, (int)sizeof(buff), file)) != NULL) {
+			size_t len = strlen (p);
+			while (len && isspace (p[len-1])) p[--len] = '\0';
+			while (isspace(*p)) p++;
 			if (strncmp (p, mark, m_ln) == 0 && isspace (p[m_ln])) {
 				/* skip this */
 				done = TRUE;
@@ -739,83 +616,3 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 	}
 	return done;
 }
-
-
-#ifdef USE_MEM_LISTS
-
-/*============================================================================*/
-B_GRP *
-bkm_group_ctor (B_GRP * This, B_GRP * Next)
-{
-	memset (This, 0, sizeof (struct bkm_group));
-	
-	if (This == Next) {
-		puts ("bkm_group_ctor(): This and Next are equal!");
-		return This;
-	}
-		
-	return This;
-}
-
-/*============================================================================*/
-B_GRP *
-bkm_group_dtor (B_GRP * This)
-{
-/*
-	if (This->Next) {
-		This->Next = NULL;
-	}
-	
-	if (This->IdName) {
-		free (This->IdName);
-		This->IdName = NULL;
-	}
-	if (This->ClName) {
-		free (This->ClName);
-		This->ClName = NULL;
-	}
-*/
-	return This;	
-}
-
-/*============================================================================*/
-B_URL *
-bkm_url_ctor (B_URL * This, B_URL * Next)
-{
-	memset (This, 0, sizeof (struct bkm_url));
-	
-	if (This == Next) {
-		puts ("bkm_url_ctor(): This and next are equal!");
-		return This;
-	}
-	
-	return This;
-}
-
-/*============================================================================*/
-B_URL *
-bkm_url_dtor (B_URL * This)
-{
-/*
-	if (This->Parent) {
-		This->Parent = NULL;
-	}
-	
-	if (This->Next) {
-		This->Next = NULL;
-	}
-
-	if (This->IdName) {
-		free (This->IdName);
-		This->IdName = NULL;
-	}
-	if (This->ClName) {
-		free (This->ClName);
-		This->ClName = NULL;
-	}
-*/
-	
-	return This;
-}
-
-#endif /* USE_MEM_LISTS */
