@@ -68,6 +68,36 @@ static BKM_LINE bkm_list_end = NULL;
 static time_t   bkm_list_tm  = 0;
 
 /*----------------------------------------------------------------------------*/
+static void
+bkm_insert (BKM_LINE line, BKM_LINE prev)
+{
+	if (prev) {
+		line->Prev   = prev;
+		line->Next   = prev->Next;
+		prev->Next   = line;
+	} else {
+		line->Prev   = NULL;
+		line->Next   = bkm_list_beg;
+		bkm_list_beg = line;
+	}
+	if (line->Next) {
+		line->Next->Prev = line;
+	} else {
+		bkm_list_end     = line;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+bkm_remove (BKM_LINE line)
+{
+	if (line->Prev) line->Prev->Next = line->Next;
+	else            bkm_list_beg     = line->Next;
+	if (line->Next) line->Next->Prev = line->Prev;
+	else            bkm_list_end     = line->Prev;
+}
+
+/*----------------------------------------------------------------------------*/
 static BKM_LINE
 bkm_create (BKM_LINE prev, const char * text)
 {
@@ -99,20 +129,7 @@ bkm_create (BKM_LINE prev, const char * text)
 		line->Id_ln    = 0;
 		line->Class    = NULL;
 		line->Class_ln = 0;
-		if (prev) {
-			line->Prev   = prev;
-			line->Next   = prev->Next;
-			prev->Next   = line;
-		} else {
-			line->Prev   = NULL;
-			line->Next   = bkm_list_beg;
-			bkm_list_beg = line;
-		}
-		if (line->Next) {
-			line->Next->Prev = line;
-		} else {
-			bkm_list_end     = line;
-		}
+		bkm_insert (line, prev);
 	}
 	return line;
 }
@@ -122,10 +139,7 @@ static void
 bkm_delete (BKM_LINE line)
 {
 	if (line) {
-		if (line->Prev) line->Prev->Next = line->Next;
-		else            bkm_list_beg     = line->Next;
-		if (line->Next) line->Next->Prev = line->Prev;
-		else            bkm_list_end     = line->Prev;
+		bkm_remove (line);
 		free (line);
 	} 
 }
@@ -267,23 +281,35 @@ bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 		}
 		line = NULL;
 	}
-	if (!line) {
-		line = (dnNup ? bkm_list_beg : bkm_list_end);
-	}
-	while (line) {
-		if (!line->Type) {
+	
+	if (strcmp (id, "*") == 0) { /*............ just get the next/prev element */
+		line = (dnNup ? line ? line->Next : bkm_list_beg
+		              : line ? line->Prev : bkm_list_end);
+		if (line && !line->Type) {
 			bkm_check (line);
 		}
-		if (line->Id && line->Id_ln == len && strncmp (line->Id, id, len) == 0) {
+		return line;
+		
+	} else { /*.................................. normal case, search for 'id' */
+		if (!line) {
+			line = (dnNup ? bkm_list_beg : bkm_list_end);
+		}
+		while (line) {
+			if (!line->Type) {
+				bkm_check (line);
+			}
+			if (line->Id && line->Id_ln == len
+			             && strncmp (line->Id, id, len) == 0) {
 /*printf ("%c", (line->Type ? line->Type : '?'));
 if (line->Class_ln&&line->Class)
 	printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
 if (line->Id_ln&&line->Id)
 	printf (" id='%.*s'", (int)line->Id_ln, line->Id);
 printf ("\n");*/
-			return line;
+				return line;
+			}
+			line = (dnNup ? line->Next : line->Prev);
 		}
-		line = (dnNup ? line->Next : line->Prev);
 	}
 	return NULL;
 }
