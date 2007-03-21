@@ -431,11 +431,10 @@ read_bookmarks (void) {
 
 /*============================================================================*/
 BOOL
-save_bookmarks (const char * key)
+save_bookmarks (void)
 {
-	(void) key;
-	
-	/* If we store the URL's internally we will need to save when we close */
+	bkm_flush();
+	bkm_clear();
 	return TRUE;
 }
 
@@ -472,6 +471,41 @@ del_bookmark (const char * lnk)
 		bkm_delete (line);
 		bkm_flush();
 		done = TRUE;
+	}
+	return done;
+}
+
+/*============================================================================*/
+BOOL
+txt_bookmark (const char * id, char * rw_buf, size_t lenNwr)
+{
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, id, TRUE);
+	if (line) {
+		if (lenNwr) {
+			size_t len = min (line->Text_ln, lenNwr -1);
+			memcpy (rw_buf, line->Text, len);
+			rw_buf[len] = '\0';
+			done = TRUE;
+		} else {
+			size_t len = strlen (rw_buf);
+			if (line->Text_ln == len) {
+				memcpy (line->Text, rw_buf, len);
+				bkm_flush();
+				done = TRUE;
+			} else {
+				char   buff[1024];
+				size_t n = line->Text - line->Buff;
+				memcpy (buff,           line->Buff, n);
+				memcpy (buff + n,       rw_buf,     len);
+				strcpy (buff + n + len, line->Text + line->Text_ln);
+				if (bkm_create (line, buff)) {
+					bkm_delete (line);
+					bkm_flush();
+					done = TRUE;
+				}
+			}
+		}
 	}
 	return done;
 }
