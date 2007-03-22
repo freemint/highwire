@@ -60,12 +60,53 @@ struct s_bkm_line {
 	size_t   Class_ln;
 	char   * Text;
 	size_t   Text_ln;
-	char     Type;   /* '\0' unchecked, 'B'ookmark, 'G'roup, '*' someting else */
-	char     Buff[2];
+	char     Type;      /* '\0' unchecked, '*' someting else, 'B'ookmark, `!`, */
+	char     Buff[2];                             /* 'G'roup & 'b'egin & 'e'nd */
 };
 static BKM_LINE bkm_list_beg = NULL;
 static BKM_LINE bkm_list_end = NULL;
 static time_t   bkm_list_tm  = 0;
+
+/*----------------------------------------------------------------------------*/
+#if 0
+static void
+bkm_print (BKM_LINE line)
+{
+	BOOL ci = FALSE;
+	int len = line->Text_ln;
+	while (line->Text[len-1] == '\n') len--;
+	printf ("%c", (line->Type ? line->Type : '?'));
+	if (line->Class_ln&&line->Class)
+		ci |= printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
+	if (line->Id_ln&&line->Id)
+		ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
+	printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
+}
+
+/*----------------------------------------------------------------------------*/
+#if 0
+static void
+bkm_dump_ (const char * func)
+{
+	BKM_LINE line = bkm_list_beg;
+	puts ("________________________________________"
+	      "________________________________________");
+	if (func) {
+		puts(func);
+		printf ("%.*s\n", (int)strlen(func)+1, "-------------------------------");
+	}
+	while (line) {
+		bkm_print (line);
+		line = line->Next;
+	}
+}
+# define bkm_dump(func) bkm_dump_(func)
+#endif
+#endif /* bkm_print */
+
+#ifndef bkm_dump
+# define bkm_dump(func)
+#endif
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -177,22 +218,20 @@ bkm_flush (void)
 }
 
 /*----------------------------------------------------------------------------*/
-static void
+static char
 bkm_check (BKM_LINE line)
 {
 	char * p = line->Text;
 	
 	if (strncmp (p, "</DL>\n", 6) == 0) {
-		line->Id    = line->Text;
-		line->Id_ln = 5;
-		line->Type  = '*';
-		return;
+		line->Type  = 'e';
+		return line->Type;
 	}
 	
 	if (*(p++) != '<' || *(p++) != 'D' || (*p != 'T' && *p != 'L')
 	                  || strncmp (++p, " CLASS='", 8) != 0) {
 		line->Type  = '*';
-		return;
+		return line->Type;
 	}
 	
 	line->Class = p += 8;
@@ -202,11 +241,15 @@ bkm_check (BKM_LINE line)
 	if ((line->Class_ln = p - line->Class) == 0) {
 		line->Class = NULL;
 	}
+	if (line->Class && line->Text[2] == 'L') {
+		line->Type  = 'b';
+		return line->Type;
+	}
 	if (!line->Class || line->Text[2] != 'T'
 	                 || strncmp (p, "' ID='", 6) != 0) {
 	
 		line->Type  = '*';
-		return;
+		return line->Type;
 	}
 	
 	line->Id = p += 6;
@@ -216,7 +259,7 @@ bkm_check (BKM_LINE line)
 	if ((line->Id_ln = p - line->Id) == 0) {
 		line->Id   = NULL;
 		line->Type = '*';
-		return;
+		return line->Type;
 	}
 	
 	if (strncmp (line->Class, "LNK'", 4) == 0) {
@@ -228,7 +271,7 @@ bkm_check (BKM_LINE line)
 	    		line->Text    = p;
 	    		line->Text_ln = q - p;
 	    		line->Type    = 'B';
-	    		return;
+	    		return line->Type;
 		    }
 	    }
 	
@@ -240,12 +283,12 @@ bkm_check (BKM_LINE line)
 	    		line->Text    = p;
 	    		line->Text_ln = q - p;
 	    		line->Type    = 'G';
-	    		return;
+	    		return line->Type;
 		    }
 	    }
 	}
 	
-	line->Type = '*';
+	return (line->Type = '*');
 }
 
 /*----------------------------------------------------------------------------*/
@@ -278,6 +321,18 @@ bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 				}
 			}
 			fclose (file);
+			if ((temp = bkm_list_beg) != NULL) do {
+				if (!temp->Type && strncmp (temp->Text, "<DL", 3) == 0) {
+					temp->Type = '!';
+					break;
+				}
+			} while ((temp = temp->Next) != NULL);
+			if ((temp = bkm_list_end) != NULL) do {
+				if (!temp->Type && strncmp (temp->Text, "</DL>", 5) == 0) {
+					temp->Type = '!';
+					break;
+				}
+			} while ((temp = temp->Prev) != NULL);
 		}
 		line = NULL;
 	}
@@ -290,6 +345,27 @@ bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 		}
 		return line;
 		
+	} else if (strcmp (id, "?") == 0) { /*.............. search for any 'type' */
+		line = (dnNup ? line ? line->Next : bkm_list_beg
+		              : line ? line->Prev : bkm_list_end);
+		while (line) {
+			if (isalpha (line->Type ? line->Type : bkm_check (line))) {
+				return line;
+			}
+			line = (dnNup ? line->Next : line->Prev);
+		}
+		
+	} else if (id[0] && !id[1]) { /*.................. search for exact 'type' */
+		if (!line) {
+			line = (dnNup ? bkm_list_beg : bkm_list_end);
+		}
+		while (line) {
+			if ((line->Type ? line->Type : bkm_check (line)) == id[0]) {
+				return line;
+			}
+			line = (dnNup ? line->Next : line->Prev);
+		}
+		
 	} else { /*.................................. normal case, search for 'id' */
 		if (!line) {
 			line = (dnNup ? bkm_list_beg : bkm_list_end);
@@ -300,12 +376,6 @@ bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 			}
 			if (line->Id && line->Id_ln == len
 			             && strncmp (line->Id, id, len) == 0) {
-/*printf ("%c", (line->Type ? line->Type : '?'));
-if (line->Class_ln&&line->Class)
-	printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
-if (line->Id_ln&&line->Id)
-	printf (" id='%.*s'", (int)line->Id_ln, line->Id);
-printf ("\n");*/
 				return line;
 			}
 			line = (dnNup ? line->Next : line->Prev);
@@ -313,37 +383,6 @@ printf ("\n");*/
 	}
 	return NULL;
 }
-
-/*----------------------------------------------------------------------------*/
-#if 0
-static void
-bkm_dump_ (const char * func)
-{
-	BKM_LINE line = bkm_list_beg;
-	puts ("________________________________________"
-	      "________________________________________");
-	if (func) {
-		puts(func);
-		printf ("%.*s\n", (int)strlen(func)+1, "-------------------------------");
-	}
-	while (line) {
-		BOOL ci = FALSE;
-		int len = line->Text_ln;
-		while (line->Text[len-1] == '\n') len--;
-		printf ("%c", (line->Type ? line->Type : '?'));
-		if (line->Class_ln&&line->Class)
-			ci |= printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
-		if (line->Id_ln&&line->Id)
-			ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
-		printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
-		line = line->Next;
-	}
-}
-#define bkm_dump(func) bkm_dump_(func)
-
-#else
-#define bkm_dump(func)
-#endif
 
 
 /******************************************************************************/
@@ -415,6 +454,8 @@ read_bookmarks (void) {
 			}
 			file = NULL;
 		}
+/*		bkm_search (NULL, "", TRUE);*/
+		bkm_dump ("bkm_search");
 	}
 	if (!file && (file = open_bookmarks ("wb")) != NULL) {
 		long now = time (NULL) -5;
@@ -475,7 +516,7 @@ BOOL
 add_bookmark (const char * url, const char * title)
 {
 	BOOL     done = FALSE;
-	BKM_LINE line = bkm_search (NULL, NULL, FALSE);
+	BKM_LINE line = bkm_search (NULL, "e", FALSE);
 	if (line) {
 		long now = time (NULL);
 		char buff[1024];
@@ -493,10 +534,42 @@ del_bookmark (const char * lnk)
 {
 	BOOL     done = FALSE;
 	BKM_LINE line = bkm_search (NULL, lnk, TRUE);
-	if (line) {
+	if (line && line->Type == 'B') {
 		bkm_delete (line);
 		bkm_flush();
 		done = TRUE;
+	}
+	return done;
+}
+
+/*============================================================================*/
+BOOL
+pos_bookmark (const char * id,  BOOL dnNup)
+{
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, id, !dnNup);
+	if (line && line->Type == 'B') {
+		BKM_LINE othr = bkm_search (line, "?", dnNup);
+		if (othr->Type) switch (othr->Type) {
+			case 'G':
+				if (!dnNup) othr = othr->Prev;
+				else        othr = bkm_search (othr, "b", TRUE);
+				break;
+			case 'b':
+				if (!dnNup && (othr = bkm_search (othr, "G", FALSE)) == NULL) break;
+			case 'e':
+			case 'B':
+				if (!dnNup) othr = othr->Prev;
+				break;
+			default:
+				othr = NULL;
+		}
+		if (othr) {
+			bkm_remove (line);
+			bkm_insert (line, othr);
+			bkm_flush();
+			done = TRUE;
+		}
 	}
 	return done;
 }
@@ -544,7 +617,7 @@ add_bookmark_group (const char * lnk, const char *title)
 	BOOL     done = FALSE;
 	BOOL     ins  = (lnk && *lnk);
 	BKM_LINE line = (ins ? bkm_search (NULL, lnk,  TRUE)
-	                     : bkm_search (NULL, NULL, FALSE));
+	                     : bkm_search (NULL, "!", FALSE));
 	if (line) {
 		long now = time (NULL);
 		char buff[1024], * p;
@@ -581,9 +654,9 @@ del_bookmark_group (const char * grp)
 	BOOL     done = FALSE;
 	size_t   len  = (grp ? strlen (grp) : 0l);
 	BKM_LINE line = (len ? bkm_search (NULL, grp, TRUE) : NULL);
-	if (line && line->Next) {
+	if (line && line->Type == 'G') {
 		BKM_LINE beg = line->Next;
-		BKM_LINE end = (beg ? bkm_search (beg, NULL, TRUE) : NULL);
+		BKM_LINE end = (beg ? bkm_search (beg, "e", TRUE) : NULL);
 /*printf ("%p %p  %li|%.*s| %li|%.*s| %li|%.*s|%c\n", beg,end, len,(int)len,grp,
         line->Id_ln, (int)line->Id_ln, line->Id,
         beg->Class_ln, (int)beg->Class_ln, beg->Class, beg->Type);*/

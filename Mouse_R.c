@@ -30,12 +30,16 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 #define RBKM_EXPAND  1
 		" Expand",
 		"---------",/* 2 */
-#define RBKM_REMOVE  3
+#define RBKM_UP      3
+		"     ",
+#define RBKM_DN      4
+		"     ",
+#define RBKM_REMOVE  5
 		" Remove",
-		"---------",/* 4 */
-#define RBKM_ADDGRP  5
+		"---------",/* 6 */
+#define RBKM_ADDGRP  7
 		" Add Group",
-#define RBKM_COPY    6
+#define RBKM_COPY    8
 		" Copy URL",
 		NULL
 	};
@@ -43,10 +47,6 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 	BOOL      reload = FALSE;
 	const char * lnk = NULL;
 	const char * grp = NULL;
-/*	const char * lnk = (*box->ClName == 'L' && *box->IdName
-	                    ? box->IdName : NULL);
-	const char * grp = (*box->ClName == 'G' && *box->IdName
-	                    ? box->IdName : NULL);*/
 	if (box) {
 		if (*box->ClName == 'L') lnk = box->IdName;
 		else               /*G*/ grp = box->IdName;
@@ -54,10 +54,10 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 			box = box->Parent;
 			grp = (box->ClName ? box->ClName : NULL);
 		}
-/*	printf ("%i/%i -> LNK = '%s' GRP = '%s'   %p\n",
-	        box->BoxClass, box->HtmlCode, lnk, grp, word);*/
+		menu[RBKM_REMOVE][0] = ' ';
+	} else {
+		menu[RBKM_REMOVE][0] = '!';
 	}
-	
 	if (grp) {
 		DOMBOX * next = box->Sibling;
 		while (next && next->HtmlCode != TAG_DL) {
@@ -84,19 +84,25 @@ rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
 	} else {
 		menu[RBKM_COPY][0] = '!';
 	}
-	switch (HW_form_popup (menu, mouse.p_x, mouse.p_y, TRUE)) {
+	switch (HW_form_popup (menu, mouse.p_x, mouse.p_y - 16*4, TRUE)) {
 		case RBKM_COLLAPS:
 			reload = set_bookmark_group (grp, FALSE);
 			break;
 		case RBKM_EXPAND:
 			reload = set_bookmark_group (grp, TRUE);
 			break;
+		case RBKM_REMOVE:
+			if(lnk) reload = del_bookmark       (lnk);
+			else    reload = del_bookmark_group (grp);
+			break;
+		case RBKM_UP:
+			if(lnk) reload = pos_bookmark       (lnk, FALSE);
+			break;
+		case RBKM_DN:
+			if(lnk) reload = pos_bookmark       (lnk, TRUE);
+			break;
 		case RBKM_ADDGRP:
 			reload = add_bookmark_group (lnk, NULL);
-			break;
-		case RBKM_REMOVE:
-			if(lnk)  reload = del_bookmark       (lnk);
-			else     reload = del_bookmark_group (grp);
 			break;
 		case RBKM_COPY: {
 			FILE * file = open_scrap (FALSE);
