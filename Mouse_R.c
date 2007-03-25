@@ -18,108 +18,6 @@
 #include "hwWind.h"
 
 
-/*============================================================================*/
-#include "token.h"
-#include "bookmark.h"
-static void
-rpop_bmrk (PXY mouse, DOMBOX * box, WORDITEM word)
-{
-	char * menu[] = {
-#define RBKM_COLLAPS 0
-		" Collaps",
-#define RBKM_EXPAND  1
-		" Expand",
-		"---------",/* 2 */
-#define RBKM_UP      3
-		"     ",
-#define RBKM_DN      4
-		"     ",
-#define RBKM_REMOVE  5
-		" Remove",
-		"---------",/* 6 */
-#define RBKM_ADDGRP  7
-		" Add Group",
-#define RBKM_COPY    8
-		" Copy URL",
-		NULL
-	};
-	
-	BOOL      reload = FALSE;
-	const char * lnk = NULL;
-	const char * grp = NULL;
-	if (box) {
-		if (*box->ClName == 'L') lnk = box->IdName;
-		else               /*G*/ grp = box->IdName;
-		if (!grp && box->Parent) {
-			box = box->Parent;
-			grp = (box->ClName ? box->ClName : NULL);
-		}
-		menu[RBKM_REMOVE][0] = ' ';
-	} else {
-		menu[RBKM_REMOVE][0] = '!';
-	}
-	if (grp) {
-		DOMBOX * next = box->Sibling;
-		while (next && next->HtmlCode != TAG_DL) {
-			next = next->Sibling;
-		}
-		if (!next || strcmp (next->ClName, grp) != 0) {
-			menu[RBKM_COLLAPS][0] = '!';
-			menu[RBKM_EXPAND][0]  = '!';
-		} else if (next->Hidden) {
-			menu[RBKM_COLLAPS][0] = '!';
-			menu[RBKM_EXPAND][0]  = ' ';
-		} else {
-			menu[RBKM_COLLAPS][0] = ' ';
-			menu[RBKM_EXPAND][0]  = '!';
-		}
-		menu[RBKM_ADDGRP][0]  = '!';
-	} else {
-		menu[RBKM_COLLAPS][0] = '!';
-		menu[RBKM_EXPAND][0]  = '!';
-		menu[RBKM_ADDGRP][0]  = ' ';
-	}
-	if (lnk && word && word->link) {
-		menu[RBKM_COPY][0] = ' ';
-	} else {
-		menu[RBKM_COPY][0] = '!';
-	}
-	switch (HW_form_popup (menu, mouse.p_x, mouse.p_y - 16*4, TRUE)) {
-		case RBKM_COLLAPS:
-			reload = set_bookmark_group (grp, FALSE);
-			break;
-		case RBKM_EXPAND:
-			reload = set_bookmark_group (grp, TRUE);
-			break;
-		case RBKM_REMOVE:
-			if(lnk) reload = del_bookmark       (lnk);
-			else    reload = del_bookmark_group (grp);
-			break;
-		case RBKM_UP:
-			if(lnk) reload = pos_bookmark       (lnk, FALSE);
-			break;
-		case RBKM_DN:
-			if(lnk) reload = pos_bookmark       (lnk, TRUE);
-			break;
-		case RBKM_ADDGRP:
-			reload = add_bookmark_group (lnk, NULL);
-			break;
-		case RBKM_COPY: {
-			FILE * file = open_scrap (FALSE);
-			if (file) {
-				char * url = word->link->address;
-				fwrite (url, 1, strlen(url), file);
-				fclose (file);
-			}
-		}	break;
-	}
-	if (reload) {
-		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
-	}
-}
-
-
 /*==============================================================================
  *
  * handles mouse interaction with a frame
@@ -182,11 +80,8 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				ok = TRUE;
 			}
 			if (ok) {
-				rpop_bmrk (mouse, box, word);
+				rpopbkm_open (mouse.p_x, mouse.p_y, box, word);
 			}
-			
-			
-			
 		
 		} else if (elem == PE_ILINK) {
 			rpopilink_open (mouse.p_x, mouse.p_y, cont, hash);			

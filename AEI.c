@@ -12,15 +12,17 @@
 
 #include <gem.h>
 
+#include "token.h" /* rpopbkm_open */
+
 #ifdef __PUREC__
 # define CONTAINR struct s_containr *
 # define HISTORY  struct s_history *
 #endif
+#include "global.h"
 
 #include "version.h"
 #include "vaproto.h"
 /* #include "av_comm.h" */
-#include "global.h"
 #include "bookmark.h"
 #include "Location.h"
 #include "Containr.h"
@@ -1208,6 +1210,97 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 	}
 	
 	free_location (&loc);
+}
+
+/*============================================================================*/
+void
+rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
+{
+	extern OBJECT *rpopbkm;
+	
+	BOOL      reload = FALSE;
+	const char * lnk = NULL;
+	const char * grp = NULL;
+	WORD         i;
+	for (i = rpopbkm->ob_head; i > 0; i = rpopbkm[i].ob_next) {
+		if (rpopbkm[i].ob_flags & OF_SELECTABLE /*&& i != RBKM_IMPORT*/) {
+			objc_change (rpopbkm, i, 0, 0,0,0,0, OS_DISABLED, 0);
+		}
+	}
+	if (box) {
+		if (*box->ClName == 'L') lnk = box->IdName;
+		else               /*G*/ grp = box->IdName;
+		if (!grp && box->Parent) {
+			box = box->Parent;
+			grp = (box->ClName ? box->ClName : NULL);
+		}
+	/*	objc_change (rpopbkm, RBKM_EDIT,   0, 0,0,0,0, OS_DISABLED, 0);*/
+		objc_change (rpopbkm, RBKM_REMOVE, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	if (grp) {
+		DOMBOX * next = box->Sibling;
+		while (next) {
+			if (next->HtmlCode == TAG_DL) {
+				if (next->Hidden) {
+					objc_change (rpopbkm, RBKM_EXPAND,  0, 0,0,0,0, OS_NORMAL, 0);
+				} else {
+					objc_change (rpopbkm, RBKM_COLLAPS, 0, 0,0,0,0, OS_NORMAL, 0);
+				}
+				break;
+			}
+			next = next->Sibling;
+		}
+	} else {
+		objc_change (rpopbkm, RBKM_ADDGRP, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	if (lnk) {
+		if (word && word->link) {
+			objc_change (rpopbkm, RBKM_COPY, 0, 0,0,0,0, OS_NORMAL, 0);
+		}
+		objc_change (rpopbkm, RBKM_UP, 0, 0,0,0,0, OS_NORMAL, 0);
+		objc_change (rpopbkm, RBKM_DN, 0, 0,0,0,0, OS_NORMAL, 0);
+	}
+	i = rpopbkm[RBKM_UP].ob_y + rpopbkm[RBKM_UP].ob_height /2;
+	switch (rpop_do (rpopbkm, RBKMPOP, mx +3, my - i)) {
+		
+		case RBKM_COLLAPS:
+			reload = set_bookmark_group (grp, FALSE);
+			break;
+		
+		case RBKM_EXPAND:
+			reload = set_bookmark_group (grp, TRUE);
+			break;
+		
+		case RBKM_UP:
+			if(lnk) reload = pos_bookmark       (lnk, FALSE);
+			break;
+		
+		case RBKM_DN:
+			if(lnk) reload = pos_bookmark       (lnk, TRUE);
+			break;
+		
+		case RBKM_REMOVE:
+			if(lnk) reload = del_bookmark       (lnk);
+			else    reload = del_bookmark_group (grp);
+			break;
+		
+		case RBKM_ADDGRP:
+			reload = add_bookmark_group (lnk, NULL);
+			break;
+		
+		case RBKM_COPY: {
+			FILE * file = open_scrap (FALSE);
+			if (file) {
+				char * url = word->link->address;
+				fwrite (url, 1, strlen(url), file);
+				fclose (file);
+			}
+		}	break;
+	}
+	if (reload) {
+		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+	}
 }
 #endif
 
