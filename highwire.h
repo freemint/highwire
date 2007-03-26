@@ -114,3 +114,18 @@
 #define RBKM_ADDGRP 9  /* STRING in tree RBKMPOP */
 #define RBKM_COPY 10  /* STRING in tree RBKMPOP */
 #define RBKM_IMPORT 12  /* STRING in tree RBKMPOP */
+
+#define BKMEDIT 8  /* form/dial */
+#define BKM_BG_EDIT 1  /* IBOX in tree BKMEDIT */
+#define BKM_EDIT 2  /* FBOXTEXT in tree BKMEDIT */
+#define BKM_ID 3  /* FTEXT in tree BKMEDIT */
+#define BKM_ADDED 4  /* FTEXT in tree BKMEDIT */
+#define BKM_VISITED 5  /* FTEXT in tree BKMEDIT */
+#define BKM_URL 6  /* FTEXT in tree BKMEDIT */
+#define BKM_OK 7  /* BUTTON in tree BKMEDIT */
+#define BKM_CANCEL 8  /* BUTTON in tree BKMEDIT */
+#define BKM_BG_TEXT 9  /* IBOX in tree BKMEDIT */
+#define BKM_TXT_B_ADD 10  /* STRING in tree BKMEDIT */
+#define BKM_TXT_B_EDIT 11  /* STRING in tree BKMEDIT */
+#define BKM_TXT_G_ADD 12  /* STRING in tree BKMEDIT */
+#define BKM_TXT_G_EDIT 13  /* STRING in tree BKMEDIT */

@@ -1,5 +1,5 @@
 ResourceMaster v2.072
-#C 8@0@0@
+#C 9@0@0@
 #N 99@0@AZAazA___  _@AZAazA090___  _@@@
 #FoHRD@rsm2out@HRD@hrd@@@ [HRD-File@
 #FoC-Header@rsm2out@C-Header@h@@@ [C-Header@
@@ -111,4 +111,18 @@ ResourceMaster v2.072
 #O 9@28@RBKM_ADDGRP@@
 #O 10@28@RBKM_COPY@@
 #O 12@28@RBKM_IMPORT@@
-#c 23059@
+#T 8@2@BKMEDIT@@14@
+#O 1@25@BKM_BG_EDIT@@
+#O 2@30@BKM_EDIT@@
+#O 3@29@BKM_ID@@
+#O 4@29@BKM_ADDED@@
+#O 5@29@BKM_VISITED@@
+#O 6@29@BKM_URL@@
+#O 7@26@BKM_OK@@
+#O 8@26@BKM_CANCEL@@
+#O 9@25@BKM_BG_TEXT@@
+#O 10@28@BKM_TXT_B_ADD@@
+#O 11@28@BKM_TXT_B_EDIT@@
+#O 12@28@BKM_TXT_G_ADD@@
+#O 13@28@BKM_TXT_G_EDIT@@
+#c 28755@

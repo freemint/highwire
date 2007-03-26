@@ -2,6 +2,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>   /* bookmark_editor */
 
 #ifdef __PUREC__
 #include <tos.h>
@@ -176,11 +177,12 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 	const char *cmd = *(const char **)&msg[3];
 	/* if a parameter contains spaces then
 	 *    it is enclosed with '...', and a ' is encoded as '' */
-	const BOOL quoted = cmd[0] == '\'' && cmd[1] != '\0'
-	                    && strrchr(&cmd[2], '\'') != NULL && strrchr(&cmd[2], '\'')[1] == '\0';
+	const BOOL quoted = (cmd[0] == '\'' && cmd[1] != '\0'
+	                     && strrchr(&cmd[2], '\'') != NULL
+	                     && strrchr(&cmd[2], '\'')[1] == '\0');
 	
-	HwWIND wind = (state && K_ALT ? NULL : hwWind_byCoord (mouse.p_x, mouse.p_y));
-	
+	HwWIND wind = (state && K_ALT
+	               ? NULL : hwWind_byCoord (mouse.p_x, mouse.p_y));
 	if (quoted) {
 		char *p = filename;
 
@@ -318,7 +320,9 @@ doGSCommand(const WORD msg[8])
 		}
 		else if (!stricmp(cmd, "GetAllCommands"))
 		{
-			#define ALL "AppGetLongName\0CheckCommand\0Close\0GetAllCommands\0Open <file>\0Quit\0"
+			#define _ALL_1 "AppGetLongName\0CheckCommand\0Close"
+			#define _ALL_2 "\0GetAllCommands\0Open <file>\0Quit\0"
+			#define ALL   _ALL_1 _ALL_2
 			#ifdef __PUREC__
 				#if sizeof(ALL) + 1 > HW_PATH_MAX
 					#error gsanswer[HW_PATH_MAX] too small for GetAllCommands!
@@ -756,8 +760,10 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_INFO:      menu_info();                                break;
 		case M_QUIT:      menu_quit();                                break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);             break;
-		case M_OPEN_BOOKMARKS: menu_openbookmarks(); break;
-		case M_BOOKMARK_URL:   menu_bookmark_url (hwWind_ActiveFrame(hwWind_Top)->Location, hwWind_Top->Base.Name); break;
+		case M_OPEN_BOOKMARKS: menu_openbookmarks();             break;
+		case M_BOOKMARK_URL:   menu_bookmark_url
+		                                (hwWind_ActiveFrame(hwWind_Top)->Location,
+		                                 hwWind_Top->Base.Name); break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
 		case M_I8859_2:   menu_reload (ENCODING_ISO8859_2);   break;
@@ -870,7 +876,110 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 			return which_obj; /* to be handled by the caller */
 	}
 #	undef _
-	return -1; /* already hadled by te switch() */
+	return -1; /* already handled by the switch() statement above */
+}
+
+/*----------------------------------------------------------------------------*/
+static const char *
+bookmark_editor (UWORD type, const char * text,
+                 const char * id, const char * added, const char * url)
+{
+	WORD title;
+	WORD x, y, w, h, n;
+	
+	static OBJECT * tree = NULL;
+	if (!tree) {
+		rsrc_gaddr (R_TREE, BKMEDIT, &tree);
+		title = tree[BKM_BG_TEXT].ob_head;
+		for (n = title; n != BKM_BG_TEXT; n = tree[n].ob_next) {
+			tree[n].ob_flags |= OF_HIDETREE;
+			tree[n].ob_y     =  0;
+		}
+		n = tree[BKM_BG_TEXT].ob_height - tree[title].ob_height;
+		tree[BKM_BG_TEXT].ob_height -= n;
+		tree[BKM_BG_EDIT].ob_y      -= n;
+		tree[ROOT].ob_height        -= n;
+	}
+	
+	switch (type) {
+		case ((UWORD)'B'<<8)|'A': title = BKM_TXT_B_ADD;  break;
+		case ((UWORD)'B'<<8)|'E': title = BKM_TXT_B_EDIT; break;
+		case ((UWORD)'G'<<8)|'A': title = BKM_TXT_G_ADD;  break;
+		case ((UWORD)'G'<<8)|'E': title = BKM_TXT_G_EDIT; break;
+		default:                  title = 0;
+	}
+	if (title) {
+		tree[title].ob_flags &= ~OF_HIDETREE;
+	}
+	tree[BKM_VISITED].ob_flags |= OF_HIDETREE;
+	
+	if (url && (n = strlen (url)) > 0) {
+		char * t = tree[BKM_URL].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_URL].ob_spec.tedinfo->te_txtlen -1;
+		memcpy (t, url, min (l, n));
+		t += n;
+		while (n++ < l) *(t++) = ' ';
+		*t = '\0';
+		tree[BKM_URL].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_URL].ob_flags |= OF_HIDETREE;
+	}
+	if (added && (n = strlen (added)) > 0) {
+		char * t = tree[BKM_ADDED].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen -1;
+		char   buf[80];
+		time_t      dt = strtol (added, NULL, 16);
+		struct tm * tm = localtime (&dt);
+		sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
+		         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+		         tm->tm_hour, tm->tm_min, tm->tm_sec);
+		n = strlen (buf);
+		memcpy (t, buf, min (l, n));
+		t += n;
+		while (n++ < l) *(t++) = ' ';
+		*t = '\0';
+		tree[BKM_ADDED].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_ADDED].ob_flags |= OF_HIDETREE;
+	}
+	if (id && (n = strlen (id)) > 0) {
+		char * t = tree[BKM_ID].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_ID].ob_spec.tedinfo->te_txtlen -1;
+		memcpy (t, id, min (l, n));
+		t += n;
+		while (n++ < l) *(t++) = ' ';
+		*t = '\0';
+		tree[BKM_ID].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_ID].ob_flags |= OF_HIDETREE;
+	}
+	if (text && *text) {
+		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_EDIT].ob_spec.tedinfo->te_txtlen -1;
+		strncpy (t, text, l);
+		text = t;
+	} else {
+		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
+		*t = '\0';
+		text = t;
+	}
+	tree[BKM_OK].ob_state     &= ~OS_SELECTED;
+	tree[BKM_CANCEL].ob_state &= ~OS_SELECTED;
+	
+	wind_update (BEG_MCTRL);
+	form_center (tree, &x, &y, &w, &h);
+	form_dial   (FMD_START, x,y,w,h, x,y,w,h);
+	objc_draw   (tree, ROOT, MAX_DEPTH, x, y, w, h);
+	if (form_do (tree, BKM_EDIT) != BKM_OK || !*text) {
+		text = NULL;
+	}
+	form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
+	wind_update (END_MCTRL);
+
+	if (title) {
+		tree[title].ob_flags |= OF_HIDETREE;
+	}
+	return text;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -973,9 +1082,6 @@ rpopup_open (WORD mx, WORD my)
 			break;
 
 		case RPOP_BOOKM: 
-			/* we need a method to grab the name of the link */
-			/* this fails if the window we are grabbing the URL from
-			 * is not the top window */
 			menu_bookmark_url (loc, wind->Base.Name);		
 			break;
 	}
@@ -1054,7 +1160,8 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RLINK_BOOKM:
 			/* we need a method to grab the name of the link */
-			menu_bookmark_url (loc, addr);
+			addr = bookmark_editor (((UWORD)'B'<<8)|'A', addr, NULL, NULL, addr);
+			if (addr) menu_bookmark_url (loc, addr);
 			break;
 	}
 	
@@ -1205,7 +1312,8 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RIMG_BOOKM: 
 			/* we need a method to grab the name of the link */
-			menu_bookmark_url (loc, addr);
+			addr = bookmark_editor (((UWORD)'B'<<8)|'A', addr, NULL, NULL, addr);
+			if (addr) menu_bookmark_url (loc, addr);
 			break;
 	}
 	
@@ -1234,13 +1342,13 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 			box = box->Parent;
 			grp = (box->ClName ? box->ClName : NULL);
 		}
-	/*	objc_change (rpopbkm, RBKM_EDIT,   0, 0,0,0,0, OS_DISABLED, 0);*/
-		objc_change (rpopbkm, RBKM_REMOVE, 0, 0,0,0,0, OS_NORMAL, 0);
+		objc_change (rpopbkm, RBKM_EDIT,   0, 0,0,0,0, OS_NORMAL,   0);
+		objc_change (rpopbkm, RBKM_REMOVE, 0, 0,0,0,0, OS_NORMAL,   0);
 	}
 	if (grp) {
 		DOMBOX * next = box->Sibling;
 		while (next) {
-			if (next->HtmlCode == TAG_DL) {
+			if (next->HtmlCode == TAG_DL && strcmp (next->ClName, grp) == 0) {
 				if (next->Hidden) {
 					objc_change (rpopbkm, RBKM_EXPAND,  0, 0,0,0,0, OS_NORMAL, 0);
 				} else {
@@ -1284,9 +1392,31 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 			else    reload = del_bookmark_group (grp);
 			break;
 		
-		case RBKM_ADDGRP:
-			reload = add_bookmark_group (lnk, NULL);
-			break;
+		case RBKM_EDIT: {
+			UWORD        type;
+			const char * text;
+			const char * id, * url;
+			char         buff[1024];
+			if (lnk) {
+				type = ((UWORD)'B'<<8)|'E';
+				id   = lnk;
+				url  = (word && word->link ? word->link->address : NULL);
+			} else {
+				type = ((UWORD)'G'<<8)|'E';
+				id   = grp;
+				url  = NULL;
+			}
+			txt_bookmark (id, buff, sizeof(buff));
+			if ((text = bookmark_editor (type, buff, id, id +2, url)) != NULL) {
+				reload = txt_bookmark (id, strcpy (buff, text), 0);
+			}
+		}	break;
+		
+		case RBKM_ADDGRP: {
+			UWORD        type = ((UWORD)'G'<<8)|'A';
+			const char * text = bookmark_editor (type, NULL, NULL, NULL, NULL);
+			if (text)  reload = add_bookmark_group (lnk, text);
+		}	break;
 		
 		case RBKM_COPY: {
 			FILE * file = open_scrap (FALSE);
