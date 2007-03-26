@@ -506,21 +506,17 @@ save_bookmarks (void)
 }
 
 
-/* we need a method to add a bookmark to a group and delete a bookmark
- * from a group
- */
-
-
 /*============================================================================*/
 BOOL
 add_bookmark (const char * url, const char * title)
 {
-	BOOL     done = FALSE;
-	BKM_LINE line = bkm_search (NULL, "e", FALSE);
+	BOOL       done = FALSE;
+	BKM_LINE   line = bkm_search (NULL, "?", FALSE);
+	if (!line) line = bkm_search (NULL, "!", TRUE); /* empty file? */
 	if (line) {
 		long now = time (NULL);
 		char buff[1024];
-		if (bkm_create (line->Prev, wr_lnk (buff, now, now, url, title))) {
+		if (bkm_create (line, wr_lnk (buff, now, now, url, title))) {
 			bkm_flush();
 			done = TRUE;
 		}
