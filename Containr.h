@@ -34,9 +34,9 @@ typedef enum {
 	HW_PageCleared,  /* A part of or the pane itsels lost it contents.  Any   *
 	                  * pointer into the tree structure should be invalidated *
 	                  * immediately.                                          */
-	HW_PageStarted,  /* A part of or the pane itsels starts loading new *
-	                  * content.  'gen_ptr' points to a char* with the  *
-	                  * location of the new contents.                   */
+	HW_PageStarted,  /* A part of or the pane itsels starts loading new  *
+	                  * content.  'gen_ptr' contains the LOCATION of the *
+	                  * new contents.                                    */
 	HW_PageFinished, /* A part of or the pane itself is finished after loading *
 	                  * and parsing.  'gen_ptr' points to the screen extents   *
 	                  * or is NULL if no content exists.                       */

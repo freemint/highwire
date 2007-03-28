@@ -1876,6 +1876,8 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageStarted: {
+			union { const void * cv; LOCATION loc; } u;
+			char buf[1024];
 			if (!wind->loading++) {
 				if (wind->HistUsed) {
 					char * flag = wind->History[wind->HistMenu]->Text;
@@ -1893,10 +1895,12 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				}
 				chng_toolbar  (wind, 0, (UWORD)~TBAR_STOP_MASK, -1);
 			}
+			u.cv = gen_ptr;
+			location_FullName (u.loc, buf, sizeof(buf));
 			if (!cont->Parent) {
-				hwWind_setName (wind, gen_ptr);
+				hwWind_setName (wind, buf);
 			} else {
-				hwWind_setInfo (wind, gen_ptr, TRUE);
+				hwWind_setInfo (wind, buf, TRUE);
 			}
 		}
 		goto case_HW_ActivityBeg;

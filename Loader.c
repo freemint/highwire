@@ -315,9 +315,8 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base,
 	loc = (loader->Cached ? loader->Cached : loader->Location);
 	
 	if (!loader->notified) {
-		char buf[1024];
-		location_FullName (loader->Location, buf, sizeof(buf));
-		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
+		loader->notified = containr_notify (loader->Target, HW_PageStarted,
+		                                    loader->Location);
 	}
 	
 	if (loc->Proto == PROT_DIR) {
@@ -944,9 +943,8 @@ loader_job (void * arg, long invalidated)
 	}
 	
 	if (!loader->notified) {
-		char buf[1024];
-		location_FullName (loader->Location, buf, sizeof(buf));
-		loader->notified = containr_notify (loader->Target, HW_PageStarted, buf);
+		loader->notified = containr_notify (loader->Target, HW_PageStarted,
+		                                    loader->Location);
 	}
 	
 	loader->Data = load_file (loc, &loader->DataSize, &loader->DataFill);
