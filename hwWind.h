@@ -11,27 +11,28 @@ typedef struct hw_window * HwWIND;
 
 struct hw_window {
 	WINDOWBASE Base;
-	BOOL    shaded;
-	UWORD   isBusy;  /* number of loading jobs etc. ..*/
-	UWORD   isDone;  /* .. and that many already done */
-	UWORD   loading; /* number of frames to be loaded */
-	GRECT   Work;
-	WORD    IbarH;
-	WORD    TbarH;
-	UWORD   TbarMask;
-	WORD    TbarActv;
+	BOOL     shaded;
+	UWORD    isBusy;  /* number of loading jobs etc. ..*/
+	UWORD    isDone;  /* .. and that many already done */
+	UWORD    loading; /* number of frames to be loaded */
+	GRECT    Work;
+	WORD     IbarH;
+	WORD     TbarH;
+	UWORD    TbarMask;
+	WORD     TbarActv;
 	struct {
 		WORD Offset;
 		WORD Width;    
-	}       TbarElem[8];
-	void  * Pane;
-	void  * Active;
-	void  * Input;
-	char    Stat[128];
-	char    Info[128];
-	UWORD   HistUsed;
-	UWORD   HistMenu;
-	HISTORY History[1];
+	}        TbarElem[8];
+	LOCATION Location;
+	void   * Pane;
+	void   * Active;
+	void   * Input;
+	char     Stat[128];
+	char     Info[128];
+	UWORD    HistUsed;
+	UWORD    HistMenu;
+	HISTORY  History[1];
 };
 
 
@@ -47,13 +48,13 @@ void    hwWind_undo   (HwWIND, BOOL redo);
 
 extern WORD   hwWind_Mshape;
 extern HwWIND hwWind_Focus;
-#define hwWind_Top      hwWind_Next(NULL)
-HwWIND  hwWind_Next     (HwWIND);
-HwWIND  hwWind_byValue  (long);
-HwWIND  hwWind_byHandle (WORD);
-HwWIND  hwWind_byType   (WORD);
-#define hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
-HwWIND  hwWind_byContainr (CONTAINR);
+#define  hwWind_Top       hwWind_Next(NULL)
+HwWIND   hwWind_Next      (HwWIND);
+HwWIND   hwWind_byHandle  (WORD);
+HwWIND   hwWind_byValue   (long);
+#define  hwWind_byCoord( x, y )   hwWind_byHandle (wind_find (x, y))
+HwWIND   hwWind_byContainr(CONTAINR);
+HwWIND   hwWind_byType    (WORD);
 
 #define hwWind_redraw( HwWIND, GRECT)       window_redraw (&HwWIND->Base, GRECT)
 HwWIND  hwWind_mouse  (WORD mx, WORD my, GRECT * watch);

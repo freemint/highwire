@@ -406,13 +406,14 @@ new_hwWind (const char * name, const char * url)
 	This->Base.sized     = vTab_sized;
 	This->Base.iconified = vTab_iconified;
 	
-	This->shaded  = FALSE;
-	This->isBusy  = 0;
-	This->isDone  = 0;
-	This->loading = 0;
-	This->Pane    = new_containr (NULL);
-	This->Active  = NULL;
-	This->Input   = NULL;
+	This->shaded   = FALSE;
+	This->isBusy   = 0;
+	This->isDone   = 0;
+	This->loading  = 0;
+	This->Location = NULL;
+	This->Pane     = new_containr (NULL);
+	This->Active   = NULL;
+	This->Input    = NULL;
 	containr_register (This->Pane, wnd_hdlr, (long)This);
 	
 	This->HistUsed = 0;
@@ -478,6 +479,10 @@ vTab_destruct (HwWIND This)
 {
 	short i;
 	
+	if (hwWind_Focus == This) {
+		hwWind_Focus = NULL;
+	}
+	
 #ifdef GEM_MENU
 	if (This == hwWind_Top) {
 		HwWIND next = hwWind_Next (This);
@@ -490,12 +495,9 @@ vTab_destruct (HwWIND This)
 #endif
 	for (i = 0; i < This->HistUsed; history_destroy (&This->History[i++]));
 	
+	free_location   (&This->Location);
 	delete_containr ((CONTAINR*)&This->Pane);
 
-	if (hwWind_Focus == This) {
-		hwWind_Focus = NULL;
-	}
-	
 	return window_dtor(This);
 }
 
@@ -1878,6 +1880,9 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		case HW_PageStarted: {
 			union { const void * cv; LOCATION loc; } u;
 			char buf[1024];
+			u.cv = gen_ptr;
+			location_FullName (u.loc, buf, sizeof(buf));
+			
 			if (!wind->loading++) {
 				if (wind->HistUsed) {
 					char * flag = wind->History[wind->HistMenu]->Text;
@@ -1891,13 +1896,13 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 					}
 				}
 				if (!cont->Parent && wind->TbarH) {
-					updt_toolbar (wind, gen_ptr);
+					updt_toolbar (wind, buf);
 				}
 				chng_toolbar  (wind, 0, (UWORD)~TBAR_STOP_MASK, -1);
 			}
-			u.cv = gen_ptr;
-			location_FullName (u.loc, buf, sizeof(buf));
 			if (!cont->Parent) {
+				free_location (&wind->Location);
+				wind->Location = location_share (u.loc);
 				hwWind_setName (wind, buf);
 			} else {
 				hwWind_setInfo (wind, buf, TRUE);
