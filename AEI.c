@@ -563,16 +563,141 @@ menu_reload (ENCODING encoding)
 	}
 }
 
+/*----------------------------------------------------------------------------*/
+static const char *
+bookmark_editor (UWORD type, const char * text,
+                 const char * id, const char * added, const char * url)
+{
+	WORD title;
+	WORD x, y, w, h, n;
+	
+	static OBJECT * tree = NULL;
+	if (!tree) {
+		rsrc_gaddr (R_TREE, BKMEDIT, &tree);
+		title = tree[BKM_BG_TEXT].ob_head;
+		for (n = title; n != BKM_BG_TEXT; n = tree[n].ob_next) {
+			tree[n].ob_flags |= OF_HIDETREE;
+			tree[n].ob_y     =  0;
+		}
+		n = tree[BKM_BG_TEXT].ob_height - tree[title].ob_height;
+		tree[BKM_BG_TEXT].ob_height -= n;
+		tree[BKM_BG_EDIT].ob_y      -= n;
+		tree[ROOT].ob_height        -= n;
+	}
+	
+	switch (type) {
+		case ((UWORD)'B'<<8)|'A': title = BKM_TXT_B_ADD;  break;
+		case ((UWORD)'B'<<8)|'E': title = BKM_TXT_B_EDIT; break;
+		case ((UWORD)'G'<<8)|'A': title = BKM_TXT_G_ADD;  break;
+		case ((UWORD)'G'<<8)|'E': title = BKM_TXT_G_EDIT; break;
+		default:                  title = 0;
+	}
+	if (title) {
+		tree[title].ob_flags &= ~OF_HIDETREE;
+	}
+	tree[BKM_VISITED].ob_flags |= OF_HIDETREE;
+	
+	if (url && (n = strlen (url)) > 0) {
+		char * t = tree[BKM_URL].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_URL].ob_spec.tedinfo->te_txtlen -1;
+		if (n <= l) {
+			memcpy (t,     url, n);
+			memset (t + n, ' ', l - n);
+			t[l] = '\0';
+		} else {
+			memcpy (t,        url, l -3);
+			strcpy (t + l -3, "úú¯");
+		}
+		tree[BKM_URL].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_URL].ob_flags |= OF_HIDETREE;
+	}
+	if (added && (n = strlen (added)) > 0) {
+		char * t = tree[BKM_ADDED].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen -1;
+		char   buf[80];
+		time_t      dt = strtol (added, NULL, 16);
+		struct tm * tm = localtime (&dt);
+		sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
+		         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+		         tm->tm_hour, tm->tm_min, tm->tm_sec);
+		n = strlen (buf);
+		memcpy (t, buf, min (l, n));
+		t += n;
+		while (n++ < l) *(t++) = ' ';
+		*t = '\0';
+		tree[BKM_ADDED].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_ADDED].ob_flags |= OF_HIDETREE;
+	}
+	if (id && (n = strlen (id)) > 0) {
+		char * t = tree[BKM_ID].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_ID].ob_spec.tedinfo->te_txtlen -1;
+		memcpy (t, id, min (l, n));
+		t += n;
+		while (n++ < l) *(t++) = ' ';
+		*t = '\0';
+		tree[BKM_ID].ob_flags &= ~OF_HIDETREE;
+	} else {
+		tree[BKM_ID].ob_flags |= OF_HIDETREE;
+	}
+	if (text && *text) {
+		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
+		size_t l = tree[BKM_EDIT].ob_spec.tedinfo->te_txtlen -1;
+		strncpy (t, text, l);
+		text = t;
+	} else {
+		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
+		*t = '\0';
+		text = t;
+	}
+	tree[BKM_OK].ob_state     &= ~OS_SELECTED;
+	tree[BKM_CANCEL].ob_state &= ~OS_SELECTED;
+	
+	wind_update (BEG_MCTRL);
+	form_center (tree, &x, &y, &w, &h);
+	form_dial   (FMD_START, x,y,w,h, x,y,w,h);
+	objc_draw   (tree, ROOT, MAX_DEPTH, x, y, w, h);
+	if (form_do (tree, BKM_EDIT) != BKM_OK || !*text) {
+		text = NULL;
+	}
+	form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
+	wind_update (END_MCTRL);
+
+	if (title) {
+		tree[title].ob_flags |= OF_HIDETREE;
+	}
+	return text;
+}
+
 /*============================================================================*/
 void
-menu_bookmark_url (LOCATION loc, const char *b_title)
+menu_bookmark_url (LOCATION loc, const char * title)
 {
-	char buf[2 * HW_PATH_MAX];
-	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-		
-	location_FullName (loc, buf, sizeof(buf));
-	add_bookmark (buf, b_title);
-	if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+	HwWIND bmrk = NULL;
+	ULONG ident = WINDOW_IDENT('B','M','R','K');
+	if (!loc) {
+		HwWIND wind = hwWind_Top;
+		if (wind && wind->Base.Ident == ident) {
+			bmrk = wind;
+			wind = hwWind_Next (bmrk);
+		}
+		if (wind) {
+			loc   = wind->Location;
+			title = wind->Base.Name;
+		}
+	}
+	if (loc) {
+		char url[2 * HW_PATH_MAX];
+		location_FullName (loc, url, sizeof(url));
+		if (!title || !*title) {
+			title = bookmark_editor (((UWORD)'B'<<8)|'A', url, NULL, NULL, url);
+		}
+		if (title && add_bookmark (url, title)
+		          && (bmrk || (bmrk = (HwWIND)window_byIdent (ident)) != NULL)) {
+			hwWind_history (bmrk, bmrk->HistMenu, TRUE);
+		}
+	}
 }
 
 /*============================================================================*/
@@ -760,10 +885,8 @@ handle_menu (WORD title, WORD item, UWORD state)
 		case M_INFO:      menu_info();                                break;
 		case M_QUIT:      menu_quit();                                break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);             break;
-		case M_OPEN_BOOKMARKS: menu_openbookmarks();             break;
-		case M_BOOKMARK_URL:   menu_bookmark_url
-		                                (hwWind_ActiveFrame(hwWind_Top)->Location,
-		                                 hwWind_Top->Base.Name); break;
+		case M_OPEN_BOOKMARKS: menu_openbookmarks();           break;
+		case M_BOOKMARK_URL:   menu_bookmark_url (NULL, NULL); break;
 #if (_HIGHWIRE_ENCMENU_ == 1)
 		case M_W1252:     menu_reload (ENCODING_WINDOWS1252); break;
 		case M_I8859_2:   menu_reload (ENCODING_ISO8859_2);   break;
@@ -880,109 +1003,6 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 }
 
 /*----------------------------------------------------------------------------*/
-static const char *
-bookmark_editor (UWORD type, const char * text,
-                 const char * id, const char * added, const char * url)
-{
-	WORD title;
-	WORD x, y, w, h, n;
-	
-	static OBJECT * tree = NULL;
-	if (!tree) {
-		rsrc_gaddr (R_TREE, BKMEDIT, &tree);
-		title = tree[BKM_BG_TEXT].ob_head;
-		for (n = title; n != BKM_BG_TEXT; n = tree[n].ob_next) {
-			tree[n].ob_flags |= OF_HIDETREE;
-			tree[n].ob_y     =  0;
-		}
-		n = tree[BKM_BG_TEXT].ob_height - tree[title].ob_height;
-		tree[BKM_BG_TEXT].ob_height -= n;
-		tree[BKM_BG_EDIT].ob_y      -= n;
-		tree[ROOT].ob_height        -= n;
-	}
-	
-	switch (type) {
-		case ((UWORD)'B'<<8)|'A': title = BKM_TXT_B_ADD;  break;
-		case ((UWORD)'B'<<8)|'E': title = BKM_TXT_B_EDIT; break;
-		case ((UWORD)'G'<<8)|'A': title = BKM_TXT_G_ADD;  break;
-		case ((UWORD)'G'<<8)|'E': title = BKM_TXT_G_EDIT; break;
-		default:                  title = 0;
-	}
-	if (title) {
-		tree[title].ob_flags &= ~OF_HIDETREE;
-	}
-	tree[BKM_VISITED].ob_flags |= OF_HIDETREE;
-	
-	if (url && (n = strlen (url)) > 0) {
-		char * t = tree[BKM_URL].ob_spec.tedinfo->te_ptext;
-		size_t l = tree[BKM_URL].ob_spec.tedinfo->te_txtlen -1;
-		memcpy (t, url, min (l, n));
-		t += n;
-		while (n++ < l) *(t++) = ' ';
-		*t = '\0';
-		tree[BKM_URL].ob_flags &= ~OF_HIDETREE;
-	} else {
-		tree[BKM_URL].ob_flags |= OF_HIDETREE;
-	}
-	if (added && (n = strlen (added)) > 0) {
-		char * t = tree[BKM_ADDED].ob_spec.tedinfo->te_ptext;
-		size_t l = tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen -1;
-		char   buf[80];
-		time_t      dt = strtol (added, NULL, 16);
-		struct tm * tm = localtime (&dt);
-		sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
-		         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-		         tm->tm_hour, tm->tm_min, tm->tm_sec);
-		n = strlen (buf);
-		memcpy (t, buf, min (l, n));
-		t += n;
-		while (n++ < l) *(t++) = ' ';
-		*t = '\0';
-		tree[BKM_ADDED].ob_flags &= ~OF_HIDETREE;
-	} else {
-		tree[BKM_ADDED].ob_flags |= OF_HIDETREE;
-	}
-	if (id && (n = strlen (id)) > 0) {
-		char * t = tree[BKM_ID].ob_spec.tedinfo->te_ptext;
-		size_t l = tree[BKM_ID].ob_spec.tedinfo->te_txtlen -1;
-		memcpy (t, id, min (l, n));
-		t += n;
-		while (n++ < l) *(t++) = ' ';
-		*t = '\0';
-		tree[BKM_ID].ob_flags &= ~OF_HIDETREE;
-	} else {
-		tree[BKM_ID].ob_flags |= OF_HIDETREE;
-	}
-	if (text && *text) {
-		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
-		size_t l = tree[BKM_EDIT].ob_spec.tedinfo->te_txtlen -1;
-		strncpy (t, text, l);
-		text = t;
-	} else {
-		char * t = tree[BKM_EDIT].ob_spec.tedinfo->te_ptext;
-		*t = '\0';
-		text = t;
-	}
-	tree[BKM_OK].ob_state     &= ~OS_SELECTED;
-	tree[BKM_CANCEL].ob_state &= ~OS_SELECTED;
-	
-	wind_update (BEG_MCTRL);
-	form_center (tree, &x, &y, &w, &h);
-	form_dial   (FMD_START, x,y,w,h, x,y,w,h);
-	objc_draw   (tree, ROOT, MAX_DEPTH, x, y, w, h);
-	if (form_do (tree, BKM_EDIT) != BKM_OK || !*text) {
-		text = NULL;
-	}
-	form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
-	wind_update (END_MCTRL);
-
-	if (title) {
-		tree[title].ob_flags |= OF_HIDETREE;
-	}
-	return text;
-}
-
-/*----------------------------------------------------------------------------*/
 static void
 copy_url_2_scrap (LOCATION loc)
 {
@@ -1074,15 +1094,18 @@ rpopup_open (WORD mx, WORD my)
 					ldr->Encoding = frame->Encoding;
 				}
 			}
-			
-			} break;
+		}	break;
 
 		case RPOP_COPY: 
 			copy_url_2_scrap (loc);
 			break;
 
 		case RPOP_BOOKM: 
-			menu_bookmark_url (loc, wind->Base.Name);		
+			if (!frame->Container->Parent) {
+				menu_bookmark_url (NULL, NULL);
+			} else {
+				menu_bookmark_url (loc, frame->Container->Name);		
+			}
 			break;
 	}
 }
@@ -1160,8 +1183,7 @@ rpoplink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RLINK_BOOKM:
 			/* we need a method to grab the name of the link */
-			addr = bookmark_editor (((UWORD)'B'<<8)|'A', addr, NULL, NULL, addr);
-			if (addr) menu_bookmark_url (loc, addr);
+			menu_bookmark_url (loc, NULL);
 			break;
 	}
 	
@@ -1194,8 +1216,9 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 	WORDITEM word   = find_word (frame, mx, my);
 	LOCATION imgloc = word->image->source;
 	
-	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_DISABLED, 0);
-	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_DISABLED, 0);
+	objc_change (rpopimg, RIMG_SAVE,  0, 0,0,0,0, OS_DISABLED, 0);
+	objc_change (rpopimg, RIMG_BOOKM, 0, 0,0,0,0, OS_DISABLED, 0);
+	objc_change (rpopimg, RIMG_COPY,  0, 0,0,0,0, OS_DISABLED, 0);
 	
 	switch (rpop_do (rpopimg, RIMGPOP, mx, my)) {
 	
@@ -1225,8 +1248,9 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 			break;
 	}
 	
-	objc_change (rpopimg, RIMG_SAVE, 0, 0,0,0,0, OS_NORMAL, 0);
-	objc_change (rpopimg, RIMG_COPY, 0, 0,0,0,0, OS_NORMAL, 0);
+	objc_change (rpopimg, RIMG_SAVE,  0, 0,0,0,0, OS_NORMAL, 0);
+	objc_change (rpopimg, RIMG_BOOKM, 0, 0,0,0,0, OS_NORMAL, 0);
+	objc_change (rpopimg, RIMG_COPY,  0, 0,0,0,0, OS_NORMAL, 0);
 }
 
 /*============================================================================*/
@@ -1312,8 +1336,7 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RIMG_BOOKM: 
 			/* we need a method to grab the name of the link */
-			addr = bookmark_editor (((UWORD)'B'<<8)|'A', addr, NULL, NULL, addr);
-			if (addr) menu_bookmark_url (loc, addr);
+			menu_bookmark_url (loc, NULL);
 			break;
 	}
 	
