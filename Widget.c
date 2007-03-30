@@ -329,6 +329,100 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 }
 
 
+/*============================================================================*/
+void
+progress_bar (ULONG size, ULONG part, const char * txt0, const char * txt1)
+{
+	static char string_0[] = "123456789a123456789b123456789d123456789e12345";
+	static char string_1[] = "123456789a123456789b123456789d123456789e12345";
+	static TEDINFO rs_tedinfo[] = {
+		{ string_0, NULL, NULL, 5, 6, 0, 0x1180, 0x0, -1, 46,1 },
+		{ string_1, NULL, NULL, 5, 6, 0, 0x1180, 0x0, -1, 46,1 },
+	};
+	static OBJECT rs_object[] = {
+		{ -1, 1, 4, G_BOX,  0x400,   OS_OUTLINED, {0x00021100l}, 1,1,36,4 },
+		{  3, 2, 2, G_BOX,  0x200,   OS_SELECTED, {0x000111C0l}, 2,1,32,1 },
+		{  1,-1,-1, G_BOX,  OF_NONE, OS_NORMAL,   {0x00003173l}, 0,0, 7,1 },
+		{  4,-1,-1, G_TEXT, 0x400,   OS_NORMAL,   {0l/*rs_tedinfo[0]*/},
+		                                                      1,2050, 1569,2048 },
+		{  0,-1,-1, G_TEXT, 0x420,   OS_NORMAL,   {0l/*rs_tedinfo[1]*/},
+		                                                      1,   3, 1569,2048 },
+	};
+	if (!rs_object[3].ob_spec.tedinfo) { /* initial call */
+		WORD i;
+		rs_object[3].ob_spec.tedinfo = &rs_tedinfo[0];
+		rs_object[4].ob_spec.tedinfo = &rs_tedinfo[1];
+		for (i = 0; i < numberof(rs_object); rsrc_obfix (rs_object, i++));
+		rs_object[4].ob_spec.tedinfo = NULL;
+	}
+	if (size) {
+		WORD obj;
+		WORD x, y, w, h;
+		if (!rs_object[4].ob_spec.tedinfo) { 
+			rs_object[4].ob_spec.tedinfo = &rs_tedinfo[1];
+			wind_update (BEG_MCTRL);
+			form_center (rs_object, &x, &y, &w, &h);
+			form_dial   (FMD_START, x,y,w,h, x,y,w,h);
+			rs_object[2].ob_width = -1;
+			string_0[0] = '\0';
+			string_1[0] = '\0';
+			obj = ROOT;
+		} else {
+			x = rs_object[0].ob_x;
+			y = rs_object[0].ob_y;
+			w = rs_object[0].ob_width;
+			h = rs_object[0].ob_height;
+			obj = -1;
+		}
+		part = ((part <<8) + size -1) / size;
+		if (rs_object[2].ob_width != part) {
+			if (!part) {
+				rs_object[2].ob_flags |= OF_HIDETREE;
+				if (obj < ROOT) obj = 1;
+			} else {
+				rs_object[2].ob_flags &= ~OF_HIDETREE;
+				if (obj < ROOT) obj = (rs_object[2].ob_width < part ? 2 : 1);
+			}
+			rs_object[2].ob_width =  min (part, rs_object[1].ob_width);
+		}
+		if (txt0) {
+			size_t len = strlen (txt0);
+			if (len >= sizeof (string_0) -1) {
+				len = sizeof (string_0) -2;
+				string_0[len] = '¯';
+			} else { 
+				memset (string_0 + len, ' ', sizeof (string_0) -1 - len);
+			}
+			memcpy (string_0, txt0, len);
+			obj = (obj < ROOT ? 3 : ROOT);
+		}
+		if (txt1) {
+			size_t len = strlen (txt1);
+			if (len >= sizeof (string_1) -1) {
+				len = sizeof (string_1) -2;
+				string_1[len] = '¯';
+			} else { 
+				memset (string_1 + len, ' ', sizeof (string_1) -1 - len);
+			}
+			memcpy (string_1, txt1, len);
+			obj = (obj < ROOT ? 4 : ROOT);
+		}
+		if (obj >= ROOT) {
+			objc_draw   (rs_object, obj, MAX_DEPTH, x,y,w,h);
+		}
+	
+	} else { /* !size */
+		WORD x, y, w, h;
+		if (rs_object[4].ob_spec.tedinfo) { 
+			form_center (rs_object, &x, &y, &w, &h);
+			form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
+			wind_update (END_MCTRL);
+			rs_object[4].ob_spec.tedinfo = NULL;
+		}
+	}
+}
+
+
 /*******************************************************************************
  *
  * User Interface functions.  Here they are realized by form_alerts but could

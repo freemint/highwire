@@ -125,6 +125,9 @@ WORD HW_form_do    (OBJECT *, WORD next);
 #endif
 WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
 
+void progress_bar (ULONG size, ULONG part,
+                   const char * txt0, const char * txt1);
+
 #ifndef VARIADIC            /* Gnu C provides a (non-portable) method to have */
 # ifndef __GNUC__           /* the compiler check the arguments of a variadic */
 #  define VARIADIC(v,a)     /* function against its format string if this is  */
