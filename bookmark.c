@@ -539,6 +539,118 @@ save_bookmarks (void)
 	return TRUE;
 }
 
+/*==============================================================================
+ * extract useable links from the file 'name' and add them to the bookmark file
+*/
+BOOL
+pick_bookmarks (const char * name,
+                void (*progress)(ULONG, ULONG, const char *, const char *))
+{
+	BOOL     done = FALSE;
+	BKM_LINE line = NULL;
+	ULONG    size = 0ul;
+	char   * fbuf = NULL;
+	char   * p    = NULL;
+	char   * pend = NULL;
+	
+	if (name && *name) {
+		struct stat st;
+		union { const char * c; char * v; } u;
+		u.c = name;
+		st.st_size = 0;
+		if (stat (u.v, &st) == E_OK && (size = st.st_size) > 0
+		    && (fbuf = malloc (max (size, 100) +1)) != NULL) {
+			FILE * file;
+			sprintf (fbuf, "Import: '%.90s'",
+			         (p = strrchr (name, '\\')) != NULL ? p +1 :
+			         (p = strrchr (name, '/') ) != NULL ? p +1 : name);
+			if (progress) (*progress)(size, 0, NULL, fbuf);
+			if ((file = fopen (name, "rb")) != NULL) {
+				fread (fbuf, 1, size, file);
+				*(pend = (p = fbuf) + size) = '\0';
+				while ((p = memchr (p, '\0', size)) != NULL) *(p++) = ' ';
+				p = fbuf;
+				while ((p = memchr (p, '\n', size)) != NULL) *(p++) = ' ';
+				p = fbuf;
+				if (progress) (*progress)(size, 1, NULL, NULL);
+				fclose (file);
+			}
+		}
+	}
+	while (p < pend) {
+		char * url = NULL;
+		char * txt = NULL;
+		char * tag = memchr (p, '<', pend - p);
+		if (!tag) {
+			if (progress) (*progress)(size, size, NULL, NULL);
+			p = pend;
+			break;
+		}
+		if (strnicmp (++tag, "A ", 2) == 0) {
+			if (progress) (*progress)(size, p - fbuf, NULL, NULL);
+			p = tag +2;
+			if ((tag = memchr (p, '>', pend - p)) == NULL) tag  = pend -1;
+			else                                           *tag = '\0';
+			while (*p && strnicmp (p, "HREF=", 5) != 0) p++;
+			if (*p && *(p += 5)) {
+				char * end = (*p == '"'  ? strchr (p +1, '"') :
+				              *p == '\'' ? strchr (p +1, '\'') : NULL);
+				if (end) {
+					p++;
+				} else if (*p =='/' || isalnum (*p)) { 
+					end = p;
+					while (*end && !isspace (*(++end)));
+				}
+				if (end) {
+					*end = '\0';
+					url  = p;
+					if (progress) (*progress)(size, url - fbuf, "", url);
+				}
+			}
+		}
+		if (url && (p = strstr (tag +1, "</")) != NULL) {
+			while (strnicmp (p +2, "A>", 2) != 0
+			       && (p = strstr (p +4, "</")) != NULL);
+			if (p) {
+				*p  = '\0';
+				txt = tag;
+				tag = p +4;
+				while (isspace(*(++txt)));
+				while (p > txt && isspace(*(--p))) *p = '\0';
+				if (progress) (*progress)(size, txt - fbuf, txt, NULL);
+			}
+		}
+		if (url) {
+			char buff[1024];
+			if (!line) {
+				sprintf (buff, "Import: '%.90s'",
+				         (p = strrchr (name, '\\')) != NULL ? p +1 :
+				         (p = strrchr (name, '/') ) != NULL ? p +1 : name);
+				if (add_bookmark_group (NULL, buff)) {
+					line = bkm_search (NULL, "b", FALSE);
+					bkm_flush();
+					done = TRUE;
+				} else {
+					break; /* memory exhausted or file format error */
+				}
+			}
+			wr_lnk (buff, 0L, url, (txt && *txt ? txt : url));
+			if ((line = bkm_create (line, buff)) != NULL) {
+				bkm_flush();
+				done = TRUE;
+			} else {
+				break; /* memory exhausted */
+			}
+		}
+		p = tag +1;
+		if (progress) (*progress)(size, p - fbuf, NULL, NULL);
+	}
+	if (fbuf) free (fbuf);
+	if (progress) (*progress)(0, 0, NULL, NULL);
+	
+	return done;
+}
+
 
 /*============================================================================*/
 BOOL

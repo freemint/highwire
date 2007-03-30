@@ -8,6 +8,10 @@ long bookmark_id2date (const char * id, char * buff, size_t b_len);
 
 BOOL read_bookmarks (void);
 BOOL save_bookmarks (void);
+BOOL pick_bookmarks (const char * name,
+                     void (*progress)(ULONG size, ULONG part,
+                                      const char * txt0, const char * txt1));
+
 BOOL add_bookmark       (const char * url, const char *title);
 BOOL del_bookmark       (const char * lnk);
 BOOL pos_bookmark       (const char * id,  BOOL dnNup);
