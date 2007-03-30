@@ -2,7 +2,6 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>   /* bookmark_editor */
 
 #ifdef __PUREC__
 #include <tos.h>
@@ -566,7 +565,7 @@ menu_reload (ENCODING encoding)
 /*----------------------------------------------------------------------------*/
 static const char *
 bookmark_editor (UWORD type, const char * text,
-                 const char * id, const char * added, const char * url)
+                 const char * id, const char * url)
 {
 	WORD title;
 	WORD x, y, w, h, n;
@@ -612,20 +611,14 @@ bookmark_editor (UWORD type, const char * text,
 	} else {
 		tree[BKM_URL].ob_flags |= OF_HIDETREE;
 	}
-	if (added && (n = strlen (added)) > 0) {
+	if (id && bookmark_id2date (id,tree[BKM_ADDED].ob_spec.tedinfo->te_ptext,
+	                               tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen)) {
 		char * t = tree[BKM_ADDED].ob_spec.tedinfo->te_ptext;
 		size_t l = tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen -1;
-		char   buf[80];
-		time_t      dt = strtol (added, NULL, 16);
-		struct tm * tm = localtime (&dt);
-		sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
-		         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-		         tm->tm_hour, tm->tm_min, tm->tm_sec);
-		n = strlen (buf);
-		memcpy (t, buf, min (l, n));
-		t += n;
-		while (n++ < l) *(t++) = ' ';
-		*t = '\0';
+		if ((n = strlen (t)) < l) {
+			memset (t + n, ' ', l - n);
+			t[l] = '\0';
+		}
 		tree[BKM_ADDED].ob_flags &= ~OF_HIDETREE;
 	} else {
 		tree[BKM_ADDED].ob_flags |= OF_HIDETREE;
@@ -691,7 +684,7 @@ menu_bookmark_url (LOCATION loc, const char * title)
 		char url[2 * HW_PATH_MAX];
 		location_FullName (loc, url, sizeof(url));
 		if (!title || !*title) {
-			title = bookmark_editor (((UWORD)'B'<<8)|'A', url, NULL, NULL, url);
+			title = bookmark_editor (((UWORD)'B'<<8)|'A', url, NULL, url);
 		}
 		if (title && add_bookmark (url, title)
 		          && (bmrk || (bmrk = (HwWIND)window_byIdent (ident)) != NULL)) {
@@ -1430,14 +1423,14 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 				url  = NULL;
 			}
 			txt_bookmark (id, buff, sizeof(buff));
-			if ((text = bookmark_editor (type, buff, id, id +2, url)) != NULL) {
+			if ((text = bookmark_editor (type, buff, id, url)) != NULL) {
 				reload = txt_bookmark (id, strcpy (buff, text), 0);
 			}
 		}	break;
 		
 		case RBKM_ADDGRP: {
 			UWORD        type = ((UWORD)'G'<<8)|'A';
-			const char * text = bookmark_editor (type, NULL, NULL, NULL, NULL);
+			const char * text = bookmark_editor (type, NULL, NULL, NULL);
 			if (text)  reload = add_bookmark_group (lnk, text);
 		}	break;
 		

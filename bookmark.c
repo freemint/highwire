@@ -18,7 +18,7 @@
 #include "bookmark.h"
 
 
-#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-file-2>\n"
+#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-file-3>"
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
@@ -28,23 +28,58 @@ const char * bkm_CSS  = NULL;
 #define open_bookmarkCss(mode) open_default (&bkm_CSS, _HIGHWIRE_BKM_CSS_, mode)
 #define open_bookmarks(mode)   open_default (&bkm_File,_HIGHWIRE_BOOKMARK_,mode)
 
+
+/*============================================================================*/
+long
+bookmark_id2date (const char * id, char * buff, size_t b_len)
+{
+	time_t dt = (id && (*id == 'L' || *id == 'G') && id[1] == ':'
+	             ? (strtoul (id +2, NULL, 16) >>2) | 0x40000000ul : 0ul);
+	if (buff && b_len) {
+		char   buf[80];
+		size_t len;
+		if (dt) {
+			struct tm * tm  = localtime (&dt);
+			len = sprintf (buf, "%04i-%02i-%02i %02i:%02i:%02i",
+			               tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+			               tm->tm_hour, tm->tm_min, tm->tm_sec);
+		} else {
+			len = strlen (strcpy (buf, "<invalid>"));
+		}
+		if (len >= b_len) len = b_len -1;
+		memcpy (buff, buf, len);
+		buff[len] = '\0';
+	}
+	return dt;
+}
+
+/*----------------------------------------------------------------------------*/
+static ULONG
+get_id (void)
+{
+	static ULONG _id = 0uL;
+	ULONG        id  = time(NULL) <<2;
+	return (_id = (id > _id ? id : _id +1));
+}
+
+
 /*----------------------------------------------------------------------------*/
 static char *
-wr_grp (char * buff, long id_class, const char * title)
+wr_grp (char * buff, const char * title)
 {
+	ULONG id_class = get_id();
 	sprintf (buff, "<DT CLASS='GRP' ID='G:%08lX'><B>%s</B></DT>\n"
-	               "<DL CLASS='G:%08lX'>", 
-	               id_class, title,   id_class);
+	               "<DL CLASS='G:%08lX'>", id_class, title,   id_class);
 	return buff;
 }
 
 /*----------------------------------------------------------------------------*/
 static char *
-wr_lnk (char * buff, long id, long visit, const char * url, const char * title)
+wr_lnk (char * buff, long visit, const char * url, const char * title)
 {
 	sprintf (buff, "<DT CLASS='LNK' ID='L:%08lX'><A TARGET='_hw_top'"
 	               " LAST_VISIT='%08lX' HREF='%s'>%s</A></DT>",
-	               id, visit, url, title);
+	               get_id(), visit, url, title);
 	return buff;
 }
 
@@ -458,25 +493,24 @@ read_bookmarks (void) {
 		bkm_dump ("bkm_search");
 	}
 	if (!file && (file = open_bookmarks ("wb")) != NULL) {
-		long now = time (NULL) -5;
 		char buff[1024];
 		fputs (tmpl_head, file);
-		fprintf (file, "<BODY ID='%08lX'>\n", now -1);
+		fprintf (file, "<BODY ID='%08lX'>\n", get_id());
 		fputs ("<DL>\n", file);
-		fputs (strcat (wr_grp (buff, now++, "HighWire Project"), "\n"), file);
-		fputs (strcat (wr_lnk (buff, now++, 0L,
+		fputs (strcat (wr_grp (buff, "HighWire Project"), "\n"), file);
+		fputs (strcat (wr_lnk (buff, 0L,
 		       "http://highwire.atari-users.net", "HighWire Homepage"),
 		       "\n"), file);
-		fputs (strcat (wr_lnk (buff, now++, 0L,
+		fputs (strcat (wr_lnk (buff, 0L,
 		       "http://www.atariforums.com/index.php?20", "HighWire Forum"),
 		       "\n"), file);
-		fputs (strcat (wr_lnk (buff, now++, 0L,
+		fputs (strcat (wr_lnk (buff, 0L,
 		       "http://www.atari-users.net/mailman/listinfo/highwire",
 		       "Developers Mailing lists"), "\n"), file);
-		fputs (strcat (wr_lnk (buff, now++, 0L,
+		fputs (strcat (wr_lnk (buff, 0L,
 		       "http://www.atari-users.net/mailman/listinfo/highwire-users",
 		       "Users Mailing lists"), "\n"), file);
-		fputs (strcat (wr_lnk (buff, now++, 0L,
+		fputs (strcat (wr_lnk (buff, 0L,
 		       "http://highwire.atari-users.net/mantis/", "Bugtracker"),
 		       "\n"), file);
 		fputs ("</DL>\n", file);
@@ -514,9 +548,8 @@ add_bookmark (const char * url, const char * title)
 	BKM_LINE   line = bkm_search (NULL, "?", FALSE);
 	if (!line) line = bkm_search (NULL, "!", TRUE); /* empty file? */
 	if (line) {
-		long now = time (NULL);
 		char buff[1024];
-		if (bkm_create (line, wr_lnk (buff, now, now, url, title))) {
+		if (bkm_create (line, wr_lnk (buff, 0L, url, title))) {
 			bkm_flush();
 			done = TRUE;
 		}
@@ -615,15 +648,14 @@ add_bookmark_group (const char * lnk, const char *title)
 	BKM_LINE line = (ins ? bkm_search (NULL, lnk,  TRUE)
 	                     : bkm_search (NULL, "!", FALSE));
 	if (line) {
-		long now = time (NULL);
 		char buff[1024], * p;
 		BKM_LINE group;
 		char     id[12];
 		if (!title) {
-			sprintf (id, "G:%08lX", now);
+			sprintf (id, "G:%08lX", get_id() -1);
 			title = id;
 		}
-		if ((p = strchr (wr_grp (buff, now, title), '\n')) != NULL) {
+		if ((p = strchr (wr_grp (buff, title), '\n')) != NULL) {
 			*(p++) = '\0';
 		}
 		if ((group = bkm_create (line->Prev, buff)) != NULL) {

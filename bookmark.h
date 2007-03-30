@@ -4,6 +4,8 @@
 extern const char * bkm_File;
 extern const char * bkm_CSS;
 
+long bookmark_id2date (const char * id, char * buff, size_t b_len);
+
 BOOL read_bookmarks (void);
 BOOL save_bookmarks (void);
 BOOL add_bookmark       (const char * url, const char *title);
