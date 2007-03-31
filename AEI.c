@@ -1347,7 +1347,7 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 	const char * grp = NULL;
 	WORD         i;
 	for (i = rpopbkm->ob_head; i > 0; i = rpopbkm[i].ob_next) {
-		if (rpopbkm[i].ob_flags & OF_SELECTABLE /*&& i != RBKM_IMPORT*/) {
+		if (rpopbkm[i].ob_flags & OF_SELECTABLE && i != RBKM_IMPORT) {
 			objc_change (rpopbkm, i, 0, 0,0,0,0, OS_DISABLED, 0);
 		}
 	}
@@ -1440,6 +1440,14 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 				char * url = word->link->address;
 				fwrite (url, 1, strlen(url), file);
 				fclose (file);
+			}
+		}	break;
+		
+		case RBKM_IMPORT: {
+			char file[HW_PATH_MAX] = "";
+			const char * label = "HighWire: Import Links from";
+			if (file_selector (label, NULL, NULL, file, sizeof(file)) && *file) {
+				reload = pick_bookmarks (file, progress_bar);
 			}
 		}	break;
 	}
