@@ -763,20 +763,22 @@ txt_bookmark (const char * id, char * rw_buf, size_t lenNwr)
 				bkm_flush();
 				done = TRUE;
 			} else {
+				char * p1 = line->Buff;
 				size_t l1 = line->Text - line->Buff;
-				char * b3 = line->Text + line->Text_ln;
-				size_t l3 = strlen (b3);
+				char * p3 = line->Text + line->Text_ln;
+				size_t l3 = strlen (p3);
 				if ((line = bkm_create (line, NULL, l1 + len + l3)) != NULL) {
 					char * p = line->Buff;
-					memcpy (p,        line->Buff, l1);
-					memcpy (p += l1,  rw_buf,     len);
-					strcpy (p += len, b3);
+					memcpy (p,        p1,     l1);
+					memcpy (p += l1,  rw_buf, len);
+					strcpy (p += len, p3);
 					bkm_delete (line->Prev);
 					bkm_flush();
 					done = TRUE;
 				}
 			}
 		}
+		bkm_dump ("txt_bookmark");
 	}
 	return done;
 }
