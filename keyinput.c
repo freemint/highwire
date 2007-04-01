@@ -11,7 +11,6 @@
 #include <gem.h>
 
 #include "global.h"
-#include "bookmark.h"
 #include "Loader.h"
 #include "Containr.h"
 #include "Location.h"
