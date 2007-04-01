@@ -1,5 +1,5 @@
 ResourceMaster v2.072
-#C 9@0@0@
+#C 9@1@0@
 #N 99@0@AZAazA___  _@AZAazA090___  _@@@
 #FoHRD@rsm2out@HRD@hrd@@@ [HRD-File@
 #FoC-Header@rsm2out@C-Header@h@@@ [C-Header@
@@ -125,4 +125,5 @@ ResourceMaster v2.072
 #O 11@28@BKM_TXT_B_EDIT@@
 #O 12@28@BKM_TXT_G_ADD@@
 #O 13@28@BKM_TXT_G_EDIT@@
-#c 30792@
+#S 0@4@BKMOUTDATED@@
+#c 3766@

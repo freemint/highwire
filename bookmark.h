@@ -6,7 +6,7 @@ extern const char * bkm_CSS;
 
 long bookmark_id2date (const char * id, char * buff, size_t b_len);
 
-BOOL read_bookmarks (void);
+BOOL read_bookmarks (char ** old_file);
 BOOL save_bookmarks (void);
 BOOL pick_bookmarks (const char * name,
                      void (*progress)(ULONG size, ULONG part,

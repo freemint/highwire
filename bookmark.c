@@ -11,14 +11,16 @@
 # include <ext.h>
 #else
 # include <sys/stat.h>
+# ifdef __GNUC__
+#  include <unistd.h>
+# endif
 #endif
 
-#include "file_sys.h"
 #include "global.h"
 #include "bookmark.h"
 
 
-#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-file-3>"
+#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-File-3>"
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
@@ -484,20 +486,29 @@ static const char tmpl_css[] =
 
 /*============================================================================*/
 BOOL
-read_bookmarks (void) {
+read_bookmarks (char ** old_file)
+{
+	BOOL   ok   = TRUE;
 	FILE * file = NULL;
+	if (old_file) {
+		*old_file = NULL;
+	}
 	if ((file = open_bookmarks ("r")) != NULL) { 
 		size_t len = strchr (tmpl_head, '>') - tmpl_head +1;
 		char   buff[1024];
 		if (!fgets (buff, (int)sizeof(buff), file)) {
-			buff[0] = '\n';
+			buff[0] = '\0';
 		}
 		fclose (file);
-		if (strncmp (buff, tmpl_head, len) != 0) {
+		if (strncmp (buff, tmpl_head, len) == 0) {
+			ok = TRUE; /* version matches */
+		
+		} else {
 			char * bak_file = (bkm_File ? strdup (bkm_File) : NULL);
 			if (bak_file) {
 				const char * bak_name = "book-old.htm";
 				char       * ptr      = strrchr (bak_file, '\\');
+				if (!ptr)    ptr      = strrchr (bak_file, '/');
 				if (ptr) {
 					strcpy (++ptr, bak_name);
 					unlink (bak_file);
@@ -515,11 +526,13 @@ read_bookmarks (void) {
 							free (u.v);
 							bkm_CSS = NULL;
 						}
-						hwUi_info (NULL, "Outdated '%s'\nsaved as '%s'",
-						           _HIGHWIRE_BOOKMARK_, bak_name);
 					}
 				}
-				free (bak_file);
+				if (old_file) {
+					*old_file = bak_file;
+				} else {
+					free (bak_file);
+				}
 			}
 			file = NULL;
 		}
@@ -546,6 +559,7 @@ read_bookmarks (void) {
 		line = bkm_create     (line, tmpl_tail, 0uL);
 		bkm_flush();
 		bkm_clear();
+		ok = TRUE; /* version matches now */
 		
 		if ((file = open_bookmarkCss ("r")) != NULL) {
 			/* Bookmarks CSS exists, read or parse or load? */
@@ -557,7 +571,7 @@ read_bookmarks (void) {
 			fclose(file);
 		}
 	}
-	return TRUE;
+	return ok;
 }
 
 /*============================================================================*/

@@ -2,14 +2,13 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> /* for memcmp() */
 
 #ifdef __PUREC__
 #include <tos.h>
-#include <string.h> /* for memcmp() */
 
 #else /* LATTICE || __GNUC__ */
 #include <mintbind.h>
-#include <string.h> /* for memcmp() */
 #endif
 
 #include <gemx.h>
@@ -77,9 +76,10 @@ static void set_timer (long msec)
 int
 main (int argc, char **argv)
 {
-	WORD info, u;
-	BOOL quit = FALSE;
-	long gdostype;
+	WORD   info, u;
+	long   gdostype;
+	char * old_bookm = NULL;
+	BOOL   quit      = FALSE;
 
 	if (appl_init() < 0) {
 		exit (EXIT_FAILURE);
@@ -155,11 +155,11 @@ main (int argc, char **argv)
 	if (!rsrc_load(_HIGHWIRE_RSC_)) {
 		hwUi_fatal (NULL, _ERROR_NORSC_);
 	}
-	rsrc_gaddr(R_TREE, MENUTREE, &menutree);
-	rsrc_gaddr(R_TREE, RPOPUP,   &rpopup);
-	rsrc_gaddr(R_TREE, RLINKPOP, &rpoplink);
-	rsrc_gaddr(R_TREE, RIMGPOP,  &rpopimg);
-	rsrc_gaddr(R_TREE, RBKMPOP,  &rpopbkm);
+	rsrc_gaddr (R_TREE, MENUTREE, &menutree);
+	rsrc_gaddr (R_TREE, RPOPUP,   &rpopup);
+	rsrc_gaddr (R_TREE, RLINKPOP, &rpoplink);
+	rsrc_gaddr (R_TREE, RIMGPOP,  &rpopimg);
+	rsrc_gaddr (R_TREE, RBKMPOP,  &rpopbkm);
 
 	menu_bar    (menutree, MENU_INSTALL);
 	menu_icheck (menutree, M_COOKIES, cfg_AllowCookies);
@@ -172,12 +172,52 @@ main (int argc, char **argv)
 	read_config();
 
 	/* load/create bookmark.htm file */
-	read_bookmarks();
+	if (read_bookmarks (&old_bookm) && old_bookm) {
+		char * alert = NULL;
+		char * beg   = NULL;
+		char * end   = NULL;
+		if (rsrc_gaddr (R_STRING, BKMOUTDATED, &alert)) {
+			if ((beg = strchr (alert, '"')) != NULL) {
+				end = strchr (++beg, '"');
+			}
+		}
+		if (beg && end) {
+			const char * p = _HIGHWIRE_BOOKMARK_;
+			while (*p && beg < end) {
+				*(beg++) = *(p++);
+			}
+			if (beg < end) {
+				strcpy (beg, end);
+			}
+			if ((beg = strchr (end +1, '"')) != NULL) {
+				end = strchr (++beg, '"');
+			}
+		}
+		if (beg && end) {
+			char *     p = strrchr (old_bookm, '\\');
+			if (!p && (p = strrchr (old_bookm, '/')) == NULL) p = old_bookm;
+			else                                              p++;
+			while (*p && beg < end) {
+				*(beg++) = *(p++);
+			}
+			if (beg < end) {
+				strcpy (beg, end);
+			}
+		
+		} else {
+			hwUi_fatal ("RSC file", "damaged or outdated!");
+			/* we never arrive at this line due to previous exit() */
+		}
+		if (form_alert (1, alert) != 1) {
+			free (old_bookm);
+			old_bookm = NULL;
+		}
+	}
 
-	if (appl_xgetinfo(12, &info, &u, &u, &u) && (info & 8)) {
-/*	if (appl_xgetinfo(AES_MESSAGE, &info, &u, &u, &u) && (info & 8))*/
+	if (appl_xgetinfo (12, &info, &u, &u, &u) && (info & 8)) {
+/*	if (appl_xgetinfo (AES_MESSAGE, &info, &u, &u, &u) && (info & 8))*/
 		/* we know about AP_TERM message */
-		shel_write(SWM_NEWMSG, 1, 0, NULL, NULL);
+		shel_write (SWM_NEWMSG, 1, 0, NULL, NULL);
 	}
 	/* grab the screen colors for later use */
 	save_colors();
@@ -187,10 +227,10 @@ main (int argc, char **argv)
 	}
 	
 	vst_load_fonts (vdi_handle, 0);
-
+	
 	vst_scratch (vdi_handle, SCRATCH_BOTH);
-	vst_kern (vdi_handle, TRACK_NORMAL, PAIR_ON, &u, &u);
-	vswr_mode (vdi_handle, MD_TRANS);
+	vst_kern    (vdi_handle, TRACK_NORMAL, PAIR_ON, &u, &u);
+	vswr_mode   (vdi_handle, MD_TRANS);
 	
 	u = 0;
 	if (argc > 1) {
@@ -203,6 +243,11 @@ main (int argc, char **argv)
 	}
 	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage)) {
 		hwUi_fatal (NULL, "Can't open main window.");
+	}
+	if (old_bookm && pick_bookmarks (old_bookm, progress_bar)) {
+		free (old_bookm);
+		old_bookm = NULL;
+		menu_openbookmarks();
 	}
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 

@@ -129,3 +129,5 @@
 #define BKM_TXT_B_EDIT 11  /* STRING in tree BKMEDIT */
 #define BKM_TXT_G_ADD 12  /* STRING in tree BKMEDIT */
 #define BKM_TXT_G_EDIT 13  /* STRING in tree BKMEDIT */
+
+#define BKMOUTDATED 0  /* Alert string */
