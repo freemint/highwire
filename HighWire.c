@@ -236,12 +236,12 @@ main (int argc, char **argv)
 	if (argc > 1) {
 		short i = 1;
 		do {
-			if (argv[i][0] != '-' && new_hwWind ("", argv[i])) {
+			if (argv[i][0] != '-' && new_hwWind ("", argv[i], TRUE)) {
 				u++;
 			}
 		} while (++i < argc);
 	}
-	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage)) {
+	if ((!u || !cfg_UptoDate) && !new_hwWind ("", cfg_StartPage, TRUE)) {
 		hwUi_fatal (NULL, "Can't open main window.");
 	}
 	if (old_bookm && pick_bookmarks (old_bookm, progress_bar)) {

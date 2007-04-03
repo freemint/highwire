@@ -190,9 +190,9 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		break;
 	case 0x000E:  /* CTRL+N */
 		if (state & (K_RSHIFT|K_LSHIFT)) {
-			new_hwWind ("HighWire", NULL);
+			new_hwWind ("HighWire", NULL, TRUE);
 		} else {
-			new_hwWind ("", cfg_StartPage);
+			new_hwWind ("", cfg_StartPage, TRUE);
 		}
 		break;
 	case 0x0015:  /* CTRL+U */

@@ -323,7 +323,7 @@ hwWind_store (HWWIND_SET set)
 
 /*============================================================================*/
 HwWIND
-new_hwWind (const char * name, const char * url)
+new_hwWind (const char * name, const char * url, BOOL topNbot)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
 	                      sizeof (HISTORY) * HISTORY_LAST +
@@ -455,7 +455,7 @@ new_hwWind (const char * name, const char * url)
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
 	}
 	This->Work.g_w = This->Work.g_h = 0; /* mark for inital resize */
-	window_raise (&This->Base, TRUE, &curr);
+	window_raise (&This->Base, topNbot, &curr);
 	hwWind_redraw (This, NULL);
 
 	if (url && *url) {

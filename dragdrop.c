@@ -496,7 +496,7 @@ rec_ddmsg (WORD msg[8])
 			if ( cnt > 0 )
 			{
 				if ((kstate & K_ALT))
-					new_hwWind ("", cmdline);
+					new_hwWind ("", cmdline, TRUE);
 				else
 				{
 					HwWIND wind = hwWind_byHandle (winid);
@@ -524,7 +524,7 @@ rec_ddmsg (WORD msg[8])
 			if (s != NULL)
 				*s = '\0';
 			if ((kstate & K_ALT))
-				new_hwWind ("", cmdline);
+				new_hwWind ("", cmdline, TRUE);
 			else
 			{
 				HwWIND wind = hwWind_byHandle (winid);

@@ -258,7 +258,7 @@ handle_avdd (short win_handle, short kstate, char * arg)
 						p[0] = '\0';
 						s= cmd+1;
 						cmd = filename;
-						new_hwWind ("", cmd);
+						new_hwWind ("", cmd, TRUE);
 						quoted = FALSE;
 						cmd = s;
 						if (cmd[0] == '\'')
@@ -282,7 +282,7 @@ handle_avdd (short win_handle, short kstate, char * arg)
 				s= cmd+1;
 				cmd = filename;
 				if ((kstate & K_ALT))
-					new_hwWind ("", cmd);
+					new_hwWind ("", cmd, TRUE);
 				else
 				{
 					HwWIND wind = hwWind_byHandle (win_handle);
@@ -306,7 +306,7 @@ handle_avdd (short win_handle, short kstate, char * arg)
 
 		cmd = filename;
 		if ((kstate & K_ALT))
-			new_hwWind ("", cmd);
+			new_hwWind ("", cmd, TRUE);
 		else
 		{
 			HwWIND wind = hwWind_byHandle (win_handle);

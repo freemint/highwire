@@ -3,10 +3,13 @@ Changes in V. 0.3.3 beta
 - New Feature implemented:  Initial Support for
   file method FORMs (file upload via forms)
 
-- New Feature implemented:  Basic Bookmark support (still in development)
-   Bookmark GEO stored in Config file
-   Ability to open Bookmark window from menu and with Control+B
-   Ability to bookmark a window from menu, popups and with Control+D
+- New Feature implemented:  Basic Bookmark support
+  (still in development)
+  - Bookmark GEO stored in Config file
+  - Ability to open Bookmark window from menu and
+    with Control+B
+  - Ability to bookmark a window from menu, popups
+    and with Control+D
 
 - New config keyword FIXED_CMAP for using an
   optimized color palette and COLORS_CHANGED
@@ -15,26 +18,34 @@ Changes in V. 0.3.3 beta
   This palette is also always used for plane modes
   > 8.
 
-- Bug Fix: Highwire now gets form data encoding from the form
+- Improved opening of windows in the background
+  (SHIFT+ALT while clicking a link).
 
-- Bug Fix for background colors
+- Bug Fix: Highwire now gets form data encoding
+  from the form.
+
+- Bug Fix for background colors.
 
 - Bug Fix for text following floating images
   
-- Bug Fix for window geo code and constantly reseting values
+- Bug Fix for window geo code and constantly
+  reseting values
 
-- Table Border code overhauled
+- Table Border code overhauled.
 
-- Force empty Option tags to be '_'
+- Force empty Option tags to be '_'.
 
-- Invalid 'polygon' map areas supported, as well as a few
-  other wonderful errors brought to the world by IE.
+- Invalid 'polygon' map areas supported, as well
+  as a few other wonderful errors brought to the
+  world by IE.
   
-- Invalid '&' CSS token and corresponding rules ignored
+- Invalid '&' CSS token and corresponding rules
+  ignored.
 
-- Invalid trailing ';' in CSS ignored
+- Invalid trailing ';' in CSS ignored.
 
-- Invalid '\' escaped CSS tokens and identifiers ignored
+- Invalid '\' escaped CSS tokens and identifiers
+  ignored.
 
 - Bugs #179, #217 resolved
 __________________________________________________
@@ -537,9 +548,9 @@ Changes in V. 0.1.7 release  of March 25, 2004:
   CSS 1.0 as well as for 2.0 specification.
 
 - For lists and the tags CENTER, BLOCKQUOTE and
-  DIV the CSS styles background-color, border-width/-color,  margin,
-  padding and text-indent
-  are supported now.
+  DIV the CSS styles padding, margin, text-indent,
+  background-color, border-width/-color, are
+  supported now.
 
 - Block level elements store id='..' attributes
   now and can be used for   <a href="#id"> .

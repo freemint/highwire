@@ -420,23 +420,40 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 {
 	BOOL done = FALSE;
 	
+	if (bevent < 0) window_setBevent (NULL);
+	
 	if (!This) {
 		This = window_Top;
 		if (!This || This->isModal) return;
 		if (topNbot) {
 			while (This->Next) This = This->Next;
 		}
+		curr = NULL;
 	
-	} else if (curr && !This->Next && !This->Prev) {
-		topNbot    = TRUE;
-		done       = TRUE;
-		wind_open_grect (This->Handle, curr);
-		wind_set_grect (This->Handle, WF_CURRXYWH, curr);
-		if (!wind_get_grect (This->Handle, WF_CURRXYWH, &This->Curr)
-		    || This->Curr.g_w <= 0 || This->Curr.g_h <= 0) {
-			This->Curr = *curr; /* avoid a Geneva-bug where curr becomes 0,0,0,0 */
-		}                      /* if the window was created but not opend       */
-		(*This->sized)(This);
+	} else if (curr && !This->Next && !This->Prev && window_Top != This) {
+		if (!topNbot) {
+			if (window_Top) {
+				This->Next = window_Top;
+				window_Top = This;
+			} else {
+				topNbot = TRUE;
+			}
+		}
+		if (!curr) {
+			curr = &desk_area;
+		}
+		if (!topNbot && bevent) {
+			GRECT temp = *curr;     /* open it out of desktop to avoid flickerig */
+			temp.g_x += desk_area.g_w;
+			temp.g_y += desk_area.g_h;
+			wind_open_grect (This->Handle, &temp);
+		} else {
+			wind_open_grect (This->Handle, curr);
+		}
+		done = TRUE;
+	
+	} else {
+		curr = NULL;
 	}
 	
 	if (topNbot) {
@@ -492,7 +509,7 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 			bot->Next  = This;
 			done       = TRUE;
 		}
-		if (bevent > 0 || (bevent < 0 && window_setBevent (NULL))) {
+		if (bevent) {
 			wind_set (This->Handle, WF_BOTTOM, 0,0,0,0);
 		} else {
 			WINDOW prev = This->Prev;
@@ -504,6 +521,11 @@ window_raise (WINDOW This, BOOL topNbot, const GRECT * curr)
 	}
 	
 	if (done) {
+		if (curr) {
+			wind_set_grect  (This->Handle, WF_CURRXYWH, curr);
+			wind_get_grect  (This->Handle, WF_CURRXYWH, &This->Curr);
+			(*This->sized)(This);
+		}
 		(*This->raised)(This, topNbot);
 	}
 }

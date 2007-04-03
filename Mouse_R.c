@@ -333,11 +333,11 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 					addr = buf;
 				}
 				
-				if (!cont && (wind = new_hwWind (addr, NULL)) != NULL) {
-					if (state & (K_RSHIFT|K_LSHIFT)) {
-						window_raise (&wind->Base, FALSE, NULL);
+				if (!cont) {
+					BOOL topNbot = !(state & (K_RSHIFT|K_LSHIFT));
+					if ((wind = new_hwWind (addr, NULL, topNbot)) != NULL) {
+						cont = wind->Pane;
 					}
-					cont = wind->Pane;
 				}
 
 				if (cont) {
