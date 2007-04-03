@@ -6,17 +6,86 @@
 
 #include <gemx.h>
 
+#include "token.h"
+
 #ifdef __PUREC__
 # define CONTAINR struct s_containr *
 #endif
-
 #include "global.h"
+
+#include "bookmark.h"
 #include "Containr.h"
 #include "Loader.h"
 #include "Location.h"
 #include "Form.h"
 #include "hwWind.h"
 
+
+/*----------------------------------------------------------------------------*/
+static BOOL
+bmrk_clicked (PXY mouse, WORD button, WORD clicks, UWORD elem, void * hash)
+{
+	WORDITEM word = NULL;
+	DOMBOX * box  = NULL;
+	if (elem == PE_TLINK) {
+		struct url_link * link = hash;
+		word = link->start;
+	} else if (elem == PE_TEXT) {
+		word = hash;
+	} else if (elem == PE_PARAGRPH) {
+		PARAGRPH par = hash;
+		if (par) {
+			box = &par->Box;
+		}
+	}
+	if (word) {
+		WORDLINE line = word->line;
+		PARAGRPH par  = (line ? line->Paragraph : NULL);
+		if (par) {
+			box = &par->Box;
+		}
+	}
+	if (box && (!box->IdName || (strcmp (box->ClName, "LNK") != 0 &&
+	                             strcmp (box->ClName, "GRP") != 0))) {
+		box = NULL;
+	}
+	
+	if (button & RIGHT_BUTTON) {
+/*printf ("BMRK = %04X (%p)\n", elem, hash);*/
+		if (box || elem == PE_FRAME) {
+			rpopbkm_open (mouse.p_x, mouse.p_y, box, word);
+		}
+		return TRUE;
+	
+	} else if (clicks >= 2) {
+		const char * lnk = NULL;
+		const char * grp = NULL;
+		if (box) {
+			if (*box->ClName == 'L') lnk = box->IdName;
+			else               /*G*/ grp = box->IdName;
+			if (!grp && box->Parent) {
+				box = box->Parent;
+				grp = (box->ClName ? box->ClName : NULL);
+			}
+		}
+		if (grp && !lnk) {
+			DOMBOX * next = box->Sibling;
+			while (next) {
+				if (next->HtmlCode == TAG_DL && strcmp (next->ClName, grp) == 0) {
+					BOOL openNclose = next->Hidden;
+					if (set_bookmark_group (grp, openNclose)) {
+						HwWIND wind = (HwWIND)window_byIdent
+						                              (WINDOW_IDENT('B','M','R','K'));
+						if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+					}
+				}
+				next = next->Sibling;
+			}
+		}
+	}
+	
+	return FALSE;
+}
 
 /*==============================================================================
  *
@@ -43,47 +112,17 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
 	}
 #endif
+	if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')
+	    && bmrk_clicked (mouse, button, clicks, elem, hash)	) {
+		return;
+	}
 	
 	txt_o = txt_i;
 	
 	if ((button & RIGHT_BUTTON) &&
 	    (elem >= PE_PARAGRPH || elem == PE_EMPTY || elem == PE_FRAME)) {
 #if (_HIGHWIRE_RPOP_ == 1)
-		if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')) {
-			WORDITEM word = NULL;
-			DOMBOX * box  = NULL;
-			BOOL     ok   = FALSE;
-			if (elem == PE_TLINK) {
-				struct url_link * link = hash;
-				word = link->start;
-			} else if (elem == PE_TEXT) {
-				word = hash;
-			} else if (elem == PE_PARAGRPH) {
-				PARAGRPH par = hash;
-				if (par) {
-					box = &par->Box;
-				}
-			} else if (elem == PE_FRAME) {
-				ok = TRUE;
-			}
-/*printf ("BMRK = %04X (%p)\n", elem, hash);*/
-			if (word) {
-				WORDLINE line = word->line;
-				PARAGRPH par  = (line ? line->Paragraph : NULL);
-				if (par) {
-					box = &par->Box;
-				}
-			}
-			if (box && box->IdName
-			    && (strcmp (box->ClName, "LNK") == 0 ||
-			        strcmp (box->ClName, "GRP") == 0)) {
-				ok = TRUE;
-			}
-			if (ok) {
-				rpopbkm_open (mouse.p_x, mouse.p_y, box, word);
-			}
-		
-		} else if (elem == PE_ILINK) {
+		if (elem == PE_ILINK) {
 			rpopilink_open (mouse.p_x, mouse.p_y, cont, hash);			
 		} else if (elem == PE_IMAGE) {
 			rpopimg_open (mouse.p_x, mouse.p_y, cont);			
