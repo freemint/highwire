@@ -23,7 +23,8 @@
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-bmrk_clicked (PXY mouse, WORD button, WORD clicks, UWORD elem, void * hash)
+bmrk_clicked (PXY mouse, WORD button, WORD clicks,
+              HwWIND wind, FRAME frame,UWORD elem, void * hash)
 {
 	WORDITEM word = NULL;
 	DOMBOX * box  = NULL;
@@ -72,12 +73,13 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks, UWORD elem, void * hash)
 			DOMBOX * next = box->Sibling;
 			while (next) {
 				if (next->HtmlCode == TAG_DL && strcmp (next->ClName, grp) == 0) {
-					BOOL openNclose = next->Hidden;
-					if (set_bookmark_group (grp, openNclose)) {
-						HwWIND wind = (HwWIND)window_byIdent
-						                              (WINDOW_IDENT('B','M','R','K'));
-						if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
+					BOOL  hidden = !next->Hidden;
+					next->Hidden = hidden;
+					if (containr_calculate (frame->Container, NULL)) {
+						hwWind_redraw (wind, NULL);
+						set_bookmark_group (grp, !hidden);
 					}
+					return TRUE;
 				}
 				next = next->Sibling;
 			}
@@ -113,7 +115,7 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 	}
 #endif
 	if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')
-	    && bmrk_clicked (mouse, button, clicks, elem, hash)	) {
+	    && bmrk_clicked (mouse, button, clicks, wind, frame, elem, hash)	) {
 		return;
 	}
 	
