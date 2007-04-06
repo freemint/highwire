@@ -355,7 +355,7 @@ bkm_check (BKM_LINE line)
 static BKM_LINE
 bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 {
-	size_t len = strlen (id ? id : (id = "</DL>"));
+	size_t len = (id ? strlen (id) : 0);
 	
 	if (bkm_File && !line && (bkm_list_beg || !bkm_list_tm)) {
 		struct stat st;
@@ -408,7 +408,10 @@ bkm_search (BKM_LINE line, const char * id, BOOL dnNup)
 		line = NULL;
 	}
 	
-	if (strcmp (id, "*") == 0) { /*............ just get the next/prev element */
+	if (!len) { /*.............................................................*/
+		return NULL;
+		
+	} else if (strcmp (id, "*") == 0) { /*..... just get the next/prev element */
 		line = (dnNup ? line ? line->Next : bkm_list_beg
 		              : line ? line->Prev : bkm_list_end);
 		if (line && !line->Type) {
@@ -728,13 +731,13 @@ del_bookmark (const char * lnk)
 
 /*============================================================================*/
 BOOL
-pos_bookmark (const char * id,  BOOL dnNup)
+pos_bookmark (const char * lnk,  BOOL dnNup)
 {
 	BOOL     done = FALSE;
-	BKM_LINE line = bkm_search (NULL, id, !dnNup);
+	BKM_LINE line = bkm_search (NULL, lnk, !dnNup);
 	if (line && line->Type == 'B') {
 		BKM_LINE othr = bkm_search (line, "?", dnNup);
-		if (othr->Type) switch (othr->Type) {
+		if (othr) switch (othr->Type) {
 			case 'G':
 				if (!dnNup) othr = othr->Prev;
 				else        othr = bkm_search (othr, "b", TRUE);
@@ -827,21 +830,23 @@ add_bookmark_group (const char * lnk, const char *title)
 	return done;
 }
 
+/*----------------------------------------------------------------------------*/
+static BOOL cl_cmp (BKM_LINE grp, const char * cl)
+{
+	size_t len  = (cl && grp ? strlen (cl) : 0l);
+	return (len && grp->Class_ln == len && strncmp (grp->Class, cl, len) == 0);
+}
+
 /*============================================================================*/
 BOOL
 del_bookmark_group (const char * grp)
 {
 	BOOL     done = FALSE;
-	size_t   len  = (grp ? strlen (grp) : 0l);
-	BKM_LINE line = (len ? bkm_search (NULL, grp, TRUE) : NULL);
+	BKM_LINE line = bkm_search (NULL, grp, TRUE);
 	if (line && line->Type == 'G') {
-		BKM_LINE beg = line->Next;
-		BKM_LINE end = (beg ? bkm_search (beg, "e", TRUE) : NULL);
-/*printf ("%p %p  %li|%.*s| %li|%.*s| %li|%.*s|%c\n", beg,end, len,(int)len,grp,
-        line->Id_ln, (int)line->Id_ln, line->Id,
-        beg->Class_ln, (int)beg->Class_ln, beg->Class, beg->Type);*/
-/*printf ("   %li|%.*s|\n", beg->Text_ln, (int)beg->Text_ln-1, beg->Text);*/
-		if (end && beg->Class_ln == len && strncmp (beg->Class, grp, len) == 0) {
+		BKM_LINE beg = bkm_search (line, "b", TRUE);
+		BKM_LINE end = (cl_cmp (beg, grp) ? bkm_search (beg, "e", TRUE) : NULL);
+		if (end) {
 			bkm_delete (line);
 			bkm_delete (beg);
 			bkm_delete (end);
@@ -850,6 +855,50 @@ del_bookmark_group (const char * grp)
 			done = TRUE;
 		}
 		bkm_dump ("del_bookmark_group");
+	}
+	return done;
+}
+
+/*============================================================================*/
+BOOL
+pos_bookmark_group (const char * grp,  BOOL dnNup)
+{
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, grp, !dnNup);
+	if (line && line->Type == 'G') {
+		BKM_LINE beg  = bkm_search (line, "b", TRUE);
+		BKM_LINE end  = (cl_cmp (beg, grp) ? bkm_search (beg, "e", TRUE) : NULL);
+		BKM_LINE othr = (end ? bkm_search ((dnNup ? end : line), "?", dnNup)
+		                     : NULL);
+		if (othr) switch (othr->Type) {
+			case 'G':
+				if (!dnNup) othr = othr->Prev;
+				else        othr = bkm_search (othr, "e", TRUE);
+				break;
+			case 'e':
+				if (dnNup || (othr = bkm_search (othr, "G", FALSE)) == NULL) break;
+			case 'B':
+				if (!dnNup) othr = othr->Prev;
+				break;
+			default:
+				othr = NULL;
+		}
+		if (othr) {
+			bkm_remove (line);
+			line->Next = beg;
+			do {
+				bkm_remove (beg);
+			} while ((beg = beg->Next) != end);
+			bkm_remove (end);
+			end->Next = NULL;
+			do {
+				beg = line->Next;
+				bkm_insert (line, othr);
+				othr = line;
+			} while ((line = beg) != NULL);
+			bkm_flush();
+			done = TRUE;
+		}
 	}
 	return done;
 }

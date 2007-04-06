@@ -1358,8 +1358,10 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 			box = box->Parent;
 			grp = (box->ClName ? box->ClName : NULL);
 		}
-		objc_change (rpopbkm, RBKM_EDIT,   0, 0,0,0,0, OS_NORMAL,   0);
-		objc_change (rpopbkm, RBKM_REMOVE, 0, 0,0,0,0, OS_NORMAL,   0);
+		objc_change (rpopbkm, RBKM_UP,     0, 0,0,0,0, OS_NORMAL, 0);
+		objc_change (rpopbkm, RBKM_DN,     0, 0,0,0,0, OS_NORMAL, 0);
+		objc_change (rpopbkm, RBKM_EDIT,   0, 0,0,0,0, OS_NORMAL, 0);
+		objc_change (rpopbkm, RBKM_REMOVE, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	if (grp) {
 		DOMBOX * next = box->Sibling;
@@ -1381,8 +1383,6 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 		if (word && word->link) {
 			objc_change (rpopbkm, RBKM_COPY, 0, 0,0,0,0, OS_NORMAL, 0);
 		}
-		objc_change (rpopbkm, RBKM_UP, 0, 0,0,0,0, OS_NORMAL, 0);
-		objc_change (rpopbkm, RBKM_DN, 0, 0,0,0,0, OS_NORMAL, 0);
 	}
 	i = rpopbkm[RBKM_UP].ob_y + rpopbkm[RBKM_UP].ob_height /2;
 	switch (rpop_do (rpopbkm, RBKMPOP, mx +3, my - i)) {
@@ -1396,11 +1396,13 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 			break;
 		
 		case RBKM_UP:
-			if(lnk) reload = pos_bookmark       (lnk, FALSE);
+			if (lnk) reload = pos_bookmark       (lnk, FALSE);
+			else     reload = pos_bookmark_group (grp, FALSE);
 			break;
 		
 		case RBKM_DN:
-			if(lnk) reload = pos_bookmark       (lnk, TRUE);
+			if (lnk) reload = pos_bookmark       (lnk, TRUE);
+			else     reload = pos_bookmark_group (grp, TRUE);
 			break;
 		
 		case RBKM_REMOVE:

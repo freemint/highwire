@@ -14,10 +14,11 @@ BOOL pick_bookmarks (const char * name,
 
 BOOL add_bookmark       (const char * url, const char *title);
 BOOL del_bookmark       (const char * lnk);
-BOOL pos_bookmark       (const char * id,  BOOL dnNup);
+BOOL pos_bookmark       (const char * lnk, BOOL dnNup);
 BOOL txt_bookmark       (const char * id,  char * rw_buf, size_t lenNwr);
 BOOL add_bookmark_group (const char * lnk, const char *title);
 BOOL del_bookmark_group (const char * grp);
+BOOL pos_bookmark_group (const char * grp, BOOL dnNup);
 BOOL set_bookmark_group (const char * grp, BOOL openNclose);
 
 #endif /*__BOOKMARK_H__*/
