@@ -570,6 +570,8 @@ bookmark_editor (UWORD type, const char * text,
 	WORD title;
 	WORD x, y, w, h, n;
 	
+	graf_mouse (hwWind_Mshape = ARROW, NULL);
+
 	static OBJECT * tree = NULL;
 	if (!tree) {
 		rsrc_gaddr (R_TREE, BKMEDIT, &tree);
