@@ -73,7 +73,9 @@ enum
 	VA_OB_FILE,
 	VA_OB_FOLDER,
 	VA_OB_DRIVE,
-	VA_OB_WINDOW
+	VA_OB_WINDOW,
+	VA_OB_NOTEPAD,
+	VA_OB_NOTE
 };
 
 typedef enum
@@ -108,7 +110,9 @@ typedef enum
 	AA_COPY        = 0x0001,
 	AA_DELETE      = 0x0002,
 	AA_VIEW        = 0x0004,
-	AA_SETWINDPOS  = 0x0008
+	AA_SETWINDPOS  = 0x0008,
+	AA_COPYFILELINK= 0x0010,
+	AA_SENDCLICK   = 0x0020
 } av_va_have;
 
 /* Makros zum Testen auf Quoting */
