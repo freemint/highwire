@@ -1424,9 +1424,9 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 				id   = grp;
 				url  = NULL;
 			}
-			txt_bookmark (id, buff, sizeof(buff));
+			txt_bookmark_entry (id, buff, sizeof(buff));
 			if ((text = bookmark_editor (type, buff, id, url)) != NULL) {
-				reload = txt_bookmark (id, strcpy (buff, text), 0);
+				reload = txt_bookmark_entry (id, strcpy (buff, text), 0);
 			}
 		}	break;
 		
