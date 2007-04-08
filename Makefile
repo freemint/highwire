@@ -90,6 +90,7 @@ CFILES = \
 	hwWind.c \
 	av_prot.c \
 	dragdrop.c \
+	olga.c \
 	config.c \
 	bookmark.c \
 	Variable.c \

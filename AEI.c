@@ -31,6 +31,7 @@
 #include "cache.h"
 #include "Logging.h"
 #include "dragdrop.h"
+#include "olga.h"
 #ifdef GEM_MENU
 #	include "highwire.h"
 	extern OBJECT * menutree;
@@ -570,9 +571,10 @@ bookmark_editor (UWORD type, const char * text,
 	WORD title;
 	WORD x, y, w, h, n;
 	
-	graf_mouse (hwWind_Mshape = ARROW, NULL);
-
 	static OBJECT * tree = NULL;
+
+	graf_mouse (hwWind_Mshape = ARROW, NULL);
+	
 	if (!tree) {
 		rsrc_gaddr (R_TREE, BKMEDIT, &tree);
 		title = tree[BKM_BG_TEXT].ob_head;
@@ -1572,7 +1574,14 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		case AP_DRAGDROP:
 			rec_ddmsg (msg);
 			break;
-		
+
+		case OLE_NEW:						/* Messages from OLGA	*/
+		case OLE_EXIT:
+		case OLGA_INIT:
+		case OLGA_UPDATED:
+			handle_olga ( msg );
+		break;
+
 		case 0x7A18/*FONT_CHANGED*/:
 			fonts_setup (msg);
 			break;

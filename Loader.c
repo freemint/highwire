@@ -1152,6 +1152,7 @@ launch_viewer(const char *name)
 			msg[5] = msg [6] = msg[7] = 0;
 		}		
 		appl_write (av_shell_id, 16, msg);
+		send_olga_link ( name );
 	}
 }
 

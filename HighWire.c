@@ -116,9 +116,9 @@ main (int argc, char **argv)
 	if (Sysconf(-1) != -EINVFN) {
 		short mode = 0x0003  /* prefer TT ram    */
 		           | 0x0020; /* global accesible */
-		gslongname = (char *)Mxalloc (32 + 16 + 4 * HW_PATH_MAX, mode);
+		gslongname = (char *)Mxalloc (32 + 16 + 5 * HW_PATH_MAX, mode);
 	} else {
-		gslongname = (char *)Malloc (32 + 16 + 4 * HW_PATH_MAX);
+		gslongname = (char *)Malloc (32 + 16 + 5 * HW_PATH_MAX);
 	}
 	if (!gslongname) {
 		hwUi_fatal (NULL, _ERROR_NOMEM_);
@@ -126,6 +126,8 @@ main (int argc, char **argv)
 	gsi        = gslongname + 32;
 	gsanswer   = gsi + 16/*sizeof(GS_INFO)*/;
 	va_helpbuf = gsanswer + 3 * HW_PATH_MAX;
+	olga_memory= va_helpbuf + HW_PATH_MAX;
+
 	Init_AV_Protocol();
 
 	if (ignore_colours) {
@@ -145,6 +147,9 @@ main (int argc, char **argv)
 	/* If you know a documented length greater than 79 characters, add it. */
 		if (sys_NAES()) {
 			aes_max_window_title_length = 127;
+		}
+		if (sys_XAAES()) {
+			aes_max_window_title_length = 200;
 		}
 		/* our name in the application menu */
 		menu_register(gl_apid, "  HighWire " _HIGHWIRE_VERSION_);
@@ -221,6 +226,8 @@ main (int argc, char **argv)
 	}
 	/* grab the screen colors for later use */
 	save_colors();
+
+	Init_OLGA();
 
 	if (sys_type() & SYS_TOS) {
 		init_logging();
@@ -313,6 +320,7 @@ highwire_ex (void)
 		kill_ovl (NULL);
 		
 		Exit_AV_Protocol();
+		Exit_OLGA();
 
 	#ifdef GEM_MENU
 		menu_bar(menutree, MENU_REMOVE);

@@ -272,3 +272,13 @@ BOOL  Send_AV          (short message, const char *data1, const char *data2);
 
 void send_avwinopen  (short handle);
 void send_avwinclose (short handle);  
+
+/* in olga.c */
+
+extern char *olga_memory; /* HW_PATH_MAX byte */
+
+extern void send_olga_link ( const char *s );
+extern void handle_olga ( short msg[8] );
+extern void Init_OLGA   ( void );
+extern void Exit_OLGA   ( void );
+

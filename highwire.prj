@@ -42,6 +42,7 @@ Widget.c   (global.h,defs.h,hw-types.h, Containr.h,Loader.h,Location.h,Logging.h
 hwWind.c   (global.h,defs.h,hw-types.h, hwWind.h,Containr.h,Form.h,mime.h,Loader.h,Logging.h,Location.h,cache.h)
 av_prot.c  (global.h,defs.h,hw-types.h, av_comm.h)
 dragdrop.c (global.h,defs.h,hw-types.h, dragdrop.h)
+olga.c     (global.h,defs.h,hw-types.h, olga.h)
 config.c   (global.h,defs.h,hw-types.h,version.h, cache.h,hwWind.h,scanner.h)
 bookmark.c ( defs.h,hw-types.h,version.h, bookmark.h)
 Variable.c (global.h,defs.h,hw-types.h)
