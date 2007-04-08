@@ -761,9 +761,10 @@ pos_bookmark (const char * lnk,  BOOL dnNup)
 	return done;
 }
 
+
 /*============================================================================*/
 BOOL
-txt_bookmark (const char * id, char * rw_buf, size_t lenNwr)
+txt_bookmark_entry (const char * id, char * rw_buf, size_t lenNwr)
 {
 	BOOL     done = FALSE;
 	BKM_LINE line = bkm_search (NULL, id, TRUE);
@@ -796,6 +797,70 @@ txt_bookmark (const char * id, char * rw_buf, size_t lenNwr)
 			}
 		}
 		bkm_dump ("txt_bookmark");
+	}
+	return done;
+}
+
+/*============================================================================*/
+BOOL
+pos_bookmark_entry (const char * id, const char * other)
+{
+	BOOL     done = FALSE;
+	BKM_LINE line = bkm_search (NULL, id, TRUE);
+	if (line) {
+		BKM_LINE prev = bkm_search (NULL, (other ? other : "!"), TRUE);
+		if (prev) {
+			if (prev == line || prev == line->Prev) {
+				prev = NULL;
+			} else if (prev->Type == 'G') {
+				prev = bkm_search (prev, (line->Type == 'G' ? "e" : "b"), TRUE);
+			} else if (line->Type == 'G') {
+				BKM_LINE temp = line->Prev;
+				while (temp) { /* check for other is inside id */
+					if (temp->Type == 'b' || temp->Type == 'G') {
+						prev = NULL;
+						break;
+					} else if (temp->Type == 'e' || temp->Type == '!') {
+						break;
+					}
+					temp = temp->Prev;
+				}
+				temp = prev;
+				while (temp) { /* check for other is inside another group */
+					if (temp->Type == 'b' || temp->Type == 'G') {
+						prev = bkm_search (prev, "e", TRUE);
+						break;
+					} else if (temp->Type == 'e' || temp->Type == '!') {
+						break;
+					}
+					temp = temp->Prev;
+				}
+			}
+		}
+		if (prev) {
+			bkm_remove (line);
+			if (line->Type == 'G') {
+				BKM_LINE temp = line->Next;
+				while (temp) {
+					bkm_remove (temp);
+					if (temp->Type == 'e') {
+						temp->Next = NULL;
+						break;
+					}
+					temp = temp->Next;
+				}
+			} else {
+				line->Next = NULL;
+			}
+			do {
+				BKM_LINE temp = line->Next;
+				bkm_insert (line, prev);
+				prev = line;
+				line = temp;
+			} while (line);
+			bkm_flush();
+			done = TRUE;
+		}
 	}
 	return done;
 }

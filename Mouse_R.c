@@ -26,6 +26,7 @@ static BOOL
 bmrk_clicked (PXY mouse, WORD button, WORD clicks,
               HwWIND wind, FRAME frame,UWORD elem, void * hash)
 {
+	BOOL     done = FALSE;
 	WORDITEM word = NULL;
 	DOMBOX * box  = NULL;
 	if (elem == PE_TLINK) {
@@ -55,8 +56,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 /*printf ("BMRK = %04X (%p)\n", elem, hash);*/
 		if (box || elem == PE_FRAME) {
 			rpopbkm_open (mouse.p_x, mouse.p_y, box, word);
+			done = TRUE;
 		}
-		return TRUE;
 	
 	} else if (clicks >= 2) {
 		const char * lnk = NULL;
@@ -73,20 +74,151 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 			DOMBOX * next = box->Sibling;
 			while (next) {
 				if (next->HtmlCode == TAG_DL && strcmp (next->ClName, grp) == 0) {
-					BOOL  hidden = !next->Hidden;
-					next->Hidden = hidden;
+					BOOL  hidden = next->Hidden;
+					next->Hidden = !hidden;
 					if (containr_calculate (frame->Container, NULL)) {
 						hwWind_redraw (wind, NULL);
-						set_bookmark_group (grp, !hidden);
+						set_bookmark_group (grp, hidden);
 					}
-					return TRUE;
+					done = TRUE;
+					break;
 				}
 				next = next->Sibling;
 			}
 		}
+	
+	} else if (box && box->IdName) {
+		const char * id   = box->IdName;
+		WORD         bgnd = box->Backgnd;
+		GRECT     rect = {0,0,0,0};
+		WORD      dx = 0, dy = 0;
+		PXY       p[5];
+		DOMBOX *  hide  = NULL;
+		short     event = 0;/*wind_update (BEG_MCTRL);*/
+		EVMULT_IN m_in  = { MU_TIMER|MU_BUTTON/*|MU_M1*/, 1, 0x03, 0x00,
+		                    MO_LEAVE,{0,0,1,1}, MO_LEAVE,{0,0,0,0}, 300,0 };
+		EVMULT_OUT out;
+		do {
+			WORD msg[8];
+			event = evnt_multi_fast (&m_in, msg, &out);
+			if (event & MU_TIMER) {
+				long x, y;
+				dombox_Offset (box, &x, &y);
+				rect.g_x = x + (long)frame->clip.g_x - frame->h_bar.scroll;
+				rect.g_y = y + (long)frame->clip.g_y - frame->v_bar.scroll;
+				rect.g_w = box->Rect.W;
+				rect.g_h = box->Rect.H;
+				
+				box->Backgnd = G_MAGENTA;
+				if (*box->ClName == 'G') {
+					hide = box->Sibling;
+					while (hide) {
+						if (hide->HtmlCode == TAG_DL
+						    && strcmp (hide->ClName, id) == 0) {
+							if (hide->Hidden) {
+								hide = NULL;
+							} else {
+								hide->Hidden = TRUE;
+								if (containr_calculate (frame->Container, NULL)) {
+									hwWind_redraw (wind, NULL);
+								} else {
+									hide->Hidden = FALSE;
+									hide = NULL;
+								}
+							}
+							break;
+						}
+						hide = hide->Sibling;
+					}
+				}
+				if (!hide) {
+					hwWind_redraw (wind, &rect);
+				}
+				dx = rect.g_x - out.emo_mouse.p_x;
+				dy = rect.g_y - out.emo_mouse.p_y;
+				vswr_mode (vdi_handle, MD_XOR);
+				vsl_type  (vdi_handle, USERLINE);
+				vsl_udsty (vdi_handle, (short)0xAAAA);
+				
+				m_in.emi_flags &= ~MU_TIMER;
+				event |= MU_M1;
+			}
+			if (event & (MU_M1|MU_BUTTON)) {
+				v_hide_c (vdi_handle);
+				if (!(m_in.emi_flags & MU_M1)) {
+					m_in.emi_flags |= MU_M1;
+				} else {
+					v_pline (vdi_handle, 5, (short*)p);
+				}
+				if (!(event & MU_BUTTON)) {
+					p[0].p_x = p[3].p_x = out.emo_mouse.p_x + dx;
+					p[1].p_x = p[2].p_x = p[0].p_x + rect.g_w -1;
+					p[0].p_y = p[1].p_y = out.emo_mouse.p_y + dy;
+					p[2].p_y = p[3].p_y = p[0].p_y + rect.g_h -1;
+					p[4]     = p[0];
+					v_pline (vdi_handle, 5, (short*)p);
+				}
+				v_show_c (vdi_handle, 1);
+				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
+			}
+		} while (!(event & MU_BUTTON));
+/*		wind_update (END_MCTRL);*/
+		if (!(m_in.emi_flags & MU_TIMER)) {
+			vsl_type  (vdi_handle, SOLID);
+			vswr_mode (vdi_handle, MD_TRANS);
+			box->Backgnd = bgnd;
+			if (wind->Base.Handle == wind_find (out.emo_mouse.p_x,
+			                                    out.emo_mouse.p_y)) {
+				CONTAINR cont  = frame->Container;
+				DOMBOX * other = NULL;
+				GRECT    watch;
+				word = NULL;
+				elem = containr_Element (&cont,
+				                         out.emo_mouse.p_x, out.emo_mouse.p_y,
+				                         &watch, NULL, &hash);
+				if (elem == PE_TLINK) {
+					struct url_link * link = hash;
+					word = link->start;
+				} else if (elem == PE_TEXT) {
+					word = hash;
+				} else if (elem == PE_PARAGRPH) {
+					PARAGRPH par = hash;
+					if (par) {
+						other = &par->Box;
+					}
+				}
+				if (word) {
+					WORDLINE line = word->line;
+					PARAGRPH par  = (line ? line->Paragraph : NULL);
+					if (par) {
+						other = &par->Box;
+					}
+				}
+				if (other && (!other->IdName
+				              || (strcmp (other->ClName, "LNK") != 0 &&
+				                  strcmp (other->ClName, "GRP") != 0))) {
+					other = NULL;
+				}
+				if ((other || elem == PE_FRAME)
+				    && pos_bookmark_entry (id, (other ? other->IdName : NULL))) {
+					hwWind_history (wind, wind->HistMenu, TRUE);
+					done = TRUE;
+				}
+			}
+			if (!done) {
+				if (hide) {
+					hide->Hidden = FALSE;
+					containr_calculate (frame->Container, NULL);
+					hwWind_redraw (wind, NULL);
+				} else {
+					hwWind_redraw (wind, &rect);
+				}
+				done = TRUE;
+			}
+		}
 	}
 	
-	return FALSE;
+	return done;
 }
 
 /*==============================================================================

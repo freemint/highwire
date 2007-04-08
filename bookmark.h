@@ -12,11 +12,12 @@ BOOL pick_bookmarks (const char * name,
                      void (*progress)(ULONG size, ULONG part,
                                       const char * txt0, const char * txt1));
 
-BOOL add_bookmark       (const char * url, const char *title);
+BOOL add_bookmark       (const char * url, const char * title);
 BOOL del_bookmark       (const char * lnk);
 BOOL pos_bookmark       (const char * lnk, BOOL dnNup);
-BOOL txt_bookmark       (const char * id,  char * rw_buf, size_t lenNwr);
-BOOL add_bookmark_group (const char * lnk, const char *title);
+BOOL txt_bookmark_entry (const char * id,  char * rw_buf, size_t lenNwr);
+BOOL pos_bookmark_entry (const char * id,  const char * other);
+BOOL add_bookmark_group (const char * lnk, const char * title);
 BOOL del_bookmark_group (const char * grp);
 BOOL pos_bookmark_group (const char * grp, BOOL dnNup);
 BOOL set_bookmark_group (const char * grp, BOOL openNclose);
