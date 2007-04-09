@@ -808,25 +808,29 @@ pos_bookmark_entry (const char * id, const char * other)
 	BOOL     done = FALSE;
 	BKM_LINE line = bkm_search (NULL, id, TRUE);
 	if (line) {
-		BKM_LINE prev = bkm_search (NULL, (other ? other : "!"), TRUE);
+		BKM_LINE prev;
+		if (!other || !*other) {
+			prev = NULL;
+		} else if (strcmp (other, "<") == 0) {
+			prev = bkm_search (NULL, "!", TRUE);
+		} else if (strcmp (other, ">") == 0) {
+			prev = bkm_search (NULL, "?", FALSE);
+		} else {
+			prev = bkm_search (NULL, other, TRUE);
+		}
 		if (prev) {
-			if (prev == line || prev == line->Prev) {
-				prev = NULL;
-			} else if (prev->Type == 'G') {
-				prev = bkm_search (prev, (line->Type == 'G' ? "e" : "b"), TRUE);
-			} else if (line->Type == 'G') {
-				BKM_LINE temp = line->Prev;
-				while (temp) { /* check for other is inside id */
-					if (temp->Type == 'b' || temp->Type == 'G') {
+			if (line->Type == 'G') {
+				BKM_LINE temp = bkm_search (line, "e", TRUE);
+				if (!temp) {
+					prev = NULL;
+				} else do { /* check for 'other' is inside 'id' itself */
+					if (temp == prev) {
 						prev = NULL;
 						break;
-					} else if (temp->Type == 'e' || temp->Type == '!') {
-						break;
 					}
-					temp = temp->Prev;
-				}
+				} while ((temp = temp->Prev) != line);
 				temp = prev;
-				while (temp) { /* check for other is inside another group */
+				while (temp) { /* check for 'other' is inside another group */
 					if (temp->Type == 'b' || temp->Type == 'G') {
 						prev = bkm_search (prev, "e", TRUE);
 						break;
@@ -835,6 +839,11 @@ pos_bookmark_entry (const char * id, const char * other)
 					}
 					temp = temp->Prev;
 				}
+			} else if (prev->Type == 'G') {
+				prev = bkm_search (prev, "b", TRUE);
+			}
+			if (prev == line || prev == line->Prev) {
+				prev = NULL;
 			}
 		}
 		if (prev) {

@@ -22,31 +22,41 @@
 
 
 /*----------------------------------------------------------------------------*/
+static DOMBOX * elem_box (UWORD elem, void * hash, WORDITEM * word)
+{
+	DOMBOX * box  = NULL;
+	if (elem == PE_TLINK) {
+		struct url_link * link = hash;
+		*word = link->start;
+	} else if (elem == PE_TEXT) {
+		*word = hash;
+	} else if (elem == PE_PARAGRPH) {
+		PARAGRPH par = hash;
+		if (par) {
+			box = &par->Box;
+		}
+		*word = NULL;
+	} else {
+		*word = NULL;
+	}
+	if (*word) {
+		WORDLINE line = (*word)->line;
+		PARAGRPH par  = (line ? line->Paragraph : NULL);
+		if (par) {
+			box = &par->Box;
+		}
+	}
+	return box;
+}
+
+/*----------------------------------------------------------------------------*/
 static BOOL
 bmrk_clicked (PXY mouse, WORD button, WORD clicks,
               HwWIND wind, FRAME frame,UWORD elem, void * hash)
 {
 	BOOL     done = FALSE;
 	WORDITEM word = NULL;
-	DOMBOX * box  = NULL;
-	if (elem == PE_TLINK) {
-		struct url_link * link = hash;
-		word = link->start;
-	} else if (elem == PE_TEXT) {
-		word = hash;
-	} else if (elem == PE_PARAGRPH) {
-		PARAGRPH par = hash;
-		if (par) {
-			box = &par->Box;
-		}
-	}
-	if (word) {
-		WORDLINE line = word->line;
-		PARAGRPH par  = (line ? line->Paragraph : NULL);
-		if (par) {
-			box = &par->Box;
-		}
-	}
+	DOMBOX * box  = elem_box (elem, hash, &word);
 	if (box && (!box->IdName || (strcmp (box->ClName, "LNK") != 0 &&
 	                             strcmp (box->ClName, "GRP") != 0))) {
 		box = NULL;
@@ -94,10 +104,11 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		WORD      dx = 0, dy = 0;
 		PXY       p[5];
 		DOMBOX *  hide  = NULL;
-		short     event = 0;/*wind_update (BEG_MCTRL);*/
+		short     event = 0;
 		EVMULT_IN m_in  = { MU_TIMER|MU_BUTTON/*|MU_M1*/, 1, 0x03, 0x00,
 		                    MO_LEAVE,{0,0,1,1}, MO_LEAVE,{0,0,0,0}, 300,0 };
 		EVMULT_OUT out;
+		wind_update (BEG_MCTRL);
 		do {
 			WORD msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
@@ -162,45 +173,38 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
 			}
 		} while (!(event & MU_BUTTON));
-/*		wind_update (END_MCTRL);*/
+		wind_update (END_MCTRL);
+		
 		if (!(m_in.emi_flags & MU_TIMER)) {
 			vsl_type  (vdi_handle, SOLID);
 			vswr_mode (vdi_handle, MD_TRANS);
 			box->Backgnd = bgnd;
 			if (wind->Base.Handle == wind_find (out.emo_mouse.p_x,
 			                                    out.emo_mouse.p_y)) {
-				CONTAINR cont  = frame->Container;
-				DOMBOX * other = NULL;
-				GRECT    watch;
-				word = NULL;
-				elem = containr_Element (&cont,
-				                         out.emo_mouse.p_x, out.emo_mouse.p_y,
-				                         &watch, NULL, &hash);
-				if (elem == PE_TLINK) {
-					struct url_link * link = hash;
-					word = link->start;
-				} else if (elem == PE_TEXT) {
-					word = hash;
-				} else if (elem == PE_PARAGRPH) {
-					PARAGRPH par = hash;
-					if (par) {
-						other = &par->Box;
-					}
-				}
-				if (word) {
-					WORDLINE line = word->line;
-					PARAGRPH par  = (line ? line->Paragraph : NULL);
-					if (par) {
-						other = &par->Box;
-					}
-				}
+				CONTAINR     cont  = frame->Container;
+				DOMBOX     * other = NULL;
+				const char * where = NULL;
+				GRECT        watch;
+				elem  = containr_Element (&cont,
+				                          out.emo_mouse.p_x, out.emo_mouse.p_y,
+				                          &watch, NULL, &hash);
+				other = elem_box (elem, hash, &word);
 				if (other && (!other->IdName
 				              || (strcmp (other->ClName, "LNK") != 0 &&
 				                  strcmp (other->ClName, "GRP") != 0))) {
 					other = NULL;
 				}
-				if ((other || elem == PE_FRAME)
-				    && pos_bookmark_entry (id, (other ? other->IdName : NULL))) {
+				if (other) {
+					where = other->IdName;
+				} else if (elem == PE_FRAME) {
+					long my = out.emo_mouse.p_y - frame->clip.g_y;
+					if (my >= frame->clip.g_h - dombox_BotDist (&frame->Page)) {
+						where = ">";
+					} else if (my < dombox_TopDist (&frame->Page)) {
+						where = "<";
+					}
+				}
+				if (pos_bookmark_entry (id, where)) {
 					hwWind_history (wind, wind->HistMenu, TRUE);
 					done = TRUE;
 				}
