@@ -3,8 +3,13 @@
 
 #include "olga.h"
 #include "global.h"
+#include "Location.h"
 #include "cache.h"
 #include "hwWind.h"
+
+static void send_olga_init(void);
+static void send_olga_exit(void);
+
 
 static int olga_id;
 static int olga_active;
@@ -15,7 +20,7 @@ char *olga_memory; /* HW_PATH_MAX byte */
 
 /*============================================================================*/
 
-void send_olga_init(void)
+static void send_olga_init(void)
 {
 	short msg[8];
 
@@ -30,7 +35,7 @@ void send_olga_init(void)
 
 /*============================================================================*/
 
-void send_olga_exit(void)
+static void send_olga_exit(void)
 {
 	short msg[8];
 
@@ -113,23 +118,8 @@ void handle_olga( short msg[8])
 
 /*============================================================================*/
 
-void do_olga ( int msg )
-{
-	if ( olga_active )
-	{
-		switch ( msg )
-		{
-			case OLGA_LINK:
-			break;
-		}
-	}
-}
-/*============================================================================*/
-
 void Init_OLGA(void)
 {
-	char	*p;
-
 	if (!olga_active)
 	{
 		olga_id = appl_find("OLGA    ");

@@ -99,7 +99,7 @@ typedef struct
 	int Blue;
 } OLGARGB;
 
-
+/* not used at the moment ---------------
 typedef struct
 {
 	int     Count;
@@ -115,15 +115,14 @@ typedef struct _OLGAObjectInfo
 	long            ServerData;
 	int             CBLock;
 	int             CBCount;
-	void            cdecl (*CBDraw)    (struct _OLGAObjectInfo *objectinfo, int outScreen, int outHandle, int outDevID, OLGARect *Size, OLGARect *Clip);
-	void            cdecl (*CBUnembed) (struct _OLGAObjectInfo *objectinfo);
-	void            cdecl (*CBXDraw)   (struct _OLGAObjectInfo *objectinfo, int outScreen, int outHandle, int outDevID, OLGARect *Size, OLGARect *Clip, long Width_mm1000, long Height_mm1000, long Scale);
+	void            __CDECL (*CBDraw)    (struct _OLGAObjectInfo *objectinfo, int outScreen, int outHandle, int outDevID, OLGARect *Size, OLGARect *Clip);
+	void            __CDECL (*CBUnembed) (struct _OLGAObjectInfo *objectinfo);
+	void            __CDECL (*CBXDraw)   (struct _OLGAObjectInfo *objectinfo, int outScreen, int outHandle, int outDevID, OLGARect *Size, OLGARect *Clip, long Width_mm1000, long Height_mm1000, long Scale);
 	OLGAColorTable *cbColorTable;
 	int             cbClientID;
 	int             cbServerID;
 	/* IE */
 } OLGAObjectInfo;
-
 
 typedef struct
 {
@@ -133,5 +132,6 @@ typedef struct
 	OLGARect       *Size;
 	OLGAObjectInfo *objectinfo;
 } OLGAIEInfo;
+---------------- */
 
 #endif
