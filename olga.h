@@ -121,7 +121,6 @@ typedef struct _OLGAObjectInfo
 	OLGAColorTable *cbColorTable;
 	int             cbClientID;
 	int             cbServerID;
-	/* IE */
 } OLGAObjectInfo;
 
 typedef struct
