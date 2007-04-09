@@ -1,5 +1,9 @@
 Changes in V. 0.3.3 beta
 
+- OLGA support implemented (as client).  Files
+  sent to an OLGA server (as eg. QED) get reloaded
+  by HighWire after changed by the server.
+
 - New Feature implemented:  Initial Support for
   file method FORMs (file upload via forms)
 
@@ -48,6 +52,7 @@ Changes in V. 0.3.3 beta
   ignored.
 
 - Bugs #179, #217 resolved
+
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:
 
