@@ -88,15 +88,19 @@ static time_t   bkm_list_tm  = 0;
 static void
 bkm_print (BKM_LINE line)
 {
-	BOOL ci = FALSE;
-	int len = line->Text_ln;
-	while (line->Text[len-1] == '\n') len--;
-	printf ("%c", (line->Type ? line->Type : '?'));
-	if (line->Class_ln&&line->Class)
-		ci |= printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
-	if (line->Id_ln&&line->Id)
-		ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
-	printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
+	if (line) {
+		BOOL ci = FALSE;
+		int len = line->Text_ln;
+		while (line->Text[len-1] == '\n') len--;
+		printf ("%c", (line->Type ? line->Type : '?'));
+		if (line->Class_ln&&line->Class)
+			ci |= printf (" cl='%.*s'", (int)line->Class_ln, line->Class);
+		if (line->Id_ln&&line->Id)
+			ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
+		printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
+	} else {
+		printf ("ð <nil>\n");
+	}
 }
 
 /*----------------------------------------------------------------------------*/
@@ -819,7 +823,9 @@ pos_bookmark_entry (const char * id, const char * other)
 			prev = bkm_search (NULL, other, TRUE);
 		}
 		if (prev) {
-			if (line->Type == 'G') {
+			if (prev == line || prev == line->Prev) {
+				prev = NULL;
+			} else if (line->Type == 'G') {
 				BKM_LINE temp = bkm_search (line, "e", TRUE);
 				if (!temp) {
 					prev = NULL;
@@ -832,7 +838,9 @@ pos_bookmark_entry (const char * id, const char * other)
 				temp = prev;
 				while (temp) { /* check for 'other' is inside another group */
 					if (temp->Type == 'b' || temp->Type == 'G') {
-						prev = bkm_search (prev, "e", TRUE);
+						if ((prev = bkm_search (prev, "e", TRUE)) == line->Prev) {
+							prev = NULL;
+						}
 						break;
 					} else if (temp->Type == 'e' || temp->Type == '!') {
 						break;
@@ -841,9 +849,6 @@ pos_bookmark_entry (const char * id, const char * other)
 				}
 			} else if (prev->Type == 'G') {
 				prev = bkm_search (prev, "b", TRUE);
-			}
-			if (prev == line || prev == line->Prev) {
-				prev = NULL;
 			}
 		}
 		if (prev) {
