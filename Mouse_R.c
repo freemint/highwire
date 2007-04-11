@@ -62,14 +62,13 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		box = NULL;
 	}
 	
-	if (button & RIGHT_BUTTON) {
-/*printf ("BMRK = %04X (%p)\n", elem, hash);*/
+	if (button & RIGHT_BUTTON) { /*............................................*/
 		if (box || elem == PE_FRAME) {
 			rpopbkm_open (mouse.p_x, mouse.p_y, box, word);
 			done = TRUE;
 		}
 	
-	} else if (clicks >= 2) {
+	} else if (clicks >= 2) { /*...............................................*/
 		const char * lnk = NULL;
 		const char * grp = NULL;
 		if (box) {
@@ -97,7 +96,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 			}
 		}
 	
-	} else if (box && box->IdName) {
+	} else if (box && box->IdName) { /*........................................*/
 		const char * id   = box->IdName;
 		WORD         bgnd = box->Backgnd;
 		GRECT     rect = {0,0,0,0};
@@ -105,8 +104,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		PXY       p[5];
 		DOMBOX *  hide  = NULL;
 		short     event = 0;
-		EVMULT_IN m_in  = { MU_TIMER|MU_BUTTON/*|MU_M1*/, 1, 0x03, 0x00,
-		                    MO_LEAVE,{0,0,1,1}, MO_LEAVE,{0,0,0,0}, 300,0 };
+		EVMULT_IN m_in  = { MU_TIMER|MU_BUTTON|MU_M2, 1, 0x03, 0x00,
+		                    MO_LEAVE,{0,0,1,1}, MO_LEAVE,{0,0,0,0}, 200,0 };
 		EVMULT_OUT out;
 		wind_update (BEG_MCTRL);
 		do {
@@ -120,7 +119,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				rect.g_w = box->Rect.W;
 				rect.g_h = box->Rect.H;
 				
-				box->Backgnd = G_MAGENTA;
+				box->Backgnd = G_YELLOW;
 				if (*box->ClName == 'G') {
 					hide = box->Sibling;
 					while (hide) {
@@ -145,6 +144,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				if (!hide) {
 					hwWind_redraw (wind, &rect);
 				}
+				graf_mouse (FLAT_HAND, NULL);
 				dx = rect.g_x - out.emo_mouse.p_x;
 				dy = rect.g_y - out.emo_mouse.p_y;
 				vswr_mode (vdi_handle, MD_XOR);
@@ -171,6 +171,40 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				}
 				v_show_c (vdi_handle, 1);
 				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
+			}
+			if (event & (MU_M2)) {
+				static const MFORM mform = {
+					7,7, 1, G_WHITE, G_RED,
+					{	0x03C0,0x0FF0,0x1FF8,0x3FFC, 0x7C7E,0x78FE,0xF1FF,0xF3EF,
+						0xF7CF,0xFF8F,0x7F1E,0x7E3E, 0x3FFC,0x1FF8,0x0FF0,0x03C0	},
+					{	0x0000,0x03C0,0x0FF0,0x1C38, 0x303C,0x307C,0x60E6,0x61C6,
+						0x6386,0x6706,0x3E0C,0x3C0C, 0x1C38,0x0FF0,0x03C0,0x0000	}
+				/*	7,7, 1, G_WHITE, G_BLACK,
+					{	0xC007,0xF00F,0xF81F,0x7C3E, 0x3E7C,0x1FF8,0x0FF0,0x07E0,
+						0x07E0,0x0FF0,0x1FF8,0x3E7C, 0x7C3E,0xF81F,0xF00F,0xC007	},
+					{	0x0000,0x6006,0x700E,0x381C, 0x1C38,0x0E70,0x07E0,0x03C0,
+						0x03C0,0x07E0,0x0E70,0x1C38, 0x381C,0x700E,0x6006,0x0000	}*/
+				};
+				WORD hdl = wind_find (out.emo_mouse.p_x, out.emo_mouse.p_y);
+				BOOL flt = (hdl == wind->Base.Handle);
+				wind_get_grect (hdl, WF_FIRSTXYWH, &m_in.emi_m2);
+				while (m_in.emi_m2.g_w > 0 && m_in.emi_m2.g_h > 0) {
+					if (out.emo_mouse.p_x >= m_in.emi_m2.g_x                   &&
+					    out.emo_mouse.p_x <  m_in.emi_m2.g_x + m_in.emi_m2.g_w &&
+					    out.emo_mouse.p_y >= m_in.emi_m2.g_y                   &&
+					    out.emo_mouse.p_y <  m_in.emi_m2.g_y + m_in.emi_m2.g_h) {
+						break;
+					}
+					wind_get_grect (hdl, WF_NEXTXYWH, &m_in.emi_m2);
+				}
+				if (m_in.emi_m2.g_w <= 0 || m_in.emi_m2.g_h <= 0) {
+					*(PXY*)&m_in.emi_m2 = out.emo_mouse;
+					m_in.emi_m2.g_w = m_in.emi_m2.g_h = 1;
+					flt = FALSE;
+				}
+				graf_mouse ((flt ? FLAT_HAND : USER_DEF), &mform);
+/*printf ("%i,%i/%i,%i\n",
+        m_in.emi_m2.g_x,m_in.emi_m2.g_y,m_in.emi_m2.g_w,m_in.emi_m2.g_h);*/
 			}
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
@@ -217,6 +251,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				} else {
 					hwWind_redraw (wind, &rect);
 				}
+				graf_mouse (ARROW, NULL); /* shouldn't be necessary... */
+				check_mouse_position (out.emo_mouse.p_x, out.emo_mouse.p_y);
 				done = TRUE;
 			}
 		}
