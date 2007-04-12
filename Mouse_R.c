@@ -286,7 +286,7 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
 	}
 #endif
-	if (wind->Base.Ident == WINDOW_IDENT('B','M','R','K')
+	if (wind->Base.Ident == WIDENT_BMRK
 	    && bmrk_clicked (mouse, button, clicks, wind, frame, elem, hash)	) {
 		return;
 	}

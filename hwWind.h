@@ -35,6 +35,9 @@ struct hw_window {
 	HISTORY  History[1];
 };
 
+#define WIDENT_BRWS   WINDOW_IDENT('B','R','W','S')
+#define WIDENT_BMRK   WINDOW_IDENT('B','M','R','K')
+
 
 HwWIND  new_hwWind   (const char * name, const char * url, BOOL topNbot);
 #define delete_hwWind(HwWIND)   delete_window (&(HwWIND)->Base)

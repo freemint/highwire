@@ -672,10 +672,9 @@ void
 menu_bookmark_url (LOCATION loc, const char * title)
 {
 	HwWIND bmrk = NULL;
-	ULONG ident = WINDOW_IDENT('B','M','R','K');
 	if (!loc) {
 		HwWIND wind = hwWind_Top;
-		if (wind && wind->Base.Ident == ident) {
+		if (wind && wind->Base.Ident == WIDENT_BMRK) {
 			bmrk = wind;
 			wind = hwWind_Next (bmrk);
 		}
@@ -691,7 +690,8 @@ menu_bookmark_url (LOCATION loc, const char * title)
 			title = bookmark_editor (((UWORD)'B'<<8)|'A', url, NULL, url);
 		}
 		if (title && add_bookmark (url, title)
-		          && (bmrk || (bmrk = (HwWIND)window_byIdent (ident)) != NULL)) {
+		          && (bmrk
+		              || (bmrk = (HwWIND)window_byIdent (WIDENT_BMRK)) != NULL)) {
 			hwWind_history (bmrk, bmrk->HistMenu, TRUE);
 		}
 	}
@@ -701,8 +701,7 @@ menu_bookmark_url (LOCATION loc, const char * title)
 void
 menu_openbookmarks (void)
 {
-	HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
-
+	HwWIND wind = (HwWIND)window_byIdent (WIDENT_BMRK);
 	if (wind) hwWind_raise (wind, TRUE);
 	else      new_hwWind ("", bkm_File, TRUE);
 }
@@ -1458,7 +1457,7 @@ rpopbkm_open (WORD mx, WORD my, DOMBOX * box, WORDITEM word)
 		}	break;
 	}
 	if (reload) {
-		HwWIND wind = (HwWIND)window_byIdent (WINDOW_IDENT('B','M','R','K'));
+		HwWIND wind = (HwWIND)window_byIdent (WIDENT_BMRK);
 		if (wind) hwWind_history (wind, wind->HistMenu, TRUE);
 	}
 }

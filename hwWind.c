@@ -24,8 +24,6 @@
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
-#define IDENT_BRWS   WINDOW_IDENT('B','R','W','S')
-#define IDENT_BMRK   WINDOW_IDENT('B','M','R','K')
 static WINDOW vTab_destruct(HwWIND);
 static BOOL vTab_evMessage (HwWIND, WORD msg[], PXY mouse, UWORD kstate);
 static void vTab_evButton  (HwWIND, WORD bmask, PXY mouse, UWORD kstate, WORD);
@@ -331,7 +329,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	TBAREDIT * edit;
 	short      i;
 	GRECT      curr;
-	ULONG      ident = (url && url == bkm_File ? IDENT_BMRK : IDENT_BRWS);
+	ULONG      ident = (url && url == bkm_File ? WIDENT_BMRK : WIDENT_BRWS);
 	                                       /* special case for bookmark window */
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
@@ -368,7 +366,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 #endif
 		}
 		
-	} else if (ident == IDENT_BMRK) {
+	} else if (ident == WIDENT_BMRK) {
 		static BOOL __once = TRUE;
 		if (__once) {
 			__once = FALSE;
@@ -432,7 +430,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	} else {
 		This->IbarH = widget_h - widget_b -1;
 	}
-	This->TbarH    = (tbar_set > 0 && ident == IDENT_BRWS ? tbar_set : 0);
+	This->TbarH    = (tbar_set > 0 && ident == WIDENT_BRWS ? tbar_set : 0);
 	This->TbarMask = (url_hist ? TBAR_HIST_MASK : 0) | TBAR_OPEN_MASK;
 	This->TbarActv = (This->TbarH && !url ? TBAR_EDIT : -1);
 	for (i = 0; i < numberof(hw_buttons)-1; i++) {
@@ -790,11 +788,11 @@ vTab_moved (HwWIND This)
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &This->Work);
 	containr_relocate (This->Pane, This->Work.g_x, This->Work.g_y + This->TbarH);
 
-	if (This->Base.Ident == IDENT_BRWS) {
+	if (This->Base.Ident == WIDENT_BRWS) {
 		brws_curr.g_x = This->Curr.g_x;
 		brws_curr.g_y = This->Curr.g_y;
 		brws_gmsk    |= GEO_USR_XY;
-	} else { /* IDENT_BMRK */
+	} else { /* WIDENT_BMRK */
 		bmrk_curr.g_x = This->Curr.g_x;
 		bmrk_curr.g_y = This->Curr.g_y;
 		bmrk_gmsk    |= GEO_USR_XY;
@@ -828,11 +826,11 @@ vTab_sized (HwWIND This)
 		
 	} else if (!This->Base.isFull) {
 		BOOL mask = (This->Work.g_w > 0 && This->Work.g_h > 0 ? GEO_USR_WH : 0);
-		if (This->Base.Ident == IDENT_BRWS) {
+		if (This->Base.Ident == WIDENT_BRWS) {
 			brws_curr.g_w = This->Curr.g_w;
 			brws_curr.g_h = This->Curr.g_h;
 			brws_gmsk    |= mask;
-		} else if (This->Base.Ident == IDENT_BMRK) {
+		} else if (This->Base.Ident == WIDENT_BMRK) {
 			bmrk_curr.g_w = This->Curr.g_w;
 			bmrk_curr.g_h = This->Curr.g_h;
 			bmrk_gmsk    |= mask;
@@ -890,7 +888,7 @@ vTab_iconified (HwWIND This)
 static BOOL
 vTab_close (HwWIND This, UWORD state)
 {
-	if (!(state & K_ALT) || This->Base.Ident != IDENT_BRWS) {
+	if (!(state & K_ALT) || This->Base.Ident != WIDENT_BRWS) {
 		return TRUE; /* to be deleted */
 	
 	} else if (tbar_set) {
@@ -1133,9 +1131,9 @@ hwWind_byType (WORD val)
 	ULONG  ident;
 	
 	if (val == 0) {
-		ident = IDENT_BRWS;
+		ident = WIDENT_BRWS;
 	} else {
-		ident = IDENT_BMRK;
+		ident = WIDENT_BMRK;
 	}
 	while (wind && wind->Base.Ident != ident) {
 		wind = hwWind_Next (wind);
@@ -1872,7 +1870,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			break;
 		
 		case HW_PageUpdated:
-			if (!wind->Base.isIcon && wind->Base.Ident != IDENT_BMRK) {
+			if (!wind->Base.isIcon && wind->Base.Ident != WIDENT_BMRK) {
 				hwWind_redraw (wind, gen_ptr);
 			}
 			break;
