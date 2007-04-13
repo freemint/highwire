@@ -97,6 +97,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		}
 	
 	} else if (box && box->IdName) { /*........................................*/
+		HwWIND     target = wind;
+		BOOL      dragged = FALSE;
 		const char * id   = box->IdName;
 		WORD         bgnd = box->Backgnd;
 		GRECT     rect = {0,0,0,0};
@@ -111,6 +113,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		do {
 			WORD msg[8];
 			event = evnt_multi_fast (&m_in, msg, &out);
+			
 			if (event & MU_TIMER) {
 				long x, y;
 				dombox_Offset (box, &x, &y);
@@ -152,8 +155,10 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				vsl_udsty (vdi_handle, (short)0xAAAA);
 				
 				m_in.emi_flags &= ~MU_TIMER;
-				event |= MU_M1;
+				event  |= MU_M1;
+				dragged = TRUE;
 			}
+			
 			if (event & (MU_M1|MU_BUTTON)) {
 				v_hide_c (vdi_handle);
 				if (!(m_in.emi_flags & MU_M1)) {
@@ -172,6 +177,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				v_show_c (vdi_handle, 1);
 				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
 			}
+			
 			if (event & (MU_M2)) {
 				static const MFORM mform = {
 					7,7, 1, G_WHITE, G_RED,
@@ -186,7 +192,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 						0x03C0,0x07E0,0x0E70,0x1C38, 0x381C,0x700E,0x6006,0x0000	}*/
 				};
 				WORD hdl = wind_find (out.emo_mouse.p_x, out.emo_mouse.p_y);
-				BOOL flt = (hdl == wind->Base.Handle);
+				BOOL flt;
 				wind_get_grect (hdl, WF_FIRSTXYWH, &m_in.emi_m2);
 				while (m_in.emi_m2.g_w > 0 && m_in.emi_m2.g_h > 0) {
 					if (out.emo_mouse.p_x >= m_in.emi_m2.g_x                   &&
@@ -200,7 +206,16 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				if (m_in.emi_m2.g_w <= 0 || m_in.emi_m2.g_h <= 0) {
 					*(PXY*)&m_in.emi_m2 = out.emo_mouse;
 					m_in.emi_m2.g_w = m_in.emi_m2.g_h = 1;
-					flt = FALSE;
+					flt    = FALSE;
+					target = NULL;
+				} else if ((target = hwWind_byHandle (hdl)) == NULL) {
+					flt    = FALSE;
+				} else if (target != wind
+				           && (*id != 'L' || target->Base.Ident != WIDENT_BRWS)) {
+					flt    = FALSE;
+					target = NULL;
+				} else {
+					flt    = TRUE;
 				}
 				graf_mouse ((flt ? FLAT_HAND : USER_DEF), &mform);
 /*printf ("%i,%i/%i,%i\n",
@@ -209,12 +224,11 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 		} while (!(event & MU_BUTTON));
 		wind_update (END_MCTRL);
 		
-		if (!(m_in.emi_flags & MU_TIMER)) {
+		if (dragged) {
 			vsl_type  (vdi_handle, SOLID);
 			vswr_mode (vdi_handle, MD_TRANS);
 			box->Backgnd = bgnd;
-			if (wind->Base.Handle == wind_find (out.emo_mouse.p_x,
-			                                    out.emo_mouse.p_y)) {
+			if (target == wind) {
 				CONTAINR     cont  = frame->Container;
 				DOMBOX     * other = NULL;
 				const char * where = NULL;
@@ -241,6 +255,12 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				if (pos_bookmark_entry (id, where)) {
 					hwWind_history (wind, wind->HistMenu, TRUE);
 					done = TRUE;
+				}
+			} else if (target) { /* WIDENT_BRWS */
+				const char * url = (word && word->link
+				                    ? word->link->address : NULL);
+				if (url) {
+					start_page_load (target->Pane, url, NULL, TRUE, NULL);
 				}
 			}
 			if (!done) {
