@@ -22,7 +22,7 @@ short av_shell_id     = -1;   /* Desktop's AES ID */
 short av_shell_status = 0;    /* What AV commands can desktop do? */
 
 extern char *thisapp;
-             
+
 /*============================================================================*/
 short
 get_avserver(void)
@@ -47,9 +47,7 @@ BOOL
 Send_AV (short message, const char * data1, const char * data2)
 {
 	short msg[8];
-	short to_ap_id;
-	
-	to_ap_id=av_shell_id;
+	short to_ap_id = av_shell_id;
 	
 	(void)data2;  /* unused at the moment, so suppress warning by Pure C */
 
@@ -72,33 +70,36 @@ Send_AV (short message, const char * data1, const char * data2)
 			msg[3] = gl_apid;
 			break;
 		case AV_PROTOKOLL:
-			msg[3] = VV_START | VV_ACC_QUOTING; 
+			msg[3] = VV_START | VV_ACC_QUOTING;
 			*(char **)(msg+6) = strcpy (va_helpbuf, thisapp);
 			break;
 		case AV_ACCWINDOPEN:
-			if (cfg_AVWindow) {
-				msg[3] = *(const short *)data1;
+			if (!cfg_AVWindow) {
+				return FALSE;
 			}
+			msg[3] = *(const short *)data1;
 			break;
 		case AV_ACCWINDCLOSED:
-			if (cfg_AVWindow) {
-				msg[3] = *(const short *)data1;
+			if (!cfg_AVWindow) {
+				return FALSE;
 			}
+			msg[3] = *(const short *)data1;
 			break;
 		case AV_SENDKEY :
-			if (cfg_AVWindow) {
-				msg[3] = 0x0004;
-				msg[4] = 0x1117;	/* ^W */
+			if (!cfg_AVWindow) {
+				return FALSE;
 			}
+			msg[3] = 0x0004;
+			msg[4] = 0x1117;	/* ^W */
 			break;
 		case VA_START:
 			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
 			break;
 		default:
-			return 0; /* not supported here */
+			return FALSE; /* not supported here */
 	}
 
-	return appl_write (to_ap_id, 16, msg);
+	return (appl_write (to_ap_id, 16, msg) > 0);
 }
 
 
@@ -112,10 +113,12 @@ Receive_AV (short msg[8])
 /*	POSENTRY	*va_list = NULL; */
 	switch (msg[0]) {
 		case VA_PROTOSTATUS :
-			if (msg[1] == av_shell_id) 
+			if (msg[1] == av_shell_id) {
 				av_shell_status = msg[3];
-			if (acc_wind_OK && !(av_shell_status & AA_ACCWIND))
+			}
+			if (acc_wind_OK && !(av_shell_status & AA_ACCWIND)) {
 				acc_wind_OK = FALSE;
+			}
 #ifdef AVSERVER_TEST
 			if (av_shell_status & AA_SENDKEY) puts ("SENDKEY\r");
 			else                              puts ("SENDKEY error\r");
@@ -142,7 +145,7 @@ Receive_AV (short msg[8])
 			if (av_shell_status & AA_XWIND) puts ("XWIND\r");
 			else                            puts ("XWIND error\r");
 			if (av_shell_status & AA_FONTCHANGED) puts ("FONTCHANGED\r");
-			else                                  puts ("FONTCHANGED error\r"); 
+			else                                  puts ("FONTCHANGED error\r");
 			if (av_shell_status & AA_STARTED) puts ("STARTED\r");
 			else                              puts ("STARTED error\r");
 			if (av_shell_status & AA_SRV_QUOTING) puts ("SRV_QUOTING\r");
@@ -153,12 +156,11 @@ Receive_AV (short msg[8])
 			break;
 
 		case AV_SENDKEY :  /* doesn't seem to be necessary at all ??? */
-				printf ("AV_SENDKEY von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);  
-				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) 	/* ^W */
-				{
-					window_raise (NULL, TRUE, NULL);		
+				printf ("AV_SENDKEY von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);
+				if ((msg[3] == 0x0004) && (msg[4] == 0x1117)) { 	/* ^W */
+					window_raise (NULL, TRUE, NULL);
 				}
-			break;	
+			break;
 /*		case VA_DRAG_COMPLETE :
 			if (debug_level & DBG_AV)
 				debug("VA_DRAG_COMPLETE.\n");
@@ -172,7 +174,7 @@ Receive_AV (short msg[8])
 		case VA_DRAGACCWIND :				/* bei D&D mit glob. Fensterwechsel */
 			str_p   = *(char **)(msg+6);
 			whandle = msg[3];
-			graf_mkstate(&d, &d, &d, &kstate);
+			graf_mkstate (&d, &d, &d, &kstate);
 /*			printf ("VA_DRAGACCWIND von %d: %x, %x\r\n", msg[1], msg[3], msg[4]);*/
 			if (str_p != NULL) {
 				handle_avdd (whandle, kstate, str_p);
@@ -191,7 +193,7 @@ Init_AV_Protocol(void)
 
 	av_shell_id = get_avserver();
 
-	Send_AV(AV_PROTOKOLL, NULL, NULL);
+	Send_AV (AV_PROTOKOLL, NULL, NULL);
 }
 
 
@@ -199,8 +201,9 @@ Init_AV_Protocol(void)
 void
 Exit_AV_Protocol(void)
 {
-	if (av_shell_status & AA_EXIT)  /* AV server knows AV_EXIT */
-		Send_AV(AV_EXIT, NULL, NULL);
+	if (av_shell_status & AA_EXIT) {  /* AV server knows AV_EXIT */
+		Send_AV (AV_EXIT, NULL, NULL);
+	}
 }
 
 
@@ -227,37 +230,33 @@ send_avwinclose (short handle)
 static void
 handle_avdd (short win_handle, short kstate, char * arg)
 {
-	char filename[HW_PATH_MAX];
-	char	*cmd_orig;
-	char	*cmd;
-	BOOL quoted; 
-
-	cmd_orig = strdup(arg);
-	cmd = cmd_orig;
-
- 	if (win_handle) {
-		char *p = filename;
-		char *s;
+	char   filename[HW_PATH_MAX];
+	char * cmd_orig = strdup(arg);
+	BOOL   quoted;
+	
+ 	if (win_handle && cmd_orig) {
+ 		HwWIND wind;
+		char * cmd = cmd_orig;
+		char * p   = filename;
+		char * s;
 		
 		if (cmd[0] == '\'') {
-			cmd++; 
+			cmd++;
 			quoted = TRUE;
 		} else {
 			quoted = FALSE;
 		}
 		while (cmd[0] != '\0') {
-			if (cmd[0] == '\'') 
-			{
+			if (cmd[0] == '\'') {
 				quoted = TRUE;
-				switch (cmd[1])
-				{
+				switch (cmd[1]) {
 					case '\'':
 						cmd++;
 						break;
 					case ' ':
 						p[0] = '\0';
-						s= cmd+1;
-						cmd = filename;
+						s    = cmd +1;
+						cmd  = filename;
 						new_hwWind ("", cmd, TRUE);
 						quoted = FALSE;
 						cmd = s;
@@ -269,8 +268,8 @@ handle_avdd (short win_handle, short kstate, char * arg)
 						cmd++;
 						if (cmd[0] == '\'') {
 							cmd++;
-							quoted = TRUE; 
-						}	
+							quoted = TRUE;
+						}
 						break;
 					default:
 						break;
@@ -279,15 +278,15 @@ handle_avdd (short win_handle, short kstate, char * arg)
 			p++[0] = cmd++[0];
 			if (!quoted && cmd[0] == ' ') {
 				p[0] = '\0';
-				s= cmd+1;
-				cmd = filename;
-				if ((kstate & K_ALT))
-					new_hwWind ("", cmd, TRUE);
-				else
-				{
-					HwWIND wind = hwWind_byHandle (win_handle);
-					start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
+				s    = cmd +1;
+				cmd  = filename;
+				if ((kstate & K_ALT)
+				    || ((wind = hwWind_byHandle (win_handle)) != NULL
+				         && wind->Base.Ident != WIDENT_BRWS)) {
+					wind = NULL;
 				}
+				if (!wind) new_hwWind      ("", cmd, TRUE);
+				else       start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
 				cmd = s;
 				if (cmd[0] == '\'') {
 					quoted = TRUE;
@@ -296,24 +295,27 @@ handle_avdd (short win_handle, short kstate, char * arg)
 				if (cmd[0] != '\0') {
 					p = filename;
 				}
-				if (cmd[0] == '\'')
+				if (cmd[0] == '\'') {
 				  cmd++;
-			}			
-		} 
-		if (cmd[-1] == '\'')
-			p[-1] = '\0'; 
-		else p[0] = '\0';
-
-		cmd = filename;
-		if ((kstate & K_ALT))
-			new_hwWind ("", cmd, TRUE);
-		else
-		{
-			HwWIND wind = hwWind_byHandle (win_handle);
-			start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
+				}
+			}
 		}
-
-   } free (cmd_orig);
+		if (cmd > cmd_orig && cmd[-1] == '\'') {
+			p[-1] = '\0';
+		} else {
+			p[0] = '\0';
+		}
+		cmd = filename;
+		if ((kstate & K_ALT)
+		    || ((wind = hwWind_byHandle (win_handle)) != NULL
+		         && wind->Base.Ident != WIDENT_BRWS)) {
+			wind = NULL;
+		}
+		if (!wind) new_hwWind      ("", cmd, TRUE);
+		else       start_cont_load (wind->Pane, cmd, NULL, TRUE, TRUE);
+   }
+	
+	if (cmd_orig) free (cmd_orig);
 }
 
 

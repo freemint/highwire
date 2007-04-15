@@ -64,8 +64,9 @@ static long oldpipesig;
 #define debug_alert(x, y)
 #endif
 
-/* 
- * parseargs(char cmdlin[]):
+
+/*------------------------------------------------------------------------------
+ * parseargs (char cmdlin[]):
  *	Given a null terminated string of arguments, separated
  *	by spaces, parse it and perform whatever actions are
  *	appropriate on the arguments (usually file and folder
@@ -76,50 +77,50 @@ static long oldpipesig;
  * - The str contains the string separated by null
 */
 
-static WORD parseargs ( char * str)
+static WORD
+parseargs (char * str)
 {
-	WORD	cnt = 1;
-	char 	*c = str;
-	BOOL	in_quote = FALSE;
+	WORD	 cnt      = 1;
+	char * c        = str;
+	BOOL	 in_quote = FALSE;
 
-	while (*c)
-	{
-		switch (*c)
-		{
+	while (*c) {
+		switch (*c) {
+			
 			case ' ' :
-				if ( !in_quote )
-				{
+				if (!in_quote) {
 					*c = '\0';
 					cnt++;
 				}
 				break;
+			
 			case '\'' :
-				strcpy( c, c + 1);
-				if ( !in_quote )
+				strcpy (c, c + 1);
+				if (!in_quote ) {
 					in_quote = TRUE;
-				else
-				{
-					if ( *c != '\'' )
-					{
-						in_quote = FALSE;
-						*c = 0;
-						if ( c[1] )
-							cnt++;
+				} else if (*c != '\'') {
+					in_quote = FALSE;
+					*c = 0;
+					if (c[1]) {
+						cnt++;
 					}
 				}
 				break;
+			
 			default:
 				break;
 		}
-		c += 1;
+		c++;
 	}
 	return cnt;
 }
 
 
-/* Code for originator */
+/* Code for originator*/
 
-/*
+
+/*------------------------------------------------------------------------------
+ *
  * create a pipe for doing the drag & drop,
  * and send an AES message to the recipient
  * application telling it about the drag & drop
@@ -148,7 +149,7 @@ static WORD parseargs ( char * str)
 static int
 ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 {
-	int fd;
+	int  fd;
 	WORD msg[8];
 	long i;
 	long fd_mask;
@@ -160,19 +161,20 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 		pipename[18]++;
 		if (pipename[18] > 'Z') {
 			pipename[17]++;
-			if (pipename[17] > 'Z')
+			if (pipename[17] > 'Z') {
 				break;
+			}
 		}
-/* FA_HIDDEN means "get EOF if nobody has pipe open for reading" */
-		fd = (int) Fcreate(pipename, FA_HIDDEN);
+		/* FA_HIDDEN means "get EOF if nobody has pipe open for reading" */
+		fd = (int) Fcreate (pipename, FA_HIDDEN);
 	} while (fd == EACCDN);
 
 	if (fd < 0) {
-		debug_alert(1, "[1][Fcreate error][OK]");
+		debug_alert (1, "[1][Fcreate error][OK]");
 		return fd;
 	}
 
-/* construct and send the AES message */
+	/* construct and send the AES message */
 	msg[0] = AP_DRAGDROP;
 	msg[1] = gl_apid;
 	msg[2] = 0;
@@ -181,46 +183,44 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 	msg[5] = msy;
 	msg[6] = kstate;
 	msg[7] = (pipename[17] << 8) | pipename[18];
-	i = appl_write(apid, 16, msg);
+	i = appl_write (apid, 16, msg);
 	if (i == 0) {
-		debug_alert(1, "[1][appl_write error][OK]");
-		Fclose ((int) fd);
+		debug_alert (1, "[1][appl_write error][OK]");
+		Fclose (fd);
 		return -2;
 	}
-
-/* now wait for a response */
+	
+	/* now wait for a response */
 	fd_mask = 1L << fd;
-	i = Fselect(DD_TIMEOUT, &fd_mask, 0L, 0L);
+	i = Fselect (DD_TIMEOUT, &fd_mask, 0L, 0L);
 	if (!i || !fd_mask) {	/* timeout happened */
-		debug_alert(1, "[1][ddcreate: Fselect timeout][OK]");
-abort_dd:
-		Fclose(fd);
+		debug_alert (1, "[1][ddcreate: Fselect timeout][OK]");
+		Fclose (fd);
 		return -1;
 	}
 
-/* read the 1 byte response */
-	i = Fread(fd, 1L, &c);
+	/* read the 1 byte response */
+	i = Fread (fd, 1L, &c);
 	if (i != 1 || c != DD_OK) {
-		if (i != 1)
-			debug_alert(1, "[1][ddcreate: read error][OK]");
-		else
-			debug_alert(1, "[1][ddcreate: DD_NAK][OK]");
-		goto abort_dd;
+		if (i != 1) debug_alert (1, "[1][ddcreate: read error][OK]");
+		else        debug_alert (1, "[1][ddcreate: DD_NAK][OK]");
+		Fclose (fd);
+		return -1;
 	}
 
-/* now read the "preferred extensions" */
-	i = Fread(fd, DD_EXTSIZE, exts);
+	/* now read the "preferred extensions" */
+	i = Fread (fd, DD_EXTSIZE, exts);
 	if (i != DD_EXTSIZE) {
-		debug_alert(1, "[1][Error reading extensions][OK]");
-		goto abort_dd;
+		debug_alert (1, "[1][Error reading extensions][OK]");
+		Fclose (fd);
+		return -1;
 	}
 
-	oldpipesig = Psignal(SIGPIPE, (LONG)SIG_IGN);
+	oldpipesig = Psignal (SIGPIPE, (LONG)SIG_IGN);
 	return fd;
 }
 
-
-/*
+/*------------------------------------------------------------------------------
  * see if the recipient is willing to accept a certain
  * type of data (as indicated by "ext")
  *
@@ -245,53 +245,54 @@ ddstry(int fd, char *ext, char *name, long size)
 	WORD hdrlen, i;
 	char c;
 
-/* 4 bytes for extension, 4 bytes for size, 1 byte for
- * trailing 0
- */
+	/* 4 bytes for extension, 4 bytes for size, 1 byte for
+	 * trailing 0
+	 */
 	hdrlen = 9 + strlen(name);
-	i = Fwrite(fd, 2L, &hdrlen);
+	i = Fwrite (fd, 2L, &hdrlen);
 
-/* now send the header */
+	/* now send the header */
 	if (i != 2) return DD_NAK;
-	i = Fwrite(fd, 4L, ext);
-	i += Fwrite(fd, 4L, &size);
-	i += Fwrite(fd, (long)strlen(name)+1, name);
+	i =  Fwrite (fd, 4L, ext);
+	i += Fwrite (fd, 4L, &size);
+	i += Fwrite (fd, (long)strlen(name)+1, name);
 	if (i != hdrlen) return DD_NAK;
 
-/* wait for a reply */
+	/* wait for a reply */
 	i = Fread(fd, 1L, &c);
-	if (i != 1) return DD_NAK;
-	return c;
+	return (i != 1 ? DD_NAK : c);
 }
 
 
 /* Code for either recipient or originator */
 
-/*
+
+/*------------------------------------------------------------------------------
  * close a drag & drop operation
  */
 
 static void
 ddclose (int fd)
 {
-	(void)Psignal(SIGPIPE, oldpipesig);
-	(void)Fclose(fd);
+	(void)Psignal (SIGPIPE, oldpipesig);
+	(void)Fclose (fd);
 }
 
 
 
 /* Code for recipient */
 
-/*
+
+/*------------------------------------------------------------------------------
  * open a drag & drop pipe
  *
  * Input Parameters:
- * ddnam:	the pipe's name (from the last word of
- *		the AES message)
- * preferext:	a list of DD_NUMEXTS 4 byte extensions we understand
- *		these should be listed in order of preference
- *		if we like fewer than DD_NUMEXTS extensions, the
- *		list should be padded with 0s
+ * ddnam: the pipe's name (from the last word of
+ *        the AES message)
+ * preferext: a list of DD_NUMEXTS 4 byte extensions we understand
+ *            these should be listed in order of preference
+ *            if we like fewer than DD_NUMEXTS extensions, the
+ *            list should be padded with 0s
  *
  * Output Parameters: none
  *
@@ -315,11 +316,11 @@ ddopen (int ddnam, char *preferext)
 	if (fd < 0) return fd;
 
 	outbuf[0] = DD_OK;
-	strncpy(outbuf+1, preferext, DD_EXTSIZE);
+	strncpy (outbuf+1, preferext, DD_EXTSIZE);
 
-	oldpipesig = Psignal(SIGPIPE, (LONG)SIG_IGN);
+	oldpipesig = Psignal (SIGPIPE, (LONG)SIG_IGN);
 
-	if (Fwrite(fd, (long)DD_EXTSIZE+1, outbuf) != DD_EXTSIZE+1) {
+	if (Fwrite (fd, (long)DD_EXTSIZE+1, outbuf) != DD_EXTSIZE+1) {
 		ddclose(fd);
 		return -1;
 	}
@@ -327,7 +328,7 @@ ddopen (int ddnam, char *preferext)
 	return fd;
 }
 
-/*
+/*------------------------------------------------------------------------------
  * ddrtry: get the next header from the drag & drop originator
  *
  * Input Parameters:
@@ -355,44 +356,46 @@ ddrtry (int fd, char *name, char *whichext, long *size)
 	int i;
 	char buf[80];
 
-	i = (int) Fread(fd, 2L, &hdrlen);
+	i = (int) Fread (fd, 2L, &hdrlen);
 	if (i != 2) {
 		return -1;
 	}
 	if (hdrlen < 9) {	/* this should never happen */
 		return -1;
 	}
-	i = (int)Fread(fd, 4L, whichext);
+	i = (int) Fread (fd, 4L, whichext);
 	if (i != 4) {
 		return -1;
 	}
 	whichext[4] = 0;
-	i = (int) Fread(fd, 4L, size);
+	i = (int) Fread (fd, 4L, size);
 	if (i != 4) {
 		return -1;
 	}
 	hdrlen -= 8;
-	if (hdrlen > DD_NAMEMAX)
+	if (hdrlen > DD_NAMEMAX) {
 		i = DD_NAMEMAX;
-	else
+	} else {
 		i = hdrlen;
-	if (Fread(fd, (long)i, name) != i) {
+	}
+	if (Fread (fd, (long)i, name) != i) {
 		return -1;
 	}
 	hdrlen -= i;
 
-/* skip any extra header */
+	/* skip any extra header */
 	while (hdrlen > 80) {
-		Fread(fd, 80L, buf);
+		Fread (fd, 80L, buf);
 		hdrlen -= 80;
 	}
-	if (hdrlen > 0)
+	if (hdrlen > 0) {
 		Fread(fd, (long)hdrlen, buf);
+	}
 
 	return 0;
 }
 
-/*
+/*------------------------------------------------------------------------------
  * send a 1 byte reply to the drag & drop originator
  *
  * Input Parameters:
@@ -411,8 +414,8 @@ ddreply (int fd, int ack)
 {
 	char c = ack;
 
-	if (Fwrite(fd, 1L, &c) != 1L) {
-		Fclose(fd);
+	if (Fwrite (fd, 1L, &c) != 1L) {
+		Fclose (fd);
 	}
 	return 0;
 }
@@ -431,7 +434,7 @@ ddreply (int fd, int ack)
 /* modify this as necessary */
 char ourexts[DD_EXTSIZE] = ".TXT";
 
-/*
+/*------------------------------------------------------------------------------
  * rec_ddmsg: given a drag & drop message, act as
  * a recipient and get the data
  *
@@ -457,56 +460,54 @@ char ourexts[DD_EXTSIZE] = ".TXT";
 void
 rec_ddmsg (WORD msg[8])
 {
-	int winid;
-	int /*msx, msy,*/ kstate;
-	int fd, pnam;
-	int i;
-	char txtname[DD_NAMEMAX], ext[5];
-	char *cmdline, *s;
-	long size;
+	int    i;
+	char   txtname[DD_NAMEMAX], ext[5];
+	char * cmdline, * s;
+	long   size;
 
-	winid  = msg[3];
-/*	msx    = msg[4];*/
-/*	msy    = msg[5];*/
-	kstate = msg[6];
-	pnam   = msg[7];
+	int winid  = msg[3];
+/*	int msx    = msg[4];*/
+/*	int msy    = msg[5];*/
+	int kstate = msg[6];
+	int pnam   = msg[7];
 
-	fd = ddopen(pnam, ourexts);
+	int fd = ddopen (pnam, ourexts);
 	if (fd < 0) return;
 
 	for(;;) {
-		i = ddrtry(fd, txtname, ext, &size);
+ 		HwWIND wind;
+		
+		i = ddrtry (fd, txtname, ext, &size);
 		if (i < 0) {
 			ddclose(fd);
 			return;
 		}
-		if (!strncmp(ext, "ARGS", 4)) {
+		if (strncmp (ext, "ARGS", 4) == 0) {
 			WORD cnt;
 			
 			cmdline = malloc((size_t)size+1);
 			if (!cmdline) {
-				ddreply(fd, DD_LEN);
+				ddreply (fd, DD_LEN);
 				continue;
 			}
-			ddreply(fd, DD_OK);
-			Fread(fd, size, cmdline);
-			ddclose(fd);
+			ddreply (fd, DD_OK);
+			Fread (fd, size, cmdline);
+			ddclose (fd);
 			cmdline[size] = 0;
-			cnt = parseargs(cmdline);
-			if ( cnt > 0 )
-			{
-				if ((kstate & K_ALT))
-					new_hwWind ("", cmdline, TRUE);
-				else
-				{
-					HwWIND wind = hwWind_byHandle (winid);
-					start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
+			cnt = parseargs (cmdline);
+			if (cnt > 0) {
+				if ((kstate & K_ALT)
+				    || ((wind = hwWind_byHandle (winid)) != NULL
+				         && wind->Base.Ident != WIDENT_BRWS)) {
+					wind = NULL;
 				}
+				if (!wind) new_hwWind      ("", cmdline, TRUE);
+				else       start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
 			}
-			free ( cmdline );
+			free (cmdline);
 			return;
-		} 
-		else if (!strncmp(ext, ".TXT", 4)) {
+		
+		} else if (strncmp (ext, ".TXT", 4) == 0) {
 			if (size == 0) {
 				ddreply(fd, DD_LEN);
 				continue;
@@ -516,21 +517,22 @@ rec_ddmsg (WORD msg[8])
 				ddreply(fd, DD_LEN);
 				continue;
 			}
-			ddreply(fd, DD_OK);
-			Fread(fd, size, cmdline);
-			ddclose(fd);
+			ddreply (fd, DD_OK);
+			Fread (fd, size, cmdline);
+			ddclose (fd);
 			cmdline[size] = 0;
 			s = strchr (cmdline, '\r');
-			if (s != NULL)
+			if (s != NULL) {
 				*s = '\0';
-			if ((kstate & K_ALT))
-				new_hwWind ("", cmdline, TRUE);
-			else
-			{
-				HwWIND wind = hwWind_byHandle (winid);
-				start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
 			}
-			free ( cmdline );
+			if ((kstate & K_ALT)
+			    || ((wind = hwWind_byHandle (winid)) != NULL
+			         && wind->Base.Ident != WIDENT_BRWS)) {
+				wind = NULL;
+			}
+			if (!wind) new_hwWind      ("", cmdline, TRUE);
+			else       start_cont_load (wind->Pane, cmdline, NULL, TRUE, TRUE);
+			free (cmdline);
 			return;
 		}
 		ddreply(fd, DD_EXT);
@@ -545,7 +547,7 @@ rec_ddmsg (WORD msg[8])
 	}
 }
 
-/*
+/*------------------------------------------------------------------------------
  * send_ddmsg: construct and send a drag & drop message;
  * we only can send the 1 type of data (specified
  * by ext)
@@ -570,14 +572,15 @@ rec_ddmsg (WORD msg[8])
  */
 
 int
-send_ddmsg (WORD msx, WORD msy, WORD kstate, char *name, char *ext, long size, char *data)
+send_ddmsg (WORD msx, WORD msy, WORD kstate,
+            char * name, char * ext, long size, char * data)
 {
-	int fd;
+	int   fd;
 	short apid, winid;
 	short dummy, i;
-	char recexts[DD_EXTSIZE];
+	char  recexts[DD_EXTSIZE];
 
-	winid = wind_find(msx, msy);
+	winid = wind_find (msx, msy);
 /*
 	if (!winid) {
 		debug_alert(1, "[1][Window not found][OK]");
@@ -591,18 +594,22 @@ send_ddmsg (WORD msx, WORD msy, WORD kstate, char *name, char *ext, long size, c
 
 	if (apid == gl_apid) {
 		HwWIND wind = hwWind_byHandle (winid);
-		start_cont_load (wind->Pane, data, NULL, TRUE, TRUE);
+		if (wind && wind->Base.Ident != WIDENT_BRWS) {
+			wind = NULL;
+		}
+		if (!wind) new_hwWind      ("", data, TRUE);
+		else       start_cont_load (wind->Pane, data, NULL, TRUE, TRUE);
 
 /*		debug_alert(1, "[1][Same owner][OK]"); */
 		return 1;	/* huh? that shouldn't happen */
 	}
 
-	fd = ddcreate(apid, winid, msx, msy, kstate, recexts);
+	fd = ddcreate (apid, winid, msx, msy, kstate, recexts);
 	if (fd < 0) {
-		debug_alert(1, "[1][Couldn't open pipe][OK]");
+		debug_alert (1, "[1][Couldn't open pipe][OK]");
 		return fd;
 	}
-	if ((i = ddstry(fd, ext, name, size)) != DD_OK) {
+	if ((i = ddstry (fd, ext, name, size)) != DD_OK) {
 		if (i == DD_EXT) {
 			debug_alert(1, "[1][Bad extension][OK]");
 		} else {
@@ -611,7 +618,7 @@ send_ddmsg (WORD msx, WORD msy, WORD kstate, char *name, char *ext, long size, c
 		ddclose(fd);
 		return 3;
 	}
-	Fwrite(fd, size, data);
-	ddclose(fd);
+	Fwrite (fd, size, data);
+	ddclose (fd);
 	return 0;
 }
