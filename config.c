@@ -28,6 +28,7 @@ BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_FixedCmap    = FALSE;
 BOOL         cfg_UseCSS       = TRUE;
+BOOL         cfg_HotlistOpen  = FALSE;
 BOOL         cfg_AVWindow     = FALSE;
 BOOL         cfg_GlobalCycle  = FALSE;
 WORD         cfg_ConnTout     = 1;
@@ -630,6 +631,7 @@ read_config(void)
 				{ "GLOBAL_WINCYCLE",      cfg_BOOL,      (long)&cfg_GlobalCycle },
 				{ "HEADER",               cfg_font,      FA(header_font, 0, 0)  },
 				{ "HIGHWIRE",             cfg_up2date,   0 },
+				{ "HOTLIST_OPEN",         cfg_BOOL,      (long)&cfg_HotlistOpen },
 				{ "HTTP_PROXY",           cfg_http_proxy,0 },
 				{ "INFOBAR",              cfg_infobar,   0 },
 				{ "ITALIC_HEADER",        cfg_font,      FA(header_font, 0, 1)  },

@@ -160,6 +160,7 @@ extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
 extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
 extern BOOL         cfg_FixedCmap;
 extern BOOL         cfg_UseCSS;
+extern BOOL         cfg_HotlistOpen;
 extern BOOL         cfg_AVWindow;    /* AVSERVER window enables AV-drag&drop */
 extern BOOL         cfg_GlobalCycle; /* global window cycling by AV_SENDKEY  */
 extern WORD         cfg_ConnTout;    /* seconds for connection establishing  */

@@ -256,6 +256,10 @@ main (int argc, char **argv)
 		old_bookm = NULL;
 		menu_openbookmarks();
 	}
+	if (cfg_HotlistOpen) {
+		menu_openbookmarks();
+	}
+	
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 
 #if 0
