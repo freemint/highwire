@@ -509,6 +509,23 @@ cfg_urlhist (char * param, long arg)
 
 
 /*----------------------------------------------------------------------------*/
+static void
+cfg_data_dir (char * param, long arg)
+{
+	size_t n = strlen (param);
+	(void)arg;
+	if (n > 0 && n < sizeof(fsel_path) -2) {
+		char sep = (*param == '/' ? '/' : '\\');
+		memcpy (fsel_path, param, n);
+		if (fsel_path[n-1] != sep) {
+			fsel_path[n++] = sep;
+		}
+		fsel_path[n] = '\0';
+	}
+}
+
+
+/*----------------------------------------------------------------------------*/
 typedef struct s_devl_flag * DEVL_FLAG;
 struct s_devl_flag {
 	DEVL_FLAG Next;
@@ -622,6 +639,7 @@ read_config(void)
 				{ "CACHEDSK",             cfg_cachedsk,  0 },
 				{ "CACHEMEM",             cfg_cachemem,  0 },
 				{ "COOKIES",              cfg_Func,      (long)menu_cookies     },
+				{ "DATA_DIR",             cfg_data_dir,  0 },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   (long)&backgnd },
 				{ "FIXED_CMAP",           cfg_BOOL,      (long)&cfg_FixedCmap   },
