@@ -66,6 +66,7 @@ CFILES = \
 	W_Struct.c \
 	raster.c \
 	image.c \
+	img-dcdr.c \
 	Paragrph.c \
 	list.c \
 	Form.c \

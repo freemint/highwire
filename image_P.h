@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Private declarations for image.c and raster.c
+ * Private declarations for image.c, raster.c and img-dcdr.c
  *
  *******************************************************************************
 */
@@ -38,6 +38,8 @@ struct s_img_info {
 	ULONG    Pixel[256];
 };
 
+IMGINFO    get_decoder (const char * file);
+
 typedef struct s_rasterizer {
 	const char * DispInfo;
 	BOOL         StndBitmap;
@@ -45,5 +47,4 @@ typedef struct s_rasterizer {
 	void       (*functn)(IMGINFO, void *);
 } * RASTERIZER;
 
-RASTERIZER rasterizer (UWORD depth, UWORD comps);
-	
+RASTERIZER rasterizer  (UWORD depth, UWORD comps);

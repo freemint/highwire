@@ -2,8 +2,7 @@
  */
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h> /* memcpy */
-#include <time.h>
+#include <string.h> /* memcpy() */
 #include <gemx.h>
 
 #ifdef __PUREC__
@@ -16,13 +15,9 @@
 #include "Containr.h"
 #include "schedule.h"
 #include "cache.h"
-
-#if 01
-#include "Loader.h" /* enables remote access of images */
-#endif
+#include "Loader.h"
 
 
-static IMGINFO  get_decoder (const char * file);
 static pIMGDATA setup       (IMAGE, IMGINFO);
 static void     read_img    (IMAGE, IMGINFO, pIMGDATA);
 static int      image_job   (void *, long);
@@ -155,11 +150,7 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 		img->disp_h = (h > 0 ? h : 16);
 		set_word (img);
 		
-#if defined(__LOADER_H__)
 		if (!img->u.Data && (cfg_ViewImages || win_image)) {
-#else
-		if (!img->u.Data && PROTO_isLocal (loc->Proto)) {
-#endif
 			if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
 				containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
 			}
@@ -316,7 +307,6 @@ image_calculate (IMAGE img, short par_width)
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#if defined(__LOADER_H__)
 static int
 image_ldr (void * arg, long invalidated)
 {
@@ -347,7 +337,6 @@ image_ldr (void * arg, long invalidated)
 	
 	return FALSE;
 }
-#endif
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 static int
@@ -387,7 +376,6 @@ image_job (void * arg, long invalidated)
 				cached = info.Object;
 			}
 		}
-#if defined(__LOADER_H__)
 		if (!cached) {
 			if (res & CR_LOCAL) {
 				loc   = info.Local;
@@ -407,7 +395,6 @@ image_job (void * arg, long invalidated)
 				return FALSE;
 			}
 		}
-#endif
 	}	
 	if (cached) {
 		img->u.Data = cache_bound (cached, &img->source);
@@ -685,43 +672,4 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 			y = interlace /2;
 		} while (interlace > 1);
 	}
-}
-
-
-/*******************************************************************************
- *
- *   Image Decoders
- */
-
-typedef struct s_decoder {
-	struct s_decoder * Next;
-	BOOL (*start)(const char * file, IMGINFO);
-} DECODER;
-#define DECODER_CHAIN NULL
-
-#include "img_gif.c"
-#include "img_jpg.c"
-#include "img_png.c"
-#include "img_xmp.c"
-
-/*----------------------------------------------------------------------------*/
-static IMGINFO
-get_decoder (const char * file)
-{
-	static DECODER * decoder_chain = DECODER_CHAIN;
-	
-	DECODER * decoder = decoder_chain;
-	IMGINFO   info    = (decoder ? malloc (sizeof (struct s_img_info)) : NULL);
-	
-	if (info) {
-		memset (info, 0, offsetof (struct s_img_info, Pixel));
-		while (decoder && !(*decoder->start)(file, info)) {
-			decoder = decoder->Next;
-		}
-		if (!info->_priv_data) {
-			free (info);
-			info = NULL;
-		}
-	}
-	return info;
 }
