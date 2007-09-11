@@ -24,6 +24,11 @@ Changes in V. 0.3.3 beta
   This palette is also always used for plane modes
   > 8.
 
+- Support added for image/x-icon format and mime
+  type.
+
+- Bug Fix for background colors.
+
 - New config keyword DATA_DIR to define the
   default directory for downloading files (affects
   also path for opening local files).
@@ -33,8 +38,6 @@ Changes in V. 0.3.3 beta
 
 - Bug Fix: Highwire now gets form data encoding
   from the form.
-
-- Bug Fix for background colors.
 
 - Bug Fix for text following floating images
   

@@ -14,6 +14,7 @@ typedef struct s_decoder {
 #include "img_jpg.c"
 #include "img_png.c"
 #include "img_xmp.c"
+#include "img_ico.c"
 
 /*----------------------------------------------------------------------------*/
 IMGINFO
