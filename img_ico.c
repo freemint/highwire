@@ -24,6 +24,7 @@ typedef struct s_icon_dir_entry {
 	CHAR  bHeight;
 	CHAR  bColorCount;
 	CHAR  bReserved;
+#define  bHasMask bReserved /* used for our own purpose */
 	UWORD wPlanes;
 	UWORD wBitCount;
 	ULONG dwBytesInRes;
@@ -196,6 +197,7 @@ decIco_start (const char * name, IMGINFO info)
 				entry->dwImageOffset += header.biSize;
 				entry->bColorCount   =  colors -1; /* take care for 256 */
 				entry->wBitCount     =  depth;
+				entry->bHasMask      = (header.biHeight == entry->bHeight *2);
 				found                =  entry;
 			}
 		}
@@ -242,7 +244,7 @@ decIco_start (const char * name, IMGINFO info)
 			info->PalGpos = 1;
 			info->PalBpos = 0;
 			info->PalStep = 4;
-			info->Transp     = -1; /* not yet supported */
+			info->Transp     = -1;
 			info->Interlace  = 0;
 		}
 	}
@@ -252,6 +254,84 @@ decIco_start (const char * name, IMGINFO info)
 	if (!found) {
 		fclose (file);
 		return FALSE;
+		
+	} else if (found->bHasMask) {
+		/* Check for at least one transparent pixel */
+		WORD    transp = -1;
+		long    fsave  = ftell (file);
+		ICON    icon   = info->_priv_data;
+		int     nlongs = (found->bWidth +31) /32;
+		int     nbytes = nlongs * 4;
+		ULONG   rmask  = ~((1uL << (32 - (found->bWidth & 0x1F))) -1);
+		CHAR    cbuf[32]; /* == 256 bits */
+		ULONG * lbuf   = (ULONG*)cbuf;
+		int     y, x;
+		for (y = 0; y < found->bHeight && transp < 0; y++) {
+			fread (cbuf, 1, nbytes, file);
+			lbuf[nlongs -1] &= rmask;
+			for (x = 0; x < nlongs; x++) {
+				if (lbuf[x]) {
+					transp = 1 << found->wBitCount;
+#ifdef ICO_DBG
+					printf ("ICO: transparency detected.\n");
+#endif	
+					break;
+				}
+				/*printf("%08lX", lbuf[x]);*/
+			}
+			/*printf("\n");*/
+		}
+		if (transp >= 0) {
+			/* search for an available color index */
+			CHAR   bit = 0;
+			CHAR * ptr = icon->Ptr;
+			memset (cbuf, 0, sizeof(cbuf));
+			for (y = 0; y < found->bHeight; y++) {
+				CHAR * p = ptr -= icon->Inc;
+				for (x = 0; x < found->bWidth; x++) {
+					CHAR pix = *(p++);
+					cbuf[pix >>3] |= 1 << (7 - (pix & 7));
+				}
+			}
+			ptr = cbuf + sizeof(cbuf);
+			while (--transp >= 0) {
+				if ((bit <<= 1) == 0) {
+					bit = 0x01u;
+					ptr--;
+				}
+				if (!(*ptr & bit)) {
+#ifdef ICO_DBG
+					printf ("ICO: transparency index %i %08lX.\n",
+					        transp, ((ULONG*)info->Palette)[transp]);
+#endif	
+					break;
+				}
+			}
+		}
+		if (transp >= 0) {
+			CHAR * ptr = (CHAR*)(icon +1);
+			fseek (file, fsave, SEEK_SET);
+			for (y = 0; y < found->bHeight; y++, ptr += icon->Inc) {
+				CHAR * p   = ptr;
+				CHAR   bit = 0;
+				CHAR * msk = cbuf -1;
+				fread (cbuf, 1, nbytes, file);
+				for (x = 0; x < found->bWidth; x++, p++) {
+					if ((bit >>= 1) == 0) {
+						if (!(*(++msk))) {
+							x += 7;
+							p += 7;
+							continue;
+						}
+						bit = 0x80u;
+					}
+					if (*msk & bit) {
+						*p = transp;
+					}
+				}
+			}
+			info->Transp = transp;
+		}
 	}
 	
 	return TRUE;
