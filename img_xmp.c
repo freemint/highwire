@@ -55,7 +55,8 @@ xmap_read (FILE * file, XMAP xmap, BOOL all)
 static BOOL
 decXmp_start (const char * name, IMGINFO info)
 {
-	WORD   depth = 1;
+	WORD   depth  = 1;
+	WORD   transp = -1;
 	XMAP   xmap;
 	char * p;
 	FILE * file = fopen (name, "rb");
@@ -115,18 +116,19 @@ decXmp_start (const char * name, IMGINFO info)
 				map = pix +256;
 			}
 			if (pix) {
-				char form[] = "\"%0[^\t] c %19[^\"]\",", val[20];
+				char form[] = "\"%0[^\t] %1[cs] %19[^\"]\",", mod[2], val[20];
 				form[2] += xmap->NumChrs;
 				memset (pix, 0, (char*)map - (char*)pix);
 				for (i = 0; i < xmap->Colors; i++) {
 					BOOL ok = TRUE;
 					if ((p = xmap_read (file, xmap, FALSE)) == NULL ||
-					    sscanf (p, form, (char*)&pix[i], val) != 2) {
+					    sscanf (p, form, (char*)&pix[i], mod, val) != 3) {
 						ok = FALSE;
 					} else if (val[0] == '#' && isxdigit (val[1])) {
 						map[i] = strtoul (val +1, NULL, 16);
-					} else if (stricmp ("None", val) == 0) {
-						map[i] = 0ul; /* transparency value? */
+					} else if (strnicmp ("None", val, 4) == 0) {
+						map[i] = 0ul; /* transparency value */
+						transp = i;
 					} else {
 						ok = FALSE;
 					}
@@ -167,7 +169,7 @@ decXmp_start (const char * name, IMGINFO info)
 	info->NumComps   = 1;
 	info->BitDepth   = depth;
 	info->NumColors  = xmap->Colors;
-	info->Transp     = -1;
+	info->Transp     = transp;
 	info->Interlace  = 0;
 	
 	xmap->Buffer[0]  = '\0';
