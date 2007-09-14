@@ -27,6 +27,9 @@ Changes in V. 0.3.3 beta
 - Support added for image/x-icon format and mime
   type.
 
+- Improved image decoder selector, makes loading
+  of some images a bit faster.
+
 - Bug Fix for background colors.
 
 - New config keyword DATA_DIR to define the
