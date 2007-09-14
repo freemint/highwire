@@ -10,7 +10,7 @@
 HIGHWIRE.PRG
 ;
 
-.C [-K -P -w-stv -DUSE_OVL -DUSE_INET -DLIBGIF -DLIBJPG -DLIBPNG -DIMG_XMP]
+.C [-K -P -w-stv -DUSE_OVL -DUSE_INET]
 .S [] ; -Y]
 .L [-S=16384]
 =
