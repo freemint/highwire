@@ -1,5 +1,3 @@
-#ifdef LIBJPG
-
 #define XMD_H /* avoid redefining INT16 and INT32, already done in gemlib */
 #include <setjmp.h>
 #include <jpeglib.h>
@@ -11,6 +9,7 @@ static void decJpg_quit  (IMGINFO);
 
 static DECODER _decoder_jpg = {
 	DECODER_CHAIN,
+	{ MIME_IMG_JPEG, 0 },
 	decJpg_start
 };
 #undef  DECODER_CHAIN
@@ -160,5 +159,3 @@ decJpg_quit (IMGINFO info)
 		info->_priv_data = NULL;
 	}
 }
-
-#endif /* LIBJPG */

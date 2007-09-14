@@ -1,5 +1,3 @@
-#ifdef LIBGIF
-
 #include <gif_lib.h>
 #undef TRUE
 #undef FALSE
@@ -10,6 +8,7 @@ static void decGif_quit  (IMGINFO);
 
 static DECODER _decoder_gif = {
 	DECODER_CHAIN,
+	{ MIME_IMG_GIF, 0 },
 	decGif_start
 };
 #undef  DECODER_CHAIN
@@ -125,5 +124,3 @@ decGif_quit (IMGINFO info)
 		info->_priv_data = NULL;
 	}
 }
-
-#endif /* LIBGIF */

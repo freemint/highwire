@@ -1,5 +1,3 @@
-#ifdef IMG_XMP
-
 #include <ctype.h>
 
 static BOOL decXmp_start (const char * file, IMGINFO info);
@@ -9,6 +7,7 @@ static void decXmp_quit  (IMGINFO);
 
 static DECODER _decoder_xmp = {
 	DECODER_CHAIN,
+	{ MIME_IMG_X_XBM, MIME_IMG_X_XPM, 0 },
 	decXmp_start
 };
 #undef  DECODER_CHAIN
@@ -267,5 +266,3 @@ decXmp_quit (IMGINFO info)
 		info->_priv_data = NULL;
 	}
 }
-
-#endif /*IMG_XMP*/

@@ -9,6 +9,7 @@ static void decIco_quit  (IMGINFO);
 
 static DECODER _decoder_ico = {
 	DECODER_CHAIN,
+	{ MIME_IMG_X_ICON, 0 },
 	decIco_start
 };
 #undef  DECODER_CHAIN

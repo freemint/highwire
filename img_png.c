@@ -1,5 +1,3 @@
-#ifdef LIBPNG
-
 #include <setjmp.h>
 #if defined(__PUREC__) && !defined(STDC)
 #	define STDC
@@ -18,6 +16,7 @@ static void decPng_quit  (IMGINFO);
 
 static DECODER _decoder_png = {
 	DECODER_CHAIN,
+	{ MIME_IMG_PNG, 0 },
 	decPng_start
 };
 #undef  DECODER_CHAIN
@@ -164,5 +163,3 @@ decPng_quit  (IMGINFO info)
 		info->_priv_data = NULL;
 	}
 }
-
-#endif /* LIBPNG */
