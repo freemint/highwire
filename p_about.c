@@ -170,26 +170,6 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	
 	font_byType (-1, -1, font_step2size (2), current->word);
 	
-	#ifdef LIBGIF
-	{
-		#define w /* avoid warnings due to shadowed */
-		#include <gif_lib.h>
-		#undef w
-		const char * p = GIF_LIB_VERSION;
-		while (*p && *p != '.' && !isdigit(*p)) p++;
-		if (*p) {
-			char * b = buf;
-			*(++w) = render_text (current, """gif-lib:""");
-			tab    = max (tab, (*w)->word_width);
-			while (*p == '.' || isdigit(*p)) *(b++) = *(p)++;
-			*(b++) = '';
-			*(b++) = '\r';
-			*(b)   = '\0';
-			render_text (current, buf);
-		}
-	}
-	#endif
-	
 	sprintf (buf, """GEMlib:""""%i.%02i.%i"" " __GEMLIB_BETATAG__ "\r",
 	         __GEMLIB_MAJOR__, __GEMLIB_MINOR__, __GEMLIB_REVISION__);
 	*(++w) = render_text (current, buf);
