@@ -997,6 +997,28 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				p = empty;
 			}
 		}
+		
+	}
+	
+#ifdef __PUREC__
+# define isgraph(c)   (c > 0x20 && c < 0x7F)  /* seems to be broken in Pure C */
+#endif
+	if (*p && !isspace (*p) && !isgraph (*p)) {
+		/* check for invalid characters (probably some UTF-8) */
+		int n = 0;
+		do {
+			if (++n > 10) {
+				n = 0; /* too much nonsense, skip check */
+				break;
+			}
+		} while (p[n] && !isspace (p[n]) && !isgraph (p[n]));
+		if (n && p[n]) {
+			int i;
+			printf ("parse_css(): leading invalid characters skipped:");
+			for (i = 0; i < n; printf (" %02X", p[i++]));
+			printf ("\n");
+			p += n;
+		}
 	}
 	
 	while (*p_style) { /* jump to the end of previous stored style sets */
