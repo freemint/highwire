@@ -24,6 +24,7 @@ typedef enum {   /* Basic MIME types from RFC2045/2046 by the
 
 	MIME_AUDIO = 0x3000,
 		MIME_AUD_BASIC,   /* audio/basic  "*.au,*.snd" */
+		MIME_AUD_MPEG,    /* audio/mpeg   "*.mp3       */
 		MIME_AUD_X_WAV,   /* audio/x-wav  "*.wav"      */
 
 	MIME_VIDEO = 0x4000,

@@ -56,12 +56,12 @@ Changes in V. 0.3.3 beta
   world by IE.
   
 - Invalid '&' CSS token and corresponding rules
-  ignored.
+  ignored.  Also invalid '\' escaped CSS tokens
+  and identifiers ignored as well as invalid
+  trailing ';'.
 
-- Invalid trailing ';' in CSS ignored.
-
-- Invalid '\' escaped CSS tokens and identifiers
-  ignored.
+- New mime-type 'audio/mpeg' (*.mp3) added, will
+  be simply propagated to the AV-server.
 
 - Bugs #179, #217 resolved
 
