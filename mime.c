@@ -12,32 +12,27 @@ struct ext_2_mime {
 	const char   * Appl;
 };
 static const struct ext_2_mime mime_list[] = {
-/*
-	{ "avr",  MIME_AUDIO,      "GEMJing"  },
-	{ "dvs",  MIME_AUDIO,      "GEMJing"  },
-	{ "hsn",  MIME_AUDIO,      "GEMJing"  },
-	{ "hyp",  MIME_APPL,       "ST-Guide" },
-	{ "img",  MIME_IMG_X_XIMG, ""         },
-	{ "mpg",  MIME_VID_MPEG,   "ANIPLAY"  },
-	{ "pdf",  MIME_APP_PDF,    "MyPdf"    },
-*/
+	/* mime_list->Appl means: NULL == internal handled by own decoder, else sent
+	 * to the AV-Server with either empty argument or to that as stored there as
+	 * the target application.
+	*/
 	{ "au",    MIME_AUD_BASIC,  "GEMJing"  },
 	{ "css",   MIME_TXT_CSS,    NULL       },
 	{ "gif",   MIME_IMG_GIF,    NULL       },
 	{ "htm",   MIME_TXT_HTML,   NULL       },
 	{ "html",  MIME_TXT_HTML,   NULL       },
-	{ "ico",   MIME_IMG_X_ICON, ""         },
-	{ "jpeg",  MIME_IMG_JPEG,   ""         },
-	{ "jpg",   MIME_IMG_JPEG,   ""         },
-	{ "jpe",   MIME_IMG_JPEG,   ""         },
+	{ "ico",   MIME_IMG_X_ICON, NULL       },
+	{ "jpeg",  MIME_IMG_JPEG,   NULL       },
+	{ "jpg",   MIME_IMG_JPEG,   NULL       },
+	{ "jpe",   MIME_IMG_JPEG,   NULL       },
 	{ "mp3",   MIME_AUD_MPEG,   ""         },
-	{ "png",   MIME_IMG_PNG,    ""         },
+	{ "png",   MIME_IMG_PNG,    NULL       },
 	{ "shtml", MIME_TXT_HTML,   NULL       },
 	{ "snd",   MIME_AUD_BASIC,  "GEMJing"  },
 	{ "txt",   MIME_TXT_PLAIN,  NULL       },
 	{ "wav",   MIME_AUD_X_WAV,  "GEMJing"  },
-	{ "xbm",   MIME_IMG_X_XBM,  ""         },
-	{ "xpm",   MIME_IMG_X_XPM,  ""         }
+	{ "xbm",   MIME_IMG_X_XBM,  NULL       },
+	{ "xpm",   MIME_IMG_X_XPM,  NULL       }
 };
 
 struct mime_2_ext {
