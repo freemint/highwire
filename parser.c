@@ -486,7 +486,8 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 					/*printf("val %.*s  ent %d \r\n",10,val,css);*/
 				}
 			} else {
-				/*	if (css == 13) printf("found ent %d val %.*s %d  \r\n",css,ent->Len,ent->Value,ent->weight);
+				/*	if (css == 13) printf("found ent %d val %.*s %d  \r\n",
+				                         css, ent->Len,ent->Value,ent->weight);
 				*/
 				;
 			}
@@ -494,13 +495,16 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 
 		if (ent) {
 /*			if (important && ent->Key == 13)
-					printf("in   %.*s %ld vs %ld _______________\n",(unsigned)(ptr - val +1),val,weight,ent->weight);
+					printf("in   %.*s %ld vs %ld _______________\n",
+					       (unsigned)(ptr - val +1),val,weight,ent->weight);
 */
 			if ((weight >= ent->weight)
 				||(important && ((weight + 10000000L) >= ent->weight))) {
 
 /*				if (ent->Key == 13)
-					printf("new ent %d val %.*s %ld old %.*s %ld \r\n",css,(unsigned)(ptr - val +1),val,weight,ent->Len,ent->Value,ent->weight);
+					printf("new ent %d val %.*s %ld old %.*s %ld \r\n",
+					       css,(unsigned)(ptr - val +1),val,weight,ent->Len,
+					       ent->Value,ent->weight);
 */						
 				ent->Key   = css;
 				ent->Value = val;
@@ -544,7 +548,8 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	while (style) {
 		BOOL match;
 	
-		if ((style->Css.Key && style->Css.Key != tag && style->Css.Key != TAG_LastDefined) ||
+		if ((style->Css.Key && style->Css.Key != tag
+		                    && style->Css.Key != TAG_LastDefined) ||
 		    (class_id != style->ClassId)              ||
 		    (keyval && (strncmp (style->Ident, keyval->Value, keyval->Len)
 	                         || style->Ident[keyval->Len]))) {
@@ -1266,7 +1271,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if ((key == TAG_Unknown) || (*p == '_')) {
 					p = q;
 
-					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&') ;
+					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
 				}
 			}
 			
@@ -1277,7 +1282,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if (!isalpha (*p)) skip = TRUE;
 
 				beg = p;
-				while (isalnum (*(++p)) || strchr ("-_.:&", *p));
+				while (isalnum (*(++p)) || strchr ("-_.&", *p));
 
 				end = p;
 
@@ -1286,13 +1291,16 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				beg = end = NULL;
 			}
 
-
 			if (*p == ':') { /*........................ pseudo format */
+				p++;
 				if (key == TAG_A
-				    && strnicmp (p +1, "link", 4) == 0 && !isalpha (*(p +5))) {
-					p += 5; /* ignore */
+				    && strnicmp (p, "link", 4) == 0 && !isalpha (p[4])) {
+					p += 4; /* just eat this */
+				} else if ((strnicmp (p, "before", 6) == 0 && !isalpha (p[6])) ||
+				           (strnicmp (p, "after",  5) == 0 && !isalpha (p[5]))) {
+					p += (*p == 'b' ? 6 : 5); /* just eat this */
 				} else {
-					while (isalpha (*(++p)) || *p == ':' || *p == '-');
+					while (isalpha (*p) || *p == ':' || *p == '-') p++;
 					skip = TRUE; /* ignore */
 				}
 			}
@@ -1330,7 +1338,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				if (len) memcpy (tmp->Ident, beg, len);
 				tmp->Ident[len] = '\0';
 				tmp->ClassId    = cid;
-				tmp->Css.Key    = key; /*(key == TAG_LastDefined ? TAG_Unknown : key);*/
+				tmp->Css.Key    = key; /*(key==TAG_LastDefined ?TAG_Unknown :key);*/
 				tmp->Css.Value  = NULL;
 				tmp->Next    = NULL;
 				if (!*p_style) {
@@ -1367,8 +1375,8 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				p++;
 				continue;
 			} else if (*p == '~') { 
-				/* ........ WTF  ???  I can't find this but Slashdot uses it */
-				/* so I'm treating it like it was a normal alpha char seems to work */
+				/* ........ WTF  ???  I can't find this but Slashdot uses it, so */
+				/* I'm treating it like it was a normal alpha char seems to work */
 				
 				if (style) style->Css.Value = "";
 				p++;
