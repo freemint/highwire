@@ -8,7 +8,6 @@ Changes in V. 0.3.3 beta
   file method FORMs (file upload via forms)
 
 - New Feature implemented:  Basic Bookmark support
-  (still in development)
   - Bookmark GEO stored in Config file
   - Ability to open Bookmark window from menu and
     with Control+B
@@ -42,11 +41,14 @@ Changes in V. 0.3.3 beta
 - Bug Fix: Highwire now gets form data encoding
   from the form.
 
-- Bug Fix for text following floating images
-  
 - Bug Fix for window geo code and constantly
-  reseting values
+  reseting values.
 
+- Bug Fix for text following floating images.
+
+- Overworked handling of align/float/text-align
+  attributes.
+  
 - Table Border code overhauled.
 
 - Force empty Option tags to be '_'.
@@ -63,7 +65,7 @@ Changes in V. 0.3.3 beta
 - New mime-type 'audio/mpeg' (*.mp3) added, will
   be simply propagated to the AV-server.
 
-- Bugs #179, #217 resolved
+- Bugs #179, #217 resolved.
 
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:

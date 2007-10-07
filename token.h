@@ -284,7 +284,7 @@
 		__CSS_ITEM (PADDING_TOP,      0),
 		__CSS_ITEM (POSITION,         0),
 		__CSS_ITEM (RIGHT,            0), /* for position */
-		__CSS_ITEM (TEXT_ALIGN,       KEY_ALIGN),
+		__CSS_ITEM (TEXT_ALIGN,       0),
 		__CSS_ITEM (TEXT_DECORATION,  0),
 		__CSS_ITEM (TEXT_INDENT,      0),
 		__CSS_ITEM (TOP,              0), /* for position */

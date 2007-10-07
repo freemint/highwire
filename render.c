@@ -60,20 +60,6 @@ list_indent (WORD type)
 
 
 /*----------------------------------------------------------------------------*/
-static H_ALIGN
-get_h_align (PARSER parser, H_ALIGN dflt)
-{
-	char out[10];
-	if (get_value (parser, KEY_ALIGN, out, sizeof(out))) {
-		if      (stricmp (out, "left")    == 0) dflt = ALN_LEFT;
-		else if (stricmp (out, "right")   == 0) dflt = ALN_RIGHT;
-		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
-		else if (stricmp (out, "justify") == 0) dflt = ALN_JUSTIFY;
-	}
-	return dflt;
-}
-
-/*----------------------------------------------------------------------------*/
 static V_ALIGN
 get_v_align (PARSER parser, V_ALIGN dflt)
 {
@@ -83,6 +69,35 @@ get_v_align (PARSER parser, V_ALIGN dflt)
 		else if (stricmp (out, "middle")   == 0)  dflt = ALN_MIDDLE;
 		else if (stricmp (out, "bottom")   == 0)  dflt = ALN_BOTTOM;
 	/*	else if (stricmp (out, "baseline") == 0) dflt = ALN_BASELINE;*/
+	}
+	return dflt;
+}
+
+/*----------------------------------------------------------------------------*/
+static H_ALIGN
+get_h_align (PARSER parser, H_ALIGN dflt)
+{
+	char out[10];
+	if (get_value (parser, CSS_TEXT_ALIGN, out, sizeof(out)) ||
+	    get_value (parser, KEY_ALIGN,      out, sizeof(out))) {
+		if      (stricmp (out, "left")    == 0) dflt = ALN_LEFT;
+		else if (stricmp (out, "right")   == 0) dflt = ALN_RIGHT;
+		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
+		else if (stricmp (out, "justify") == 0) dflt = ALN_JUSTIFY;
+	}
+	return dflt;
+}
+
+/*----------------------------------------------------------------------------*/
+static H_ALIGN
+get_floating (PARSER parser, H_ALIGN dflt)
+{
+	char out[10];
+	if (get_value (parser, CSS_FLOAT, out, sizeof(out)) ||
+	    get_value (parser, KEY_ALIGN, out, sizeof(out))) {
+		if      (stricmp (out, "left")    == 0) dflt = FLT_LEFT;
+		else if (stricmp (out, "right")   == 0) dflt = FLT_RIGHT;
+		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
 	}
 	return dflt;
 }
@@ -1104,7 +1119,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	}
 	
 	/* devl stuff, activate in cfg: DEVL_FLAGS = CssPosition */
-/*	if (box->HtmlCode == TAG_DIV) {*/
+/*	if (box->HtmlCode == TAG_DIV) }{*/
 	if (TRUE) {
 		static BOOL __once = FALSE, _CssPosition = FALSE;
 		if (!__once) {
@@ -1213,9 +1228,8 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		}
 	} /* devl stuff */
 	
-	if (get_value (parser, CSS_FLOAT, out, sizeof(out))) {
-		if      (stricmp (out, "right") == 0) box->Floating = FLT_RIGHT;
-		else if (stricmp (out, "left")  == 0) box->Floating = FLT_LEFT;
+	if (box->HtmlCode != TAG_HR) {
+		box->Floating = get_floating (parser, ALN_NO_FLT);
 	}
 	if (get_value (parser, CSS_CLEAR, out, sizeof(out))) {
 		if      (stricmp (out, "right") == 0) box->ClearFlt = BRK_RIGHT;
@@ -2930,11 +2944,11 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 	UNUSED (text);
 	
 	if (flags & PF_START) {
-		FRAME    frame    = parser->Frame;
-		TEXTBUFF current  = &parser->Current;
-		H_ALIGN  floating = get_h_align (parser, ALN_NO_FLT);
+		FRAME    frame     = parser->Frame;
+		TEXTBUFF current   = &parser->Current;
+		H_ALIGN  floating  = get_floating (parser, ALN_NO_FLT);
 		H_ALIGN  old_value = current->paragraph->Box.TextAlign;
-		V_ALIGN  v_align  = ALN_BOTTOM;
+		V_ALIGN  v_align   = ALN_BOTTOM;
 		TEXTATTR word_attr   = current->word->attr;
 		short word_height    = current->word->word_height;
 		short word_tail_drop = current->word->word_tail_drop;
@@ -2954,24 +2968,13 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			return flags;
 		}
 	
-		if (floating == ALN_NO_FLT) {
-			if (get_value (parser, CSS_FLOAT, output, sizeof(output))) {
-				if      (stricmp (output, "right") == 0) floating = FLT_RIGHT;
-				else if (stricmp (output, "left")  == 0) floating = FLT_LEFT;
-			}
-			
-		}
 		if (floating != ALN_NO_FLT) {
 			H_ALIGN  align = current->paragraph->Box.TextAlign;
 			PARAGRPH par   = add_paragraph (current, 0);
 			par->Box.BoxClass  = BC_SINGLE;
 			par->Box.HtmlCode  = TAG_IMG;
 			par->Box.TextAlign = align;
-			if (floating == ALN_CENTER) {
-				par->Box.Floating = floating;
-			} else {
-				par->Box.Floating = floating|FLT_MASK;
-			}
+			par->Box.Floating  = floating;
 /*			box_frame  (parser, &par->Box.Margin, CSS_MARGIN);
 */
 			/* This might need to be moved */
@@ -3262,7 +3265,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		/* If we have a seperate non terminated tag inside of
 		 * our H tag, then pop the fontstack */
 		if (current->paragraph->Box.HtmlCode < TAG_H1 ||
-		current->paragraph->Box.HtmlCode > TAG_H6) {
+		    current->paragraph->Box.HtmlCode > TAG_H6) {
 			fontstack_pop (current);
 		}
 
@@ -3906,7 +3909,7 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		WORD    border   = get_value_unum (parser, KEY_BORDER, -1);
 		WORD    padding  = get_value_unum (parser, KEY_CELLPADDING, -1);
-		H_ALIGN floating = get_h_align    (parser, ALN_NO_FLT);
+		H_ALIGN floating = get_floating   (parser, ALN_NO_FLT);
 		WORD    height   = 0;
 		WORD    width    = 0;
 		WORD    min_wid  = 0;
@@ -3918,18 +3921,18 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (padding < 0) {
 			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
-		if (floating != ALN_NO_FLT) {
-		if (floating != ALN_CENTER) floating |= FLT_MASK;
-		} else if (get_v_align (parser, -1) == ALN_MIDDLE) {
-			floating = ALN_CENTER; /* patch for invalid key value */
-		} else if (parser->Current.paragraph->Box.TextAlign == ALN_RIGHT ||
-			        parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
-			floating = parser->Current.paragraph->Box.TextAlign;
-		} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
-			        parser->Current.parentbox->TextAlign == ALN_CENTER) {
-			floating = parser->Current.parentbox->TextAlign;
-		} else { 
-			floating = ALN_LEFT;
+		if (floating == ALN_NO_FLT) {
+			if (get_v_align (parser, -1) == ALN_MIDDLE) {
+				floating = ALN_CENTER; /* patch for invalid key value */
+			} else if (parser->Current.paragraph->Box.TextAlign == ALN_RIGHT ||
+				        parser->Current.paragraph->Box.TextAlign == ALN_CENTER) {
+				floating = parser->Current.paragraph->Box.TextAlign;
+			} else if (parser->Current.parentbox->TextAlign == ALN_RIGHT ||
+				        parser->Current.parentbox->TextAlign == ALN_CENTER) {
+				floating = parser->Current.parentbox->TextAlign;
+			} else { 
+				floating = ALN_LEFT;
+			}
 		}
 		if (parser->hasStyle) {
 			short em = parser->Current.word->font->Ascend;
