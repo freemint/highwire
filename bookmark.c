@@ -20,7 +20,7 @@
 #include "bookmark.h"
 
 
-#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-File-3>"
+#define BKM_MAGIC "<!DOCTYPE HighWire-Bookmark-File-4>"
 
 const char * bkm_File = NULL;
 const char * bkm_CSS  = NULL;
@@ -35,7 +35,7 @@ const char * bkm_CSS  = NULL;
 long
 bookmark_id2date (const char * id, char * buff, size_t b_len)
 {
-	time_t dt = (id && (*id == 'L' || *id == 'G') && id[1] == ':'
+	time_t dt = (id && (*id == 'L' || *id == 'G') && id[1] == '-'
 	             ? (strtoul (id +2, NULL, 16) >>2) | 0x40000000ul : 0ul);
 	if (buff && b_len) {
 		char   buf[80];
@@ -206,7 +206,7 @@ bkm_create_grp (BKM_LINE prev, const char * title)
 {
 	ULONG    id_class = get_id();
 	char     b1[100];
-	size_t   l1   = sprintf (b1, "<DT CLASS='GRP' ID='G:%08lX'><B>", id_class);
+	size_t   l1   = sprintf (b1, "<DT CLASS='GRP' ID='G-%08lX'><B>", id_class);
 	size_t   l2   = strlen (title && *title ? title : (title = "?¨?¨?"));
 	char     b3[] = "</B></DT>\n";
 	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + sizeof(b3)-1);
@@ -215,7 +215,7 @@ bkm_create_grp (BKM_LINE prev, const char * title)
 		memcpy (p,       b1,    l1);
 		memcpy (p += l1, title, l2);
 		strcpy (p += l2, b3);
-		sprintf (b1, "<DL CLASS='G:%08lX'>", id_class);
+		sprintf (b1, "<DL CLASS='G-%08lX'>", id_class);
 		if ((line = bkm_create ((prev = line), b1, 0)) == NULL) {
 			bkm_delete (prev);
 		}
@@ -229,7 +229,7 @@ bkm_create_lnk (BKM_LINE prev, const char * title, const char * url, long visit)
 {
 	ULONG    id = get_id();
 	char     b1[100];
-	size_t   l1   = sprintf (b1, "<DT CLASS='LNK' ID='L:%08lX'>"
+	size_t   l1   = sprintf (b1, "<DT CLASS='LNK' ID='L-%08lX'>"
 	                             "<A TARGET='_hw_top' LAST_VISIT='%08lX'"
 	                             " HREF='", id, visit);
 	size_t   l2   = strlen (url && *url ? url : (url = "#"));
@@ -892,7 +892,7 @@ add_bookmark_group (const char * lnk, const char *title)
 		BKM_LINE group;
 		char     id[12];
 		if (!title) {
-			sprintf (id, "G:%08lX", get_id() -1);
+			sprintf (id, "G-%08lX", get_id() -1);
 			title = id;
 		}
 		if ((group = bkm_create_grp (line->Prev, title)) != NULL) {
