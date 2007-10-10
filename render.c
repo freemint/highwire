@@ -1229,7 +1229,7 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	} /* devl stuff */
 	
 	if (box->HtmlCode != TAG_HR) {
-		box->Floating = get_floating (parser, ALN_NO_FLT);
+		box->Floating = get_floating (parser, box->Floating);
 	}
 	if (get_value (parser, CSS_CLEAR, out, sizeof(out))) {
 		if      (stricmp (out, "right") == 0) box->ClearFlt = BRK_RIGHT;
