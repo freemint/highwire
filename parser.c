@@ -34,8 +34,8 @@
 typedef struct { /* array to store KEY=VALUE pairs found while a parse() call */
 	BF16(HTMLKEY,  Key);
 	BF16(unsigned, Len);
-	const char   	* Value;
-	LONG		 	weight;
+	const char   * Value;
+	LONG           Weight;
 } KEYVALUE;
 
 typedef struct s_style * STYLE;
@@ -62,6 +62,8 @@ typedef struct s_parser_priv {
 } * PARSPRIV;            /* if the encoding is unrecognized, parsed */
                          /* as single byte characters in PRE mode.  */
 #define ParserPriv(p) ((PARSPRIV)(p +1))
+
+#define keyval_disposable(prs)   (prs->KeyNum < numberof(prs->KeyValTab))
 
 
 /*============================================================================*/
@@ -477,17 +479,17 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 
 		if (val && (css != CSS_Unknown)) {
 			if ((ent = find_key (parser, (HTMLKEY)css)) == NULL) {
-				if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
+				if (keyval_disposable (prsdata)) {
 					ent = entry++;
 					prsdata->KeyNum++;
-					ent->weight = 0;
+					ent->Weight = 0;
 				} else {
 					printf("KeyValTab overflow\r\n");
 					/*printf("val %.*s  ent %d \r\n",10,val,css);*/
 				}
 			} else {
 				/*	if (css == 13) printf("found ent %d val %.*s %d  \r\n",
-				                         css, ent->Len,ent->Value,ent->weight);
+				                         css, ent->Len,ent->Value,ent->Weight);
 				*/
 				;
 			}
@@ -496,27 +498,27 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 		if (ent) {
 /*			if (important && ent->Key == 13)
 					printf("in   %.*s %ld vs %ld _______________\n",
-					       (unsigned)(ptr - val +1),val,weight,ent->weight);
+					       (unsigned)(ptr - val +1),val,weight,ent->Weight);
 */
-			if ((weight >= ent->weight)
-				||(important && ((weight + 10000000L) >= ent->weight))) {
+			if ((weight >= ent->Weight)
+				||(important && ((weight + 10000000L) >= ent->Weight))) {
 
 /*				if (ent->Key == 13)
 					printf("new ent %d val %.*s %ld old %.*s %ld \r\n",
 					       css,(unsigned)(ptr - val +1),val,weight,ent->Len,
-					       ent->Value,ent->weight);
+					       ent->Value,ent->Weight);
 */						
 				ent->Key   = css;
 				ent->Value = val;
 				ent->Len   = (unsigned)(ptr - val +1);
-				ent->weight = weight;
+				ent->Weight = weight;
 
 				if (important) {
-					ent->weight += 10000000L;
+					ent->Weight += 10000000L;
 					important = FALSE;
 
 /*					if ( ent->Key == 13)
-						printf("\nin   %.*s %ld\n",ent->Len,ent->Value,ent->weight);
+						printf("\nin   %.*s %ld\n",ent->Len,ent->Value,ent->Weight);
 */					
 				}
 
@@ -543,7 +545,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	PARSPRIV   prsdata = ParserPriv(parser);
 	KEYVALUE * entry   = prsdata->KeyValTab + prsdata->KeyNum;
 	STYLE      style   = prsdata->Styles;
-	LONG	   weight = 0;
+	LONG       weight  = 0;
 
 	while (style) {
 		BOOL match;
@@ -788,7 +790,7 @@ parse_tag (PARSER parser, const char ** pptr)
 					parser->hasStyle = TRUE;
 					entry = css_values (parser, val, len,1000000L);
 				}
-			} else if (prsdata->KeyNum < numberof(prsdata->KeyValTab)) {
+			} else if (keyval_disposable (prsdata)) {
 				int temp_count = 1;
 				unsigned tlen = 0, tlen1 = 0;
 
@@ -823,7 +825,7 @@ parse_tag (PARSER parser, const char ** pptr)
 
 					/* now send it in parts - multiple classes
 					 * a pain and still not done 100% */
-					while (temp_count > 0) {
+					while (temp_count > 0 && keyval_disposable (prsdata)) {
 						while((!isspace(tempval[tlen1])) && (tlen1 < tlen)) {
 							tlen1++;
 						}
