@@ -3806,12 +3806,12 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		if (parser->hasStyle) {
 			fontstack_push (current, -1);
+		}
+		list_marker (current, bullet, counter);
+		if (parser->hasStyle) {
 			css_box_styles  (parser, &current->paragraph->Box, ALN_LEFT);
 			css_text_styles (parser, current->font);
 		} 
-
-		list_marker (current, bullet, counter);
-		
 		box_anchor (parser, &current->paragraph->Box, TRUE);
 		flags |= PF_FONT;
 	}
