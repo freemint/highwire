@@ -57,19 +57,24 @@ dombox_ctor (DOMBOX * This, DOMBOX * parent, BOXCLASS class)
 	This->Floating = ALN_NO_FLT;
 
 	/* init the position */
-	This->ConBlock = FALSE; /* Set to true if it's a containg block */	
-	This->SetPos.Lft = This->SetPos.Rgt = This->SetPos.Top = This->SetPos.Bot = NO_SET_POSITION;
+	This->ConBlock = FALSE; /* Set to true if it's a containg block */
+	This->SetPos.Lft = This->SetPos.Rgt =
+	This->SetPos.Top = This->SetPos.Bot = NO_SET_POSITION;
 
 	/* init the border */
 	This->HasBorder = FALSE;
-	This->BorderWidth.Top = This->BorderWidth.Bot = This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
+	This->BorderWidth.Top = This->BorderWidth.Bot =
+	This->BorderWidth.Lft = This->BorderWidth.Rgt = 0;
 
 	if (parent && parent->FontStk)	{
-		This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
+		This->BorderColor.Top = This->BorderColor.Bot =
+		This->BorderColor.Lft = This->BorderColor.Rgt = parent->FontStk->Color;
 	} else {
-		This->BorderColor.Top = This->BorderColor.Bot = This->BorderColor.Lft = This->BorderColor.Rgt = G_BLACK;
+		This->BorderColor.Top = This->BorderColor.Bot =
+		This->BorderColor.Lft = This->BorderColor.Rgt = G_BLACK;
 	}
-	This->BorderStyle.Top = This->BorderStyle.Bot = This->BorderStyle.Lft = This->BorderStyle.Rgt = BORDER_NONE;
+	This->BorderStyle.Top = This->BorderStyle.Bot =
+	This->BorderStyle.Lft = This->BorderStyle.Rgt = BORDER_NONE;
 	
 	return This;
 }
@@ -127,7 +132,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 	/* style display: none */
 	if (This->Hidden) return;
-			
+	
 	vsl_type (vdi_handle, 0); /* reset the line type */
 
 	if (This->HasBorder) {
@@ -150,7 +155,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					break;
 				}
 			}
-		} 
+		}
 
 		if (This->BorderStyle.Top > BORDER_HIDDEN) {
 			n = This->BorderWidth.Top;
@@ -200,14 +205,15 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					while(1) {
 						p[0].p_y++; p[1].p_y++;
 						if (!--light) break;
-					}		
+					}
 					while(1) {
 						p[0].p_y++; p[1].p_y++;
 						v_pline(vdi_handle, 2, (short*)p);
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Top == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT)
+					     && (This->BorderStyle.Top == BORDER_INSET)) {
 						if (realbkg == G_WHITE) {
 							vsl_color (vdi_handle, G_LWHITE);
 						} else {
@@ -217,7 +223,8 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						n--;
 						p[0].p_y++;  p[1].p_y++;
 						vsl_color (vdi_handle, G_LBLACK);
-					} else if ((This->BoxClass == BC_TABLE) && (This->BorderStyle.Top == BORDER_OUTSET)) {
+					} else if ((This->BoxClass == BC_TABLE)
+					           && (This->BorderStyle.Top == BORDER_OUTSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -226,14 +233,15 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 							vsl_color (vdi_handle, G_LWHITE);
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
-						}		
+						}
 					}
-						
-					if (n > 0) {				
+					
+					if (n > 0) {
 						while(1) {
 							v_pline (vdi_handle, 2, (short*)p);
 							if (!--n) break;
-							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+							/* b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+							   these were rounded */
 							p[0].p_y++;  p[1].p_y++;
 						}
 					}
@@ -293,14 +301,15 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					while(1) {
 						p[0].p_y--;  p[1].p_y--;
 						if (!--light) break;
-					}		
+					}
 					while(1) {
 						p[0].p_y--;  p[1].p_y--;
 						v_pline(vdi_handle, 2, (short*)p);
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Bot == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT)
+					     && (This->BorderStyle.Bot == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -310,13 +319,14 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
 						}
-					} 
+					}
 					
-					if (n > 0) {				
+					if (n > 0) {
 						while(1) {
 							v_pline (vdi_handle, 2, (short*)p);
 							if (!--n) break;
-							/*b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y; these were rounded */
+							/* b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
+							   these were rounded */
 							p[0].p_y--;  p[1].p_y--;
 						}
 					}
@@ -373,7 +383,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark1) break;
 						p[0].p_x++;  p[1].p_x++;
 
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 					}
 
@@ -381,24 +391,25 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 					while(1) {
 						p[0].p_x++;  p[1].p_x++;
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 						v_pline(vdi_handle, 2, (short*)p);
 
 						if (!--light) break;
-					}		
+					}
 
 					vsl_color (vdi_handle, This->BorderColor.Lft);
 
 					while(1) {
 						p[0].p_x++;  p[1].p_x++;
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 						v_pline(vdi_handle, 2, (short*)p);
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Lft == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT)
+					    && (This->BorderStyle.Lft == BORDER_INSET)) {
 						if (realbkg == G_WHITE) {
 							vsl_color (vdi_handle, G_LWHITE);
 						} else {
@@ -408,9 +419,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						n--;
 						p[0].p_x++;  p[1].p_x++;
 						vsl_color (vdi_handle, G_LBLACK);
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
-					} else if ((This->BoxClass == BC_TABLE) && (This->BorderStyle.Lft == BORDER_OUTSET)) {
+					} else if ((This->BoxClass == BC_TABLE)
+					           && (This->BorderStyle.Lft == BORDER_OUTSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -419,19 +431,20 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 							vsl_color (vdi_handle, G_LWHITE);
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
-						}		
-						if (!FlatTop) p[0].p_y++;  
+						}
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 					}
 
-					if (n > 0) {				
+					if (n > 0) {
 						while(1) {
 							v_pline (vdi_handle, 2, (short*)p);
 							if (!--n) break;
-							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+							/* b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+							   these were rounded */
 							p[0].p_x++;  p[1].p_x++;
 					
-							if (!FlatTop) p[0].p_y++;  
+							if (!FlatTop) p[0].p_y++;
 							if (!FlatBot) p[1].p_y--;
 						}
 					}
@@ -484,7 +497,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						if (!--dark1) break;
 						p[0].p_x--;  p[1].p_x--;
 
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 					}
 
@@ -492,23 +505,24 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 					while(1) {
 						p[0].p_x--;  p[1].p_x--;
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 						v_pline(vdi_handle, 2, (short*)p);
 						if (!--light) break;
-					}		
+					}
 
 					vsl_color (vdi_handle, This->BorderColor.Lft);
 
 					while(1) {
 						p[0].p_x--;  p[1].p_x--;
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 						v_pline(vdi_handle, 2, (short*)p);
 						if (!--dark2) break;
 					}
 				} else {
-					if ((This->BoxClass == BC_STRUCT) && (This->BorderStyle.Rgt == BORDER_INSET)) {
+					if ((This->BoxClass == BC_STRUCT)
+					    && (This->BorderStyle.Rgt == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
 						v_pline (vdi_handle, 2, (short*)p);
 						n--;
@@ -519,17 +533,18 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 							vsl_color (vdi_handle, G_WHITE);
 						}
 						
-						if (!FlatTop) p[0].p_y++;  
+						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
 					}
 
-					if (n > 0) {				
+					if (n > 0) {
 						while(1) {
 							v_pline (vdi_handle, 2, (short*)p);
 							if (!--n) break;
-							/*b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x; these were rounded */
+							/* b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
+							   these were rounded */
 							p[0].p_x--;  p[1].p_x--;
-							if (!FlatTop) p[0].p_y++;  
+							if (!FlatTop) p[0].p_y++;
 							if (!FlatBot) p[1].p_y--;
 						}
 					}
@@ -575,20 +590,18 @@ vTab_delete (DOMBOX * This)
 static LONG
 vTab_MinWidth (DOMBOX * This)
 {
-	DOMBOX * box = This->ChildBeg;
-	LONG tempminwidth;
-
-	tempminwidth = This->MinWidth;
+	DOMBOX * box          = This->ChildBeg;
+	LONG     tempminwidth = This->MinWidth;
 
 	This->MinWidth = (This->SetWidth > 0 ? This->SetWidth : 0);
 
 	/* style display: none */
-	if (This->Hidden)
-			return This->MinWidth;
+	if (This->Hidden) {
+		return This->MinWidth;
+	}
 
 	while (box) {
 		long width = dombox_MinWidth (box);
-
 		if (This->MinWidth < width) {
 			 This->MinWidth = width;
 		}
@@ -618,15 +631,21 @@ static LONG
 vTab_MaxWidth (DOMBOX * This)
 {
 	if (This->SetWidth > 0) {
-		This->MaxWidth = This->SetWidth;	
+		This->MaxWidth = This->SetWidth;
 	} else {
-		DOMBOX * box = This->ChildBeg;
+		DOMBOX * box   = This->ChildBeg;
+		BOOL     list  = (This->BoxClass == BC_LIST);
+		long     width = 0;
 
 		This->MaxWidth = 0;
 		while (box) {
-			long width = dombox_MaxWidth (box);
-			if (This->MaxWidth < width) {
-				 This->MaxWidth = width;
+			width += dombox_MaxWidth (box);
+			if (!list || box->Floating != FLT_LEFT || !box->Sibling
+			          || (box->Sibling->ClearFlt & 0x10)) {
+				if (This->MaxWidth < width) {
+					 This->MaxWidth = width;
+				}
+				width = 0;
 			}
 			box = box->Sibling;
 		}
@@ -789,7 +808,7 @@ dombox_Offset (DOMBOX * This, long * x, long * y)
  * possible overlapping areas of other boxes.  Then px/py will be set to the
  * origin of the box, also relative to the coordinate.
 */
-DOMBOX * 
+DOMBOX *
 dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 {
 	DOMBOX * cld = box->ChildBeg;
@@ -827,7 +846,7 @@ dombox_byCoord (DOMBOX * box, LRECT * r, long * px, long * py)
 			cld  =  box->ChildBeg;
 			x    -= box->Rect.X;
 			y    -= box->Rect.Y;
-		} 
+		}
 	}
 /*	printf ("%4li,%4li -> %4li,%4li / %4li,%4li ",
 	        *px, *py, c_lft, c_rgt, c_top, c_bot);
@@ -1003,7 +1022,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 	struct blocking_area t_blocker = *p_blocker;
 	BLOCKER              blocker   = &t_blocker;
-
+	
 	/* style display: none */
 	if (This->Hidden)	return;
 
@@ -1093,11 +1112,11 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 					}
 				}
 				/* we should check for
-				 * if (box->real_parent) {
+				 * if (box->real_parent) {}
 				 * as well, but that was returning
-				 * bad values too often 
+				 * bad values too often
 				 * So we will need to debug that code
-				 */		
+				 */
 			} else {
 				printf("ERROR: THIS SHOULD NOT HAPPEN !parent_box\r\n");
 				parent_box = NULL;
@@ -1111,7 +1130,8 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 						if (box->SetPosMsk & 0x010) {
 							box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;
 						} else {
-							box->Rect.X = (parent_box->Rect.W * -box->SetPos.Lft +512) /1024;				
+							box->Rect.X = (parent_box->Rect.W * -box->SetPos.Lft +512)
+							              /1024;
 							set_width = parent_box->Rect.W - box->Rect.X;
 						}
 					} else {
@@ -1124,12 +1144,13 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				} else {
 					if (parent_box) {
 						/*box->Rect.X = parent_box->Rect.X + box->SetPos.Lft;*/
-						box->Rect.X = parent_box->Padding.Lft + parent_box->Margin.Lft + box->SetPos.Lft;
-						set_width = parent_box->Rect.W - box->Rect.X; 
+						box->Rect.X = parent_box->Padding.Lft
+						            + parent_box->Margin.Lft + box->SetPos.Lft;
+						set_width = parent_box->Rect.W - box->Rect.X;
 					} else {
 						box->Rect.X = box->SetPos.Lft;
-					}				
-				} 
+					}
+				}
 			}
 
 
@@ -1145,12 +1166,16 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 						 */
 						 ;
 /*printf("percentage top %d\r\n",box->SetPos.Top);*/
-						box->Rect.Y = parent_box->Rect.Y + (parent_box->Rect.H * -box->SetPos.Top +512) /1024;				
+						box->Rect.Y = parent_box->Rect.Y
+						            + (parent_box->Rect.H * -box->SetPos.Top +512)
+						              /1024;
 					}
 				} else {
 					if (parent_box) {
-						box->Rect.Y = parent_box->Padding.Top + parent_box->Margin.Top + box->SetPos.Top;
-/*printf("parent M Top %d P Top %d   \r\n",parent_box->Margin.Top,parent_box->Padding.Top);*/
+						box->Rect.Y = parent_box->Padding.Top
+						            + parent_box->Margin.Top + box->SetPos.Top;
+/*printf("parent M Top %d P Top %d   \r\n",
+         parent_box->Margin.Top,parent_box->Padding.Top);*/
 					} else {
 						box->Rect.Y = box->SetPos.Top;
 					}
@@ -1170,7 +1195,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 
 			if(box->SetPos.Lft > NO_SET_POSITION) {
 				box->Rect.X = box->SetPos.Lft;
-			}	
+			}
 
 			if(box->SetPos.Rgt > NO_SET_POSITION) {
 				box->Rect.X = box->SetPos.Rgt;
@@ -1183,7 +1208,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			if (box->SetPos.Bot > NO_SET_POSITION ) {
 				box->Rect.Y = box->SetPos.Bot;
 			}
-			floating = FALSE;		
+			floating = FALSE;
 		} else if (box->ClearFlt) {
 			L_BRK clear = box->ClearFlt & ~BRK_LN;
 			if (blocker->L.bottom && (clear & BRK_LEFT)) {
@@ -1206,49 +1231,49 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 					if (box->SetPosMsk & 0x010) {
 						box->Rect.X += box->SetPos.Lft;
 					} else {
-						box->Rect.X += (box->Rect.W * -box->SetPos.Lft +512) /1024;				
+						box->Rect.X += (box->Rect.W * -box->SetPos.Lft +512) /1024;
 					}
 				} else {
 					box->Rect.X += box->SetPos.Lft;
 				}
-			}	
+			}
 
 			if(box->SetPos.Rgt > NO_SET_POSITION) {
 				if (box->SetPos.Rgt < 0) {
 					if (box->SetPosMsk & 0x020) {
 						box->Rect.X -= box->SetPos.Rgt;
 					} else {
-						box->Rect.X -= (box->Rect.W * -box->SetPos.Rgt +512) /1024;				
+						box->Rect.X -= (box->Rect.W * -box->SetPos.Rgt +512) /1024;
 					}
 				} else {
 					box->Rect.X -= box->SetPos.Rgt;
 				}
-			}	
+			}
 
 			if(box->SetPos.Top > NO_SET_POSITION) {
 				if (box->SetPos.Top < 0) {
 					if (box->SetPosMsk & 0x030) {
 						box->Rect.Y += box->SetPos.Top;
 					} else {
-						box->Rect.Y += (box->Rect.H * -box->SetPos.Top +512) /1024;				
+						box->Rect.Y += (box->Rect.H * -box->SetPos.Top +512) /1024;
 					}
 				} else {
 					box->Rect.Y += box->SetPos.Top;
 				}
-			}	
+			}
 
 			if(box->SetPos.Bot > NO_SET_POSITION) {
 				if (box->SetPos.Bot < 0) {
 					if (box->SetPosMsk & 0x040) {
 						box->Rect.Y -= box->SetPos.Bot;
 					} else {
-						box->Rect.Y -= (box->Rect.H * -box->SetPos.Bot +512) /1024;				
+						box->Rect.Y -= (box->Rect.H * -box->SetPos.Bot +512) /1024;
 					}
 				} else {
 					box->Rect.Y -= box->SetPos.Bot;
 				}
-			}	
-				
+			}
+			
 		}
 
 		if (floating) {
@@ -1273,7 +1298,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 			}
 		}
 		
-		if (floating || absolute) { 
+		if (floating || absolute) {
 			struct blocking_area empty = { {0, 0}, {0, 0} };
 			box->_vtab->format (box, set_width, &empty);
 		} else {
@@ -1301,18 +1326,19 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				}
 
 				/* we should check for
-				 * if (box->real_parent) {
+				 * if (box->real_parent) {}
 				 * as well, but that was returning
-				 * bad values too often 
+				 * bad values too often
 				 * So we will need to debug that code
-				 */		
+				 */
 			} else {
 				parent_box = NULL;
 			}
 
-			if (box->SetPos.Rgt > NO_SET_POSITION) {	
+			if (box->SetPos.Rgt > NO_SET_POSITION) {
 				if (box->SetPos.Lft == NO_SET_POSITION) {
-					 /* This isn't right.  If we have a Lft then we should extend the width of the object */
+					 /* This isn't right.  If we have a Lft then we should extend the
+					    width of the object */
 
 					/* Negative 0x020 or Percentage */
 					if (box->SetPos.Rgt < 0) {
@@ -1321,13 +1347,17 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 								box->Rect.X = parent_box->Rect.W + box->SetPos.Rgt;
 							} else {
 /* printf("Right: Percentage value\r\n"); */
-								box->Rect.X = parent_box->Rect.W - ((parent_box->Rect.W * -box->SetPos.Rgt +512) /1024);
+								box->Rect.X = parent_box->Rect.W
+								            - ((parent_box->Rect.W * -box->SetPos.Rgt
+								                +512) /1024);
 							}
 						} else {
 							if (box->SetPosMsk & 0x020) {
 								box->Rect.X = set_width + box->SetPos.Rgt;
 							} else {
-								box->Rect.X = set_width - ((set_width * -box->SetPos.Rgt +512) /1024);
+								box->Rect.X = set_width
+								            - ((set_width * -box->SetPos.Rgt
+								                +512) /1024);
 							}
 						}
 					} else {
@@ -1336,21 +1366,24 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 							 * to watch parent_box.Rect.W
 							 */
 						 	box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
-							/* box->Rect.X = parent_box->Rect.W - (box->Rect.W + box->SetPos.Rgt);*/
+							/* box->Rect.X = parent_box->Rect.W
+							               - (box->Rect.W + box->SetPos.Rgt);*/
 						} else {
 							box->Rect.X = set_width - (box->Rect.W + box->SetPos.Rgt);
-						}				
-					} 
+						}
+					}
 				}
 			}
 
 			if (box->SetPos.Bot > NO_SET_POSITION ) {
 				if (box->SetPos.Top == NO_SET_POSITION) {
-					 /* This isn't right.  If we have a top then we should extend the height of the object */
+					 /* This isn't right.  If we have a top then we should extend the
+					    height of the object */
 					/*box->Rect.Y -= (box->SetPos.Bot + box->Rect.H);*/
-					box->Rect.Y -= (box->SetPos.Bot + parent_box->Padding.Bot + parent_box->Margin.Bot + box->Rect.H);
+					box->Rect.Y -= box->SetPos.Bot + parent_box->Padding.Bot
+					             + parent_box->Margin.Bot + box->Rect.H;
 				}
-			} 
+			}
 		}
 		
 		if (!absolute) switch (box->Floating) {
@@ -1366,7 +1399,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 * a clue to the real culprit
 				 
 				if (box->BoxClass == BC_TABLE) {
-					height += box->Rect.H;	
+					height += box->Rect.H;
 				}
 				*/
 				goto case_FLT_MASK;
@@ -1380,7 +1413,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				 * a clue to the real culprit
 				 
 				if (box->BoxClass == BC_TABLE) {
-					height += box->Rect.H;	
+					height += box->Rect.H;
 				}
 				*/
 				
@@ -1393,7 +1426,7 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 				/* Bug note for links that aren't accessible
 				 * for example atari-forums list
 				 *
-				 * Here we need code similar to what is in 
+				 * Here we need code similar to what is in
 				 * case_ALN_NO_FLT, but not the same
 				 */
 				break;
