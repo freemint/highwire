@@ -2124,6 +2124,14 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			
 			if (c == '<') {
 				*text = line; /* save this */
+				if (strncmp (line, "![CDATA[", 8) == 0) {
+					/* extremly crazy way to encapsulate script code */ 
+					const char * end = strstr (line +8, "]]>");
+					if (end) {
+						line = end +3;
+						continue;
+					}
+				}
 				if (*line == '!') {        /* just a comment tag, simply skip it */
 					while (*(++line) == '-');
 					continue;
