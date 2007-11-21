@@ -517,29 +517,11 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		}
 		if ((long)len > 0 && post_buf) {
 			long n = post_buf->BufLength;
-			char *postptr = post_buf->Buffer;
-			long sent = 0;
-			long slice = 1024;
 			len = sprintf (buffer,
 			               "Content-type: %s\r\n"
 			               "Content-length: %li\r\n\r\n",
-						   post_buf->ContentType, n);
-			/* Sending whole post at once will fail if too big */
-			/* Let's split in multiple smaller inet_send */
-			/* However best way would be to have another
-			   schedule action for continuing sending data */
-			if ((long)(len = inet_send (sock, buffer, len)) > 0 && n)
-			{
-				while((len > 0) && (sent < n))
-				{
-					if ((n-sent) < slice)
-					{
-						slice = n-sent;
-					}
-					len = inet_send (sock, postptr+sent, slice);
-					sent += slice;
-				}
-			}
+			               post_buf->ContentType, n);
+			len = inet_send (sock, post_buf->Buffer, n);
 		}
 		if ((long)len < 0 || (long)(len = inet_send (sock, "\r\n", 2)) < 0) {
 			if ((long)len < -1) {
