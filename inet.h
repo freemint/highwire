@@ -2,7 +2,7 @@
 #define __HW_INET_H__
 
 
-#define INET_VERSION 0x20050513l /* synchronize network OVL version */
+#define INET_VERSION 0x20071111l /* synchronize network OVL version */
 
 
 /*------------------------------------------------------------------------------

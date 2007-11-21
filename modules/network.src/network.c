@@ -28,19 +28,19 @@ OVL_DECL (OF_CHLDPRC,FTAB_NETWORK);
 #else
 OVL_DECL (OF_SIMPLE,FTAB_NETWORK);
 #endif
+static char ovl_date[] = __DATE__ ", " __TIME__;
 struct ovl_info_t ovl_data = {
 #if defined(USE_MINT)
-	"MiNTnet.OVL",
+	"MiNTnet.OVL",  "0.01.0", ovl_date, "AltF4@freemint.de"
 #elif defined(USE_ICNN)
-	"Iconnect.OVL",
+	"Iconnect.OVL", "0.01.0", ovl_date, "AltF4@freemint.de"
 #elif defined(USE_STNG)
-	"Sting.OVL",
+	"Sting.OVL",    "0.01.0", ovl_date, "AltF4@freemint.de"
 #elif defined(USE_STIK)
-	"STiK2.OVL",
+	"STiK2.OVL",    "0.01.0", ovl_date, "AltF4@freemint.de"
 #else
-	"NETWORK.OVL",
+	"NETWORK.OVL",  "0.00.0", ovl_date, "<invalid>"
 #endif
-	"0001", __DATE__ ", " __TIME__, "AltF4@freemint.de"
 };
 
 

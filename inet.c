@@ -153,13 +153,15 @@ static BOOL init_iconnect (void)
 # include <string.h>
 # include <tos.h>
 # include <time.h>
-# undef min
-# undef max
 # ifdef USE_STNG
 #  include <sting/transprt.h>
 # else /*STiK2*/
+#  undef min
+#  undef max
 #  include <transprt.h>
 # endif
+
+#define TCP_OBUFF_SIZE   2048   /* TCP_open/TCP_send */
 
 static TPL * tpl = NULL;
 
@@ -318,7 +320,7 @@ inet_connect (long addr, long port, long tout_sec)
 			sig_tout = FALSE;
 			Talarm (tout_sec);
 		}
-		if ((fh = TCP_open (addr, (short)port, 0, 2048)) < 0) {
+		if ((fh = TCP_open (addr, (short)port, 0, TCP_OBUFF_SIZE)) < 0) {
 			fh = -(fh == -1001L ? ETIMEDOUT : 1);
 		} else {
 			sockets_free--;
@@ -341,23 +343,53 @@ inet_connect (long addr, long port, long tout_sec)
 long __CDECL
 inet_send (long fh, const char * buf, size_t len)
 {
-	long ret = -1;
+	long ret = 0;
 
 #if defined(USE_MINT)
-	ret = Fwrite (fh, len, buf);
+	while (len) {
+		long n = Fwrite (fh, len, buf);
+		if (n < 0) {
+			ret = n;
+			break;
+		} else {
+			ret += n;
+			buf += n;
+			len -= n;
+		}
+	}
 
 #elif defined(USE_ICNN)
-	ret = swrite ((int)fh, buf, (int)len);
+	while (len) {
+		short n = swrite ((int)fh, buf, (int)min(len, 16384l));
+		if (n < 0) {
+			ret = n;
+			break;
+		} else {
+			ret += n;
+			buf += n;
+			len -= n;
+		}
+	}
 
 #elif defined(USE_STIK)
 	if (!tpl) {
 		puts ("No STiK/Sting");
-	} else if ((ret = TCP_send ((int)fh, (char*)buf, (int)len)) == 0) {
-		ret = len;
+	} else while (len) {
+		int16 n = (int16)min(len, TCP_OBUFF_SIZE);
+		int16 r;
+		if ((r = TCP_send ((int)fh, (char*)buf, n)) < E_OBUFFULL) {
+			ret = -1;
+			break;
+		} else if (r == E_NORMAL) {
+			ret += n;
+			buf += n;
+			len -= n;
+		}
 	}
 
 #else
 	(void)fh; (void)buf; (void)len;
+	ret = -1;
 #endif
 
 	return ret;
@@ -431,8 +463,8 @@ inet_recv (long fh, char * buf, size_t len)
 	}
 
 #else
-	ret = -1;
 	(void)fh; (void)buf; (void)len;
+	ret = -1;
 #endif
 
 	return ret;
@@ -480,8 +512,8 @@ inet_instat (long fh)
 	}
 
 #elif defined(USE_ICNN)
-	char buf[1];
-	ret = recv ((int)fh, buf, 1, (int)MSG_PEEK);
+	char buf[1024];
+	ret = recv ((int)fh, buf, sizeof(buf), (int)MSG_PEEK);
 
 #elif defined(USE_STIK)
 	if (!tpl) {
