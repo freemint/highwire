@@ -31,8 +31,8 @@ about_modules (TEXTBUFF current, ENCODING enc)
 		while (count--) {
 	#if 01
 			struct ovl_info_t * info = (*mod->Meth->ovl_version)();
-			sprintf (buf, "%s: %s by %s",
-			         mod->File, info->name, info->author);
+			sprintf (buf, "%s: %s %s by %s",
+			         mod->File, info->name, info->version, info->author);
 			render_text (current, buf);
 			current->word->line_brk = BRK_LN;
 			sprintf (buf, "kill=0x%08lX", (long)mod->Meth);
