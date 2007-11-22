@@ -157,9 +157,23 @@ http_charset (const char * beg, size_t len, MIMETYPE * p_type)
 	if (MIME_Major(type) == MIME_TEXT && *beg == ';') {
 		while (--len > 0 && isspace (*(++beg)));
 		if (len > 8 && strnicmp (beg, "charset=", 8) == 0) {
+			char buf[20];
+			WORD n = 0;
 			beg += 8;
 			len -= 8;
-			cset = scan_encoding (beg, cset);
+			while (len--) {
+				if (isalnum(*beg) || *beg == '-') {
+					buf[n++] = *(beg++);
+				} else {
+					break;
+				}
+				if (n >= sizeof(buf)) {
+					n = 0;
+					break;
+				}
+			}
+			buf[n] = '\0';
+			cset = scan_encoding (buf, cset);
 		}
 	}
 	
