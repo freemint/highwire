@@ -41,6 +41,10 @@ Changes in V. 0.3.3 beta
 - Bug Fix: Highwire now gets form data encoding
   from the form.
 
+- Corrected behaviour of sending data in the
+  sting/stik2 OVLs.  Could lead to connection
+  errors while posting data.
+
 - Bug Fix for window geo code and constantly
   reseting values.
 
@@ -65,7 +69,11 @@ Changes in V. 0.3.3 beta
 - New mime-type 'audio/mpeg' (*.mp3) added, will
   be simply propagated to the AV-server.
 
-- Bugs #179, #217 resolved.
+- Reading of 'Content-Type ... charset=' from the
+  HTTP header fixed.  This was never working
+  correctly before (#172).
+
+- Bugs #172, #179, #217 resolved.
 
 __________________________________________________
 Changes in V. 0.3.2 release  of December 29, 2006:
