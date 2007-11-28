@@ -535,7 +535,9 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			               "Content-type: %s\r\n"
 			               "Content-length: %li\r\n\r\n",
 			               post_buf->ContentType, n);
-			len = inet_send (sock, post_buf->Buffer, n);
+			if ((long)(len = inet_send (sock, buffer, len)) > 0 && n) {
+				len = inet_send (sock, post_buf->Buffer, n);
+			}
 		}
 		if ((long)len < 0 || (long)(len = inet_send (sock, "\r\n", 2)) < 0) {
 			if ((long)len < -1) {
