@@ -878,6 +878,7 @@ handle_menu (WORD title, WORD item, UWORD state)
 	} else switch (item) {
 		case M_ABOUT:     menu_about();                               break;
 		case M_OPEN:      menu_open (!(state & (K_RSHIFT|K_LSHIFT))); break;
+    case M_NEW:       new_hwWind ("", cfg_StartPage, TRUE);       break;
 		case M_INFO:      menu_info();                                break;
 		case M_QUIT:      menu_quit();                                break;
 		case M_RELOAD:    menu_reload (ENCODING_Unknown);             break;

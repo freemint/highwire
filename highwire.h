@@ -1,33 +1,34 @@
- /*  Resource C-Header-File v1.06 fÅr ResourceMaster v2.07 by ARDISOFT  */
+ /*  Resource C-Header-File v1.97 fÅr ResourceMaster ab v2.06 by ARDISOFT  */
 
 #define MENUTREE 0  /* menu */
 #define M_HISTORY 7  /* TITLE in tree MENUTREE */
 #define M_ABOUT 11  /* STRING in tree MENUTREE */
 #define M_OPEN 20  /* STRING in tree MENUTREE */
+#define M_NEW 23  /* STRING in tree MENUTREE */
 #define M_INFO 22  /* STRING in tree MENUTREE */
-#define M_QUIT 24  /* STRING in tree MENUTREE */
-#define M_RELOAD 26  /* STRING in tree MENUTREE */
-#define M_W1252 28  /* STRING in tree MENUTREE */
-#define M_I8859_2 29  /* STRING in tree MENUTREE */
-#define M_I8859_15 30  /* STRING in tree MENUTREE */
-#define M_UTF8 31  /* STRING in tree MENUTREE */
-#define M_UTF16 32  /* STRING in tree MENUTREE */
-#define M_UTF16LE 33  /* STRING in tree MENUTREE */
-#define M_MACINTOSH 34  /* STRING in tree MENUTREE */
-#define M_ATARI_SYS 35  /* STRING in tree MENUTREE */
-#define M_ATARINVDI 36  /* STRING in tree MENUTREE */
-#define M_FONT_INC 38  /* STRING in tree MENUTREE */
-#define M_FONT_DEC 39  /* STRING in tree MENUTREE */
-#define M_BOOKMARK_URL 41  /* STRING in tree MENUTREE */
-#define M_OPEN_BOOKMARKS 43  /* STRING in tree MENUTREE */
-#define M_HIST_BEG 45  /* STRING in tree MENUTREE */
-#define M_HIST_END 65  /* STRING in tree MENUTREE */
-#define M_COOKIES 67  /* STRING in tree MENUTREE */
-#define M_IMAGES 68  /* STRING in tree MENUTREE */
-#define M_USE_CSS 69  /* STRING in tree MENUTREE */
-#define M_FRM_CTRL 71  /* STRING in tree MENUTREE */
-#define M_LOGGING 72  /* STRING in tree MENUTREE */
-#define M_FONTS 74  /* STRING in tree MENUTREE */
+#define M_QUIT 25  /* STRING in tree MENUTREE */
+#define M_RELOAD 27  /* STRING in tree MENUTREE */
+#define M_W1252 29  /* STRING in tree MENUTREE */
+#define M_I8859_2 30  /* STRING in tree MENUTREE */
+#define M_I8859_15 31  /* STRING in tree MENUTREE */
+#define M_UTF8 32  /* STRING in tree MENUTREE */
+#define M_UTF16 33  /* STRING in tree MENUTREE */
+#define M_UTF16LE 34  /* STRING in tree MENUTREE */
+#define M_MACINTOSH 35  /* STRING in tree MENUTREE */
+#define M_ATARI_SYS 36  /* STRING in tree MENUTREE */
+#define M_ATARINVDI 37  /* STRING in tree MENUTREE */
+#define M_FONT_INC 39  /* STRING in tree MENUTREE */
+#define M_FONT_DEC 40  /* STRING in tree MENUTREE */
+#define M_BOOKMARK_URL 42  /* STRING in tree MENUTREE */
+#define M_OPEN_BOOKMARKS 44  /* STRING in tree MENUTREE */
+#define M_HIST_BEG 46  /* STRING in tree MENUTREE */
+#define M_HIST_END 66  /* STRING in tree MENUTREE */
+#define M_COOKIES 68  /* STRING in tree MENUTREE */
+#define M_IMAGES 69  /* STRING in tree MENUTREE */
+#define M_USE_CSS 70  /* STRING in tree MENUTREE */
+#define M_FRM_CTRL 72  /* STRING in tree MENUTREE */
+#define M_LOGGING 73  /* STRING in tree MENUTREE */
+#define M_FONTS 75  /* STRING in tree MENUTREE */
 
 #define URLINPUT 1  /* form/dial */
 #define URL_OK 2  /* BUTTON in tree URLINPUT */

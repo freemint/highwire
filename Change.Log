@@ -1,3 +1,10 @@
+Changes in V. 0.3.4 beta 1
+
+- Form text areas now use cflib to enable all keyboards
+- Paste is not artificially limited to any length of buffer.
+  This may have unexpected consequences which will be fixed if
+  they arise.
+
 Changes in V. 0.3.3 beta
 
 - OLGA support implemented (as client).  Files
