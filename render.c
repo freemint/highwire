@@ -2033,12 +2033,16 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	
-	if (flags & PF_START) {
+	if (flags & PF_START)
+	{
 		char snd_file[HW_PATH_MAX];
 
-		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file))) {
-			start_objc_load (parser->Target, snd_file, parser->Frame->BaseHref,
-			                 (int(*)(void*,long))NULL, NULL);
+		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file)))
+		{
+			start_objc_load (parser->Target
+			                ,snd_file
+			                ,parser->Frame->BaseHref
+			                ,(int(*)(void*,long))NULL, NULL);
 		}
 	}
 	return flags;
@@ -2630,12 +2634,12 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
 				if (get_value (parser, KEY_CHARSET, out2, sizeof(out2))) {
-					/* ENCODING_WINDOWS1252 as default, which is commen practice. */
+					/* ENCODING_WINDOWS1252 as default, which is common practice. */
 					word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
 				}
 			}
 			
-			/* Since HTML 4.0 links ca also be used for image maps
+			/* Since HTML 4.0 links can also be used for image maps
 			 * (not even supported by IE5, Netscape, CAB)
 			 */
 			if (current->maparea) {

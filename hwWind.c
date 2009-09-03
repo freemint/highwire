@@ -1,3 +1,12 @@
+/*
+ ** 
+ **
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        14-Aug-2009    Remove the limit on paste buffer size by dynamically allocating space.
+ **
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +59,7 @@ struct s_url_hist {
 static URLHIST url_hist = NULL;
 #define        URL_HIST_MAX 10
 
+#define MAX_CLIPBOARD_LENGTH 4096
 
 static WORD  info_fgnd = G_BLACK, info_bgnd = G_WHITE;
 static WORD  inc_xy = 0;
@@ -2403,6 +2413,13 @@ open_scrap (BOOL rdNwr)
 }
 
 /*============================================================================*/
+
+/*
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        14-Aug-2009    Remove the limit on paste buffer size by dynamically allocating space.
+ **
+ */
 static void
 vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 {
@@ -2419,18 +2436,35 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		
 		if ((kstate & K_CTRL) && scan == 0x2F) { /* ^V -- copy from clipboard */
 			FILE * file = open_scrap (TRUE);
-			if (file) {
-				char buf[256], * p = buf;
-				size_t len = fread (buf, 1, sizeof (buf), file);
-				while (len-- > 0) {
+			if (file)
+			{
+			  long filelength;
+				char *buf, * p;
+
+        /* find the size of the file */
+        fseek (file, 0, SEEK_END);
+        filelength = ftell (file);
+
+        /* allocate enough memory to hold the file */
+        buf = malloc (filelength);
+        p = buf;
+
+        /* read the entire file */
+        fseek (file, 0, SEEK_SET);
+        fread (buf, 1, filelength, file);
+
+			/**	size_t len = fread (buf, 1, sizeof (buf), file);  **/
+				while (filelength-- > 0)
+				{
 					if ((key = *(p++)) == '\n') key = '\r';
 					else if (key < ' ')         key = '\0';
-					if (key) {
+					if (key)
+					{
 						WORDITEM w = input_keybrd (This->Input, key, 0, &clip, &next);
 						if (w) word = w;
 						else   break;
 					}
-				}
+				}  /* while */
 				fclose (file);
 			}
 			if (word) {
@@ -2526,7 +2560,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				if (edit->Length < sizeof(edit->Text) -1) {
 					FILE * file = open_scrap (TRUE);
 					if (file) {
-						char buf[256];
+						char buf[MAX_CLIPBOARD_LENGTH];
 						size_t len = sizeof(edit->Text) - edit->Length -1;
 						len = fread (buf, 1, min (len, sizeof (buf)), file);
 						fclose (file);
@@ -2541,7 +2575,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 						/* [GS] Start patch */
 						if (len > 0)
 						{
-							char ZStr[256], * ptr = buf;
+							char ZStr[MAX_CLIPBOARD_LENGTH], * ptr = buf;
 							WORD i;
 							i = 0;
 								while ( len-- > 0 )

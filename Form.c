@@ -1,6 +1,16 @@
+/*
+ ** Form handler
+ **
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        14-Aug-2009    Utilise NKCC from cflib to handle the various control keys in text fields.
+ **
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <cflib.h>
 
 #ifndef __PUREC__
 #  include <osbind.h>
@@ -120,7 +130,7 @@ static void form_activate_multipart (FORM form);
 00-7F : 1 byte
 	( 0bbbaaaa = 7 bits )
 80-1FFF   : 2 bytes
-	( 10dccccb 0bbbaaaa = 13 bits) 
+	( 10dccccb 0bbbaaaa = 13 bits)
 2000-3FFFF : 3 bytes
 	( 110eeddd 10dccccb 0bbbaaaa = 18 bits)
 40000-7FFFFF : 4 bytes
@@ -191,7 +201,7 @@ new_form (FRAME frame, char * target, char * action, const char * method, char *
 {
 	char *ptr;
 	FORM form = malloc (sizeof (struct s_form));
-	
+
 	if (!action) {
 		const char * q = strchr (frame->BaseHref->FullName, '?');
 		size_t       n = (q ? q - frame->BaseHref->FullName
@@ -201,7 +211,7 @@ new_form (FRAME frame, char * target, char * action, const char * method, char *
 			action[n] = '\0';
 		}
 	}
-	
+
 	form->Frame     = frame;
 	form->Next      = frame->FormList;
 	frame->FormList = form;
@@ -238,7 +248,7 @@ new_form (FRAME frame, char * target, char * action, const char * method, char *
 	form->TextShiftY = 0;
 	form->InputList = NULL;
 	form->Last      = NULL;
-	
+
 	return form;
 }
 
@@ -327,7 +337,7 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 	input->TextMax   = 0;
 	input->TextRows  = 0;
 	input->TextArray = NULL;
-	
+
 	if (type <= IT_GROUP) {
 		input->Word    = NULL;
 		input->checked = (type == IT_HIDDN);
@@ -336,12 +346,12 @@ _alloc (INP_TYPE type, TEXTBUFF current, const char * name)
 		input->checked = (type >= IT_SELECT/*IT_TEXT*/);
 		current->word->input = input;
 	}
-	
+
 	if (n_len) {
 		memcpy (input->Name, name, n_len);
 	}
 	input->Name[n_len] = '\0';
-	
+
 	if (type != IT_RADIO) {
 		if (form->Last) {
 			form->Last->Next = input;
@@ -358,7 +368,7 @@ static void
 set_word (TEXTBUFF current, WORD asc, WORD dsc, WORD wid)
 {
 	WORDITEM word = current->word;
-	
+
 	if (current->text == current->buffer) {
 		*(current->text++) = font_Nobrk(current->word->font);
 	}
@@ -379,7 +389,7 @@ form_check (TEXTBUFF current, const char * name, char * value, BOOL checked)
 {
 	WORD  asc = current->word->word_height - (current->word->word_tail_drop +2);
 	INPUT input = _alloc (IT_CHECK, current, name);
-	
+
 	if (value) {
 	input->Value   = value;
 	} else {
@@ -402,7 +412,7 @@ form_radio (TEXTBUFF current,
 	FORM  form  = current->form;
 	INPUT input = _alloc (IT_RADIO, current, value);
 	INPUT group = form->InputList;
-	
+
 	while (group) {
 		if (group->Type == IT_GROUP && strcmp (group->Name, name) == 0) break;
 		group = group->Next;
@@ -418,11 +428,11 @@ form_radio (TEXTBUFF current,
 	input->u.Group = group;
 	input->Next    = group->u.Group;
 	group->u.Group = input;
-	
+
 	if (asc < 1) asc =  1;
 	else         asc |= 1;
 	set_word (current, asc, 0, asc);
-	
+
 	return input;
 }
 
@@ -434,23 +444,23 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 	WORDITEM word  = current->word;
 	TEXTATTR attr  = word->attr;
 	INPUT    input = _alloc (IT_BUTTN, current, name);
-	
+
 	if (sub_type == 'I') {
 		FRAME frame          = ((FORM)current->form)->Frame;
 		short word_height    = current->word->word_height;
 		short word_tail_drop = current->word->word_tail_drop;
 		short word_v_align   = current->word->vertical_align;
-		
+
 		input->SubType = 'S';
-		
+
 		new_image (frame, current, value, frame->BaseHref, 0,0, 0,0,FALSE);
 		font_switch (current->word->font, NULL);
-		
+
 		new_word (current, TRUE);
 		current->word->word_height    = word_height;
 		current->word->word_tail_drop = word_tail_drop;
 		current->word->vertical_align = word_v_align;
-		
+
 	} else {
 		input->SubType = sub_type;
 		input->Value   = strdup (value);
@@ -464,7 +474,7 @@ form_buttn (TEXTBUFF current, const char * name, const char * value,
 		set_word (current, word->word_height, word->word_tail_drop +1, -4);
 	}
 	current->word->attr = attr;
-	
+
 	return input;
 }
 
@@ -476,10 +486,10 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 	INPUT  input = _alloc (IT_TEXT, current, name);
 	size_t v_len = (value  ? strlen (value) : 0);
 	size_t size  = (maxlen ? maxlen : v_len);
-	
+
 	input->TextMax  = maxlen;
 	input->readonly = readonly;
-	
+
 	if (edit_init (input, current, cols, 1, size)) {
 		if (value && v_len < maxlen) {
 			char * mem = malloc (maxlen +1);
@@ -501,7 +511,7 @@ form_text (TEXTBUFF current, const char * name, char * value, UWORD maxlen,
 	} else {
 		input->Value = value;
 	}
-	
+
 	return input;
 }
 
@@ -514,16 +524,16 @@ new_input (PARSER parser, WORD width)
 	TEXTBUFF current = &parser->Current;
 	const char * val = "T"; /* default type is TEXT */
 	char output[100], name[100];
-	
+
 	if (!current->form) {
 		current->form = new_form (frame, NULL, NULL, NULL, NULL);
 	}
-	
+
 	get_value (parser, KEY_NAME, name, sizeof(name));
-	
+
 	if (!get_value (parser, KEY_TYPE, output, sizeof(output))
 	    || stricmp (output, val = "TEXT")     == 0
-	    || stricmp (output, val = "FILE")     == 0 
+	    || stricmp (output, val = "FILE")     == 0
 	    || stricmp (output, val = "PASSWORD") == 0) {
 		UWORD  mlen = get_value_unum (parser, KEY_MAXLENGTH, 0);
 		UWORD  cols = get_value_unum (parser, KEY_SIZE, 0);
@@ -533,7 +543,7 @@ new_input (PARSER parser, WORD width)
 			if (mlen > 500)  mlen = 500;
 			if (cols > mlen) cols = mlen;
 		}
-		
+
 		if (*val == 'F') {
 			INPUT bttn = form_buttn (current, name, "...", frame->Encoding, 'F');
 
@@ -564,16 +574,16 @@ new_input (PARSER parser, WORD width)
 	} else if (stricmp (output, "HIDDEN") == 0) {
 		input = _alloc (IT_HIDDN, current, name);
 		input->Value = get_value_str (parser, KEY_VALUE);
-		
+
 	} else if (stricmp (output, "RADIO") == 0) {
 		get_value (parser, KEY_VALUE, output, sizeof(output));
 		input = form_radio (current, name, output,
 		                    get_value (parser, KEY_CHECKED, NULL,0));
-		
+
 	} else if (stricmp (output, "CHECKBOX") == 0) {
 		input = form_check (current, name, get_value_str (parser, KEY_VALUE),
 		                    get_value (parser, KEY_CHECKED, NULL,0));
-		
+
 	} else if (stricmp (output, val = "Submit") == 0 ||
 	           stricmp (output, val = "Reset")  == 0 ||
 	           stricmp (output, val = "Button") == 0 ||
@@ -595,7 +605,7 @@ new_input (PARSER parser, WORD width)
 			}
 		}
 		input = form_buttn (current, name, val, frame->Encoding, sub_type);
-		
+
 	} else if (stricmp (output, "debug") == 0) {
 		FORM  form = current->form;
 		INPUT inp  = form->InputList;
@@ -610,11 +620,11 @@ new_input (PARSER parser, WORD width)
 		}
 		printf ("\n");
 	}
-	
+
 	if (input && get_value (parser, KEY_DISABLED, NULL,0)) {
 		input_disable (input, TRUE);
 	}
-	
+
 	return input;
 }
 
@@ -625,28 +635,28 @@ new_tarea (PARSER parser, const char * beg, const char * end, UWORD nlines)
 	INPUT    input   = NULL;
 	FRAME    frame   = parser->Frame;
 	TEXTBUFF current = &parser->Current;
-	
+
 	size_t size = (end - beg) + nlines * (sizeof(WCHAR*) / sizeof(WCHAR));
 	UWORD  rows = get_value_unum (parser, KEY_ROWS, 0);
 	UWORD  cols = get_value_unum (parser, KEY_COLS, 0);
 	char   name[100];
-	
+
 	if (!current->form) {
 		current->form = new_form (frame, NULL, NULL, NULL, NULL);
 	}
 	get_value (parser, KEY_NAME, name, sizeof(name));
 	input = _alloc (IT_TAREA, current, name);
-	
+
 	input->disabled = get_value_exists (parser, KEY_DISABLED);
 	input->readonly = get_value_exists (parser, KEY_READONLY);
-	
+
 	if (!rows) rows = 5;
 	if (!cols) cols = 40;
-	
+
 	if (edit_init (input, current, cols, rows, size)) {
 		edit_feed (input, frame->Encoding, beg, end);
 	}
-	
+
 	return input;
 }
 
@@ -659,13 +669,13 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 	WORD     asc  = word->word_height -1;
 	WORD     dsc  = word->word_tail_drop;
 	INPUT    input;
-	
+
 	(void)size;
-	
+
 	if (!current->form /*&&
 		 (current->form = new_form (frame, NULL, NULL, NULL)) == NULL*/) {
 		input = NULL;
-	
+
 	} else if ((input = _alloc (IT_SELECT, current, name)) != NULL) {
 		SELECT sel = malloc (sizeof(struct s_select));
 		if ((input->u.Select = sel) != NULL) {
@@ -679,7 +689,7 @@ form_selct (TEXTBUFF current, const char * name, UWORD size, BOOL disabled)
 		set_word (current, asc, dsc, asc + dsc);
 		sel->SaveWchr = input->Word->item;
 	}
-	
+
 	return input;
 }
 
@@ -691,13 +701,13 @@ selct_option (TEXTBUFF current, const char * text,
 	INPUT    input = (current->form ? ((FORM)current->form)->Last : NULL);
 	SELECT   sel;
 	SLCTITEM item;
-	
+
 	if (((!input || input->Type != IT_SELECT) &&
 	     (input = form_selct (current, "", 1, FALSE)) == NULL) ||
 	    (sel = input->u.Select) == NULL) {
 		return NULL;
 	}
-	
+
 	if (*text && (item = malloc (sizeof(struct s_slctitem))) != NULL) {
 		size_t tlen = strlen (text);
 		WORD  pts[8];
@@ -716,7 +726,7 @@ selct_option (TEXTBUFF current, const char * text,
 		}
 		memcpy (item->Strng +1, text, tlen);
 		item->Strng[tlen +1] = '\0';
-		
+
 		encoding = ENCODING_ATARIST;
 		current->text = current->buffer;
 		scan_string_to_16bit (text, encoding, &current->text,
@@ -731,9 +741,9 @@ selct_option (TEXTBUFF current, const char * text,
 		item->Length = tlen;
 		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
 		item->Width = pts[2] - pts[0];
-		
+
 		item->Value = (disabled ? NULL : value ? value : item->Strng +1);
-		
+
 		if (!sel->ItemList || selected) {
 			input->Word->item   = item->Text;
 			input->Word->length = item->Length;
@@ -743,7 +753,7 @@ selct_option (TEXTBUFF current, const char * text,
 		sel->ItemList = item;
 		sel->NumItems--;
 	}
-	
+
 	return input;
 }
 
@@ -763,10 +773,10 @@ finish_selct (INPUT input)
 {
 	SELECT sel = input->u.Select;
 	WORD   num;
-	
+
 	if (!sel || !sel->NumItems) {
 		input->disabled = TRUE;
-		
+
 	} else if ((num = -sel->NumItems) > 0) {
 		SELECT rdy = malloc (sizeof (struct s_select) + num * sizeof(char*));
 		if (rdy) {
@@ -800,7 +810,7 @@ input_draw (INPUT input, WORD x, WORD y)
 	p[2].p_x = (p[0].p_x = x) + word->word_width -1;
 	p[1].p_y = y - word->word_height;
 	p[3].p_y = y + word->word_tail_drop -1;
-	
+
 	if (input->Type >= IT_TEXT) {
 		vsf_color (vdi_handle, G_WHITE);
 		vsl_color (vdi_handle, G_LBLACK);
@@ -832,19 +842,19 @@ input_draw (INPUT input, WORD x, WORD y)
 	if (input->Type == IT_RADIO) {
 		vsl_color (vdi_handle, c_lu);
 		p[0].p_x++;
-		p[1].p_y++; 
+		p[1].p_y++;
 		v_pline (vdi_handle, 2, (short*)p);
 		p[0].p_x++;
-		p[1].p_y++; 
+		p[1].p_y++;
 		v_pline (vdi_handle, 2, (short*)p);
 		vsl_color (vdi_handle, c_rd);
 		p[1].p_x++;   p[2].p_x -= 2;   p[4].p_x = p[0].p_x +1;
 		p[1].p_y++;   p[3].p_y -= 2;   p[4].p_y = p[0].p_y +1;
 		v_pline (vdi_handle, 4, (short*)(p +1));
 		p[2].p_x++;
-		p[3].p_y++; 
+		p[3].p_y++;
 		v_pline (vdi_handle, 2, (short*)(p +2));
-	
+
 	} else {
 		vsl_color (vdi_handle, c_lu);
 		p[1].p_x = ++p[0].p_x;   p[2].p_x -= 2;
@@ -1006,13 +1016,13 @@ WORD
 input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 {
 	WORD rtn = 0;
-	
+
 	if (!input->disabled) switch (input->Type) {
-		
+
 		case IT_RADIO:
 			if (!input->checked) {
 				INPUT group = input->u.Group;
-				rtn = 1;				
+				rtn = 1;
 				if (group->checked) {
 					INPUT check = group->u.Group;
 					do if (check->checked) {
@@ -1028,7 +1038,7 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 				input->checked = TRUE;
 			}
 			break;
-		
+
 		case IT_FILE:
 		case IT_TAREA:
 		case IT_TEXT: {
@@ -1065,12 +1075,12 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 				form->TextCursrX = 0;
 			}
 		}	break;
-		
+
 		case IT_CHECK:
 			input->checked = !input->checked;
 			rtn = 1;
 			break;
-		
+
 		case IT_SELECT: {
 			SELECT sel = input->u.Select;
 			if (sel && sel->NumItems > 0) {
@@ -1084,14 +1094,14 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 				rtn = 1;
 			}
 		}	break;
-			
+
 		case IT_BUTTN:
 			if (!input->checked) {
 				input->checked = TRUE;
 				rtn = 1;
 			}
 			break;
-		
+
 		default: ;
 	}
 	return rtn;
@@ -1147,7 +1157,7 @@ form_activate (FORM form)
 	size_t	len;
 	char 	*data;
 	char	*url;
-	
+
 	if (form->Method == METH_AUTH) { /* special case, internal created *
 	                                  * for HTTP Authentication        */
 		const char * realm = (frame->AuthRealm && *frame->AuthRealm
@@ -1193,7 +1203,7 @@ form_activate (FORM form)
 
 		return;
 	}
-	
+
 	if (elem)
 	{
 		int nbvar = 0;
@@ -1257,7 +1267,7 @@ form_activate (FORM form)
 		url  = form->Action;
 		data = malloc (size +1);
 		if (size) size--;
-	} else {	
+	} else {
 		len  = strlen (form->Action);
 		url  = strcpy (malloc (len + size +1), form->Action);
 		data = url;
@@ -1318,7 +1328,7 @@ form_activate (FORM form)
 		len = size;
 	}
 	data[len] = '\0';
-	
+
 	if (form->Method != METH_POST) {
 		CONTAINR target = NULL;
 		CONTAINR cont = NULL;
@@ -1333,7 +1343,7 @@ form_activate (FORM form)
 				target = containr_byName (cont, "_top");
 			} else {
 				target = NULL;
-			}		
+			}
 		} else {
 			target = (form->Target &&
 		                   stricmp (form->Target, "_blank") != 0
@@ -1345,7 +1355,7 @@ form_activate (FORM form)
 		} else {
 			cont = frame->Container;
 		}
-		
+
 		ldr = start_page_load (cont, url,loc, TRUE, NULL);
 		free (url);
 	} else {
@@ -1595,15 +1605,15 @@ input_file_handler (INPUT input) {
 	FORM   form = input->Form;
 	FRAME frame = form->Frame;
 	HwWIND wind = hwWind_byContainr(frame->Container);
-	
+
 	if (file_selector ("HighWire: Select File to Upload", NULL,
 	                   fsel_file, fsel_file,sizeof(fsel_file))) {
 		INPUT field = input->u.FileEd;
-		
+
 		form->TextActive = field;
-		
+
 		edit_feed (field, frame->Encoding, fsel_file, strchr(fsel_file, '\0'));
-		
+
 		/* to be overworked, probably the same scheme as for radio buttons */
 		{
 			WORDITEM word = field->Word;
@@ -1632,7 +1642,7 @@ WORDITEM
 input_activate (INPUT input, WORD slct)
 {
 	FORM form = input->Form;
-	
+
 	if (input->Type >= IT_TEXT) {
 		WORDITEM word;
 		if (slct >= 0) {
@@ -1643,7 +1653,7 @@ input_activate (INPUT input, WORD slct)
 		}
 		return word;
 	}
-	
+
 	if (input->Type == IT_SELECT) {
 		if (slct >= 0) {
 			SELECT   sel  = input->u.Select;
@@ -1657,7 +1667,7 @@ input_activate (INPUT input, WORD slct)
 		}
 		return input->Word;
 	}
-	
+
 	if (input->Type != IT_BUTTN) {
 		return NULL;
 	}
@@ -1669,9 +1679,9 @@ input_activate (INPUT input, WORD slct)
 	if (input->SubType == 'S' && form->Action) {
 		form_activate (form);
 	}
-	
+
 	input->checked = FALSE;
-	
+
 	return input->Word;
 }
 
@@ -1683,101 +1693,279 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
 	WCHAR ** text = input->TextArray;
-	WORD     asc  = key & 0xFF;
+	WORD     ascii_code;
 	WORD     scrl = 0;
 	WORD     lift = 0;
 	WORD     line = 0;
-	
-	if (input != (*next = form->TextActive)) {
+	unsigned short nkey;
+/**	WORD     start;
+	WORD     end;
+	CHAR     strChunk[];
+**/
+	BOOL     shift, ctrl, alt;
+
+  nkc_init();
+
+  /* Convert the GEM key code to the "standard" */
+  nkey = gem_to_norm ((short)state, (short)key);
+
+  /* Remove the unwanted flags */
+  nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
+
+	ascii_code =  nkey & 0x00FF;
+
+	shift = (state & (K_RSHIFT|K_LSHIFT)) != 0;
+	ctrl  = (state & K_CTRL) != 0;
+	alt   = (state & K_ALT) != 0;
+
+	if (input != (*next = form->TextActive))
+	{
 		return NULL;   /* shouldn't happen but who knows... */
 	}
-	
-/*printf ("%04X %04X\n", key, state);*/
-	if (asc >= ' ' && asc != 127 &&
-	    (asc < '0' || asc > '9' || !(state & (K_RSHIFT|K_LSHIFT)))) {
+
+  if (!(nkey & NKF_FUNC))
+	{
 		if (!input->readonly
-		    && edit_char (input, form->TextCursrX, form->TextCursrY, asc)) {
+		    && edit_char (input, form->TextCursrX, form->TextCursrY, ascii_code))
+		{
 			scrl = +1;
 			line = 1;
-		} else {
+		}
+		else
+		{
 			word = NULL;
 		}
-		
-	} else if (asc) switch (asc) {
-			
-		case 27: /* escape */ {
+	}
+	else
+	{
+    nkey &= ~NKF_FUNC;
+
+	switch (nkey)
+	{
+    case NK_UP:
+     	if (form->TextCursrY)
+			{
+				lift = -1;
+				line = +2;
+			}
+			else
+			{
+				word = NULL;
+			}
+			break;
+
+		case NK_DOWN:
+			if (form->TextCursrY < input->TextRows -1)
+			{
+				lift = +1;
+				line = -2;
+			}
+			else
+			{
+				word = NULL;
+			}
+			break;
+
+		case NK_LEFT:  /* cursor-left */
+		  if (shift)  /* cursor-left shifted: 52 */
+		  {
+			scrl = -form->TextCursrX;
+			if (scrl >= 0)
+			{
+				word = NULL;
+			}
+			else
+			{
+				line = 1;
+			}
+		  }
+#if 0
+		  else if (ctrl)
+		  {
+        /* move cursor one word to the left */
+        start = edit_rowln (input, form->TextCursrY-1) + 1;
+        end = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+        strChunk = strncpy(input, start, end-start);
+        position = strrchr(strChunk, ' ');
+        if (position == NULL)
+          scrl = 0;
+        else
+          scrl = position  - thisLine + 1;
+		  }
+#endif
+		  else  /* cursor-left unshifted */
+		  {
+		    if (form->TextCursrX)
+			  {
+				  scrl = -1;
+				  line = 1;
+			  }
+			  else if (form->TextCursrY)
+			  {
+				  scrl = +edit_rowln (input, form->TextCursrY -1);
+				  lift = -1;
+				  line = +2;
+			  }
+			  else
+			  {
+				  word = NULL;
+			  }
+		  }
+		  break;
+
+		case NK_RIGHT:  /*cursor-right */
+		  if (shift)  /* cursor-right shifted: 54 */
+		  {
+			  scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+			  if (scrl <= 0)
+			  {
+				  word = NULL;
+			  }
+			  else
+			  {
+				  line = 1;
+			  }
+		  }
+#if 0
+      else if (ctrl)  /* cursor-right control */
+      {
+			  /* move cursor one word to the right */
+			  start = edit_rowln(input, form->TextCursrY) - form->TextCursrX;
+			  end = edit_rowln (input, form->TextCursrY);
+
+        strChunk = strncpy(input, start, end-start);
+        position = strrchr(strChunk, ' ');
+			  if (position == NULL)
+				  scrl = 0;
+			  else
+				  scrl = position  - thisLine + 1;
+		  }
+
+#endif
+		  else  /* cursor-right unshifted */
+		  {
+		  	if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+			  {
+				  scrl = +1;
+				  line = 1;
+			  }
+			  else if (form->TextCursrY < input->TextRows -1)
+			  {
+				  scrl = -form->TextCursrX;
+				  lift = +1;
+				  line = -2;
+			  }
+			  else
+			  {
+				  word = NULL;
+			  }
+		  }
+		  break;
+
+		case NK_ESC:  /* Escape:  27 */
+		{
 			WCHAR  * last = text[input->TextRows];
-			if (!input->readonly && text[0] < last -1 && edit_zero (input)) {
+			if (!input->readonly && text[0] < last -1 && edit_zero (input))
+			{
 				form->TextCursrX = 0;
 				form->TextCursrY = 0;
 				form->TextShiftX = 0;
 				form->TextShiftY = 0;
-			} else {
+			}
+			else
+			{
 				word = NULL;
 			}
 		}	break;
-		
-		case 52: /* shift+left */
-			scrl = -form->TextCursrX;
-			if (scrl >= 0) {
-				word = NULL;
-			} else {
-				line = 1;
-			}
-			break;
-		
-		case 54: /* shift+right */
-			scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
-			if (scrl <= 0) {
-				word = NULL;
-			} else {
-				line = 1;
-			}
-			break;
-		
-		case 55: /* shift+home */
-			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
-			lift =                    input->TextRows -1  - form->TextCursrY;
-			if (!scrl && !lift) {
-				word = NULL;
-			}
-			break;
-		
-		case 13: /* enter/return */
-			if (input->Type == IT_TAREA) {
-				if (edit_crlf (input, form->TextCursrX, form->TextCursrY)) {
+
+		case NK_RET:  /* Enter/Return: 13 */
+		case (NK_ENTER|NKF_NUM):
+			if (input->Type == IT_TAREA)
+			{
+				if (edit_crlf (input, form->TextCursrX, form->TextCursrY))
+				{
 					scrl = -form->TextCursrX;
 					lift = +1;
-				} else {
+				}
+				else
+				{
 					word = NULL;
 				}
-			} else if (edit_rowln (input, form->TextCursrY) && (key & 0xFF00)) {
+			}
+			else if (edit_rowln (input, form->TextCursrY) && (key & 0xFF00))
+			{
 				form_activate (form);
 				form->TextActive = NULL;
-			} else {
+			}
+			else
+			{
 				word = NULL;
 			}
 			break;
-		
-		case 9: /* tab */
-			if (state & K_CTRL) {
+
+		case NK_CLRHOME:  /* Clr/Home: 55 */
+		  if (shift)  /* Clr-Home shifted */
+		  {
+			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+			lift =                    input->TextRows -1  - form->TextCursrY;
+			if (!scrl && !lift)
+			{
+				word = NULL;
+			}
+		  }
+		  else  /* Clr-Home unshifted */
+		  {
+		  	if (form->TextCursrX || form->TextCursrY)
+			  {
+				  scrl = -form->TextCursrX;
+				  lift = -form->TextCursrY;
+			  }
+			  else
+			  {
+				  word = NULL;
+			  }
+		  }
+		  break;
+
+		case NK_M_END:  /* Mac END key  */
+		  scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+		  lift =                    input->TextRows -1  - form->TextCursrY;
+		  if (!scrl && !lift)
+		  {
+			word = NULL;
+		  }
+		  break;
+
+
+		case NK_TAB:  /* Tab: 9 */
+			if (ctrl)  /* Tabe control */
+			{
 				form->TextActive = NULL;
 				*next            = NULL;
-			} else if ((state & K_LSHIFT)||(state & K_RSHIFT)) {
+			}
+			else if (shift)
+			{
 				INPUT srch = form->InputList;
 				INPUT last = NULL;
-				
-				if (srch) {
-					while (1) {
+
+				if (srch)
+				{
+					while (1)
+					{
 						while ((srch->disabled) && (srch = srch->Next) != NULL) ;
-						
-						if (srch->Next == input) {
-							if (srch->Type == IT_TEXT) {
+
+						if (srch->Next == input)
+						{
+							if (srch->Type == IT_TEXT)
+							{
 								last = srch;
 							}
 							break;
-						} else {
-							if (srch->Type == IT_TEXT) {
+						}
+						else
+						{
+							if (srch->Type == IT_TEXT)
+							{
 								last = srch;
 							}
 							srch = srch->Next;
@@ -1785,166 +1973,161 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 					}
 				}
 
-				if (!last) {
+				if (!last)
+				{
 					srch = input->Next;
-					
-					while ((srch = srch->Next) != NULL) {
-						if (!srch->disabled && srch->Type == IT_TEXT) {
+
+					while ((srch = srch->Next) != NULL)
+					{
+						if (!srch->disabled && srch->Type == IT_TEXT)
+						{
 							last = srch;
 						}
-					}					
-				} 
+					}
+				}
 
 				/* on google it would move out of the form */
 				if (!last) last = input;
-				
-				*next = last; 
-			} else {
+
+				*next = last;
+			}
+			else
+			{
 				INPUT srch = input->Next;
-				if (srch) {
+				if (srch)
+				{
 					while ((srch->disabled || srch->Type < IT_TEXT)
 					       && (srch = srch->Next) != NULL);
 				}
-				if (!srch) {
+				if (!srch)
+				{
 					srch = form->InputList;
 					while ((srch->disabled || srch->Type < IT_TEXT)
 					       && (srch = srch->Next) != NULL);
 				}
-				
-				*next = srch; 
+
+				*next = srch;
 			}
 			break;
-		
-		case 8: /* backspace */
-			if (input->readonly) {
+
+		case NK_BS:  /* Backspace: 8 */
+			if (input->readonly)
+			{
 				word = NULL;
-			} else if (form->TextCursrX) {
+			}
+			else if (form->TextCursrX)
+			{
 				edit_delc (input, form->TextCursrX -1, form->TextCursrY);
 				scrl = -1;
 				line = 1;
-			} else if (form->TextCursrY) {
+			}
+			else if (form->TextCursrY)
+			{
 				WORD col = edit_rowln (input, form->TextCursrY -1);
 				edit_delc (input, col, form->TextCursrY -1);
 				scrl = col;
 				lift = -1;
-			} else {
+			}
+			else
+			{
 				word = NULL;
 			}
 			break;
-		
-		case 127: /* delete */
-			if (input->readonly) {
-				word = NULL;
-			} else if (form->TextCursrX < edit_rowln (input, form->TextCursrY)) {
-				edit_delc (input, form->TextCursrX, form->TextCursrY);
-				line = 1;
-			} else if (!edit_delc (input, form->TextCursrX, form->TextCursrY)) {
+
+		case NK_DEL:  /* Delete: 127 */
+			if (input->readonly)
+			{
 				word = NULL;
 			}
+			else
+			{
+				if (shift)  /* Delete shifted */
+				{
+				  printf ("X=%d edit_rowln=%ld\n\r",form->TextCursrX, edit_rowln(input,form->TextCursrY));
+					if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+					{
+					  printf ("delete character to right of cursor\n\r");
+						edit_delc (input, form->TextCursrX, form->TextCursrY);
+						line = 1;
+					}
+					else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
+					{
+					  printf ("end of line reached so merge lines\n\r");
+						word = NULL;
+					}
+				}
+				else
+				{
+					if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+					{
+						edit_delc (input, form->TextCursrX, form->TextCursrY);
+						line = 1;
+					}
+					else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
+					{
+						word = NULL;
+					}
+				}
+			}
 			break;
-		
+
 		default:
 			word = NULL;
-	
-	} else switch (key >>8) {
-		
-		case 0x4B: /* left */
-			if (form->TextCursrX) {
-				scrl = -1;
-				line = 1;
-			} else if (form->TextCursrY) {
-				scrl = +edit_rowln (input, form->TextCursrY -1);
-				lift = -1;
-				line = +2;
-			} else {
-				word = NULL;
-			}
-			break;
-		
-		case 0x48: /* up */
-			if (form->TextCursrY) {
-				lift = -1;
-				line = +2;
-			} else {
-				word = NULL;
-			}
-			break;
-		
-		case 0x4D: /* right */
-			if (form->TextCursrX < edit_rowln (input, form->TextCursrY)) {
-				scrl = +1;
-				line = 1;
-			} else if (form->TextCursrY < input->TextRows -1) {
-				scrl = -form->TextCursrX;
-				lift = +1;
-				line = -2;
-			} else {
-				word = NULL;
-			}
-			break;
-		
-		case 0x50: /* down */
-			if (form->TextCursrY < input->TextRows -1) {
-				lift = +1;
-				line = -2;
-			} else {
-				word = NULL;
-			}
-			break;
-		
-		case 0x47: /* home */
-			if (form->TextCursrX || form->TextCursrY) {
-				scrl = -form->TextCursrX;
-				lift = -form->TextCursrY;
-			} else {
-				word = NULL;
-			}
-			break;
-		
-		case 0x4F: /* end */
-			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
-			lift =                    input->TextRows -1  - form->TextCursrY;
-			if (!scrl && !lift) {
-				word = NULL;
-			}
-			break;
-		
-		default:
-			word = NULL;
-	}
-	if (word) {
+
+	}  /* switch */
+	}  /* if  */
+
+
+	if (word)
+	{
 		form->TextCursrY += lift;
-		if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX) {
+		if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX)
+		{
 			scrl = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
 		}
-		if (lift > 0) {
-			if (form->TextShiftY < form->TextCursrY - (WORD)(input->VisibleY -1)) {
+		if (lift > 0)
+		{
+			if (form->TextShiftY < form->TextCursrY - (WORD)(input->VisibleY -1))
+			{
 				form->TextShiftY = form->TextCursrY - (WORD)(input->VisibleY -1);
 				line = 0;
 			}
-		} else {
-			if (form->TextShiftY > form->TextCursrY) {
+		}
+		else
+		{
+			if (form->TextShiftY > form->TextCursrY)
+			{
 				form->TextShiftY = form->TextCursrY;
 				line = 0;
-			} else if (form->TextShiftY &&
-			           input->TextRows < form->TextShiftY + input->VisibleY) {
+			}
+			else if (form->TextShiftY &&
+			           input->TextRows < form->TextShiftY + input->VisibleY)
+			{
 				form->TextShiftY = input->TextRows - (WORD)input->VisibleY;
 				line = 0;
 			}
 		}
 		form->TextCursrX += scrl;
-		if (scrl > 0) {
-			if (form->TextShiftX < form->TextCursrX - (WORD)input->VisibleX) {
+		if (scrl > 0)
+		{
+			if (form->TextShiftX < form->TextCursrX - (WORD)input->VisibleX)
+			{
 				form->TextShiftX = form->TextCursrX - (WORD)input->VisibleX;
 				line = 0;
 			}
-		} else {
-			if (form->TextShiftX > form->TextCursrX) {
+		}
+		else
+		{
+			if (form->TextShiftX > form->TextCursrX)
+			{
 				form->TextShiftX = form->TextCursrX;
 				line = 0;
-			} else if (form->TextShiftX) {
+			}
+			else if (form->TextShiftX)
+			{
 				WORD n = edit_rowln (input, form->TextCursrY);
-				if (n < form->TextShiftX + input->VisibleX) {
+				if (n < form->TextShiftX + input->VisibleX)
+				{
 					form->TextShiftX = n - (WORD)input->VisibleX;
 					line = 0;
 				}
@@ -1954,11 +2137,15 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		rect->g_x = 2;
 		rect->g_y = 2 - word->word_height;
 		rect->g_w = word->word_width -4;
-		if (!line) {
+		if (!line)
+		{
 			rect->g_h = word->word_height + word->word_tail_drop -4;
-		} else { 
+		}
+		else
+		{
 			WORD row = form->TextCursrY - form->TextShiftY;
-			if (line < 0) {
+			if (line < 0)
+			{
 				row -= 1;
 				line = 2;
 			}
@@ -1986,7 +2173,7 @@ edit_grow (INPUT input)
 	WORD    rows  = input->TextRows +1;
 	size_t  size  = (n_num * sizeof(WCHAR) + rows * sizeof(WCHAR*) +3) & ~3uL;
 	WCHAR * buff;
-	
+
 	if (input->TextMax) {
 		return FALSE;
 	}
@@ -2022,7 +2209,7 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, UWORD rows, size_t size)
 	TEXTATTR attr = word->attr;
 	void   * buff;
 	WORD     p[8], n;
-	
+
 	font_byType (pre_font, -1, -1, word);
 	if (word->font->Base->Mapping != MAP_UNICODE) {
 		vst_map_mode (vdi_handle, MAP_UNICODE);
@@ -2035,7 +2222,7 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, UWORD rows, size_t size)
 		vst_map_mode (vdi_handle, word->font->Base->Mapping);
 	}
 	current->word->attr = attr;
-	
+
 	size += 1;                 /* space for the trailing 0 */
 	size *= sizeof(WCHAR);
 	size =  (size +1) & ~1uL;  /* aligned to (WCHAR*) boundary */
@@ -2043,21 +2230,21 @@ edit_init (INPUT input, TEXTBUFF current, UWORD cols, UWORD rows, size_t size)
 	if ((buff = malloc (size)) != NULL) {
 		word->item       = buff;
 		input->TextArray = (WCHAR**)((char*)buff + size) -1;
-	
+
 	} else { /* memory exhausted */
 		input->TextMax  = 1;
 		input->readonly = TRUE;
 	}
 	edit_zero (input);
-	
+
 	input->VisibleX = cols;
 	input->VisibleY = rows;
 	input->CursorH  = p[7] + p[1] -1;
-	
+
 	if (rows > 1) {
 		word->word_height += (rows-1) * input->CursorH;
 	}
-	
+
 	return buff;
 }
 
@@ -2122,7 +2309,7 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 	}
 	*(ptr++) = '\0';
 	*(line)  = ptr; /* behind the last line */
-	
+
 	if (input->Value) { /* password */
 		char * val = input->Value;
 		ptr = input->Word->item;
@@ -2130,7 +2317,7 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 			*(ptr++) = '*';
 		}
 	}
-	
+
 	(void)encoding;
 }
 
@@ -2140,12 +2327,12 @@ edit_crlf (INPUT input, WORD col, WORD row)
 {
 	WCHAR * dst, * end;
 	WORD    n;
-	
+
 	if (edit_space (input) < (sizeof(WCHAR) + sizeof(WCHAR*)) / sizeof(WCHAR)
 	    && !edit_grow (input)) {
 		return FALSE;
 	}
-	
+
 	input->TextArray--;
 	input->TextRows++;
 	for (n = 0; n <= row; n++) {
@@ -2161,7 +2348,7 @@ edit_crlf (INPUT input, WORD col, WORD row)
 		*(end) = *(end -1);
 	}
 	*(dst) = '\n';
-	
+
 	return TRUE;
 }
 
@@ -2172,13 +2359,13 @@ edit_char (INPUT input, WORD col, WORD row, WORD chr)
 	ENCODER_W encoder = encoder_word (ENCODING_ATARIST, MAP_UNICODE);
 	const char  * ptr = &((char*)&chr)[1];
 	BOOL ok;
-	
+
 	if (edit_space (input) > 0 || edit_grow (input)) {
 		WCHAR ** line = input->TextArray;
 		WORD  n;
 		WCHAR uni[5];
 		(*encoder)(&ptr, uni);
-		
+
 		if (input->Value) { /*password */
 			UWORD  len = edit_rowln (input, row);
 			char * end = input->Value + len;
@@ -2189,7 +2376,7 @@ edit_char (INPUT input, WORD col, WORD row, WORD chr)
 			*dst = *uni;
 			input->Word->item[len]    = '*';
 			input->Word->item[len +1] = '\0';
-		
+
 		} else {
 			WCHAR * end = line[input->TextRows];
 			WCHAR * dst = line[row] + col;
@@ -2200,7 +2387,7 @@ edit_char (INPUT input, WORD col, WORD row, WORD chr)
 		}
 		for (n = row +1; n <= input->TextRows; line[n++]++);
 		ok = TRUE;
-	
+
 	} else { /* buffer full */
 		ok = FALSE;
 	}
@@ -2215,17 +2402,17 @@ edit_delc (INPUT input, WORD col, WORD row)
 	WCHAR  * beg  = text[row] + col;
 	WCHAR  * end  = text[input->TextRows];
 	BOOL ok;
-	
+
 	if (beg < end -1) {
 		WORD n;
-		
+
 		if (input->Value) { /*password */
 			char * ptr = input->Value + col;
 			do {
 				*(ptr) = *(ptr +1);
 			} while (*(ptr++));
 			*(--end) = '\0';
-		
+
 		} else {
 			if (beg >= text[row +1] -1) { /* at the end of this row, merge */
 				n    =  row;               /* with the following one        */
@@ -2240,7 +2427,7 @@ edit_delc (INPUT input, WORD col, WORD row)
 		}
 		for (n = row; n < input->TextRows; text[++n]--);
 		ok = TRUE;
-	
+
 	} else {
 		ok = FALSE;
 	}

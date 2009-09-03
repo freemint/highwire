@@ -42,7 +42,7 @@ Paragrph.c (global.h,defs.h,hw-types.h, token.h, fontbase.h)
 list.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, fontbase.h)
 Form.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Form.h,fontbase.h,Loader.h,mime.h)
 Table.c    (global.h,defs.h,hw-types.h, token.h, parser.h,Table.h,Loader.h,mime.h,fontbase.h)
-Frame.c    (global.h,defs.h,hw-types.h, Table.h,Form.h,Location.h,mime.h,fontbase.h)
+Frame.c    (global.h,defs.h,hw-types.h, token.h, Table.h,Form.h,Location.h,mime.h,fontbase.h)
 color.c    (global.h,defs.h,hw-types.h)
 encoding.c ( defs.h,hw-types.h,         scanner.h, en_uni.h,en_bics.h,en_atari.h)
 scanner.c  ( defs.h,hw-types.h,         token.h,scanner.h)   [-M]
@@ -81,3 +81,4 @@ UNGIF.LIB
 JPEG.LIB
 PNG.LIB
 ZLIB.LIB
+cflib.lib
