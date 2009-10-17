@@ -16,6 +16,7 @@ HIGHWIRE.PRG
 =
 PCSTART.O
 ;
+modules\network.src\magicnet.prj
 modules\network.src\iconnect.prj
 modules\network.src\sting.prj
 modules\network.src\purec.prj

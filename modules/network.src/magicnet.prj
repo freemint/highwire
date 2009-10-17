@@ -1,0 +1,13 @@
+; Overlay for MagiCNet
+..\magicnet.ovl
+.C [ -P -M -DUSE_MAGICNET]
+.L [ -L -V -S=1024]
+.S [ -V ]
+=
+
+CRT0.O          ; startup code
+
+magicnet.c (network.c,..\..\ovl_sys.h, ..\..\hw-types.h,..\..\inet.c,..\..\inet.h)
+
+MINTLIB.LIB        ; TOS library
+net_s2.lib

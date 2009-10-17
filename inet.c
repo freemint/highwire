@@ -18,6 +18,9 @@ static WORD sockets_free = 0;
 
 #endif /* USE_INET */
 
+#if defined(USE_MAGICNET)
+static WORD sockets_free = 0;
+#endif
 
 #include <stddef.h>
 #include <errno.h>
@@ -125,6 +128,33 @@ static BOOL init_mintnet (void)
 }
 
 
+#elif defined(USE_MAGICNET) /**************************************************/
+# include <magicnet/netdb.h>
+# include <magicnet/sys/socket.h>
+# include <magicnet/netinet/in.h>
+# include <magicnet/unistd.h>
+# include <mintbind.h>
+
+/*----------------------------------------------------------------------------*/
+static BOOL init_mintnet (void)
+{
+	static BOOL __once = TRUE;
+	if (__once) {
+		short n;
+		sockets_free = 32;
+		for (n = 0; n < 32; n++) {
+			if (Finstat (n) >= 0 || Foutstat (n) >= 0) sockets_free--;
+		}
+		if ((sockets_free -= 2) > 0) { /* always save two free handles */
+			__once = FALSE;
+		} else {
+			sockets_free = 0;
+		}
+	}
+	return (sockets_free > 0);
+}
+
+
 #elif defined(USE_ICNN) /******************************************************/
 # include <time.h>
 # include <string.h>
@@ -199,7 +229,7 @@ inet_host_addr (const char * name, long * addr)
 {
 	short ret = -1;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	struct hostent * host = gethostbyname (name);
 	if (host) {
 		*addr = *(long*)host->h_addr;
@@ -233,7 +263,7 @@ inet_host_addr (const char * name, long * addr)
 
 
 /*----------------------------------------------------------------------------*/
-#if defined(USE_MINT) || defined(USE_STIK)
+#if defined(USE_MINT) || defined(USE_STIK) || defined(USE_MAGICNET)
 static BOOL sig_tout = FALSE;
 
 static void sig_alrm (long sig)
@@ -249,7 +279,7 @@ inet_connect (long addr, long port, long tout_sec)
 {
 	long fh = -1;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	if (!init_mintnet()) {
 		fh = -35/*EMFILE*/;
 	} else {
@@ -345,7 +375,7 @@ inet_send (long fh, const char * buf, size_t len)
 {
 	long ret = 0;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	while (len) {
 		long n = Fwrite (fh, len, buf);
 		if (n < 0) {
@@ -402,13 +432,13 @@ inet_recv (long fh, char * buf, size_t len)
 {
 	long ret = 0;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	while (len) {
 		long n = Finstat (fh);
 		if (n < 0) {
 			if (!ret) ret = n;
 			break;
-		} else if (n == 0x7FFFFFFF) { /* connection closed */
+		} else if (n == 0x7FFFFFFFL) { /* connection closed */
 			if (!ret) ret = -ECONNRESET;
 			break;
 		} else if (n && (n = Fread (fh, (n < len ? n : len), buf)) < 0) {
@@ -477,7 +507,7 @@ inet_close (long fh)
 {
 	if (fh >= 0) {
 
-	#if defined(USE_MINT)
+	#if defined(USE_MINT) || defined(USE_MAGICNET)
 		if (close (fh) == 0) sockets_free++;
 
 	#elif defined(USE_ICNN)
@@ -505,9 +535,9 @@ inet_instat (long fh)
 {
 	long ret = -1;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	ret = Finstat (fh);
-	if (ret == 0x7FFFFFFF) { /* connection closed */
+	if (ret == 0x7FFFFFFFL) { /* connection closed */
 		ret = -ECONNRESET;
 	}
 
@@ -538,7 +568,7 @@ inet_select (long timeout, long * rfds, long * wfds) /* timeout is milliseconds 
 {
 	long ret = 0;
 
-#if defined(USE_MINT)
+#if defined(USE_MINT) || defined(USE_MAGICNET)
 	ret = Fselect (timeout, rfds, wfds, NULL);
 
 #elif defined(USE_ICNN)
@@ -627,6 +657,9 @@ inet_info (void)
 {
 #if defined(USE_MINT)
 	return "MiNTnet";
+
+#elif defined(USE_MAGICNET)
+	return "MagiCNet";
 
 #elif defined(USE_ICNN)
 	return "Iconnect";
