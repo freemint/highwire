@@ -1,5 +1,8 @@
 ..\sting.ovl
 .C [ -P -M -DUSE_INET]
+
+.C [-ih:\src\highwire\include]   ; include path
+
 .L [ -L -V -S=1024]
 .S [ -V ]
 =

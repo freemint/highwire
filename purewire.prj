@@ -10,9 +10,20 @@
 HIGHWIRE.PRG
 ;
 
-.C [-K -P -w-stv -DUSE_OVL -DUSE_INET]
-.S [] ; -Y]
-.L [-S=16384]
+.C [-C]             ; Allow nested comments
+.C [-K]             ; Default char is unsigned
+.C [-P]             ; Use absolute calls
+.C [-2]             ; Generate 68020 Code
+.C [-w-stv]         ; Disable warning "Structure passed by value"
+.C [-DUSE_OVL -DUSE_INET -DLIBGIF -DLIBJPG -DLIBPNG -DIMG_XMP]
+
+.C [-ih:\src\highwire\include]   ; include path
+
+.S [-F]             ; No false condition listing
+.S [-M]             ; No macro line listing
+
+.L [-S=32000]
+
 =
 PCSTART.O
 ;
@@ -23,14 +34,14 @@ modules\network.src\purec.prj
 modules\example.src\sample.prj
 ;
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)
-schedule.c (  hw-types.h, schedule.h)
-mime.c     (  hw-types.h, mime.h)
-ovl_sys.c  ( defs.h,hw-types.h, ovl_sys.h)
-inet.c     (  hw-types.h,       ovl_sys.h,inet.h)
-http.c     ( defs.h,hw-types.h,version.h, Location.h,mime.h,http.h,inet.h,scanner.h)
-cache.c    ( defs.h,hw-types.h, Location.h,cache.h)
+schedule.c (hw-types.h, schedule.h)
+mime.c     (hw-types.h, mime.h)
+ovl_sys.c  (defs.h,hw-types.h, ovl_sys.h)
+inet.c     (hw-types.h, ovl_sys.h,inet.h)
+http.c     (defs.h,hw-types.h,version.h, Location.h,mime.h,http.h,inet.h,scanner.h)
+cache.c    (defs.h,hw-types.h, Location.h,cache.h)
 Location.c (global.h,defs.h,hw-types.h, Location.h,Logging.h,inet.h)
-cookie.c   ( defs.h,hw-types.h, mime.h,http.h,Location.h,cookie.h)
+cookie.c   (defs.h,hw-types.h, mime.h,http.h,Location.h,cookie.h)
 DomBox.c   (global.h,defs.h,hw-types.h)
 O_Struct.c (global.h,defs.h,hw-types.h)
 fontbase.c (global.h,defs.h,hw-types.h, fontbase.h)
@@ -43,10 +54,10 @@ Paragrph.c (global.h,defs.h,hw-types.h, token.h, fontbase.h)
 list.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, fontbase.h)
 Form.c     (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Form.h,fontbase.h,Loader.h,mime.h)
 Table.c    (global.h,defs.h,hw-types.h, token.h, parser.h,Table.h,Loader.h,mime.h,fontbase.h)
-Frame.c    (global.h,defs.h,hw-types.h, token.h, Table.h,Form.h,Location.h,mime.h,fontbase.h)
+Frame.c    (global.h,defs.h,hw-types.h, token.h, Table.h, Form.h, Location.h,mime.h, fontbase.h)
 color.c    (global.h,defs.h,hw-types.h)
-encoding.c ( defs.h,hw-types.h,         scanner.h, en_uni.h,en_bics.h,en_atari.h)
-scanner.c  ( defs.h,hw-types.h,         token.h,scanner.h)   [-M]
+encoding.c (defs.h,hw-types.h, scanner.h, en_uni.h,en_bics.h,en_atari.h)
+scanner.c  (defs.h,hw-types.h, token.h,scanner.h)   [-M]
 parser.c   (global.h,defs.h,hw-types.h, token.h,scanner.h, parser.h,Containr.h,Loader.h,mime.h,cache.h,parser.h,Location.h,fontbase.h)
 p_about.c  (global.h,defs.h,hw-types.h,version.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h,Containr.h,inet.h,cache.h,Form.h,ovl_sys.h)
 p_dir.c    (global.h,defs.h,hw-types.h, parser.h,mime.h,Loader.h,Location.h,fontbase.h)
@@ -55,7 +66,7 @@ Containr.c (global.h,defs.h,hw-types.h, Containr.h,Form.h,schedule.h,Location.h)
 Loader.c   (global.h,defs.h,hw-types.h, parser.h,mime.h,av_comm.h,schedule.h,Containr.h,Location.h,Loader.h,http.h,inet.h,cache.h)
 Redraws.c  (global.h,defs.h,hw-types.h, Form.h,fontbase.h)
 ;
-Window.c   (  hw-types.h, Window.h)
+Window.c   (hw-types.h, Window.h)
 formwind.c (global.h,defs.h,hw-types.h, Window.h)
 fntsetup.c (global.h,defs.h,hw-types.h, highwire.h, Window.h,hwWind.h)
 dl_mngr.c  (global.h,defs.h,hw-types.h, schedule.h,Location.h,Loader.h,Window.h,highwire.h,inet.h)
@@ -65,7 +76,7 @@ av_prot.c  (global.h,defs.h,hw-types.h, av_comm.h)
 dragdrop.c (global.h,defs.h,hw-types.h, dragdrop.h)
 olga.c     (global.h,defs.h,hw-types.h, olga.h)
 config.c   (global.h,defs.h,hw-types.h,version.h, cache.h,hwWind.h,scanner.h)
-bookmark.c ( defs.h,hw-types.h, bookmark.h)
+bookmark.c (defs.h,hw-types.h, bookmark.h)
 Variable.c (global.h,defs.h,hw-types.h)
 Nice_VDI.c (global.h,defs.h,hw-types.h)
 keyinput.c (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h)

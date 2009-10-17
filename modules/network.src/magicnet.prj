@@ -1,6 +1,8 @@
-; Overlay for MagiCNet
 ..\magicnet.ovl
 .C [ -P -M -DUSE_MAGICNET]
+
+.C [-ih:\src\highwire\include]   ; include path
+
 .L [ -L -V -S=1024]
 .S [ -V ]
 =
