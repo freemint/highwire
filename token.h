@@ -171,6 +171,7 @@
 		__KEY_ITEM (MAXLENGTH),    /* INPUT */
 		__KEY_ITEM (MEDIA),        /* LINK, STYLE */
 		__KEY_ITEM (METHOD),       /* FORM */
+#		undef       NAME
 		__KEY_ITEM (NAME),         /* A,FRAME */
 		__KEY_ITEM (NORESIZE),     /* FRAME */
 		__KEY_ITEM (NOSHADE),      /* HR */
