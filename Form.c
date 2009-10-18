@@ -1704,8 +1704,6 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 **/
 	BOOL     shift, ctrl, alt;
 
-  nkc_init();
-
   /* Convert the GEM key code to the "standard" */
   nkey = gem_to_norm ((short)state, (short)key);
 
