@@ -36,7 +36,7 @@ struct hw_window {
 };
 
 #define WIDENT_BRWS   WINDOW_IDENT('B','R','W','S')
-#define WIDENT_BMRK   WINDOW_IDENT('B','M','R','K')
+#define WIDENT_BMRK   WINDOW_IDENT('B','M','R','K')     /* Ident for bookmark window */
 
 
 HwWIND  new_hwWind   (const char * name, const char * url, BOOL topNbot);

@@ -1,5 +1,7 @@
 Changes in V. 0.3.4 beta 1
 
+- The URL input field can copie qith Drag and Drop to the
+  bookmark window.
 - Form text areas now use cflib to enable all keyboards
 - Paste is not artificially limited to any length of buffer.
   This may have unexpected consequences which will be fixed if
