@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <cflib.h>
 #include <gem.h>
 
 #include <gemx.h>
@@ -2182,6 +2183,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 
 		graf_mkstate (&mx, &my, &bstate, (WORD*)&kstate);
 		if (bstate & 1) {   /* key still pressed? */
+
 			WORD  d;         /* then is drag & drop */
 			GRECT pos;
 			WORD hdl;
@@ -2203,7 +2205,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			  menu_bookmark_url ( NULL, NULL);
 			} else {
 			  send_ddmsg ( mx, my, kstate, "Text", ".TXT", 
-			    				edit->Length, edit->Text );
+			    					edit->Length, edit->Text );
 			}
 		} else {
 			if (This->Input) {
@@ -2404,15 +2406,19 @@ open_scrap (BOOL rdNwr)
 	const char * mode = (rdNwr ? "rb" : "wb");
 	FILE * file;
 	
-	if (scrp_read (path) <= 0 || !path[0]) {
+	if (scrp_read (path) <= 0 || !path[0])
+	{
 		file = NULL;
 	
-	} else {
+	}
+	else
+	{
 		char * scrp = strchr (path, '\0');
 		if (scrp[-1] != '\\') *(scrp++) = '\\';
 		if (path[0]  >= 'a')  path[0]  -= ('a' - 'A');
 		strcpy (scrp, "scrap.txt");
-		if ((file = fopen (path, mode)) == NULL && rdNwr) {
+		if ((file = fopen (path, mode)) == NULL && rdNwr)
+		{
 			strcpy (scrp, "SCRAP.TXT");
 			file = fopen (path, mode);
 		}
@@ -2421,6 +2427,36 @@ open_scrap (BOOL rdNwr)
 }
 
 /*============================================================================*/
+char *
+read_scrap(void)
+{
+  FILE * file = open_scrap (TRUE);
+	if (file)
+  {
+	  long filelength;
+		char * paste;
+
+		/* find the size of the file */
+		fseek (file, 0, SEEK_END);
+		filelength = ftell (file);
+		fseek (file, 0, SEEK_SET);
+
+		/* allocate enough memory to hold the file */
+		paste = malloc (filelength+1);
+
+		if (paste != NULL)
+		{
+			/* read the entire file */
+			long n = fread (paste, 1, filelength, file);
+			paste[n] = '\0';
+		}
+
+		fclose (file);
+		return paste;
+	}
+	else
+		return NULL;
+}
 
 /*
  ** Changes
@@ -2442,39 +2478,34 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		WORD     key  = (scan << 8) | ascii;
 		WORDITEM word = NULL;
 		
-		if ((kstate & K_CTRL) && scan == 0x2F) { /* ^V -- copy from clipboard */
-			FILE * file = open_scrap (TRUE);
-			if (file)
+		if ((kstate & K_CTRL) && scan == 0x2F)
+		{ /* ^V -- paste from clipboard */
+			char * p = read_scrap();  /* Get the clipboard text */
+			long filelength = strlen (p);
+/**      long filelength;
+      long maxlength = 65535;
+      char *buf = malloc (maxlength);
+			char *p = scrap_rtxt (buf, &filelength, maxlength);
+**/
+			while (filelength-- > 0)
 			{
-			  long filelength;
-				char *buf, * p;
+				key = *(p++);
+				if (key == '\n')
+					key = 0x1C0D;  /* ikbd Return key */
+				else if (key == '\t')
+				  key = ' ';  /*0x0F09;   ikbd Tab key */
+				else if (key < ' ')
+					key = '\0';
 
-        /* find the size of the file */
-        fseek (file, 0, SEEK_END);
-        filelength = ftell (file);
-
-        /* allocate enough memory to hold the file */
-        buf = malloc (filelength);
-        p = buf;
-
-        /* read the entire file */
-        fseek (file, 0, SEEK_SET);
-        fread (buf, 1, filelength, file);
-
-			/**	size_t len = fread (buf, 1, sizeof (buf), file);  **/
-				while (filelength-- > 0)
+				if (key)
 				{
-					if ((key = *(p++)) == '\n') key = '\r';
-					else if (key < ' ')         key = '\0';
-					if (key)
-					{
-						WORDITEM w = input_keybrd (This->Input, key, 0, &clip, &next);
-						if (w) word = w;
-						else   break;
-					}
-				}  /* while */
-				fclose (file);
-			}
+					WORDITEM w = input_keybrd (This->Input, key, 0, &clip, &next);
+					if (w) word = w;
+					else   break;
+				}
+			}  /* while */
+			free (p);
+
 			if (word) {
 				clip.g_x = 0;
 				clip.g_w = word->word_width;
@@ -2552,35 +2583,53 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		WORD       scrl = 0;
 		BOOL       chng = FALSE;
 		
-		if (kstate & K_CTRL) switch (scan) {
+/*	UWORD      nkey;
+		BOOL       shift, ctrl, alt;
+*/
+		if (kstate & K_CTRL) switch (scan)
+		{
 			
 			case 0x2E: /* ^C -- copy to clipboard */
-				if (edit->Length) {
+				if (edit->Length)
+				{
 					FILE * file = open_scrap (FALSE);
-					if (file) {
+					if (file)
+					{
 						fwrite (edit->Text, 1, edit->Length, file);
 						fclose (file);
 					}
 				}
 				break;
 			
-			case 0x2F: /* ^V -- copy from clipboard */
-				if (edit->Length < sizeof(edit->Text) -1) {
-					FILE * file = open_scrap (TRUE);
-					if (file) {
-						char buf[MAX_CLIPBOARD_LENGTH];
+			case 0x2F: /* ^V -- paste from clipboard */
+				if (edit->Length < sizeof(edit->Text) -1)
+				{
+					char * p = read_scrap ();
+					long filelength = strlen (p);
+
+					if (filelength > 0)
+					{
 						size_t len = sizeof(edit->Text) - edit->Length -1;
-						len = fread (buf, 1, min (len, sizeof (buf)), file);
-						fclose (file);
-						while (len > 0 && isspace (buf[len-1])) {
+						char * buf;
+						len = min (len, filelength);
+
+						buf = malloc (len);
+						strncpy (buf, p, len);
+						buf[len] = '\0';
+						free (p);
+
+						while (len > 0 && isspace (buf[len-1]))
+						{
 							len --;
 						}
-						if (len > 0 && isspace (buf[0])) {
+						if (len > 0 && isspace (buf[0]))
+						{
 							char * ptr = buf;
 							while (len-- && isspace (*(++ptr)));
 							memmove (buf, ptr, len);
 						}
 						/* [GS] Start patch */
+						/* remove control characters */
 						if (len > 0)
 						{
 							char ZStr[MAX_CLIPBOARD_LENGTH], * ptr = buf;
@@ -2650,7 +2699,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		
 		} else if (ascii) switch (ascii) {
 			
-			case 8: /* backspace */
+			case NK_BS:  /* Backspace: 8 */
 				if (!edit->Cursor) {
 					break;
 				
@@ -2666,7 +2715,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				} else if (--edit->Cursor < edit->Shift) {
 					edit->Shift = edit->Cursor;
 				}
-			case 127: /* delete */
+			case NK_DEL:  /* Delete: 127 */
 				if (edit->Cursor < edit->Length) {
 					short  crs = edit->Cursor - edit->Shift;
 					char * dst = edit->Text + edit->Cursor, * src = dst;
@@ -2687,7 +2736,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				}
 				break;
 			
-			case 27: /* escape */
+			case NK_ESC:  /* Escape:  27 */
 				if (edit->Length) {
 					edit->Length  = 0;
 					edit->Cursor  = 0;
@@ -2697,7 +2746,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				}
 				break;
 			
-			case 13: /* enter/return */
+			case NK_RET:  /* Enter/Return: 13 */
+			case (NK_ENTER|NKF_NUM):
 				if (edit->Length) {
 					LOCATION loc;
 					if (edit->Text[0] != '/' && strchr (edit->Text, ':') == NULL) {
@@ -2729,7 +2779,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 					free_location (&loc);
 					break;
 				}
-			case 9: /* tab */
+			case NK_TAB:  /* Tab: 9 */
 				edit->Cursor = 0;
 				edit->Shift  = 0;
 				chng_toolbar (This, 0, 0, -1);
@@ -2861,4 +2911,3 @@ hwWind_ActiveFrame (HwWIND This)
 	return ((This || (This = hwWind_Top) != NULL) && This->Active
 	        ? containr_Frame (((CONTAINR)This->Active)) : NULL);
 }
-
