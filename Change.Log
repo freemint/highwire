@@ -1,16 +1,18 @@
 Changes in V. 0.3.4
  beta 1
-- The URL input field can copied with Drag and Drop to the
-  bookmark window.
-- Added New Window ^N to File menu
-- Form text areas now use cflib to enable all keyboards
-- Paste is not artificially limited to any length of buffer.
-  This may have unexpected consequences which will be fixed if
-  they arise.
+  - Added New Window ^N to File menu
+  - Form text areas
+      - now use cflib to enable all language keyboards
+      - Shift Del, deletes to end of line 
+      - Paste is not artificially limited to any length of buffer.
+        This may have unexpected consequences which will be fixed if
+        they arise.
+  - The URL input field can be copied with Drag and Drop to the
+    bookmark window. 
 
  beta 2
-- Bug fix for carriage returns and tabs pasted from clipboard
-  to form text areas.
+  - Form text areas
+    - Bug fix for carriage returns and tabs pasted from clipboard.
 
 Changes in V. 0.3.3 beta
 
@@ -66,7 +68,7 @@ Changes in V. 0.3.3 beta
 
 - Overworked handling of align/float/text-align
   attributes.
-
+  
 - Table Border code overhauled.
 
 - Force empty Option tags to be '_'.
@@ -74,7 +76,7 @@ Changes in V. 0.3.3 beta
 - Invalid 'polygon' map areas supported, as well
   as a few other wonderful errors brought to the
   world by IE.
-
+  
 - Invalid '&' CSS token and corresponding rules
   ignored.  Also invalid '\' escaped CSS tokens
   and identifiers ignored as well as invalid
