@@ -22,7 +22,7 @@ struct hw_window {
 	WORD     TbarActv;
 	struct {
 		WORD Offset;
-		WORD Width;    
+		WORD Width;
 	}        TbarElem[8];
 	LOCATION Location;
 	void   * Pane;
@@ -90,8 +90,9 @@ void hwWind_urlhist (HwWIND, const char *);
 void init_icons(void);
 
 
-/* service function, not really releated here */
+/* service function, not really related here */
 FILE * open_scrap (BOOL rdNwr);
 
+char * read_scrap(void);
 
 #endif /*__HW_WIND_H__*/
