@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cflib.h>
 
 #define __TOS
 #include <gem.h>
