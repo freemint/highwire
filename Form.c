@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <cflib.h>
 
 #ifndef __PUREC__
 #  include <osbind.h>
 #else
 #  include <tos.h>
 #endif
+
+#include <cflib.h>
 
 #include "token.h"
 #include <gemx.h>
