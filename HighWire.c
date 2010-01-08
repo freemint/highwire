@@ -12,7 +12,7 @@
 #endif
 
 #include <gemx.h>
-#include <cflib.h>
+#include <cflib.h>
 #include "version.h"
 #include "global.h"
 #include "Logging.h"
@@ -103,7 +103,7 @@ main (int argc, char **argv)
 		hwUi_fatal (NULL, _ERROR_SPEEDO_);
 	}
 
-	nkc_init();
+	nkc_init();
 	init_icons();
 		
 	open_splash();
