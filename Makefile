@@ -11,8 +11,8 @@ CP = cp
 RM = rm -f
 
 #CPU = 68000
-CPU = 68030
-#CPU = 68040
+#CPU = 68030
+CPU = 68040
 #CPU = 68020-60
 
 DEFS = -DUSE_OVL -DUSE_INET
@@ -100,6 +100,7 @@ CFILES = \
 	Mouse_R.c \
 	AEI.c \
 	HighWire.c \
+	stringtools.c \
 #	mem-diag.c
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
