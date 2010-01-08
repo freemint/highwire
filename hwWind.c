@@ -31,6 +31,7 @@
 #include "Logging.h"
 #include "dragdrop.h"
 #include "bookmark.h"
+#include "stringtools.h"
 
 
 #define WINDOW_t HwWIND
@@ -2489,11 +2490,6 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			char * p = read_scrap();  /* Get the clipboard text */
 			long filelength = strlen (p);
 
-/**      long filelength;
-      long maxlength = 65535;
-      char *buf = malloc (maxlength);
-			char *p = scrap_rtxt (buf, &filelength, maxlength);
-**/
 			while (filelength-- > 0)
 			{
 				key = *(p++);
@@ -2591,15 +2587,19 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		BOOL       chng = FALSE;
 		
 		UWORD      nkey;
-/*		BOOL       shift, ctrl, alt;
-*/
+		BOOL       shift, ctrl, alt;
+
 		/* Convert the GEM key code to the "standard" */
 		nkey = gem_to_norm ((short)kstate, (short)key);
+
+		shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
+		ctrl  = (kstate & K_CTRL) != 0;
+		alt   = (kstate & K_ALT) != 0;
 
 		/* Remove the unwanted flags */
 		nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
 
-		if (kstate & K_CTRL)
+		if (ctrl)
 		switch (scan)
 		{
 			
@@ -2632,16 +2632,10 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 						buf[len] = '\0';
 						free (p);
 
-						while (len > 0 && isspace (buf[len-1]))
-						{
-							len --;
-						}
-						if (len > 0 && isspace (buf[0]))
-						{
-							char * ptr = buf;
-							while (len-- && isspace (*(++ptr)));
-							memmove (buf, ptr, len);
-						}
+						rtrim (buf, ' ');
+						ltrim (buf, ' ');
+						len = strlen(buf);
+
 						/* [GS] Start patch */
 						/* remove control characters */
 						if (len > 0)
