@@ -463,12 +463,18 @@ scan_namedchar (const char ** pptr, void * dst, BOOL wordNchar, WORD mapping)
 	const char * str = ++(*pptr);
 	WCHAR        uni = 0;
 	
-	if (str[0] == '#') {  /* &#<number>; */
+	if (str[0] == ' ')  /* if the char is a space then it is just an ampersand */
+	{
+		/*str = --(* pptr);*/
+	}
+
+	if (str[0] == '#')  /* &#<number>; */
+	{
 		char * next = NULL;
 		long   val;
 		int    radix;
 
-		if (*(++str) == 'x') {
+		if (*(++str) == 'x') {  /* test for hexadecimal or decimal */
 			radix = 16;
 			str++;
 		} else {
@@ -492,14 +498,22 @@ scan_namedchar (const char ** pptr, void * dst, BOOL wordNchar, WORD mapping)
 		int   end = (int)numberof(named_char) - 1;
 		short len = 0;
 		while (isalnum (str[len])) len++;
-		do {
+
+		/* Binary chop search */
+		do 
+		{
 			int i = (end + beg) / 2;
 			int d = strncmp (str, named_char[i].Name, len);
-			if (d > 0) {
+			if (d > 0)
+			{
 				beg = i + 1;
-			} else if (d || named_char[i].Name[len]) {
+			}
+			else if (d || named_char[i].Name[len])
+			{
 				end = i - 1;
-			} else {
+			}
+			else
+			{
 				uni =  named_char[i].Code;
 				str += len;
 				break;
@@ -540,7 +554,8 @@ scan_namedchar (const char ** pptr, void * dst, BOOL wordNchar, WORD mapping)
 		}
 		dst = c;
 	}
-	if (uni) {
+	if (uni)
+	{
 		*pptr = (*str == ';' ? str +1 : str);
 	}
 	return dst;
