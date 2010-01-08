@@ -1781,6 +1781,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				}
 				else if (ctrl)  /* control left */
 				{
+#if 0
 					WORD     start, end, length;
 					WORD *   position;
 					CHAR *   strChunk;
@@ -1802,7 +1803,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 						end--;
 						scrl--;
 					}
-#if 0
+
 					position = strrchr(strChunk, ' ');  /* this doesn't find the first left space */
 					free (strChunk);
 					if (position == NULL)
