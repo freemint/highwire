@@ -1686,7 +1686,12 @@ input_activate (INPUT input, WORD slct)
 }
 
 
-/*============================================================================*/
+/*============================================================================
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        14-Aug-2009    Utilise NKCC from cflib to handle the various control keys in text fields.
+ **
+ */
 WORDITEM
 input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 {
@@ -1697,18 +1702,14 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	WORD     scrl = 0;
 	WORD     lift = 0;
 	WORD     line = 0;
-	unsigned short nkey;
-/**	WORD     start;
-	WORD     end;
-	CHAR     strChunk[];
-**/
+	UWORD    nkey;
 	BOOL     shift, ctrl, alt;
 
-  /* Convert the GEM key code to the "standard" */
-  nkey = gem_to_norm ((short)state, (short)key);
+	/* Convert the GEM key code to the "standard" */
+	nkey = gem_to_norm ((short)state, (short)key);
 
-  /* Remove the unwanted flags */
-  nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
+	/* Remove the unwanted flags */
+	nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
 
 	ascii_code =  nkey & 0x00FF;
 
@@ -1721,10 +1722,10 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 		return NULL;   /* shouldn't happen but who knows... */
 	}
 
-  if (!(nkey & NKF_FUNC))
+	if (!(nkey & NKF_FUNC))
 	{
 		if (!input->readonly
-		    && edit_char (input, form->TextCursrX, form->TextCursrY, ascii_code))
+				&& edit_char (input, form->TextCursrX, form->TextCursrY, ascii_code))
 		{
 			scrl = +1;
 			line = 1;
@@ -1736,343 +1737,389 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	}
 	else
 	{
-    nkey &= ~NKF_FUNC;
+		nkey &= ~NKF_FUNC;
 
-	switch (nkey)
-	{
-    case NK_UP:
-     	if (form->TextCursrY)
-			{
-				lift = -1;
-				line = +2;
-			}
-			else
-			{
-				word = NULL;
-			}
-			break;
-
-		case NK_DOWN:
-			if (form->TextCursrY < input->TextRows -1)
-			{
-				lift = +1;
-				line = -2;
-			}
-			else
-			{
-				word = NULL;
-			}
-			break;
-
-		case NK_LEFT:  /* cursor-left */
-		  if (shift)  /* cursor-left shifted: 52 */
-		  {
-			scrl = -form->TextCursrX;
-			if (scrl >= 0)
-			{
-				word = NULL;
-			}
-			else
-			{
-				line = 1;
-			}
-		  }
-#if 0
-		  else if (ctrl)
-		  {
-        /* move cursor one word to the left */
-        start = edit_rowln (input, form->TextCursrY-1) + 1;
-        end = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
-        strChunk = strncpy(input, start, end-start);
-        position = strrchr(strChunk, ' ');
-        if (position == NULL)
-          scrl = 0;
-        else
-          scrl = position  - thisLine + 1;
-		  }
-#endif
-		  else  /* cursor-left unshifted */
-		  {
-		    if (form->TextCursrX)
-			  {
-				  scrl = -1;
-				  line = 1;
-			  }
-			  else if (form->TextCursrY)
-			  {
-				  scrl = +edit_rowln (input, form->TextCursrY -1);
-				  lift = -1;
-				  line = +2;
-			  }
-			  else
-			  {
-				  word = NULL;
-			  }
-		  }
-		  break;
-
-		case NK_RIGHT:  /*cursor-right */
-		  if (shift)  /* cursor-right shifted: 54 */
-		  {
-			  scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
-			  if (scrl <= 0)
-			  {
-				  word = NULL;
-			  }
-			  else
-			  {
-				  line = 1;
-			  }
-		  }
-#if 0
-      else if (ctrl)  /* cursor-right control */
-      {
-			  /* move cursor one word to the right */
-			  start = edit_rowln(input, form->TextCursrY) - form->TextCursrX;
-			  end = edit_rowln (input, form->TextCursrY);
-
-        strChunk = strncpy(input, start, end-start);
-        position = strrchr(strChunk, ' ');
-			  if (position == NULL)
-				  scrl = 0;
-			  else
-				  scrl = position  - thisLine + 1;
-		  }
-
-#endif
-		  else  /* cursor-right unshifted */
-		  {
-		  	if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
-			  {
-				  scrl = +1;
-				  line = 1;
-			  }
-			  else if (form->TextCursrY < input->TextRows -1)
-			  {
-				  scrl = -form->TextCursrX;
-				  lift = +1;
-				  line = -2;
-			  }
-			  else
-			  {
-				  word = NULL;
-			  }
-		  }
-		  break;
-
-		case NK_ESC:  /* Escape:  27 */
+		switch (nkey)
 		{
-			WCHAR  * last = text[input->TextRows];
-			if (!input->readonly && text[0] < last -1 && edit_zero (input))
-			{
-				form->TextCursrX = 0;
-				form->TextCursrY = 0;
-				form->TextShiftX = 0;
-				form->TextShiftY = 0;
-			}
-			else
-			{
-				word = NULL;
-			}
-		}	break;
-
-		case NK_RET:  /* Enter/Return: 13 */
-		case (NK_ENTER|NKF_NUM):
-			if (input->Type == IT_TAREA)
-			{
-				if (edit_crlf (input, form->TextCursrX, form->TextCursrY))
+			case NK_UP:
+				if (form->TextCursrY)
 				{
-					scrl = -form->TextCursrX;
-					lift = +1;
+					lift = -1;
+					line = +2;
 				}
 				else
 				{
 					word = NULL;
 				}
-			}
-			else if (edit_rowln (input, form->TextCursrY) && (key & 0xFF00))
-			{
-				form_activate (form);
-				form->TextActive = NULL;
-			}
-			else
-			{
-				word = NULL;
-			}
-			break;
+				break;
 
-		case NK_CLRHOME:  /* Clr/Home: 55 */
-		  if (shift)  /* Clr-Home shifted */
-		  {
-			scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
-			lift =                    input->TextRows -1  - form->TextCursrY;
-			if (!scrl && !lift)
-			{
-				word = NULL;
-			}
-		  }
-		  else  /* Clr-Home unshifted */
-		  {
-		  	if (form->TextCursrX || form->TextCursrY)
-			  {
-				  scrl = -form->TextCursrX;
-				  lift = -form->TextCursrY;
-			  }
-			  else
-			  {
-				  word = NULL;
-			  }
-		  }
-		  break;
-
-		case NK_M_END:  /* Mac END key  */
-		  scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
-		  lift =                    input->TextRows -1  - form->TextCursrY;
-		  if (!scrl && !lift)
-		  {
-			word = NULL;
-		  }
-		  break;
-
-
-		case NK_TAB:  /* Tab: 9 */
-			if (ctrl)  /* Tabe control */
-			{
-				form->TextActive = NULL;
-				*next            = NULL;
-			}
-			else if (shift)
-			{
-				INPUT srch = form->InputList;
-				INPUT last = NULL;
-
-				if (srch)
+			case NK_DOWN:
+				if (form->TextCursrY < input->TextRows -1)
 				{
-					while (1)
-					{
-						while ((srch->disabled) && (srch = srch->Next) != NULL) ;
-
-						if (srch->Next == input)
-						{
-							if (srch->Type == IT_TEXT)
-							{
-								last = srch;
-							}
-							break;
-						}
-						else
-						{
-							if (srch->Type == IT_TEXT)
-							{
-								last = srch;
-							}
-							srch = srch->Next;
-						}
-					}
-				}
-
-				if (!last)
-				{
-					srch = input->Next;
-
-					while ((srch = srch->Next) != NULL)
-					{
-						if (!srch->disabled && srch->Type == IT_TEXT)
-						{
-							last = srch;
-						}
-					}
-				}
-
-				/* on google it would move out of the form */
-				if (!last) last = input;
-
-				*next = last;
-			}
-			else
-			{
-				INPUT srch = input->Next;
-				if (srch)
-				{
-					while ((srch->disabled || srch->Type < IT_TEXT)
-					       && (srch = srch->Next) != NULL);
-				}
-				if (!srch)
-				{
-					srch = form->InputList;
-					while ((srch->disabled || srch->Type < IT_TEXT)
-					       && (srch = srch->Next) != NULL);
-				}
-
-				*next = srch;
-			}
-			break;
-
-		case NK_BS:  /* Backspace: 8 */
-			if (input->readonly)
-			{
-				word = NULL;
-			}
-			else if (form->TextCursrX)
-			{
-				edit_delc (input, form->TextCursrX -1, form->TextCursrY);
-				scrl = -1;
-				line = 1;
-			}
-			else if (form->TextCursrY)
-			{
-				WORD col = edit_rowln (input, form->TextCursrY -1);
-				edit_delc (input, col, form->TextCursrY -1);
-				scrl = col;
-				lift = -1;
-			}
-			else
-			{
-				word = NULL;
-			}
-			break;
-
-		case NK_DEL:  /* Delete: 127 */
-			if (input->readonly)
-			{
-				word = NULL;
-			}
-			else
-			{
-				if (shift)  /* Delete shifted */
-				{
-				  printf ("X=%d edit_rowln=%ld\n\r",form->TextCursrX, edit_rowln(input,form->TextCursrY));
-					if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
-					{
-					  printf ("delete character to right of cursor\n\r");
-						edit_delc (input, form->TextCursrX, form->TextCursrY);
-						line = 1;
-					}
-					else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
-					{
-					  printf ("end of line reached so merge lines\n\r");
-						word = NULL;
-					}
+					lift = +1;
+					line = -2;
 				}
 				else
 				{
-					if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+					word = NULL;
+				}
+				break;
+
+			case NK_LEFT:  /* cursor-left */
+				if (shift)  /* shift cursor-left: 52 */
+				{
+					/* Move cursor to the left by scrl places */
+					scrl = -form->TextCursrX;
+					if (scrl >= 0)
 					{
-						edit_delc (input, form->TextCursrX, form->TextCursrY);
+						word = NULL;
+					}
+					else
+					{
 						line = 1;
 					}
-					else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
+				}
+				else if (ctrl)  /* control left */
+				{
+					WORD     start, end, length;
+					WORD *   position;
+					CHAR *   strChunk;
+					/* move cursor one word to the left */
+					start = edit_rowln (input, form->TextCursrY);
+					end   = edit_rowln (input, form->TextCursrY) + form->TextCursrX;
+					scrl = 0;
+
+					length = end-start;
+					strChunk = malloc (length+1);
+					position = input->TextArray[form->TextCursrY];
+/*					strChunk = strncpy(strChunk, position, length);
+*/					strChunk[length++] = '\0';
+
+					/* Find the next space to the left of the cursor */
+					while (start < end
+					       && isalnum(*input->TextArray[end]))
+					{
+						end--;
+						scrl--;
+					}
+#if 0
+					position = strrchr(strChunk, ' ');  /* this doesn't find the first left space */
+					free (strChunk);
+					if (position == NULL)
+						scrl = 0;
+					else
+						scrl = start - position;
+					if (scrl <= 0)
+						word = NULL;
+					else
+						line = 1;
+#endif
+				}
+				else  /* cursor-left */
+				{
+					if (form->TextCursrX)
+					{
+						scrl = -1;
+						line = 1;
+					}
+					else if (form->TextCursrY)
+					{
+						scrl = +edit_rowln (input, form->TextCursrY -1);
+						lift = -1;
+						line = +2;
+					}
+					else
 					{
 						word = NULL;
 					}
 				}
-			}
-			break;
+				break;
 
-		default:
-			word = NULL;
+			case NK_RIGHT:  /*cursor-right */
+				if (shift)  /* shift cursor-right: 54 */
+				{
+					/* Move cursor to the right by scrl places */
+					scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+					if (scrl <= 0)
+					{
+						word = NULL;
+					}
+					else
+					{
+						line = 1;
+					}
+				}
+				else if (ctrl)  /* control cursor-right */
+				{
+	#if 0
+					/* move cursor one word to the right */
+				  WORD     start, end;
+					start = input->TextArray[form->TextCursrY] + form->TextCursrX;  /* find cursor position */
+					end   = input->TextArray[form->TextCursrY+1] - 1;  /* find end of row */
+					scrl = 0;
+					/* Find the next space to the right of the cursor */
+					while ((input)->TextArray**[start] != ' '
+					       && start < end)
+					{
+						start++;
+						scrl++;
+					}
+					if (scrl <= 0)
+					{
+						word = NULL;
+					}
+					else
+					{
+						line = 1;
+					}
+	#endif
+				}
+				else  /* cursor-right */
+				{
+					if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+					{
+						scrl = +1;
+						line = 1;
+					}
+					else if (form->TextCursrY < input->TextRows -1)
+					{
+						scrl = -form->TextCursrX;
+						lift = +1;
+						line = -2;
+					}
+					else
+					{
+						word = NULL;
+					}
+				}
+				break;
 
-	}  /* switch */
+			case NK_ESC:  /* Escape:  27 */
+			{
+				WCHAR  * last = text[input->TextRows];
+				if (!input->readonly && text[0] < last -1 && edit_zero (input))
+				{
+					form->TextCursrX = 0;
+					form->TextCursrY = 0;
+					form->TextShiftX = 0;
+					form->TextShiftY = 0;
+				}
+				else
+				{
+					word = NULL;
+				}
+			}	break;
+
+			case NK_RET:  /* Enter/Return: 13 */
+			case (NK_ENTER|NKF_NUM):
+				if (input->Type == IT_TAREA)
+				{
+					if (edit_crlf (input, form->TextCursrX, form->TextCursrY))
+					{
+						scrl = -form->TextCursrX;
+						lift = +1;
+					}
+					else
+					{
+						word = NULL;
+					}
+				}
+				else if (edit_rowln (input, form->TextCursrY) && (key & 0xFF00))
+				{
+					form_activate (form);
+					form->TextActive = NULL;
+				}
+				else
+				{
+					word = NULL;
+				}
+				break;
+
+			case NK_CLRHOME:  /* Clr/Home: 55 */
+				if (shift)  /* Clr-Home shifted */
+				{
+					scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+					lift =                    input->TextRows -1  - form->TextCursrY;
+					if (!scrl && !lift)
+					{
+						word = NULL;
+					}
+				}
+				else  /* Clr-Home unshifted */
+				{
+					if (form->TextCursrX || form->TextCursrY)
+					{
+						scrl = -form->TextCursrX;
+						lift = -form->TextCursrY;
+					}
+					else
+					{
+						word = NULL;
+					}
+				}
+				break;
+
+			case NK_M_END:  /* Mac END key */
+				scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+				lift =                    input->TextRows -1  - form->TextCursrY;
+				if (!scrl && !lift)
+				{
+					word = NULL;
+				}
+				break;
+
+			case NK_TAB:  /* Tab: 9 */
+				if (ctrl)  /* Tab control */
+				{
+					form->TextActive = NULL;
+					*next            = NULL;
+				}
+				else if (shift)
+				{
+					INPUT srch = form->InputList;
+					INPUT last = NULL;
+
+					if (srch)
+					{
+						while (1)
+						{
+							while ((srch->disabled) && (srch = srch->Next) != NULL) ;
+
+							if (srch->Next == input)
+							{
+								if (srch->Type == IT_TEXT)
+								{
+									last = srch;
+								}
+								break;
+							}
+							else
+							{
+								if (srch->Type == IT_TEXT)
+								{
+									last = srch;
+								}
+								srch = srch->Next;
+							}
+						}
+					}
+
+					if (!last)
+					{
+						srch = input->Next;
+
+						while ((srch = srch->Next) != NULL)
+						{
+							if (!srch->disabled && srch->Type == IT_TEXT)
+							{
+								last = srch;
+							}
+						}
+					}
+
+					/* on google it would move out of the form */
+					if (!last) last = input;
+
+					*next = last;
+				}
+				else
+				{
+					INPUT srch = input->Next;
+					if (srch)
+					{
+						while ((srch->disabled || srch->Type < IT_TEXT)
+									 && (srch = srch->Next) != NULL);
+					}
+					if (!srch)
+					{
+						srch = form->InputList;
+						while ((srch->disabled || srch->Type < IT_TEXT)
+									 && (srch = srch->Next) != NULL);
+					}
+
+					*next = srch;
+				}
+				break;
+
+			case NK_BS:  /* Backspace: 8 */
+				if (input->readonly)
+				{
+					word = NULL;
+				}
+				else if (form->TextCursrX)
+				{
+					if (shift)
+					{
+						int col = form->TextCursrX;
+						while (col > 0)
+						{
+							edit_delc (input, col-1, form->TextCursrY);
+							scrl = scrl - 1;
+							line = 1;
+							col--;
+						}
+					}
+					else
+					{
+						edit_delc (input, form->TextCursrX -1, form->TextCursrY);
+						scrl = -1;
+						line = 1;
+					}
+				}
+				else if (form->TextCursrY)
+				{
+					WORD col = edit_rowln (input, form->TextCursrY -1);
+					edit_delc (input, col, form->TextCursrY -1);
+					scrl = col;
+					lift = -1;
+				}
+				else
+				{
+					word = NULL;
+				}
+				break;
+
+			case NK_DEL:  /* Delete: 127 */
+				if (input->readonly)
+				{
+					word = NULL;
+				}
+				else
+				{
+					if (shift)  /* Shift Delete */
+					{
+						if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+						{
+							while (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+							{
+								edit_delc (input, form->TextCursrX, form->TextCursrY);
+								line = 1;
+							}
+						}
+						else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
+						{
+							word = NULL;
+						}
+					}
+					else
+					{
+						if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+						{
+							edit_delc (input, form->TextCursrX, form->TextCursrY);
+							line = 1;
+						}
+						else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
+						{
+							word = NULL;
+						}
+					}
+				}
+				break;
+
+			default:
+				word = NULL;
+
+		}  /* switch */
 	}  /* if  */
 
 
@@ -2099,7 +2146,7 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 				line = 0;
 			}
 			else if (form->TextShiftY &&
-			           input->TextRows < form->TextShiftY + input->VisibleY)
+								 input->TextRows < form->TextShiftY + input->VisibleY)
 			{
 				form->TextShiftY = input->TextRows - (WORD)input->VisibleY;
 				line = 0;
