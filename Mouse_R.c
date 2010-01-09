@@ -50,6 +50,8 @@ static DOMBOX * elem_box (UWORD elem, void * hash, WORDITEM * word)
 }
 
 /*----------------------------------------------------------------------------*/
+/* Mouse click in bookmark window                                             */
+
 static BOOL
 bmrk_clicked (PXY mouse, WORD button, WORD clicks,
               HwWIND wind, FRAME frame,UWORD elem, void * hash)
@@ -306,7 +308,7 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		update_menu (frame->Encoding, (frame->MimeType == MIME_TXT_PLAIN));
 	}
 #endif
-	if (wind->Base.Ident == WIDENT_BMRK
+	if (wind->Base.Ident == WIDENT_BMRK          /* bookmark window  */
 	    && bmrk_clicked (mouse, button, clicks, wind, frame, elem, hash)	) {
 		return;
 	}
