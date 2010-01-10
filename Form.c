@@ -1694,7 +1694,7 @@ input_activate (INPUT input, WORD slct)
  **
  */
 WORDITEM
-input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
+input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 {
 	FORM     form = input->Form;
 	WORDITEM word = input->Word;
@@ -1707,16 +1707,16 @@ input_keybrd (INPUT input, WORD key, UWORD state, GRECT * rect, INPUT * next)
 	BOOL     shift, ctrl, alt;
 
 	/* Convert the GEM key code to the "standard" */
-	nkey = gem_to_norm ((short)state, (short)key);
+	nkey = gem_to_norm ((short)kstate, (short)key);
 
 	/* Remove the unwanted flags */
 	nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
 
 	ascii_code =  nkey & 0x00FF;
 
-	shift = (state & (K_RSHIFT|K_LSHIFT)) != 0;
-	ctrl  = (state & K_CTRL) != 0;
-	alt   = (state & K_ALT) != 0;
+	shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
+	ctrl  = (kstate & K_CTRL) != 0;
+	alt   = (kstate & K_ALT) != 0;
 
 	if (input != (*next = form->TextActive))
 	{
