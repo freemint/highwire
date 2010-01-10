@@ -2585,121 +2585,31 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		GRECT      clip = { 0,0,0, };
 		WORD       scrl = 0;
 		BOOL       chng = FALSE;
-		
+
+		WORD       ascii_code;
 		UWORD      nkey;
 		BOOL       shift, ctrl, alt;
 
 		/* Convert the GEM key code to the "standard" */
 		nkey = gem_to_norm ((short)kstate, (short)key);
 
+		/* Remove the unwanted flags */
+		nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
+
+		ascii_code =  nkey & 0x00FF;
+
 		shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
 		ctrl  = (kstate & K_CTRL) != 0;
 		alt   = (kstate & K_ALT) != 0;
 
-		/* Remove the unwanted flags */
-		nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
-
-		if (ctrl)
-		switch (scan)
+		if (!(nkey & NKF_FUNC))
 		{
-			
-			case 0x2E: /* control C -- copy to clipboard */
-				if (edit->Length)
-				{
-					FILE * file = open_scrap (FALSE);
-					if (file)
-					{
-						fwrite (edit->Text, 1, edit->Length, file);
-						fclose (file);
-					}
-				}
-				break;
-			
-			case 0x2F: /* control V -- paste from clipboard */
-				if (edit->Length < sizeof(edit->Text) -1)
-				{
-					char * p = read_scrap ();
-					long filelength = strlen (p);
-
-					if (filelength > 0)
-					{
-						size_t len = sizeof(edit->Text) - edit->Length -1;
-						char * buf;
-						len = min (len, filelength);
-
-						buf = malloc (len);
-						strncpy (buf, p, len);
-						buf[len] = '\0';
-						free (p);
-
-						rtrim (buf, ' ');
-						ltrim (buf, ' ');
-						len = strlen(buf);
-
-						/* [GS] Start patch */
-						/* remove control characters */
-						if (len > 0)
-						{
-							char ZStr[MAX_CLIPBOARD_LENGTH], * ptr = buf;
-							WORD i;
-							i = 0;
-								while ( len-- > 0 )
-								{
-									if ( *ptr >= ' ' )
-										ZStr[i++]=*ptr;
-									++ptr;
-								}
-							len = i;
-							memcpy (buf, ZStr, len);
-						}
-						/* End patch */
-						if (len > 0) {
-							char * ptr = edit->Text + edit->Cursor;
-							char * src = edit->Text + edit->Length;
-							char * dst = src + len;
-							do {
-								*(dst--) = *(src--);
-							} while (src >= ptr);
-							memcpy (ptr, buf, len);
-							edit->Length += len;
-							scrl = +len;
-							chng = TRUE;
-						}
-					}
-				}
-				break;
-			
-			case 0x73: /* control left */
-				if (edit->Cursor) {
-					short crs = edit->Cursor;
-					while (--crs && isalnum (edit->Text[crs]));
-					scrl = crs - edit->Cursor;
-				}
-				break;
-			
-			case 0x74: /* control right */
-				if (edit->Cursor < edit->Length) {
-					short crs = edit->Cursor;
-					while (++crs < edit->Length && isalnum (edit->Text[crs]));
-					scrl = crs - edit->Cursor;
-				}
-				break;
-			
-			default:
-				edit->Cursor = 0;
-				edit->Shift  = 0;
-				chng_toolbar (This, 0, 0, -1);
-				more = TRUE;
-			
-		}
-/***		else if (ascii > ' ' && ascii < 127 &&
-		       (ascii < '0' || ascii > '9' || !(kstate & (K_RSHIFT|K_LSHIFT))))***/
-		else if (!(nkey & NKF_FUNC))
-		{
-			if (edit->Length < sizeof(edit->Text) -1) {
+			if (edit->Length < sizeof(edit->Text) -1)
+			{
 				char * end = edit->Text + edit->Length;
 				char * dst = edit->Text + edit->Cursor;
-				do {
+				do
+				{
 					*(end +1) = *(end);
 				} while (--end >= dst);
 				*dst = ascii;
@@ -2709,45 +2619,184 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			}
 		
 		}
-		else if (ascii)
-		switch (ascii)
+		else
 		{
-			case NK_BS:  /* Backspace: 8 */
-				if (!edit->Cursor) {
-					break;
-				
-				} else if (kstate & (K_RSHIFT|K_LSHIFT)) {
-					char * dst = edit->Text;
-					char * src = edit->Text + edit->Cursor;
-					while ((*(dst++) = *(src++)) != '\0');
-					edit->Length -= edit->Cursor;
-					edit->Cursor = edit->Shift = 0;
-					clip.g_w = edit->Visible *8 +1;
-					break;
-				
-				} else if (--edit->Cursor < edit->Shift) {
-					edit->Shift = edit->Cursor;
-				}
-			case NK_DEL:  /* Delete: 127 */
-				if (edit->Cursor < edit->Length) {
-					short  crs = edit->Cursor - edit->Shift;
-					char * dst = edit->Text + edit->Cursor, * src = dst;
-					if (kstate & (K_RSHIFT|K_LSHIFT)) {
-						*dst = '\0';
-						edit->Length = edit->Cursor;
-					} else {
-						while ((*(dst++) = *(++src)) != '\0');
-						edit->Length--;
+			nkey &= ~NKF_FUNC;
+			printf ("keycode = %d\n", nkey);
+
+			switch (nkey)
+			{
+				case NK_LEFT:  /* cursor-left */
+					if (ctrl)      /* 0x73: control cursor-left */
+					{
+						if (edit->Cursor)
+						{
+							short crs = edit->Cursor;
+							while (--crs && isalnum (edit->Text[crs]));
+							scrl = crs - edit->Cursor;
+						}
 					}
-					if (edit->Shift && edit->Length - edit->Shift < edit->Visible) {
-						edit->Shift = max (edit->Length - edit->Visible, 0);
-						clip.g_w = (edit->Visible +1) *8 +2;
-					} else {
-						clip.g_x = crs *8;
-						clip.g_w = (edit->Visible - crs) *8 +2;
+					else if (shift)  /* 52: shift+left */
+					{
+						scrl = edit->Shift - edit->Cursor;
 					}
-				}
-				break;
+					else  /*0x4B: cursor-left */
+					{
+						if (edit->Cursor)
+						{
+							scrl = -1;
+						}
+					}
+					break;
+
+				case NK_RIGHT: /* 0x4D: cursor-right */
+					if (ctrl)    /* 0x74: control cursor-right */
+					{
+						if (edit->Cursor < edit->Length)
+						{
+							short crs = edit->Cursor;
+							while (++crs < edit->Length && isalnum (edit->Text[crs]));
+							scrl = crs - edit->Cursor;
+						}
+					}
+					else if (shift)  /* 54: shift+right */
+					{
+						if (edit->Length > edit->Visible)
+						{
+							scrl = edit->Shift + edit->Visible - edit->Cursor;
+						}
+						else
+							scrl = edit->Length - edit->Cursor;
+					}
+					else
+					{
+						if (edit->Cursor < edit->Length)
+						{
+							scrl = +1;
+						}
+					}
+					break;
+
+				case 67: /* 0x2E: control C -- copy to clipboard */
+					if (ctrl)
+					{
+						if (edit->Length)
+						{
+							FILE * file = open_scrap (FALSE);
+							if (file)
+							{
+								fwrite (edit->Text, 1, edit->Length, file);
+								fclose (file);
+							}
+						}
+					}
+					break;
+			
+				case 86:  /* 0x2F: control V -- paste from clipboard */
+					if (ctrl)
+					{
+						if (edit->Length < sizeof(edit->Text) -1)
+						{
+							char * p = read_scrap ();
+							long filelength = strlen (p);
+
+							if (filelength > 0)
+							{
+								size_t len = sizeof(edit->Text) - edit->Length -1;
+								char * buf;
+								len = min (len, filelength);
+
+								buf = malloc (len);
+								strncpy (buf, p, len);
+								buf[len] = '\0';
+								free (p);
+
+								rtrim (buf, ' ');
+								ltrim (buf, ' ');
+								len = strlen(buf);
+
+								/* [GS] Start patch */
+								/* remove control characters */
+								if (len > 0)
+								{
+									char ZStr[MAX_CLIPBOARD_LENGTH], * ptr = buf;
+									WORD i;
+									i = 0;
+										while ( len-- > 0 )
+										{
+											if ( *ptr >= ' ' )
+												ZStr[i++]=*ptr;
+											++ptr;
+										}
+									len = i;
+									memcpy (buf, ZStr, len);
+								}
+								/* End patch */
+								if (len > 0) {
+									char * ptr = edit->Text + edit->Cursor;
+									char * src = edit->Text + edit->Length;
+									char * dst = src + len;
+									do {
+										*(dst--) = *(src--);
+									} while (src >= ptr);
+									memcpy (ptr, buf, len);
+									edit->Length += len;
+									scrl = +len;
+									chng = TRUE;
+								}
+							}
+						}
+					}
+					break;
+
+				case NK_BS:  /* Backspace: 8 */
+					if (!edit->Cursor)
+					{
+						break;
+					}
+					else if (shift)
+					{
+						char * dst = edit->Text;
+						char * src = edit->Text + edit->Cursor;
+						while ((*(dst++) = *(src++)) != '\0');
+						edit->Length -= edit->Cursor;
+						edit->Cursor = edit->Shift = 0;
+						clip.g_w = edit->Visible *8 +1;
+						break;
+					}
+					else if (--edit->Cursor < edit->Shift)
+					{
+						edit->Shift = edit->Cursor;
+					}
+					/*no break here */
+
+				case NK_DEL:  /* Delete: 127 */
+					if (edit->Cursor < edit->Length)
+					{
+						short  crs = edit->Cursor - edit->Shift;
+						char * dst = edit->Text + edit->Cursor, * src = dst;
+						if (shift)
+						{
+							*dst = '\0';
+							edit->Length = edit->Cursor;
+						}
+						else
+						{
+							while ((*(dst++) = *(++src)) != '\0');
+							edit->Length--;
+						}
+						if (edit->Shift && edit->Length - edit->Shift < edit->Visible)
+						{
+							edit->Shift = max (edit->Length - edit->Visible, 0);
+							clip.g_w = (edit->Visible +1) *8 +2;
+						}
+						else
+						{
+							clip.g_x = crs *8;
+							clip.g_w = (edit->Visible - crs) *8 +2;
+						}
+					}
+					break;
 			
 			case NK_ESC:  /* Escape:  27 */
 				if (edit->Length) {
@@ -2792,49 +2841,32 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 					free_location (&loc);
 					break;
 				}
+
 			case NK_TAB:  /* Tab: 9 */
 				edit->Cursor = 0;
 				edit->Shift  = 0;
 				chng_toolbar (This, 0, 0, -1);
 				break;
 			
-			case 52: /* shift+left */
-				scrl = edit->Shift - edit->Cursor;
-				break;
-			
-			case 54: /* shift+right */
-				if (edit->Length > edit->Visible) {
-					scrl = edit->Shift + edit->Visible - edit->Cursor;
+			case NK_CLRHOME:  /* 0x47: Clr/Home */
+				if (shift)      /* shift+home */
+				{
+					scrl = edit->Length - edit->Cursor;
 					break;
 				}
-			case 55: /* shift+home */
+				else
+				{
+					scrl = -edit->Cursor;
+					break;
+				}
+
+			case NK_M_END:  /* 0x4F: end */
 				scrl = edit->Length - edit->Cursor;
 				break;
-		
-		} else switch (scan) {
-			
-			case 0x4B: /* left */
-				if (edit->Cursor) {
-					scrl = -1;
-				}
-				break;
-			
-			case 0x4D: /*right */
-				if (edit->Cursor < edit->Length) {
-					scrl = +1;
-				}
-				break;
-			
-			case 0x47: /* home */
-				scrl = -edit->Cursor;
-				break;
-			
-			case 0x4F: /* end */
-				scrl = edit->Length - edit->Cursor;
-				break;
-			
-			case 0x52: /* insert */
-				if (This->Active) {
+
+			case NK_INS:  /* 0x52: insert */
+				if (This->Active)
+				{
 					FRAME frame = containr_Frame ((CONTAINR)This->Active);
 					if (frame) {
 						edit->Length = location_FullName (frame->Location,
@@ -2851,12 +2883,23 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 					}
 				}
 				break;
-			
-			case 97: /* undo */
+
+			case NK_UNDO:  /* 97: undo */
 				edit->Cursor = 0;
 				edit->Shift  = 0;
 				chng_toolbar (This, 0, 0, -1);
 				break;
+
+			default:
+				if (ctrl)
+				{
+					edit->Cursor = 0;
+					edit->Shift  = 0;
+					chng_toolbar (This, 0, 0, -1);
+					more = TRUE;
+				}
+
+			}  /* switch */
 		}
 		
 		if (scrl > 0) {
