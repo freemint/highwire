@@ -1,5 +1,5 @@
 /*
- ** 
+ **
  **
  ** Changes
  ** Author         Date           Desription
@@ -31,7 +31,7 @@
 #include "Logging.h"
 #include "dragdrop.h"
 #include "bookmark.h"
-#include "stringtools.h"
+#include "strtools.h"
 
 
 #define WINDOW_t HwWIND
@@ -211,7 +211,7 @@ static UWORD
 wgeo_calc (GRECT * rect, GRECT * curr)
 {
 	UWORD mask = 0x0000u;
-	
+
 	if (rect->g_w > 0 && rect->g_h > 0) {
 		WORD w = ((long)rect->g_w * desk_area.g_w) / 0x7FFFu;
 		WORD h = ((long)rect->g_h * desk_area.g_h) / 0x7FFFu;
@@ -244,7 +244,7 @@ wgeo_calc (GRECT * rect, GRECT * curr)
 		}
 	}
 	*rect = *curr;
-	
+
 	return mask;
 }
 
@@ -276,7 +276,7 @@ void
 hwWind_setup (HWWIND_SET set, long arg)
 {
 	switch (set) {
-		
+
 		case HWWS_INFOBAR:
 			if (arg & 1) wind_kind |=  INFO;
 			else         wind_kind &= ~INFO;
@@ -288,13 +288,13 @@ hwWind_setup (HWWIND_SET set, long arg)
 				else         wind_kind &= ~LFARROW;
 			}
 			break;
-		
+
 		case HWWS_TOOLBAR:
 			if      (arg > 0) tbar_set = +21;
 			else if (arg < 0) tbar_set = -21;
 			else              tbar_set = 0;
 			break;
-		
+
 		case HWWS_GEOMETRY:
 			wgeo_read ((char*)arg, &brws_curr);
 			break;
@@ -310,11 +310,11 @@ void
 hwWind_store (HWWIND_SET set)
 {
 	switch (set) {
-		
+
 		case HWWS_INFOBAR:
 		case HWWS_TOOLBAR:
 			break;   /* not in use yet */
-		
+
 		case HWWS_GEOMETRY: {
 			char buff[30];
 			if (wgeo_write (&brws_curr, brws_gmsk, buff)) {
@@ -361,7 +361,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 			curr.g_h = (desk_area.g_h *3) /4;
 		}
 		brws_gmsk = wgeo_calc (&brws_curr, &curr);
-		
+
 		if (!ignore_colours) {
 #if 0 /* this doesn't work with MagiC yet */
 			u   = W_HELEV;
@@ -378,7 +378,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 			info_bgnd = G_LWHITE;
 #endif
 		}
-		
+
 	} else if (ident == WIDENT_BMRK) {
 		static BOOL __once = TRUE;
 		if (__once) {
@@ -402,7 +402,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	   }
 		curr = brws_curr;
 	}
-	
+
 	window_ctor (This, wind_kind, ident,
 	             (name && *name ? name : url), NULL, FALSE);
 	This->Base.destruct  = vTab_destruct;
@@ -416,7 +416,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	This->Base.moved     = vTab_moved;
 	This->Base.sized     = vTab_sized;
 	This->Base.iconified = vTab_iconified;
-	
+
 	This->shaded   = FALSE;
 	This->isBusy   = 0;
 	This->isDone   = 0;
@@ -426,14 +426,14 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	This->Active   = NULL;
 	This->Input    = NULL;
 	containr_register (This->Pane, wnd_hdlr, (long)This);
-	
+
 	This->HistUsed = 0;
 	This->HistMenu = 0;
 	for (i = 0; i <= HISTORY_LAST; This->History[i++] = NULL);
-	
+
 	This->Stat[0] = '\0';
 	This->Info[0] = '\0';
-	
+
 	if (wind_kind & (HSLIDE|LFARROW|SIZER)) {
 		if (wind_kind & HSLIDE) {
 			wind_set (This->Base.Handle, WF_HSLIDE,   0, 0,0,0);
@@ -460,7 +460,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	edit->Cursor  = 0;
 
 	window_setBevent (&This->Base);
-	
+
 	if (info_bgnd & 0x0080) {
 		wind_set(This->Base.Handle, WF_COLOR, W_HBAR,   info_bgnd, info_bgnd, -1);
 		wind_set(This->Base.Handle, WF_COLOR, W_HSLIDE, info_bgnd, info_bgnd, -1);
@@ -472,7 +472,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	if (url && *url) {
 		start_page_load (This->Pane, url, NULL, TRUE, NULL);
 	}
-	
+
 #ifdef GEM_MENU
 	menu_history (NULL,0,0);
 #endif
@@ -480,7 +480,7 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	if (cfg_AVWindow) {
 		send_avwinopen(This->Base.Handle);
 	}
-	
+
 	return This;
 }
 
@@ -489,11 +489,11 @@ static WINDOW
 vTab_destruct (HwWIND This)
 {
 	short i;
-	
+
 	if (hwWind_Focus == This) {
 		hwWind_Focus = NULL;
 	}
-	
+
 #ifdef GEM_MENU
 	if (This == hwWind_Top) {
 		HwWIND next = hwWind_Next (This);
@@ -505,7 +505,7 @@ vTab_destruct (HwWIND This)
 	}
 #endif
 	for (i = 0; i < This->HistUsed; history_destroy (&This->History[i++]));
-	
+
 	free_location   (&This->Location);
 	delete_containr ((CONTAINR*)&This->Pane);
 
@@ -556,15 +556,15 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 {
 	GRECT area, clip, rect;
 	short x_btn, dmy, fnt, pnt;
-	
+
 	if (This->Base.isIcon || This->shaded) return;
-	
+
 	area = This->Work;
 	area.g_y += area.g_h - This->IbarH +1;
 	area.g_h =             This->IbarH -1;
 	clip  = area;
 	x_btn = area.g_x + area.g_w - This->IbarH;
-	
+
 	if (p_clip) {
 		clip.g_y--;
 		clip.g_h++;
@@ -572,7 +572,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			return;
 		}
 		rect = *p_clip;
-	
+
 	} else {
 		clip.g_w -= This->IbarH +1;
 		if (!rc_intersect (&desk_area, &clip)) {
@@ -581,10 +581,10 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 		wind_update (BEG_UPDATE);
 		wind_get_grect (This->Base.Handle, WF_FIRSTXYWH, &rect);
 	}
-	
+
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_color    (vdi_handle, info_bgnd & 0x000F);
-	
+
 	fnt = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
 	if ((fnt = vst_font (vdi_handle, fnt)) == 1) {
 		pnt = (inc_xy < 16 ? 11 : 12);
@@ -596,7 +596,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 	vst_color     (vdi_handle, info_fgnd);
 	vst_map_mode  (vdi_handle, MAP_UNICODE);
 	vst_effects   (vdi_handle, TXT_NORMAL);
-	
+
 	v_hide_c (vdi_handle);
 	while (rect.g_w > 0 && rect.g_h > 0) {
 		if (rc_intersect (&clip, &rect)) {
@@ -604,7 +604,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			p[1].p_x = (p[0].p_x = rect.g_x) + rect.g_w -1;
 			p[1].p_y = (p[0].p_y = rect.g_y) + rect.g_h -1;
 			v_bar (vdi_handle, (short*)p);
-			
+
 			if (This->isBusy) {
 				vs_clip_pxy (vdi_handle, p);
 				draw_busybar (This, &area, &rect);
@@ -655,9 +655,9 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 		wind_get_grect (This->Base.Handle, WF_NEXTXYWH, &rect);
 	}
 	v_show_c (vdi_handle, 1);
-	
+
 	vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
-	
+
 	if (!p_clip) {
 		wind_update (END_UPDATE);
 	}
@@ -693,12 +693,12 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 		return;
 	}
 	vs_clip_pxy (vdi_handle, clip);
-	
+
 	vswr_mode    (vdi_handle, MD_REPLACE);
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_style    (vdi_handle, 4);
 	vsf_color    (vdi_handle, info_bgnd & 0x000F);
-	
+
 	dmy = (inc_xy < 16 ? 1 : fonts[header_font][0][0]);
 	if (vst_font (vdi_handle, dmy) == 1) {
 		vst_point (vdi_handle, (inc_xy < 16 ? 11 : 12), &dmy, &dmy, &dmy, &dmy);
@@ -723,10 +723,10 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 		clip[1].p_y -= clip[0].p_y -1;
 		draw_busybar (This, &area, (GRECT*)clip);
 	}
-	
+
 	v_ftext  (vdi_handle, p[0].p_x +1, p[1].p_y -1, info);
 	v_show_c (vdi_handle, 1);
-	
+
 	vst_alignment (vdi_handle, TA_LEFT, TA_BASE, &dmy, &dmy);
 
 	vs_clip_off (vdi_handle);
@@ -747,7 +747,7 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 		} else {
 			info = (This->Info[0] ? This->Info : NULL);
 		}
-	
+
 	} else {
 		if (info && *info) {
 			strncpy (This->Info, info, sizeof(This->Info));
@@ -760,7 +760,7 @@ hwWind_setInfo (HwWIND This, const char * info, BOOL statNinfo)
 			info = (This->Stat[0] ? This->Stat : NULL);
 		}
 	}
-	
+
 	if (info && !(This->Base.isScrn && This->Base.isFull)) {
 		if (wind_kind & INFO) {
 			wind_set_str (This->Base.Handle, WF_INFO, info);
@@ -780,13 +780,13 @@ vTab_raised (HwWIND This, BOOL topNbot)
 {
 	HwWIND new_top = hwWind_Top;
 	WORD mx, my, u;
-	
+
 	if (topNbot && !This->Base.isScrn && (wind_kind & (LFARROW|HSLIDE))) {
 		hwWind_setHSInfo (This, (This->Info[0] ? This->Info : This->Stat));
 	}
 	graf_mkstate (&mx, &my, &u,&u);
 	check_mouse_position (mx, my);
-	
+
 #ifdef GEM_MENU
 	if (new_top) {
 		menu_history (new_top->History, new_top->HistUsed, new_top->HistMenu);
@@ -818,11 +818,11 @@ vTab_sized (HwWIND This)
 {
 	TBAREDIT * edit = TbarEdit (This);
 	GRECT      work;
-	
+
 	if (This->Base.isScrn) {
 		if (This->Base.isFull) { /* set to mode */
 			This->IbarH = 0;
-		
+
 		} else {                 /* back to normal mode */
 			char * info = (This->Info[0] ? This->Info : This->Stat);
 			if (wind_kind & INFO) {
@@ -836,7 +836,7 @@ vTab_sized (HwWIND This)
 			wind_set_str (This->Base.Handle, WF_NAME, This->Base.Name);
 			window_setBevent (&This->Base);
 		}
-		
+
 	} else if (!This->Base.isFull) {
 		BOOL mask = (This->Work.g_w > 0 && This->Work.g_h > 0 ? GEO_USR_WH : 0);
 		if (This->Base.Ident == WIDENT_BRWS) {
@@ -854,7 +854,7 @@ vTab_sized (HwWIND This)
 	work.g_y += This->TbarH;
 	work.g_h -= This->TbarH + This->IbarH;
 	containr_calculate (This->Pane, &work);
-	
+
 	work.g_w -= This->TbarElem[TBAR_EDIT].Offset +6
 	          + This->TbarElem[TBAR_HIST].Width;
 	if ((edit->Visible = work.g_w /8) < 7) {
@@ -870,7 +870,7 @@ vTab_sized (HwWIND This)
 	} else if (edit->Shift < edit->Cursor - edit->Visible) {
 		edit->Shift = edit->Cursor - edit->Visible;
 	}
-	
+
 	return TRUE;
 }
 
@@ -879,7 +879,7 @@ static void
 vTab_iconified (HwWIND This)
 {
 	short mx, my, u;
-	
+
 	if (This->Base.isIcon) {
 		if (This->TbarActv == TBAR_EDIT) {
 			TBAREDIT * edit = TbarEdit (This);
@@ -903,7 +903,7 @@ vTab_close (HwWIND This, UWORD state)
 {
 	if (!(state & K_ALT) || This->Base.Ident != WIDENT_BRWS) {
 		return TRUE; /* to be deleted */
-	
+
 	} else if (tbar_set) {
 		GRECT work = This->Work;
 		TBAREDIT * edit = TbarEdit (This);
@@ -934,12 +934,12 @@ void
 hwWind_scroll (HwWIND This, CONTAINR cont, long dx, long dy)
 {
 	GRECT work = This->Work;
-	
+
 	if (cont->Base != This->Pane) {
 		printf ("hwWind_scroll() ERROR: container not in window!\n");
 		return;
 	}
-	
+
 	if (containr_shift (cont, &dx, &dy)
 	    && rc_intersect (&desk_area,  &work)
 	    && rc_intersect (&cont->Area, &work)) {
@@ -963,11 +963,11 @@ hist_append (HwWIND This, CONTAINR sub)
 {
 	WORD prev = This->HistMenu;
 	WORD menu = prev +1;
-	
+
 	if (!This->HistUsed) {
 		prev = -1;
 		menu = 0;
-	
+
 	} else if (menu < This->HistUsed) {
 		do {
 			history_destroy (&This->History[--This->HistUsed]);
@@ -975,7 +975,7 @@ hist_append (HwWIND This, CONTAINR sub)
 		if (prev > menu) {
 			prev = -1;
 		}
-	
+
 	} else if (menu > HISTORY_LAST) {
 		short i;
 		history_destroy (&This->History[0]);
@@ -985,7 +985,7 @@ hist_append (HwWIND This, CONTAINR sub)
 		menu = This->HistUsed = HISTORY_LAST;
 		prev--;
 	}
-	
+
 	if (sub) {
 		This->History[menu] = history_create (sub, This->Stat,
 		                                 (prev < 0 ? NULL : This->History[prev]));
@@ -998,7 +998,7 @@ hist_append (HwWIND This, CONTAINR sub)
 	This->History[menu]->Text[0] = ' ';
 	This->HistMenu = menu;
 	This->HistUsed++;
-	
+
 #ifdef GEM_MENU
 	if (This == hwWind_Top) {
 		menu_history (This->History, This->HistUsed, menu);
@@ -1013,9 +1013,9 @@ hwWind_history (HwWIND This, UWORD menu, BOOL renew)
 	if (menu < This->HistUsed) {
 		HISTENTR entr[100];
 		UWORD    num;
-		
+
 		history_update (This->Pane, This->History[This->HistMenu]);
-		
+
 		num = containr_process (This->Pane, This->History[menu],
 		                        This->History[This->HistMenu],
 		                        entr, numberof(entr));
@@ -1041,7 +1041,7 @@ hwWind_history (HwWIND This, UWORD menu, BOOL renew)
 				}
 			}
 			chng_toolbar (This, bttn_on, bttn_off, -1);
-		
+
 		} else {
 			UWORD i;
 			This->History[menu]->Text[0] = '*';
@@ -1142,7 +1142,7 @@ hwWind_byType (WORD val)
 {
 	HwWIND wind = hwWind_Top;
 	ULONG  ident;
-	
+
 	if (val == 0) {
 		ident = WIDENT_BRWS;
 	} else {
@@ -1155,7 +1155,7 @@ hwWind_byType (WORD val)
 	if (wind->Base.Ident != ident) {
 		wind = NULL;
 	}
-	
+
 	return wind;
 }
 
@@ -1166,7 +1166,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 	GRECT clip, area = This->Work;
 	area.g_h = This->TbarH;
 	clip = area;
-	
+
 	if (rc_intersect (p_clip, &clip)) {
 		PXY  p[4] = { {0,0}, {14,14}, };
 		clip.g_w += clip.g_x -1;
@@ -1182,7 +1182,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 			v_pline (vdi_handle, 2, (short*)(p +2));
 		}
 		vsf_color (vdi_handle, G_WHITE);
-		
+
 		p[3].p_y = (p[2].p_y = area.g_y +3) +15 -1;
 		if (all) {
 			MFDB scrn = { NULL, }, icon = { NULL, 15,15,1, 1, 1, 0,0,0 };
@@ -1337,7 +1337,7 @@ chng_toolbar (HwWIND This, UWORD on, UWORD off, WORD active)
 	UWORD mask = 1;
 	short lft = 0, rgt = -1;
 	short i;
-	
+
 	if (This->TbarActv != active) {
 		if (This->TbarActv >= 0) {
 			lft = rgt = This->TbarActv;
@@ -1390,7 +1390,7 @@ updt_toolbar (HwWIND This, const char * text)
 {
 	TBAREDIT * edit = TbarEdit (This);
 	size_t     len  = strlen (text);
-	
+
 	if (len >= sizeof(edit->Text)) {
 		len = sizeof(edit->Text);
 	}
@@ -1459,7 +1459,7 @@ hwWind_urlhist (HwWIND This, const char * link)
 {
 	size_t  len = strlen (link);
 	URLHIST ent = (This ? url_hist : NULL);
-	
+
 	if (ent && strcmp (ent->Link, link) != 0) {
 		URLHIST * pptr = &ent->Next;
 		while ((ent = *pptr) != NULL) {
@@ -1518,7 +1518,7 @@ vTab_drawWork (HwWIND This, const GRECT * clip)
 		draw_infobar (This, clip, info);
 	}
 	containr_redraw (This->Pane, clip);
-		
+
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1648,7 +1648,7 @@ static UWORD logo8_data[] = {
 	0x602b,0xf6a0, 0x6034,0x0140, 0xe02c,0x00a0, 0x2234,0x2040,
 	0xb02c,0x00e1, 0x7214,0x2041, 0x302c,0x01b2, 0x1814,0x0150,
 	0x1c28,0x01b4, 0x0ed5,0x0352, 0x06ab,0x06ae, 0x0100,0x3000,
-	0x00d1,0xf7f8, 0x003f,0xc000, 0x0000,0x0000, 0x0000,0x0000 
+	0x00d1,0xf7f8, 0x003f,0xc000, 0x0000,0x0000, 0x0000,0x0000
 };
 MFDB logo8_icon = { logo8_data, 32,32, 2, 1, 8, 0,0,0 };
 
@@ -1667,7 +1667,7 @@ MFDB logo_mask = { mask_data, 32,32, 2, 0, 1, 0,0,0 };
 MFDB logo_icon;
 
 /*----------------------------------------------------------------------------*/
-static WORD 
+static WORD
 TC_trans (MFDB *src)
 {
 	WORD i, bit, color, mask;
@@ -1682,7 +1682,7 @@ TC_trans (MFDB *src)
 	LONG temp_size, size;
 
 	size = (LONG)(src->fd_wdwidth * src->fd_h);
-	
+
 	/* memory for the device raster */
 	if( (new_addr = (short *) malloc( (size << 1) * planes )) == NULL )
 		return( FALSE );
@@ -1728,7 +1728,7 @@ TC_trans (MFDB *src)
 	{
 		memset(temp_addr,0,temp_size);
 		memset( used_colors, 0, sizeof( used_colors ) );
-	
+
 		for (x = 0; x < src->fd_wdwidth; x++)
 		{
 			/* go through all bitplanes */
@@ -1753,7 +1753,7 @@ TC_trans (MFDB *src)
 				used_colors[color] = 1;
 
 				bit_location =  (short *)(color_table + (temp.fd_wdwidth * (long)color) + x);
-	
+
 				*bit_location |= 1 << bit;
 			}
 
@@ -1778,7 +1778,7 @@ TC_trans (MFDB *src)
 	free(temp_addr);
 	src->fd_stand = 0;	/* standard format */
 	src->fd_addr  = new_addr;
-	
+
 	return( TRUE );
 }
 
@@ -1797,14 +1797,14 @@ init_icons(void)
 		case 8:
 			logo_icon = logo8_icon;
 			break;
-		default:	
+		default:
 			logo_icon = logo8_icon;
 
 			/* convert it to current bit planes */
 			TC_trans((MFDB *)&logo_icon);
 			break;
 	}
-	
+
 	if (logo_icon.fd_stand) {
 		WORD color[2] = { G_BLACK, G_WHITE };
 		PXY  p[4];
@@ -1825,7 +1825,7 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 	WORD   color[2] = { G_WHITE, G_LWHITE };
 	PXY    lu ,p[4];
 	GRECT  work;
-	
+
 	wind_get_grect (This->Base.Handle, WF_WORKXYWH, &work);
 	lu.p_x = work.g_x + (work.g_w - icon->fd_w) /2;
 	lu.p_y = work.g_y + (work.g_h - icon->fd_h) /2;
@@ -1870,30 +1870,30 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 {
 	HwWIND wind     = hwWind_byValue (arg);
 	BOOL   progress = FALSE;
-	
+
 	if (!wind) return;
-	
+
 	switch (event) {
-		
+
 		case HW_PageCleared:
 			if (wind->Active == cont) {
 				wind->Active = NULL;
 				wind->Input  = NULL;
 			}
 			break;
-		
+
 		case HW_PageUpdated:
 			if (!wind->Base.isIcon && wind->Base.Ident != WIDENT_BMRK) {
 				hwWind_redraw (wind, gen_ptr);
 			}
 			break;
-		
+
 		case HW_PageStarted: {
 			union { const void * cv; LOCATION loc; } u;
 			char buf[1024];
 			u.cv = gen_ptr;
 			location_FullName (u.loc, buf, sizeof(buf));
-			
+
 			if (!wind->loading++) {
 				if (wind->HistUsed) {
 					char * flag = wind->History[wind->HistMenu]->Text;
@@ -1920,7 +1920,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 		}
 		goto case_HW_ActivityBeg;
-		
+
 		case HW_SetTitle:
 			if (!cont->Parent) {
 				hwWind_setName (wind, gen_ptr);
@@ -1929,7 +1929,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 		case HW_SetInfo:
 			hwWind_setInfo (wind, gen_ptr, TRUE);
 			break;
-		
+
 		case HW_PageFinished: {
 			WORD bttn_on = TBAR_REDO_MASK|TBAR_OPEN_MASK
 			             | (url_hist ? TBAR_HIST_MASK :0);
@@ -1967,17 +1967,17 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 		}
 		goto case_HW_ActivityEnd;
-			
+
 		case HW_ImgBegLoad:
 			hwWind_setInfo (wind, gen_ptr, TRUE);
 			goto case_HW_ActivityBeg;
-		
+
 		case HW_ImgEndLoad:
 			if (!wind->Base.isIcon && gen_ptr) {
 				hwWind_redraw (wind, gen_ptr);
 			}
 			goto case_HW_ActivityEnd;
-		
+
 		case_HW_ActivityBeg:
 			gen_ptr = NULL;
 		case HW_ActivityBeg: {
@@ -1994,7 +1994,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 			progress = TRUE;
 		}	break;
-		
+
 		case_HW_ActivityEnd:
 			gen_ptr = NULL;
 		case HW_ActivityEnd:
@@ -2014,11 +2014,11 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 			}
 			progress = TRUE;
 			break;
-		
+
 		default:
 			errprintf ("wind_handler (%i, %p)\n", event, cont);
 	}
-	
+
 	if (progress && !wind->Base.isIcon && wind->IbarH) {
 		draw_infobar (wind, NULL, (*wind->Info ? wind->Info : wind->Stat));
 	}
@@ -2037,7 +2037,7 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 				case WA_LFLINE:
 					hwWind_undo (This, ((kstate & (K_RSHIFT|K_LSHIFT)) != 0));
 					break;
-				
+
 				case WA_UPLINE: {
 					FRAME active = hwWind_ActiveFrame (This);
 					if (active) {
@@ -2064,7 +2064,7 @@ vTab_evMessage (HwWIND This, WORD msg[], PXY mouse, UWORD kstate)
 		case 22361: /* unshaded */
 			This->shaded = FALSE;
 			break;
-		
+
 		default:
 			found = FALSE;
 	}
@@ -2081,12 +2081,12 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 	GRECT  clip;
 	WORD   whdl = wind_find (mx, my);
 	HwWIND wind = hwWind_byHandle (whdl);
-	
+
 	/* check wether the found window is of the correct type */
 	if (wind && wind->Base.drawWork != vTab_drawWork) {
 		return (NULL);
 	}
-	
+
 	if (wind && !wind->Base.isIcon) {
 		clip = wind->Work;
 	} else {
@@ -2098,7 +2098,7 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 		watch->g_y = my;
 		watch->g_w = watch->g_h = 1;
 		wind = NULL;
-	
+
 	} else {
 		wind_get_grect (whdl, WF_FIRSTXYWH, watch);
 		while (watch->g_w > 0 && watch->g_h > 0 &&
@@ -2111,11 +2111,11 @@ hwWind_mouse  (WORD mx, WORD my, GRECT * watch)
 			watch->g_y = my;
 			watch->g_w = watch->g_h = 1;
 			wind = NULL;
-		
+
 		} else if (wind) {
 			if (wind->Base.isIcon) {
 				wind = NULL;
-			
+
 			} else {
 				if (wind->TbarH) {
 					if (my >= clip.g_y + wind->TbarH) {
@@ -2150,7 +2150,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 {
 	WORD mx = mouse.p_x, my = mouse.p_y;
 	WORD ib_x = 0, ib_y = 0, tb_n = -1;
-	
+
 	if (This->TbarH && my < This->Work.g_y + This->TbarH) {
 		short x = mx - This->Work.g_x;
 		tb_n = numberof(This->TbarElem) -1;
@@ -2163,19 +2163,19 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			}
 			break;
 		} while (tb_n--);
-	
+
 	} else if (This->IbarH &&
 		       ((ib_y = This->Work.g_y + This->Work.g_h - This->IbarH) > my ||
 		        (ib_x = This->Work.g_x + This->Work.g_w - This->IbarH) > mx)) {
 		ib_y = ib_x = 0;
 	}
-	
+
 	if (!This) {
 		short dmy;
 		wind_update (BEG_MCTRL);
 		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
 		wind_update (END_MCTRL);
-	
+
 	} else if (tb_n == TBAR_EDIT) {
 		TBAREDIT * edit = TbarEdit (This);
 		WORD x = This->Work.g_x + This->TbarElem[TBAR_EDIT].Offset;
@@ -2190,7 +2190,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 
 			WORD hdl;
 			WINDOW wind;
-			
+
 			pos.g_x = x;
 			pos.g_y = This->Work.g_y;
 			pos.g_w = This->TbarElem[TBAR_EDIT].Width;
@@ -2206,7 +2206,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			if ( wind && wind->Ident == WIDENT_BMRK ) {  /* It is the bookmark window */
 			  menu_bookmark_url ( NULL, NULL);
 			} else {
-			  send_ddmsg ( mx, my, kstate, "Text", ".TXT", 
+			  send_ddmsg ( mx, my, kstate, "Text", ".TXT",
 			    					edit->Length, edit->Text );
 			}
 		} else {
@@ -2242,7 +2242,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			}
 		}
 		This = NULL;
-	
+
 	} else if (tb_n >= 0) {
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
@@ -2311,7 +2311,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			default:        chng_toolbar (This, 0, 0, -1);
 		}
 		This = NULL;
-	
+
 	} else if (ib_y) {
 		short     event = wind_update (BEG_MCTRL);
 		EVMULT_IN m_in  = { MU_BUTTON|MU_M1, 1, 0x03, 0x00, MO_LEAVE, };
@@ -2388,7 +2388,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		c[1].p_y = c[2].p_y - c[0].p_y +1;
 		window_resize (&This->Base, (GRECT*)c, FALSE);
 		This = NULL;
-	
+
 	} else if (This->TbarActv == TBAR_EDIT) {
 		TBAREDIT * edit = TbarEdit (This);
 		edit->Shift = 0;
@@ -2407,11 +2407,11 @@ open_scrap (BOOL rdNwr)
 	char path[HW_PATH_MAX] = "";
 	const char * mode = (rdNwr ? "rb" : "wb");
 	FILE * file;
-	
+
 	if (scrp_read (path) <= 0 || !path[0])
 	{
 		file = NULL;
-	
+
 	}
 	else
 	{
@@ -2479,12 +2479,12 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 
 	if (!This->TbarH && !This->Input) {
 		more = TRUE;
-	
+
 	} else if (This->Input) {
 		GRECT    clip, rect;
 		INPUT    next;
 		WORDITEM word = NULL;
-		
+
 		if ((kstate & K_CTRL) && scan == 0x2F)
 		{ /* control V -- paste from clipboard */
 			char * p = read_scrap();  /* Get the clipboard text */
@@ -2516,7 +2516,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				clip.g_h = word->word_height + word->word_tail_drop;
 			}
 			next = This->Input;
-		
+
 		} else {
 			word = input_keybrd (This->Input, key, kstate, &clip, &next);
 		}
@@ -2528,7 +2528,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			     + frame->clip.g_x - frame->h_bar.scroll;
 			y += (long)clip.g_y + word->line->OffsetY
 			     + frame->clip.g_y - frame->v_bar.scroll;
-			
+
 			if (next != This->Input) {
 				if (next) {
 					PXY pxy = { 0, 0 };
@@ -2568,7 +2568,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				}
 			}
 		}
-	
+
 	} else if (This->TbarActv != TBAR_EDIT) {
 		if (ascii == 27 && !containr_escape (This->Pane)
 		    && !This->Base.isIcon && !This->shaded) {
@@ -2579,7 +2579,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			This = NULL;
 		}
 		more = TRUE;
-	
+
 	} else {
 		TBAREDIT * edit = TbarEdit (This);
 		GRECT      clip = { 0,0,0, };
@@ -2617,7 +2617,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				scrl = +1;
 				chng = TRUE;
 			}
-		
+
 		}
 		else
 		{
@@ -2691,7 +2691,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 						}
 					}
 					break;
-			
+
 				case 86:  /* 0x2F: control V -- paste from clipboard */
 					if (ctrl)
 					{
@@ -2797,7 +2797,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 						}
 					}
 					break;
-			
+
 			case NK_ESC:  /* Escape:  27 */
 				if (edit->Length) {
 					edit->Length  = 0;
@@ -2807,7 +2807,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 					clip.g_w = This->TbarElem[TBAR_EDIT].Width -4;
 				}
 				break;
-			
+
 			case NK_RET:  /* Enter/Return: 13 */
 			case (NK_ENTER|NKF_NUM):
 				if (edit->Length) {
@@ -2847,7 +2847,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				edit->Shift  = 0;
 				chng_toolbar (This, 0, 0, -1);
 				break;
-			
+
 			case NK_CLRHOME:  /* 0x47: Clr/Home */
 				if (shift)      /* shift+home */
 				{
@@ -2901,7 +2901,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 
 			}  /* switch */
 		}
-		
+
 		if (scrl > 0) {
 			short old_crs = edit->Cursor - edit->Shift;
 			edit->Cursor += scrl;
@@ -2930,7 +2930,7 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			draw_toolbar (This, &clip, FALSE);
 		}
 	}
-	
+
 	if (more) {
 		key_pressed (scan, ascii, kstate);
 	}
@@ -2942,7 +2942,7 @@ FRAME
 hwWind_setActive (HwWIND This, CONTAINR cont, INPUT input)
 {
 	FRAME active = NULL;
-	
+
 	if (This) {
 		if (cont &&  This->Pane && cont->Base != This->Pane) {
 			printf ("hwWind_setActive() ERROR: container not in window!\n");

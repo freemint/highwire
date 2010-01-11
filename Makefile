@@ -6,7 +6,7 @@ TARGET = highwire.app
 # compiler settings
 CC = gcc -g #-DDEBUG
 AS = $(CC) -c
-LD = $(CC) 
+LD = $(CC)
 CP = cp
 RM = rm -f
 
@@ -31,7 +31,7 @@ INCLUDE = -I/usr/GEM/include
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
-LDFLAGS = 
+LDFLAGS =
 LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm #-lsocket
 
 OBJDIR = obj$(CPU:68%=.%)
@@ -100,12 +100,12 @@ CFILES = \
 	Mouse_R.c \
 	AEI.c \
 	HighWire.c \
-	stringtools.c \
+	strtools.c \
 #	mem-diag.c
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 
-SFILES = 
+SFILES =
 
 OBJS = $(SFILES:%.s=$(OBJDIR)/%.o) $(CFILES:%.c=$(OBJDIR)/%.o)
 OBJS_MAGIC := $(shell mkdir ./$(OBJDIR) > /dev/null 2>&1 || :)
