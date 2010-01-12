@@ -184,7 +184,7 @@ OFFSET * frame_anchor    (FRAME, const char * name);
 
 /* in keyinput.c */
 
-void key_pressed (WORD scan, WORD ascii, UWORD state);
+void key_pressed (WORD scan, WORD ascii, UWORD kstate);
 
 /* in Loader.c */
 
@@ -272,7 +272,7 @@ BOOL  Receive_AV       (short msg[8]);
 BOOL  Send_AV          (short message, const char *data1, const char *data2);
 
 void send_avwinopen  (short handle);
-void send_avwinclose (short handle);  
+void send_avwinclose (short handle);
 
 /* in olga.c */
 

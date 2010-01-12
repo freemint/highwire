@@ -4,11 +4,17 @@
  * routines.  ie. Input to forms, URL address etc
  *
  * baldrick July 10, 2001
+ *============================================================================
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        11-Jan-2010    key_pressed: Utilise NKCC from cflib to handle the various control keys in text fields.
+ **
  */
 #include <ctype.h>
 #include <stdlib.h>
 
 #include <gem.h>
+#include <cflib.h>
 
 #include "global.h"
 #include "Loader.h"
@@ -59,15 +65,25 @@ frame_next (FRAME frame)
 	return frame;
 }
 
-/*============================================================================*/
+/*============================================================================
+ ** Changes
+ ** Author         Date           Desription
+ ** P Slegg        11-Jan-2010    Utilise NKCC from cflib to handle the various control keys in text fields.
+ **
+ */
 void
-key_pressed (WORD scan, WORD ascii, UWORD state)
+key_pressed (WORD scan, WORD ascii, UWORD kstate)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
 	long  sx = 0, sy = 0;
-	
+	BOOL     shift, ctrl, alt;
+
+	shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
+	ctrl  = (kstate & K_CTRL) != 0;
+	alt   = (kstate & K_ALT) != 0;
+
 	switch (scan) {
-	
+
 	case 0x0F:  /* Tab: change active frame */
 		if (active && (active = frame_next (active)) != NULL) {
 			hwWind_setActive (hwWind_Top, active->Container, NULL);
@@ -89,7 +105,8 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		cfg_DropImages = !cfg_DropImages;
 		break;
 	case 0x47:  /* home */
-		if (active && !(state & (K_RSHIFT|K_LSHIFT))) {
+		if (active && !(shift))
+		{
 			sx = -active->Page.Rect.W;
 			sy = -active->Page.Rect.H;
 			break;
@@ -101,7 +118,8 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		}
 		break;
 	case 0x48:  /* /|\ */
-		if (!(state & (K_RSHIFT|K_LSHIFT))) {
+		if (!(shift))
+		{
 			sy = -scroll_step;
 			break;
 		} /* else fall through */
@@ -112,7 +130,8 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		break;
 	case 0x50:  /* \|/ */
 		ascii = 0;  /* this key has character '2' */
-		if (!(state & (K_RSHIFT|K_LSHIFT))) {
+		if (!(shift))
+		{
 			sy = +scroll_step;
 			break;
 		} /* else fall through */
@@ -123,18 +142,18 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		break;
 	case 0x4B:  /* <- */
 		if (active) {
-			sx = -(state & (K_RSHIFT|K_LSHIFT)
+			sx = -(shift
 			       ? active->clip.g_w - scroll_step : scroll_step);
 		}
 		break;
 	case 0x4D:  /* -> */
 		if (active) {
-			sx = +(state & (K_RSHIFT|K_LSHIFT)
+			sx = +(shift
 			       ? active->clip.g_w - scroll_step : scroll_step);
 		}
 		break;
 	case 0x61:  /* Undo */
-		hwWind_undo (hwWind_Top, (state & (K_RSHIFT|K_LSHIFT)));
+		hwWind_undo (hwWind_Top, (shift));
 		break;
 	case 0x3B:  /* F1 (defined in DIN 2137-6, Nr 6.2.4 (ISO/IEC 9995-6?)) */
 	case 0x62:  /* Help */
@@ -147,7 +166,7 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 	}
 
 	switch (toupper (ascii)) {
-	
+
 	case '+':  /* +: increase font size and reload */
 	case '-':  /* -: decrease font size and reload */
 		menu_fontsize (ascii);
@@ -183,13 +202,14 @@ key_pressed (WORD scan, WORD ascii, UWORD state)
 		menu_reload (ENCODING_Unknown);
 		break;
 	case 0x000F:  /* CTRL+O */
-		menu_open (!(state & (K_RSHIFT|K_LSHIFT)));
+		menu_open (!(shift));
 		break;
 	case 0x0009:  /* CTRL+I */
 		menu_info();
 		break;
 	case 0x000E:  /* CTRL+N */
-		if (state & (K_RSHIFT|K_LSHIFT)) {
+		if (shift)
+		{
 			new_hwWind ("HighWire", NULL, TRUE);
 		} else {
 			new_hwWind ("", cfg_StartPage, TRUE);
