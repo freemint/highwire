@@ -415,7 +415,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
              short * keep_alive, long tout_msec,
              LOCATION referer, const char * auth, POSTDATA post_buf)
 {
-	static char buffer[2048];
+	static char buffer[4096];
 	size_t left  = sizeof(buffer) -4;
 	int    reply = 0;
 	
