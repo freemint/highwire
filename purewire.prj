@@ -82,6 +82,7 @@ Nice_VDI.c (global.h,defs.h,hw-types.h)
 keyinput.c (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h)
 Mouse_R.c  (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Form.h,hwWind.h,Location.h,Form.h)
 AEI.c      (global.h,defs.h,hw-types.h,version.h,highwire.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h,av_comm.h,cache.h)
+strtools.c (global.h,defs.h,hw-types.h)
 HighWire.c (global.h,defs.h,hw-types.h,version.h,highwire.h, Logging.h,schedule.h,hwWind.h,ovl_sys.h)
 ;
 UNGIF.LIB
