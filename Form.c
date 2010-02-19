@@ -3,13 +3,14 @@
  **
  ** Changes
  ** Author         Date           Desription
- ** P Slegg        14-Aug-2009    Utilise NKCC from cflib to handle the various control keys in text fields.
+ ** P Slegg        14-Aug-2009    input_keybrd: Utilise NKCC from cflib to handle the various control keys in text fields.
  **
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <utf8/wctype.h>
 
 #ifndef __PUREC__
 #  include <osbind.h>
@@ -91,7 +92,7 @@ struct s_input {
 	short    CursorH;
 	UWORD    TextMax;  /* either 0 for infinite long or restricted to n char */
 	UWORD    TextRows;
-	WCHAR ** TextArray;
+	WCHAR ** TextArray; /* possibly rows of text */
 	char     Name[1];
 };
 
@@ -1479,6 +1480,7 @@ form_activate_multipart (FORM form)
 				{
 					WCHAR * beg = elem->TextArray[0];
 					WCHAR * end = elem->TextArray[elem->TextRows] -1;
+
 					size += (end-beg);	/* the - gives a number of entry, not byte */
 					/*while (beg < end) {
 						char c = *(beg++);
@@ -1518,6 +1520,7 @@ form_activate_multipart (FORM form)
 			/* "Content-Disposition: form-data; name=\"" + Name + "\"" */
 			sprintf(ptr, "Content-Disposition: form-data; name=\"%s\"", elem->Name);
 			ptr += 38 + strlen(elem->Name) + 1;
+
 			if ((elem->Type == IT_FILE) && (elem->Value))
 			{
 				/* "; filename=\"" + value + "\"" + CRLF */
@@ -1566,11 +1569,14 @@ form_activate_multipart (FORM form)
 					WCHAR * beg = elem->TextArray[0];
 					WCHAR * end = elem->TextArray[elem->TextRows] -1;
 					char c;
-					while (beg < end) {
+
+					while (beg < end)
+					{
 						c = (char)*beg++;
 						*ptr++ = c;
 					}
-				}
+
+				}  /* if else */
 				*ptr++ = '\r';
 				*ptr++ = '\n';
 			}
@@ -1781,41 +1787,33 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					}
 				}
 				else if (ctrl)  /* control left */
-				{
-#if 0
-					WORD     start, end, length;
-					WORD *   position;
-					CHAR *   strChunk;
-					/* move cursor one word to the left */
-					start = edit_rowln (input, form->TextCursrY);
-					end   = edit_rowln (input, form->TextCursrY) + form->TextCursrX;
+				{								/* move cursor one word to the left */
+					WCHAR *  beg;
+					WCHAR *  end;
+
+					beg = input->TextArray[form->TextCursrY];         /* beginning of line    */
+					end = beg + form->TextCursrX;                     /* cursor point in line */
+
 					scrl = 0;
 
-					length = end-start;
-					strChunk = malloc (length+1);
-					position = input->TextArray[form->TextCursrY];
-/*					strChunk = strncpy(strChunk, position, length);
-*/					strChunk[length++] = '\0';
-
-					/* Find the next space to the left of the cursor */
-					while (start < end
-					       && isalnum(*input->TextArray[end]))
+					/* Ignore the leading spaces to the left of the cursor */
+					while (beg < end
+					       && iswspace(*(end-1)) )
 					{
 						end--;
 						scrl--;
 					}
 
-					position = strrchr(strChunk, ' ');  /* this doesn't find the first left space */
-					free (strChunk);
-					if (position == NULL)
-						scrl = 0;
-					else
-						scrl = start - position;
-					if (scrl <= 0)
-						word = NULL;
-					else
-						line = 1;
-#endif
+					/* Find the next space to the left of the cursor or word */
+					while (beg < end
+					       &&  ! iswspace(*(end-1)) )
+					{
+						end--;
+						scrl--;
+					}
+
+					line = 1;
+
 				}
 				else  /* cursor-left */
 				{
@@ -1852,20 +1850,31 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					}
 				}
 				else if (ctrl)  /* control cursor-right */
-				{
-	#if 0
-					/* move cursor one word to the right */
-				  WORD     start, end;
-					start = input->TextArray[form->TextCursrY] + form->TextCursrX;  /* find cursor position */
-					end   = input->TextArray[form->TextCursrY+1] - 1;  /* find end of row */
+				{               /* move cursor one word to the right */
+					WCHAR *  beg;
+					WCHAR *  end;
+
+					beg = input->TextArray[form->TextCursrY] + form->TextCursrX;  /* find cursor position */
+					end = input->TextArray[form->TextCursrY+1] - 1;               /* find end of row */
+
 					scrl = 0;
-					/* Find the next space to the right of the cursor */
-					while ((input)->TextArray**[start] != ' '
-					       && start < end)
+
+					/* ignore the leading spaces to the right of the cursr */
+					while (beg < end
+					       &&   iswspace(*beg) )
 					{
-						start++;
+						beg++;
 						scrl++;
 					}
+
+					/* Find the next space to the right of the cursor or word */
+					while (beg < end
+					       &&  (! iswspace(*beg)) )
+					{
+						beg++;
+						scrl++;
+					}
+
 					if (scrl <= 0)
 					{
 						word = NULL;
@@ -1874,7 +1883,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					{
 						line = 1;
 					}
-	#endif
+
 				}
 				else  /* cursor-right */
 				{
