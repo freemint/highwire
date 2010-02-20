@@ -120,7 +120,11 @@ static void    edit_feed (INPUT, ENCODING, const char * beg, const char * end);
 static BOOL    edit_crlf (INPUT, WORD col, WORD row);
 static BOOL    edit_char (INPUT, WORD col, WORD row, WORD chr);
 static BOOL    edit_delc (INPUT, WORD col, WORD row);
-static void form_activate_multipart (FORM form);
+static void    form_activate_multipart (FORM form);
+static int     ctrl_left  (WCHAR * beg, WCHAR * end);
+static int     ctrl_right (WCHAR * beg, WCHAR * end);
+static void    del_chars (INPUT input, WORD col, WORD row, int numChars);
+
 #define        __edit_len(inp,a,b)   ((inp)->TextArray[b]-(inp)->TextArray[a]-1)
 #define        edit_rowln(inp,row)   __edit_len (inp, row, row +1)
 #define        __edit_r_0(inp)       ((inp)->TextArray[0])
@@ -1790,30 +1794,18 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				{								/* move cursor one word to the left */
 					WCHAR *  beg;
 					WCHAR *  end;
+					int      numChars;
 
 					beg = input->TextArray[form->TextCursrY];         /* beginning of line    */
 					end = beg + form->TextCursrX;                     /* cursor point in line */
 
 					scrl = 0;
+					numChars = ctrl_left (beg, end);
 
-					/* Ignore the leading spaces to the left of the cursor */
-					while (beg < end
-					       && iswspace(*(end-1)) )
-					{
-						end--;
-						scrl--;
-					}
-
-					/* Find the next space to the left of the cursor or word */
-					while (beg < end
-					       &&  ! iswspace(*(end-1)) )
-					{
-						end--;
-						scrl--;
-					}
+					end = end - numChars;
+					scrl = scrl - numChars;
 
 					line = 1;
-
 				}
 				else  /* cursor-left */
 				{
@@ -1853,27 +1845,16 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				{               /* move cursor one word to the right */
 					WCHAR *  beg;
 					WCHAR *  end;
+					int      numChars;
 
 					beg = input->TextArray[form->TextCursrY] + form->TextCursrX;  /* find cursor position */
 					end = input->TextArray[form->TextCursrY+1] - 1;               /* find end of row */
 
 					scrl = 0;
+					numChars = ctrl_right (beg, end);
 
-					/* ignore the leading spaces to the right of the cursr */
-					while (beg < end
-					       &&   iswspace(*beg) )
-					{
-						beg++;
-						scrl++;
-					}
-
-					/* Find the next space to the right of the cursor or word */
-					while (beg < end
-					       &&  (! iswspace(*beg)) )
-					{
-						beg++;
-						scrl++;
-					}
+					end = end + numChars;
+					scrl = scrl + numChars;
 
 					if (scrl <= 0)
 					{
@@ -2062,13 +2043,30 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					if (shift)
 					{
 						int col = form->TextCursrX;
-						while (col > 0)
+
+						if (col > 0)
 						{
-							edit_delc (input, col-1, form->TextCursrY);
-							scrl = scrl - 1;
+							scrl = scrl - col;
+							del_chars (input, col, form->TextCursrY, col);
 							line = 1;
-							col--;
 						}
+					}
+					else if (ctrl)
+					{
+						WCHAR *  beg;
+						WCHAR *  end;
+						int col = form->TextCursrX;
+						int      numChars;
+
+						beg = input->TextArray[form->TextCursrY];         /* beginning of line    */
+						end = beg + form->TextCursrX;                     /* cursor point in line */
+
+						numChars = ctrl_left (beg, end);
+						del_chars (input, col, form->TextCursrY, numChars);
+
+						end = end - numChars;
+						scrl = scrl - numChars;
+						line = 1;
 					}
 					else
 					{
@@ -2488,4 +2486,64 @@ edit_delc (INPUT input, WORD col, WORD row)
 		ok = FALSE;
 	}
 	return ok;
+}
+
+/*----------------------------------------------------------------------------*/
+static void
+del_chars (INPUT input, WORD col, WORD row, int numChars)
+{
+	while (numChars > 0)
+	{
+		edit_delc (input, col-1, row);
+		col--;
+		numChars--;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+static int
+ctrl_left (WCHAR * beg, WCHAR * end)
+{
+	int numChars = 0;
+
+	/* Ignore the leading spaces to the left of the cursor */
+	while (beg < end
+	       && iswspace(*(end-1)) )
+	{
+		end--;
+		numChars++;
+	}
+
+	/* Find the next space to the left of the cursor or word */
+	while (beg < end
+	       &&  ! iswspace(*(end-1)) )
+	{
+		end--;
+		numChars++;
+	}
+	return numChars;
+}
+
+/*----------------------------------------------------------------------------*/
+static int
+ctrl_right (WCHAR * beg, WCHAR * end)
+{
+	int numChars = 0;
+
+	/* ignore the leading spaces to the right of the cursr */
+	while (beg < end
+	       &&   iswspace(*beg) )
+	{
+		beg++;
+		numChars++;
+	}
+
+	/* Find the next space to the right of the cursor or word */
+	while (beg < end
+	       &&  (! iswspace(*beg)) )
+	{
+		beg++;
+		numChars++;
+	}
+	return numChars;
 }
