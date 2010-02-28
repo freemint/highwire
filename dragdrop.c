@@ -22,12 +22,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <cflib.h>
 
 #define __TOS
 #include <gem.h>
 #undef  __TOS
 
+#include <cflib.h>
 #include "file_sys.h"
 #include "global.h"
 #include "Loader.h"
