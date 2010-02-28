@@ -3144,16 +3144,34 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 		if (current->prev_wrd) {
 			if (current->prev_wrd->line_brk) {
 				css_ext = parser->hasStyle;
+				if(!css_ext) { /* otherwise css part should handle this. */
+					*(current->text++) = font_Nobrk (current->word->font);
+					new_word (current, TRUE);
+				}
 			}
 			current->prev_wrd->line_brk = clear;
 			current->word->vertical_align = ALN_BOTTOM;
 		
 		} else if (current->prev_par) {
 			css_ext = parser->hasStyle;
+			if(!css_ext)  /* otherwise css part should handle this. */
+			{
+				*(current->text++) = font_Nobrk (current->word->font);
+				new_word (current, TRUE);
+				current->prev_wrd->line_brk = clear;
+			}
+		} else {
+			css_ext = parser->hasStyle;
+			if(!css_ext)	{
+				*(current->text++) = font_Nobrk (current->word->font);
+					new_word (current, TRUE);
+					current->prev_wrd->line_brk = clear;
+					current->word->vertical_align = ALN_BOTTOM;
+			}
 		}
 		
 		if (css_ext) {     /* with CSS styles a <br> can be used as a spacer */
-			short size = 0; /* instead of an ordinary line break              */
+			short size = 0;  /* instead of an ordinary line break              */
 			if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))
 			    && isdigit (output[0])) {
 				size = numerical (output, NULL, current->font->Size,
