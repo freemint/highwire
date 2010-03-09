@@ -1151,6 +1151,10 @@ hwWind_byType (WORD val)
 	while (wind && wind->Base.Ident != ident) {
 		wind = hwWind_Next (wind);
 	}
+	if( wind != NULL ) {
+		if (wind->Base.Ident != ident) {
+			wind = NULL;
+		}
 
 	if (wind->Base.Ident != ident) {
 		wind = NULL;
