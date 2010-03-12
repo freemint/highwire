@@ -1155,9 +1155,6 @@ hwWind_byType (WORD val)
 		if (wind->Base.Ident != ident) {
 			wind = NULL;
 		}
-
-	if (wind->Base.Ident != ident) {
-		wind = NULL;
 	}
 	
 	return wind;
