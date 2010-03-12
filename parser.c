@@ -1019,11 +1019,15 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				break;
 			}
 		} while (p[n] && !isspace (p[n]) && !isgraph (p[n]));
-		if (n && p[n]) {
-			int i;
-			printf ("parse_css(): leading invalid characters skipped:");
+		if (n && p[n])
+		{
+/*			int i;
+*/
+			/* todo : output should probably be sent to a logfile */
+/*			printf ("parse_css(): leading invalid characters skipped:");
 			for (i = 0; i < n; printf (" %02X", p[i++]));
 			printf ("\n");
+*/
 			p += n;
 		}
 	}
@@ -1514,9 +1518,12 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					}
 					n++;
 				}
-				if (!done) {
+				/* todo : output should probably be sent to a logfile */
+/*				if (!done)
+				{
 					printf("parse_css(): stopped at\n%.*s\n", n, p);
 				}
+*/
 			}
 			if (prsdata->Stack[0].Ptr) {
 				free_location (&loc);
