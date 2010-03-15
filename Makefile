@@ -6,7 +6,7 @@ TARGET = highwire.app
 # compiler settings
 CC = gcc -g #-DDEBUG
 AS = $(CC) -c
-LD = $(CC)
+LD = $(CC) 
 CP = cp
 RM = rm -f
 
@@ -31,8 +31,8 @@ INCLUDE = -I/usr/GEM/include
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
-LDFLAGS =
-LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm #-lsocket
+LDFLAGS = 
+LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm -lutf8 #-lsocket
 
 OBJDIR = obj$(CPU:68%=.%)
 
@@ -105,7 +105,7 @@ CFILES = \
 
 HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 
-SFILES =
+SFILES = 
 
 OBJS = $(SFILES:%.s=$(OBJDIR)/%.o) $(CFILES:%.c=$(OBJDIR)/%.o)
 OBJS_MAGIC := $(shell mkdir ./$(OBJDIR) > /dev/null 2>&1 || :)
@@ -120,6 +120,7 @@ $(TARGET): $(OBJS)
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
 040: ; $(MAKE) CPU=68040
+060: ; $(MAKE) CPU=68020-60
 
 clean:
 	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
