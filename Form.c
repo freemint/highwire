@@ -4,6 +4,7 @@
  ** Changes
  ** Author         Date           Desription
  ** P Slegg        14-Aug-2009    input_keybrd: Utilise NKCC from cflib to handle the various control keys in text fields.
+ ** P Slegg        18-Mar-2010    input_keybrd: Add Ctrl-Delete and Ctrl-Backspace edit functions
  **
  */
 
@@ -1701,6 +1702,7 @@ input_activate (INPUT input, WORD slct)
  ** Changes
  ** Author         Date           Desription
  ** P Slegg        14-Aug-2009    Utilise NKCC from cflib to handle the various control keys in text fields.
+ ** P Slegg        18-Mar-2010    Add Ctrl-Delete and Ctrl-Backspace edit functions
  **
  */
 WORDITEM
@@ -2047,11 +2049,11 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 						if (col > 0)
 						{
 							scrl = scrl - col;
-							del_chars (input, col, form->TextCursrY, col);
+							del_chars (input, col, form->TextCursrY, -col);
 							line = 1;
 						}
 					}
-					else if (ctrl)
+					else if (ctrl)  /* Ctrl Backspace */
 					{
 						WCHAR *  beg;
 						WCHAR *  end;
@@ -2062,7 +2064,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 						end = beg + form->TextCursrX;                     /* cursor point in line */
 
 						numChars = ctrl_left (beg, end);
-						del_chars (input, col, form->TextCursrY, numChars);
+						del_chars (input, col, form->TextCursrY, -numChars);
 
 						end = end - numChars;
 						scrl = scrl - numChars;
@@ -2097,19 +2099,37 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				{
 					if (shift)  /* Shift Delete */
 					{
-						if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
+					int col = form->TextCursrX;
+					int numChars = edit_rowln (input, form->TextCursrY) - col - 1;
+					
+						if (numChars > 0)
 						{
-							while (form->TextCursrX < edit_rowln (input, form->TextCursrY))
-							{
-								edit_delc (input, form->TextCursrX, form->TextCursrY);
-								line = 1;
-							}
+							del_chars (input, col, form->TextCursrY, numChars);
+							line = 1;
 						}
 						else if (!edit_delc (input, form->TextCursrX, form->TextCursrY))
 						{
 							word = NULL;
 						}
 					}
+					else if (ctrl)  /* Ctrl Delete */
+					{
+						WCHAR *  beg;
+						WCHAR *  end;
+						int col = form->TextCursrX;
+						int      numChars;
+
+						beg = input->TextArray[form->TextCursrY] + form->TextCursrX;       /* cursor point in line */
+						end = input->TextArray[form->TextCursrY+1] - 1;                    /* end of line    */
+
+						numChars = ctrl_right (beg, end);
+						del_chars (input, col, form->TextCursrY, numChars);
+
+						end = end - numChars;
+						line = 1;
+					}
+
+
 					else
 					{
 						if (form->TextCursrX < edit_rowln (input, form->TextCursrY))
@@ -2492,11 +2512,25 @@ edit_delc (INPUT input, WORD col, WORD row)
 static void
 del_chars (INPUT input, WORD col, WORD row, int numChars)
 {
-	while (numChars > 0)
+  /* Delete characters to left (-ve numChars) or right (+ve numChars) of position col */
+	if (numChars < 0)
 	{
-		edit_delc (input, col-1, row);
-		col--;
-		numChars--;
+		numChars = abs(numChars);
+
+		while (numChars > 0)
+		{
+			edit_delc (input, col-1, row);
+			col--;
+			numChars--;
+		}  /* while */
+	}
+	else
+	{
+		while (numChars+1 > 0)
+		{
+			edit_delc (input, col, row);
+			numChars--;
+		}  /* while */
 	}
 }
 
