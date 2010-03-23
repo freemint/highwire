@@ -15,7 +15,7 @@ RM = rm -f
 CPU = 68040
 #CPU = 68020-60
 
-DEFS = -DUSE_OVL -DUSE_INET
+DEFS = -DUSE_OVL -DUSE_INET -DLIBPNG -DLIBGIF
 
 OPTS = $(CPU:%=-m%) -funsigned-char \
        -fomit-frame-pointer -O2 -fstrength-reduce
