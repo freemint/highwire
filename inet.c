@@ -18,10 +18,6 @@ static WORD sockets_free = 0;
 
 #endif /* USE_INET */
 
-#if defined(USE_MAGICNET)
-static WORD sockets_free = 0;
-#endif
-
 #include <stddef.h>
 #include <errno.h>
 
@@ -101,12 +97,20 @@ static long  __CDECL demand_connect (long addr, long port, long tout_sec)
 /* endif defined(_USE_OVL_) */
 
 
-#elif defined(USE_MINT) /******************************************************/
+#elif defined(USE_MINT) || defined(USE_MAGICNET) /*****************************/
+#if   defined(USE_MINT)
 # include <netdb.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <unistd.h>
 # include <mintbind.h>
+#else       /*USE_MAGICNET*/
+# include <magicnet/netdb.h>
+# include <magicnet/sys/socket.h>
+# include <magicnet/netinet/in.h>
+# include <magicnet/unistd.h>
+# include <mintbind.h>
+#endif
 
 /*----------------------------------------------------------------------------*/
 static BOOL init_mintnet (void)
