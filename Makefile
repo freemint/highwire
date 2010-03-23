@@ -32,7 +32,8 @@ INCLUDE = -I/usr/GEM/include
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = 
-LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm -lutf8 #-lsocket
+LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm -lutf8 \
+       #-lsocket
 
 OBJDIR = obj$(CPU:68%=.%)
 
@@ -116,6 +117,7 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
 	stack --fix=128k $@
+	flags -g -v $@
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
