@@ -413,7 +413,7 @@ typedef struct s_image {
 		cIMGDATA Data;
 	}        u;
 	WORDITEM word;
-	PARAGRPH paragraph;
+	DOMBOX * box;
 	FRAME    frame;
 	LOCATION source;
 	IMAGEMAP map;

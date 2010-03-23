@@ -76,13 +76,13 @@ new_image (FRAME frame, TEXTBUFF current, const char * file, LOCATION base,
 	img->source    = loc;
 	img->u.Data    = NULL;
 	img->frame     = frame;
-	img->paragraph = current->paragraph;
+	img->box       = &current->paragraph->Box;
 	img->word      = current->word;
 	img->map       = NULL;
 	img->backgnd   = current->backgnd;
 	img->alt_w     = 0;
 	img->alt_h     = img->word->word_height;
-	img->offset.Origin = &img->paragraph->Box;
+	img->offset.Origin = img->box;
 	img->word->image = img;
 	
 	hash   = img_hash ((w > 0 ? w : 0), (h > 0 ? h : 0), -1);
@@ -343,7 +343,7 @@ static int
 image_job (void * arg, long invalidated)
 {
 	IMAGE    img = arg;
-	PARAGRPH par = img->paragraph;
+	DOMBOX * box = img->box;
 	LOCATION loc = img->source;
 	FRAME  frame = img->frame;
 	GRECT  rec   = frame->Container->Area, * clip = &rec;
@@ -441,16 +441,16 @@ image_job (void * arg, long invalidated)
 		}
 	}
 	
-	if ((img->set_w >= 0 && par->Box.MinWidth < img->word->word_width)
+	if ((img->set_w >= 0 && box->MinWidth < img->word->word_width)
 	    || img->disp_w != old_w || img->disp_h != old_h) {
 /*		long par_x = par->Box.Rect.X;*/
 /*		long par_y = par->Box.Rect.Y;*/
 		long off_y = img->offset.Y;
-		long par_w = par->Box.Rect.W;
-		long par_h = par->Box.Rect.H;
-		if (par->Box.MinWidth < img->disp_w) {
-			 par->Box.MinWidth = img->disp_w;
-			 par->Box.MaxWidth = 0;
+		long par_w = box->Rect.W;
+		long par_h = box->Rect.H;
+		if (box->MinWidth < img->disp_w) {
+			 box->MinWidth = img->disp_w;
+			 box->MaxWidth = 0;
 		}
 		dombox_MinWidth (&frame->Page);
 		
@@ -464,7 +464,7 @@ image_job (void * arg, long invalidated)
 			calc_xy = -1;
 	*/
 		if (containr_calculate (frame->Container, NULL)
-		    && par_w == par->Box.Rect.W) {
+		    && par_w == box->Rect.W) {
 			long x, y;
 			dombox_Offset (img->offset.Origin, &x, &y);
 			x += frame->clip.g_x - frame->h_bar.scroll;
@@ -475,7 +475,7 @@ image_job (void * arg, long invalidated)
 				off_y = 0;
 			}
 			rec.g_y = y;
-			if (par_h == par->Box.Rect.H) {
+			if (par_h == box->Rect.H) {
 				rec.g_x = x;
 				rec.g_w = par_w;
 				rec.g_h = par_h - off_y;
@@ -489,13 +489,13 @@ image_job (void * arg, long invalidated)
 	}
 
 	if (calc_xy) {
-		DOMBOX * box = img->offset.Origin;
+		DOMBOX * obox = img->offset.Origin;
 		short x = img->offset.X + frame->clip.g_x - frame->h_bar.scroll;
 		short y = img->offset.Y + frame->clip.g_y - frame->v_bar.scroll;
-		while (box) {
-			x  += box->Rect.X;
-			y  += box->Rect.Y;
-			box = box->Parent;
+		while (obox) {
+			x  += obox->Rect.X;
+			y  += obox->Rect.Y;
+			obox = obox->Parent;
 		}
 		if (calc_xy > 0) {
 			rec.g_x = x;
