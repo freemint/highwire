@@ -189,6 +189,37 @@ delete_image (IMAGE * _img)
 	}
 }
 
+/*============================================================================*/
+void reload_image(IMAGE * _img)
+{
+	IMAGE img = *_img;
+	CACHED cached;
+	
+	/* Free memory of the image */
+	if (img->u.Data) {
+		CACHEOBJ cob = cache_release ((CACHED*)&img->u.Data, TRUE);
+		if (cob) {
+			free (cob);
+		} else if (img->u.Mfdb) {
+			free (img->u.Mfdb);
+			img->u.Mfdb = NULL;
+		}
+	}
+	/* remove cached to ensure freshnes: */
+	/* maybe some elements are stored twice in cache */ 
+	/* one time in memory, one time on disk	*/
+	/* I just assume that! */
+	cached = cache_lookup (img->source, 0, NULL);
+	while (cached) { 
+		cache_clear (cached);
+		cached = cache_lookup (img->source, 0, NULL);
+	}
+	
+	if (sched_insert (image_job, img, (long)img->frame->Container, 1)) {
+		containr_notify (img->frame->Container, HW_ActivityBeg, NULL);
+	}
+}
+
 
 /*----------------------------------------------------------------------------*/
 static void

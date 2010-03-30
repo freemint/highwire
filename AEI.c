@@ -1249,6 +1249,10 @@ rpopimg_open (WORD mx, WORD my, CONTAINR current)
 			dl_manager (imgloc, frame->Location);
 			break;
 
+		case RIMG_RELOAD:
+			reload_image(&word->image);
+			break;
+
 		case RIMG_COPYIMGURL: 
 			copy_url_2_scrap (imgloc);
 			break;
@@ -1338,6 +1342,10 @@ rpopilink_open (WORD mx, WORD my, CONTAINR current, void * hash)
 
 		case RIMG_COPYIMGURL: 
 			copy_url_2_scrap (imgloc);
+			break;
+
+		case RIMG_RELOAD:
+			reload_image(&word->image);
 			break;
 
 		case RIMG_BOOKM: 

@@ -1,9 +1,9 @@
 ResourceMaster v3.65   
 #C 9@1@0@0@
 #N 99@0@AZAazA___  _@AZAazA090___  _@@_@
-#FoC-Header@rsm2out@C-Header@h@@@[C-Header@0@
+#FoC-Header@rsm2out@C-Header@rsh@@@[C-Header@0@
 #R 0@0@2@1@2@1@
-#M 20010100@0@7728@740@
+#M 20010100@0@7728@742@
 #T 0@1@MENUTREE@@76@@
 #O 7@32@M_HISTORY@@
 #O 11@28@M_ABOUT@@
@@ -55,7 +55,7 @@ ResourceMaster v3.65
 #O 5@28@RLINK_BOOKM@@
 #O 6@28@RLINK_COPY@@
 #O 8@28@RLINK_INFO@@
-#T 4@2@RIMGPOP@@12@@
+#T 4@2@RIMGPOP@@13@@
 #O 1@28@RIMG_OPEN@@
 #O 2@28@RIMG_NEW@@
 #O 3@28@RIMG_SAVE@@
@@ -64,6 +64,7 @@ ResourceMaster v3.65
 #O 8@28@RIMG_SAVEIMG@@
 #O 9@28@RIMG_COPYIMGURL@@
 #O 11@28@RIMG_INFO@@
+#O 12@28@RIMG_RELOAD@@
 #T 5@2@DLMNGR@@25@@
 #O 1@25@DLM_1@@
 #O 2@28@DLM_1FILE@@
@@ -127,4 +128,4 @@ ResourceMaster v3.65
 #O 12@28@BKM_TXT_G_ADD@@
 #O 13@28@BKM_TXT_G_EDIT@@
 #S 0@4@BKMOUTDATED@@
-#c 30369@
+#c 32399@

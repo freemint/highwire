@@ -64,6 +64,7 @@
 #define RIMG_SAVEIMG 8  /* STRING in tree RIMGPOP */
 #define RIMG_COPYIMGURL 9  /* STRING in tree RIMGPOP */
 #define RIMG_INFO 11  /* STRING in tree RIMGPOP */
+#define RIMG_RELOAD 12  /* STRING in tree RIMGPOP */
 
 #define DLMNGR 5  /* form/dial */
 #define DLM_1 1  /* IBOX in tree DLMNGR */
