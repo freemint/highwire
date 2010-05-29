@@ -32,7 +32,7 @@
 #include "dragdrop.h"
 #include "bookmark.h"
 #include "strtools.h"
-
+#include "clipbrd.h"
 
 #define WINDOW_t HwWIND
 #include "hwWind.h"
@@ -2402,68 +2402,6 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 
 
 /*----------------------------------------------------------------------------*/
-FILE *
-open_scrap (BOOL rdNwr)
-{
-	char path[HW_PATH_MAX] = "";
-	const char * mode = (rdNwr ? "rb" : "wb");
-	FILE * file;
-	
-	if (scrp_read (path) <= 0 || !path[0])
-	{
-		file = NULL;
-	
-	}
-	else
-	{
-		char * scrp = strchr (path, '\0');
-		if (scrp[-1] != '\\') *(scrp++) = '\\';
-		if (path[0]  >= 'a')  path[0]  -= ('a' - 'A');
-
-		strcpy (scrp, "scrap.txt");
-		if ((file = fopen (path, mode)) == NULL && rdNwr)
-		{
-			strcpy (scrp, "SCRAP.TXT");
-			file = fopen (path, mode);
-		}
-	}
-	return file;
-}
-
-/*============================================================================*/
-
-char *
-read_scrap(void)
-{
-    FILE * file = open_scrap (TRUE);
-		if (file)
-		{
-			long filelength;
-			char * paste;
-
-			/* find the size of the file */
-			fseek (file, 0, SEEK_END);
-			filelength = ftell (file);
-			fseek (file, 0, SEEK_SET);
-
-			/* allocate enough memory to hold the file */
-			paste = malloc (filelength+1);
-
-			if (paste != NULL)
-			{
-				/* read the entire file */
-				long n = fread (paste, 1, filelength, file);
-				paste[n] = '\0';
-			}
-
-			fclose (file);
-			return paste;
-		}
-		else
-			return NULL;
-}
-
-/*============================================================================*/
 
 /*
  ** Changes
@@ -2476,17 +2414,22 @@ static void
 vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 {
 	BOOL more = FALSE;
-	WORD     key  = (scan << 8) | ascii;
+	WORD key  = (scan << 8) | ascii;
 
 	if (!This->TbarH && !This->Input) {
 		more = TRUE;
 	
-	} else if (This->Input) {
+	}
+	else if (This->Input)
+	{
 		GRECT    clip, rect;
 		INPUT    next;
 		WORDITEM word = NULL;
-		
-		if ((kstate & K_CTRL) && scan == 0x2F)
+
+		BOOL ctrl;
+		ctrl  = (kstate & K_CTRL) != 0;
+
+		if (ctrl && scan == 0x2F)
 		{ /* control V -- paste from clipboard */
 			char * p = read_scrap();  /* Get the clipboard text */
 			long filelength = strlen (p);
@@ -2517,8 +2460,9 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				clip.g_h = word->word_height + word->word_tail_drop;
 			}
 			next = This->Input;
-		
-		} else {
+		}
+		else
+		{
 			word = input_keybrd (This->Input, key, kstate, &clip, &next);
 		}
 		if (word) {
@@ -2581,7 +2525,9 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		}
 		more = TRUE;
 	
-	} else {
+	}
+	else
+	{
 		TBAREDIT * edit = TbarEdit (This);
 		GRECT      clip = { 0,0,0, };
 		WORD       scrl = 0;
