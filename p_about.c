@@ -212,7 +212,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
   #ifdef LIBGIF
     #ifdef GIF_LIB_VERSION
 		sprintf (buf,
-		         """ungif.lib:""""%s"" " "\r",
+		         """gif_lib:""""%s"" " "\r",
 		         GIF_LIB_VERSION);
 		*(++w) = render_text (current, buf);
 		tab    = max (tab, (*w)->word_width);
