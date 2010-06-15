@@ -26,6 +26,13 @@
   #include "gif_lib.h"
 #endif
 
+#ifdef LIBJPG
+  #define XMD_H /* avoid redefining INT16 and INT32, already done in gemlib */
+    #include <jpeglib.h>
+  #undef XMD_H
+#endif
+
+
 /*----------------------------------------------------------------------------*/
 static void
 about_modules (TEXTBUFF current, ENCODING enc)
@@ -214,6 +221,16 @@ about_highwire (TEXTBUFF current, WORD link_color)
 		sprintf (buf,
 		         """gif_lib:""""%s"" " "\r",
 		         GIF_LIB_VERSION);
+		*(++w) = render_text (current, buf);
+		tab    = max (tab, (*w)->word_width);
+    #endif
+  #endif
+
+  #ifdef LIBJPG
+    #ifdef JPEG_LIB_VERSION
+		sprintf (buf,
+		         """jpeg_lib:""""%d"" " "\r",
+		         JPEG_LIB_VERSION);
 		*(++w) = render_text (current, buf);
 		tab    = max (tab, (*w)->word_width);
     #endif
