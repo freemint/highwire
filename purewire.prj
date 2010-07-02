@@ -84,6 +84,7 @@ Mouse_R.c  (global.h,defs.h,hw-types.h, Containr.h,mime.h,Loader.h,Form.h,hwWind
 AEI.c      (global.h,defs.h,hw-types.h,version.h,highwire.h, Containr.h,mime.h,Loader.h,Location.h,Logging.h,hwWind.h,av_comm.h,cache.h)
 strtools.c (global.h,defs.h,hw-types.h)
 HighWire.c (global.h,defs.h,hw-types.h,version.h,highwire.h, Logging.h,schedule.h,hwWind.h,ovl_sys.h)
+clipbrd.c  (global.h,defs.h,hw-types.h)
 ;
 UNGIF.LIB
 PCSTDLIB.LIB
