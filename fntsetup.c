@@ -241,7 +241,7 @@ fontsel_handler (OBJECT * tree, WORD obj)
 /*		msg[3] = fnt_wind->Handle;*/
 		msg[4] = local_font[actv_font][actv_type&1][actv_type>>1];
 		msg[5] = font_size;
-		if (actv_type==2) {			/* FNT_MONO */
+		if (actv_font==2) {			/* FNT_MONO */
 			msg[7] = 0x1000;        /* monospaced */
 		}
 		appl_write (selector, 16, msg);
