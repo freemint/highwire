@@ -7,6 +7,7 @@
 #include <gem.h>
 
 #include "file_sys.h"
+#include "vaproto.h"
 #include "global.h"
 #include "schedule.h"
 #include "Location.h"
@@ -27,6 +28,7 @@ typedef struct s_slot {
 		LOCATION Location;
 		WORD     Source;
 		WORD     Target;
+    char     path[HW_PATH_MAX];
 		char   * Buffer;
 		long     Size;   /* size of the source or <0 if unknown           */
 		long     Fill;   /* number of already stored bytes in target file */
@@ -35,10 +37,10 @@ typedef struct s_slot {
 	} Data;
 } * SLOT;
 static struct s_slot slot_tab[4] = {
-	{ DLM_1, DLM_1FILE,DLM_1TEXT,DLM_1BAR,DLM_1BTN, {NULL,-1,-1,NULL,0,0,0,0} },
-	{ DLM_2, DLM_2FILE,DLM_2TEXT,DLM_2BAR,DLM_2BTN, {NULL,-1,-1,NULL,0,0,0,0} },
-	{ DLM_3, DLM_3FILE,DLM_3TEXT,DLM_3BAR,DLM_3BTN, {NULL,-1,-1,NULL,0,0,0,0} },
-	{ DLM_4, DLM_4FILE,DLM_4TEXT,DLM_4BAR,DLM_4BTN, {NULL,-1,-1,NULL,0,0,0,0} }
+	{ DLM_1, DLM_1FILE,DLM_1TEXT,DLM_1BAR,DLM_1BTN, {NULL,-1,-1,"\0",NULL,0,0,0,0} },
+	{ DLM_2, DLM_2FILE,DLM_2TEXT,DLM_2BAR,DLM_2BTN, {NULL,-1,-1,"\0",NULL,0,0,0,0} },
+	{ DLM_3, DLM_3FILE,DLM_3TEXT,DLM_3BAR,DLM_3BTN, {NULL,-1,-1,"\0",NULL,0,0,0,0} },
+	{ DLM_4, DLM_4FILE,DLM_4TEXT,DLM_4BAR,DLM_4BTN, {NULL,-1,-1,"\0",NULL,0,0,0,0} }
 };
 #define slot_end   (slot_tab + numberof(slot_tab) -1)
 
@@ -351,6 +353,7 @@ recv_job (void * arg, long invalidated)
 			BTTN_Strng(slot)    = bttn_text_ok;
 			PBAR_Fpatt(slot)    = IP_4PATT;
 			PBAR_Rect(slot).g_w = 256;
+      Send_AV ( AV_PATH_UPDATE, data->path, NULL );
 		} else {
 			slot_error (slot, "Connection broken!");
 		}
@@ -426,6 +429,7 @@ fsel_job (void * arg, long invalidated)
 			SCHED_FUNC job = (PROTO_isRemote (data->Location->Proto)
 			                  ? recv_job : load_job);
 			sched_insert (job, arg, (long)arg, 20/*PRIO_RECIVE*/);
+      strcpy ( data->path, fsel_file );
 		}
 	} else {
 		slot_remove (slot);
