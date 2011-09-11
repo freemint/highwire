@@ -92,6 +92,9 @@ Send_AV (short message, const char * data1, const char * data2)
 			msg[3] = 0x0004;
 			msg[4] = 0x1117;	/* ^W */
 			break;
+    case AV_PATH_UPDATE:
+      *(char **)(msg+3) = strcpy(va_helpbuf, data1);
+      break;
 		case VA_START:
 			*(char **)(msg+3) = strcpy(va_helpbuf, data1);
 			break;
