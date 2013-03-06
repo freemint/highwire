@@ -4,7 +4,8 @@
 TARGET = ../mintnet.ovl
 
 # compiler settings
-CC = gcc -g #-DDEBUG
+#CROSS = m68k-atari-mint-
+CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
 CP = cp
@@ -14,11 +15,18 @@ CPU = 68000
 #CPU = 68030
 #CPU = 68040
 #CPU = 68020-60
+#CPU = 5475
 
 DEFS = -DUSE_INET
 
-OPTS = $(CPU:%=-m%) -fomit-frame-pointer -funsigned-char \
-       -O2 -fstrength-reduce
+OPTFLAGS = -funsigned-char \
+       -fomit-frame-pointer -O2 -fstrength-reduce 
+
+ifeq ($(CPU),5475)
+	OPTS = $(CPU:%=-mcpu=%) $(OPTFLAGS)
+else
+	OPTS = $(CPU:%=-m%) $(OPTFLAGS)
+endif
 
 WARN = \
 	-Wall \
@@ -32,9 +40,13 @@ INCLUDE =
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = 
-LIBS = -liio -lsocket
+LIBS = -liio
 
-OBJDIR = obj$(CPU:68%=.%)
+ifeq ($(CPU),5475)
+        OBJDIR = obj.$(CPU)
+else
+	OBJDIR = obj$(CPU:68%=.%)
+endif
 
 
 #
@@ -64,11 +76,12 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
-	stack --fix=8k $@
+	$(CROSS)stack --fix=8k $@
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
 040: ; $(MAKE) CPU=68040
+v4e: ; $(MAKE) CPU=5475
 
 clean:
 	$(RM) $(OBJS)

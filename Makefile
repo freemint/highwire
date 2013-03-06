@@ -4,7 +4,9 @@
 TARGET = highwire.app
 
 # compiler settings
-CC = gcc -g #-DDEBUG
+
+#CROSS = m68k-atari-mint-
+CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
 CP = cp
@@ -14,18 +16,28 @@ RM = rm -f
 #CPU = 68030
 CPU = 68040
 #CPU = 68020-60
+#CPU = 5475
 
 DEFS = -DUSE_OVL -DUSE_INET -DLIBPNG -DLIBGIF
+OPTFLAGS = -funsigned-char \
+       -fomit-frame-pointer -O2 -fstrength-reduce 
 
-OPTS = $(CPU:%=-m%) -funsigned-char \
-       -fomit-frame-pointer -O2 -fstrength-reduce
+ifeq ($(CPU),5475)
+	OPTS = $(CPU:%=-mcpu=%) $(OPTFLAGS)
+else
+	OPTS = $(CPU:%=-m%) $(OPTFLAGS)
+endif
 
+DISABLED_WARNINGS = -Wno-deprecated-declarations
 WARN = \
 	-Wall \
 	-Wmissing-prototypes \
 	-Wshadow \
 	-Wpointer-arith \
-	-Wcast-qual -Werror
+	-Wcast-qual \
+	$(DISABLED_WARNINGS) \
+	-Werror 
+
 
 INCLUDE = -I/usr/GEM/include
 
@@ -35,7 +47,11 @@ LDFLAGS =
 LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm -lutf8 \
        #-lsocket
 
-OBJDIR = obj$(CPU:68%=.%)
+ifeq ($(CPU),5475)
+        OBJDIR = obj.$(CPU)
+else
+	OBJDIR = obj$(CPU:68%=.%)
+endif
 
 
 #
@@ -83,7 +99,7 @@ CFILES = \
 	Containr.c \
 	Loader.c \
 	Redraws.c \
-	\
+	clipbrd.c \
 	Window.c \
 	formwind.c \
 	fntsetup.c \
@@ -116,13 +132,14 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
-	stack --fix=128k $@
-	flags -g -v $@
+	$(CROSS)stack --fix=128k $@
+	$(CROSS)flags -g -v $@
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
 040: ; $(MAKE) CPU=68040
 060: ; $(MAKE) CPU=68020-60
+v4e: ; $(MAKE) CPU=5475
 
 clean:
 	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
