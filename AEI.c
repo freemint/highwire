@@ -1524,7 +1524,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		
 		case GS_REQUEST:
 			{
-			#if 1  /* an optimized version of the below original */
+			#if 0  /* an optimized version of the below original */
 				const GS_INFO *sender;
 				short answ[8], *p_answ = answ;
 				long *gsi_ = (long *)gsi;
