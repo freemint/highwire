@@ -1,0 +1,510 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<TITLE>Soft hyphen (SHY) - a hard problem?</TITLE>
+<link rel="stylesheet" href="basic.css">
+<STYLE><!--
+SPAN.charname {font: small-caps}
+-->
+</STYLE>
+
+<H1>Soft hyphen (SHY) - a hard problem?</H1>
+
+<h2>Summary</h2>
+
+There seems to be a fundamental misunderstanding about the
+soft hyphen character (often abbrev. SHY, one HTML notation:
+<code>&amp;shy;</code>).
+Although the ISO Latin 1 standard
+(ISO 8859-1) makes things perfectly clear, saying that it is
+a <em>visible hyphen, to be used in a specific context</em>,
+it is
+commonly regarded as hidden hyphenation hint.
+These two views are incompatible.
+<p>
+The misunderstanding is probably caused by the strong needs for
+hyphenation of Web documents. These needs are very real,
+but it is incorrect to try to answer to them in a manner which
+violates the character code standards.
+Moreover, explicit hyphenation hints can play only a very small role
+in the solution of the hyphenation problem, and
+the (mis)use of SHY would not even be the best way of giving
+hyphenation hints.
+<p>
+On the other hand, the
+<a href="http://www.w3.org/TR/REC-html40/">HTML 4.0 specification</a>
+defines SHY as a hyphenation hint, although in a manner which suggests
+that universal support to it is not to be expected.
+<p>
+Thus, <code>&amp;shy;</code> could be used
+<em>at most</em>
+as an occasional
+hyphenation hint in special cases, with the risk that it may not have
+such an effect and it may even be displayed as a normal hyphen in
+any context by some browsers.
+
+<h2>What the ISO Latin 1 standard says</h2>
+
+The ISO Latin 1 character code, also known as ISO 8859-1, and the
+<a href="http://www.cs.tu-berlin.de/user/czyborra/charsets/">ISO 8859</a>
+character sets in general, contain a character named
+<span class="charname">soft hyphen</span>,
+abbreviated SHY, code value 255 in octal.
+In general, the ISO 8859 standards specify the characters and their
+codes only, not the use of the characters.
+However, soft hyphen is one of the few exceptions.
+<p>
+The
+ISO
+8859-1 standard defines, in section 6.3.3,
+<em>both the graphic presentation and the usage</em> of
+soft hyphen, as follows:
+<blockquote>
+A graphic character that is imaged by a graphic symbol
+identical with, or similar to, that representing
+<span class="charname">hyphen</span>,
+for use when a line break has been established within a word.
+</blockquote>
+<p>
+The ISO 10646 standard, which is the document character set for
+HTML, is an extension to ISO 8859-1.
+It contains no special remark about the soft hyphen.
+<p>
+Thus, <strong>soft hyphen is a visible (graphic) character,
+not an invisible hyphenation hint</strong>.
+Soft hyphen is not related to any word division process
+to be applied to the
+text but may indicate <em>what has happened</em> in
+such a process when the text was produced.
+<P>
+Such a character seems to appear in the
+<a href=
+"http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=EBCDIC&amp;action=Search"
+>EBCDIC</a>
+character set, too,
+under the name "syllable hyphen", also abbreviated "SHY". It is
+described in
+<a href=
+"http://as400bks.rochester.ibm.com/cgi-bin/bookmgr/BookMgr.cmd/BOOKS/QB3AIG01/GLOSSARY"
+title='"AS/400 Master Glossary V4R2" GLOSSARY via IBM BookManager BookServer (large!)'
+>a glossary by IBM</a> as follows:
+<blockquote cite=
+"http://as400bks.rochester.ibm.com/cgi-bin/bookmgr/BookMgr.cmd/BOOKS/QB3AIG01/GLOSSARY#SPTWQ15275">
+<DL><DT>syllable hyphen
+     <DD>In the OfficeVision program, a hyphen used to divide a word
+	  at the end of a
+line; it may be removed when the OfficeVision program adjusts lines.
+	  Contrast with <EM>required
+hyphen</EM>. 
+</DL>
+</blockquote>
+<p>
+As regards to the difference between a normal hyphen and a soft hyphen,
+the specification says that there might or might not be some visible
+difference. The difference in usage is that the soft hyphen is for
+a particular use - in practise, at the end of a line. The specification
+does not prohibit the use of normal hyphen there as well.
+Thus, it is possible but not mandatory to indicate whether a hyphen
+at the end of a line belongs to the word itself (and is to be presented
+even if the word is not divided into lines at that point), by using
+normal hyphen in that case and soft hyphen otherwise.
+
+<h2>What HTML specifications HTML 2.0 and HTML 3.2 say</h2>
+
+One might expect that SHY is pretty irrelevant in HTML documents,
+since normally one should not divide a word into two lines
+in HTML.
+<p>
+According to the
+<a href="http://www.w3.org/pub/WWW/MarkUp/html-spec/html-spec_toc.html">HTML 2.0</a> specification (RFC 1866),
+the document character set of an HTML document must be
+ISO Latin 1 or some superset of it.
+(In <a href="http://www.w3.org/pub/WWW/MarkUp/Wilbur/">HTML 3.2</a>
+the situation was clarified further that it shall be a specific superset
+of it, namely ISO 10646.)
+It specifies, in the section
+<a href="http://www.w3.org/pub/WWW/MarkUp/html-spec/html-spec_6.html#SEC6"><cite>Characters, Words, and Paragraphs</cite></a>,
+the processing of characters.
+<p>
+The visible presentation involves reformatting, but of course any
+ISO Latin 1 character for which no specific treatment is mandated
+shall be presented as such. (Variations in sizes, font faces etc
+are allowed, of course.) There is no specific rule for a soft hyphen,
+just the following note:
+<blockquote>
+Use of the non-breaking space and soft hyphen indicator characters is discouraged
+because support for them is not widely deployed. 
+</blockquote>
+Being a note, this does not introduce any additional rule. It implies
+that the two characters mentioned must be supported but
+<em>warns authors</em> (without relaxing requirements on browsers)
+that those characters may not be processed according to the
+specifications on all browsers.
+<p>
+The <a href="http://www.w3.org/pub/WWW/MarkUp/Wilbur/">HTML 3.2</a>
+specification is partly less informative than HTML 2.0, so we
+must really assume the material in HTML 2.0
+as the default when reading HTML 3.2.
+It mentions the soft hyphen in no other way than by introducing
+a quasi-symbolic notation, <code>&amp;shy;</code>, for it, to be used
+as identical with the older <code>&amp;#173;</code> notation.
+<p>
+So what <em>is</em> the intended use of SHY in HTML documents?
+Should a line ending with SHY be treated so that effectively the
+SHY and the following newline are removed, restoring the
+integrity of a word that had been divided into lines?
+This would be natural, but there is no specific requirement on this
+and it does not logically follow from the definition of ISO Latin 1
+(which does not prescribe in any way
+how the text should be processed in eventual reformatting - such
+issues are outside the scope of a character code standard).
+<p>
+The so-called
+<a href="http://www.w3.org/pub/WWW/International/">internationalization</a>
+activity
+has produced
+a short
+<a href="http://www.w3.org/pub/WWW/International/O-HTML-hyphenation.html">document
+on hyphenation</a> which seems to take it for granted that SHY
+is a hyphenation hint.
+This is reflected in the document
+<a href="http://www.alis.com:8085/ietf/html/rfc2070.en.html"><cite>Internationalization of the Hypertext Markup Language</cite></a>
+(RFC 2070; dated January 1997)
+which contains the following:
+<BLOCKQUOTE>
+NOTE - the <span class="charname">soft hyphen</span>
+character (U+00AD) needs special attention from user-agent implementers.  It is present in many character sets (including the whole ISO 8859 series and, of course, ISO 10646), and can always be included by means of the reference &amp;shy;.  Its semantics are different from the plain
+<span class="charname">hyphen</span>:
+it indicates a point in a word where a line break is allowed.  If the line is indeed broken there, a hyphen must be displayed at the end of the first line.  If not, the character is not dispalyed at all.  In operations like searching and sorting, it must always be ignored.
+</BLOCKQUOTE>
+Strangely,
+this is presented in a note
+as if referring to a specification set up elsewhere,
+but without citing any source.
+
+<h2>A review of some discussions</h2>
+
+This section mainly reviews some discussions which the
+author found using <a href="http://www.infoseek.com/">InfoSeek</a>.
+<p>
+In a discussion
+on a mailing list (<a href="http://www.acl.lanl.gov/HTML_WG/">HTML-WG</a>)
+as early as in 1994,
+<a href="http://www.acl.lanl.gov/HTML_WG/html-wg-94q4.messages/0438.html">
+an article</a>
+suggested two different interpretations:
+<ul>
+  <li> a visible hyphen within a word:
+<blockquote>
+My assumption was that the purpose of this soft hyphen would be to
+       mark a visible hyphen or dash character that can be used as a word
+       separator; for example, in order to break the word "drawing-<br>
+       parlour" at a margin (as in this letter), one would use the string
+       "drawing&amp;shy;parlour" in their HTML document.
+       </blockquote>
+  <li> 
+       an invisible mark for a possible hyphenation point:
+       <blockquote>
+The other interpretation is that &amp;shy; would mark an *invisible*
+       point at which a word can be broken; thus, "al&amp;shy;go&amp;shy;rithm"
+       could be used to represent a word which can be broken at a margin
+       into the portions "al-" and "gorithm," or "algo-" and "rithm,"
+       depending on which is needed by the browser.
+ </blockquote>
+</ul>
+
+A <a href="http://www.acl.lanl.gov/HTML_WG/html-wg-94q4.messages/0444.html
+">reply</a>
+to this quoted the ISO formulation but draws the conclusion
+that the latter interpretation is true! Of course,
+<em>both are wrong</em>.
+The statement in ISO 8859-1 says two things about SHY
+(emphases mine):
+<ul>
+  <li> it is a
+"graphic character that is <strong>imaged by a graphic symbol</strong>
+identical with, or similar to, that representing <span class="charname">hyphen</span>"
+  <li> it is
+       "for use when a line break
+       <strong>has been established</strong> within a word".
+</ul>
+It does not say "can be established" but "has been established".
+This means, in particular, that when a program formats text, it
+can hyphenate words so that the formatted text carries information
+which tells whether a hyphen at the end of a line is part of
+a word itself (as in <i>corn-crake</i>) or was introduced when
+hyphenating for word division.
+(This means that if the formatted text is to be formatted again,
+the program could know how to restore words which have been
+divided.)
+This could be done so that the formatting process leaves a normal
+hyphen into the word when dividing
+<i>corn-crake</i> into
+<i>corn-</i> (at the end of a line) and <i>crake</i> (at the beginning
+of the next line) but introduces soft hyphen on other divisions.
+<p>
+Yet another interpretation of what SHY should mean was
+presented in
+<a href="http://www.acl.lanl.gov/HTML_WG/html-wg-94q4.messages/0437.html">an
+article</a> which suggested that it might mean the following:
+<blockquote>
+a real hyphen which is an allowed breakpoint, as in much&amp;shy;needed
+   and as opposed to a non-breaking one like X-Windows (where you
+   don't want an X- at the end of a line
+</blockquote>
+<p>
+In
+<a href="http://wwwwbs.cs.tu-berlin.de/%7Emfx/h/space.html">a news article</a>
+Olle Jarnefors has commented several character issues and raised the
+following question:
+<blockquote>
+- - the current definition of SHY
+- - says nothing about how to image the character when it is within a word on a line and not at the end of the line (which should be more frequent than the other situation).
+</blockquote>
+He suggested that SHY should not be shown in other positions
+than at the end of a line.
+<p>
+My interpretation of the wording of ISO 8859-1 is that 
+<em>SHY shall definitely be presented as a hyphen</em>,
+either identical with or
+similar to <span class="charname">hyphen</span>, <em>in all positions</em>.
+This is a requirement on programs which present ISO 8859-1 characters
+in visible form.
+The occurrence of SHY in
+other positions than at the end of a line
+is a violation of the standard
+by the person or program which produced the text,
+but such violation implies no change on the requirement of the standard.
+(As a remote analogue, if I violate the rules of the English language
+by misspelling a word, programs should not
+"fix" this by
+displaying my text differently
+from the requirements of the character code used. They may of course
+suggest changes to the text itself. Similarly, a Web browser might
+separately report that SHY is used incorrectly in the document, but
+it must still display SHY as a hyphen.)
+<p>
+The question of the nature of SHY seems to appear again and again
+in discussions about HTML. For example,
+the document
+<a href="http://www.nada.kth.se/i18n/html/hyph.html"><cite>Suggestion for hyphenation indications in HTML - &lt;HYPH&gt;</cite></a>,
+(May 1996) says:
+<blockquote>
+The current situation in HTML is that the only possible
+way to specify to the client where a hyphenation can be
+done is by using the <STRONG>soft hyphen</STRONG> character.
+</blockquote>
+Although the document then says that this does not work in practice
+(and suggests an alternative method for giving hyphenation hints)
+the statement still paints the wrong picture.
+<p>
+The soft hyphen issue has been discussed in the
+<a href="http://lists.w3.org/Archives/Public/www-html/"
+title="www-html mail archives">www-html list</a>.
+Interestingly,
+<a href="http://lists.w3.org/Archives/Public/www-html/1997May/0102.html"
+title="Re: Soft hyphen (Re: Cougar comments) (fwd)">an article</a>
+was posted which quoted a message from the president of the
+Unicode consortium, saying just the following
+<blockquote>
+The Unicode character 00AD is defined to be invisible, except at the end
+of a line, where it may or may not be visible, depending on the script.
+</blockquote>
+(Here "00AD" means the character which has code 00AD in hexadecimal,
+i.e. the soft hyphen character.) As a commented in
+<a href="http://lists.w3.org/Archives/Public/www-html/1997May/0104.html">my reply</a>,
+such a statement, despite its authoritative appearance, cannot settle
+the question.
+However, after the
+<a href="http://www.unicode.org/unicode/standard/versions/Unicode3.0-beta.html"
+title="Versions of Unicode"
+>approval of version 3.0 of the Unicode standard</a> the official answer
+is that Unicode regards, according to Unicode technical report #14
+<a href="http://www.unicode.org/unicode/reports/tr14/"
+><cite>Line Breaking Properties</cite></a> which is regarded as part
+of Unicode&nbsp;3.0,
+the soft hyphen "is rendered invisibly
+and has no width, EXCEPT at a line break".  
+(See
+<a href="#unicode">notes on the conflict between ISO 8859-1
+and Unicode</a> below.)
+
+<h2>The HTML 4.0 view</h2>
+
+It should be clear from the preceding arguments that the soft hyphen
+character is, <i>per se</i>, a visible character for a specific use
+which can hardly be frequent in HTML.
+On the other hand, the specification of a markup language like HTML
+can naturally <em>define specific semantics</em> for printable characters.
+Just as the less than sign (&lt;) has a very special meaning,
+not derivable from the normal meaning of "less than", the soft hyphen
+might be defined to mean something which is more or less different from
+its meaning in ISO 8859. (These cases are not quite comparable, since
+the less than sign is the concrete syntax representation of SGML
+abstract syntax whereas the soft hyphen character would be separately
+defined to have a special meaning as a data character. Thus, the
+<a href="http://www.hut.fi/u/jkorpela/HTML3.2/3.7.html"
+title="Division into lines and the use of blanks and tabs in HTML">space
+character</a> and the
+<a href="http://www.hut.fi/u/jkorpela/HTML3.2/3.10.html#nbsp"
+title="the meanings of NBSP in HTML">non-breaking space</a>
+are closer analogues.)
+<p>
+In a sense, the
+<a href="http://www.w3.org/TR/REC-html40/">HTML 4.0 specification</a>
+is more explicit here than the HTML 2.0 and HTML 3.2 specifications.
+It says, in
+<a href="http://www.w3.org/TR/REC-html40/struct/text.html">section <cite>Text</cite></a>,
+<a href="http://www.w3.org/TR/REC-html40/struct/text.html#h-9.3">subsection <cite>Lines and Paragraphs</cite></a>,
+<a href="http://www.w3.org/TR/REC-html40/struct/text.html#hyphenation">clause
+<cite>Hyphenation</cite></a>:
+<blockquote>
+<P>In HTML, there are two types of hyphens: the plain hyphen and the
+soft hyphen. The plain hyphen should be interpreted by a user agent as
+just another character. The <span class="index-def" title="soft
+hyphen"><a name="didx-soft_hyphen">soft hyphen</a></span> tells the user agent where a line break can
+occur.</P>
+
+<P>Those browsers that interpret soft hyphens must observe the
+following semantics: If a line is broken at a soft hyphen, a hyphen
+character must be displayed at the end of the first line. If a line
+is not broken at a soft hyphen, the user agent must not display a hyphen
+character. For operations such as searching and sorting, the soft
+hyphen should always be ignored.</P>
+
+<P>In HTML, the plain hyphen is represented by the "-" character
+(&amp;#45; or &amp;#x2D;). The soft hyphen is represented by the
+character entity reference &amp;shy; (&amp;#173; or &amp;#xAD;)</P>
+</blockquote>
+
+In a sense, this clearly defines the "discretionary hyphen" semantics
+for the soft hyphen. (In fact, it might be clearer, since the phrase
+"where a line break can occur" is somewhat abstract and obscure;
+line breaks do not just "occur", they are <em>produced</em> by user
+agents.)
+And the
+<a href="http://www.w3.org/TR/REC-html40/sgml/entities.html#h-24.2"
+title="Character entity references for ISO 8859-1 characters">character entity reference list</a> even
+names the character as "soft hyphen = discretionary hyphen".
+<p>
+But notice the wording
+"Those browsers that interpret soft hyphens".
+Perhaps the intent is to refer to the fact that browsers need not
+divide words into lines at all, in which case they would ignore soft
+hyphens. But the obvious interpretation of the <em>wording</em> is
+that browsers need not "interpret soft hyphens" at all. In that case they
+would treat them as normal data characters having their normal meanings
+as set up in ISO 8859-1. This would imply that soft hyphens are
+displayed as hyphens.
+<p>
+Moreover, a
+<a href="shytest.html" title="A document for testing the treatment of
+soft hyphens by Web browsers">simple test</a> shows that e.g.
+(at least some versions of) Netscape 4.0 and Internet Explorer 4.0
+basically treat soft hyphens as plain data characters which are
+<strong>always visible</strong>. IE may divide a word into two lines
+where a soft hyphen occurs, but it does the same for normal hyphens.
+<p>
+IE&nbsp;5.0 seems to treat soft hyphens as discretionary,
+i.e. it does not display them as a rule but may split a word
+at a soft hyphen (and then append a hyphen at the end of a line).
+But since other browsers generally display soft hyphens simply
+as hyphens, it would be foolish, at least for the time being,
+to use soft hyphens on Web pages.
+The appearance of you document might improve on IE&nbsp;5.0 but it
+would look very foolish on other browsers, which would display your text
+as explicitly <nobr>hy-phen-ated!</nobr>
+</p>
+
+
+<h2><a name="unicode">What the Unicode standard says</a></h2>
+
+<P>In the
+<a href="chars.html#10646">Unicode</a>
+standard, version 2.0, soft hyphen is defined as follows:</P>
+<BLOCKQUOTE>
+<P>U+00AD <SPAN CLASS="charname">soft hyphen</SPAN> indicates a hyphenation point,
+where a line-break is preferred when a word is to be hyphenated. Depending on the script,
+the visible rendering of this character when a line break occurs may differ
+(for example, in some scripts it is rendered as a <I>hyphen</I> -, while
+in others it may be invisible).</P>
+</BLOCKQUOTE>
+<P>The standard also defines
+U+2027 <SPAN CLASS="charname">hyphenation point</SPAN>,
+but that character is irrelevant for the discussion here. (It is a raised dot, resembling a middle dot and
+used to indicate correct word breaking, e.g. in dictionaries. It is definitely a printable
+character, and the very purpose of its use implies that it must be visible. Naturally,
+this makes it very clear that the soft hyphen is not intended to be a <EM>visible</EM>
+hyphenation hint to humans; the discussion revolves around the question whether it is
+intended to be an <EM>invisible</EM> hyphenation hint to computer programs.)
+</P>
+<P>
+The code table in Unicode 2.0 mentions "discretionary hyphen" as an alternative name for
+ <SPAN CLASS="charname">soft hyphen</SPAN>.
+This, together with the definition quoted above, imply that the intention was to specify
+that soft hyphen is not a normal printable character but essentially an invisible
+hyphenation hint, which may cause a hyphen-like glyph to be rendered if some program
+actually divides the word into two lines at the suggested hyphenation point.
+One might say that this does not make the soft hyphen even a conditionally printable
+character, since an eventual glyph is used by the program to indicate what it has done.
+The appearance and form of such a glyph may or may not depend on whether hyphenation
+took place due to a hyphenation hint given by a soft hyphen or due to normal
+hyphenation rules (based on dictionary lookup or algorithmic rules or something else).
+Notice that the definition of soft hyphen in ISO 8859-1 strongly suggests that when
+a line break within a word
+has been established by a program applying hyphenation rules, it could
+use the (visible) soft hyphen character so that the situation can be distinguished
+(programmatically at least, perhaps visually too) from a hyphen that occurs at the
+end of a line for some other reason.
+</P>
+<P>
+Thus, Unicode 2.0 seems to be in definite contradiction with ISO 8859-1 as regards to
+the definition and use of the soft hyphen characters.
+These important standards conflicting,
+and implementations being defective from both viewpoints,
+the practical conclusion is that
+<STRONG>authors should not use the soft hyphen character at all, for any purpose</STRONG>.
+</P>
+
+
+<h2>Concluding remarks: why did all this happen?</h2>
+
+Hyphenation is one part of the problems of taking various
+(natural) languages
+and writing systems into account
+on the Web, an issue called
+<a href="http://www.w3.org/pub/WWW/International/">internationalization</a>
+(abbr. i18n)
+or localization, for some odd reason.
+It is a difficult issue, but not really among the most important in the
+area,
+except for languages with very long words and in contexts where
+text width is small.
+<p>
+Conceivably, people want fast solutions to their problems.
+When we see the problems which arise from Web browsers using no
+hyphenation, we pay attention to the worst cases and wish we could
+solve at least them, and solve them <em>now</em>. The simple
+idea of giving an explicit hyphenation hint suggests itself.
+Several popular text processing programs allow you to enter
+"hidden hyphenation hints" which are normally invisible.
+(Cf.
+<a href="http://www.sandybay.com/pc-web/hyphenation.htm">information
+about hyphenation</a> in
+<a href="http://www.pcwebopaedia.com/index.html">PC Webop&aelig;dia</a>.)
+This is probably how people started thinking that there must be
+a <em>character</em> for the purpose, and when one looks at the
+ISO Latin 1 specification, what else could one use but soft hyphen?
+<p>
+Moreover, people may regard the notation <code>&amp;shy;</code> as
+comparable to HTML tags. But of course it is defined simply as
+a notation which stands for a single character, the soft hyphen.
+<HR TITLE="Information about this document">
+<P>
+<A HREF="http://www.hut.fi/u/jkorpela/">Jukka Korpela</A>,
+<a href="mailto:Jukka.Korpela@hut.fi">Jukka.Korpela@hut.fi</a>
+<br><small>
+Originally written in April - May 1997<br>
+Updated in December 1997 to discuss the effect of HTML 4.0.<br>
+Updated in March 1998 to add remarks on Unicode.<br>
+Updated in August 1998 to add a remark on syllable hyphen.<br>
+Updated in August 1999 to add a note on new Unicode material.<br>
+Updated in September 1999 to add a note on IE 5.</br></small>

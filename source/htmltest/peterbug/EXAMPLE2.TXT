@@ -1,0 +1,11 @@
+This is the extract from the html file that produces the CAB_02 and HHWR_02 
+images.
+
+
+<p align=JUSTIFY><font size="+3"><strong><a name="_Toc375545189"></a><a name="_Toc408018386"></a>
+<a name="_Toc472654683"></a><a name="_Toc475600254"></a><a name="Heading23">An object has an interface<br>
+</a></strong></font>
+<p align=JUSTIFY><a name="Index45"></a>
+<a name="Index46">Aristotle was probably the first to begin a careful study of the concept of <cite>type</cite>; he spoke of &quot;the class of fishes and the class of birds.&quot; The idea that all objects, while being unique, are also part of a class of objects that have characteristics and behavi
+ours in common was used directly in the first object-oriented language, Simula-67, with its fundamental keyword <strong>class</strong> that introduces a new type into a program.<br>
+</a>

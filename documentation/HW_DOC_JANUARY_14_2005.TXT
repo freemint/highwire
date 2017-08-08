@@ -1,0 +1,509 @@
+Last updated: January 14, 2005
+
+=====================================
+
+      HighWire Documentation
+      
+=====================================
+
+    Table of Content
+
+      1. HighWire Release License
+      2. What is HighWire?
+      3. HighWire Development Team
+      4. Use of HighWire
+      5. Use of FontList
+      6. Supported HTML tags
+      7. Project Links
+
+
+1. HighWire Release License
+
+
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any damages
+   arising from the use of this software.
+
+   Permission is granted to anyone to use this software for any purpose,
+   including commercial applications, and to alter it and redistribute it
+   freely, subject to the following restrictions:
+
+   1. The origin of this software must not be misrepresented; you must not
+      claim that you wrote the original software. If you use this software
+      in a product, an acknowledgment in the product documentation would be
+      appreciated but is not required.
+
+   2. Altered source versions must be plainly marked as such, and must not be
+      misrepresented as being the original software.
+
+   3. This notice may not be removed or altered from any source distribution.
+      Anyone uses bits of the code for other reasons is welcome to, as long as
+      they specifically state that their work is based, in part, on the Project
+      HighWire source release by Robert Goldsmith.
+      
+
+2. What is HighWire?
+
+This is taken from the HighWire site written by the original author, 
+Robert Goldsmith.
+
+"For those of you who have not heard, HighWire is a new web browser. It has
+been in 'development' for over a year. I started HighWire in what I 
+considered a feeble attempt to discourage me from moaning about Cab. I 
+figured that when I proved my code was vastly slower than Cab at parsing and
+rendering a page I would give up and accept that browsing on my Falcon would
+always be slow.  Things did not turn out how I expected... I think the big
+problem with my plan was that, unbeknownst to me at the time, I had had a
+couple of rather good ideas.  The result is HighWire. Ok, so can I download
+it?  You cannot write a web browser in a month. I know, I tried :) HighWire
+is still very much in development. "
+ 
+Originally HighWire could do the following:
+
+  ù Load in an HTML 3.2 page hard coded into the source
+  ù Display this page multiple times in hard coded frames
+  ù Redraw and scroll the frames and resize the window
+  ù Quit
+ 
+Where we have gone with the project ...
+
+New items since it went open source:
+
+ ù Frameset Support (90%)
+ ù Tables (98%)
+ ù HTML 4 compliant (90%)
+ ù HTML forms (20%)  ù Online OVLs for mintnet, sting and support for iconnect
+ ù Colour support (mapped to current system palette)
+ ù Graphics (99%) - Now loads HTML files with Gifs, Jpgs, XBM, XPM and Pngs 
+   (50%) - colours are now perfect in all color modes 
+   (mono/256/32k/64k/24bit/32bit) which were tested using a Hades060 with a 
+   Nova graphics card. May solve color problems on a Falcon with a Nova card 
+   but this has not been tested as yet.
+ ù Files (Graphics, HTMLs, Docs etc.) can be dragged to a Highwire window 
+   where they will be displayed
+ ù Implementation of memory caching of images avoids multiple loading of the 
+   same image. The pseudo URI "about:cache" now shows detailed information 
+   about cached images.
+ ù Gem Version with drop-down menues
+ ù Gemscript support
+ ù Iconify/Uniconify window
+ ù HighWire now loads sample HTM files from a folder named "HTML"
+ ù Sound support
+ ù International Character Set support
+ ù Unicode characters up to U+FFFD with NVDI 4 and TrueType fonts
+ ù Scroll Window using arrow keys
+ ù A working implementation of hyperlinks (text and image)
+ ù File Selector support
+ ù Display text files using PRE style font selection
+ ù Number of windows only restricted by operating system
+ ù Frame Scroll controls are implemented now, also support of right mouse
+   button.
+ ù Real time scrolling
+ ù Background Scrolling is now working
+ ù Highwire now works with scroll mice when the program MWheel is being used.
+ ù The program MyPDF has been added to the HighWire package and is currently
+   under development (PDF support 10%)
+ ù Several Hotkeys added ù Extended menu bar, the current charset encoding 
+   can be seen and changed at menu title "View". Also de/increasing of the 
+   display font is available there.
+ ù Menu entry"Info.." will show now some basic information about the active 
+   frame.
+ ù Improved algorithm for line breaking to avoid splitting of text lines at 
+   wrong positions.
+ ù HTTP protocol layer reworked, is much faster now and works for much more 
+   servers.
+ ù The problem of files with long names not loaded at some Magic versions 
+   (eg. *.html) is solved now.
+ ù Added a workaround to have it working under Geneva again.
+ ù Reworked code to avoid a flickering mouse pointer when using Highwire.
+ ù Navigational Bar added with the traditional browser button: Forward, Back,
+   Home, Reload, Stop and URL Edit Field.
+ ù When holding down the Forward and Back buttons a bit longer, a popup 
+   appears allows selection of any URL in History as well as the Last and 
+   Next URLs..
+ ù Using the commands, ^C/^V, copying between the Navigation Bar's edit field 
+   and the Clipboard can be done.
+ ù The Navigation Bar can be hidden or shown by holding down the ALT key while
+   the window's Close Button.
+ ù Initial implementation of the Ovl's for different TCP/IP stack support has
+   been added.
+ ù Form support added which allow keyboard input into form input fields.
+ ù Calculation of table width and cells have been improved.
+ ù New keyword FONT_MINSIZE to define a minimum font height in points, eg. for
+   (font size = 1) (see example.cfg\highwire.cfg for explanation).
+ ù New menu entry under "Options" to have frames always resizable and 
+   scrollbars if necessary even if the HTML defines anything else there. The
+   default is off, but can be set with the keyword FORCE_FRAMECTRL = 1 in the
+   config file.
+ ù The cfg file now supports three new keywords concerning the cache:  1) 
+   CACHEDIR which lets the user choose where Highwire will define a directory 
+   for the storage of visited pages/images, 2) CACHEMEM = (kbytes) to limit 
+   the amount of memory cached images (default is now 100k) which should help 
+   to prevent Highwire from running out of memory due to always storing every 
+   image ever loaded and 3) CACHEDSK which sets limits for filling up the 
+   cache in order to prevent blowing up hard drives. (eg. CACHEDSK = 8192 
+   1000 means to use only 8192 of disk space, but not more than 1000 files).
+ ù More funtionality for the redo buttion: Holding down the ALT key clears 
+   now the whole cache. Additional holding down the SHIFT key will avoid 
+   forcing a page reload then.
+ ù The TAB key can now be used to jump between text fields, inluding 
+   autmatical page scrolling to the actual field -- the latter in opposite to 
+   CAB. To leave the edit mode either press CTRL+TAB or click somewhere else
+   on the page.
+ ù A right mouse click not only brings up the options: Back, Forward, Reload, 
+   View Source and Info, but also Copy URL and Save As. This means that now 
+   it is possible to download archive and HTML files to a local directory.
+ ù TEXTAREA tags are now working and editable.
+ ù Highwire is now capable of storing non-session cookies to allow persistent 
+   user preferences for sites, as offered by Google, Yahoo and others. Access 
+   this "Options" menu.
+ ù When the option 'Cookies allowed' in the menu gets changed, this will be 
+   stored in the config file.
+ ù F10 brings up full-screen mode.
+ ù New keyword for the Highwire cfg file. START_PAGE = <url or file> to define 
+   what be displayed after program start. NOTE: This option will always be 
+   ignored at the very first start of a new installed version.
+ ù The menu bar got changed: 'Suppress Images' was removed (still useable from 
+   config file) and instead 'View Images' and 'Use CSS' were added. Both of 
+   the latter are stored in the cfg file also when changed.
+ ù Highwire now has CSS support especially for the layout of the floating 
+   block elements (DIV, TABLE, P, ..). Also recognized are the CSS attributes: 
+   float, clear, border and font.
+ ù Highwire now loads it's config file from the HOME directory under Magic and 
+   Mint.
+
+It is currently missing:
+
+  ù user interface
+  ù Java/JavaScript support
+  ù use of internet clients
+  ù External viewer support
+  ù External emailer
+  ù lots more...
+ 
+So why all the fuss?
+
+Well, HighWire can load in, parse and render an HTML page in full 16-bit
+fonts (for all the 'strange' characters such as Thorn) in about half the time
+of Cab. Furthermore, once a page is pre-rendered (before the first time it
+is displayed) it does not need further processing, making redraws and
+window resizes much much faster. On a Hades machine the code was tested
+on, the page render including font sizes, centering and lists redrew
+correctly in real time (with a slight flicker...) as the window was
+resized.
+
+
+3. HighWire Development Team
+
+HighWire Code
+
+  ù Dan Ackerman (aka Baldrick - current maintainer)
+  ù Ralph Lowinski (aka AltF4)
+  ù Rainer Seitel
+  ù Matthias Jaap
+  ù Rafal Kawecki
+  ù David Leaver
+  ù Markus Lutz
+  ù Mike De.Petris
+  ù Denis Huguet (aka Stghost)
+  ù Robert Goldsmith (original HighWire author - non active)
+  ù Frank Naumann (original GCC modifications - non active)
+ 
+HighWire Documentation
+
+  ù Rob Mahlert
+  ù Edward Baiz Jr. (aka Gamer)
+  ù Jean-Paul Mata (aka ProTOS)
+ 
+Fontlist Project
+
+  ù Joakim H”gberg (aka GokMasE)
+  ù Lonny Pursell (aka LP)
+ 
+
+4. Use of HighWire
+
+  ù System Requirements:
+  ù Multitasking (preemptive multitasking) Atari OS - Magic or Mint
+  ù NVDI or Speedo (NVDI 4 for Unicode mode and TrueType fonts)
+  ù Speedo fonts with Bitstream International Character Set (BICS)
+
+Hot Keys:
+
+  ù Control + I - About Highwire alert
+  ù Control + O - Open file selector
+  ù Control + R - Reload
+  ù Control + Q - Quit Highwire
+  ù Control + U - Cycle window
+  ù Control + W - Cycle window
+  ù Control + TAB - Close frames
+  ù 1 -   Reload with default character set ISO/IEC 8859-1, Latin-1, 
+          Windows codepage 1252 (This is the default character set for 
+          a HTML browser.)
+  ù 2 -   Reload with default character set ISO/IEC 8859-2, Latin-2
+  ù A -   Reload with default character set Atari ST system font
+  ù F -   Reload with default character set ISO/IEC 8859-15, Latin-8
+  ù M -   Reload with default character set Apple Macintosh Roman
+  ù U -   Reload with default encoding UTF-8, Unicode
+  ù Tab - Cycle Frames
+  ù + -   Reload with increased font size
+  ù - -   Reload with decreased font size
+  ù Help,F1 -  Help: Help
+  ù F5 -  Reload
+  ù F7 -  Toggle logging to console
+  ù F8 -  Toggle pictures or alternative text
+  ù Undo - Go back in file history (+Shift: go forward)
+  ù Arrow keys - Scroll frame
+ 
+The scroll elements support the right mouse button.</p>
+
+File types supported:
+
+  ù HTML files (8-bit coded)
+  ù GIF images
+  ù JPG images
+  ù PNG images (not yet complete: no interlaced pics at the moment)
+  ù Plain text (8-bit and 16-bit coded)
+
+Configuration:
+
+  ù At present highwire.cfg consists mainly of font information. Change
+    manually, or better with the setup tool FontList. 
+
+
+5. Use of FontList
+
+FontList - Coded by Lp and GokMasE for HighWire project
+========
+
+Small utility to change font settings in HighWire configuration file.
+
+* Installation
+
+Keep this binary in the work directory of HighWire.
+
+* Useage
+
+As of FontList 1.11 a default config file is created at launch time,
+unless an existing file is located in FontList's work directory.
+Also note that if the font setting you are seeking to change is not
+present (or not activated) in the old config file, FontList will add
+the new setting to the end of the config.
+
+Select 1 (there can be only one) of the fonts, then use
+menubar to decide what setting in HighWire should be affected.
+You can also right click on any of the fonts to open up a popup menu 
+and select a text style to link the current font ID to.
+Note that changes are written to HighWire configuration file
+instantly when you select an entry in either menu!
+
+Another thing you can do, is select a number of fonts (hold down 
+CTRL) and later press CTRL+C. Then the prg will save a list of all 
+currently selected fonts to the clipboard.
+
+CTRL+A selects/deselects all.
+
+NOTE: When NVDI is installed, all non-speedo fonts are greyed out and 
+thus not selectable. The reason for this is that HighWire at this time 
+does not support other format than Speedo. However, if you wish to 
+play around with other fonts you can enable all listed fonts by 
+selecting "Allow non-speedo" from menubar.
+
+* General advice
+
+While this tools seems to work pretty reliable, it is a good idea to 
+keep backups of the configuration file.
+
+ 
+6. Supported HTML tags
+
+Here are some of the HTML tags that HighWire supports:
+Hopefully will be updated to list all supported tags.
+
+   ù A	
+     - CHARSET	
+     - HREF
+     - ID	
+     - NAME
+     - TARGET
+   ù B (bold)
+   ù BASE
+     - TARGET
+   ù BASEFONT	
+     - COLOR
+     - SIZE
+   ù BGSOUND (IE proprietary)
+     - SRC
+   ù BIG
+   ù BLOCKQUOTE
+     - TITLE
+   ù BODY	
+     - ALINK	
+     - BGCOLOR
+     - LEFTMARGIN (IE proprietary)
+     - MARGINHEIGHT (NS proprietary)
+     - MARGINWIDTH (NS proprietary)
+     - TEXT
+     - TOPMARGIN (IE proprietary)
+   ù BR
+     - CLEAR
+   ù C
+   ù CENTER
+   ù CITE
+   ù CODE
+   ù DD (DL definition)
+   ù DEL
+   ù DFN (instance definition)
+   ù DIR
+   ù DIV	
+     - ALIGN
+   ù DL (definition lists)
+   ù DT (DL term)
+   ù EM
+   ù EMBED
+     - SRC
+   ù FONT	
+     - COLOR	
+     - SIZE
+   ù FORM
+     - ACTION
+     - METHOD
+     - TARGET
+   ù FRAME
+     - MARGINHEIGHT
+     - MARGINWIDTH
+     - NAME	
+     - SCROLLING	
+     - SRC
+   ù FRAMESET	
+     - COLS	
+     - FRAMEBORDER
+     - ROWS	
+   ù H (H1 - H6)
+     - ALIGN
+     - BGCOLOR (HW proprietary, CSS wrapper)
+     - COLOR (HW proprietary, CSS wrapper)
+   ù HR	
+     - ALIGN
+     - BGCOLOR (HW proprietary, CSS wrapper)
+     - COLOR
+     - HEIGHT	
+     - NOSHADE	
+     - SIZE	
+     - WIDTH	
+   ù HTML
+     - LANG
+   ù I (italics)
+   ù IMG	
+     - ALIGN
+     - ALT	
+     - HEIGHT
+     - HSPACE	 	
+     - SRC
+     - VSPACE	
+     - WIDTH
+   ù INPUT
+     - CHECKED
+     - MAXLENGTH
+     - SIZE
+     - TYPE ('BUTTON','CHECKBOX','FILE','HIDDEN','PASSWORD','RADIO','RESET',
+       'SUBMIT','TEXT')
+     - VALUE
+   ù INS
+   ù IOD (IOD4 proprietary)
+     - SHOUT
+   ù KBD
+   ù LI (list item)
+     - TYPE
+     - VALUE
+   ù LISTING
+   ù MENU
+   ù META	
+     - CONTENT	
+     - HTTP_EQUIV ('"CHARSET','REFRESH"')
+   ù NOSCRIPT
+   ù OL (numbered lists)
+     - START
+     - TYPE
+   ù P	
+     - ALIGN
+   ù PLAINTEXT
+   ù PRE
+     - WIDTH
+   ù Q
+     - LANG
+   ù S (strike through)
+   ù SAMP
+   ù SCRIPT (unused atm)
+   ù (SELECT)
+   ù SMALL
+   ù STRIKE
+   ù STRONG
+   ù STYLE (unused atm)
+   ù SUB
+   ù SUP
+   ù TABLE
+     - ALIGN	
+     - BGCOLOR	
+     - BORDER	
+     - CELLPADDING	
+     - CELLSPACING	
+     - HEIGHT	
+     - WIDTH
+   ù TD (table data cell)			
+     - ALIGN	
+     - BGCOLOR	
+     - COLSPAN	
+     - HEIGHT	
+     - ROWSPAN	
+     - VALIGN	
+     - WIDTH	
+   ù (TEXTAREA)
+   ù TH (table header cell)	
+     - ALIGN	
+     - BGCOLOR	
+     - COLSPAN	
+     - HEIGHT	
+     - ROWSPAN	
+     - VALIGN	
+     - WIDTH
+   ù TITLE
+   ù TR (table row)
+     - ALIGN	
+     - BGCOLOR	
+     - HEIGHT	
+     - VALIGN
+   ù TT (teletype font)
+   ù U (underlined)
+   ù UL (bulleted lists)	
+     - TYPE	
+   ù VAR
+   ù XMP
+
+
+7. Project Links
+
+While HighWire won't directly use these at this point.  Here are some useful
+links for the HighWire project:
+
+HighWire Project Homepage.
+
+  - Place for the most current downloads and information about
+    the HighWire project
+  
+    http://highwire.atari-users.net
+
+
+HighWire Users mailing list
+
+   - A list for users to ask questions and report bugs.
+
+    http://www.atari-users.net/mailman/listinfo/highwire-users_atari-users.net
+
+
+HighWire Developer Mailing list
+
+  - A list for people interested in actively working on the project.
+
+    http://www.atari-users.net/mailman/listinfo/highwire-atari-users.net
+

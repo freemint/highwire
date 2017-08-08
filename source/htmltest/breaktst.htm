@@ -1,0 +1,98 @@
+
+<html>
+
+<head><title>Test page</title></head>
+
+<body>
+
+<font size="6">Small test to see how BR is interpreted in different occasions</font><br>
+(notice how the numerous BR tags below have no effect in HighWire?)
+<p><br><br><br><br><br><br>
+There should be a blank row inserted before the first image in the cell,<br>
+and the row should be as high as the image (+vspace) itself it seems.<br>
+(This glitch can be seen on eg. the Atari.org site)
+
+<br>
+
+<table border="1">
+
+<tr>
+<td valign="top">
+<br>
+
+<img src="nopic.gif" width="122" height="22" vspace="2" alt="Dummy image"><br>
+<img src="nopic2.gif" width="100%" height="2" alt="Image ruler"><br>
+
+
+
+
+
+<font face="verdana" size="1">
+Next text..<br>
+<a href="http://www.norran.se"><b>Link text</b></a>
+</font>
+
+
+</td></tr></table>
+
+
+
+
+
+<p>
+In this table we have inserted the P tag, creating a new paragraph.<br>
+Now HW will add a blank row, but not in the "correct" height. It seems like also in this case, the
+height of the following row (in our case the image+vspace) should be used.
+<br>
+<table border="1">
+<tr><td>
+<p><br>
+<img src="nopic.gif" width="122" height="22" vspace="2" alt="Dummy image"><br>
+<img src="nopic2.gif" width="100%" height="2" alt="Image ruler"><br>
+
+<font face="verdana" size="1">
+Next text..<br>
+<a href="http://www.norran.se"><b>Link text</b></a>
+</font>
+</p>
+</td></tr>
+</table>
+
+
+<p>
+Compare these two tables.<br>
+The only difference is that this table has example text written
+before setting the font size. Compare HW to Mozilla/Netscape/IE and notice how
+the second table should have a higher
+blank row?
+<br>
+<table border="1">
+<tr><td>Begin cell with some test text
+<font size="6"><br>
+Just some example text</font>
+<br>
+<font face="verdana" size="1">
+Next text..<br>
+<a href="http://www.norran.se"><b>Link text</b></a>
+</font>
+</p>
+</td></tr>
+</table>
+
+<br>
+<table border="1">
+<tr><td>
+<font size="6"><br>
+Just some example text</font>
+<br>
+<font face="verdana" size="1">
+Next text..<br>
+<a href="http://www.norran.se"><b>Link text</b></a>
+</font>
+</p>
+</td></tr>
+</table>
+
+
+</body>
+</html>

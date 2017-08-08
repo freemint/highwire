@@ -1,0 +1,15 @@
+<HTML>
+<HEAD>
+<TITLE>Magic RSS Test Page</TITLE>
+</HEAD>
+<BODY>
+
+<H3>Magic RSS Test page</H3>
+
+If you can see a feedbox with listings from Yahoo! News Top Stories, then congratulations - you have successfully installed Magic RSS on your website.  Use this page as a template for including Magic RSS into your own pages.<P>
+
+
+	<!--#include virtual="/magicrssforblogs.php?rss=http://rss.news.yahoo.com/rss/topstories" -->
+
+</BODY>
+</HTML>

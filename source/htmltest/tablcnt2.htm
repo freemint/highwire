@@ -1,0 +1,74 @@
+<HTML>
+<HEAD><TITLE></TITLE></HEAD>
+
+
+<BODY>
+
+<FONT SIZE="7">HighWire test page</FONT><P>
+<FONT SIZE="4">Demonstration of the problem with cancelled alignments (bug 0000012)<BR>
+Note that it will also demonstrate that tables can't yet have cell widths specified in percentage (bug 0000020)
+<hr width="100%">
+<bR>
+<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="1" WIDTH="100%">
+<TR><TD WIDTH="25%">CELL 1<P>Should be 25% of full table width</TD><TD ALIGN="right">
+<P><BR>
+
+We have set align=right for this cell
+
+<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="1" WIDTH="90%">
+<TR><TD>
+SUBTABLE 1
+<P><BR>
+This is a table within a table, and it should be located to the right in middle cell
+</TD></TR>
+</TABLE>
+
+This text should be right aligned<br>
+since the right alignment of this<br>
+cell still is valid
+
+<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="1" WIDTH="90%">
+<TR><TD>
+SUBTABLE 2
+<P><BR>
+This is a table within a table, and it should be located to the right in middle cell
+</TD></TR>
+</TABLE>
+
+<CENTER>
+Now we have alignment set to center<br>
+so this text should be centered<br>
+within the cell
+
+<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="1" WIDTH="90%">
+<TR><TD>
+SUBTABLE 3
+<P><BR>
+This is a table within a table, and it should be located in the horizontal middle of the cell
+</TD></TR>
+</TABLE>
+
+This text should be centered<br>
+since the center tag has not been<br>
+closed yet
+
+<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="1" WIDTH="90%">
+<TR><TD>
+SUBTABLE 4
+<P><BR>
+This is a table within a table, and it should be located in the horizontal middle of the cell
+</TD></TR>
+</TABLE>
+
+</CENTER>
+This text should be right aligned<br>
+since we closed the center tag
+
+</TD>
+<TD WIDTH="25%">CELL 3<P>Should be 25% of full table width</TD>
+</TR>
+</TABLE>
+
+
+
+</BODY></HTML>

@@ -1,0 +1,194 @@
+<HTML
+<HEAD><TITLE>HighWire Help: Configuration</TITLE>
+</HEAD><BODY bgcolor="#EEEEEE">
+
+<H1 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    Configuring HighWire</H1>
+<P align="justify">
+At startup, HighWire tries to load the <TT>highwire.cfg</TT> configuration file.
+In case the environment variable <TT>$HOME</TT> is set it will first try to load
+it from <TT>$HOME/defaults/highwire.cfg</TT>.  If that fails it will then try to
+load it from <TT>$HOME/highwire.cfg</TT> and if still still fails (or
+<TT>$HOME</TT> is not defined at all) HighWire will finally try to load the file
+from its starting directory.
+<P align="justify">
+The configuration file has a simple structured <I>(yet)</I>:<BR>
+Lines starting with a '<TT>#</TT>' are ignored in general (to be precise,
+everything after a '<TT>#</TT>' is ignored) and empty lines are ignored as well.
+Furthermore, leading and trailing white spaces (blanks, tabs,
+<TT>cr</TT>/<TT>lf</TT>... that is) are also ignored in general.  A valid line
+consists of:<BR>
+<TT>&nbsp;&nbsp;&nbsp;<I>variable</I>&nbsp;=&nbsp;<I>value</I><BR>
+
+<P>
+<B>Variables sorted alphabetically:</B><FONT size="1">
+<TT><UL style="list-style-type: none;">
+<LI>&nbsp;B </TT>
+    <NOBR>&bull; <A href="#Fnt+Hdr"><TT>BOLD_HEADER</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Hdr"><TT>BOLD_ITALIC_HEADER</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Nrm"><TT>BOLD_ITALIC_NORMAL</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Tty"><TT>BOLD_ITALIC_TELETYPE</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Nrm"><TT>BOLD_NORMAL</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Tty"><TT>BOLD_TELETYPE</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;C </TT>
+    <NOBR>&bull; <A href="#Cctl"><TT>CACHEDIR</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Cctl"><TT>CACHEMEM</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;D </TT>
+    <NOBR>&bull; <A href="#Rndr"><TT>DFLT_BACKGND</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;F </TT>
+    <NOBR>&bull; <A href="#Fnt+Pnt"><TT>FONT_MINSIZE</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Pnt"><TT>FONT_SIZE</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Rndr"   ><TT>FORCE_FRAMECTRL</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;H </TT>
+    <NOBR>&bull; <A href="#Fnt+Hdr"><TT>HEADER</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;I </TT>
+    <NOBR>&bull; <A href="#GUI"    ><TT>INFOBAR</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Hdr"><TT>ITALIC_HEADER</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Nrm"><TT>ITALIC_NORMAL</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Fnt+Tty"><TT>ITALIC_TELETYPE</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;L </TT>
+    <NOBR>&bull; <A href="#Dbgg"><TT>LOCAL_WEB</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Dbgg"><TT>LOGGING</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;N </TT>
+    <NOBR>&bull; <A href="#Fnt+Nrm"><TT>NORMAL</TT></A></NOBR>
+    <NOBR>&bull; <A href="#Rndr"   ><TT>NO_IMAGE</TT></A></NOBR>
+    <P><TT>
+<LI>&nbsp;T </TT>
+    <NOBR>&bull; <A href="#Fnt+Tty"><TT>TELETYPE</TT></A></NOBR>
+</UL></FONT>
+&nbsp;
+
+<!----------------------------------------------------------------------------->
+<H2 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    <A name="Wind">GUI Stuff:</A></H2>
+<DL>
+<DT><TT><B>INFOBAR</B> = [0..5]</TT>
+<DD>Controls the appearance of the windows' infobars.  The value means:<NOBR>
+    <BR>&nbsp;&nbsp;<TT>0</TT>: no infobar drawn at all
+    <BR>&nbsp;&nbsp;<TT>1</TT>: only AES infobar (traditional GEM)
+    <BR>&nbsp;&nbsp;<TT>2</TT>: only output to the hslider area
+    <BR>&nbsp;&nbsp;<TT>3</TT>: both methods above
+    <BR>&nbsp;&nbsp;<TT>4</TT>: application widget infobar, no realtime resizing
+                                possible
+    <BR>&nbsp;&nbsp;<TT>5</TT>: both AES and application widget infobar.
+    <BR></NOBR>
+    The default setting is <TT>4</TT>.
+</DL>
+&nbsp;
+
+<!----------------------------------------------------------------------------->
+<H2 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    <A name="Font">Font Setting:</A></H2>
+<P align="justify">
+The value for ALL font variables is the index number of the VDI.  There are
+four necessary values for each of the font variables, these are plain, italic,
+bold and bold italic.  The default values are <TT>5031</TT>, <TT>5032</TT>,
+<TT>5033</TT>, <TT>5034</TT> (Baskerville Speedo font).
+<DL>
+<DT><A name="Fnt+Nrm"></A>
+    <B><TT>NORMAL</TT></B>,        <B><TT>BOLD_NORMAL</TT></B>,
+    <B><TT>ITALIC_NORMAL</TT></B>, <B><TT>BOLD_ITALIC_NORMAL</TT></B>
+<DD>This is the font that the normal text will be displayed with.
+    <BR>&nbsp;
+<DT><A name="Fnt+Hdr"></A>
+    <B><TT>HEADER</TT></B>,        <B><TT>BOLD_HEADER</TT></B>,
+    <B><TT>ITALIC_HEADER</TT></B>, <B><TT>BOLD_ITALIC_HEADER</TT></B>
+<DD>The font that headers will be displayed with.
+    <BR>&nbsp;
+<DT><A name="Fnt+Tty"></A>
+    <B><TT>TELETYPE</TT></B>,       <B><TT>BOLD_TELETYPE</TT></B>, 
+    <B><TT>ITALIC_TELETYPE</TT></B>,<B><TT>BOLD_ITALIC_TELETYPE</TT></B>
+<DD>Font used for <CODE>&lt;PRE&gt;</CODE> and <CODE>&lt;TT&gt;</CODE> tags as
+    well as for plain text files.
+    <BR>&nbsp;
+<DT><A name="Fnt+Pnt"></A>
+    <B><TT>FONT_SIZE</TT></B>
+<DD>Defines the base font size in points for normal font height (as of
+    <CODE>&lt;FONT SIZE="3"&gt;</CODE>).  Usefull values are <TT>10..14</TT>.
+<DT><B><TT>FONT_MINSIZE</TT></B>
+<DD>Set the minimum height in points that a font should have at least, eg. for
+    <CODE>&lt;FONT SIZE="1"&gt;</CODE> tags.
+</DL>
+&nbsp;
+
+<!----------------------------------------------------------------------------->
+<H2 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    <A name="Rndr">Parser/Renderer:</A></H2>
+<DL>
+<DT><TT><B>DFLT_BACKGND</B> = <I>&lt;colour&gt;</I></TT>
+<DD>Sets the default background colour for pages that have none defined.  The
+    value can either be a decimal number <TT>0..255</TT> to use the VDI colour
+    map, a hexadecimal number of the form <TT>0xRRGGBB</TT> as a direct colour
+    value or a text as used in HTML.  The three examples below mean all the same
+    colour:<TT>
+    <BR>&nbsp;&nbsp;&nbsp;DFLT_BACKGND = 8
+    <BR>&nbsp;&nbsp;&nbsp;DFLT_BACKGND = 0xC0C0C0
+    <BR>&nbsp;&nbsp;&nbsp;DFLT_BACKGND = silver
+    </TT>
+    <BR>&nbsp;
+<DT><TT><B>FORCE_FRAMECTRL</B> = [0|1]</TT>
+<DD>If set to a non-zero value, the attributes <CODE>NORESIZE</CODE> and
+    <CODE>SCROLLING</CODE> of frames and framesets are ignored.  Also setting
+    frame borders to zero will be prevented.  This makes some mal-designed
+    pages more useable.<BR>
+    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    >Menu Options</A>.
+    <BR>&nbsp;
+<DT><TT><B>NO_IMAGE</B> = [0|1]</TT>
+<DD>If set to a non-zero value, images won't be displayed but the text from
+    their <CODE>ALT</CODE> attribute will be used instead (if given).<BR>
+    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    >Menu Options</A>.
+</DL>
+&nbsp;
+
+<!----------------------------------------------------------------------------->
+<H2 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    <A name="Cctl">Cache Control:</A></H2>
+<DL>
+<DT><TT><B>CACHEDIR</B> = <I>&lt;absolute path&gt;</I></TT>
+<DD>To allow HighWire to save visited pages for later revisites it is necessary
+    to define a directory for storage.  This might be something like:<TT>
+    <BR>&nbsp;&nbsp;&nbsp;CACHEDIR = C:\TMP\
+    <BR>&nbsp;&nbsp;&nbsp;CACHEDIR = D:\HIGHWIRE\CACHE.DIR\
+    <BR>&nbsp;&nbsp;&nbsp;CACHEDIR = U:\ram\
+    </TT><BR><I><B>Note:</B>  The last example might need plenty of ram!</I>
+    <BR>&nbsp;
+<DT><TT><B>CACHEMEM</B> = <I>&lt;kilobytes&gt;</I></TT>
+<DD>Sets the maximum amout in kilobytes for images cached in memory.  This
+    value affects only these images which aren't used anymore (default is 100k).
+</DL>
+&nbsp;
+
+<!----------------------------------------------------------------------------->
+<H2 style="color:yellow; background-color:dodgerblue;
+           text-indent:1em; text-decoration:underline; white-space:nowrap">
+    <A name="Dbgg">Debugging:</A></H2>
+<DL>
+<DT><TT><B>LOCAL_WEB</B> = <I>&lt;absolute path&gt;</I></TT>
+<DD><font color=red><TT><B><I>- TO BE ADDED -</I></B></TT></FONT>
+<DT><TT><B>LOGGING</B> = [0|1]</TT>
+<DD>If set to a non-zero value, HighWire will spit lots of debug messages to
+    <TT>stdout</TT>.<BR>
+    <I><B>Note:</B>  If you haven't installed any console window (T-Con,
+    TosWin2, ...) this will lead to several text lines written over the screen.
+    </I><BR>
+    This setting can be changed at runtime in <A href="c-MB.htm#Optn"
+    >Menu Options</A>.
+</DL>
+&nbsp;
+
+<P><A href="#">Goto top</A>
+</BODY></HTML>

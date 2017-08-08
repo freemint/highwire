@@ -1,0 +1,55 @@
+<html>
+
+<head><title>Another doc to test wrapping</title></head>
+
+
+<body>
+
+
+
+<font size="7">Opposite alignment setting forces wrapping<br><b>Bug 0000059</b></font>
+
+<br>
+
+<font size="3">In the first two tables you will notice how the two image blocks having different alignment set, will cause
+the second block to be wrapped down.</font>
+
+<TABLE cellSpacing=0 cellPadding=0 width="100%" border="1">
+
+  <TR>
+    <TD vAlign=top height=78><A href="http://www.mozillazine.org/"><IMG 
+      height=70 alt="img 1 (align=right)"  src="file1.gif" width=180 
+      align=right><IMG height=70 alt="img 2 (align=left)" src="file2.gif" width=133 
+      align=left></A></TD></TR></TABLE>
+<br>
+<TABLE cellSpacing=0 cellPadding=0 width="100%" border="1">
+
+  <TR>
+    <TD vAlign=top height=78><A href="http://www.mozillazine.org/"><IMG 
+      height=70 alt="img 1 (align=left)"  src="file1.gif" width=180 
+      align=left><IMG height=70 alt="img 2 (align=right)" src="file2.gif" width=133 
+      align=right></A></TD></TR></TABLE>
+
+<font size="3">The next 2 tables illustrates that two images with same alignment set is handled correctly.</font>
+
+<TABLE cellSpacing=0 cellPadding=0 width="100%" border="1">
+
+  <TR>
+    <TD vAlign=top height=78><A href="http://www.mozillazine.org/"><IMG 
+      height=70 alt="image 1"  src="file1.gif" width=180 
+      align=left><IMG height=70 alt="image 2" src="file2.gif" width=133 
+      align=left></A></TD></TR></TABLE>
+
+<TABLE cellSpacing=0 cellPadding=0 width="100%" border="1">
+
+  <TR>
+    <TD vAlign=top height=78><A href="http://www.mozillazine.org/"><IMG 
+      height=70 alt="image 1"  src="file1.gif" width=180 
+      align=right><IMG height=70 alt="image 2" src="file2.gif" width=133 
+      align=right></A></TD></TR></TABLE>
+
+
+</body>
+
+
+</html>

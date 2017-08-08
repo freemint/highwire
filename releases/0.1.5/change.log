@@ -1,0 +1,437 @@
+Changes in V. 0.1.5 release  of October 24, 2003:
+
+- Enabled loading and displaying of image files
+  over remote connections.
+  NOTE:  This will only work when the CACHEDIR is
+  defined properly in HighWire's cfg file!!!
+
+- New config keyword added to control how much
+  memory shall be used for caching of image
+  bitmaps in memory (not those on disk):
+    CACHEMEM = <kilo bytes>
+  When not defined 100k will be assumed.
+  (see example.cfg\highwire.cfg for details).
+
+- Added more functionality for dithering and
+  displaying of images, especially for GrayScale
+  and TrueColor.
+
+- Implemented support for 32k colours screen mode.
+
+- Support for jpg and png implemented.
+
+- Decreased a bit flickering of image rendering,
+  by improved cache prefetches.
+
+- Fixed the cache screwing up bug which occured
+  when storing of files failed for some reason
+  (eg. no cache dir defined in config).  This was
+  leading to an infinite loop.
+
+- Corrected cache size calculation for disk cached
+  objects (#0126).
+
+- Added automatic prepending of 'http://' when no
+  protocol was given in the URL of the button bar
+  (in fact, when neither a leading '/' nor any ':'
+  was found there) (#0093).
+
+- Added timeout check for HTTP header request to
+  prevent HighWire from hanging due to not
+  responsing servers.
+
+- Fixed a bug occuring with both rowspan and
+  colspan defined in one table cell (#0119).
+
+- Fixed the 'too many open files' bug, resulting
+  from forgotten socket close after connection
+  failed.
+
+- Fixed the infinite loop caused by too long lines
+  in HTML texts.
+
+- Corrected the handling of URLs for <frame> when
+  a previous <base href=..> was found.
+
+- Improved handling of incorrect absolute sizes of
+  frames and framesets to avoid overlappings or
+  empty gaps (#0135).
+
+- Corrected clipping of infobar drawing for shaded
+  or iconified windows (#0118).
+
+- Implemented a pgrogress bar for the infobar to
+  indicate how busy HighWire is with loading and
+  rendering.
+
+- Implemented recoding of faulty encoded character
+  entities from code page 1252 (&#128; .. &#159;).
+
+- Added handling of CSS list item marker attribute
+  'list-style-type'.
+
+- New shortcut CTRL+N added to open a new empty
+  window:
+
+- Fixed buffer overflow crashes due to very long
+  URLs.
+
+- Added several checks to avoid crashes due to
+  memory exhausted.
+
+- Bugs #0093, #0118, #0119, #0126, #0135 resolved.
+
+__________________________________________________
+Changes in V. 0.1.4 release  of August 10, 2003:
+
+- Implemented disk caching of text/html files from
+  remote (only per session yet).  To enable this
+  feature the highwire.cfg file needs to include
+  the line
+    CACHEDIR = <path>
+  where <path> must be a valid and writeable
+  directory.
+
+- Added a new config keyword to define the default
+  background colour for pages that doesn't define
+  any:
+    DFLT_BACKGND = <colour>
+  (see example.cfg\highwire.cfg for details).
+
+- The toolbar got a stop button now to allow page
+  loading to be stopped.  The same function is
+  implemented for the escape key now as well.
+  Additional there is also a new button for open
+  file now.
+
+- Some adaptions for monochrome screen mode done.
+
+- Improved history functionality to not messed up
+  due to frames that are loaded from a different
+  server than the frameset.  Furthermore slider
+  positions of frames are stored also now.
+
+- Implemented ID keyword as anchor for <P> and
+  <Hx> tags, blanks in anchor names are filtered
+  out now in general.
+
+- Implemented <base href=...> tag (base URL for
+  relative links in a document).
+
+- Sound files from remote sites are now loaded
+  also and can be played by external players.
+
+- Fixed a problem with tables which were over-
+  lapping other objects.
+
+- Reworked config parser for faster program start
+  on slow machines.
+
+- Fixed a bug that was messing up the scheduler's
+  job queue.
+
+- Bugs #0092, #0114 resolved.
+
+__________________________________________________
+Changes in V. 0.1.3 release  of June 05, 2003:
+
+- Implemented handling of shift + left/right
+  cursor keys (page-wise horizontal scrolling).
+
+- Double clicks on arrows of sliders are handled
+  now in the same way as N.AES does (for left and
+  right mouse button).
+
+- New menu entry (under 'Options') to have frames
+  always resizeable and scrollbars if necessary,
+  even if the HTML defines anything else there.
+  The default is off but can be set to on with the
+  keyword FORCE_FRAMECTRL = 1 in the config file.
+
+- New keyword FONT_MINSIZE to define a minimum
+  font height in points, eg. for <font size=1>
+  (see example.cfg\highwire.cfg for explanation).
+
+- Added a fix for <meta http-equiv="refresh" ..>
+  tags with large refresh URLs.
+
+- Improved calculation of percent and fractional
+  frame size values, makes it much more robust
+  against faulty frameset tags.
+
+- Corrected wrong setting of hanging indentions in
+  and after lists.
+
+- Corrected handling of table cells with both 
+  colspan and rowspan set.
+
+- Re-implemented <div> tag rendering to tables
+  with one single cell, matches their meaning much
+  more now than the previous implementation.
+
+- Added resetting of font characteristics after
+  tables and title tags, this was messing up the
+  renderer while calculating text word widths
+  (only rarely seen on some very simple pages).
+
+- Set texts of buttons and input fields always to
+  black.
+
+- Removed several code redundancies.
+
+- Bugs #0041, #0096, #0098, #0102, #0103, #0104,
+  #0105, #0106, #0108, #0109, #0110 resolved.
+
+__________________________________________________
+Changes in V. 0.1.2 release  of May 12, 2003:
+
+- The new implemented navigation bar allows easy
+  entering of URLs as well as going for/backward
+  in view history (can be hidden/shown by holding
+  down the ALT key while clicking the window's
+  closer button).
+
+- Changed the behaviour of the window's info bar
+  to have it more logical and informative.
+
+- New control keyword for the configuration file
+  to change the appearance of the info bar, can be
+  displayed now at the window's bottom
+  (see example.cfg\highwire.cfg for explanation).
+
+- Formulars now also support selection lists, as
+  given from <select name=foo><option value=bar>..
+  tags.
+
+- Improved handling of framesets, frames are
+  resizeable now.
+
+- Fixed wrong image colours under TrueColor, added
+  support for 16bit HighColor with reverted byte
+  order.  Improved vertical position and line
+  height calculation when align=top/bottom is set.
+
+- Initial implementation of OVLs for different
+  network support (MiNTnet and STiK2).
+
+- Improved calculation of the width of tables and
+  their cells, makes several pages looking a bit
+  better.
+
+- Fixed a bug in interpreting of quoted file names
+  from VA_START.
+
+- Improved parsing of urls to encode HTML entities
+  and remove control characters from links.  Also
+  invalid urls of the form //<server_name>/ with a
+  missing http: are supported now.
+
+- Fixed a bug in parsing of plain text files which
+  led to an endless loop on very long lines.
+
+- Fixed a bug in the style=".." parsing function
+  which could cause crashes before.
+
+- Mended some more memory leaks.
+
+- Overworked charset encoding to speedo encoding
+  for better performance.
+
+- Bugs #0063, #0064, #0090, #0094 resolved.
+
+__________________________________________________
+Changes in V. 0.1.1 release  of January 15, 2003:
+
+- Overworked recognization of link areas, still
+  not perfect yet but much better now.
+
+- HTTP protocol layer reworked, is faster now and
+  works for much more servers now.
+
+- The problem of files with long names not loaded
+  at some Magic versions (eg. *.html) is solved
+  now.
+
+- Added a workaround to have it working under
+  Geneva again.
+
+- Fixed several remaining bugs related to <li>
+  tags.
+
+- Implemented <nobr> and <wbr> tags, also
+  <td nowrap> is working now.
+
+- Table cells with percentage width are working
+  now.
+
+- Images that has not more than 1 pixel width
+  and/or height don't get a place holder anyore.
+  That makes pages looking nicer if some spacer
+  gifs couldn't be loaded.
+
+- Fixed some oddities related to transparent GIFs.
+
+- Reworked code to avoid flickering mouse pionter
+  when moved over window's title or info bar or
+  being exactly over a frame's border.
+
+- Bugs #0020, #0022, #0080, #0086, #0087 resolved.
+
+__________________________________________________
+Changes in V. 0.1.0 release  of December 20, 2002:
+
+- Working implementation of history functionality
+  allows back/forward navigation per window
+  through previous loaded pages and frames (undo/
+  redo).
+
+- More functionality for <form> tag input
+  elements.  Radio buttons, check boxes and normal
+  buttons are working now.
+
+- Completed Unicode support for TrueType fonts.
+
+- New functionality for browsing the local file
+  system (directory listing), sortable by name/
+  date/size.
+
+- Meta tag for "refresh" implemented, even if the
+  refresh time will always be taken as '0' yet
+  (scheduler limitation).
+
+- Improved representation of list items.
+
+- More compacted storage of documents in memory.
+
+- Bugs #0006, #0015, #0024, #0027, #0052, #0066,
+  #0069, #0072, #0073, #0079, #0081, #0082
+  resolved.
+
+__________________________________________________
+Changes in V.09 alpha  of October 30, 2002:
+
+- Multiple Windows are now supported for the frame
+  target "_blank".  Also ALT+ mouse click on a
+  link opens it in a new window.
+
+- Displaying of non-Speedo fonts is working now so
+  far.  The result isn't that pretty yet but at
+  least useable.
+
+- Implementation of wheel mouse support.
+
+- Realtime scrolling for slider usage.
+
+- Highlighting of links improved.  If the mouse
+  pointer is over a link the target will be shown
+  in the window's info line.
+
+- Improved parser function to also recognize
+  <tag key='attribute'> quotation.
+
+- Overworked text floating around images and
+  tables.
+
+- Slightlly improved Nearest Colour algorithm for
+  screen resolutions <=256 colours
+
+- Closed some memory leaks.
+
+__________________________________________________
+Changes in V.08 alpha  of August 15, 2002:
+
+- Extended menu bar, the current charset encoding
+  can be seen and changed at menu title "View".
+  Also de/increasing of the display font is
+  available there.
+
+- Menu entry "Info.." will show now some basic
+  information about the active frame.
+
+- Right mouse click now opens a popup menu.
+
+- Improved algorithm for line breaking to avoid
+  splitting of text lines at wrong positions.
+
+- Implementation of memory caching of images
+  avoids multiple loading of the same image.  The
+  pseudo URI "about:cache" now shows detailed
+  information about cached images.
+
+- Implementation of <frame scrolling=..>
+  attribute.
+
+- Bugfix <font> tags inside links breaking
+  colouring.
+
+- And many more ...
+
+__________________________________________________
+Changes in V.07 alpha  of July 24, 2002:
+
+- Reworked configuration code, new keyword
+  FONT_SIZE in the cfg file sets the base font
+  size in point (default is 12pt).  If the
+  environment variable HOME is set the cfg file
+  will first be searched at the  places
+  $HOME/defaults/highwire.cfg ->
+  $HOME/highwire.cfg -> $HOME/.highwire .
+
+- Improved handling of text wrapping around images
+  and tables, also <br clear> flag is handled now.
+
+- Implemented HSPACE image attributes.
+
+- Frame targets _top, _self, _parent are
+  recognized properly now (_blank still not
+  working).
+
+- Margin settings of <frame> and <body> are
+  implemented now (default is 5px).
+
+- <HR> tags are now correctly calculated in
+  position and size.
+
+- Very first implementation of CSS attribute STYLE
+  of some HTML tags.
+
+- For <H1>..<H6> and <HR> the color and the
+  background-color can be set with the CSS style
+  attribute.
+
+- Reworked parser and text storing code for faster
+  parsing and reduced memory usage.
+
+- Lots of smaller glitches fixed.
+
+__________________________________________________
+Changes in V.06 alpha  of July 07, 2002:
+
+- Bugfix in the GIF image reading function.  Due
+  to a miscalculated value for vertical scaling
+  this function could cause crashes by corrupting
+  memory.
+
+- First implementation of text wrapping around
+  images that have ALIGN="LEFT" set.
+
+- Implementation of the VSPACE attribute for
+  images.
+
+- Links to target frame "_top" are working
+  correctly now.
+
+- Fixed drawing of table background and cell
+  borders.
+
+- Fixed redraw bug if the window was covered by
+  other windows.
+
+- Scrolling works now also if the window is not
+  the top window (without topping it).
+
+- If a file type can't be determined by the file's
+  extension a simple check is done to see if the
+  file contains HTML (eg. for php extension).
+
+- Added handling of 'about:' and 'mailto:'.

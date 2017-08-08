@@ -1,0 +1,189 @@
+HighWire and DOM 2 correspondences and notes
+date:  June 24,  2002
+author:  Dan Ackerman (baldrick@netset.com)
+
+Contents
+   1. Purpose
+   2. HighWire Internal  Document Structures.
+   3. STRUCT S_CONTAINR
+   4. STRUCT FRAME_ITEM
+   5. STRUCT PARAGRAPH_ITEM
+   6. STRUCT WORD_ITEM
+   7. STRUCT S_IMAGE  (Note this is posibly in transition)
+   8. STRUCT S_TABLE
+       8.1 STRUCT S_TABLE_ROW
+       8.2 STRUCT S_TABLE_CELL
+   9. Implementation NOTES
+       9.1 HTMLCollection Interface and attribute ID
+       9.2 Matching DOM and HighWire DOM
+  10. References
+
+1. Purpose
+
+This Document is meant to describe HighWires internal storage
+mechanisms and cover the corespondences between
+HighWire's internal storage of a Document and the W3 specifications
+for the Document Object Model as found at
+http://www.w3.org/TR/2002/CR-DOM-Level-2-HTML-20020605/
+Also contained are some implementation notes.
+
+2. HighWire Internal  Document Structures.
+
+There are 4 main internal structures for document storage in 
+HighWire.
+
+These are the Container (s_containr), the frame (frame_item),
+the paragraph (paragraph_item) and the word (word_item).
+They operate exactly in that order of Heirachy.
+
+Containers contain Frames or other containers
+Frames contain Paragraphs
+Paragraphs contain Words
+
+
+3. STRUCT S_CONTAINR
+
+The highest level structure is the struct s_containr, it's definition
+is located in containr.h.
+
+/*
+ * Containr.h -- Tree hirachy to hold frames.
+ *
+ * A container is a polymorph struct which can either hold one or more children
+ * containers or exactly one frame (or is empty).  This way a tree structure of
+ * containers  represents  the  hirachy as given by <FRAMESET> and <FRAME> tags
+ * and  allowes  every  node (= container)  in the tree to have it's content be
+ * replaced at any time.
+ *
+ * AltF4 - Feb. 17, 2002
+ *
+ */
+
+
+4. STRUCT FRAME_ITEM
+
+
+The next level of the structure is the struct frame_item, it's
+definition is located in defs.h.  This is the highest level structure
+that contains HTML data beyond the FRAMESET element.
+Beyond holding the bodies attributes and some buffers used
+in parsing the document, The main contents of the Frame are
+the lists for the object (clickable and anchors) and the paragraph
+list.  All HTML data is contained in the paragraph list.
+
+  clickable_area list.
+    This is a list of all the area's in this frame that respond to user interaction
+    via a mouseclick.
+
+  
+  named_location list.
+    This is a list of all the target area's in the frame.  (anchors)
+
+NOTE:  These correspond in a way to the DOM model lists.  More research
+should be done on whether these lists are adequate.  I am uncertain on some
+topics at the moment.  (ie should all paragraphs have id's or only those that
+explicitly have an id attribute)
+
+
+
+5. STRUCT PARAGRAPH_ITEM
+
+The paragraph_item structure is the main organizational structure
+in HighWire.  It's definition can be found in defs.h.   Paragraphs
+are of many different natures.  At their simplest a Paragraph is
+a list of word_item structs.  However a Paragraph can also be
+a Table, IMG, Horizontal Ruler, Ordered List or Unorder List.
+Basically a PARAGRAPH_ITEM is a block level data container.
+
+
+6. STRUCT WORD_ITEM
+
+The word_item structure is the most basic element structure
+of HighWire.  It contains formatting and style attributes and
+one of the following.
+
+  line_brk code - this forces an end to the current line
+
+  struct s_image * - this contains information on an image.
+   In this case we would be working with an IMG tag contained
+   within a paragraph (ie NOT align LEFT or align RIGHT)
+
+  UWORD *item - This would be the data of this word.  Simplistically
+   it can be thought of exactly as it's name implies,  this is a word.
+  ex.  "Atari"
+
+7. STRUCT S_IMAGE  (Note this is posibly in transition)
+
+An image structure (struct s_image) can exist in 2 different manners.
+It's most common form, is most likely as a link to a word_item struct
+inside of a paragraph.  This is where we have an IMG tag without
+left or right alignment.  It's other posibility is in a Paragraph_struct
+as a word_item, with the paragraph_code being  PAR_IMG.  The effect
+then is to allow the side aligned IMG to be grabbed out at display
+and moved to the appropriate border.
+
+8. STRUCT S_TABLE
+
+struct s_table definition is found in table.h.
+A table is an escaped paragraph with a code of PAR_TABLE.
+It is itself a formatting container for the sub container
+struct s_table_row.  Which are contained in a link list.
+
+8.1 STRUCT S_TABLE_ROW
+
+A struct s_table_row, is a list of table_cells comprising one
+line (or row) of a table.
+
+8.2 STRUCT S_TABLE_CELL
+
+A table_cell is exactly what it is named.  It is one data cell of a table.
+It holds formating issues inherited from the table or row, offset information
+and a paragraph_item list of contained data.  A table cell structure can 
+contain any type of paragraph as discussed in 5. STRUCT PARAGRAPH_ITEM.
+
+9. Implementation NOTES
+
+9.1 HTMLCollection Interface and attribute ID
+
+When the attribute ID is processed we will need to build a list of these objects, 
+as well as storing the name.
+
+example... (from html 4.01 specs)
+
+<P id="myparagraph"> This is a uniquely named paragraph.</P>
+<P id="yourparagraph"> This is also a uniquely named paragraph.</P>
+
+In this case "myparagraph" could be referenced by index 1 as well the
+as "myparagraph".  Additionally "yourpargraph" would have an index of
+2.
+
+This will be needed to properly support the HTMLCollection interface.  In addition
+an index list of Images, links, forms and anchors would need to be
+created and stored in a central location for the document.   These could be
+contained as they are now in the frame_item struct, with additions made for
+the objects that are currently not listed.   If upon study it is determined that
+this is inadequate for our needs then  another good candidate for this would
+be additions into the struct s_containr.  Since this is a super frame element.
+
+9.2 Matching W3 DOM and HighWire DOM
+
+It may sound overly simplistic.  But in most cases so far the additions noted
+in HTMLCollection Interface and attribute ID (section 9.1).  Will cover the holes
+in the DOM mapping.  There are still missing HTML tag supports in HighWire
+dealing with FORMS and iFrames as well as others.   There are also some
+missing HTML tags dealing with Tables.   These currently would not be available
+for DOM mapping.  However we can currently with a litle work map Links and
+Anchors to the DOM model.  We will need to look at the EMCAscript definitions
+and modify our returns in a method that is in compliance with what it expects
+in these situations.
+
+10. References
+
+HighWire Source code can be retrieved from http://highwire.atari-users.net/
+
+Document Object Model (DOM) Level 2 HTML Specification
+Version 1.0
+W3C Candidate Recommendation 05 June 2002
+can be retrieved at http://www.w3.org/TR/DOM-Level-2-HTML/
+
+HTML 4.01 Specification can be retrieved at http://www.w3.org/TR/html401 

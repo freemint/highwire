@@ -1,0 +1,34 @@
+a:7:{s:8:"encoding";s:5:"UTF-8";s:5:"title";s:44:"ATF - Atari Talk Forums - HighWire - General";s:4:"link";s:38:"http://www.atariforums.com/list.php?21";s:11:"description";s:44:"General questions and support about HighWire";s:13:"lastBuildDate";s:31:"Wed, 05 Jun 2013 18:24:18 -0400";s:5:"items";a:5:{i:0;a:6:{s:5:"title";s:35:"Release of Vn 0.3.4Beta (3 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?21,4018,4018#msg-4018";s:11:"description";s:324:"<![CDATA[ Some of you have all ready downloaded this release, the only change since the one from the 17th is that I have added a brief commentary on my small work on Highwire in the html section.<br />
+<br />
+[<a href="http://sourceforge.net/projects/highwire/"  rel="nofollow">sourceforge.net</a>]<br />
+<br />
+Peter]]>";s:8:"category";s:18:"HighWire - General";s:4:"guid";s:57:"http://www.atariforums.com/read.php?21,4018,4018#msg-4018";s:7:"pubDate";s:31:"Sat, 06 Feb 2010 05:44:39 -0500";}i:1;a:6:{s:5:"title";s:45:"Highwire No Route to host issues (21 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?21,3995,3995#msg-3995";s:11:"description";s:1020:"<![CDATA[ Hello all,<br />
+  I have had some nagging issues with highwire and wondering if anyone can help me to solve it.  I am currently running Macic 6.2 with Jinnee 2.5 on a Falcon CT60 at 95 mhz.  Whenever I startup Highwire 0.3.2 which was the last available download, it seems to be not loading images in and eventually gives me a No Route to Host error in Highwire.  I have been through My MagicNet setup and cannot see anything that would explain the issue, but I am sure I am missing something.  Can anyone zip up the latest Highwire (the entire package) and send it to me?  My address is <a href="mailto:&#102;&#97;&#108;&#99;&#111;&#110;&#48;&#54;&#48;&#64;&#114;&#111;&#97;&#100;&#114;&#117;&#110;&#110;&#101;&#114;&#46;&#99;&#111;&#109;">&#102;&#97;&#108;&#99;&#111;&#110;&#48;&#54;&#48;&#64;&#114;&#111;&#97;&#100;&#114;&#117;&#110;&#110;&#101;&#114;&#46;&#99;&#111;&#109;</a>.  Once I get this running I would love to be a tester of the latest releases if at all possible.<br />
+<br />
+Thanks Carey]]>";s:8:"category";s:18:"HighWire - General";s:4:"guid";s:57:"http://www.atariforums.com/read.php?21,3995,3995#msg-3995";s:7:"pubDate";s:31:"Mon, 15 Feb 2010 12:01:57 -0500";}i:2;a:6:{s:5:"title";s:24:"Problems.... (9 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?21,3985,3985#msg-3985";s:11:"description";s:1469:"<![CDATA[ Hi there,<br />
+<br />
+I want to develop for highwire - but the whole environment seems to be in a worse situation.<br />
+I have an working 0.3.2 highwire development environment, but i don't wan't to develop for such an old version. <br />
+<br />
+1. The wikilink is dead: [<a href="http://highwire.atari-users.net/wiki"  rel="nofollow">highwire.atari-users.net</a>]<br />
+2. The webbased cvs browser doesn't allow me to get the newest sources...:<br />
+<br />
+Error: Export failure (exit status 1), output: <br />
+cvs export: failed to create lock directory for `/home/cvs/server-root/atariforge/highwire' (/home/cvs/server-root/atariforge/highwire/#cvs.lock): Permission denied<br />
+cvs export: failed to obtain dir lock in repository `/home/cvs/server-root/atariforge/highwire'<br />
+cvs [export aborted]: read lock failed - giving up<br />
+<br />
+anyone knows how to download via the real cmd line cvs client?<br />
+<br />
+3. There is no download for the newest sources on the main page.<br />
+4. Because the wiki is down, this document: [<a href="http://highwire.atari-users.net/code_faq.txt"  rel="nofollow">highwire.atari-users.net</a>] should contain cvs access info, at least. <br />
+5. I'm waiting for developers maillinglist approval - but nothing happens. <br />
+6. This file is corrupted: [<a href="http://highwire.atari-users.net/hw_doc.htm"  rel="nofollow">highwire.atari-users.net</a>]<br />
+<br />
+cheers, <br />
+m0n0]]>";s:8:"category";s:18:"HighWire - General";s:4:"guid";s:57:"http://www.atariforums.com/read.php?21,3985,3985#msg-3985";s:7:"pubDate";s:31:"Fri, 08 Jan 2010 09:14:57 -0500";}i:3;a:6:{s:5:"title";s:43:"Javascript - don't get excited (no replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?21,3964,3964#msg-3964";s:11:"description";s:243:"<![CDATA[ I knew there had been some discussion of Js I just hadn't looked for it and I just  found it by accident.<br />
+<br />
+[<a href="http://www.atariforums.com/read.php?23,1385,1386#msg-1386"  rel="nofollow">www.atariforums.com</a>]]]>";s:8:"category";s:18:"HighWire - General";s:4:"guid";s:57:"http://www.atariforums.com/read.php?21,3964,3964#msg-3964";s:7:"pubDate";s:31:"Wed, 16 Dec 2009 10:52:01 -0500";}i:4;a:6:{s:5:"title";s:44:"Just a word to the developers... (2 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?21,3961,3961#msg-3961";s:11:"description";s:137:"<![CDATA[ Hi there... I just wanted to say: good work developers. Thanks for this Atari browser :) <br />
+<br />
+Cheers,<br />
+m0n0]]>";s:8:"category";s:18:"HighWire - General";s:4:"guid";s:57:"http://www.atariforums.com/read.php?21,3961,3961#msg-3961";s:7:"pubDate";s:31:"Tue, 29 Dec 2009 10:50:21 -0500";}}s:11:"items_count";i:5;}

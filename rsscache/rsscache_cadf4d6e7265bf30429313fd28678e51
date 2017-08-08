@@ -1,0 +1,107 @@
+a:7:{s:8:"encoding";s:5:"UTF-8";s:5:"title";s:45:"ATF - Atari Talk Forums - HighWire - Features";s:4:"link";s:38:"http://www.atariforums.com/list.php?23";s:11:"description";s:82:"Talk about what features youd like to see possibly added to HighWire in the future";s:13:"lastBuildDate";s:31:"Wed, 05 Jun 2013 18:24:19 -0400";s:5:"items";a:5:{i:0;a:6:{s:5:"title";s:27:"Highwire features (1 reply)";s:4:"link";s:57:"http://www.atariforums.com/read.php?23,4217,4217#msg-4217";s:11:"description";s:99:"<![CDATA[ The feature I would most like is a compatibility with MaggiCmac, and my Mac compiuter/]]>";s:8:"category";s:19:"HighWire - Features";s:4:"guid";s:57:"http://www.atariforums.com/read.php?23,4217,4217#msg-4217";s:7:"pubDate";s:31:"Wed, 07 Jul 2010 18:46:30 -0400";}i:1;a:6:{s:5:"title";s:29:"first fixes for nov (1 reply)";s:4:"link";s:57:"http://www.atariforums.com/read.php?23,3915,3915#msg-3915";s:11:"description";s:2378:"<![CDATA[ when I do finally get HW to <br />
+compile I will be looking <br />
+immediately at the following:<br />
+ 1) php (script) cacheing issues<br />
+ 2) protocol 6<br />
+ 3) SSL (if thats not protocol 6)<br />
+ <br />
+for scripting, either &quot;force&quot; <br />
+HW to always get a new version <br />
+of the file based on its <br />
+extension, or add an &quot;intelligent&quot; <br />
+option somewhere. A lot of <br />
+options are only configurable <br />
+in the .CFG file, so in the <br />
+beginning maybe just add a <br />
+list of extensions to &quot;cache <br />
+intelligently&quot;<br />
+ <br />
+in other browsers this is <br />
+done by querying the size of <br />
+the file, and if it has not <br />
+changed, chances are it is <br />
+still the same.. we will see..<br />
+ <br />
+the &quot;protocol 6&quot; may or may <br />
+not be SSL, but it is required <br />
+to do &quot;basic authentication&quot; <br />
+which is required by one of <br />
+my other PHP projects<br />
+[<a href="http://navphp.sf.net/"  rel="nofollow">navphp.sf.net</a>]<br />
+ <br />
+I have already had a look at <br />
+SSL in &quot;links&quot;, its &quot;way simple&quot; <br />
+to add to the code, although <br />
+that may depend on OpenSSL <br />
+being compiled against, as <br />
+it will &quot;bloat&quot; the code <br />
+somewhat<br />
+ <br />
+an SLB and/or LGD for OpenSSL <br />
+might be the way to go after <br />
+the initial inclusion of SSL <br />
+has been successfully completed<br />
+ <br />
+this will allow other projects <br />
+to take advantage of SSL, <br />
+especially since SSL itself <br />
+is going through some &quot;upgades&quot;. <br />
+In which case &quot;slight&quot; abstraction <br />
+would be a wise thing<br />
+ <br />
+NOTE: this may be the way to <br />
+add other protocol handshaking <br />
+to a project like AtarICQ, <br />
+or one of the GAIM based <br />
+clients, as Yahoo Messenger <br />
+have recently started using <br />
+a heavily encripted protocol <br />
+wrapped in SSL<br />
+ <br />
+I'll look at some of the <br />
+other library ports to see <br />
+whats invovle with creating <br />
+a PureC/AHCC version..<br />
+ <br />
+OK, once thats done, I do <br />
+have a list of other DOM <br />
+related issue to look at, <br />
+but if there is anything in <br />
+particular that someone wants <br />
+fixing, adding or update, <br />
+let me know..<br />
+ <br />
+Paul]]>";s:8:"category";s:19:"HighWire - Features";s:4:"guid";s:57:"http://www.atariforums.com/read.php?23,3915,3915#msg-3915";s:7:"pubDate";s:31:"Wed, 09 Dec 2009 10:01:59 -0500";}i:2;a:6:{s:5:"title";s:21:"html emails (1 reply)";s:4:"link";s:57:"http://www.atariforums.com/read.php?23,3358,3358#msg-3358";s:11:"description";s:645:"<![CDATA[ I sometimes get a emails with html attachments that<br />
+contain images.<br />
+<br />
+The html looks something like this<br />
+<br />
+--Apple-Mail-9-235628823<br />
+Content-Disposition: inline;<br />
+filename=S7001917_1.jpg<br />
+Content-Transfer-Encoding: base64<br />
+Content-Type: image/jpeg;<br />
+x-unix-mode=0644;<br />
+x-mac-type=4A504547;<br />
+name=&quot;S7301987_1.jpg&quot;<br />
+Content-Id: &lt;22152835-6101-4E15-9c2C-0235F2E94159&gt;<br />
+/9j/4ZAiRXhpZgAATU0AKgAAAAgA<br />
+<br />
+The base64 encoding can presumably be handled if HW can detect<br />
+the heading stuff.<br />
+<br />
+It might be a nice feature to add.]]>";s:8:"category";s:19:"HighWire - Features";s:4:"guid";s:57:"http://www.atariforums.com/read.php?23,3358,3358#msg-3358";s:7:"pubDate";s:31:"Thu, 01 Oct 2009 22:18:38 -0400";}i:3;a:6:{s:5:"title";s:23:"Image zoom (no replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?23,2910,2910#msg-2910";s:11:"description";s:403:"<![CDATA[ I had this idea a few years ago but someone has beaten me to it.<br />
+<br />
+In my office we avoid M$ apps (my boss hates them) so we use<br />
+OpenOffice, Firefox etc.<br />
+<br />
+Firefox has a nice plugin called ZoomFox which opens a new<br />
+browser tab and allows the selected image to be zoomed. Quite<br />
+handy and it would be nice to have such plugin features<br />
+in Highwire.]]>";s:8:"category";s:19:"HighWire - Features";s:4:"guid";s:57:"http://www.atariforums.com/read.php?23,2910,2910#msg-2910";s:7:"pubDate";s:31:"Sat, 03 Nov 2007 12:49:28 -0400";}i:4;a:6:{s:5:"title";s:27:"Atariage Forums (2 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?23,2702,2702#msg-2702";s:11:"description";s:315:"<![CDATA[ It seems that neither Highwire or Cab can open the forum pages at Atariage, shame on them:<br />
+<br />
+[<a href="http://www.atariage.com/forums/index.php"  rel="nofollow">www.atariage.com</a>]<br />
+<br />
+Any idea why, or whether support for this page type is one the list?<br />
+<br />
+Thanks!]]>";s:8:"category";s:19:"HighWire - Features";s:4:"guid";s:57:"http://www.atariforums.com/read.php?23,2702,2702#msg-2702";s:7:"pubDate";s:31:"Fri, 27 Jul 2007 17:07:04 -0400";}}s:11:"items_count";i:5;}

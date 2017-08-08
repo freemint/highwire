@@ -1,0 +1,42 @@
+<html><head><title>Table width evangelism bug demo</title></head>
+
+
+
+
+<body>
+
+
+
+(All changes are in the middle cell of the tables)<br>
+Cell width setting alone should not override the width setting for the table<p>
+
+<TABLE height=10 cellSpacing=0 cellPadding=0 width=140 
+                  border=1>
+                    <TBODY>
+                    <TR>
+                      <TD vAlign=top align=left width=10><IMG height=10 alt="" 
+                        src="progheaven-filer/corner_1white.gif" width=10></TD>
+                      <TD vAlign=top width=134><IMG height=10 alt="" 
+                        src="progheaven-filer/line1white.gif" width=120></TD>
+                      <TD vAlign=top align=right width=10><IMG height=10 
+                        alt="" src="progheaven-filer/corner_2white.gif" 
+                      width=10></TD></TR></TBODY></TABLE>
+<p>
+However, if the contents of the cell requires is, then the width for cell (and thus whole table) will be changed.<p>
+
+<TABLE height=10 cellSpacing=0 cellPadding=0 width=140 
+                  border=1>
+                    <TBODY>
+                    <TR>
+                      <TD vAlign=top align=left width=10><IMG height=10 alt="" 
+                        src="progheaven-filer/corner_1white.gif" width=10></TD>
+                      <TD vAlign=top width=134><IMG height=10 alt="" 
+                        src="progheaven-filer/line1white.gif" width=134></TD>
+                      <TD vAlign=top align=right width=10><IMG height=10 
+                        alt="" src="progheaven-filer/corner_2white.gif" 
+                      width=10></TD></TR></TBODY></TABLE>
+<p>
+This problem is seen on <a href="http://www.programmersheaven.com/">http://www.programmersheaven.com/</A>
+
+
+</body></html>

@@ -1,0 +1,157 @@
+Changes in V. 0.1.0 release  of December 20, 2002:
+
+- Working implementation of history functionality
+  allows back/forward navigation per window
+  through previous loaded pages and frames (undo/
+  redo).
+
+- More functionality for <form> tag input
+  elements.  Radio buttons, check boxes and normal
+  buttons are working now.
+
+- Completed Unicode support for TrueType fonts.
+
+- New functionality for browsing the local file
+  system (directory listing), sortable by name/
+  date/size.
+
+- Meta tag for "refresh" implemented, even if the
+  refresh time will always be taken as '0' yet
+  (scheduler limitation).
+
+- Improved representation of list items.
+
+- More compacted storage of documents in memory.
+
+- Bugs #0006, #0015, #0024, #0027, #0052, #0066,
+  #0069, #0072, #0073, #0079, #0081, #0082
+  resolved.
+
+__________________________________________________
+Changes in V.09 alpha  of October 30, 2002:
+
+- Multiple Windows are now supported for the frame
+  target "_blank".  Also ALT+ mouse click on a
+  link opens it in a new window.
+
+- Displaying of non-Speedo fonts is working now so
+  far.  The result isn't that pretty yet but at
+  least useable.
+
+- Implementation of wheel mouse support.
+
+- Realtime scrolling for slider usage.
+
+- Highlighting of links improved.  If the mouse
+  pointer is over a link the target will be shown
+  in the window's info line.
+
+- Improved parser function to also recognize
+  <tag key='attribute'> quotation.
+
+- Overworked text floating around images and
+  tables.
+
+- Slightly improved Nearest Colour algorithm for
+  screen resolutions <=256 colours
+
+- Closed some memory leaks.
+
+__________________________________________________
+Changes in V.08 alpha  of August 15, 2002:
+
+- Extended menu bar, the current charset encoding
+  can be seen and changed at menu title "View".
+  Also de/increasing of the display font is
+  available there.
+
+- Menu entry "Info.." will show now some basic
+  information about the active frame.
+
+- Right mouse click now opens a popup menu.
+
+- Improved algorithm for line breaking to avoid
+  splitting of text lines at wrong positions.
+
+- Implementation of memory caching of images
+  avoids multiple loading of the same image.  The
+  pseudo URI "about:cache" now shows detailed
+  information about cached images.
+
+- Implementation of <frame scrolling=..>
+  attribute.
+
+- Bugfix <font> tags inside links breaking
+  colouring.
+
+- And many more ...
+
+__________________________________________________
+Changes in V.07 alpha  of July 24, 2002:
+
+- Reworked configuration code, new keyword
+  FONT_SIZE in the cfg file sets the base font
+  size in point (default is 12pt).  If the
+  environment variable HOME is set the cfg file
+  will first be searched at the  places
+  $HOME/defaults/highwire.cfg ->
+  $HOME/highwire.cfg -> $HOME/.highwire .
+
+- Improved handling of text wrapping around images
+  and tables, also <br clear> flag is handled now.
+
+- Implemented HSPACE image attributes.
+
+- Frame targets _top, _self, _parent are
+  recognized properly now (_blank still not
+  working).
+
+- Margin settings of <frame> and <body> are
+  implemented now (default is 5px).
+
+- <HR> tags are now correctly calculated in
+  position and size.
+
+- Very first implementation of CSS attribute STYLE
+  of some HTML tags.
+
+- For <H1>..<H6> and <HR> the color and the
+  background-color can be set with the CSS style
+  attribute.
+
+- Reworked parser and text storing code for faster
+  parsing and reduced memory usage.
+
+- Lots of smaller glitches fixed.
+
+__________________________________________________
+Changes in V.06 alpha  of July 07, 2002:
+
+- Bugfix in the GIF image reading function.  Due
+  to a miscalculated value for vertical scaling
+  this function could cause crashes by corrupting
+  memory.
+
+- First implementation of text wrapping around
+  images that have ALIGN="LEFT" set.
+
+- Implementation of the VSPACE attribute for
+  images.
+
+- Links to target frame "_top" are working
+  correctly now.
+
+- Fixed drawing of table background and cell
+  borders.
+
+- Fixed redraw bug if the window was covered by
+  other windows.
+
+- Scrolling works now also if the window is not
+  the top window (without topping it).
+
+- If a file type can't be determined by the file's
+  extension a simple check is done to see if the
+  file contains HTML (eg. for php extension).
+
+- Added handling of 'about:' and 'mailto:'.

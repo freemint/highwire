@@ -1,0 +1,32 @@
+Changes in V.06 alpha   (since V.05):
+
+- Bugfix in the GIF image reading function.
+  Due to a miscalculated value for vertical
+  scaling this function could cause crashes
+  by corrupting memory.
+
+- First implementation of text wrapping
+  around images that have ALIGN="LEFT" set.
+
+- Implementation of the VSPACE attribute for
+  images.
+
+- Links to target frame "_top" are working
+  correctly now.
+
+- Fixed drawing of table background and cell
+  borders.
+
+- Fixed redraw bug if the window was covered
+  by other windows.
+
+- Scrolling works now also if the window is
+  not the top window (without topping it).
+
+- If a file type can't be determined by the
+  file's extension a simple check is done to
+  see if the file contains HTML (eg. for php
+  extension).
+
+- Added handling of 'about:' and 'mailto:'.
+

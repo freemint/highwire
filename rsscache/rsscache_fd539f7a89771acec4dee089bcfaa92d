@@ -1,0 +1,41 @@
+a:7:{s:8:"encoding";s:5:"UTF-8";s:5:"title";s:41:"ATF - Atari Talk Forums - HighWire - Bugs";s:4:"link";s:38:"http://www.atariforums.com/list.php?22";s:11:"description";s:107:"Have a bug in HighWire thats annoying you? Discuss it here (Dont forget to post it in the bugtracker also!)";s:13:"lastBuildDate";s:31:"Wed, 05 Jun 2013 18:24:20 -0400";s:5:"items";a:5:{i:0;a:6:{s:5:"title";s:41:"Files open in hotlist window (no replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?22,4292,4292#msg-4292";s:11:"description";s:290:"<![CDATA[ Hi,<br />
+i found another bug (HW 0.3.4. beta 6):<br />
+If the hotlist is the topped window and i click on &quot;Open file&quot; (folder icon in non-topped main window),<br />
+fileselector opens correct, but the selected file is opened in hotlist window then.<br />
+<br />
+Latz]]>";s:8:"category";s:15:"HighWire - Bugs";s:4:"guid";s:57:"http://www.atariforums.com/read.php?22,4292,4292#msg-4292";s:7:"pubDate";s:31:"Fri, 13 Aug 2010 06:30:20 -0400";}i:1;a:6:{s:5:"title";s:39:"Editable textfields (again) (4 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?22,4283,4283#msg-4283";s:11:"description";s:932:"<![CDATA[ Hi,<br />
+<br />
+there are some problems with editable textfields in 0.3.4 beta6 (Falcon/CT60/CTPCI/Radeon, 1280*1024 screenres.):<br />
+- The textfields are too small (half width they should be) and don't scroll horizontally when<br />
+  typing (follow the textcursor). But it's strange: When i delete some long lines with keeping<br />
+  BACKSPACE pressed, the textbox scrolls (follows cursor) like it should be!<br />
+  If a line is longer than the textfield and i press ALT+CTL+CLEAR (screen update), the missing<br />
+  part of this line is displayed right outside the textbox. I can't attach a snapshot because of<br />
+  the limited attachment size here in forum (25 kB), but this happens in all Atari-forums i tested.<br />
+- German NON-ASCII characters are not inserted correct, for example a german &quot;a with too dots<br />
+  on top&quot; is inserted as a greek &quot;eta&quot;, i think..<br />
+<br />
+Latz]]>";s:8:"category";s:15:"HighWire - Bugs";s:4:"guid";s:57:"http://www.atariforums.com/read.php?22,4283,4283#msg-4283";s:7:"pubDate";s:31:"Tue, 28 Sep 2010 04:25:42 -0400";}i:2;a:6:{s:5:"title";s:38:"HW 0.3.4 ß4: JPEG display (6 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?22,4046,4046#msg-4046";s:11:"description";s:751:"<![CDATA[ Hi,<br />
+there is a serious problem in Highwire 0.3.4 ß4 (hw100125.zip) from<br />
+[<a href="http://highwire.sourceforge.net/prototype-development.php"  rel="nofollow">highwire.sourceforge.net</a>] which was not<br />
+present in 0.3.3 ß4:<br />
+JPEG pictures are displayed with a shadow, means if there's a car in a<br />
+picture then a transparent copy of the car is drawn some pixels to the left<br />
+or right- just like &quot;shadowed&quot; text.<br />
+For example see [<a href="http://aniplay.atari.org/"  rel="nofollow">aniplay.atari.org</a>] picture of LCD display.<br />
+<br />
+This happens on my Falcon/CT60 with MinT/XaAES/NVDI 256 colors/736*544p (with<br />
+CNTSCREEN.PRG) and with MagiC, too (same res.).<br />
+<br />
+Latz]]>";s:8:"category";s:15:"HighWire - Bugs";s:4:"guid";s:57:"http://www.atariforums.com/read.php?22,4046,4046#msg-4046";s:7:"pubDate";s:31:"Wed, 04 Aug 2010 08:21:29 -0400";}i:3;a:6:{s:5:"title";s:31:"Ignore this Testing (4 replies)";s:4:"link";s:57:"http://www.atariforums.com/read.php?22,4000,4000#msg-4000";s:11:"description";s:73:"<![CDATA[ I am working<br />
+<br />
+on the blank line<br />
+<br />
+bug]]>";s:8:"category";s:15:"HighWire - Bugs";s:4:"guid";s:57:"http://www.atariforums.com/read.php?22,4000,4000#msg-4000";s:7:"pubDate";s:31:"Mon, 22 Feb 2010 23:59:28 -0500";}i:4;a:6:{s:5:"title";s:48:"Long HTTP header / redirect failure... (1 reply)";s:4:"link";s:57:"http://www.atariforums.com/read.php?22,3962,3962#msg-3962";s:11:"description";s:471:"<![CDATA[ Hi there!<br />
+<br />
+When accessing (login) squirrelmail, the webapp sends a bunch of http headers (set cookies, http redirect, etc.) to the client... highwire just displays the http response (no html, it's just a header, and it's cut somewhere before the real end...) and then does nothing. If i then put in the address that redirect.php would redirect me, the webapp works. :) <br />
+<br />
+Anyone knows about this?<br />
+<br />
+greets,<br />
+m0n0]]>";s:8:"category";s:15:"HighWire - Bugs";s:4:"guid";s:57:"http://www.atariforums.com/read.php?22,3962,3962#msg-3962";s:7:"pubDate";s:31:"Thu, 17 Dec 2009 12:39:47 -0500";}}s:11:"items_count";i:5;}

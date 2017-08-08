@@ -1,0 +1,37 @@
+
+
+
+
+<html>
+<head>
+<TITLE>Test document (wrapping glitch?</TITLE>
+</head>
+
+
+
+<body>
+This seems to be a problem with table cell formatting and wrapping/floating.
+HW rather wants to wrap down image #2 one line than extend the width of the 1st cell.<br>
+(this glitch is often seen in especially forums with a threaded msg view)
+<p>
+<br>
+
+
+1) In the 1st col, notice how the 2nd images it wrapped down one line
+
+<table cellspacing="0" cellpadding="0" border="1"  bgcolor="#FFFFCC">
+<tr>
+<td><img src="dummy.gif" width="5" height="21" border="0"><img src="dummy.gif" width="9" height="21" border="1"></td>
+<td><font color="#000000">This<br>is<br>just<br>some<br>example<br>text..</font></td>
+</tr>
+</table>
+2) In this example, the problem is not seen anymore, since the cell was set to a width making room for both images..
+
+<table cellspacing="0" cellpadding="0" border="1"  bgcolor="#FFFFCC">
+<tr>
+<td width="17"><img src="dummy.gif" width="5" height="21" border="0"><img src="dummy.gif" width="9" height="21" border="1"></td>
+<td><font color="#000000">This<br>is<br>just<br>some<br>example<br>text..</font></td>
+</tr>
+</table>
+
+</body>

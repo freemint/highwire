@@ -1,0 +1,68 @@
+body { background:#493B0F; color:#000000; FONT: 10px Verdana, Helvetica; COLOR: #3C3C3C; FONT-WEIGHT: normal;
+	margin:10px; }
+
+table { font: 12px Verdana, Helvetica; font-weight: normal; color: #000000;}
+p.datestyle { font: 10px Verdana, Helvetica; font-weight: bold; color: darkred;}
+p.newsstyle { font: 10px Verdana, Helvetica; font-weight: normal; color: #000000;}
+
+a:LINK     {text-decoration: none; color: #000080; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: bold;}
+a:VISITED  {text-decoration: none; color: #000080; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: bold;}
+a:HOVER  {text-decoration: underline; color: #000080; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: bold;}
+
+
+
+.footer {text-decoration:none; color: #000000; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: normal}
+
+
+
+a.footer:link {text-decoration:none; color: #000080; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.footer:visited {text-decoration:none; color: #000080; FONT: 10px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.footer:hover {BACKGROUND: none; COLOR: #000080; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline; FONT-WEIGHT: bold}
+
+table.topmenu{
+text-align: left;
+font-family: Verdana;
+font-weight: normal;
+font-size: 11px;
+color: #404040;
+background-color: #fafafa;
+	BORDER-RIGHT: #965C00 1px solid;
+	BORDER-LEFT: #965C00 1px solid;
+	BORDER-TOP: #965C00 1px solid;
+	border-collapse: collapse;
+border-spacing: 0px;
+margin-left:20px;
+}
+
+
+.topmenu {text-decoration:none; color: #000080; FONT: 12px Verdana, Helvetica; FONT-WEIGHT: bold; line-height: 0px;}
+
+a.menu:link {text-decoration: underline; color: #5E3A00; FONT: 14px Verdana, Helvetica; FONT-WEIGHT: bold;}
+a.menu:visited {text-decoration: underline; color: #5E3A00; FONT: 14px Verdana, Helvetica; FONT-WEIGHT: bold;}
+a.menu:hover {BACKGROUND: none; COLOR: #825000; FONT: 14px Verdana, Helvetica; TEXT-DECORATION: underline; FONT-WEIGHT: bold;}
+
+a.menu2:link {text-decoration: none; color: #965C00; FONT: 14px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.menu2:visited {text-decoration: none; color: #965C00; FONT: 14px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.menu2:hover {TEXT-DECORATION: none; BACKGROUND: none; COLOR: #B66F00; FONT: 14px Verdana, Helvetica; FONT-WEIGHT: bold}
+
+
+a.submenu1:link {text-decoration:none; color: #000080; FONT: 9px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.submenu1:visited {text-decoration:none; color: #000080; FONT: 9px Verdana, Helvetica; FONT-WEIGHT: bold}
+a.submenu1:hover {BACKGROUND: none; COLOR: #000080; FONT: 9px Verdana, Helvetica; TEXT-DECORATION: underline; FONT-WEIGHT: bold}
+
+a.submenu2:link {text-decoration:none; color: #000080; FONT: 9px Verdana, Helvetica; FONT-WEIGHT: normal}
+a.submenu2:visited {text-decoration:none; color: #000080; FONT: 9px Verdana, Helvetica; FONT-WEIGHT: normal}
+a.submenu2:hover {BACKGROUND: none; COLOR: #000080; FONT: 9px Verdana, Helvetica; TEXT-DECORATION: underline; FONT-WEIGHT: normal}
+
+.rss-header1 {text-decoration:none; color: #DBAE67; FONT: 27px Verdana, Helvetica; FONT-WEIGHT: bold}
+
+
+a.forum1:LINK     {text-decoration: none; color: #808080; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: none;}
+a.forum1:VISITED  {text-decoration: none; color: #000000; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: none;}
+a.forum1:HOVER  {text-decoration: none; color: #0f0f0f; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: none;}
+a.forum1:HOVER    {BACKGROUND: underline; COLOR: #0f0f0f; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline;}
+
+a.forum2:LINK     {text-decoration: none; color: #965C00; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline; font-weight: bold;}
+a.forum2:VISITED  {text-decoration: none; color: #965C00; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline; font-weight: bold;}
+a.forum2:HOVER  {text-decoration: none; color: #000000; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline; font-weight: bold;}
+a.forum2:HOVER    {BACKGROUND: underline; COLOR: #000000; FONT: 10px Verdana, Helvetica; TEXT-DECORATION: underline; font-weight: bold;}

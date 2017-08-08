@@ -1,0 +1,71 @@
+Changes in V.07 alpha  of July 24, 2002:
+
+- Reworked configuration code, new keyword
+  FONT_SIZE in the cfg file sets the base
+  font size in point (default is 12pt).  If
+  the environment variable HOME is set the
+  cfg file will first be searched at the
+  places  $HOME/defaults/highwire.cfg ->
+  $HOME/highwire.cfg -> $HOME/.highwire .
+
+- Improved handling of text wrapping around
+  images and tables, also <br clear> flag is
+  handled now.
+
+- Implemented HSPACE image attributes.
+
+- Frame targets _top, _self, _parent are
+  recognized properly now (_blank still not
+  working).
+
+- Margin settings of <frame> and <body> are
+  implemented now (default is 5px).
+
+- <HR> tags are now correctly calculated in
+  position and size.
+
+- Very first implementation of CSS attribute
+  STYLE of some HTML tags.
+
+- For <H1>..<H6> and <HR> the color and the
+  background-color can be set with the CSS
+  style attribute.
+
+- Reworked parser and text storing code for
+  faster parsing and reduced memory usage.
+
+_ Lots of smaller glitches fixed.
+
+
+Changes in V.06 alpha  of July 07, 2002:
+
+- Bugfix in the GIF image reading function.
+  Due to a miscalculated value for vertical
+  scaling this function could cause crashes
+  by corrupting memory.
+
+- First implementation of text wrapping
+  around images that have ALIGN="LEFT" set.
+
+- Implementation of the VSPACE attribute for
+  images.
+
+- Links to target frame "_top" are working
+  correctly now.
+
+- Fixed drawing of table background and cell
+  borders.
+
+- Fixed redraw bug if the window was covered
+  by other windows.
+
+- Scrolling works now also if the window is
+  not the top window (without topping it).
+
+- If a file type can't be determined by the
+  file's extension a simple check is done to
+  see if the file contains HTML (eg. for php
+  extension).
+
+- Added handling of 'about:' and 'mailto:'.
+

@@ -1,0 +1,27 @@
+HighWire coders FAQ		(2002-07-29)
+============================================
+
+-Q. To whom should I send my patches ?
+-A. We generally upload them to the HighWire FTP in the source dir and then notify
+    the developers mailing list.
+
+    Filenames beginning with:
+     * HW is from maintainer Dan Ackerman (Kind of HighWire's nightly builds) ;)
+     * A4 is from Ralph Lowinski
+     * RS is from Rainer Seitel
+
+
+-Q. Is it OK if CR are stripped in patches ?
+-A. That is OK, but expect Pure-C to have put them back on when patches are
+    merged into main source tree.
+    
+-Q. What PRJ-file should I use when compiling HighWire?
+-A. Supported compilers:
+
+		* Pure-C (purec.prj)
+		* Lattice (lattice.prj)
+		* GCC (makefile)
+
+================================================================================
+Got any questions that needs to be answered here?
+-Post them to highwire@atari-users.net

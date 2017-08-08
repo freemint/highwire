@@ -1,0 +1,35 @@
+<html>
+<head>
+<title>Test page for HighWire</title></head>
+
+<body>
+
+<pre>
+The problem: It seems like when these conditions are met, the indention of list elements gets messed up:
+
+1) The closing tag for LI is located on the row below (CR)
+2) The list element is inside a header tag
+3) The last char of the list entry is NOT a SPACE
+
+</pre>
+
+
+<ul>
+<li><h3>1 This line entry will mess up the indention</h3>
+</li>
+<li><h3>2 This line entry will "reset" the indention (becase of the SPACE at the end) </h3>
+</li>
+<li><h3>3 This line entry will mess up the indention</h3>
+</li>
+<li><h3>4 This line entry will NOT mess up the indention (next row is back on track)</h3></li>
+
+<li><h3>5 This line entry will mess up the indention</h3>
+</li>
+<li><font size="5">6 This line will not affect the indention mess</font>
+</li>
+<li><h3>We need a line with header tag to reset things it seems</h3></li>
+<li>So this line should be back on track again..</li>
+
+</ul>
+
+</body></html>
