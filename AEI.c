@@ -174,7 +174,7 @@ vastart (const WORD msg[8], PXY mouse, UWORD state)
 {
 	short answ[8];
 	char filename[HW_PATH_MAX];
-	const char *cmd = *(const char **)&msg[3];
+	const char *cmd = *(const char *const *)&msg[3];
 	/* if a parameter contains spaces then
 	 *    it is enclosed with '...', and a ' is encoded as '' */
 	const BOOL quoted = (cmd[0] == '\'' && cmd[1] != '\0'
@@ -287,7 +287,7 @@ nextToken(const char *pcmd)
 static BOOL
 doGSCommand(const WORD msg[8])
 {
-	const char *cmd = *(const char **)&msg[3];
+	const char *cmd = *(const char *const *)&msg[3];
 	WORD answ[8];
 	BOOL quit = FALSE;
 

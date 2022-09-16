@@ -177,7 +177,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 					v_pline (vdi_handle, 5, (short*)p);
 				}
 				v_show_c (vdi_handle, 1);
-				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
+				m_in.emi_m1.g_x = out.emo_mouse.p_x;
+				m_in.emi_m1.g_y = out.emo_mouse.p_y;
 			}
 			
 			if (event & (MU_M2)) {
@@ -206,7 +207,8 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 					wind_get_grect (hdl, WF_NEXTXYWH, &m_in.emi_m2);
 				}
 				if (m_in.emi_m2.g_w <= 0 || m_in.emi_m2.g_h <= 0) {
-					*(PXY*)&m_in.emi_m2 = out.emo_mouse;
+					m_in.emi_m2.g_x = out.emo_mouse.p_x;
+					m_in.emi_m2.g_y = out.emo_mouse.p_y;
 					m_in.emi_m2.g_w = m_in.emi_m2.g_h = 1;
 					flt    = FALSE;
 					target = NULL;

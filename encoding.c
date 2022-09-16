@@ -33,7 +33,7 @@ _bin_search (WCHAR uni, const struct s_uni_trans * tab, WORD end)
 		}
 	} while (beg <= end);
 	
-	return (*arr == 0xFFFF ? *(const WCHAR **)(arr +1) : arr);
+	return (*arr == 0xFFFF ? *(const WCHAR *const*)(arr +1) : arr);
 }
 #define bin_search(uni, tab) _bin_search (uni, tab, numberof(tab) -1)
 

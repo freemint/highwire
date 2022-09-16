@@ -9,6 +9,9 @@
 #ifdef LATTICE
 # define timezone __timezone
 #endif
+#ifndef CLK_TCK
+#   define CLK_TCK     CLOCKS_PER_SEC
+#endif
 
 #include "version.h"
 #include "global.h"

@@ -1,0 +1,8 @@
+.deps
+*.app
+*.prg
+obj.*
+*.bak
+*.orig
+*.o
+*.a

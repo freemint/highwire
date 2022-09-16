@@ -76,9 +76,8 @@ key_pressed (WORD scan, WORD ascii, UWORD kstate)
 {
 	FRAME active = hwWind_ActiveFrame (hwWind_Top);
 	long  sx = 0, sy = 0;
-	WORD     ascii_code;
 	UWORD    nkey;
-	BOOL     shift, ctrl, alt;
+	BOOL     shift, ctrl;
 	WORD     key  = (scan << 8) | ascii;
 
 	/* Convert the GEM key code to the "standard" */
@@ -87,11 +86,8 @@ key_pressed (WORD scan, WORD ascii, UWORD kstate)
 	/* Remove the unwanted flags */
 	nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS|NKF_NUM);
 
-	ascii_code =  nkey & 0x00FF;
-
 	shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
 	ctrl  = (kstate & K_CTRL) != 0;
-	alt   = (kstate & K_ALT) != 0;
 
 	nkey &= ~NKF_FUNC;
 

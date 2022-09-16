@@ -550,8 +550,8 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 	while (style) {
 		BOOL match;
 	
-		if ((style->Css.Key && style->Css.Key != tag
-		                    && style->Css.Key != TAG_LastDefined) ||
+		if ((style->Css.Key && (HTMLTAG)style->Css.Key != tag
+		                    && (HTMLTAG)style->Css.Key != TAG_LastDefined) ||
 		    (class_id != style->ClassId)              ||
 		    (keyval && (strncmp (style->Ident, keyval->Value, keyval->Len)
 	                         || style->Ident[keyval->Len]))) {
@@ -560,7 +560,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
 							
-			if (style->Css.Key && style->Css.Key == tag) {
+			if (style->Css.Key && (HTMLTAG)style->Css.Key == tag) {
 				weight += 1;
 			}
 			if (class_id == style->ClassId) {
@@ -629,7 +629,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						weight += 1;
 
 						/* temporary fix for missing a DOMBOX for HTML tag */
-						if (link && (link->Css.Key && link->Css.Key == TAG_HTML)
+						if (link && (link->Css.Key && (HTMLTAG)link->Css.Key == TAG_HTML)
 						         && (box == NULL)) {
 							weight += 1;
 							link = link->Link;
@@ -650,7 +650,7 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 					weight += 1;
 
 					/* temporary fix for missing a DOMBOX for HTML tag */
-					if (link && (link->Css.Key == TAG_HTML) && (box == NULL)) {
+					if (link && ((HTMLTAG)link->Css.Key == TAG_HTML) && (box == NULL)) {
 						weight += 1;
 						link = link->Link;
 					}
@@ -922,7 +922,7 @@ css_import (PARSER parser, const char * ptr, LOCATION * base)
 				loc = new_location (buf, *base);
 			}
 			p = (e ? strchr (++e, ';') : e);
-			p = (p ? ++p : e ? e : strchr (ptr, '\0'));
+			p = (p ? p + 1 : e ? e : strchr (ptr, '\0'));
 		}
 	}
 	ret = p;
@@ -1519,11 +1519,13 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					n++;
 				}
 				/* todo : output should probably be sent to a logfile */
-/*				if (!done)
+				(void)done;
+#if 0
+				if (!done)
 				{
 					printf("parse_css(): stopped at\n%.*s\n", n, p);
 				}
-*/
+#endif
 			}
 			if (prsdata->Stack[0].Ptr) {
 				free_location (&loc);

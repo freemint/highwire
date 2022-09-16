@@ -1114,7 +1114,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		
 		/* clip long array into struct of shorts */
 		
-		*(PXY*)watch = *(PXY*)&frame->clip; /*copy x/y at once */
+		watch->g_x = frame->clip.g_x;
+		watch->g_y = frame->clip.g_y;
 		
 		if (rect.X < 0) {
 			rect.W += rect.X;

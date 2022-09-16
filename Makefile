@@ -5,7 +5,7 @@ TARGET = highwire.app
 
 # compiler settings
 
-#CROSS = m68k-atari-mint-
+CROSS = m68k-atari-mint-
 CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
@@ -39,12 +39,12 @@ WARN = \
 	-Werror 
 
 
-INCLUDE = -I/usr/GEM/include
+INCLUDE = 
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = 
-LIBS = -L/usr/GEM/lib -lgem -lcflib -liio -lungif -ljpeg -lpng -lz -lm -lutf8 \
+LIBS = -lgem -lcflib -liio -lgif -ljpeg -lpng -lz -lm \
        #-lsocket
 
 ifeq ($(CPU),5475)
@@ -53,6 +53,7 @@ else
 	OBJDIR = obj$(CPU:68%=.%)
 endif
 
+all: $(TARGET)
 
 #
 # C source files
@@ -131,9 +132,7 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 
 $(TARGET): $(OBJS)
-	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
-	$(CROSS)stack --fix=128k $@
-	$(CROSS)flags -g -v $@
+	$(LD) -o $@ -Wl,-stack,128k -Wl,--mprg-flags=0x17 $(CFLAGS) $(OBJS) $(LIBS)
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030

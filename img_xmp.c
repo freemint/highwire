@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <string.h>
 
 static BOOL decXmp_start (const char * file, IMGINFO info);
 static BOOL decXmp_r_bit (IMGINFO, char * buffer);

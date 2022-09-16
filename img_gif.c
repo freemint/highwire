@@ -182,7 +182,7 @@ decGif_start (const char * file, IMGINFO info)
 
 	if (!map || img_w <= 0 || img_w >= 4096 || img_h <= 0 || img_h >= 4096) {
 
-		DGifCloseFile (gif);
+		DGifCloseFile (gif, NULL);
 
 		return TRUE;
 
@@ -270,7 +270,7 @@ decGif_quit (IMGINFO info)
 
 	if (info->_priv_data) {
 
-		DGifCloseFile (info->_priv_data);
+		DGifCloseFile (info->_priv_data, NULL);
 
 		info->_priv_data = NULL;
 

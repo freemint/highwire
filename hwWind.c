@@ -716,9 +716,12 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	vswr_mode (vdi_handle, MD_TRANS);
 
 	if (This->isBusy) {
-		GRECT area = *(GRECT*)p;
-		area.g_w -= area.g_x -1;
-		area.g_h -= area.g_y -1;
+		GRECT area;
+		
+		area.g_x = p[0].p_x;
+		area.g_y = p[0].p_y;
+		area.g_w = p[1].p_x - area.g_x + 1;
+		area.g_h = p[1].p_y - area.g_y + 1;
 		clip[1].p_x -= clip[0].p_x -1;
 		clip[1].p_y -= clip[0].p_y -1;
 		draw_busybar (This, &area, (GRECT*)clip);
@@ -2335,12 +2338,14 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			}
 			wind_get_grect (This->Base.Handle, WF_NEXTXYWH, (GRECT*)w);
 		}
-		c[0] = *(PXY*)&This->Curr;
+		c[0].p_x = This->Curr.g_x;
+		c[0].p_y = This->Curr.g_y;
 		c[1].p_x = c[2].p_x = (c[3].p_x = c[0].p_x) + This->Curr.g_w -1;
 		c[3].p_y = c[2].p_y = (c[1].p_y = c[0].p_y) + This->Curr.g_h -1;
 		c[4].p_x = c[0].p_x;
 		c[4].p_y = c[0].p_y +1;
-		w[0] = *(PXY*)&This->Work;
+		w[0].p_x = This->Work.g_x;
+		w[0].p_y = This->Work.g_y;
 		w[1].p_x = w[2].p_x = (w[3].p_x = w[0].p_x) + This->Work.g_w -1;
 		w[1].p_y = w[0].p_y;
 		w[3].p_y = w[2].p_y = ib_y;
@@ -2377,7 +2382,8 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 				w[3].p_y = w[2].p_y;
 				c[1].p_x = c[2].p_x += dx;
 				c[3].p_y = c[2].p_y += dy;
-				*(PXY*)&m_in.emi_m1 = out.emo_mouse;
+				m_in.emi_m1.g_x = out.emo_mouse.p_x;
+				m_in.emi_m1.g_y = out.emo_mouse.p_y;
 			}
 		} while (!(event & MU_BUTTON));
 		vs_clip_off (vdi_handle);
@@ -2533,9 +2539,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		WORD       scrl = 0;
 		BOOL       chng = FALSE;
 
-		WORD       ascii_code;
 		UWORD      nkey;
-		BOOL       shift, ctrl, alt;
+		BOOL       shift, ctrl;
 
 		/* Convert the GEM key code to the "standard" */
 		nkey = gem_to_norm ((short)kstate, (short)key);
@@ -2543,11 +2548,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 		/* Remove the unwanted flags */
 		nkey &= ~(NKF_RESVD|NKF_SHIFT|NKF_CTRL|NKF_CAPS);
 
-		ascii_code =  nkey & 0x00FF;
-
 		shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
 		ctrl  = (kstate & K_CTRL) != 0;
-		alt   = (kstate & K_ALT) != 0;
 
 		if (!(nkey & NKF_FUNC))
 		{

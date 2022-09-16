@@ -13,6 +13,10 @@
 #include "token.h" /* must be included before gem/gemx.h */
 #include <gemx.h>
 
+#ifndef CLK_TCK
+#   define CLK_TCK     CLOCKS_PER_SEC
+#endif
+
 #ifdef __PUREC__
 # define PARSER   struct s_parser * PARSER
 #endif
@@ -1367,7 +1371,7 @@ anc_correct (char * anc)
 				char buf[4]; buf[0] = *(p++); buf[1] = *(p++); buf[2] = '\0';
 				c = strtoul (buf, NULL, 16);
 			} else if (c == '&') {
-				const char ** pp = (const char **)&p;
+				const char ** pp = (const char **)(void *)&p;
 				char         uni[16];
 				p--; /* set back to the '&' */
 				if (scan_namedchar (pp, uni, TRUE, MAP_UNICODE) == uni +2

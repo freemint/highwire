@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <utf8/wctype.h>
+#include <wctype.h>
 
 #ifndef __PUREC__
 #  include <osbind.h>
@@ -1716,7 +1716,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 	WORD     lift = 0;
 	WORD     line = 0;
 	UWORD    nkey;
-	BOOL     shift, ctrl, alt;
+	BOOL     shift, ctrl;
 
 	/* Convert the GEM key code to the "standard" */
 	nkey = gem_to_norm ((short)kstate, (short)key);
@@ -1728,7 +1728,6 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 
 	shift = (kstate & (K_RSHIFT|K_LSHIFT)) != 0;
 	ctrl  = (kstate & K_CTRL) != 0;
-	alt   = (kstate & K_ALT) != 0;
 
 	if (input != (*next = form->TextActive))
 	{

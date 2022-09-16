@@ -153,7 +153,7 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 	int  fd;
 	WORD msg[8];
 	long i;
-	long fd_mask;
+	long fdmask;
 	char c;
 
 	pipename[17] = pipename[18] = 'A';
@@ -192,9 +192,9 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 	}
 	
 	/* now wait for a response */
-	fd_mask = 1L << fd;
-	i = Fselect (DD_TIMEOUT, &fd_mask, 0L, 0L);
-	if (!i || !fd_mask) {	/* timeout happened */
+	fdmask = 1L << fd;
+	i = Fselect (DD_TIMEOUT, &fdmask, 0L, 0L);
+	if (!i || !fdmask) {	/* timeout happened */
 		debug_alert (1, "[1][ddcreate: Fselect timeout][OK]");
 		Fclose (fd);
 		return -1;

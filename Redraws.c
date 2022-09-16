@@ -191,7 +191,8 @@ draw_vbar (FRAME frame, BOOL complete)
 
 	if (!ignore_colours) {
 		GRECT b;
-		*(PXY*)&b = p[2];
+		b.g_x = p[2].p_x;
+		b.g_y = p[2].p_y;
 		b.g_w = scroll_bar_width -2;
 		b.g_h = p[3].p_y - p[2].p_y +1;
 		draw_border (&b, G_WHITE, G_LBLACK, 1);
@@ -301,7 +302,8 @@ draw_hbar (FRAME frame, BOOL complete)
 
 	if (!ignore_colours) {
 		GRECT b;
-		*(PXY*)&b = p[2];
+		b.g_x = p[2].p_x;
+		b.g_y = p[2].p_y;
 		b.g_w     = p[3].p_x - p[2].p_x +1;
 		b.g_h     = scroll_bar_width -2;
 		draw_border (&b, G_WHITE, G_LBLACK, 1);

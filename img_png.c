@@ -64,7 +64,9 @@ decPng_start (const char * name, IMGINFO info)
 
 	FILE * file = fopen (name, "rb");
 
-	
+	png_color *palette;
+
+	int num_colors;
 
 	if (!file) {
 
@@ -138,15 +140,15 @@ decPng_start (const char * name, IMGINFO info)
 
 	
 
-	if (info_ptr->bit_depth == 16) {
+	if (png_get_bit_depth(png_ptr, info_ptr) == 16) {
 
 		png_set_strip_16 (png_ptr);
 
-	} else if (info_ptr->bit_depth < 8) {
+	} else if (png_get_bit_depth(png_ptr, info_ptr) < 8) {
 
 		png_set_packing (png_ptr);
 
-		if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+		if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY) {
 
 #if (PNG_LIBPNG_VER_MAJOR >= 1) && (PNG_LIBPNG_VER_MINOR >= 4)
 
@@ -162,7 +164,7 @@ decPng_start (const char * name, IMGINFO info)
 
 	}
 
-	if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA) {
+	if (png_get_color_type(png_ptr, info_ptr) & PNG_COLOR_MASK_ALPHA) {
 
 		png_set_strip_alpha (png_ptr);
 
@@ -178,28 +180,28 @@ decPng_start (const char * name, IMGINFO info)
 
 	info->quit       = decPng_quit;
 
-	info->ImgWidth   = info_ptr->width;
+	info->ImgWidth   = png_get_image_width(png_ptr, info_ptr);
 
-	info->ImgHeight  = info_ptr->height;
+	info->ImgHeight  = png_get_image_height(png_ptr, info_ptr);
 
-	info->NumComps   = (info_ptr->channels >= 3 ? 3 : 1);
+	info->NumComps   = (png_get_channels(png_ptr, info_ptr) >= 3 ? 3 : 1);
 
-	info->BitDepth   = info_ptr->bit_depth;
+	info->BitDepth   = png_get_bit_depth(png_ptr, info_ptr);
 
-	info->NumColors  = info_ptr->num_palette;
+	if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_colors) & PNG_INFO_PLTE) {
+		info->Palette = (char *)palette;
+		info->NumColors = num_colors;
+		info->PalRpos = offsetof(png_color, red);
 
-	if ((info->Palette = (char*)info_ptr->palette) != NULL) {
+		info->PalGpos = offsetof(png_color, green);
 
-		png_color * rgb = NULL;
+		info->PalBpos = offsetof(png_color, blue);
 
-		info->PalRpos = (unsigned)&rgb->red;
-
-		info->PalGpos = (unsigned)&rgb->green;
-
-		info->PalBpos = (unsigned)&rgb->blue;
-
-		info->PalStep = (unsigned)&rgb[1];
-
+		info->PalStep = sizeof(png_color);
+	} else
+	{
+		info->Palette = NULL;
+		info->NumColors = 0;
 	}
 
 	info->Transp     = -1;
@@ -208,7 +210,7 @@ decPng_start (const char * name, IMGINFO info)
 
 	
 
-	if (info_ptr->interlace_type == PNG_INTERLACE_ADAM7) {
+	if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7) {
 
 		png_set_interlace_handling (png_ptr);
 
@@ -286,7 +288,7 @@ decPng_readi (IMGINFO info, char * buffer)
 
 	
 
-	if (!png_ptr->row_number) {
+	if (png_get_current_row_number(png_ptr) == 0) {
 
 		ULONG       rowbytes      = info->RowBytes;	
 
