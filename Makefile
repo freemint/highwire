@@ -18,7 +18,7 @@ CPU = 68040
 #CPU = 68020-60
 #CPU = 5475
 
-DEFS = -DUSE_OVL -DUSE_INET -DLIBPNG -DLIBGIF
+DEFS = -DUSE_OVL -DUSE_INET -DLIBPNG -DLIBGIF -DLIBJPG
 OPTFLAGS = -funsigned-char \
        -fomit-frame-pointer -O2 -fstrength-reduce 
 

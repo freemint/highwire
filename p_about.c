@@ -217,10 +217,16 @@ about_highwire (TEXTBUFF current, WORD link_color)
   #endif
 
   #ifdef LIBGIF
-    #ifdef GIF_LIB_VERSION
+    #if defined(GIF_LIB_VERSION)
 		sprintf (buf,
 		         "\025gif_lib:\005\024\022%s\020 \026\024\r",
 		         GIF_LIB_VERSION);
+		*(++w) = render_text (current, buf);
+		tab    = max (tab, (*w)->word_width);
+    #elif defined(GIFLIB_MAJOR) && defined(GIFLIB_MINOR) && defined(GIFLIB_RELEASE)
+		sprintf (buf,
+		         "\025gif_lib:\005\024\022%d.%d.%d\020 \026\024\r",
+		         GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE);
 		*(++w) = render_text (current, buf);
 		tab    = max (tab, (*w)->word_width);
     #endif
@@ -239,7 +245,7 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	*(++w) = render_text (current, "\025compiled:\005\024");
 	tab    = max (tab, (*w)->word_width);
 	#if defined (__GNUC__)
-		sprintf (buf, "Gnu C \022%i.%02i\020, ", __GNUC__, __GNUC_MINOR__);
+		sprintf (buf, "Gnu C \022%s\020, ", __VERSION__);
 		render_text (current, buf);
 	#elif defined (__PUREC__)
 		sprintf (buf, "Pure C \022%i.%02x\020, ",
