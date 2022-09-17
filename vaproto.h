@@ -62,7 +62,7 @@ typedef enum
 } AV_VA;
 
 
-/* Objekttypen fÅr VA_THAT_IZIT */
+/* Objekttypen fuer VA_THAT_IZIT */
 
 enum
 {

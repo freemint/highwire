@@ -104,9 +104,9 @@ static void long2alpha (char **p_ws, long l, BOOL upper)
 /*------------------------------------------------------------------------------
  * Sources:
  * Friedlein, Gottfried: Die Zahlzeichen und das elementare Rechnen
- * der Griechen und R”mer und des christlichen Abendlandes vom 7.
- * bis 13. Jahrhundert. - unver„nderter Neudruck der Ausgabe von
- * 1869. - Wiesbaden : Dr. Martin S„ndig oHG, 1968.
+ * der Griechen und Roemer und des christlichen Abendlandes vom 7.
+ * bis 13. Jahrhundert. - unveraenderter Neudruck der Ausgabe von
+ * 1869. - Wiesbaden : Dr. Martin Saendig oHG, 1968.
  * Ifroh, Georges: Universalgeschichte der Zahlen. - Frankfurt am
  * Main ; New York : Campus, 1986. - ISBN 3-593-33666-9. - Kapitel
  * 9. (Histoire Universelle des Chiffres. - Paris : Seghers, 1981.)

@@ -248,7 +248,7 @@ font_step2size (WORD step)
 		size[2] = max (s - s / 8, font_minsize);    /*  9 10 11 12 13 14 14 16 */
 		size[3] = max (s,         font_minsize);    /* 10 11 12 13 14 15 16 18 */
 		for (i = 4; i <= 7; i++) {
-			s += s / 6;  /* < 18: 2-point step, ò 18: 3-point step */
+			s += s / 6;  /* < 18: 2-point step, >= 18: 3-point step */
 			size[i] = max (s, font_minsize);
 		}
 #else

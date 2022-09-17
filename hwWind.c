@@ -1481,7 +1481,7 @@ hwWind_urlhist (HwWIND This, const char * link)
 			strcpy (ent->Menu +1, link);
 		} else {
 			memcpy (ent->Menu +1, link, sizeof(ent->Menu) -3);
-			ent->Menu[sizeof(ent->Menu) -2] = '¯';
+			ent->Menu[sizeof(ent->Menu) -2] = '\257';
 			ent->Menu[sizeof(ent->Menu) -1] = '\0';
 		}
 		memcpy (ent->Link, link, len +1);

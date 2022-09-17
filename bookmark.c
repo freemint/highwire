@@ -99,7 +99,7 @@ bkm_print (BKM_LINE line)
 			ci |= printf (" id='%.*s'", (int)line->Id_ln, line->Id);
 		printf ("%s  '%.*s'\n", (ci ? "\n " : ""), len, line->Text);
 	} else {
-		printf ("ð <nil>\n");
+		printf ("\360 <nil>\n");
 	}
 }
 
@@ -207,7 +207,7 @@ bkm_create_grp (BKM_LINE prev, const char * title)
 	ULONG    id_class = get_id();
 	char     b1[100];
 	size_t   l1   = sprintf (b1, "<DT CLASS='GRP' ID='G-%08lX'><B>", id_class);
-	size_t   l2   = strlen (title && *title ? title : (title = "?¨?¨?"));
+	size_t   l2   = strlen (title && *title ? title : (title = "?\250?\250?"));
 	char     b3[] = "</B></DT>\n";
 	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + sizeof(b3)-1);
 	if (line) {
@@ -235,7 +235,7 @@ bkm_create_lnk (BKM_LINE prev, const char * title, const char * url, long visit)
 	size_t   l2   = strlen (url && *url ? url : (url = "#"));
 	char     b3[] = "'>";
 	size_t   l3   = sizeof(b3) -1;
-	size_t   l4   = strlen (title && *title ? title : (title = "?¨?¨?"));
+	size_t   l4   = strlen (title && *title ? title : (title = "?\250?\250?"));
 	char     b5[] = "</A></DT>\n";
 	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3 + l4 + sizeof(b5)-1);
 	if (line) {

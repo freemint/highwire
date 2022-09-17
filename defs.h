@@ -10,7 +10,7 @@
 #define _HIGHWIRE_BOOKMARK_  "bookmark.htm"
 #define _HIGHWIRE_BKM_CSS_   "bookmark.css"
 
-#define _ERROR_SPEEDO_   "needs SpeedoGDOS or NVDI ò 3!"
+#define _ERROR_SPEEDO_   "needs SpeedoGDOS or NVDI \362 3!"
 #define _ERROR_NOMEM_    "got no GLOBAL memory!"
 #define _ERROR_NORSC_    "cannot load RSC file '"_HIGHWIRE_RSC_"'!"
 
@@ -102,28 +102,28 @@ typedef enum {
 	LANG_Unknown = 0,
 	LANG_CA = ('c' << 8) + 'a',  /* Catalan, Katalanisch */
 	LANG_CS = ('c' << 8) + 's',  /* Czech, Tschechisch */
-	LANG_DA = ('d' << 8) + 'a',  /* Danish, D„nisch */
+	LANG_DA = ('d' << 8) + 'a',  /* Danish, Daenisch */
 	LANG_DE = ('d' << 8) + 'e',  /* German, Deutsch */
 	LANG_EL = ('e' << 8) + 'l',  /* Greek, Griechisch */
 	LANG_EN = ('e' << 8) + 'n',  /* English, Englisch */
 	LANG_ES = ('e' << 8) + 's',  /* Spanish, Spanisch */
 	LANG_ET = ('e' << 8) + 't',  /* Estonian, Estnisch */
 	LANG_FI = ('f' << 8) + 'i',  /* Finnish, Finnisch */
-	LANG_FR = ('f' << 8) + 'r',  /* French, Franz”sisch */
+	LANG_FR = ('f' << 8) + 'r',  /* French, Franzoesisch */
 	LANG_FY = ('f' << 8) + 'y',  /* Frisian, Friesisch */
-	LANG_HE = ('h' << 8) + 'e',  /* Hebrew, Hebr„isch */
+	LANG_HE = ('h' << 8) + 'e',  /* Hebrew, Hebraeisch */
 	LANG_HR = ('h' << 8) + 'r',  /* Croatian, Kroatisch */
 	LANG_HU = ('h' << 8) + 'u',  /* Hungarian, Ungarisch */
 	LANG_IT = ('i' << 8) + 't',  /* Italian, Italienisch */
 	LANG_JA = ('j' << 8) + 'a',  /* Japanese, Japanisch */
 	LANG_KO = ('k' << 8) + 'o',  /* Korean, Koreanisch */
-	LANG_NL = ('n' << 8) + 'l',  /* Dutch, Niederl„ndisch */
-	LANG_NB = ('n' << 8) + 'b',  /* Bokm†l Norwergian, Alt-Norwegisch */
+	LANG_NL = ('n' << 8) + 'l',  /* Dutch, Niederlaendisch */
+	LANG_NB = ('n' << 8) + 'b',  /* Bokmal Norwergian, Alt-Norwegisch */
 	LANG_NN = ('n' << 8) + 'n',  /* Nynorsk Norwergian, Neu-Norwegisch */
 	LANG_NO = ('n' << 8) + 'o',  /* Norwergian, Norwegisch */
 	LANG_PL = ('p' << 8) + 'l',  /* Polish, Polnisch */
 	LANG_PT = ('p' << 8) + 't',  /* Portuguese, Portugiesisch */
-	LANG_RO = ('r' << 8) + 'o',  /* Rumanian, Rum„nisch */
+	LANG_RO = ('r' << 8) + 'o',  /* Rumanian, Rumaenisch */
 	LANG_RU = ('r' << 8) + 'u',  /* Russian, Russisch */
 	LANG_SH = ('s' << 8) + 'h',  /* Serbo-Croatian, Serbokroatisch, deprecated! */
 	LANG_SK = ('s' << 8) + 'k',  /* Slovak, Slowakisch */
@@ -131,7 +131,7 @@ typedef enum {
 	LANG_SQ = ('s' << 8) + 'q',  /* Albanian, Albanisch */
 	LANG_SR = ('s' << 8) + 'r',  /* Serbian, Serbisch */
 	LANG_SV = ('s' << 8) + 'v',  /* Swedish, Schwedisch */
-	LANG_TR = ('t' << 8) + 'r',  /* Turkish, Trkisch */
+	LANG_TR = ('t' << 8) + 'r',  /* Turkish, Tuerkisch */
 	LANG_YI = ('y' << 8) + 'i',  /* Yiddish, Jiddisch */
 	LANG_ZH = ('z' << 8) + 'h'   /* Chinese, Chinesisch */
 } LANGUAGE;

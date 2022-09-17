@@ -48,7 +48,7 @@ WORD font_minsize = 1;  /* minimum size */
 WORD link_colour = 12;  /* G_LBLUE */
 WORD highlighted_link_colour = 10;  /* G_LRED */
 WORD text_colour = 1;  /* G_BLACK */
-WORD background_colour = 0;  /* G_WHITE, changed to G_LWHITE for ò 2 colors */
+WORD background_colour = 0;  /* G_WHITE, changed to G_LWHITE for > 2 colors */
 
 WORD slider_bkg = 9;  /* G_LBLACK */
 WORD slider_col = 8;  /* G_LWHITE */
