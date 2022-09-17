@@ -290,7 +290,7 @@ inet_connect (long addr, long port, long tout_sec)
 		struct sockaddr_in s_in;
 		s_in.sin_family = AF_INET;
 		s_in.sin_port   = htons ((short)port);
-		s_in.sin_addr   = *(struct in_addr *)&addr;
+		s_in.sin_addr.s_addr   = addr;
 		if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
 			fh = -errno;
 		} else {
@@ -320,7 +320,7 @@ inet_connect (long addr, long port, long tout_sec)
 		sockaddr_in s_in;
 		s_in.sin_family = AF_INET;
 		s_in.sin_port   = htons ((short)port);
-		s_in.sin_addr   = *(unsigned long *)&addr;
+		s_in.sin_addr   = addr;
 		do {
 			if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 				fh = -1;

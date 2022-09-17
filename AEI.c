@@ -302,9 +302,12 @@ doGSCommand(const WORD msg[8])
 
 	if (cmd)
 	{
+		char **pp;
+
 		if (!stricmp(cmd, "AppGetLongName"))
 		{
-			*(char **)&answ[5] = strcpy (gslongname, _HIGHWIRE_FULLNAME_);
+			pp = (char **)&answ[5];
+			*pp = strcpy (gslongname, _HIGHWIRE_FULLNAME_);
 			answ[7] = GSACK_OK;
 		}
 		else if (!stricmp(cmd, "CheckCommand"))
@@ -313,7 +316,8 @@ doGSCommand(const WORD msg[8])
 			if (!stricmp(cmd, "AppGetLongName") || !stricmp(cmd, "CheckCommand")
 			    || !stricmp(cmd, "Close") || !stricmp(cmd, "GetAllCommands")
 			    || !stricmp(cmd, "Open") || !stricmp(cmd, "Quit")) {
-				*(char **)&answ[5] = memcpy(gsanswer, "1\0", 3);
+				pp = (char **)&answ[5];
+				*pp = memcpy(gsanswer, "1\0", 3);
 			}
 				/* else answ[5..6] is initialized with NULL */
 			answ[7] = GSACK_OK;
@@ -328,7 +332,8 @@ doGSCommand(const WORD msg[8])
 					#error gsanswer[HW_PATH_MAX] too small for GetAllCommands!
 				#endif
 			#endif
-			*(char **)&answ[5] = memcpy(gsanswer, ALL, sizeof(ALL) + 1);
+			pp = (char **)&answ[5];
+			*pp = memcpy(gsanswer, ALL, sizeof(ALL) + 1);
 			answ[7] = GSACK_OK;
 		}
 		else if (!stricmp(cmd, "Quit"))
@@ -345,7 +350,8 @@ doGSCommand(const WORD msg[8])
 		else if (!stricmp(cmd, "AppGetLongName"))
 		{
 			strcpy(gslongname, _HIGHWIRE_FULLNAME_);
-			*(char **)&answ[5] = gslongname;
+			pp = (char **)&answ[5];
+			*pp = gslongname;
 			answ[7] = GSACK_OK;
 		}
 	}
@@ -1548,6 +1554,7 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 				}
 			#else
 				const GS_INFO *sender = *(GS_INFO **)&msg[3];
+				const GS_INFO **pgsi;
 				WORD answ[8];
 
 				answ[0] = GS_REPLY;
@@ -1564,7 +1571,8 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 				gsi->msgs = GSM_COMMAND;
 				gsi->ext = 0L;
 
-				*(const GS_INFO **)&answ[3] = gsi;
+				pgsi = (const GS_INFO **)&answ[3];
+				*pgsi = gsi;
 
 				if (sender)
 				{

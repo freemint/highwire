@@ -4,7 +4,7 @@
 TARGET = ../mintnet.ovl
 
 # compiler settings
-#CROSS = m68k-atari-mint-
+CROSS = m68k-atari-mint-
 CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
@@ -39,7 +39,7 @@ INCLUDE =
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
-LDFLAGS = 
+LDFLAGS = -s
 LIBS = -liio
 
 ifeq ($(CPU),5475)
@@ -48,6 +48,7 @@ else
 	OBJDIR = obj$(CPU:68%=.%)
 endif
 
+all: $(TARGET)
 
 #
 # C source files
@@ -75,12 +76,12 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 
 $(TARGET): $(OBJS)
-	$(LD) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
-	$(CROSS)stack --fix=8k $@
+	$(LD) -o $@ $(CFLAGS) -Wl,-stack,8k $(LDFLAGS) $(OBJS) $(LIBS)
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
 040: ; $(MAKE) CPU=68040
+060: ; $(MAKE) CPU=68020-60
 v4e: ; $(MAKE) CPU=5475
 
 clean:

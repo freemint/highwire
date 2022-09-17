@@ -43,7 +43,7 @@ INCLUDE =
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
-LDFLAGS = 
+LDFLAGS = -s
 LIBS = -lgem -lcflib -liio -lgif -ljpeg -lpng -lz -lm \
        #-lsocket
 
@@ -132,7 +132,7 @@ DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
 
 
 $(TARGET): $(OBJS)
-	$(LD) -o $@ -Wl,-stack,128k -Wl,--mprg-flags=0x17 $(CFLAGS) $(OBJS) $(LIBS)
+	$(LD) -o $@ -Wl,-stack,128k -Wl,--mprg-flags=0x17 $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030

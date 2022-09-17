@@ -643,7 +643,7 @@ new_tarea (PARSER parser, const char * beg, const char * end, UWORD nlines)
 	FRAME    frame   = parser->Frame;
 	TEXTBUFF current = &parser->Current;
 
-	size_t size = (end - beg) + nlines * (sizeof(WCHAR*) / sizeof(WCHAR));
+	size_t size = (end - beg) + nlines * (sizeof(void*) / sizeof(WCHAR));
 	UWORD  rows = get_value_unum (parser, KEY_ROWS, 0);
 	UWORD  cols = get_value_unum (parser, KEY_COLS, 0);
 	char   name[100];

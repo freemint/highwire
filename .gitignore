@@ -6,3 +6,4 @@ obj.*
 *.orig
 *.o
 *.a
+*.ovl
