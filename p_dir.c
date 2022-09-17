@@ -126,46 +126,45 @@ parse_dir (void * arg, long invalidated)
 	}
 	
 	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
-	render_text (current, "Index of ");
+	render_text (current, "Index of \003");
 	if (!sort || !strchr ("NDS", sort)) {
 		sort = 'N';
 	}
 	while (dir > loc->FullName && *(--dir) != delim);
 	if (dir > loc->FullName) {
 		size_t len = ++dir - loc->FullName;
-		char * lnk = buf + sizeof(buf) -4 - len;
+		char * lnk = buf;
 		memcpy (lnk, loc->FullName, len);
-		lnk[len]   = '\0';
-		sprintf (buf, "%s", lnk);
+		lnk[len++]   = '\003';
 		lnk[len++] = '#';
 		lnk[len++] = sort;
 		lnk[len]   = '\0';
 		render_link (current, buf, lnk, color);
 	}
-	sprintf (buf, "%s\n", dir);
+	sprintf (buf, "%s\n\005\003", dir);
 	render_text (current, buf);
 	
 	font_byType (normal_font, -1, font_step2size (3), current->word);
 	strcat (strcpy (buf, loc->FullName), "# ");
 	if (sort == 'N') {
-		wrd_name = render_text (current, "Name");
+		wrd_name = render_text (current, "Name\003\005\003");
 	} else {
 		strchr (buf, '#')[1] = 'N';
-		wrd_name = render_link (current, "Name", buf, color);
+		wrd_name = render_link (current, "Name\003\005\003", buf, color);
 	}
 	max_name = wrd_name->word_width;
 	if (sort == 'S') {
-		wrd_size = render_text (current, "Size");
+		wrd_size = render_text (current, "Size\003\005\005\003");
 	} else {
 		strchr (buf, '#')[1] = 'S';
-		wrd_size = render_link (current, "Size", buf, color);
+		wrd_size = render_link (current, "Size\003\005\005\003", buf, color);
 	}
 	max_size = wrd_size->word_width;
 	if (sort == 'D') {
-		render_text (current, "Date");
+		render_text (current, "Date\024");
 	} else {
 		strchr (buf, '#')[1] = 'D';
-		render_link (current, "Date", buf, color);
+		render_link (current, "Date\024", buf, color);
 	}
 	current->word->word_height = 2;
 	render_hrule (current, ALN_CENTER, -1024, 2, TRUE);
@@ -229,26 +228,26 @@ parse_dir (void * arg, long invalidated)
 				lnk[len++] = '#';
 				lnk[len++] = sort;
 				lnk[len]   = '\0';
-				render_text (current, "");
+				render_text (current, "\005\025");
 				if (ent->size) {
-					sprintf (buf, "%s%lu", ent->name, ent->size);
+					sprintf (buf, "%s\024\005\003%lu\003", ent->name, ent->size);
 				} else {
-					sprintf (buf, "%s-", ent->name);
+					sprintf (buf, "%s\024\005\022-\020", ent->name);
 				}
 			} else {
 				lnk = ent->name;
-				render_text (current, "");
-				sprintf (buf, "%s%lu", ent->name, ent->size);
+				render_text (current, "\005\003");
+				sprintf (buf, "%s\003\005\003%lu\003", ent->name, ent->size);
 			}
 			while (*p >= ' ') {
-				if (*p == ' ') *p = '';
+				if (*p == ' ') *p = '\005';
 				p++;
 			}
 			w = ent->word = render_link (current, buf, lnk, color);
 			max_name = max (max_name, w->word_width);
 			w = w->next_word->next_word;
 			max_size = max (max_size, w->word_width);
-			sprintf (buf, " %u-%02u-%02u%02u:%02u:%02u\r",
+			sprintf (buf, " \005%u-%02u-%02u\005%02u:%02u:%02u\r",
 			         ent->date.x.year +1980, ent->date.x.mon, ent->date.x.day,
 			         ent->date.x.hour, ent->date.x.min, ent->date.x.sec <<1);
 			render_text (current, buf);

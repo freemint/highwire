@@ -646,7 +646,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 					}
 					vst_alignment (vdi_handle, TA_CENTER, TA_TOP, &dmy, &dmy);
 					v_gtext (vdi_handle,
-					         p[0].p_x + This->IbarH /2, p[0].p_y +1, "");
+					         p[0].p_x + This->IbarH /2, p[0].p_y +1, "\006");
 				}
 				vs_clip_off (vdi_handle);
 				break;
@@ -1396,9 +1396,10 @@ updt_toolbar (HwWIND This, const char * text)
 	size_t     len  = strlen (text);
 	
 	if (len >= sizeof(edit->Text)) {
-		len = sizeof(edit->Text);
+		len = sizeof(edit->Text) - 1;
 	}
-	strncpy (edit->Text, text, len)[len] = '\0';
+	memcpy(edit->Text, text, len);
+	edit->Text[len] = '\0';
 	edit->Length = len;
 	edit->Cursor = 0;
 	edit->Shift  = 0;
@@ -2654,8 +2655,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 								char * buf;
 								len = min (len, filelength);
 
-								buf = malloc (len);
-								strncpy (buf, p, len);
+								buf = malloc (len + 1);
+								memcpy (buf, p, len);
 								buf[len] = '\0';
 								free (p);
 

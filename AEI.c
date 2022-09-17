@@ -324,8 +324,8 @@ doGSCommand(const WORD msg[8])
 		}
 		else if (!stricmp(cmd, "GetAllCommands"))
 		{
-			#define _ALL_1 "AppGetLongName\0CheckCommand\0Close"
-			#define _ALL_2 "\0GetAllCommands\0Open <file>\0Quit\0"
+			#define _ALL_1 "AppGetLongName\0CheckCommand\0Close\0"
+			#define _ALL_2 "GetAllCommands\0Open <file>\0Quit\0"
 			#define ALL   _ALL_1 _ALL_2
 			#ifdef __PUREC__
 				#if sizeof(ALL) + 1 > HW_PATH_MAX
@@ -333,7 +333,7 @@ doGSCommand(const WORD msg[8])
 				#endif
 			#endif
 			pp = (char **)&answ[5];
-			*pp = memcpy(gsanswer, ALL, sizeof(ALL) + 1);
+			*pp = memcpy(gsanswer, ALL, sizeof(ALL));
 			answ[7] = GSACK_OK;
 		}
 		else if (!stricmp(cmd, "Quit"))

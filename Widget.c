@@ -130,7 +130,7 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 {
 	static char sepr[] = "----------------------------------------"
 	                     "---------------------------------------",
-	            t_dn[] = "", t_up[] = "";
+	            t_dn[] = "\002\002", t_up[] = "\001\001";
 	static OBJECT * o_tree = NULL;
 	static short    o_pbeg = 1, o_pend;
 	static short    chr_w, chr_h;

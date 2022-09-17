@@ -903,7 +903,7 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
  
 				if (colors.Rgt > -1)
 					box->BorderColor.Lft = colors.Rgt;
-					break;
+				break;
 			default:
 				break;
 		}
@@ -4891,11 +4891,11 @@ render_text (TEXTBUFF current, const char * text)
 					}
 					break;
 				
-				case '': /* 0x05, &nbsp; */
+				case '\005': /* 0x05, &nbsp; */
 					*(current->text++) = font_Nobrk (current->word->font);
 					break;
 				
-				case '': /* 0x03, force new word */
+				case '\003': /* 0x03, force new word */
 					change = TRUE;
 					break;
 				
@@ -4913,14 +4913,14 @@ render_text (TEXTBUFF current, const char * text)
 					break;
 				
 				/* 0x10.. 0x12 */
-				case '': change = TRUE; font = normal_font; break;
-				case '': change = TRUE; font = header_font; break;
-				case '': change = TRUE; font = pre_font;    break;
+				case '\020': change = TRUE; font = normal_font; break;
+				case '\021': change = TRUE; font = header_font; break;
+				case '\022': change = TRUE; font = pre_font;    break;
 				/* 0x14 .. 0x17 */
-				case '': change = TRUE; style = 0x0000;              break;
-				case '': change = TRUE; style = FNT_BOLD;            break;
-				case '': change = TRUE; style = FNT_ITALIC;          break;
-				case '': change = TRUE; style = FNT_BOLD|FNT_ITALIC; break;
+				case '\024': change = TRUE; style = 0x0000;              break;
+				case '\025': change = TRUE; style = FNT_BOLD;            break;
+				case '\026': change = TRUE; style = FNT_ITALIC;          break;
+				case '\027': change = TRUE; style = FNT_BOLD|FNT_ITALIC; break;
 			}
 			if (change) {
 				if (current->text > current->buffer) {
