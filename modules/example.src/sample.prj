@@ -1,20 +1,17 @@
-;>>>>>>> DEFAULT.PRJ for use with single module programs <<<<<<<<
+..\sample.ovl
+.C [ -P- -M]			;  ... -Y was in for debug info
 
-..\SAMPLE.OVL
-.C [ -P -M]			;  ... -Y was in for debug info
+.C [-I..\network.src\include]   ; include path
 
-.C [-ih:\src\highwire\include]   ; include path
-
-.L [ -L -V -S=1024]	; -Y was in for debug info
-.S [ -V ]			; -Y was in for debug info
+.L [ -S=1024]	; -Y was in for debug info
 =                  ; list of modules follows...
 
-PCSTART.O          ; startup code
+pcstart.o          ; startup code
 
-SAMPLE.C (..\..\ovl_sys.h)
+sample.c (..\..\ovl_sys.h)
 
-PCSTDLIB.LIB       ; standard library
-PCEXTLIB.LIB       ; extended library
-PCTOSLIB.LIB       ; TOS library
+pcstdlib.lib       ; standard library
+pcextlib.lib       ; extended library
+pctoslib.lib       ; TOS library
 
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

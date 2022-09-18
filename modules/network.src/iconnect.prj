@@ -1,17 +1,23 @@
 ..\iconnect.ovl
-.C [ -P -M -DUSE_INET]
+.C [ -P- -M -DUSE_INET]
 
-.C [-ih:\src\highwire\include]   ; include path
+.C [-Iinclude\]   ; include path
 
-.L [ -L -V -S=1024]
-.S [ -V ]
+.L [-S=1024]
 =
 
-PCSTART.O          ; startup code
+pcstart.o          ; startup code
 
 iconnect.c (network.c,..\..\ovl_sys.h, ..\..\hw-types.h,..\..\inet.c,..\..\inet.h)
 
-PCSTDLIB.LIB       ; standard library
-PCEXTLIB.LIB       ; extended library
-PCTOSLIB.LIB       ; TOS library
-socklib.lib
+; socket library
+iconnect\socklib.c
+iconnect\inet.c
+iconnect\host.c
+iconnect\getent.c
+iconnect\url_aid.c
+iconnect\stream_i.c
+iconnect\set_flag.c
+
+pcstdlib.lib       ; standard library
+pctoslib.lib       ; TOS library

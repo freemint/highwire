@@ -1,6 +1,6 @@
 /*
- *  Wrapper file to compile 'Iconnect.OVL'
-*/
+ *  Wrapper file to compile 'iconnect.ovl'
+ */
 
 #define USE_ICNN
 

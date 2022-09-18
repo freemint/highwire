@@ -1,6 +1,6 @@
 /*
- *  Wrapper file to compile 'MAGICNET.OVL'
-*/
+ *  Wrapper file to compile 'magicnet.ovl'
+ */
 
 #define USE_MAGICNET
 

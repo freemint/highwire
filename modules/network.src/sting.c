@@ -1,6 +1,6 @@
 /*
- *  Wrapper file to compile 'Sting.OVL'
-*/
+ *  Wrapper file to compile 'sting.ovl'
+ */
 
 #define USE_STNG
 

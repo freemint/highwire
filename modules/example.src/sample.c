@@ -63,7 +63,7 @@ long __CDECL ovl_init(void)
  * ----------------------------------------------------------------- */
 struct ovl_info_t *__CDECL ovl_version(void)
 {
-	return((struct ovl_info_t *)&ovl_data);
+	return &ovl_data;
 }
 
 /* ----------------------------------------------------------------- *

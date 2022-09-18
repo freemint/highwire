@@ -9,7 +9,7 @@
 #  define USE_MINT
 
 # elif defined(__PUREC__)
-#  ifndef USE_ICNN
+#  if !defined(USE_ICNN) && !defined(USE_STIK) && !defined(USE_MINT) && !defined(USE_MAGICNET)
 #   define USE_STIK /* also if USE_STNG is already defined, (nearly) same API */
 #  endif
 # endif
@@ -103,12 +103,18 @@ static long  __CDECL demand_connect (long addr, long port, long tout_sec)
 # include <netinet/in.h>
 # include <unistd.h>
 # include <mintbind.h>
+# include <errno.h>
 #else       /*USE_MAGICNET*/
 # include <magicnet/netdb.h>
 # include <magicnet/sys/socket.h>
 # include <magicnet/netinet/in.h>
-# include <magicnet/unistd.h>
+# include <unistd.h>
 # include <mintbind.h>
+# undef E_OK
+# undef EPROTONOSUPPORT
+# undef ECONNRESET
+# undef ETIMEDOUT
+# include <magicnet/errno.h>
 #endif
 
 /*----------------------------------------------------------------------------*/
@@ -163,10 +169,10 @@ static BOOL init_mintnet (void)
 # include <string.h>
 # include <iconnect/sockinit.h>
 # include <iconnect/netdb.h>
+# include <iconnect/types.h>
 # include <iconnect/socket.h>
 # include <iconnect/in.h>
 # include <iconnect/sfcntl.h>
-# include <iconnect/types.h>
 # include <iconnect/sockios.h>
 
 /*----------------------------------------------------------------------------*/
@@ -189,10 +195,10 @@ static BOOL init_iconnect (void)
 # ifdef USE_STNG
 #  include <sting/transprt.h>
 # else /*STiK2*/
-#  undef min
-#  undef max
-#  include <transprt.h>
+#  include <sting/transprt.h>
 # endif
+#undef min
+#define	min(x,y)   	(((x)<(y))?(x):(y))
 
 #define TCP_OBUFF_SIZE   2048   /* TCP_open/TCP_send */
 
@@ -211,7 +217,7 @@ static BOOL init_stik (void)
 		while (jar->cktag) {
 			if (jar->cktag == tag) {
 				DRV_LIST * drivers = (DRV_LIST*)jar->ckvalue;
-				if (strcmp (MAGIC, drivers->magic) == 0) {
+				if (strcmp (STIK_DRVR_MAGIC, drivers->magic) == 0) {
 					tpl = (TPL*)get_dftab(TRANSPORT_DRIVER);
 				}
 				break;
@@ -243,7 +249,7 @@ inet_host_addr (const char * name, long * addr)
 
 #elif defined(USE_ICNN)
 	if (init_iconnect()) {
-		hostent * host = gethostbyname ((char*)name);
+		struct hostent * host = gethostbyname ((char*)name);
 		if (host) {
 			*addr = *(long*)host->h_addr;
 			ret   = E_OK;
@@ -269,7 +275,11 @@ inet_host_addr (const char * name, long * addr)
 #if defined(USE_MINT) || defined(USE_STIK) || defined(USE_MAGICNET)
 static BOOL sig_tout = FALSE;
 
-static void sig_alrm (long sig)
+#ifndef __mint_sighandler_t_defined
+typedef void *__mint_sighandler_t;
+#endif
+
+static void __CDECL sig_alrm (long sig)
 {
 	(void)sig;
 	sig_tout = TRUE;
@@ -280,7 +290,7 @@ static void sig_alrm (long sig)
 long __CDECL
 inet_connect (long addr, long port, long tout_sec)
 {
-	long fh = -1;
+	int fh = -1;
 
 #if defined(USE_MINT) || defined(USE_MAGICNET)
 	if (!init_mintnet()) {
@@ -293,8 +303,8 @@ inet_connect (long addr, long port, long tout_sec)
 		if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
 			fh = -errno;
 		} else {
-			long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
-			if (alrm >= 0) {
+			__mint_sighandler_t alrm = (__mint_sighandler_t)Psignal (14/*SIGALRM*/, sig_alrm);
+			if ((long)alrm >= 0) {
 				sig_tout = FALSE;
 				Talarm (tout_sec);
 			}
@@ -304,7 +314,7 @@ inet_connect (long addr, long port, long tout_sec)
 			} else {
 				sockets_free--;
 			}
-			if (alrm >= 0) {
+			if ((long)alrm >= 0) {
 				Talarm (0);
 				Psignal (14/*SIGALRM*/, alrm);
 			}
@@ -348,8 +358,8 @@ inet_connect (long addr, long port, long tout_sec)
 	} else if (sockets_free <= 0) {
 		fh = -35/*EMFILE*/;
 	} else {
-		long alrm = Psignal (14/*SIGALRM*/, (long)sig_alrm);
-		if (alrm >= 0) {
+		__mint_sighandler_t alrm = (__mint_sighandler_t)Psignal (14/*SIGALRM*/, sig_alrm);
+		if ((long)alrm >= 0) {
 			sig_tout = FALSE;
 			Talarm (tout_sec);
 		}
@@ -358,7 +368,7 @@ inet_connect (long addr, long port, long tout_sec)
 		} else {
 			sockets_free--;
 		}
-		if (alrm >= 0) {
+		if ((long)alrm >= 0) {
 			Talarm (0);
 			Psignal (14/*SIGALRM*/, alrm);
 		}
@@ -511,7 +521,7 @@ inet_close (long fh)
 	if (fh >= 0) {
 
 	#if defined(USE_MINT) || defined(USE_MAGICNET)
-		if (close (fh) == 0) sockets_free++;
+		if (close ((int)fh) == 0) sockets_free++;
 
 	#elif defined(USE_ICNN)
 		if (sclose ((int)fh) == 0) sockets_free++;
@@ -520,11 +530,7 @@ inet_close (long fh)
 		if (!tpl) {
 			puts ("No STiK/Sting");
 		} else {
-		#ifdef USE_STNG
 			if (TCP_close ((int)fh, 0, NULL) == 0) sockets_free++;
-		#else /*STiK2*/
-			if (TCP_close ((int)fh, 0) == 0) sockets_free++;
-		#endif
 		}
 	
 	#endif
@@ -575,7 +581,7 @@ inet_select (long timeout, long * rfds, long * wfds) /* timeout is milliseconds 
 	ret = Fselect (timeout, rfds, wfds, NULL);
 
 #elif defined(USE_ICNN)
-	timeval to_in;
+	struct timeval to_in;
 	fd_set * p_rf, * p_wf;
 	if (rfds && *rfds) {
 		static fd_set i_rf;

@@ -1,0 +1,15 @@
+..\stik2.ovl
+.C [ -P- -M -DUSE_INET]
+
+.C [-Iinclude]   ; include path
+
+.L [-S=1024]
+=
+
+pcstart.o          ; startup code
+
+stik2.c (network.c, ..\..\ovl_sys.h, ..\..\hw-types.h,..\..\inet.c,..\..\inet.h)
+
+pcstdlib.lib       ; standard library
+pcextlib.lib       ; extended library
+pctoslib.lib       ; TOS library

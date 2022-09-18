@@ -1,16 +1,15 @@
 ..\sting.ovl
-.C [ -P -M -DUSE_INET]
+.C [ -P- -M -DUSE_INET]
 
-.C [-ih:\src\highwire\include]   ; include path
+.C [-Iinclude]   ; include path
 
-.L [ -L -V -S=1024]
-.S [ -V ]
+.L [-S=1024]
 =
 
-PCSTART.O          ; startup code
+pcstart.o          ; startup code
 
 sting.c (network.c,..\..\ovl_sys.h, ..\..\hw-types.h,..\..\inet.c,..\..\inet.h)
 
-PCSTDLIB.LIB       ; standard library
-PCEXTLIB.LIB       ; extended library
-PCTOSLIB.LIB       ; TOS library
+pcstdlib.lib       ; standard library
+pcextlib.lib       ; extended library
+pctoslib.lib       ; TOS library
