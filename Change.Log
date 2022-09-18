@@ -14,6 +14,15 @@ Changes in V. 0.3.4
   - Form text areas
     - Bug fix for carriage returns and tabs pasted from clipboard.
 
+ beta 4
+  - url field code changes
+
+ bete 6
+  - moved clipboard code to separate module
+  - start to add Ctrl-C to form textareas (not yet working)
+  - rebuilt with libjpeg 8. Fixes jpeg image distortion in 030 build
+
+
 Changes in V. 0.3.3 beta
 
 - OLGA support implemented (as client).  Files

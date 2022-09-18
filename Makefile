@@ -41,10 +41,13 @@ WARN = \
 
 INCLUDE = 
 
+hash = \#
+CHECKGIF := $(shell if echo -e "$(hash)include <gif_lib.h> \\nconst char *version = GIF_LIB_VERSION" | $(CC) -E - | grep GIF_LIB_VERSION >/dev/null; then echo -lgif; else echo -lungif; fi)
+
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = -s
-LIBS = -lgem -lcflib -liio -lgif -ljpeg -lpng -lz -lm \
+LIBS = -lgem -lcflib -liio $(CHECKGIF) -ljpeg -lpng -lz -lm \
        #-lsocket
 
 ifeq ($(CPU),5475)

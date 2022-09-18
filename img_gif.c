@@ -31,9 +31,15 @@ static DECODER _decoder_gif = {
 
 
 #if defined(GIFLIB_MAJOR) 
-
-# define PrintGifError() GifErrorString(gif->Error);
-
+static void _PrintGifError(GifFileType *gif)
+{
+	const char *err = GifErrorString(gif->Error);
+	if (err != NULL)
+		fprintf(stderr, "\nGIF-LIB error: %s.\n", err);
+	else
+		fprintf(stderr, "\nGIF-LIB undefined error %d.\n", gif->Error);
+}
+#define PrintGifError() _PrintGifError(gif)
 #endif
 
 
@@ -86,7 +92,7 @@ decGif_start (const char * file, IMGINFO info)
 
 			if (DGifGetRecordType (gif, &rec) == GIF_ERROR) {
 
-				printf ("DGifGetRecordType() ");
+				fprintf (stderr, "DGifGetRecordType() ");
 
 				PrintGifError();
 
@@ -98,7 +104,7 @@ decGif_start (const char * file, IMGINFO info)
 
 				if (DGifGetImageDesc(gif) == GIF_ERROR) {
 
-					printf ("DGifGetImageDesc() ");
+					fprintf (stderr, "DGifGetImageDesc() ");
 
 					PrintGifError();
 
@@ -136,7 +142,7 @@ decGif_start (const char * file, IMGINFO info)
 
 				if (DGifGetExtension (gif, &code, &block) == GIF_ERROR) {
 
-					printf ("DGifGetExtension() ");
+					fprintf (stderr, "DGifGetExtension() ");
 
 					PrintGifError();
 
@@ -154,7 +160,7 @@ decGif_start (const char * file, IMGINFO info)
 
 					if (DGifGetExtensionNext (gif, &block) == GIF_ERROR) {
 
-						printf ("DGifGetExtensionNext() ");
+						fprintf (stderr, "DGifGetExtensionNext() ");
 
 						PrintGifError();
 
@@ -168,7 +174,7 @@ decGif_start (const char * file, IMGINFO info)
 
 			} else {
 
-				printf ("other: %i \n", rec);
+				fprintf (stderr, "other: %i \n", rec);
 
 				break;
 
@@ -182,7 +188,11 @@ decGif_start (const char * file, IMGINFO info)
 
 	if (!map || img_w <= 0 || img_w >= 4096 || img_h <= 0 || img_h >= 4096) {
 
+#if defined(GIFLIB_MAJOR)
 		DGifCloseFile (gif, NULL);
+#else
+		DGifCloseFile (gif);
+#endif
 
 		return TRUE;
 
@@ -243,19 +253,7 @@ static BOOL
 decGif_read (IMGINFO info, char * buffer)
 
 {
-
-#if defined(GIFLIB_MAJOR)
-
-	
-
-	return (DGifGetLine (info->_priv_data, (GifPixelType*)buffer, info->ImgWidth) == GIF_OK);
-
-#else
-
-	return (DGifGetLine (info->_priv_data, buffer, info->ImgWidth) == GIF_OK);
-
-#endif
-
+	return (DGifGetLine (info->_priv_data, (void *)buffer, info->ImgWidth) == GIF_OK);
 }
 
 
@@ -270,7 +268,11 @@ decGif_quit (IMGINFO info)
 
 	if (info->_priv_data) {
 
+#if defined(GIFLIB_MAJOR)
 		DGifCloseFile (info->_priv_data, NULL);
+#else
+		DGifCloseFile (info->_priv_data);
+#endif
 
 		info->_priv_data = NULL;
 
