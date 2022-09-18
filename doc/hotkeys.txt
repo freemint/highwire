@@ -1,0 +1,61 @@
+Window Hot Keys:
+
+Tab: change focus to next frame
+Ctrl+ R or F5 (Internet Explorer): reload page
+
+Home: home of page
+End or Shift+ home: end of page
+cursor-up: scroll up
+cursor-down: scroll down
+cursor-right: scroll right
+cursor-left: scroll left
+Page-up or Shift+ cursor-up: page up
+Page-down or Shift+ cursor-down: page down
+
+Help or F1: help
+
+Undo: page history back
+Shift+ Undo: page history forward
+
+Ctrl+ O: Open local document
+Ctrl+Shift+ O: Open url
+Ctrl+ I: Menu info
+Ctrl+ N: Open new window on home page
+Ctrl+Shift+ N: Open new window on blank page
+Ctrl+ U: Close windowCtrl+B: Open Bookmarks
+Ctrl+ D, Add page to bookmarks
+Ctrl+ F: Font set-up
+Ctrl+ Q: Quit Highwire
+
+Ctrl+ +: Increase font size (as Firefox, += key does not need to be Shifted)
+Ctrl+ -: decrease font size
+
+1: reload with default encoding windows-1252
+2: reload with default encoding ISO-8859-1
+A: reload with default encoding ISO-8859-
+F: reload with default encoding ISO-8859-15
+M: reload with default encoding Apple Macintosh Roman
+U: reload with default encoding UTF-8
+
+F7: toggle logging
+F8: toggle pictures or alternative text
+
+
+
+Text Fields:
+
+Tab: move to next input field
+Shift+ Tab: move to previous input field
+
+Cursor up, down, left, right: move cursor one character/line
+Shift+ left/right: move cursor to start/end of line
+Home: move cursor to start of text area
+End or Shift+ Home: move cursor to end of text area
+
+Escape: clear entire text area
+Backspace: delete character left of cursor
+Delete: delete character right of cursor
+Shift+ Backspace: delete from cursor to start of line
+Shift+ Delete: delete from cursor to end of line
+
+Ctrl+ V: paste from clipboard at cursor position

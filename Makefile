@@ -143,18 +143,45 @@ v4e: ; $(MAKE) CPU=5475
 clean:
 	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
 	rm -Rf obj.* */obj.* */*/obj.* .deps */.deps */*/.deps *.o */*/*.o
-	rm -Rf *.app *.[gt]tp *.prg *.ovl */*.ovl
+	rm -Rf *.app *.[gt]tp *.prg modules/mintnet.ovl
 
 distclean: clean
-	rm -Rf .cvsignore */.cvsignore */*/.cvsignore CVS */CVS */*/CVS
 
 
 #
-# adjust file names
+# distribution/snapshot archive
 #
-$(CFILES) $(HDR) Makefile: ; mv `echo $@ | tr A-Z a-z` $@
-case: Makefile $(HDR) $(CFILES)
-
+DISTDIR=dist
+dist::
+	$(MAKE) clean
+	$(MAKE) CPU=68000
+	mkdir -p $(DISTDIR)
+	mv highwire.app $(DISTDIR)/highwire.000
+	$(MAKE) CPU=68030
+	mv highwire.app $(DISTDIR)/highwire.030
+	$(MAKE) CPU=68040
+	mv highwire.app $(DISTDIR)/highwire.040
+	$(MAKE) CPU=68020-60
+	mv highwire.app $(DISTDIR)/highwire.060
+	$(MAKE) CPU=5475
+	mv highwire.app $(DISTDIR)/highwire.v4e
+	cp -a deskicon.rsc highwire.rsc $(DISTDIR)
+	mkdir -p $(DISTDIR)/doc
+	cp -a doc/HIGHWIRE.DOC doc/hotkeys.txt $(DISTDIR)/doc
+	cp -a Change.Log $(DISTDIR)
+	mkdir -p $(DISTDIR)/html
+	cp -pvr html/. $(DISTDIR)/html
+	mkdir -p $(DISTDIR)/modules
+	$(MAKE) -C modules/network.src clean
+	$(MAKE) -C modules/network.src CPU=5475
+	cp -a modules/mintnet.ovl $(DISTDIR)/modules/mintnet.v4e
+	$(MAKE) -C modules/network.src CPU=68000
+	cp -a modules/mintnet.ovl $(DISTDIR)/modules
+	cp -a modules/README.TXT modules/iconnect.ovl modules/magicnet.ovl modules/stik2.ovl modules/sting.ovl $(DISTDIR)/modules
+	mkdir -p $(DISTDIR)/example.cfg
+	cp -a example.cfg/highwire.cfg $(DISTDIR)/example.cfg
+	-unix2dos $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg
+	(cwd=`pwd`; cd $(DISTDIR); zip -r "$$cwd"/hw`date +%y%m%d`.zip .)
 
 #
 # dependencies
