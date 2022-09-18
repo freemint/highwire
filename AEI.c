@@ -45,8 +45,8 @@
 #if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
 WORD appl_xgetinfo(WORD type, WORD *out1, WORD *out2, WORD *out3, WORD *out4)
 {
-	static BOOL has_agi = -1;
-	short u;
+	static WORD has_agi = -1;
+	WORD u;
 
 	if (has_agi < 0)
 		has_agi = gl_ap_version >= 0x400 || appl_find("?AGI    ") == 0
@@ -405,7 +405,7 @@ menu_open (BOOL fsel)
 		char * ptext;
 		if (!form) {
 			TEDINFO * tedinfo;
-			short     dmy;
+			WORD     dmy;
 			rsrc_gaddr (R_TREE, URLINPUT, &form);
 			if ((ptext = malloc (MAX_LEN *3)) == NULL) {
 				form = NULL;
@@ -613,7 +613,7 @@ bookmark_editor (UWORD type, const char * text,
 	}
 	tree[BKM_VISITED].ob_flags |= OF_HIDETREE;
 	
-	if (url && (n = strlen (url)) > 0) {
+	if (url && (n = (WORD)strlen (url)) > 0) {
 		char * t = tree[BKM_URL].ob_spec.tedinfo->te_ptext;
 		size_t l = tree[BKM_URL].ob_spec.tedinfo->te_txtlen -1;
 		if (n <= l) {
@@ -632,7 +632,7 @@ bookmark_editor (UWORD type, const char * text,
 	                               tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen)) {
 		char * t = tree[BKM_ADDED].ob_spec.tedinfo->te_ptext;
 		size_t l = tree[BKM_ADDED].ob_spec.tedinfo->te_txtlen -1;
-		if ((n = strlen (t)) < l) {
+		if ((n = (WORD)strlen (t)) < l) {
 			memset (t + n, ' ', l - n);
 			t[l] = '\0';
 		}
@@ -640,7 +640,7 @@ bookmark_editor (UWORD type, const char * text,
 	} else {
 		tree[BKM_ADDED].ob_flags |= OF_HIDETREE;
 	}
-	if (id && (n = strlen (id)) > 0) {
+	if (id && (n = (WORD)strlen (id)) > 0) {
 		char * t = tree[BKM_ID].ob_spec.tedinfo->te_ptext;
 		size_t l = tree[BKM_ID].ob_spec.tedinfo->te_txtlen -1;
 		memcpy (t, id, min (l, n));
@@ -962,7 +962,7 @@ static WORD
 rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 {
 	WORD  which_obj;
-	short x, y, w, h;
+	WORD x, y, w, h;
 	GRECT desk;
 	
 	form_center (rpopup, &x, &y, &w, &h);

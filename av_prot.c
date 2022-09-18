@@ -108,11 +108,11 @@ Send_AV (short message, const char * data1, const char * data2)
 
 /*============================================================================*/
 BOOL
-Receive_AV (short msg[8])
+Receive_AV (WORD msg[8])
 {
 	WORD d;
 	char * str_p; /* *arg; */
-	short  kstate = 0, whandle;
+	WORD  kstate = 0, whandle;
 /*	POSENTRY	*va_list = NULL; */
 	switch (msg[0]) {
 		case VA_PROTOSTATUS :
@@ -164,7 +164,8 @@ Receive_AV (short msg[8])
 					window_raise (NULL, TRUE, NULL);
 				}
 			break;
-/*		case VA_DRAG_COMPLETE :
+#if 0
+		case VA_DRAG_COMPLETE :
 			if (debug_level & DBG_AV)
 				debug("VA_DRAG_COMPLETE.\n");
 			if (glob_data != NULL)
@@ -172,7 +173,8 @@ Receive_AV (short msg[8])
 				free(glob_data);
 				glob_data = NULL;
 			}
-			break; */
+			break;
+#endif
 
 		case VA_DRAGACCWIND :				/* bei D&D mit glob. Fensterwechsel */
 			str_p   = *(char **)(msg+6);

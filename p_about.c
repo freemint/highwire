@@ -28,6 +28,9 @@
 
 #ifdef LIBJPG
   #define XMD_H /* avoid redefining INT16 and INT32, already done in gemlib */
+#undef INLINE
+#undef LOCAL
+#undef GLOBAL
     #include <jpeglib.h>
   #undef XMD_H
 #endif
@@ -185,10 +188,12 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	
 	font_byType (-1, -1, font_step2size (2), current->word);
 	
+#ifdef __GEMLIB_MAJOR__
 	sprintf (buf, "\025GEMlib:\005\024\022%i.%02i.%i\020 \026" __GEMLIB_BETATAG__ "\024\r",
 	         __GEMLIB_MAJOR__, __GEMLIB_MINOR__, __GEMLIB_REVISION__);
 	*(++w) = render_text (current, buf);
 	tab    = max (tab, (*w)->word_width);
+#endif
 	
 	#ifdef __MINTLIB__
 		sprintf (buf,

@@ -11,27 +11,6 @@
 #include "Location.h" /* loc->Flags */
 
 
-/*==============================================================================
- * Patch for gemlib <= 0.42.2
-*/
-#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<=2))
-void
-vsf_udpat (short handle, short pat[], short n_planes)
-{
-	vdi_params.intin = pat;
-	
-	vdi_control[0] = 112;
-	vdi_control[1] = 0;
-	vdi_control[3] = n_planes *16;
-	vdi_control[5] = 0;
-	vdi_control[6] = handle;
-	vdi (&vdi_params);
-
-	vdi_params.intin = vdi_intin;
-}
-#endif
-
-
 /*============================================================================*/
 void
 frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
@@ -71,7 +50,7 @@ frame_draw (FRAME frame, const GRECT * p_clip, void * highlight)
 				l[1].p_x = (l[0].p_x = bgnd[1].p_x +2) + b;
 				l[1].p_y = (l[0].p_y = bgnd[1].p_y +2) + b;
 				vsf_color (vdi_handle, frame->Page.Backgnd);
-				v_bar (vdi_handle, (short*)l);
+				v_bar (vdi_handle, &l[0].p_x);
 			}
 		}
 
@@ -123,7 +102,7 @@ draw_vbar (FRAME frame, BOOL complete)
 			p[4] = p[0];
 			n = 5;
 		}
-		v_pline (vdi_handle, n, (short*)p);
+		v_pline (vdi_handle, n, &p[0].p_x);
 		
 		p[0].p_y = top - (scroll_bar_width -2);
 		p[1].p_y = top - 1;
@@ -131,12 +110,12 @@ draw_vbar (FRAME frame, BOOL complete)
 		p[3].p_y = bot + (scroll_bar_width -2);
 		p[0].p_x = p[2].p_x = lft;
 		p[1].p_x = p[3].p_x = rgt;
-		v_bar (vdi_handle, (short*)(p +0));  /* up arrow area   */
-		v_bar (vdi_handle, (short*)(p +2));  /* down arrow area */
+		v_bar (vdi_handle, &p[0].p_x);  /* up arrow area   */
+		v_bar (vdi_handle, &p[2].p_x);  /* down arrow area */
 		p[0].p_y = ++p[1].p_y;
 		p[3].p_y = --p[2].p_y;
-		v_pline (vdi_handle, 2, (short*)(p +0));/* border up arrow bottom */
-		v_pline (vdi_handle, 2, (short*)(p +2));/* border down arrow top  */
+		v_pline (vdi_handle, 2, &p[0].p_x);/* border up arrow bottom */
+		v_pline (vdi_handle, 2, &p[2].p_x);/* border down arrow top  */
 
 		p[0].p_x = p[7].p_x = lft + (scroll_bar_width -2) /2;
 		p[1].p_x = p[6].p_x = lft + 1;
@@ -150,8 +129,8 @@ draw_vbar (FRAME frame, BOOL complete)
 		
 		/* arrow buttons */
 		if (ignore_colours) {
-			v_pline (vdi_handle, 4, (short*)(p +0));
-			v_pline (vdi_handle, 4, (short*)(p +4));
+			v_pline (vdi_handle, 4, &p[0].p_x);
+			v_pline (vdi_handle, 4, &p[4].p_x);
 		} else {
 			GRECT b;
 			b.g_w = b.g_h = scroll_bar_width -2;
@@ -160,11 +139,11 @@ draw_vbar (FRAME frame, BOOL complete)
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
 			b.g_y = bot +1;
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
-			v_pline (vdi_handle, 2, (short*)(p +0));
-			v_pline (vdi_handle, 3, (short*)(p +5));
+			v_pline (vdi_handle, 2, &p[0].p_x);
+			v_pline (vdi_handle, 3, &p[5].p_x);
 			vsl_color (vdi_handle, G_WHITE);
-			v_pline (vdi_handle, 3, (short*)(p +1));
-			v_pline (vdi_handle, 2, (short*)(p +4));
+			v_pline (vdi_handle, 3, &p[1].p_x);
+			v_pline (vdi_handle, 2, &p[4].p_x);
 		}
 	} else {
 		v_hide_c (vdi_handle);
@@ -180,14 +159,14 @@ draw_vbar (FRAME frame, BOOL complete)
 	vsf_interior (vdi_handle, FIS_PATTERN);
 	vsf_style    (vdi_handle, 4);
 	vsf_color    (vdi_handle, G_LBLACK);
-	v_bar        (vdi_handle, (short*)p);
+	v_bar        (vdi_handle, &p[0].p_x);
 
 	/* slider control box */
 	p[2].p_y = frame->clip.g_y + frame->v_bar.pos  +1;
 	p[3].p_y = p[2].p_y        + frame->v_bar.size -3;
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_color    (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
-	v_bar        (vdi_handle, (short*)(p +2));
+	v_bar        (vdi_handle, &p[2].p_x);
 
 	if (!ignore_colours) {
 		GRECT b;
@@ -201,8 +180,8 @@ draw_vbar (FRAME frame, BOOL complete)
 	p[1].p_y = --p[2].p_y;
 	p[4].p_y = ++p[3].p_y;
 	p[4].p_x = lft;
-	if (p[1].p_y > top) v_pline (vdi_handle, 2, (short*)(p +1));
-	if (p[4].p_y < bot) v_pline (vdi_handle, 2, (short*)(p +3));
+	if (p[1].p_y > top) v_pline (vdi_handle, 2, &p[1].p_x);
+	if (p[4].p_y < bot) v_pline (vdi_handle, 2, &p[3].p_x);
 
 	if (!complete) {
 		v_show_c (vdi_handle, 1);
@@ -238,7 +217,7 @@ draw_hbar (FRAME frame, BOOL complete)
 			p[4] = p[0];
 			n = 5;
 		}
-		v_pline (vdi_handle, n, (short*)p);
+		v_pline (vdi_handle, n, &p[0].p_x);
 
 		p[0].p_x = lft - (scroll_bar_width -2);
 		p[1].p_x = lft - 1;
@@ -246,12 +225,12 @@ draw_hbar (FRAME frame, BOOL complete)
 		p[3].p_x = rgt + (scroll_bar_width -2);
 		p[0].p_y = p[2].p_y = top;
 		p[1].p_y = p[3].p_y = bot;
-		v_bar (vdi_handle, (short*)(p +0));
-		v_bar (vdi_handle, (short*)(p +2));
+		v_bar (vdi_handle, &p[0].p_x);
+		v_bar (vdi_handle, &p[2].p_x);
 		p[0].p_x = ++p[1].p_x;
 		p[3].p_x = --p[2].p_x;
-		v_pline (vdi_handle, 2, (short*)(p +0));
-		v_pline (vdi_handle, 2, (short*)(p +2));
+		v_pline (vdi_handle, 2, &p[0].p_x);
+		v_pline (vdi_handle, 2, &p[2].p_x);
 
 		p[0].p_y = p[7].p_y = top + (scroll_bar_width -2) /2;
 		p[1].p_y = p[6].p_y = top + 1;
@@ -263,8 +242,8 @@ draw_hbar (FRAME frame, BOOL complete)
 		p[6].p_x = p[5].p_x = rgt + 3;
 		p[4]     = p[7];
 		if (ignore_colours) {
-			v_pline (vdi_handle, 4, (short*)(p +0));
-			v_pline (vdi_handle, 4, (short*)(p +4));
+			v_pline (vdi_handle, 4, &p[0].p_x);
+			v_pline (vdi_handle, 4, &p[4].p_x);
 		} else {
 			GRECT b;
 			b.g_w = b.g_h = scroll_bar_width -2;
@@ -273,11 +252,11 @@ draw_hbar (FRAME frame, BOOL complete)
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
 			b.g_x = rgt + 1;
 			draw_border (&b, G_WHITE, G_LBLACK, 1);
-			v_pline (vdi_handle, 2, (short*)(p +0));
-			v_pline (vdi_handle, 3, (short*)(p +5));
+			v_pline (vdi_handle, 2, &p[0].p_x);
+			v_pline (vdi_handle, 3, &p[5].p_x);
 			vsl_color (vdi_handle, G_WHITE);
-			v_pline (vdi_handle, 3, (short*)(p +1));
-			v_pline (vdi_handle, 2, (short*)(p +4));
+			v_pline (vdi_handle, 3, &p[1].p_x);
+			v_pline (vdi_handle, 2, &p[4].p_x);
 		}
 
 	} else {
@@ -292,13 +271,13 @@ draw_hbar (FRAME frame, BOOL complete)
 	vsf_interior (vdi_handle, FIS_PATTERN);
 	vsf_style    (vdi_handle, 4);
 	vsf_color    (vdi_handle, G_LBLACK);
-	v_bar        (vdi_handle, (short*)p);
+	v_bar        (vdi_handle, &p[0].p_x);
 
 	p[2].p_x = frame->clip.g_x + frame->h_bar.pos  +1;
 	p[3].p_x = p[2].p_x        + frame->h_bar.size -3;
 	vsf_interior (vdi_handle, FIS_SOLID);
 	vsf_color    (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
-	v_bar        (vdi_handle, (short*)(p +2));
+	v_bar        (vdi_handle, &p[2].p_x);
 
 	if (!ignore_colours) {
 		GRECT b;
@@ -312,8 +291,8 @@ draw_hbar (FRAME frame, BOOL complete)
 	p[1].p_x = --p[2].p_x;
 	p[4].p_x = ++p[3].p_x;
 	p[4].p_y = top;
-	if (p[1].p_x > lft) v_pline (vdi_handle, 2, (short*)(p +1));
-	if (p[4].p_x < rgt) v_pline (vdi_handle, 2, (short*)(p +3));
+	if (p[1].p_x > lft) v_pline (vdi_handle, 2, &p[1].p_x);
+	if (p[4].p_x < rgt) v_pline (vdi_handle, 2, &p[3].p_x);
 
 	if (!complete) {
 		v_show_c (vdi_handle, 1);
@@ -373,7 +352,7 @@ draw_hr (PARAGRPH paragraph , WORD x, WORD y)
 		hr.g_w += hr.g_x -1;
 		hr.g_h += hr.g_y -1;
 		vsf_color (vdi_handle, TA_Color(word->attr));
-		vr_recfl  (vdi_handle, (short*)&hr);
+		vr_recfl  (vdi_handle, &hr.g_x);
 	}
 }
 
@@ -407,7 +386,7 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 	
 	short offs;
 	MFDB scrn = { NULL, }, * mfdb;
-	short colors[2] = { G_BLACK, G_WHITE };
+	WORD colors[2] = { G_BLACK, G_WHITE };
 	PXY p[7] = { {0, 0}, };
 	p[2].p_x = x;
 	p[2].p_y = y;
@@ -463,7 +442,7 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 		p[5].p_y = p[4].p_y = (p[3].p_y = y) + img->disp_h -1;
 		p[6] = p[2];
 		vsl_color (vdi_handle, G_BLACK);
-		v_pline   (vdi_handle, 5, (short*)(p +2));
+		v_pline   (vdi_handle, 5, &p[2].p_x);
 	}
 	if (mfdb) {
 		p[1].p_x = (mfdb->fd_w < img->disp_w ? mfdb->fd_w : img->disp_w) -1;
@@ -471,9 +450,9 @@ draw_image (IMAGE img, short x, short y, void * highlight)
 		p[3].p_x = p[2].p_x + p[1].p_x;
 		p[3].p_y = p[2].p_y + p[1].p_y;
 		if (mfdb->fd_nplanes > 1) {
-			vro_cpyfm (vdi_handle, S_ONLY, (short*)p, mfdb, &scrn);
+			vro_cpyfm (vdi_handle, S_ONLY, &p[0].p_x, mfdb, &scrn);
 		} else {
-			vrt_cpyfm (vdi_handle, MD_REPLACE, (short*)p, mfdb, &scrn, colors);
+			vrt_cpyfm (vdi_handle, MD_REPLACE, &p[0].p_x, mfdb, &scrn, colors);
 		}
 	}
 	return offs;
@@ -605,7 +584,7 @@ draw_paragraph (PARAGRPH paragraph,
 					if (word->word_height >= 12) {
 						vsl_width (vdi_handle, 3);
 					}
-					v_pline (vdi_handle, 2, (short*)p);
+					v_pline (vdi_handle, 2, &p[0].p_x);
 					vsl_width (vdi_handle, 1);
 				}
 			}
@@ -630,7 +609,7 @@ draw_border (const GRECT * rec, short lu, short rd, short width)
 	p[0].p_y = (p[1].p_y = p[2].p_y = rec->g_y) + rec->g_h -1;
 	vsl_color (vdi_handle, lu);
 	while(1) {
-		v_pline (vdi_handle, 3, (short*)p);
+		v_pline (vdi_handle, 3, &p[0].p_x);
 		if (!--b) break;
 		p[1].p_x = ++p[0].p_x;
 		p[1].p_y = ++p[2].p_y;
@@ -642,7 +621,7 @@ draw_border (const GRECT * rec, short lu, short rd, short width)
 	p[2].p_y++; p[1].p_y = p[0].p_y;
 	vsl_color (vdi_handle, rd);
 	while(1) {
-		v_pline (vdi_handle, 3, (short*)p);
+		v_pline (vdi_handle, 3, &p[0].p_x);
 		if (!--b) break;
 		p[1].p_x = ++p[2].p_x;
 		p[1].p_y = ++p[0].p_y;
@@ -663,7 +642,7 @@ draw_TBLR_border (const GRECT * rec, short lu, short rd, TBLR width)
 		p[0].p_y = (p[1].p_y = p[2].p_y = rec->g_y) + rec->g_h -1;
 		vsl_color (vdi_handle, lu);
 		while(1) {
-			v_pline (vdi_handle, 3, (short*)p);
+			v_pline (vdi_handle, 3, &p[0].p_x);
 			if (!--b) break;
 			p[1].p_x = ++p[0].p_x;
 			p[1].p_y = ++p[2].p_y;
@@ -679,7 +658,7 @@ draw_TBLR_border (const GRECT * rec, short lu, short rd, TBLR width)
 		p[2].p_y++; p[1].p_y = p[0].p_y;
 		vsl_color (vdi_handle, rd);
 		while(1) {
-			v_pline (vdi_handle, 3, (short*)p);
+			v_pline (vdi_handle, 3, &p[0].p_x);
 			if (!--b) break;
 			p[1].p_x = ++p[2].p_x;
 			p[1].p_y = ++p[0].p_y;

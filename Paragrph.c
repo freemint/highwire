@@ -260,7 +260,7 @@ vTab_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * highlight)
 
 	PARAGRPH paragraph = (PARAGRPH)This;
 
-	draw_paragraph (paragraph, x ,y, clip, highlight);
+	draw_paragraph (paragraph, (WORD)x ,(WORD)y, clip, highlight);
 
 }
 
@@ -1310,13 +1310,13 @@ paragraph_extend (WORDITEM word)
 
 		WORDLINE orig = word->line;
 
-		ext.g_y = (line->OffsetY - line->Ascend) - (orig->OffsetY - orig->Ascend);
+		ext.g_y = (WORD)((line->OffsetY - line->Ascend) - (orig->OffsetY - orig->Ascend));
 
 		if (line->Paragraph != orig->Paragraph) {
 
-			ext.g_y += line->Paragraph->Box.Rect.Y - orig->Paragraph->Box.Rect.Y;
+			ext.g_y += (WORD)(line->Paragraph->Box.Rect.Y - orig->Paragraph->Box.Rect.Y);
 
-			ext.g_x =  line->Paragraph->Box.Rect.X - orig->Paragraph->Box.Rect.X;
+			ext.g_x =  (WORD)(line->Paragraph->Box.Rect.X - orig->Paragraph->Box.Rect.X);
 
 			lft     -= ext.g_x;
 

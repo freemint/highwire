@@ -1,5 +1,8 @@
 #define XMD_H /* avoid redefining INT16 and INT32, already done in gemlib */
 #include <setjmp.h>
+#undef INLINE
+#undef LOCAL
+#undef GLOBAL
 #include <jpeglib.h>
 #undef XMD_H
 

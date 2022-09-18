@@ -212,10 +212,10 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->h_bar.rd--;
 		}
 		
-		frame->h_bar.size = (frame->Page.Rect.W
+		frame->h_bar.size = (WORD)((frame->Page.Rect.W
 		                     ? (long)(frame->h_bar.rd - frame->h_bar.lu +1)
 		                       * frame->clip.g_w / frame->Page.Rect.W
-						         : 0);
+						         : 0));
 		
 		if (frame->h_bar.size < scroll_bar_width) {
 			 frame->h_bar.size = scroll_bar_width;
@@ -251,10 +251,10 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		}
 
 		if (frame->Page.Rect.H <= frame->clip.g_h) {
-			frame->v_bar.size = (long)(frame->v_bar.rd - frame->v_bar.lu +1);
+			frame->v_bar.size = (WORD)(frame->v_bar.rd - frame->v_bar.lu +1);
 		} else {
-			frame->v_bar.size = (long)(frame->v_bar.rd - frame->v_bar.lu +1)
-		                     * frame->clip.g_h / frame->Page.Rect.H;
+			frame->v_bar.size = (WORD)((long)(frame->v_bar.rd - frame->v_bar.lu +1)
+		                     * frame->clip.g_h / frame->Page.Rect.H);
 		}
 		if (frame->v_bar.size < scroll_bar_width) {
 			 frame->v_bar.size = scroll_bar_width;

@@ -3,11 +3,11 @@
 
 ;
 ; First alternative creating HighWire with a GEM menu.
-;HIGHWIRE.APP
-;.C [-DGEM_MENU]
+HIGHWIRE.APP
+.C [-DGEM_MENU]
 ;
 ; Second alternative creating a stand-alone HighWire.
-HIGHWIRE.PRG
+;HIGHWIRE.PRG
 ;
 
 .C [-C]             ; Allow nested comments
@@ -17,21 +17,20 @@ HIGHWIRE.PRG
 .C [-w-stv]         ; Disable warning "Structure passed by value"
 .C [-DUSE_OVL -DUSE_INET -DLIBGIF -DLIBJPG -DLIBPNG -DIMG_XMP]
 
-.C [-ih:\src\highwire\include]   ; include path
-
 .S [-F]             ; No false condition listing
 .S [-M]             ; No macro line listing
 
+.C[-L80] ; maximum ID length (needed for libpng atleast)
 .L [-S=32000]
 
 =
 PCSTART.O
 ;
-modules\network.src\magicnet.prj
-modules\network.src\iconnect.prj
-modules\network.src\sting.prj
-modules\network.src\purec.prj
-modules\example.src\sample.prj
+;modules\network.src\magicnet.prj
+;modules\network.src\iconnect.prj
+;modules\network.src\sting.prj
+;modules\network.src\purec.prj
+;modules\example.src\sample.prj
 ;
 Logging.c  (global.h,defs.h,hw-types.h, Logging.h)
 schedule.c (hw-types.h, schedule.h)
@@ -86,13 +85,13 @@ strtools.c (global.h,defs.h,hw-types.h)
 HighWire.c (global.h,defs.h,hw-types.h,version.h,highwire.h, Logging.h,schedule.h,hwWind.h,ovl_sys.h)
 clipbrd.c  (global.h,defs.h,hw-types.h)
 ;
-UNGIF.LIB
-PCSTDLIB.LIB
-PCEXTLIB.LIB
-PCTOSLIB.LIB
-GEM.LIB
-UNGIF.LIB
-JPEG.LIB
-PNG.LIB
-ZLIB.LIB
-cflib.lib
+pcstdlib.lib
+pcfltlib.lib
+pcextlib.lib
+pctoslib.lib
+pcgemlib.lib
+000\gif.lib
+000\jpeg8.lib
+000\pnglib16.lib
+000\zlib.lib
+000\cflib.lib

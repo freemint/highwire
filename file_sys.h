@@ -48,21 +48,48 @@
 #endif
 
 
+#if !defined(__XATTR)
+#define __XATTR
 struct xattr {
-	UWORD mode;
-	LONG  index;
-	UWORD dev;
-	UWORD rdev;
-	UWORD nlink;
-	UWORD uid;
-	UWORD gid;
-	ULONG size;
-	LONG  blksize;
-	LONG  nblocks;
-	UWORD mtime, mdate;
-	UWORD atime, adate;
-	UWORD ctime, cdate;
-	UWORD attr;
+	UWORD st_mode;
+	LONG  st_ino;
+	UWORD st_dev;
+	UWORD st_rdev;
+	UWORD st_nlink;
+	UWORD st_uid;
+	UWORD st_gid;
+	ULONG st_size;
+	LONG  st_blksize;
+	LONG  st_blocks;
+	struct {
+		union {
+			unsigned long  tv_sec; /* actually time&date in DOSTIME format */
+			struct {
+				unsigned short time;
+				unsigned short date;
+			} d;
+		} u;
+	} st_mtim;
+	struct {
+		union {
+			unsigned long  tv_sec; /* actually time&date in DOSTIME format */
+			struct {
+				unsigned short time;
+				unsigned short date;
+			} d;
+		} u;
+	} st_atim;
+	struct {
+		union {
+			unsigned long  tv_sec; /* actually time&date in DOSTIME format */
+			struct {
+				unsigned short time;
+				unsigned short date;
+			} d;
+		} u;
+	} st_ctim;
+	UWORD st_attr;
 	UWORD reserved2;
 	ULONG reserved3[2];
 };
+#endif

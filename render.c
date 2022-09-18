@@ -1536,7 +1536,7 @@ enc_to_sys (char * dst, size_t max_len,
 */
 
 #ifdef __PUREC__  /* keep quiet on unused arguments */
-#	define UNUSED(v) v = v
+#	define UNUSED(v) (void)(v)
 #else
 #	define UNUSED(v)
 #endif

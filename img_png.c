@@ -191,13 +191,13 @@ decPng_start (const char * name, IMGINFO info)
 	if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_colors) & PNG_INFO_PLTE) {
 		info->Palette = (char *)palette;
 		info->NumColors = num_colors;
-		info->PalRpos = offsetof(png_color, red);
+		info->PalRpos = (int)offsetof(png_color, red);
 
-		info->PalGpos = offsetof(png_color, green);
+		info->PalGpos = (int)offsetof(png_color, green);
 
-		info->PalBpos = offsetof(png_color, blue);
+		info->PalBpos = (int)offsetof(png_color, blue);
 
-		info->PalStep = sizeof(png_color);
+		info->PalStep = (int)sizeof(png_color);
 	} else
 	{
 		info->Palette = NULL;

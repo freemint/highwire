@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#define __TOS  /* strange, without this poor c wouldn't compile */
 #include <gem.h>
 
 #include "file_sys.h"
@@ -227,8 +226,8 @@ load_job (void * arg, long invalidated)
 				objc_offset (dlm_form, slot->Pbar, &clip.g_x, &clip.g_y);
 				clip.g_h =  PBAR_Rect(slot).g_h;
 				clip.g_x += PBAR_Rect(slot).g_w;
-				clip.g_w =  n - PBAR_Rect(slot).g_w;
-				PBAR_Rect(slot).g_w = n;
+				clip.g_w =  (WORD)(n - PBAR_Rect(slot).g_w);
+				PBAR_Rect(slot).g_w = (WORD)n;
 				window_redraw (dlm_wind, &clip);
 			}
 			
@@ -298,7 +297,7 @@ recv_job (void * arg, long invalidated)
 				n = -1;
 			} else {
 				if (data->Size >= 0) {
-					WORD w = ((data->Fill + data->Blck) *256) / data->Size;
+					WORD w = (WORD)(((data->Fill + data->Blck) *256) / data->Size);
 					if (w > PBAR_Rect(slot).g_w) {
 						dr_x = PBAR_Rect(slot).g_w;
 						dr_w = w - dr_x;
@@ -566,7 +565,7 @@ dl_manager (LOCATION loc, LOCATION ref)
 	SLOT slot;
 	
 	if (!dlm_wind) {
-		short n;
+		WORD n;
 		if (!dlm_form) {
 			rsrc_gaddr (R_TREE, DLMNGR, &dlm_form);
 			form_center (dlm_form, &n,&n,&n,&n);

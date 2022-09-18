@@ -11,8 +11,6 @@
 # include <mintbind.h>
 #endif
 
-#include <errno.h>
-
 
 #define OVL_MODULE
 

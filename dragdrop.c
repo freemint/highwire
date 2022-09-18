@@ -23,9 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define __TOS
 #include <gem.h>
-#undef  __TOS
 
 #include <cflib.h>
 #include "file_sys.h"
@@ -34,17 +32,13 @@
 #include "hwWind.h"
 #include "dragdrop.h"
 
-#ifndef EACCDN
-#define EACCDN -36
-#endif
-
-#ifndef SIGPIPE
 #define SIGPIPE 13
-#endif
 
-#ifndef SIG_IGN
-#define SIG_IGN 1L
+#ifndef __mint_sighandler_t_defined
+typedef void *__mint_sighandler_t;
 #endif
+#undef SIG_IGN
+#define SIG_IGN (__mint_sighandler_t)1L
 
 #ifndef WF_OWNER
 #define WF_OWNER 20
@@ -55,7 +49,7 @@
 #endif
 
 static char pipename[] = "U:\\PIPE\\DRAGDROP.AA";
-static long oldpipesig;
+static __mint_sighandler_t oldpipesig;
 
 #define DEBUGGING
 
@@ -168,7 +162,7 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 		}
 		/* FA_HIDDEN means "get EOF if nobody has pipe open for reading" */
 		fd = (int) Fcreate (pipename, FA_HIDDEN);
-	} while (fd == EACCDN);
+	} while (fd == -EACCDN);
 
 	if (fd < 0) {
 		debug_alert (1, "[1][Fcreate error][OK]");
@@ -217,7 +211,7 @@ ddcreate (int apid, int winid, int msx, int msy, int kstate, char exts[])
 		return -1;
 	}
 
-	oldpipesig = Psignal (SIGPIPE, (LONG)SIG_IGN);
+	oldpipesig = (__mint_sighandler_t)Psignal (SIGPIPE, SIG_IGN);
 	return fd;
 }
 
@@ -249,18 +243,18 @@ ddstry(int fd, char *ext, char *name, long size)
 	/* 4 bytes for extension, 4 bytes for size, 1 byte for
 	 * trailing 0
 	 */
-	hdrlen = 9 + strlen(name);
-	i = Fwrite (fd, 2L, &hdrlen);
+	hdrlen = 9 + (WORD)strlen(name);
+	i = (WORD)Fwrite (fd, 2L, &hdrlen);
 
 	/* now send the header */
 	if (i != 2) return DD_NAK;
-	i =  Fwrite (fd, 4L, ext);
-	i += Fwrite (fd, 4L, &size);
-	i += Fwrite (fd, (long)strlen(name)+1, name);
+	i =  (WORD)Fwrite (fd, 4L, ext);
+	i += (WORD)Fwrite (fd, 4L, &size);
+	i += (WORD)Fwrite (fd, (long)strlen(name)+1, name);
 	if (i != hdrlen) return DD_NAK;
 
 	/* wait for a reply */
-	i = Fread(fd, 1L, &c);
+	i = (WORD)Fread(fd, 1L, &c);
 	return (i != 1 ? DD_NAK : c);
 }
 
@@ -319,7 +313,7 @@ ddopen (int ddnam, char *preferext)
 	outbuf[0] = DD_OK;
 	strncpy (outbuf+1, preferext, DD_EXTSIZE);
 
-	oldpipesig = Psignal (SIGPIPE, (LONG)SIG_IGN);
+	oldpipesig = (__mint_sighandler_t)Psignal (SIGPIPE, SIG_IGN);
 
 	if (Fwrite (fd, (long)DD_EXTSIZE+1, outbuf) != DD_EXTSIZE+1) {
 		ddclose(fd);
@@ -577,8 +571,8 @@ send_ddmsg (WORD msx, WORD msy, WORD kstate,
             char * name, char * ext, long size, char * data)
 {
 	int   fd;
-	short apid, winid;
-	short dummy, i;
+	WORD apid, winid;
+	WORD dummy, i;
 	char  recexts[DD_EXTSIZE];
 
 	winid = wind_find (msx, msy);

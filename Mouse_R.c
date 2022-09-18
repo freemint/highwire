@@ -119,10 +119,10 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 			if (event & MU_TIMER) {
 				long x, y;
 				dombox_Offset (box, &x, &y);
-				rect.g_x = x + (long)frame->clip.g_x - frame->h_bar.scroll;
-				rect.g_y = y + (long)frame->clip.g_y - frame->v_bar.scroll;
-				rect.g_w = box->Rect.W;
-				rect.g_h = box->Rect.H;
+				rect.g_x = (WORD)(x + (long)frame->clip.g_x - frame->h_bar.scroll);
+				rect.g_y = (WORD)(y + (long)frame->clip.g_y - frame->v_bar.scroll);
+				rect.g_w = (WORD)box->Rect.W;
+				rect.g_h = (WORD)box->Rect.H;
 				
 				box->Backgnd = G_YELLOW;
 				if (*box->ClName == 'G') {
@@ -166,7 +166,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 				if (!(m_in.emi_flags & MU_M1)) {
 					m_in.emi_flags |= MU_M1;
 				} else {
-					v_pline (vdi_handle, 5, (short*)p);
+					v_pline (vdi_handle, 5, &p[0].p_x);
 				}
 				if (!(event & MU_BUTTON)) {
 					p[0].p_x = p[3].p_x = out.emo_mouse.p_x + dx;
@@ -174,7 +174,7 @@ bmrk_clicked (PXY mouse, WORD button, WORD clicks,
 					p[0].p_y = p[1].p_y = out.emo_mouse.p_y + dy;
 					p[2].p_y = p[3].p_y = p[0].p_y + rect.g_h -1;
 					p[4]     = p[0];
-					v_pline (vdi_handle, 5, (short*)p);
+					v_pline (vdi_handle, 5, &p[0].p_x);
 				}
 				v_show_c (vdi_handle, 1);
 				m_in.emi_m1.g_x = out.emo_mouse.p_x;
@@ -372,9 +372,9 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				decy = mouse.p_y - frame->clip.g_y - frame->v_bar.pos;
 		
 			} else {                                                   /* slider */
-				short s_x  = frame->clip.g_x + frame->clip.g_w;
-				short s_y  = 0;
-				short sldr = frame->v_bar.rd - frame->v_bar.lu +1;
+				WORD s_x  = frame->clip.g_x + frame->clip.g_w;
+				WORD s_y  = 0;
+				WORD sldr = frame->v_bar.rd - frame->v_bar.lu +1;
 				graf_dragbox (scroll_bar_width, frame->v_bar.size,
 				              s_x, frame->clip.g_y + frame->v_bar.pos,
 				              s_x, frame->clip.g_y + frame->v_bar.lu,
@@ -440,9 +440,9 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 				decx = mouse.p_x - frame->clip.g_x - frame->h_bar.pos;
 		
 			} else {                                                   /* slider */
-				short s_x  = 0;
-				short s_y  = frame->clip.g_y + frame->clip.g_h;
-				short sldr = frame->h_bar.rd - frame->h_bar.lu +1;
+				WORD s_x  = 0;
+				WORD s_y  = frame->clip.g_y + frame->clip.g_h;
+				WORD sldr = frame->h_bar.rd - frame->h_bar.lu +1;
 				graf_dragbox (frame->h_bar.size, scroll_bar_width,
 				              frame->clip.g_x + frame->h_bar.pos, s_y,
 				              frame->clip.g_x + frame->h_bar.lu,  s_y,
@@ -483,10 +483,10 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 					        radio.g_y += watch.g_y;
 					        hwWind_redraw (wind, &radio);
 					case 1: if (popup) {
-					           long * xy = (long*)&radio;
+					           long * xy = (long*)&radio; /* CHECKME */
 					           xy[0] += frame->clip.g_x - frame->h_bar.scroll;
 					           xy[1] += frame->clip.g_y - frame->v_bar.scroll;
-					           value = HW_form_popup (popup, xy[0], xy[1], FALSE);
+					           value = HW_form_popup (popup, (WORD)xy[0], (WORD)xy[1], FALSE);
 					        } else {
 					           WORD dmy;
 					           if (input_isEdit (hash)) {
@@ -682,10 +682,10 @@ button_clicked (CONTAINR cont, WORD button, WORD clicks, UWORD state, PXY mouse)
 		if (word) {
 			long  x, y;
 			frame     = (FRAME)dombox_Offset (&word->line->Paragraph->Box, &x, &y);
-			watch.g_x = x + frame->clip.g_x - frame->h_bar.scroll
-			              + word->h_offset;
-			watch.g_y = y + frame->clip.g_y - frame->v_bar.scroll
-			              + word->line->OffsetY - word->word_height;
+			watch.g_x = (WORD)(x + frame->clip.g_x - frame->h_bar.scroll
+			              + word->h_offset);
+			watch.g_y = (WORD)(y + frame->clip.g_y - frame->v_bar.scroll
+			              + word->line->OffsetY - word->word_height);
 			watch.g_w = word->word_width;
 			watch.g_h = word->word_height + word->word_tail_drop;
 			hwWind_redraw (wind, &watch);

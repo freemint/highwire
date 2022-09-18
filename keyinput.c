@@ -213,8 +213,6 @@ key_pressed (WORD scan, WORD ascii, UWORD kstate)
 			menu_reload (ENCODING_ISO8859_15);
 		break;
 
-		break;
-
 	case 'M':  /* M: reload with default encoding Apple Macintosh Roman */
 		menu_reload (ENCODING_MACINTOSH);
 		break;

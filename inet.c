@@ -19,7 +19,6 @@ static WORD sockets_free = 0;
 #endif /* USE_INET */
 
 #include <stddef.h>
-#include <errno.h>
 
 #ifndef __HW_INET_H__
 # include "hw-types.h"

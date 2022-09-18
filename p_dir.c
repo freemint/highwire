@@ -98,7 +98,7 @@ parse_dir (void * arg, long invalidated)
 		struct xattr xattr;
 		long   xret;
 		
-#if defined (__PUREC__) && !defined (__MINT_EXT__)
+#if defined (__PUREC__) && !defined (__MINT_EXT__) && !defined(_MINT_MINTBIND_H)
 		char   path[HW_PATH_MAX];
 		char * p_nm = strchr (strcpy (path, loc->FullName), '\0');
 		while (Dreaddir (sizeof(buf), dh, buf) == E_OK) {
@@ -111,13 +111,13 @@ parse_dir (void * arg, long invalidated)
 				size_t           len = strlen (name);
 				struct dir_ent * ent = malloc (sizeof(struct dir_ent) + len);
 				memcpy (ent->name, name, len);
-				if ((ent->dir = (S_ISDIR (xattr.mode) != 0)) == TRUE) {
+				if ((ent->dir = (S_ISDIR (xattr.st_mode) != 0)) == TRUE) {
 					ent->name[len++] = delim;
 				}
 				ent->name[len] = '\0';
-				ent->size = xattr.size;
-				ent->date.us[0] = xattr.mdate;
-				ent->date.us[1] = xattr.mtime;
+				ent->size = xattr.st_size;
+				ent->date.us[0] = xattr.st_mtim.u.d.date;
+				ent->date.us[1] = xattr.st_mtim.u.d.time;
 				ent->next = list;
 				list = ent;
 			}

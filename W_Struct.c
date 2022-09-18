@@ -9,7 +9,7 @@
 
 static struct {
 	WCHAR Space, Empty;
-} fixed[3] = {
+} fixed_space[3] = {
 	{ SPACE_BICS,  0 }, /* 561 */
 	{ SPACE_ATARI, 0 }, /* ' ' */
 	{ SPACE_UNI,   0 }  /* 0x0020 */
@@ -66,8 +66,8 @@ destroy_word_list (WORDITEM word, WORDITEM last)
 	if (word) do {
 		WORDITEM next  = word->next_word;
 		CHUNK  * chunk = word2chunk (word);
-		if ((char*)word->item < (char*)fixed ||
-		    (char*)word->item > (char*)fixed + sizeof(fixed)) {
+		if ((char*)word->item < (char*)fixed_space ||
+		    (char*)word->item > (char*)fixed_space + sizeof(fixed_space)) {
 			free (word->item);
 		}
 		if (word->link && word->link->start == word) {
@@ -139,7 +139,7 @@ new_word (TEXTBUFF current, BOOL do_link)
 			copy_from = NULL;
 		}
 	}
-	word->item        = &fixed[0].Empty;
+	word->item        = &fixed_space[0].Empty;
 	word->length      = 0;
 	word->line_brk    = BRK_NONE;
 	word->word_width  = 0;
@@ -185,14 +185,14 @@ word_store (TEXTBUFF current)
 		}
 
 		if ((word->length = length) == 1 && word->space_width) {
-			word->item = &fixed[base->Mapping].Space;
+			word->item = &fixed_space[base->Mapping].Space;
 			pts[2] = word->space_width;
 		
 		} else {
 			size_t  size = (length +1) *2;
 			WCHAR * item = malloc (size);
 			if (!item) {
-				item = &fixed[0].Empty; /* memory exhausted */
+				item = &fixed_space[0].Empty; /* memory exhausted */
 			
 			} else if (base->Mapping == MAP_ATARI) {
 				WCHAR * src = current->buffer;
@@ -209,11 +209,7 @@ word_store (TEXTBUFF current)
 			}
 			word->item = item;
 		
-	#if (__GEMLIB_MINOR__<42)||((__GEMLIB_MINOR__==42)&&(__GEMLIB_REVISION__<2))
-			vqt_f_extent16 (vdi_handle, word->item, pts);
-	#else
-			vqt_f_extent16n (vdi_handle, word->item, length, pts);
-	#endif
+			vqt_f_extent16n (vdi_handle, word->item, (WORD)length, pts);
 			pts[2] -= pts[0];
 		}
 		if (word->image) {

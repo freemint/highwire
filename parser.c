@@ -404,9 +404,9 @@ get_value_size (PARSER parser, HTMLKEY key)
 		long   val = strtol (ent->Value, &tail, 10);
 		if (val > 0 && val < 10000 && tail != ent->Value) {
 			if (*tail != '%') {
-				size = val;
+				size = (WORD)val;
 			} else if (val < 99) {
-				size = -((val *1024 +50) /100);
+				size = (WORD)(-((val *1024 +50) /100));
 			} else {
 				size = -1024;
 			}

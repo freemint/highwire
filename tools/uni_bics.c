@@ -29,7 +29,7 @@
 typedef short WORD;
 typedef unsigned short UWORD;
 #define E_OK 0
-#define EINVFN -32
+#define EINVFN 32
 #define Space_Code 561
 #define numberof(arr)   (sizeof(arr) / sizeof(*arr))
 						/* calculates the element number of an literally array
@@ -52,7 +52,7 @@ int main(void)
 		long r;
 
 		r = Fxattr(0, "..\\uni_bics.h", &file_info);
-		if (r != EINVFN) {  /* Fxattr() exists */
+		if (r != -EINVFN) {  /* Fxattr() exists */
 			if (r == E_OK)
 				date = file_info.mdate;
 		} else {  /* here for TOS filenames */

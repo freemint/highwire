@@ -189,8 +189,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_type (vdi_handle, 0);
 				}
 
-				p[0].p_x = x1; p[1].p_x = x2;
-				p[0].p_y = y1; p[1].p_y = p[0].p_y;
+				p[0].p_x = (WORD)x1;
+				p[1].p_x = (WORD)x2;
+				p[0].p_y = (WORD)y1;
+				p[1].p_y = p[0].p_y;
 
 				if (This->BorderStyle.Top == BORDER_DOUBLE) {
 					dark1 = (n+1)/3;
@@ -198,7 +200,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					dark2 = dark1;
 
 					while(1) {
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark1) break;
 						p[0].p_y++; p[1].p_y++;
 					}
@@ -208,7 +210,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					}
 					while(1) {
 						p[0].p_y++; p[1].p_y++;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark2) break;
 					}
 				} else {
@@ -219,14 +221,14 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
 						}
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_y++;  p[1].p_y++;
 						vsl_color (vdi_handle, G_LBLACK);
 					} else if ((This->BoxClass == BC_TABLE)
 					           && (This->BorderStyle.Top == BORDER_OUTSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_y++;  p[1].p_y++;
 						if (realbkg == G_WHITE) {
@@ -238,7 +240,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					
 					if (n > 0) {
 						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
+							v_pline (vdi_handle, 2, &p[0].p_x);
 							if (!--n) break;
 							/* b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
 							   these were rounded */
@@ -285,8 +287,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_type (vdi_handle, 0);
 				}
 
-				p[0].p_x = x1; p[1].p_x = x2;
-				p[0].p_y = y2; p[1].p_y = p[0].p_y;
+				p[0].p_x = (WORD)x1;
+				p[1].p_x = (WORD)x2;
+				p[0].p_y = (WORD)y2;
+				p[1].p_y = p[0].p_y;
 
 				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
 					dark1 = (n+1)/3;
@@ -294,7 +298,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					dark2 = dark1;
 
 					while(1) {
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark1) break;
 						p[0].p_y--;  p[1].p_y--;
 					}
@@ -304,14 +308,14 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					}
 					while(1) {
 						p[0].p_y--;  p[1].p_y--;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark2) break;
 					}
 				} else {
 					if ((This->BoxClass == BC_STRUCT)
 					     && (This->BorderStyle.Bot == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_y--;  p[1].p_y--;
 						if (realbkg == G_WHITE) {
@@ -323,7 +327,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					
 					if (n > 0) {
 						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
+							v_pline (vdi_handle, 2, &p[0].p_x);
 							if (!--n) break;
 							/* b[1].p_y = ++b[0].p_y;  b[3].p_y = --b[2].p_y;
 							   these were rounded */
@@ -370,8 +374,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_type (vdi_handle, 0);
 				}
 
-				p[0].p_x = x1; p[1].p_x = p[0].p_x;
-				p[0].p_y = y1; p[1].p_y = y2;
+				p[0].p_x = (WORD)x1;
+				p[1].p_x = p[0].p_x;
+				p[0].p_y = (WORD)y1;
+				p[1].p_y = (WORD)y2;
 
 				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
 					dark1 = (n+1)/3;
@@ -379,7 +385,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					dark2 = dark1;
 
 					while(1) {
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark1) break;
 						p[0].p_x++;  p[1].p_x++;
 
@@ -393,7 +399,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						p[0].p_x++;  p[1].p_x++;
 						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 
 						if (!--light) break;
 					}
@@ -404,7 +410,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						p[0].p_x++;  p[1].p_x++;
 						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark2) break;
 					}
 				} else {
@@ -415,7 +421,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						} else {
 							vsl_color (vdi_handle, G_WHITE);
 						}
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_x++;  p[1].p_x++;
 						vsl_color (vdi_handle, G_LBLACK);
@@ -424,7 +430,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					} else if ((This->BoxClass == BC_TABLE)
 					           && (This->BorderStyle.Lft == BORDER_OUTSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_x++;  p[1].p_x++;
 						if (realbkg == G_WHITE) {
@@ -438,7 +444,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 					if (n > 0) {
 						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
+							v_pline (vdi_handle, 2, &p[0].p_x);
 							if (!--n) break;
 							/* b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
 							   these were rounded */
@@ -484,8 +490,10 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						vsl_type (vdi_handle, 0);
 				}
 
-				p[0].p_x = x2; p[1].p_x = p[0].p_x;
-				p[0].p_y = y1; p[1].p_y = y2;
+				p[0].p_x = (WORD)x2;
+				p[1].p_x = p[0].p_x;
+				p[0].p_y = (WORD)y1;
+				p[1].p_y = (WORD)y2;
 	
 				if (This->BorderStyle.Bot == BORDER_DOUBLE) {
 					dark1 = (n+1)/3;
@@ -493,7 +501,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 					dark2 = dark1;
 
 					while(1) {
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark1) break;
 						p[0].p_x--;  p[1].p_x--;
 
@@ -507,7 +515,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						p[0].p_x--;  p[1].p_x--;
 						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--light) break;
 					}
 
@@ -517,14 +525,14 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 						p[0].p_x--;  p[1].p_x--;
 						if (!FlatTop) p[0].p_y++;
 						if (!FlatBot) p[1].p_y--;
-						v_pline(vdi_handle, 2, (short*)p);
+						v_pline(vdi_handle, 2, &p[0].p_x);
 						if (!--dark2) break;
 					}
 				} else {
 					if ((This->BoxClass == BC_STRUCT)
 					    && (This->BorderStyle.Rgt == BORDER_INSET)) {
 						vsl_color (vdi_handle, G_LBLACK);
-						v_pline (vdi_handle, 2, (short*)p);
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						n--;
 						p[0].p_x--;  p[1].p_x--;
 						if (realbkg == G_WHITE) {
@@ -539,7 +547,7 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 					if (n > 0) {
 						while(1) {
-							v_pline (vdi_handle, 2, (short*)p);
+							v_pline (vdi_handle, 2, &p[0].p_x);
 							if (!--n) break;
 							/* b[3].p_x = ++b[0].p_x;  b[1].p_x = --b[2].p_x;
 							   these were rounded */
@@ -560,15 +568,15 @@ dombox_draw (DOMBOX * This, long x, long y, const GRECT * clip, void * hl)
 
 	if (This->Backgnd >= 0) {
 		PXY p[2];
-		p[0].p_x = ((long)clip->g_x >= x1 ? clip->g_x : x1);
-		p[0].p_y = ((long)clip->g_y >= y1 ? clip->g_y : y1);
-		p[1].p_x = (x2 <= 0x7FFFL ? x2 : 0x7FFF);
-		p[1].p_y = (y2 <= 0x7FFFL ? y2 : 0x7FFF);
+		p[0].p_x = (WORD)(clip->g_x >= x1 ? clip->g_x : x1);
+		p[0].p_y = (WORD)(clip->g_y >= y1 ? clip->g_y : y1);
+		p[1].p_x = (WORD)(x2 <= 0x7FFFL ? x2 : 0x7FFF);
+		p[1].p_y = (WORD)(y2 <= 0x7FFFL ? y2 : 0x7FFF);
 		if (p[0].p_x > p[1].p_x || p[0].p_y > p[1].p_y) {
 			return;
 		}
 		vsf_color (vdi_handle, This->Backgnd);
-		v_bar     (vdi_handle, (short*)p);
+		v_bar     (vdi_handle, &p[0].p_x);
 	}
 
 	vsl_type (vdi_handle, 0); /* reset the line type */

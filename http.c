@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 #include <time.h>
 #ifdef LATTICE
 # define timezone __timezone

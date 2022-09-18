@@ -410,26 +410,26 @@ vTab_draw (WINDOW This, const GRECT * clip)
 	vst_effects   (vdi_handle, TXT_NORMAL);
 	vst_font      (vdi_handle, 1);
 	v_hide_c (vdi_handle);
-	v_bar (vdi_handle, (short*)p);
+	v_bar (vdi_handle, &p[0].p_x);
 	p[0].p_x = p[0].p_y = 0;
 	p[1].p_x = logo_icon.fd_w -1;
 	p[1].p_y = logo_icon.fd_h -1;
 	if (logo_icon.fd_nplanes > 1) {
 		WORD color[2] = { G_WHITE, G_LWHITE };
-		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
-/*		vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, &logo_icon, &scrn);*/
+		vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &logo_mask, &scrn, color);
+/*		vro_cpyfm (vdi_handle, S_OR_D,   &p[0].p_x, &logo_icon, &scrn);*/
 
 		/* I have a standard routine that I call for this in my
 		 * programs
 		 */
 		if (planes > 8)
-			vro_cpyfm(vdi_handle,S_AND_D,(short*)p,&logo_icon,&scrn);
+			vro_cpyfm(vdi_handle,S_AND_D,&p[0].p_x,&logo_icon,&scrn);
 		else
-			vro_cpyfm(vdi_handle,S_OR_D,(short*)p,&logo_icon,&scrn);
+			vro_cpyfm(vdi_handle,S_OR_D,&p[0].p_x,&logo_icon,&scrn);
 
 	} else {
 		WORD color[2] = { G_BLACK, G_LWHITE };
-		vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_icon, &scrn, color);
+		vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &logo_icon, &scrn, color);
 	}
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y,     spl_name);
 	v_gtext (vdi_handle, p[3].p_x +8, p[2].p_y +16, spl_vers);
@@ -444,7 +444,7 @@ open_splash (void)
 {
 	GRECT curr;
 	WORD w = 8 + logo_icon.fd_w + 8
-	       + (max (sizeof(spl_name), sizeof(spl_vers)) -1) *8 + 8;
+	       + (max ((int)sizeof(spl_name), (int)sizeof(spl_vers)) -1) *8 + 8;
 	WORD h = 8 + logo_icon.fd_h + 8;
 	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &curr);
 	curr.g_x += (curr.g_w - w) /2;

@@ -383,7 +383,7 @@ progress_bar (ULONG size, ULONG part, const char * txt0, const char * txt1)
 				rs_object[2].ob_flags &= ~OF_HIDETREE;
 				if (obj < ROOT) obj = (rs_object[2].ob_width < part ? 2 : 1);
 			}
-			rs_object[2].ob_width =  min (part, rs_object[1].ob_width);
+			rs_object[2].ob_width =  min ((WORD)part, rs_object[1].ob_width);
 		}
 		if (txt0) {
 			size_t len = strlen (txt0);

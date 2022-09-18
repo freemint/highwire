@@ -150,7 +150,7 @@ vTab_drawWork (FORMWIND This, const GRECT * clip)
 			vs_clip_pxy (vdi_handle, (PXY*)&crsr);
 			vswr_mode (vdi_handle, MD_XOR);
 			v_hide_c  (vdi_handle);
-			v_pline   (vdi_handle, 2, (short*)&crsr);
+			v_pline   (vdi_handle, 2, &crsr.g_x);
 			v_show_c  (vdi_handle, 1);
 			vswr_mode (vdi_handle, MD_TRANS);
 			vs_clip_off (vdi_handle);

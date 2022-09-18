@@ -97,7 +97,7 @@ clear_slot (OVL_SLOT * slot)
 /*------------------------------------------------------------------------------
  * signal handler for child process exited (flags >= OF_CHLDPRC)
 */
-static void sig_chld (long sig)
+static void __CDECL sig_chld (long sig)
 {
 	long  l = Pwaitpid (-1, 0, NULL);
 	(void)sig;
@@ -173,7 +173,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 			 */
 			size_t newsize = 0x100 + ovl_basepage->p_tlen + ovl_basepage->p_dlen
 			               + ovl_basepage->p_blen + 0x800 + 0x800;
-		#ifdef __PUREC__
+		#if defined(__PUREC__) && !defined(_MINT_OSBIND_H)
 			Mshrink(0,ovl_basepage,newsize);
 		#else /* LATTICE && GCC */
 			Mshrink(ovl_basepage,newsize);
@@ -183,7 +183,7 @@ load_ovl (const char * ovl_name, void (*handler)(void*))
 			if (ovl_methods->flags == OF_CHLDPRC) {
 				pid = pexec (104, ovl_name, ovl_basepage, NULL);
 				if (pid > 0) {
-					Psignal (20/*SIGCHLD*/, (long)sig_chld);
+					Psignal (20/*SIGCHLD*/, sig_chld);
 				} else if (pid == -EINVFN) {
 					pid = 0;
 				} else {

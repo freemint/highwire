@@ -92,7 +92,7 @@ color_mapsetup(void)
 	/* setup 32 gray values */
 	for (i = 0; i < numberof(color_GrayMap); i++) {
 		LONG gray = (i <<3) | (i >>2); /* 000abcde -> abcdeabc */
-		coltab[0] = coltab[1] = coltab[2] = (gray *1000 +127) /255;
+		coltab[0] = coltab[1] = coltab[2] = (WORD)((gray *1000 +127) /255);
 		vs_color (vdi_handle, color_GrayMap[i], coltab);
 	}
 	

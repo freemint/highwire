@@ -228,7 +228,7 @@ read_coords (const char * buff, WORD * coord, size_t maxnum)
 
 		char * b = NULL;
 
-		coord[n] = strtol (buff, &b, 10);
+		coord[n] = (WORD)strtol (buff, &b, 10);
 
 		if (!b || b == buff) break;
 

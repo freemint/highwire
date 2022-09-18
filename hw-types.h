@@ -8,14 +8,27 @@
 
 /*--- some simple data type definitions ---*/
 
-typedef enum { FALSE = (1!=1), TRUE = (1==1) } BOOL;
+#undef FALSE
+#undef TRUE
+#undef BOOL
+typedef enum { FALSE = 0, TRUE = 1 } BOOL;
 #define BOOL  BOOL
 #define FALSE FALSE
 #define TRUE  TRUE
 
+#undef BYTE
+#undef CHAR
+#undef WORD
+#undef UWORD
+#undef LONG
+#undef ULONG
 typedef signed   char  BYTE;
 typedef unsigned char  CHAR;
+#ifdef __PUREC__
+typedef signed   int WORD;
+#else
 typedef signed   short WORD;
+#endif
 typedef unsigned short UWORD;
 typedef signed   long  LONG;
 typedef unsigned long  ULONG;
@@ -24,7 +37,6 @@ typedef unsigned long  ULONG;
 /*--- structure definitions as also provided by gem.h ---*/
 
 #ifdef _GEMLIB_H_
-# define PXY   PXY
 # define GRECT GRECT
 # ifdef _GEMLIB_X_H_
 #  define WCHAR WCHAR
@@ -41,22 +53,22 @@ typedef unsigned short WCHAR;  /* 16-bit character, for BICS or Unicode */
 #define WCHAR WCHAR
 #endif
 
-#ifndef PXY
+#ifndef __PXY
 typedef struct point_coord {
-	short p_x;
-	short p_y;
+	WORD p_x;
+	WORD p_y;
 } PXY;
-# define PXY PXY
+# define __PXY
 #endif
 
-#ifndef GRECT
+#ifndef __GRECT
 typedef struct graphic_rectangle {
-	short g_x;
-	short g_y;
-	short g_w;
-	short g_h;
+	WORD g_x;
+	WORD g_y;
+	WORD g_w;
+	WORD g_h;
 } GRECT;
-# define GRECT GRECT
+# define __GRECT
 #endif
 
 #ifndef COLORS_CHANGED
@@ -97,27 +109,15 @@ typedef enum {
 
 /*--- Some Error Codes ---*/
 
-#ifndef E_OK
 #define E_OK 0
-#endif
-#ifndef EINVFN
 #define EINVFN 32 /* Function not implemented. */
-#endif
-#ifndef EINVAL
+#define ENOENT 33
+#define EACCDN 36
 #define EINVAL 25 /* Invalid argument. */
-#endif
-#ifndef EINTR
 #define EINTR 128 /* Interrupted function call. */
-#endif
-#ifndef EPROTONOSUPPORT
 #define EPROTONOSUPPORT 305 /* Protocol not supported.  */
-#endif
-#ifndef ECONNRESET
 #define ECONNRESET      316 /* Connection reset by peer. */
-#endif
-#ifndef ETIMEDOUT
 #define ETIMEDOUT       320 /* Connection timed out. */
-#endif
 
 
 /*--- Macro for prototyping ---*/

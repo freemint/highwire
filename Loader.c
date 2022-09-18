@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 
 #include <gem.h>
 
@@ -1171,7 +1170,7 @@ file_size (const LOCATION loc)
 	long         xret = F_xattr(0, filename, &file_info);
 	
 	if (xret == E_OK) {  /* Fxattr() exists */
-		size = file_info.size;
+		size = file_info.st_size;
 	
 	} else if (xret == -EINVFN) {  /* here for TOS filenames */
 		DTA  new, * old = Fgetdta();

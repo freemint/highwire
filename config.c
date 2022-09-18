@@ -299,7 +299,7 @@ cfg_font (char * param, long arg)
 {
 	long id = atol (param);
 	if (id >= 1 && id <= 0xFFFF) {
-		font_setup (id, (arg >>16), (arg & 0x10) != 0, (arg & 0x01) != 0);
+		font_setup ((UWORD)id, (WORD)(arg >>16), (arg & 0x10) != 0, (arg & 0x01) != 0);
 	}
 }
 
@@ -310,7 +310,7 @@ cfg_fntsize (char * param, long arg)
 	long n = atol (param);
 	(void)arg;
 	if (n >= 8 && n <= 24) {
-		font_size = n;
+		font_size = (WORD)n;
 	}
 }
 
@@ -321,7 +321,7 @@ cfg_minsize (char * param, long arg)
 	long n = atol (param);
 	(void)arg;
 	if (n >= 1 && n <= 24) {
-		font_minsize = n;
+		font_minsize = (WORD)n;
 	}
 }
 
@@ -343,7 +343,7 @@ cfg_backgnd (char * param, long arg)
 			char * tail = param;
 			long   n    = strtoul (param, &tail, 10);
 			if (tail > param && n <= 0xFF) {
-				background_colour = n;
+				background_colour = (WORD)n;
 			}
 		
 		} else if (param[1] == 'x') { /* 0xRRGGBB direct colour value */
@@ -386,7 +386,7 @@ cfg_tout_conn (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	if (n > 0) cfg_ConnTout = n;
+	if (n > 0) cfg_ConnTout = (WORD)n;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -406,7 +406,7 @@ cfg_retry (char * param, long arg)
 {
 	long n = atol (param);
 	(void)arg;
-	if (n > 0) cfg_ConnRetry = n;
+	if (n > 0) cfg_ConnRetry = (WORD)n;
 }
 
 /*----------------------------------------------------------------------------*/

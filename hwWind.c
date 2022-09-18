@@ -180,9 +180,9 @@ wgeo_read (char * buff, GRECT * rect)
 	BOOL   ret = FALSE;
 	char * str = buff;
 	if (*str != '+') {
-		WORD w = strtol (str, &str, 16);
+		WORD w = (WORD)strtol (str, &str, 16);
 		if (*str == 'x' && str > buff) {
-			WORD h = strtol (++str, &str, 16);
+			WORD h = (WORD)strtol (++str, &str, 16);
 			if (str > buff) {
 				rect->g_w = w;
 				rect->g_h = h;
@@ -192,9 +192,9 @@ wgeo_read (char * buff, GRECT * rect)
 		}
 	}
 	if (*str == '+') {
-		WORD x = strtol (++str, &str, 16);
+		WORD x = (WORD)strtol (++str, &str, 16);
 		if (*str == '+' && str > buff +1) {
-			WORD y = strtol (++str, &str, 16);
+			WORD y = (WORD)strtol (++str, &str, 16);
 			if (str > buff +2) {
 				rect->g_x = x;
 				rect->g_y = y;
@@ -213,8 +213,8 @@ wgeo_calc (GRECT * rect, GRECT * curr)
 	UWORD mask = 0x0000u;
 	
 	if (rect->g_w > 0 && rect->g_h > 0) {
-		WORD w = ((long)rect->g_w * desk_area.g_w) / 0x7FFFu;
-		WORD h = ((long)rect->g_h * desk_area.g_h) / 0x7FFFu;
+		WORD w = (WORD)(((long)rect->g_w * desk_area.g_w) / 0x7FFFu);
+		WORD h = (WORD)(((long)rect->g_h * desk_area.g_h) / 0x7FFFu);
 		if ((curr->g_w = max (w, inc_xy *7)) > desk_area.g_w) {
 			curr->g_w = desk_area.g_w;
 		}
@@ -227,10 +227,10 @@ wgeo_calc (GRECT * rect, GRECT * curr)
 		}
 	}
 	if (rect->g_x >= 0 && rect->g_y >= 0) {
-		curr->g_x = ((long)rect->g_x * (desk_area.g_w - desk_area.g_x))
-		            / 0x7FFFu + desk_area.g_x;
-		curr->g_y = ((long)rect->g_y * (desk_area.g_h - desk_area.g_y))
-		            / 0x7FFFu + desk_area.g_y;
+		curr->g_x = (WORD)(((long)rect->g_x * (desk_area.g_w - desk_area.g_x))
+		            / 0x7FFFu + desk_area.g_x);
+		curr->g_y = (WORD)(((long)rect->g_y * (desk_area.g_h - desk_area.g_y))
+		            / 0x7FFFu + desk_area.g_y);
 		mask     |= GEO_CFG_XY;
 		if (curr->g_x + curr->g_w > desk_area.g_x + desk_area.g_w) {
 			curr->g_x = desk_area.g_x + desk_area.g_w - curr->g_w;
@@ -254,16 +254,16 @@ wgeo_write (const GRECT * rect, UWORD mask, char * buff)
 {
 	char * p = buff;
 	if ((mask & GEO_USR_WH) || ((mask & GEO_CFG_WH) && (mask & GEO_USR_XY))) {
-		WORD w = ((long)rect->g_w * 0x7FFF) / desk_area.g_w;
-		WORD h = ((long)rect->g_h * 0x7FFF) / desk_area.g_h;
+		WORD w = (WORD)(((long)rect->g_w * 0x7FFF) / desk_area.g_w);
+		WORD h = (WORD)(((long)rect->g_h * 0x7FFF) / desk_area.g_h);
 		sprintf (p, "%04hXx%04hX", w, h);
 		p = strchr (p, '\0');
 	}
 	if ((mask & GEO_USR_XY) || ((mask & GEO_CFG_XY) && (mask & GEO_USR_WH))) {
-		WORD x = ((long)(rect->g_x - desk_area.g_x) * 0x7FFF)
-		         / (desk_area.g_w - desk_area.g_x);
-		WORD y = ((long)(rect->g_y - desk_area.g_y) * 0x7FFF)
-		         / (desk_area.g_h - desk_area.g_y);
+		WORD x = (WORD)(((long)(rect->g_x - desk_area.g_x) * 0x7FFF)
+		         / (desk_area.g_w - desk_area.g_x));
+		WORD y = (WORD)(((long)(rect->g_y - desk_area.g_y) * 0x7FFF)
+		         / (desk_area.g_h - desk_area.g_y));
 		sprintf (p, "+%04hX+%04hX", x, y);
 		p = strchr (p, '\0');
 	}
@@ -531,11 +531,11 @@ draw_busybar (HwWIND This, const GRECT * area, const GRECT * clip)
 		p[2].p_x = p[1].p_x + p[2].p_x -2;
 		p[2].p_y = p[1].p_y;
 		vsl_color (vdi_handle, G_LBLACK);
-		v_pline   (vdi_handle, 3, (short*)p);
+		v_pline   (vdi_handle, 3, &p[0].p_x);
 		p[1].p_x = ++p[2].p_x;   p[0].p_x++;
 		p[1].p_y = ++p[0].p_y;   p[2].p_y++;
 		vsl_color (vdi_handle, G_WHITE);
-		v_pline   (vdi_handle, 3, (short*)p);
+		v_pline   (vdi_handle, 3, &p[0].p_x);
 		if (This->isBusy > 1) {
 			width = ((This->isDone +1) *128) / This->isBusy;
 			if      (width >128) width = 128;
@@ -545,7 +545,7 @@ draw_busybar (HwWIND This, const GRECT * area, const GRECT * clip)
 			p[0].p_x = p[1].p_x - width +1;
 			p[0].p_y = p[2].p_y;
 			vsf_color (vdi_handle, G_BLUE);
-			v_bar     (vdi_handle, (short*)p);
+			v_bar     (vdi_handle, &p[0].p_x);
 		}
 	}
 }
@@ -555,7 +555,7 @@ static void
 draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 {
 	GRECT area, clip, rect;
-	short x_btn, dmy, fnt, pnt;
+	WORD x_btn, dmy, fnt, pnt;
 	
 	if (This->Base.isIcon || This->shaded) return;
 	
@@ -603,7 +603,7 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 			PXY p[2];
 			p[1].p_x = (p[0].p_x = rect.g_x) + rect.g_w -1;
 			p[1].p_y = (p[0].p_y = rect.g_y) + rect.g_h -1;
-			v_bar (vdi_handle, (short*)p);
+			v_bar (vdi_handle, &p[0].p_x);
 			
 			if (This->isBusy) {
 				vs_clip_pxy (vdi_handle, p);
@@ -630,11 +630,11 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 					PXY l[2];
 					l[1].p_x = (l[0].p_x = area.g_x) + area.g_w -1;
 					l[1].p_y =  l[0].p_y = area.g_y -1;
-					v_pline (vdi_handle, 2, (short*)l);
+					v_pline (vdi_handle, 2, &l[0].p_x);
 				}
 				if (p[1].p_x >= x_btn) {
 					p[0].p_x = p[1].p_x = x_btn;
-					v_pline (vdi_handle, 2, (short*)p);
+					v_pline (vdi_handle, 2, &p[0].p_x);
 					p[0].p_x++;
 					p[0].p_y = area.g_y;
 					p[1].p_x = p[1].p_y = This->IbarH -1;
@@ -669,13 +669,13 @@ draw_infobar (HwWIND This, const GRECT * p_clip, const char * info)
 static void
 hwWind_setHSInfo (HwWIND This, const char * info)
 {
-	short dmy;
+	WORD dmy;
 	PXY   p[2], clip[2];
 
 	if (This != hwWind_Top || This->Base.isIcon || This->shaded) {
 		return;
 	} else {
-		short top;
+		WORD top;
 		wind_get (0, WF_TOP, &top, &dmy, &dmy, &dmy);
 		if (top != This->Base.Handle) {
 			return;
@@ -711,7 +711,7 @@ hwWind_setHSInfo (HwWIND This, const char * info)
 	vst_alignment (vdi_handle, TA_LEFT, TA_DESCENT, &dmy, &dmy);
 
 	v_hide_c     (vdi_handle);
-	v_bar        (vdi_handle, (short*)p);
+	v_bar        (vdi_handle, &p[0].p_x);
 
 	vswr_mode (vdi_handle, MD_TRANS);
 
@@ -881,7 +881,7 @@ vTab_sized (HwWIND This)
 static void
 vTab_iconified (HwWIND This)
 {
-	short mx, my, u;
+	WORD mx, my, u;
 	
 	if (This->Base.isIcon) {
 		if (This->TbarActv == TBAR_EDIT) {
@@ -1179,11 +1179,11 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 		v_hide_c (vdi_handle);
 		if (all) {
 			vsf_color (vdi_handle, (ignore_colours ? G_WHITE : G_LWHITE));
-			v_bar   (vdi_handle, (short*)&clip);
+			v_bar   (vdi_handle, &clip.g_x);
 			p[3].p_x = (p[2].p_x = area.g_x) + area.g_w -1;
 			p[3].p_y =  p[2].p_y = area.g_y  + area.g_h -1;
 			vsl_color (vdi_handle, G_BLACK);
-			v_pline (vdi_handle, 2, (short*)(p +2));
+			v_pline (vdi_handle, 2, &p[2].p_x);
 		}
 		vsf_color (vdi_handle, G_WHITE);
 		
@@ -1202,12 +1202,12 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					PXY l[4];
 					if (!ignore_colours) {
 						vrt_cpyfm (vdi_handle,
-						           MD_TRANS, (short*)p, &icon, &scrn, &btn->Fgnd);
+						           MD_TRANS, &p[0].p_x, &icon, &scrn, &btn->Fgnd);
 						icon.fd_addr = btn->Fill;
 						vrt_cpyfm (vdi_handle,
-						           MD_TRANS, (short*)p, &icon, &scrn, &btn->Bgnd);
+						           MD_TRANS, &p[0].p_x, &icon, &scrn, &btn->Bgnd);
 					} else {
-						vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+						vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &icon, &scrn, off);
 					}
 					l[0].p_x = p[2].p_x -1;
 					l[2].p_y = p[2].p_y -1;
@@ -1216,7 +1216,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 						l[1].p_x = p[3].p_x +1;
 						l[1].p_y = p[3].p_y +1;
 						vswr_mode (vdi_handle, MD_XOR);
-						v_bar     (vdi_handle, (short*)l);
+						v_bar     (vdi_handle, &l[0].p_x);
 						vswr_mode (vdi_handle, MD_TRANS);
 						l[1].p_x++;
 						l[1].p_y++;
@@ -1231,23 +1231,23 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					l[2].p_x = l[1].p_x;
 					l[0].p_y = l[1].p_y;
 					vsl_color (vdi_handle, c_rd);
-					v_pline (vdi_handle, 3, (short*)l);
+					v_pline (vdi_handle, 3, &l[0].p_x);
 					l[1].p_y = --l[2].p_y;  --l[2].p_x;
 					l[1].p_x = --l[0].p_x;  --l[0].p_y;
 					vsl_color (vdi_handle, c_lu);
-					v_pline (vdi_handle, 3, (short*)l);
+					v_pline (vdi_handle, 3, &l[0].p_x);
 					l[1].p_x = --l[0].p_x;
 					l[1].p_y = --l[2].p_y;
 					l[3].p_x = l[2].p_x += 2;
 					l[3].p_y = l[0].p_y += 1;
 					vsl_color (vdi_handle, G_BLACK);
-					v_pline (vdi_handle, 4, (short*)l);
+					v_pline (vdi_handle, 4, &l[0].p_x);
 				} else {
-					vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &icon, &scrn, off);
+					vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &icon, &scrn, off);
 					if (ignore_colours) {
 						vsf_interior (vdi_handle, FIS_PATTERN);
 						vsf_style    (vdi_handle, 3);
-						v_bar        (vdi_handle, (short*)(p +2));
+						v_bar        (vdi_handle, &p[2].p_x);
 						vsf_interior (vdi_handle, FIS_SOLID);
 					}
 				}
@@ -1272,12 +1272,12 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 				p[0].p_y = p[3].p_y += 1;
 				p[1].p_y = p[2].p_y -= 2;
 				vsl_color (vdi_handle, G_LBLACK);
-				v_pline (vdi_handle, 3, (short*)p);
+				v_pline (vdi_handle, 3, &p[0].p_x);
 				if (actv) {
 					p[1].p_x = --p[0].p_x; p[3].p_x = ++p[2].p_x;
 					p[1].p_y = --p[2].p_y; p[3].p_y = ++p[0].p_y;
 					vsl_color (vdi_handle, G_BLACK);
-					v_pline (vdi_handle, 4, (short*)p);
+					v_pline (vdi_handle, 4, &p[0].p_x);
 					p[1].p_x += 2;
 					p[1].p_y += 2;
 					p[2].p_x -= 2;
@@ -1287,7 +1287,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 					p[1].p_x = p[2].p_x; ++p[0].p_x;
 					p[1].p_y = p[0].p_y; ++p[2].p_y;
 					vsl_color (vdi_handle, G_WHITE);
-					v_pline (vdi_handle, 3, (short*)p);
+					v_pline (vdi_handle, 3, &p[0].p_x);
 					p[1].p_x =  p[0].p_x +1;
 					p[1].p_y =  p[2].p_y;
 					p[2].p_x -= 2;
@@ -1296,7 +1296,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 				}
 			}
 			if (bgnd) {
-				v_bar (vdi_handle, (short*)(p +1));
+				v_bar (vdi_handle, &p[1].p_x);
 				p[1].p_x++;
 				p[2].p_x--;
 			}
@@ -1305,7 +1305,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 				p[2].p_x -= p[1].p_x -1;
 				p[2].p_y -= p[1].p_y -1;
 				if (rc_intersect (p_clip, (GRECT*)(p +1))) {
-					short dmy;
+					WORD dmy;
 					p[2].p_x += p[1].p_x -1;
 					p[2].p_y += p[1].p_y -1;
 					vs_clip_pxy (vdi_handle, p +1);
@@ -1324,7 +1324,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 				p[1].p_x = (p[0].p_x += (edit->Cursor - edit->Shift) *8 -1) +1;
 				p[1].p_y =  p[0].p_y +16;
 				vswr_mode (vdi_handle, MD_XOR);
-				v_bar     (vdi_handle, (short*)p);
+				v_bar     (vdi_handle, &p[0].p_x);
 				vswr_mode (vdi_handle, MD_TRANS);
 			}
 		}
@@ -1400,7 +1400,7 @@ updt_toolbar (HwWIND This, const char * text)
 	}
 	memcpy(edit->Text, text, len);
 	edit->Text[len] = '\0';
-	edit->Length = len;
+	edit->Length = (WORD)len;
 	edit->Cursor = 0;
 	edit->Shift  = 0;
 	This->TbarActv = TBAR_EDIT;
@@ -1689,7 +1689,7 @@ TC_trans (MFDB *src)
 	size = (LONG)(src->fd_wdwidth * src->fd_h);
 	
 	/* memory for the device raster */
-	if( (new_addr = (short *) malloc( (size << 1) * planes )) == NULL )
+	if( (new_addr = (WORD *) malloc( (size << 1) * planes )) == NULL )
 		return( FALSE );
 
 	memset(new_addr,0,((size << 1) * planes));	/*	-> fill with 0-planes */
@@ -1708,7 +1708,7 @@ TC_trans (MFDB *src)
 	temp_size = tot_colors * temp.fd_wdwidth;
 	temp_size <<= 1;
 
-	if( (temp_addr = (short *) malloc(temp_size)) == NULL )
+	if( (temp_addr = (WORD *) malloc(temp_size)) == NULL )
 		return( FALSE );
 
 	memset(temp_addr,255,(temp_size));	/*	-> fill with 0-planes */
@@ -1725,9 +1725,9 @@ TC_trans (MFDB *src)
 
 	mask = tot_colors - 1;
 
-	idx = (short *)src->fd_addr;
+	idx = (WORD *)src->fd_addr;
 
-	bit_location = color_table = (short *)temp_addr;
+	bit_location = color_table = (WORD *)temp_addr;
 
 	for (y = 0; y < src->fd_h; y++)
 	{
@@ -1757,7 +1757,7 @@ TC_trans (MFDB *src)
 
 				used_colors[color] = 1;
 
-				bit_location =  (short *)(color_table + (temp.fd_wdwidth * (long)color) + x);
+				bit_location =  (WORD *)(color_table + (temp.fd_wdwidth * (long)color) + x);
 	
 				*bit_location |= 1 << bit;
 			}
@@ -1817,7 +1817,7 @@ init_icons(void)
 		p[0].p_x = p[0].p_y = p[2].p_x = p[2].p_y = 0;
 		p[1].p_x = p[3].p_x = logo_mask.fd_w -1;
 		p[1].p_y = p[3].p_y = logo_mask.fd_h -1;
-		vrt_cpyfm(vdi_handle, MD_ERASE, (short*)p, &logo_mask, &logo_icon, color);
+		vrt_cpyfm(vdi_handle, MD_ERASE, &p[0].p_x, &logo_mask, &logo_icon, color);
 	}
 }
 
@@ -1838,7 +1838,7 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 	p[1].p_x = (p[0].p_x = clip->g_x) + clip->g_w -1;
 	p[1].p_y = (p[0].p_y = clip->g_y) + clip->g_h -1;
 	v_hide_c (vdi_handle);
-	v_bar (vdi_handle, (short*)p);
+	v_bar (vdi_handle, &p[0].p_x);
 	p[2] = lu;
 	p[3] = *(PXY*)&icon->fd_w;
 	if (rc_intersect (clip, (GRECT*)(p +2))) {
@@ -1847,22 +1847,22 @@ vTab_drawIcon (HwWIND This, const GRECT * clip)
 		p[3].p_x += p[2].p_x -1;
 		p[3].p_y += p[2].p_y -1;
 		if (icon->fd_nplanes > 1) {
-			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, &logo_mask, &scrn, color);
-/*			vro_cpyfm (vdi_handle, S_OR_D,   (short*)p, icon,       &scrn);*/
+			vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &logo_mask, &scrn, color);
+/*			vro_cpyfm (vdi_handle, S_OR_D,   &p[0].p_x, icon,       &scrn);*/
 
 			/* for me this is a standard call in my code all true
 			 * color blitting suffers from this
 			 */
 			if (planes > 8)
-				vro_cpyfm(vdi_handle,S_AND_D,(short*)p,icon,&scrn);
+				vro_cpyfm(vdi_handle,S_AND_D,&p[0].p_x,icon,&scrn);
 			else
-				vro_cpyfm(vdi_handle,S_OR_D,(short*)p,icon,&scrn);
+				vro_cpyfm(vdi_handle,S_OR_D,&p[0].p_x,icon,&scrn);
 
 		} else {
 			if (!This->isBusy) {
 				color[0] = G_BLACK;
 			}
-			vrt_cpyfm (vdi_handle, MD_TRANS, (short*)p, icon, &scrn, color);
+			vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, icon, &scrn, color);
 		}
 	}
 	v_show_c (vdi_handle, 1);
@@ -2011,7 +2011,7 @@ wnd_hdlr (HW_EVENT event, long arg, CONTAINR cont, const void * gen_ptr)
 				if (wind->Base.isIcon) {
 					hwWind_redraw (wind, NULL); /* update icon */
 				} else {
-					short mx, my, u;
+					WORD mx, my, u;
 					graf_mkstate (&mx, &my, &u,&u);
 					check_mouse_position (mx, my);
 				}
@@ -2158,7 +2158,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 	
 	if (This->TbarH && my < This->Work.g_y + This->TbarH) {
 		short x = mx - This->Work.g_x;
-		tb_n = numberof(This->TbarElem) -1;
+		tb_n = (WORD)numberof(This->TbarElem) -1;
 		do if (x >= This->TbarElem[tb_n].Offset) {
 			if (x > This->TbarElem[tb_n].Offset + This->TbarElem[tb_n].Width) {
 				tb_n = -1;
@@ -2176,7 +2176,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 	}
 	
 	if (!This) {
-		short dmy;
+		WORD dmy;
 		wind_update (BEG_MCTRL);
 		evnt_button (1, 0x03, 0x00, &dmy, &dmy, &dmy, &dmy);
 		wind_update (END_MCTRL);
@@ -2222,10 +2222,10 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 					long  lx, ly;
 					FRAME frame = (FRAME)dombox_Offset (&word->line->Paragraph->Box,
 					                                    &lx, &ly);
-					clip.g_x = lx + frame->clip.g_x - frame->h_bar.scroll
-					              + word->h_offset;
-					clip.g_y = ly + frame->clip.g_y - frame->v_bar.scroll
-					              + word->line->OffsetY - word->word_height;
+					clip.g_x = (WORD)(lx + frame->clip.g_x - frame->h_bar.scroll
+					              + word->h_offset);
+					clip.g_y = (WORD)(ly + frame->clip.g_y - frame->v_bar.scroll
+					              + word->line->OffsetY - word->word_height);
 					clip.g_w = word->word_width;
 					clip.g_h = word->word_height + word->word_tail_drop;
 					hwWind_redraw (This, &clip);
@@ -2335,7 +2335,7 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 			if (rc_intersect ((GRECT*)c, (GRECT*)w)) {
 				w[1].p_x += w[0].p_x -1;
 				w[1].p_y += w[0].p_y -1;
-				v_bar (vdi_handle, (short*)w);
+				v_bar (vdi_handle, &w[0].p_x);
 			}
 			wind_get_grect (This->Base.Handle, WF_NEXTXYWH, (GRECT*)w);
 		}
@@ -2360,13 +2360,13 @@ vTab_evButton (HwWIND This, WORD bmask, PXY mouse, UWORD kstate, WORD clicks)
 		do {
 			EVMULT_OUT out;
 			WORD       msg[8];
-			v_pline  (vdi_handle, 5, (short*)c);
-			v_pline  (vdi_handle, 5, (short*)w);
+			v_pline  (vdi_handle, 5, &c[0].p_x);
+			v_pline  (vdi_handle, 5, &w[0].p_x);
 			v_show_c (vdi_handle, 1);
 			event = evnt_multi_fast (&m_in, msg, &out);
 			v_hide_c (vdi_handle);
-			v_pline  (vdi_handle, 5, (short*)c);
-			v_pline  (vdi_handle, 5, (short*)w);
+			v_pline  (vdi_handle, 5, &c[0].p_x);
+			v_pline  (vdi_handle, 5, &w[0].p_x);
 			if (event & MU_M1) {
 				WORD dx = out.emo_mouse.p_x - m_in.emi_m1.g_x;
 				WORD dy = out.emo_mouse.p_y - m_in.emi_m1.g_y;
@@ -2490,8 +2490,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 			} else {
 				next = NULL;
 			}
-			clip.g_x = x;
-			clip.g_y = y;
+			clip.g_x = (WORD)x;
+			clip.g_y = (WORD)y;
 			hwWind_redraw (This, &clip);
 			if (next) {
 				long dx = 0, dy = 0, d;
@@ -2514,8 +2514,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 					d = TRUE;
 				}
 				if (d) {
-					rect.g_x = x + frame->clip.g_x;
-					rect.g_y = y + frame->clip.g_y;
+					rect.g_x = (WORD)(x + frame->clip.g_x);
+					rect.g_y = (WORD)(y + frame->clip.g_y);
 					hwWind_redraw (This, &rect);
 				}
 			}
@@ -2689,8 +2689,8 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 										*(dst--) = *(src--);
 									} while (src >= ptr);
 									memcpy (ptr, buf, len);
-									edit->Length += len;
-									scrl = +len;
+									edit->Length += (WORD)len;
+									scrl = (WORD)len;
 									chng = TRUE;
 								}
 							}
@@ -2818,10 +2818,10 @@ vTab_evKeybrd (HwWIND This, WORD scan, WORD ascii, UWORD kstate)
 				{
 					FRAME frame = containr_Frame ((CONTAINR)This->Active);
 					if (frame) {
-						edit->Length = location_FullName (frame->Location,
+						edit->Length = (WORD)location_FullName (frame->Location,
 						                              edit->Text, sizeof(edit->Text));
 						if (edit->Length >= sizeof(edit->Text)) {
-							edit->Length = sizeof(edit->Text) -1;
+							edit->Length = (WORD)sizeof(edit->Text) -1;
 						}
 						if ((edit->Cursor = edit->Length) <= edit->Visible) {
 							edit->Shift = 0;

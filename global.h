@@ -106,7 +106,7 @@ void    menu_logging      (int);
 
 /* in formwind.c */
 
-#ifdef _GEMLIB_H_
+#if defined(WF_NAME)
 WORD formwind_do (OBJECT *, WORD start, const char * title,
                   BOOL modal, BOOL(*handler)(OBJECT*,WORD));
 #endif
@@ -121,7 +121,7 @@ void fonts_setup (WORD msg[]);
 
 /* in Widget.c */
 
-#ifdef _GEMLIB_H_
+#if defined(WF_NAME)
 WORD HW_form_do    (OBJECT *, WORD next);
 #endif
 WORD HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu);
@@ -270,7 +270,7 @@ long word_offset (WORDITEM);
 short get_avserver     (void);
 void  Init_AV_Protocol (void);
 void  Exit_AV_Protocol (void);
-BOOL  Receive_AV       (short msg[8]);
+BOOL  Receive_AV       (WORD msg[8]);
 BOOL  Send_AV          (short message, const char *data1, const char *data2);
 
 void send_avwinopen  (short handle);
@@ -281,7 +281,7 @@ void send_avwinclose (short handle);
 extern char *olga_memory; /* HW_PATH_MAX byte */
 
 extern void send_olga_link ( const char *s );
-extern void handle_olga ( short msg[8] );
+extern void handle_olga ( WORD msg[8] );
 extern void Init_OLGA   ( void );
 extern void Exit_OLGA   ( void );
 

@@ -144,6 +144,7 @@
 		__KEY_ITEM (CELLPADDING),  /* TABLE */
 		__KEY_ITEM (CELLSPACING),  /* TABLE */
 		__KEY_ITEM (CHARSET),      /* A */
+#undef CHECKED
 		__KEY_ITEM (CHECKED),      /* INPUT */
 		__KEY_ITEM (CLASS),        /* all */
 		__KEY_ITEM (CLEAR),        /* BR */
@@ -152,6 +153,7 @@
 		__KEY_ITEM (COLSPAN),      /* TD,TH */
 		__KEY_ITEM (CONTENT),      /* META */
 		__KEY_ITEM (COORDS),       /* AREA */
+#undef DISABLED
 		__KEY_ITEM (DISABLED),     /* INPUT,SELECT,OPTION */
 		__KEY_ITEM (ENCTYPE),      /* FORM */
 		__KEY_ITEM (FACE),         /* FONT, CSS:font-family */

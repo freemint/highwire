@@ -564,15 +564,15 @@ history_update (CONTAINR cont, HISTORY hist)
 				} else {
 					if (frame->v_bar.on && frame->v_bar.scroll > 0) {
 						long height = frame->Page.Rect.H - frame->clip.g_h;
-						item->ScrollV = (frame->v_bar.scroll * 1024 + height /2)
-						              / height;
+						item->ScrollV = (WORD)((frame->v_bar.scroll * 1024 + height /2)
+						              / height);
 					} else {
 						item->ScrollV = 0;
 					}
 					if (frame->h_bar.on && frame->h_bar.scroll > 0) {
 						long width = frame->Page.Rect.W - frame->clip.g_w;
-						item->ScrollH = (frame->h_bar.scroll * 1024 + width /2)
-						              / width;
+						item->ScrollH = (WORD)((frame->h_bar.scroll * 1024 + width /2)
+						              / width);
 					} else {
 						item->ScrollH = 0;
 					}
@@ -993,8 +993,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 			} else if (word->image) {
 				type = PE_ILINK;
 				if (word->image->map) {
-					WORD     mx  = -px - word->h_offset;
-					WORD     my  = -py - word->line->OffsetY + word->line->Ascend;
+					WORD     mx  = (WORD)(-px - word->h_offset);
+					WORD     my  = (WORD)(-py - word->line->OffsetY + word->line->Ascend);
 					IMAGE    img = word->image;
 					IMAGEMAP map = word->image->map;
 					MAPAREA  reg = map->Areas;
@@ -1046,9 +1046,9 @@ containr_Element (CONTAINR *_cont, short x, short y,
 						}
 						case 'C': {
 							long r  = (long)reg->u.Circ.Radius * reg->u.Circ.Radius;
-							long dx = mx - reg->u.Circ.Centre.p_x;
-							long dy = my - reg->u.Circ.Centre.p_y;
-							if (r >= dx*dx + dy*dy) {
+							WORD dx = mx - reg->u.Circ.Centre.p_x;
+							WORD dy = my - reg->u.Circ.Centre.p_y;
+							if (r >= (long)dx*dx + (long)dy*dy) {
 								if (dx < 0 ) { a_w = -dx *2 +1; a_x = mx;          }
 								else         { a_w = +dx *2 +1; a_x = mx - a_w +1; }
 								if (dy < 0 ) { a_h = -dy *2 +1; a_y = my;          }
@@ -1105,8 +1105,8 @@ containr_Element (CONTAINR *_cont, short x, short y,
 				*hash = word->link;
 				if (clip) {
 					*clip = paragraph_extend (word);
-					clip->g_x += rect.X + frame->clip.g_x;
-					clip->g_y += rect.Y + frame->clip.g_y;
+					clip->g_x += (WORD)(rect.X + frame->clip.g_x);
+					clip->g_y += (WORD)(rect.Y + frame->clip.g_y);
 					rc_intersect (&frame->clip, clip);
 				}
 			}
@@ -1120,23 +1120,23 @@ containr_Element (CONTAINR *_cont, short x, short y,
 		if (rect.X < 0) {
 			rect.W += rect.X;
 		} else {
-			watch->g_x += rect.X;
+			watch->g_x += (WORD)rect.X;
 		}
 		if (watch->g_x + rect.W > frame->clip.g_x + frame->clip.g_w) {
 			watch->g_w = frame->clip.g_x + frame->clip.g_w - watch->g_x;
 		} else {
-			watch->g_w = rect.W;
+			watch->g_w = (WORD)rect.W;
 		}
 		
 		if (rect.Y < 0) {
 			rect.H += rect.Y;
 		} else {
-			watch->g_y += rect.Y;
+			watch->g_y += (WORD)rect.Y;
 		}
 		if (watch->g_y + rect.H > frame->clip.g_y + frame->clip.g_h) {
 			watch->g_h = frame->clip.g_y + frame->clip.g_h - watch->g_y;
 		} else {
-			watch->g_h = rect.H;
+			watch->g_h = (WORD)rect.H;
 		}
 		
 		if (clip &&type != PE_TLINK) {
@@ -1413,12 +1413,12 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 						mouse = TRUE;
 					}
 					vsf_color (vdi_handle, cont->BorderColor);
-					v_bar (vdi_handle, (short*)(p +1));
+					v_bar (vdi_handle, &p[1].p_x);
 					if (cont->BorderSize > 3) {
 						vsl_color (vdi_handle, G_WHITE);
-						v_pline (vdi_handle, 2, (short*)(p +0));
+						v_pline (vdi_handle, 2, &p[0].p_x);
 						vsl_color (vdi_handle, G_LBLACK);
-						v_pline (vdi_handle, 2, (short*)(p +2));
+						v_pline (vdi_handle, 2, &p[2].p_x);
 					}
 				} else {
 					clipped = FALSE;
@@ -1458,7 +1458,7 @@ containr_redraw (CONTAINR cont, const GRECT * p_clip)
 					vsf_color     (vdi_handle, G_LWHITE);
 					vswr_mode     (vdi_handle, MD_REPLACE);
 					
-					v_bar (vdi_handle, (short*)&r);
+					v_bar (vdi_handle, &r.g_x);
 					
 					vsf_perimeter (vdi_handle, PERIMETER_OFF);
 					vsf_interior  (vdi_handle, FIS_SOLID);
@@ -1515,31 +1515,31 @@ containr_scroll (CONTAINR cont, const GRECT * clip, long dx, long dy)
 			if (ax) {
 				hbox = rect;
 				if (dx < 0) {              /* scroll right */
-					src[1].p_x -= ax;
-					dst[0].p_x += ax;
+					src[1].p_x -= (WORD)ax;
+					dst[0].p_x += (WORD)ax;
 				} else {                   /* scroll left */
-					src[0].p_x += ax;
-					dst[1].p_x -= ax;
+					src[0].p_x += (WORD)ax;
+					dst[1].p_x -= (WORD)ax;
 					hbox.g_x   =  dst[1].p_x +1;
 				}
-				hbox.g_w = ax;
+				hbox.g_w = (WORD)ax;
 			}
 			if (ay) {
 				vbox = rect;
 				if (dy < 0) {              /* scroll down */
-					src[1].p_y -= ay;
-					dst[0].p_y += ay;
+					src[1].p_y -= (WORD)ay;
+					dst[0].p_y += (WORD)ay;
 					hbox.g_y   =  dst[0].p_y;
 				} else {                   /* scroll up */
-					src[0].p_y += ay;
-					dst[1].p_y -= ay;
+					src[0].p_y += (WORD)ay;
+					dst[1].p_y -= (WORD)ay;
 					vbox.g_y   =  dst[1].p_y +1;
 				}
-				vbox.g_h =  ay;
-				hbox.g_h -= ay;
+				vbox.g_h =  (WORD)ay;
+				hbox.g_h -= (WORD)ay;
 			}
 			v_hide_c  (vdi_handle);
-			vro_cpyfm (vdi_handle, S_ONLY, (short*)src, &mfdb, &mfdb);
+			vro_cpyfm (vdi_handle, S_ONLY, &src[0].p_x, &mfdb, &mfdb);
 			v_show_c  (vdi_handle, 1);
 			
 			if (ax) {

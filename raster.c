@@ -2680,7 +2680,7 @@ dither_32z (IMGINFO info, void * _dst)
 
 
 
-static short pixel_val[256];
+static WORD pixel_val[256];
 
 
 
@@ -2790,7 +2790,7 @@ cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 
 		if (!t--) {
 
-			*(pal++) = color_lookup (backgnd) | ((long)pixel_val[backgnd] <<24);
+			*(pal++) = color_lookup ((WORD)backgnd) | ((long)pixel_val[backgnd] <<24);
 
 		} else {
 
@@ -2836,7 +2836,7 @@ cnvpal_15 (IMGINFO info, ULONG backgnd)
 
 		if (!t--) {
 
-			ULONG  z = color_lookup (backgnd);
+			ULONG  z = color_lookup ((WORD)backgnd);
 
 			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<7)
 
@@ -2890,7 +2890,7 @@ cnvpal_high (IMGINFO info, ULONG backgnd)
 
 		if (!t--) {
 
-			ULONG  z = color_lookup (backgnd);
+			ULONG  z = color_lookup ((WORD)backgnd);
 
 			*(pal++) = ((short)(((CHAR*)&z)[1] & 0xF8) <<8)
 
@@ -2942,7 +2942,7 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 
 		do {
 
-			*(pal++) = (!t-- ? color_lookup (backgnd) : *rgb);
+			*(pal++) = (!t-- ? color_lookup ((WORD)backgnd) : *rgb);
 
 			rgb++;
 
@@ -2958,7 +2958,7 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 
 		do {
 
-			*(pal++) = (!t-- ? color_lookup (backgnd)
+			*(pal++) = (!t-- ? color_lookup ((WORD)backgnd)
 
 			                 : ((((long)*r <<8) | *g) <<8) | *b);
 
@@ -3014,7 +3014,7 @@ rasterizer (UWORD depth, UWORD comps)
 
 		static char disp_info[10] = "";
 
-		short out[273] = { -1, };
+		WORD out[273] = { -1, };
 
 		short sdepth;
 

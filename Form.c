@@ -132,6 +132,27 @@ static void    del_chars (INPUT input, WORD col, WORD row, int numChars);
 #define        __edit_r_r(inp)       ((inp)->TextArray[(inp)->TextRows])
 #define        edit_space(inp)       ((WCHAR*)&__edit_r_0(inp)-__edit_r_r(inp))
 
+
+
+/*------------------------------------------------------------------------------*/
+#ifdef __PUREC__
+int iswspace(wint_t wc)
+{
+	static const wchar_t spaces[] = {
+		' ', '\t', '\n', '\r', 11, 12,  0x0085,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005,
+		0x2006, 0x2008, 0x2009, 0x200a,
+		0x2028, 0x2029, 0x205f, 0x3000, 0
+	};
+	int i;
+	
+	for (i = 0; spaces[i] != 0; i++)
+		if (spaces[i] == wc)
+			return 1;
+	return 0;
+}
+#endif
+
 /*------------------------------------------------------------------------------
  * Memo: UTF-8 ranges
 00-7F : 1 byte
@@ -745,7 +766,7 @@ selct_option (TEXTBUFF current, const char * text,
 		current->text = current->buffer;
 		memcpy (item->Text, current->buffer, tlen *2);
 		item->Text[tlen] = '\0';
-		item->Length = tlen;
+		item->Length = (WORD)tlen;
 		vqt_f_extent16n (vdi_handle, item->Text, item->Length, pts);
 		item->Width = pts[2] - pts[0];
 
@@ -844,37 +865,37 @@ input_draw (INPUT input, WORD x, WORD y)
 		p[3].p_x = p[2].p_x;
 	}
 	p[4]     = p[0];
-	v_fillarea (vdi_handle, 4, (short*)p);
-	v_pline    (vdi_handle, 5, (short*)p);
+	v_fillarea (vdi_handle, 4, &p[0].p_x);
+	v_pline    (vdi_handle, 5, &p[0].p_x);
 	if (input->Type == IT_RADIO) {
 		vsl_color (vdi_handle, c_lu);
 		p[0].p_x++;
 		p[1].p_y++;
-		v_pline (vdi_handle, 2, (short*)p);
+		v_pline (vdi_handle, 2, &p[0].p_x);
 		p[0].p_x++;
 		p[1].p_y++;
-		v_pline (vdi_handle, 2, (short*)p);
+		v_pline (vdi_handle, 2, &p[0].p_x);
 		vsl_color (vdi_handle, c_rd);
 		p[1].p_x++;   p[2].p_x -= 2;   p[4].p_x = p[0].p_x +1;
 		p[1].p_y++;   p[3].p_y -= 2;   p[4].p_y = p[0].p_y +1;
-		v_pline (vdi_handle, 4, (short*)(p +1));
+		v_pline (vdi_handle, 4, &p[1].p_x);
 		p[2].p_x++;
 		p[3].p_y++;
-		v_pline (vdi_handle, 2, (short*)(p +2));
+		v_pline (vdi_handle, 2, &p[2].p_x);
 
 	} else {
 		vsl_color (vdi_handle, c_lu);
 		p[1].p_x = ++p[0].p_x;   p[2].p_x -= 2;
 		p[1].p_y = ++p[2].p_y;   p[0].p_y -= 2;
-		v_pline (vdi_handle, 3, (short*)p);
+		v_pline (vdi_handle, 3, &p[0].p_x);
 		if (input->Type == IT_BUTTN) {
 			p[1].p_x = ++p[0].p_x;  --p[2].p_x;
 			p[1].p_y = ++p[2].p_y;  --p[0].p_y;
-			v_pline (vdi_handle, 3, (short*)p);
+			v_pline (vdi_handle, 3, &p[0].p_x);
 			vsl_color (vdi_handle, c_rd);
 			p[0].p_x++;   p[1].p_x = ++p[2].p_x;
 			p[2].p_y++;   p[1].p_y = ++p[0].p_y;
-			v_pline (vdi_handle, 3, (short*)p);
+			v_pline (vdi_handle, 3, &p[0].p_x);
 			p[0].p_x--;
 			p[2].p_y--;
 		} else if (input->Type == IT_SELECT) {
@@ -889,11 +910,11 @@ input_draw (INPUT input, WORD x, WORD y)
 			p[5]     = p[2];
 			if (ignore_colours) {
 				vsl_color (vdi_handle, c_rd);
-				v_pline (vdi_handle, 4, (short*)(p +2));
+				v_pline (vdi_handle, 4, &p[2].p_x);
 			} else {
-				v_pline (vdi_handle, 3, (short*)(p +2));
+				v_pline (vdi_handle, 3, &p[2].p_x);
 				vsl_color (vdi_handle, c_rd);
-				v_pline (vdi_handle, 2, (short*)(p +4));
+				v_pline (vdi_handle, 2, &p[4].p_x);
 			}
 			p[2] = p[1];
 			p[0].p_x++;
@@ -905,7 +926,7 @@ input_draw (INPUT input, WORD x, WORD y)
 		}
 		p[1].p_x = ++p[2].p_x;
 		p[1].p_y = ++p[0].p_y;
-		v_pline (vdi_handle, 3, (short*)p);
+		v_pline (vdi_handle, 3, &p[0].p_x);
 	}
 	if (input->Type >= IT_TEXT) {
 		BOOL     fmap = (word->font->Base->Mapping != MAP_UNICODE);
@@ -927,14 +948,19 @@ input_draw (INPUT input, WORD x, WORD y)
 		}
 		while (rows--) {
 			WCHAR * ptr = wptr[0] + shft;
-			WORD    len = min (wptr[1] -1 - ptr, input->VisibleX);
+			WORD    len = min ((UWORD)(wptr[1] -1 - ptr), input->VisibleX);
 			pos.p_y += input->CursorH;
-			if (len > 0) v_ftext16n (vdi_handle, pos, ptr, len);
+			if (len > 0)
+#ifdef __PUREC__
+				v_ftext16n (vdi_handle, pos.p_x, pos.p_y, ptr, len);
+#else
+				v_ftext16n (vdi_handle, pos, ptr, len);
+#endif
 			wptr++;
 		}
 		if (input == form->TextActive) {
 			WCHAR * ptr = input->TextArray[form->TextShiftY]   + shft;
-			vqt_f_extent16n (vdi_handle, ptr, form->TextCursrX - shft, (short*)p);
+			vqt_f_extent16n (vdi_handle, ptr, form->TextCursrX - shft, &p[0].p_x);
 			p[0].p_x = x +2 + p[1].p_x - p[0].p_x;
 			p[1].p_x = p[0].p_x +1;
 			p[0].p_y = y - word->word_height +2
@@ -942,7 +968,7 @@ input_draw (INPUT input, WORD x, WORD y)
 			p[1].p_y = p[0].p_y                              + input->CursorH;
 			vsf_color (vdi_handle, G_WHITE);
 			vswr_mode (vdi_handle, MD_XOR);
-			v_bar     (vdi_handle, (short*)p);
+			v_bar     (vdi_handle, &p[0].p_x);
 			vswr_mode (vdi_handle, MD_TRANS);
 		}
 		if (fmap) {
@@ -964,7 +990,7 @@ input_draw (INPUT input, WORD x, WORD y)
 			vsf_style (vdi_handle, 4);
 			vsf_color (vdi_handle, G_LWHITE);
 		}
-		v_bar (vdi_handle, (short*)p);
+		v_bar (vdi_handle, &p[0].p_x);
 		vsf_interior (vdi_handle, FIS_SOLID);
 	}
 }
@@ -1005,16 +1031,16 @@ coord_diff (INPUT check, INPUT input,  GRECT * rect)
 	WORDITEM c_w = check->Word, i_w = input->Word;
 	rect->g_x = c_w->h_offset
 	           - i_w->h_offset;
-	rect->g_y = (c_w->line->OffsetY - c_w->word_height)
-	           - (i_w->line->OffsetY - i_w->word_height);
+	rect->g_y = (WORD)((c_w->line->OffsetY - c_w->word_height)
+	           - (i_w->line->OffsetY - i_w->word_height));
 	rect->g_w = c_w->word_width;
 	rect->g_h = c_w->word_height + c_w->word_tail_drop;
 	if (check->Paragraph != input->Paragraph) {
 		long c_x, c_y, i_x, i_y;
 		dombox_Offset (&check->Paragraph->Box, &c_x, &c_y);
 		dombox_Offset (&input->Paragraph->Box, &i_x, &i_y);
-		rect->g_x += c_x - i_x;
-		rect->g_y += c_y - i_y;
+		rect->g_x += (WORD)(c_x - i_x);
+		rect->g_y += (WORD)(c_y - i_y);
 	}
 }
 
@@ -1076,7 +1102,7 @@ input_handle (INPUT input, PXY mxy, GRECT * radio, char *** popup)
 					 form->TextCursrX = input->VisibleX;
 				}
 				if (form->TextCursrX > edit_rowln (input, form->TextCursrY)) {
-					 form->TextCursrX = edit_rowln (input, form->TextCursrY);
+					 form->TextCursrX = (WORD)edit_rowln (input, form->TextCursrY);
 				}
 			} else {
 				form->TextCursrX = 0;
@@ -1642,8 +1668,8 @@ input_file_handler (INPUT input) {
 			y += (long)clip.g_y + word->line->OffsetY
 			     + frame->clip.g_y - frame->v_bar.scroll;
 
-			clip.g_x = x;
-			clip.g_y = y;
+			clip.g_x = (WORD)x;
+			clip.g_y = (WORD)y;
 			hwWind_redraw (wind, &clip);
 		}
 	}
@@ -1817,7 +1843,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					}
 					else if (form->TextCursrY)
 					{
-						scrl = +edit_rowln (input, form->TextCursrY -1);
+						scrl = (WORD)edit_rowln (input, form->TextCursrY -1);
 						lift = -1;
 						line = +2;
 					}
@@ -1832,7 +1858,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				if (shift)  /* shift cursor-right: 54 */
 				{
 					/* Move cursor to the right by scrl places */
-					scrl = +edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+					scrl = (WORD)edit_rowln (input, form->TextCursrY) - form->TextCursrX;
 					if (scrl <= 0)
 					{
 						word = NULL;
@@ -1931,7 +1957,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			case NK_CLRHOME:  /* Clr/Home: 55 */
 				if (shift)  /* Clr-Home shifted */
 				{
-					scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+					scrl = (WORD)edit_rowln (input, input->TextRows -1) - form->TextCursrX;
 					lift =                    input->TextRows -1  - form->TextCursrY;
 					if (!scrl && !lift)
 					{
@@ -1953,7 +1979,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				break;
 
 			case NK_M_END:  /* Mac END key */
-				scrl = edit_rowln (input, input->TextRows -1) - form->TextCursrX;
+				scrl = (WORD)edit_rowln (input, input->TextRows -1) - form->TextCursrX;
 				lift =                    input->TextRows -1  - form->TextCursrY;
 				if (!scrl && !lift)
 				{
@@ -2078,7 +2104,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				}
 				else if (form->TextCursrY)
 				{
-					WORD col = edit_rowln (input, form->TextCursrY -1);
+					WORD col = (WORD)edit_rowln (input, form->TextCursrY -1);
 					edit_delc (input, col, form->TextCursrY -1);
 					scrl = col;
 					lift = -1;
@@ -2099,7 +2125,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 					if (shift)  /* Shift Delete */
 					{
 					int col = form->TextCursrX;
-					int numChars = edit_rowln (input, form->TextCursrY) - col - 1;
+					int numChars = (int)edit_rowln (input, form->TextCursrY) - col - 1;
 					
 						if (numChars > 0)
 						{
@@ -2156,7 +2182,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 		form->TextCursrY += lift;
 		if (!scrl && edit_rowln (input, form->TextCursrY) < form->TextCursrX)
 		{
-			scrl = edit_rowln (input, form->TextCursrY) - form->TextCursrX;
+			scrl = (WORD)edit_rowln (input, form->TextCursrY) - form->TextCursrX;
 		}
 		if (lift > 0)
 		{
@@ -2198,7 +2224,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			}
 			else if (form->TextShiftX)
 			{
-				WORD n = edit_rowln (input, form->TextCursrY);
+				WORD n = (WORD)edit_rowln (input, form->TextCursrY);
 				if (n < form->TextShiftX + input->VisibleX)
 				{
 					form->TextShiftX = n - (WORD)input->VisibleX;
@@ -2361,7 +2387,7 @@ edit_feed (INPUT input, ENCODING encoding, const char * beg, const char * end)
 			ptr  = *line;
 		}
 		if (*beg == '\n' && crlf) {
-			WORD col = ptr - *line;
+			WORD col = (WORD)(ptr - *line);
 			*line    = ptr;
 			if (!edit_crlf (input, col, input->TextRows -1)) {
 				beg = end;

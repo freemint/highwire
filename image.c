@@ -1012,15 +1012,15 @@ image_job (void * arg, long invalidated)
 
 			}
 
-			rec.g_y = y;
+			rec.g_y = (WORD)y;
 
 			if (par_h == par->Box.Rect.H) {
 
-				rec.g_x = x;
+				rec.g_x = (WORD)x;
 
-				rec.g_w = par_w;
+				rec.g_w = (WORD)par_w;
 
-				rec.g_h = par_h - off_y;
+				rec.g_h = (WORD)(par_h - off_y);
 
 			}
 
@@ -1146,7 +1146,7 @@ setup (IMAGE img, IMGINFO info)
 
 	data->fd_h       = img->disp_h;
 
-	data->fd_wdwidth = wd_width;
+	data->fd_wdwidth = (WORD)wd_width;
 
 	data->fd_stand   = (info->BitDepth > 1 ? raster->StndBitmap : FALSE);
 
@@ -1234,9 +1234,9 @@ setup (IMAGE img, IMGINFO info)
 
 		(*raster->cnvpal) (info, transpar);
 
-		data->bgnd = info->Pixel[0];
+		data->bgnd = (WORD)info->Pixel[0];
 
-		data->fgnd = info->Pixel[1];
+		data->fgnd = (WORD)info->Pixel[1];
 
 	}
 

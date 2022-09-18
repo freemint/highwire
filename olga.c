@@ -71,7 +71,7 @@ void send_olga_link ( const char *s )
 
 /*============================================================================*/
 
-void handle_olga( short msg[8])
+void handle_olga( WORD msg[8])
 {
 	switch (msg[0])
 	{

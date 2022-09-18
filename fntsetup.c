@@ -308,7 +308,7 @@ fonts_setup (WORD msg[])
 		window_raise (fnt_wind, TRUE, NULL);
 	
 	} else {
-		short n;
+		WORD n;
 		if (!fnt_form) {
 			if (!rsrc_gaddr (R_TREE, FONTSLCT, &fnt_form)) {
 				puts ("font_setup(): rsrc_gaddr() failed!");
@@ -368,9 +368,9 @@ fonts_setup (WORD msg[])
 						pathend = NULL;
 					} else
 					{
-						len = p - pathend + 1;
+						len = (WORD)(p - pathend + 1);
 						if (len > sizeof(path))
-							len = sizeof(path);
+							len = (WORD)sizeof(path);
 						strcpy(path, pathend);
 						pathend = p + 1;
 					}
