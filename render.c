@@ -2159,7 +2159,7 @@ render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
- * Deleted Text Style (same as NN ò 6 and IE ò 5)
+ * Deleted Text Style (same as NN >= 6 and IE >= 5)
  */
 #define render_DEL_tag render_STRIKE_tag
 
@@ -2277,7 +2277,7 @@ render_I_tag (PARSER parser, const char ** text, UWORD flags)
 }
 
 /*------------------------------------------------------------------------------
- * Inserted Text Style (same as NN ò 6 and IE ò 5)
+ * Inserted Text Style (same as NN >= 6 and IE >= 5)
  */
 #define render_INS_tag render_U_tag
 
