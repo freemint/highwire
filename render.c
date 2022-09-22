@@ -10,7 +10,7 @@
 #include <time.h> 
 #include <setjmp.h> 
 
-#include "token.h" /* must be included before gem/gemx.h */
+#include "token.h"	 /* must be included before gem/gemx.h */
 #include <gemx.h>
 
 #ifndef CLK_TCK
@@ -20,6 +20,7 @@
 #ifdef __PUREC__
 # define PARSER   struct s_parser * PARSER
 #endif
+
 #include "global.h"
 #include "scanner.h"
 #include "Loader.h"
@@ -59,9 +60,9 @@ list_indent (WORD type)
 		case 2:
 			return (font_size * 4);
 	}
+	
 	return (0);
 }
-
 
 /*----------------------------------------------------------------------------*/
 static V_ALIGN
@@ -72,8 +73,9 @@ get_v_align (PARSER parser, V_ALIGN dflt)
 		if      (stricmp (out, "top")      == 0)  dflt = ALN_TOP;
 		else if (stricmp (out, "middle")   == 0)  dflt = ALN_MIDDLE;
 		else if (stricmp (out, "bottom")   == 0)  dflt = ALN_BOTTOM;
-	/*	else if (stricmp (out, "baseline") == 0) dflt = ALN_BASELINE;*/
+/*		else if (stricmp (out, "baseline") == 0) dflt = ALN_BASELINE;*/
 	}
+	
 	return dflt;
 }
 
@@ -89,6 +91,7 @@ get_h_align (PARSER parser, H_ALIGN dflt)
 		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
 		else if (stricmp (out, "justify") == 0) dflt = ALN_JUSTIFY;
 	}
+	
 	return dflt;
 }
 
@@ -103,6 +106,7 @@ get_floating (PARSER parser, H_ALIGN dflt)
 		else if (stricmp (out, "right")   == 0) dflt = FLT_RIGHT;
 		else if (stricmp (out, "center")  == 0) dflt = ALN_CENTER;
 	}
+	
 	return dflt;
 }
 
@@ -163,7 +167,6 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 		case 0x4558: /* EX */
 			size *= ex;
 			goto case_PT; /* approximated */
-		
 		case 0x434D: /* MM */
 			size *= 10;
 		case 0x4D4D: /* CM */
@@ -176,7 +179,6 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 			goto case_PT;
 		case 0x5058: /* PX, pixel */
 			val = (size + 128) >> 8;
-			
 			if (font) {
 				if (val > 1) 
 					size = (val * 9)/10;
@@ -185,9 +187,7 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 			} else {
 				size = val;
 			}
-			
 			break;
-			
 		case 0x2520: /* % */
 			/* this mod is just to keep percentages standard
 			 * across all the interfaces.  I don't think
@@ -212,6 +212,7 @@ numerical (const char * buf, char ** tail, short em, short ex, BOOL font)
 		ptr.c = buf;
 		*tail = ptr.v;
 	}
+	
 	return (short)size;
 }
 
@@ -221,46 +222,39 @@ reset_text_styles (PARSER parser)
 {
 	TEXTBUFF current = &parser->Current;
 	FRAME    frame    = parser->Frame;
-
+	
 	/* These could potentially need to be set from the parent
 	 * and not from the base of the frame
 	 */
-
+	
 	/* test in case we don't have a body tag in document */
 	if (!frame->Page.FontStk) {
 		frame->Page.FontStk = current->font;
 		return;
 	}
-	
 	if (current->font->setItalic != frame->Page.FontStk->setItalic) {
 		current->font->setItalic = frame->Page.FontStk->setItalic;
 		word_set_italic (&parser->Current, current->font->setItalic);
 	}
-
 	if (current->font->setUndrln != frame->Page.FontStk->setUndrln) {
 		current->font->setUndrln = frame->Page.FontStk->setUndrln;
 		word_set_underline (&parser->Current, current->font->setUndrln);
 	}
-
 	if (current->font->setBold != frame->Page.FontStk->setBold) {
 		current->font->setBold = frame->Page.FontStk->setBold;
 		word_set_bold(&parser->Current, current->font->setBold);
 	}
-
 	if (current->font->setStrike != frame->Page.FontStk->setStrike) {
 		current->font->setStrike = frame->Page.FontStk->setStrike;
 		word_set_strike(&parser->Current, current->font->setStrike);
 	}
-
 	if (current->font->setCondns != frame->Page.FontStk->setCondns) {
 		current->font->setCondns = frame->Page.FontStk->setCondns;
 		TAsetCondns (current->word->attr, current->font->setCondns);
 	}
-
 	if (!ignore_colours) {
 		word_set_color (current, frame->Page.FontStk->Color);
 	}
-
 /*	if (current->font->Size != frame->Page.FontStk->Size) {
 		current->font->Size = frame->Page.FontStk->Size;
 	}
@@ -275,8 +269,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	TEXTBUFF current = &parser->Current;
 	short    step    = -1;
 	char output[100];
-
-		
 	if (get_value (parser, CSS_FONT, output, sizeof(output))) {
 		WORD comma = 0;
 		char *   p = output;
@@ -285,49 +277,40 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}
 		while (*p) {
 			long color = -1;
-			
 			/*if (isdigit (*p)) {*/
-
 			if ((isdigit (*p))||(*p == '.')) {
 				char * tail = p;
 				short em = 0, ex = 0;
 				short size;
-			
-				/* Ok.  I get a value of 293 in current->parentbox->FontStk->Size when it's
-				 * the root object quite commonly.  I don't know why.  If we fix that then
-				 * fix this test
+				/* Ok.  I get a value of 293 in 
+				 *               current->parentbox->FontStk->Size when it's
+				 * the root object quite commonly.  I don't know why.  If we
+				 * fix that then fix this test
 				 */
-
-				em = (current->parentbox->FontStk ? current->parentbox->FontStk->Size : font_size);
-				em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
+				em = (current->parentbox->FontStk ? 
+					current->parentbox->FontStk->Size : font_size);
+				em = (current->paragraph->Box.real_parent ? 
+					current->paragraph->Box.real_parent->FontStk->Size : em);
 				ex = em/2;
-
 				size = numerical (tail, NULL, em, ex, TRUE);
-
 				if (size == (short)0x8000) size = 0;
-
 				if (size > 0) {
 					fontstack_setSize (current, size);
 					p = tail;
 				} else {
 					short new_size = 0;
-	
 					if (size < -1024) {
 						short mod_val, multiple;
-					
-						multiple = -size/1024;
-						mod_val = -(-size%1024);
-				
-						new_size = ((-mod_val +512) /1024)* em; /*font_size;*/
+						multiple = -size / 1024;
+						mod_val = -(-size % 1024);
+						new_size = ((-mod_val +512) / 1024)* em; /*font_size;*/
 						new_size += em * multiple; /* font_size */
 					} else {				
 						new_size = (-size * em +512) /1024;/* font_size */
 					}
-
 					fontstack_setSize (current, new_size);
 					p = tail;
 				}
-			
 			} else if (*p == '#') {
 				short len = 0;
 				while (isxdigit (p[++len]));
@@ -348,27 +331,23 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 				}
 				if ((color = scan_color (p, len)) < 0) {
 					WORD fstep = -1, ftype = -1;
-					
 					/* font-style */
 					if (strnicmp (p, "italic",  len) == 0 ||
 					    strnicmp (p, "oblique", len) == 0) {
 						fontstack_setItalic (current);
 					} else if (strnicmp (p, "normal", len) == 0) {
 						word_set_italic (&parser->Current, FALSE);
-
 					/* font-weight */
 					} else if (strnicmp (p, "bold",   len) == 0 ||
 					           strnicmp (p, "bolder", len) == 0) {
 						fontstack_setBold (current);
 						/* n/i: lighter, medium */
-					
 					/* font-decoration */
 					} else if (strnicmp (p, "line-through", len) == 0) {
 						fontstack_setStrike (current);
 					} else if (strnicmp (p, "underline",    len) == 0) {
 						fontstack_setUndrln (current);
 						/* n/i: overline */
-					
 					/* font-size */
 					} else if ( *p == '-') {
 						/* negative values should be default size ? */
@@ -388,7 +367,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 					} else if (strnicmp (p, "xx-large", len) == 0) {
 						step = 6;
 						/* n/i: smaller, larger */
-					
 					/* font-family */
 					} else if (strnicmp (p, "sans-serif", len) == 0 ||
 					           strnicmp (p, "helvetica",  len) == 0 ||
@@ -408,9 +386,7 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 						/* other family, not yet supported */
 						if (!comma) comma = -1;
 					}
-					
 					/* n/i: font-variant */
-					
 					if (fstep >= 0 && fstk) {
 						fstk->Size = font_step2size (fstk->Step = fstep);
 						word_set_point (current, fstk->Size);
@@ -437,38 +413,29 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			while (isspace (*(++p)));
 		}
 	}
-	
 	if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))) {
-	
 		/* here em and ex refer to the parents size not current size */
-
 		if ((isdigit (output[0]))||(output[0] == '.')) {
 			short em = 0, ex = 0;
 			short size;
-			
-			em = (current->parentbox->FontStk ? current->parentbox->FontStk->Size : font_size);
-			em = (current->paragraph->Box.real_parent ? current->paragraph->Box.real_parent->FontStk->Size : em);
+			em = (current->parentbox->FontStk ? 
+				current->parentbox->FontStk->Size : font_size);
+			em = (current->paragraph->Box.real_parent ? 
+				current->paragraph->Box.real_parent->FontStk->Size : em);
 			ex = em/2;
-
 			size = numerical (output, NULL, em, ex, TRUE);
-
 			if (size == (short)0x8000) size = 0;
-				
 			if (!fstk) {
 				fstk = fontstack_push (current, -1);
 			}
-
 			if (size > 0) {
 				fontstack_setSize (current, size);
 			} else {
 				short new_size = 0;
-
 				if (size < -1024) {
 					short mod_val, multiple;
-					
 					multiple = -size/1024;
 					mod_val = -(-size%1024);
-				
 					new_size = ((-mod_val +512) /1024)* em; /*font_size;*/
 					new_size += multiple * em; /* font_size */
 				} else {				
@@ -478,13 +445,10 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			}
 		
 		} else {   /* !isdigit() */
-			
 			if (stricmp (output, "smaller") == 0) {
 				step = (current->font->Step > 1 ? current->font->Step -1 : 0);
-			
 			} else if (stricmp (output, "larger") == 0) {
 				step = (current->font->Step < 6 ? current->font->Step +1 : 7);
-			
 			} else if ( output[0] == '-') {
 				/* negative values should be default size ? */
 				step = 3;
@@ -504,7 +468,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	if (!fstk) {
 		fstk = fontstack_push (current, step);
 	}
-	
 	if (get_value (parser, KEY_FACE, output, sizeof(output))) {
 		short fnt = font_face (output, TAgetFont (current->word->attr));
 		/* n/i: cursive, fantasy */
@@ -512,7 +475,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			fontstack_setType (current, fnt);
 		}
 	}
-	
 	if (get_value (parser, CSS_FONT_STYLE, output, sizeof(output))) {
 		if ((stricmp (output, "italic") == 0) 
 			|| (stricmp (output, "oblique") == 0)) {
@@ -521,7 +483,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			word_set_italic (&parser->Current, FALSE);
 		}
 	}
-	
 	if (get_value (parser, CSS_FONT_WEIGHT, output, sizeof(output))) {
 		BOOL bold;
 		if (isdigit (output[0])) {
@@ -533,14 +494,12 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}
 		/* n/i: lighter, medium, 100..300 */
 		/* but we need to be certain that normal is working */
-		
 		if (bold) { 
 			fontstack_setBold (current); 
-		} else 
+		} else {
 			word_set_bold (current, FALSE);
-
+		}
 	}
-	
 	if (get_value (parser, CSS_TEXT_DECORATION, output, sizeof(output))) {
 		if (stricmp (output, "line-through") == 0) {
 			fontstack_setStrike (current);
@@ -548,9 +507,8 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 			fontstack_setUndrln (current);
 		} else if (stricmp (output, "none") == 0) {
 			/* fstk->setUndrln and current->font.setUnderline fail
-			 * for the following tests  dan
+			 * for the following tests - dan
 			 */
-			
 			if (current->styles.strike) 
 				word_set_strike(current, fstk->setStrike = FALSE);
  
@@ -559,15 +517,12 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 		}		
 		/* n/i: overline */
 	}
-	
 	if (get_value (parser, CSS_WHITE_SPACE, output, sizeof(output))) {
 		if (stricmp (output, "nowrap") == 0) {
 			fontstack_setNoWrap (current);
 		}
-
 		/* n/i: normal, pre */
 	}
-
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_COLOR);
 		if (color >= 0) {
@@ -578,7 +533,6 @@ css_text_styles (PARSER parser, FNTSTACK fstk)
 	return fstk;
 }
 
-
 /*----------------------------------------------------------------------------*/
 static void
 box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
@@ -587,22 +541,17 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	short ex = parser->Current.font->Size/2;
 	char  out[100];
 	short val;
-
-/* negative values are legal for CSS_MARGIN */
-/* as are percentages, so this code will need to be reworked */
-
+	
+	/* negative values are legal for CSS_MARGIN */
+	/* as are percentages, so this code will need to be reworked */
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * ptr = out;
-
 		if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 			bf->Top = bf->Rgt = bf->Bot = bf->Lft = val;
-
 			if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 				bf->Rgt = bf->Lft = val;
-
 				if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 					bf->Bot = val;
-
 					if ((val = numerical (ptr, &ptr, em, ex, FALSE)) >= 0) {
 						bf->Lft = val;
 					}
@@ -626,7 +575,6 @@ box_frame (PARSER parser, TBLR * bf, HTMLCSS key)
 	    (val = numerical (out, NULL, em, ex, FALSE)) >= 0) {
 		bf->Top = val;
 	}
-
 }
 
 /*----------------------------------------------------------------------------*/
@@ -638,11 +586,9 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 	char  out[100];
 	short width = -1;
 	BORDER_LINE tempborder = BORDER_NOTSET;
-
+	BRDR styles = {BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET};
 	TBLR colors = {-1,-1,-1,-1};
 	TBLR widths = {-1,-1,-1,-1};
-	BRDR styles = {BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET,BORDER_NOTSET};
-
 	if (get_value (parser, key, out, sizeof(out))) {
 		char * p = out;
 		while (*p) {
@@ -650,11 +596,8 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			if (isdigit (*p)) {
 				char * tail = p;
 				width = numerical (p, &tail, em, ex, FALSE);
-
 				if (width == (short)0x8000)	width = 0;
-				
 				if (width < 0) width = 2; /* negative not allowed so default */
-
 				if (widths.Top == -1) {
 					widths.Top = width;
 				} else if (widths.Bot == -1) {
@@ -664,7 +607,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				} else if (widths.Rgt == -1) {
 					widths.Rgt = width;
 				}
-
 				if ( tail > p) {
 					p = tail;
 				} else {
@@ -675,7 +617,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				while (isxdigit (p[++len]));
 				if ((color = scan_color (p, len)) >= 0) {
 					p += len;
-
 					if (colors.Top == -1) {
 						colors.Top = remap_color(color);
 					} else if (colors.Bot == -1) {
@@ -701,7 +642,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				if ((color = scan_color (p, len)) < 0) {
 					width = -1;
 					tempborder = 0;
-					
 					if (strnicmp (p, "thin",  len) == 0) {
 						width = 1;					
 					} else if (strnicmp (p, "medium",  len) == 0) {
@@ -725,7 +665,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 					} else {
 						tempborder = BORDER_SOLID;		
 					}
-
 					if (width > -1) {
 						if (widths.Top == -1) {
 							widths.Top = width;
@@ -737,7 +676,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 							widths.Rgt = width;
 						}
 					}
-
 					if (tempborder > BORDER_NOTSET) {
 						if (styles.Top == BORDER_NOTSET) {
 							styles.Top = tempborder;
@@ -749,7 +687,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 							styles.Rgt = tempborder;
 						}
 					}
-
 					if (*tail != ',') {
 						p = tail;
 						while (isspace (*p)) p++;
@@ -766,18 +703,14 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 						colors.Rgt = remap_color(color);
 					}
 				}
-								
 				p = tail;
 			}
-
-			
 			if (!isspace (*p)) {
 				break;
 			}
 			while (isspace (*(++p)));
 		}
 	}
-		
 	if (styles.Top > BORDER_NOTSET) {
 		switch(key) {
 			case CSS_BORDER_TOP:
@@ -793,21 +726,19 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				box->BorderStyle.Rgt = styles.Top;
 				break;
 			case CSS_BORDER:
-				box->BorderStyle.Top = box->BorderStyle.Bot = 
-				  box->BorderStyle.Lft = box->BorderStyle.Rgt = styles.Top;
-
+				box->BorderStyle.Top = 
+				box->BorderStyle.Bot = 
+				box->BorderStyle.Lft = 
+				box->BorderStyle.Rgt = styles.Top;
 				if (styles.Bot > BORDER_NOTSET) {
 					box->BorderStyle.Rgt = styles.Bot;
 					box->BorderStyle.Lft = styles.Bot;
 				}
-	
 				if (styles.Lft > BORDER_NOTSET)
 					box->BorderStyle.Bot = styles.Lft;
-  
 				if (styles.Rgt > BORDER_NOTSET)
 					box->BorderStyle.Lft = styles.Rgt;
 				break;
-
 			case CSS_BORDER_TOP_STYLE:
 				box->BorderStyle.Top = styles.Top;
 				break;
@@ -821,20 +752,18 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				box->BorderStyle.Rgt = styles.Top;
 				break;
 			case CSS_BORDER_STYLE:
-				box->BorderStyle.Top = box->BorderStyle.Bot = 
-				  box->BorderStyle.Lft = box->BorderStyle.Rgt = styles.Top;
-
+				box->BorderStyle.Top = 
+				box->BorderStyle.Bot = 
+				box->BorderStyle.Lft = 
+				box->BorderStyle.Rgt = styles.Top;
 				if (styles.Bot > BORDER_NOTSET) {
 					box->BorderStyle.Rgt = styles.Bot;
 					box->BorderStyle.Lft = styles.Bot;
 				}
-	
 				if (styles.Lft > BORDER_NOTSET)
 					box->BorderStyle.Bot = styles.Lft;
- 
 				if (styles.Rgt > BORDER_NOTSET)
 					box->BorderStyle.Lft = styles.Rgt;
-
 				break;
 			default:
 				break;
@@ -842,11 +771,10 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 	}
 
 	if ((colors.Top > -1) && (!ignore_colours)) {
-		/* reset top color or things go insane do to limitations 
-		 * in the draw routine.  This mainly applies to tables*/
-
+		/* reset top color or things go insane due to limitations 
+		 * in the draw routine.  This mainly applies to tables
+		 */
 		if (box->BorderColor.Top < 0) box->BorderColor.Top = 0; 
-
 		switch(key) {
 			case CSS_BORDER_TOP:
 				box->BorderColor.Top = colors.Top;
@@ -861,22 +789,19 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				box->BorderColor.Rgt = colors.Top;
 				break;
 			case CSS_BORDER:
-				box->BorderColor.Top = box->BorderColor.Bot = 
-				  box->BorderColor.Lft = box->BorderColor.Rgt = colors.Top;
-
+				box->BorderColor.Top = 
+				box->BorderColor.Bot = 
+				box->BorderColor.Lft = 
+				box->BorderColor.Rgt = colors.Top;
 				if (colors.Bot > -1) {
 					box->BorderColor.Rgt = colors.Bot;
 					box->BorderColor.Lft = colors.Bot;
 				}
-	
 				if (colors.Lft > -1)
 					box->BorderColor.Bot = colors.Lft;
-  
 				if (colors.Rgt > -1)
 					box->BorderColor.Lft = colors.Rgt;
-		
 				break;
-
 			case CSS_BORDER_TOP_COLOR:
 				box->BorderColor.Top = colors.Top;
 				break;
@@ -890,17 +815,16 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				box->BorderColor.Rgt = colors.Top;
 				break;
 			case CSS_BORDER_COLOR:
-				box->BorderColor.Top = box->BorderColor.Bot = 
-				  box->BorderColor.Lft = box->BorderColor.Rgt = colors.Top;
-
+				box->BorderColor.Top = 
+				box->BorderColor.Bot = 
+				box->BorderColor.Lft = 
+				box->BorderColor.Rgt = colors.Top;
 				if (colors.Bot > -1) {
 					box->BorderColor.Rgt = colors.Bot;
 					box->BorderColor.Lft = colors.Bot;
 				}
-	
 				if (colors.Lft > -1)
 					box->BorderColor.Bot = colors.Lft;
- 
 				if (colors.Rgt > -1)
 					box->BorderColor.Lft = colors.Rgt;
 				break;
@@ -908,7 +832,6 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 				break;
 		}
 	}
-
 	if (widths.Top > -1) {
 		switch(key) {
 			case CSS_BORDER_TOP:
@@ -927,23 +850,21 @@ box_border (PARSER parser, DOMBOX * box, HTMLCSS key)
 			case CSS_BORDER_RIGHT_WIDTH:
 				box->BorderWidth.Rgt = widths.Top;
 				break;
-
 			case CSS_BORDER:
 			case CSS_BORDER_WIDTH:
-				box->BorderWidth.Top = box->BorderWidth.Bot = 
-				  box->BorderWidth.Lft = box->BorderWidth.Rgt = widths.Top;				  
-
+				box->BorderWidth.Top = 
+				box->BorderWidth.Bot = 
+				box->BorderWidth.Lft = 
+				box->BorderWidth.Rgt = widths.Top;
 				if (widths.Bot > -1) {
 					box->BorderWidth.Rgt = widths.Bot;
 					box->BorderWidth.Lft = widths.Bot;
 				}
-	
 				if (widths.Lft > -1)
 					box->BorderWidth.Bot = widths.Lft;
   
 				if (widths.Rgt > -1)
 					box->BorderWidth.Lft = widths.Rgt;
-
 				break;
 			default:
 				break;
@@ -959,25 +880,24 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	char out[100];
 
 	/* reset border widths */
-	box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top = -1;
+	box->BorderWidth.Bot = 
+	box->BorderWidth.Lft = 
+	box->BorderWidth.Rgt = 
+	box->BorderWidth.Top = -1;
 	
 	/* This should possibly be down in the base parse_html() routine */
 	if (get_value (parser, CSS_DISPLAY, out, sizeof(out))) {
-
 		if      (stricmp (out, "inline") == 0) box->Floating = FLT_LEFT;
 		else if (stricmp (out, "none") == 0) box->Hidden = TRUE;
 	}
-		
 	if (!ignore_colours) {
 		WORD color = get_value_color (parser, KEY_BGCOLOR);
 		if (color >= 0 && color != parser->Current.backgnd) {
 			box->Backgnd = parser->Current.backgnd = color;
 		}
 	}
-
 	if (get_value (parser, KEY_BORDER, out, sizeof(out))) {
 		WORD width = 2; /* default width */
-		
 		if (isalpha (*out)) {
 			if (stricmp (out, "thin") == 0) {
 				width = 1;					
@@ -988,14 +908,14 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			}		
 		} else {
 			width = get_value_unum (parser, KEY_BORDER, width);
-
 			if (width < 0)
 				width = 2; /* default width */
 		}
-
-		box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = box->BorderWidth.Top = width;
+		box->BorderWidth.Bot = 
+		box->BorderWidth.Lft = 
+		box->BorderWidth.Rgt = 
+		box->BorderWidth.Top = width;
 	}
-
 
 	/* The order on the following is important
 	 * the generic calls need to be first
@@ -1035,7 +955,6 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if (box->BorderWidth.Top > 0)
 			box->HasBorder = TRUE;
 	}	
-
 	if (box->BorderWidth.Bot == -1) {
 		if (box->BorderStyle.Bot > BORDER_NONE) {
 			box->BorderWidth.Bot = 2;
@@ -1047,7 +966,6 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if (box->BorderWidth.Bot > 0)
 			box->HasBorder = TRUE;
 	}		
-
 	if (box->BorderWidth.Lft == -1) {
 		if (box->BorderStyle.Lft > BORDER_NONE) {
 			box->BorderWidth.Lft = 2;
@@ -1059,7 +977,6 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if (box->BorderWidth.Lft > 0)
 			box->HasBorder = TRUE;
 	}		
-	
 	if (box->BorderWidth.Rgt == -1) {
 		if (box->BorderStyle.Rgt > BORDER_NONE) {
 			box->BorderWidth.Rgt = 2;
@@ -1071,38 +988,30 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 		if (box->BorderWidth.Rgt > 0)
 			box->HasBorder = TRUE;
 	}	
-
 	box_frame (parser, &box->Margin,  CSS_MARGIN);
 	box_frame (parser, &box->Padding, CSS_PADDING);
-
 	if ((int)(align = get_h_align (parser, align)) >= 0) {
 		box->TextAlign = align;
 	}
-
 	if (get_value (parser, CSS_TEXT_INDENT, out, sizeof(out))) {
 		char * tail   = out;
 		short  indent = numerical (out, &tail, parser->Current.font->Size,
 		                           parser->Current.word->font->SpaceWidth, FALSE);
-
 		if (indent == (short)0x8000) indent = 0;
-		
 		if (tail > out) {
 			/* This could be buggy needs more research */
 			if (indent < -1024) indent = 0;
-				
 			box->TextIndent = indent;
 		}
 	}
 	if (get_value (parser, KEY_WIDTH, out, sizeof(out))) {
 		short width = numerical (out, NULL, parser->Current.font->Size,
 		                         parser->Current.word->font->SpaceWidth, FALSE);
-
 		/* n/i auto */
 		if (width != (short)0x8000) {
 			box->SetWidth = width;
 			box->ConBlock = TRUE;
 		}
-
 		if (width < -1024) {
 			width = -1024;
 		}
@@ -1110,37 +1019,30 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 	if (get_value (parser, KEY_HEIGHT, out, sizeof(out))) {
 		short height = numerical (out, NULL, parser->Current.font->Size,
 		                          parser->Current.word->font->SpaceWidth, FALSE);
-
 		/* n/i auto */
 		if (height != (short)0x8000) {
 			box->SetHeight = height;
 			box->ConBlock = TRUE;
 		}
-		
 		if (height < -1024) {
 			height = -1024;
 		}
 	}
-	
-	/* devl stuff, activate in cfg: DEVL_FLAGS = CssPosition */
+	/* developers stuff, activate in cfg: DEVL_FLAGS = CssPosition */
 /*	if (box->HtmlCode == TAG_DIV) }{*/
 	if (TRUE) {
 		static BOOL __once = FALSE, _CssPosition = FALSE;
 		if (!__once) {
 			_CssPosition = (devl_flag ("CssPosition") != NULL);
 		}
-		
 		if (_CssPosition && get_value (parser, CSS_POSITION, out, sizeof(out))) {
 			UWORD mask = (stricmp (out, "absolute") == 0 ? 0x103 :
-						  stricmp (out, "fixed") == 0 ? 0x203:
+			              stricmp (out, "fixed") == 0 ? 0x203:
 			              stricmp (out, "relative") == 0 ? 0x003 : 0);
-
 			short em = parser->Current.font->Size;
 			short ex = parser->Current.font->Size/2;
-
 			if (mask) {
 				box->ConBlock = TRUE;
-
 				if (get_value (parser, CSS_LEFT, out, sizeof(out))) {
 					short lft = numerical (out, NULL, em, ex, FALSE);
 
@@ -1148,78 +1050,68 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 						/* occurs inherit or auto n/i */
 						lft = 0;
 					}
-
 					/* flag it as negative */
 					if (out[0] == '-') mask |= 0x010;
-						
 					box->SetPos.Lft = lft;
-
-					/*  Negative values are allowed
-					
-						if (lft >= (mask & 0x100 ? 0 : 1)) box->SetPos.Lft = lft;
-						else                               mask           &= ~0x001;
-					*/
+					/* Negative values are allowed */
+/*					if (lft >= (mask & 0x100 ? 0 : 1)) {
+						box->SetPos.Lft = lft;
+					} else {
+						mask &= ~0x001;
+					}
+*/
 				} /* end left */
-
 				if (get_value (parser, CSS_RIGHT, out, sizeof(out))) {
 					short rgt = numerical (out, NULL, em, ex, FALSE);
-
 					if (rgt == (short)0x8000) {
 						/* occurs inherit or auto n/i */
 						rgt = 0;
 					}
-
 					/* flag it as negative */
 					if (out[0] == '-') mask |= 0x020;
-						
 					box->SetPos.Rgt = rgt;
-	
-					/*  Negative values are allowed
-						if (rgt >= (mask & 0x100 ? 0 : 1)) box->SetPos.Rgt = rgt;
-						else                               mask           &= ~0x001;
-					*/
+					/* Negative values are allowed */
+/*					if (rgt >= (mask & 0x100 ? 0 : 1)) {
+						box->SetPos.Rgt = rgt;
+					} else {
+						mask &= ~0x001;
+					}
+*/
 				} /* end right */
-
 				if (get_value (parser, CSS_TOP, out, sizeof(out))) {
 					short top = numerical (out, NULL, em, ex, FALSE);
-
 					if (top == (short)0x8000) {
 						/* occurs inherit or auto n/i */
 						top = 0;
 					}
-
 					/* flag it as negative */
 					if (out[0] == '-') mask |= 0x030;
-						
 					box->SetPos.Top = top;
-
-					/*  Negative values are allowed
-					
-						if (top >= (mask & 0x100 ? 0 : 1)) box->SetPos.Top = top;
-						else                               mask           &= ~0x002;
-					*/
+					/* Negative values are allowed */
+/*					if (top >= (mask & 0x100 ? 0 : 1)) {
+						box->SetPos.Top = top;
+					} else {
+						mask &= ~0x002;
+					}
+*/
 				} /* end top */
-
 				if (get_value (parser, CSS_BOTTOM, out, sizeof(out))) {
 					short bot = numerical (out, NULL, em, ex, FALSE);
-
 					if (bot == (short)0x8000) {
 						/* occurs inherit or auto n/i */
 						bot = 0;
 					}
-
 					/* flag it as negative */
 					if (out[0] == '-') mask |= 0x040;
-						
 					box->SetPos.Bot = bot;
-
-					/*  Negative values are allowed
-					
-						if (bot >= (mask & 0x100 ? 0 : 1)) box->SetPos.Bot = bot;
-						else                               mask           &= ~0x002;
-					*/
+					/*  Negative values are allowed */
+/*					if (bot >= (mask & 0x100 ? 0 : 1)) {
+						box->SetPos.Bot = bot;
+					} else {
+						mask &= ~0x002;
+					}
+*/
 				} /* end bottom */
-
 				if (mask & 0x003) {
 					DOMBOX * parent = box->Parent;
 					box->SetPosMsk  = mask;
@@ -1231,7 +1123,6 @@ css_box_styles (PARSER parser, DOMBOX * box, H_ALIGN align)
 			} /* end mask */
 		}
 	} /* devl stuff */
-	
 	if (box->HtmlCode != TAG_HR) {
 		box->Floating = get_floating (parser, box->Floating);
 	}
@@ -1260,8 +1151,7 @@ box_anchor (PARSER parser, DOMBOX * box, BOOL force)
 	if (get_value (parser, KEY_CLASS, out, sizeof(out))) {
 		dombox_setClass (box, out, force);
 	}
-
-	box->FontStk = current->font; /* dan printf */	
+	box->FontStk = current->font;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1270,20 +1160,13 @@ group_box (PARSER parser, HTMLTAG tag, H_ALIGN align)
 {
 	TEXTBUFF current = &parser->Current;
 	DOMBOX * box     = create_box (current, BC_GROUP, 0);
-	
 	box->HtmlCode = tag;
-	
 	reset_text_styles(parser);
-	
 	css_box_styles (parser, box, align);
-
 	current->paragraph->Box.TextAlign  = box->TextAlign;
 	current->paragraph->Box.TextIndent = box->TextIndent;
-	
 	css_text_styles (parser, current->font);
-
 	box->FontStk = current->font;
-	
 	box_anchor (parser, box, TRUE);
 	
 	return box;
@@ -1297,25 +1180,21 @@ create_box (TEXTBUFF current, BOXCLASS bc, WORD par_top)
 	DOMBOX * rparent = (DOMBOX *)&current->paragraph->Box;
 	DOMBOX * box = dombox_ctor (malloc (sizeof(DOMBOX)), current->parentbox, bc);
 	PARAGRPH par = add_paragraph (current, par_top);
-
 	box->real_parent = rparent;
-
 	box->Margin.Top = par->Box.Margin.Top;
 	par->Box.Margin.Top = 0;
-	
 	dombox_adopt (current->parentbox = box, &par->Box);
-
 	fontstack_push (current, -1);
 	
 	return box;
 }
+
 
 /*============================================================================*/
 DOMBOX *
 leave_box (TEXTBUFF current, WORD tag)
 {
 	DOMBOX * box = current->parentbox;
-	
 	if (box->HtmlCode != tag) {
 		box = NULL;
 	} else {
@@ -1323,9 +1202,7 @@ leave_box (TEXTBUFF current, WORD tag)
 		current->parentbox = box->Parent;
 		dombox_adopt (box->Parent, &par->Box);
 		par->Box.TextAlign = box->Parent->TextAlign;
-		
 		fontstack_pop (current);
-
 		{	/* find the next box below with valid background color */
 			DOMBOX * tmp = box;
 			do if (tmp->Backgnd >= 0) {
@@ -1334,9 +1211,9 @@ leave_box (TEXTBUFF current, WORD tag)
 			} while ((tmp = tmp->Parent) != NULL);
 		}
 	}
+	
 	return box;
 }
-
 
 /*----------------------------------------------------------------------------*/
 static BOOL
@@ -1355,11 +1232,9 @@ anc_correct (char * anc)
 		while ((*(q++) = *(p++)) != '\0');
 		p = anc;
 	}
-	
 	while (*p != '%' && *p != '&' && *p > ' ') { /* search for something to do */
 		p++;
 	}
-	
 	/* encode '%xx' and named entities, compact white spaces
 	 * and remove control characters
 	*/
@@ -1399,8 +1274,8 @@ anc_correct (char * anc)
 }
 
 /*------------------------------------------------------------------------------
- * get rid of html entities in an url
-*/
+ * get rid of html entities in the url
+ */
 static char *
 url_correct (char * url)
 {
@@ -1412,7 +1287,6 @@ url_correct (char * url)
 		while ((*(q++) = *(p++)) != '\0');
 		p = url;
 	}
-	
 	if (*p && *p != '#') do {
 		if (*p == '&') {
 			const char * src = p;
@@ -1425,7 +1299,6 @@ url_correct (char * url)
 			}
 		}
 	} while (*(++p) && *p != '#');
-	
 	if (*p != '#') {
 		while (--p >= url && *p <= ' ') {
 			*p = '\0';
@@ -1433,7 +1306,6 @@ url_correct (char * url)
 	} else if (!anc_correct (p +1)) {
 		*p = '\0';
 	}
-	
 	p = url;
 	if (*p && *p != '#') do {
 		if (p[0] == '%' && isalnum(p[1]) && isalnum(p[2])) {
@@ -1447,7 +1319,7 @@ url_correct (char * url)
 			while ((*(dst++) = *(src++)) != '\0');
 		}
 	} while (*(++p) && *p != '#');
-
+	
 	return url;
 }
 
@@ -1533,7 +1405,7 @@ enc_to_sys (char * dst, size_t max_len,
 /*******************************************************************************
  *
  * Head And Structure Elements
-*/
+ */
 
 #ifdef __PUREC__  /* keep quiet on unused arguments */
 #	define UNUSED(v) v = v
@@ -1549,17 +1421,16 @@ render_HTML_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if (flags & PF_START) {
 		char output[28];
-		
 		if (get_value (parser, KEY_LANG, output, sizeof(output))
 		    && !isalpha(output[2])) {
 			parser->Current.quot_lang =
 			parser->Frame->Language
 			                = ((UWORD)toupper(output[0]) <<8) | toupper(output[1]);
 		}
-	
 	} else if (!strstr (*text, "</html>") && !strstr (*text, "</HTML>")) {
 		*text = strchr (*text, '\0');
 	}
+	
 	return flags;
 }
 
@@ -1572,14 +1443,14 @@ static UWORD
 render_HEAD_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	(void)parser; (void)text;
-
+	
 	if (flags & PF_START) {
-		/* don't know */
+		/* don't know - only useful for JS  */
 		;
 	} else {
 		;
 	}
-
+	
 	return flags;
 }
 
@@ -1593,7 +1464,7 @@ render_HEAD_tag (PARSER parser, const char ** text, UWORD flags)
  *
  * Modified to use new ISO scanning routines
  * AltF4 Dec. 19, 2001
-*/
+ */
 static UWORD
 render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -1607,6 +1478,7 @@ render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
 			font_switch (parser->Current.word->font, NULL);
 		}
 	}
+	
 	return flags;
 }
 
@@ -1624,7 +1496,7 @@ render_TITLE_tag (PARSER parser, const char ** text, UWORD flags)
  * baldrick - August 14, 2001
  *
  * Major reworks by AltF4 in late January - early Feb 2002
-*/
+ */
 static UWORD
 render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -1644,20 +1516,14 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 		hwUi_fatal ("render_frameset()",
 		            "Container not cleared in '%.160s'!", frame->Location->File);
 	}
-
 	if (flags & PF_START) do {
-	
 		if (!slash) {
-
 			/* only work on an empty container.  if not empty there was either a
 			 * forgotten </framset> or more tags than defined in the frameset.
 			 */
 			if (!container->Mode) {
-
 				if (tag == TAG_FRAMESET) {
-
 					char cols[100], rows[100];
-					
 					WORD border = get_value_unum (parser, KEY_BORDER, -1);
 					if (border >= 0) {
 						if (border || !force_frame_controls) {
@@ -1683,13 +1549,11 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					if (!update && container->BorderSize && container->Sibling) {
 						update = TRUE;
 					}
-					
 					if (!ignore_colours) {
 						WORD color;
 						if ((color = get_value_color (parser, KEY_BORDERCOLOR)) >= 0)
 							container->BorderColor = color;
 					}
-					
 					/* ok the first thing we do is look for ROWS or COLS
 					 * since when we are dumped here we are looking at a
 					 * beginning of a FRAMESET tag
@@ -1699,35 +1563,31 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					      get_value (parser, KEY_ROWS, rows, sizeof(rows))) {
 						cols[0] = '\0';
 					}
-					
 					if (*cols) {
 						containr_fillup (container, cols, TRUE);
 						container = container->u.Child;
 						depth++;
 					}
-
-					else /* at the moment settings of either COLS _and_ ROWS aren't
-					      * working yet, so we make it mutual exlusive for now   */
-
+					else {  /* at the moment settings of either COLS _and_
+						 * ROWS aren't working yet, so we make it 
+						 * mutually exlusive for now.
+						 */
+						;
+					}
 					if (*rows) {
 						containr_fillup (container, rows, FALSE);
 						container = container->u.Child;
 						depth++;
 					}
-				
 				} else if (tag == TAG_FRAME) {
 					char frame_file[HW_PATH_MAX];
-
 					container->Mode = CNT_FRAME;
 					container->Name = get_value_str (parser, KEY_NAME);
-
 					if (!force_frame_controls) {
 						char out[100];
-						
 						if (get_value_exists (parser, KEY_NORESIZE)) {
 							container->Resize = FALSE;
 						}
-						
 						if (get_value (parser, KEY_SCROLLING, out, sizeof(out))) {
 							if (stricmp (out, "yes") == 0) {
 								container->Scroll = SCROLL_ALWAYS;
@@ -1736,7 +1596,6 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 							}
 						}
 					}
-
 					if (get_value (parser, KEY_SRC, frame_file,sizeof(frame_file))) {
 						LOADER ldr = start_page_load (container,
 						                              url_correct (frame_file),
@@ -1750,17 +1609,13 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 					} else {
 						update = TRUE;
 					}
-
 					if (container->Sibling) {
 						container = container->Sibling;
 					}
 				}
 			} /* endif (!container->Mode) */
-
 		} else if (tag == TAG_FRAMESET) { /* && slash */
-
 			container = containr_resume (container);
-
 			if (--depth <= 0) {
 				symbol = strchr (symbol, '\0');
 				break;
@@ -1769,9 +1624,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 				container = container->Sibling;
 			}
 		}
-
 		/* skip junk until the next <...> */
-
 		while (*symbol && *(symbol++) != '<');
 		if (*symbol) {
 			slash = (*symbol == '/');
@@ -1781,7 +1634,6 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 	}
 	while (*symbol);
-	
 	while (container) {
 		container = containr_resume (container);
 	}
@@ -1789,7 +1641,6 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 		containr_calculate (parser->Target, NULL);
 		containr_notify    (parser->Target, HW_PageUpdated, NULL);
 	}
-	
 	*text = symbol;
 	
 	return flags;
@@ -1797,7 +1648,7 @@ render_FRAMESET_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Base URL And Target
-*/
+ */
 static UWORD
 render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -1830,21 +1681,20 @@ render_BASE_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Meta Descriptions
-*/
+ */
 static UWORD
 render_META_tag (PARSER parser, const char ** text, UWORD flags)
 {
-	char output[1024];
 	UNUSED (text);
-	
+	char output[1024];
 	if ((flags & PF_START)
 	    && get_value (parser, KEY_HTTP_EQUIV, output, sizeof(output))) {
-		
 		if (stricmp (output, "Content-Type") == 0) {
 			if (!parser->Frame->ForceEnc
 			    && get_value (parser, KEY_CONTENT, output, sizeof(output))) {
@@ -1855,15 +1705,20 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 				/* http://www.iana.org/assignments/character-sets */
 			}
-		
 		} else if (stricmp (output, "refresh") == 0) {
 			if (get_value (parser, KEY_CONTENT, output, sizeof(output))) {
 				char * url = output;
 				long   sec = strtoul (output, &url, 10);
+				time_t sys_time;
+				sys_time = time(NULL);
+/*				printf ("time = %d  delay = %ld\n", sys_time, sys_time + sec); */
 				if (sec < 30) {
 					if    (ispunct (*url)) url++;
 					while (isspace (*url)) url++;
-					if (strnicmp (url, "URL=", 4) == 0) {
+					if (strnicmp (url, "URL=", 4) != 0) {
+						strcat (output,
+							"URL=U:\\d\\CAB2_7\\HTML\\EXAMPLE2.HTM");
+					} else {
 						url += 4;
 						if (*url == '"') {
 							char * end = strchr (++url, '\0') -1;
@@ -1874,7 +1729,8 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 						}
 						if (*url) {
 							start_page_load (parser->Target, url,
-							                 parser->Frame->BaseHref, FALSE, NULL);
+							                 parser->Frame->BaseHref,
+							                 FALSE, NULL);
 						}
 					}
 				}
@@ -1904,38 +1760,36 @@ render_META_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Style Area
-*/
+ */
 static UWORD
 render_STYLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if (flags & PF_START) {
 		char out[100];
 		const char * line = *text;
-
 /*		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     strstr (out, "all") || strstr (out, "screen"))) {
-
-This old version was failing on the 'mac slash' website.
-However It's possible that the next version will fail on some sites.
-It needs more testing. - Dan
-
-the same problem could occur in render_link_tag() below
+*/
+/*		This old version was failing on the 'mac slash' website.
+		However It's possible that the next version will fail on some sites.
+		It needs more testing. - Dan
+	
+		the same problem could occur in render_link_tag() below
 */
 		if ((!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 		     mime_byString (out, NULL) == MIME_TXT_CSS) &&
 		    (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 		     (strnicmp (out, "all", 3) == 0) || (strnicmp (out, "screen", 6) == 0))) {
-
 			if (!parser->ResumeFnc) { /* initial call */
 				while (isspace (*line)) line++;
-
 				if (*line == '<') {        /* skip leading '<!--' */
 					if (*(++line) == '!') {
 						while (*(++line) == '-');
@@ -1946,19 +1800,16 @@ the same problem could occur in render_link_tag() below
 				if (!cfg_UseCSS) {
 					char * p = strchr (line, '<');
 					if (p) line = p;
-				
 				} else if (*line != '<') {
 					line = parse_css (parser, parser->Frame->BaseHref, line);
 				}
 			} else {
 				line = parse_css (parser, NULL, NULL);
 			}
-			
 			if (!line) {
 				parser_resume (parser, render_STYLE_tag, *text);
 				longjmp (resume_jbuf, 1);
 			}
-
 			if (*line == '-') {        /* skip trailing '-->' */
 				while (*(++line) == '-');
 				if (*line == '>') {
@@ -1979,29 +1830,26 @@ the same problem could occur in render_link_tag() below
 					}
 				}
 			} while (*line);
-			
 			*text = line;
 		}
 	}
-
+	
 	return flags;
 }
 
-
 /*------------------------------------------------------------------------------
  * Logical Reference
-*/
+ */
 static UWORD
 render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	char out[HW_PATH_MAX];
-
 	if ((flags & PF_START) && get_value(parser,KEY_REL,out,sizeof(out))) {
 		if (stricmp (out, "StyleSheet") == 0) {
 			if (cfg_UseCSS
 			    && (!get_value (parser, KEY_TYPE, out, sizeof(out)) ||
 			        mime_byString (out, NULL) == MIME_TXT_CSS)
-		       && (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
+			    && (!get_value (parser, KEY_MEDIA, out, sizeof(out)) ||
 			        strstr (out, "all") || strstr (out, "screen"))
 			    && get_value (parser, KEY_HREF, out, sizeof(out))) {
 				
@@ -2021,6 +1869,7 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
@@ -2031,7 +1880,7 @@ render_LINK_tag (PARSER parser, const char ** text, UWORD flags)
  * the loader find out what to do.
  *
  * AltF4 - Mar. 01, 2002
-*/
+ */
 static UWORD
 render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2040,7 +1889,6 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START)
 	{
 		char snd_file[HW_PATH_MAX];
-
 		if (get_value (parser, KEY_SRC, snd_file, sizeof(snd_file)))
 		{
 			start_objc_load (parser->Target
@@ -2049,6 +1897,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
 			                ,(int(*)(void*,long))NULL, NULL);
 		}
 	}
+	
 	return flags;
 }
 
@@ -2059,7 +1908,7 @@ render_BGSOUND_tag (PARSER parser, const char ** text, UWORD flags)
  * AltF4 - December 26, 2001
  *
  * AltF4 - Jan. 11, 2002:  modifications for yet another color routine
-*/
+ */
 static UWORD
 render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2085,7 +1934,6 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 				frame->link_color = color;
 			}
 		}
-		
 		if ((margin = get_value_unum (parser, KEY_MARGINHEIGHT, -1)) >= 0 ||
 		    (margin = get_value_unum (parser, KEY_TOPMARGIN, -1)) >= 0) {
 			frame->Page.Padding.Top = frame->Page.Padding.Bot = margin;
@@ -2094,15 +1942,11 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
 		    (margin = get_value_unum (parser, KEY_LEFTMARGIN, -1)) >= 0) {
 			frame->Page.Padding.Lft = frame->Page.Padding.Rgt = margin;
 		}
-
 		/* In case there is no style */
 		frame->Page.FontStk = parser->Current.font;
-
 		if (parser->hasStyle) {
 			box_frame (parser, &frame->Page.Padding, CSS_MARGIN);
-
 			frame->Page.FontStk = css_text_styles (parser, parser->Current.font);
-
 			frame->text_color = parser->Current.font->Color;
 		}
 		box_anchor (parser, &frame->Page, TRUE);
@@ -2115,7 +1959,7 @@ render_BODY_tag (PARSER parser, const char ** text, UWORD flags)
  * Script Area
  *
  * actually skips everything until </SCRIPT> or <NOSCRIPT> tag
-*/
+ */
 static UWORD
 render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2124,12 +1968,9 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		const char * line = *text;
 		char         quot = '\0', c;
-
 		while ((c = *line) != '\0') {
 			line++;
-			
 			/* normal javascript code level */
-			
 			if (c == '<') {
 				*text = line; /* save this */
 				if (strncmp (line, "![CDATA[", 8) == 0) {
@@ -2171,9 +2012,7 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			} else {               /* quotation ".." or '..' found, fall through */
 				quot = c;
 			}
-			
 			/* quotation scanner */
-			
 			while (quot) {
 				if ((c = *(line++)) == '\0') {
 					line--;   /* ran out of data */
@@ -2181,7 +2020,6 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 				if (c == quot) { /* quotation end found, quit this inner loop */
 					quot = '\0';
-				
 				} else if (c == '\\') { /* escape character, skip next char */
 					if (!*line) break;   /* ran out of data */
 					else        line++;  /* skip this */
@@ -2189,11 +2027,10 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		*text = line;
-	
 	} else {
 		flags &= ~PF_SCRIPT;
 	}
-
+	
 	return flags;
 }
 
@@ -2201,13 +2038,14 @@ render_SCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
  * NoScript Area
  *
  * actually skips everything until </SCRIPT> or <NOSCRIPT> tag
-*/
+ */
 static UWORD
 render_NOSCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	if ((flags & (PF_START|PF_SCRIPT)) == PF_SCRIPT) {
 		flags = render_SCRIPT_tag (parser, text, flags);
 	}
+	
 	return flags;
 }
 
@@ -2215,11 +2053,11 @@ render_NOSCRIPT_tag (PARSER parser, const char ** text, UWORD flags)
 /*******************************************************************************
  *
  * Font style and phrase elements
-*/
+ */
 
 /*------------------------------------------------------------------------------
  * Bold Text
-*/
+ */
 static UWORD
 render_B_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2227,11 +2065,9 @@ render_B_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		word_set_bold (&parser->Current, (flags & PF_START));
-
 		css_text_styles (parser, parser->Current.font);
 	} else {
 		word_set_bold (&parser->Current, (flags & PF_START));
-
 		fontstack_pop (&parser->Current);
 	}
 		
@@ -2240,7 +2076,7 @@ render_B_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Base Font Setting
-*/
+ */
 static UWORD
 render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2250,7 +2086,6 @@ render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 		TEXTBUFF current = &parser->Current;
 		FNTSTACK fstk    = &current->fnt_stack;
 		char output[10];
-		
 		if (get_value (parser, KEY_SIZE, output, sizeof(output))) {
 			if (*output == '+') {
 				if (isdigit(output[1])) {
@@ -2267,13 +2102,11 @@ render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 				if (fstk->Step < 1) fstk->Step = 1;
 			}
 			if (fstk->Step > 7) fstk->Step = 7;
-			
 			fstk->Size = font_step2size (fstk->Step);
 			if (fstk == current->font) {
 				word_set_point (current, fstk->Size);
 			}
 		}
-
 		if (!ignore_colours) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color >= 0) {
@@ -2284,18 +2117,18 @@ render_BASEFONT_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Big Font Size
-*/
+ */
 static UWORD
 render_BIG_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step +1);
 		if (parser->hasStyle) {
@@ -2304,21 +2137,21 @@ render_BIG_tag (PARSER parser, const char ** text, UWORD flags)
 	} else {
 		fontstack_pop (current);
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Citation
-*/
+ */
 #define render_CITE_tag   render_I_tag
 
-/*----------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-	
 	word_set_font (current, (flags & PF_START ? pre_font : current->font->Type));
 	TAsetCondns   (current->word->attr, (flags & PF_START));
 	
@@ -2327,17 +2160,17 @@ render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Deleted Text Style (same as NN ò 6 and IE ò 5)
-*/
+ */
 #define render_DEL_tag render_STRIKE_tag
 
 /*------------------------------------------------------------------------------
  *  Instance Definition
-*/
+ */
 #define render_DFN_tag   render_I_tag
 
 /*------------------------------------------------------------------------------
  *  Emphasis Text
-*/
+ */
 #define render_EM_tag   render_I_tag
 
 /*------------------------------------------------------------------------------
@@ -2350,7 +2183,7 @@ render_CODE_tag (PARSER parser, const char ** text, UWORD flags)
  *
  * Baldrick - March 1, 2002: modifications to always store a font step
  *            so that we don't loose our size on complex sites
-*/
+ */
 static UWORD
 render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2360,9 +2193,7 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		char output[100];
 		WORD step = current->font->Step;
-
 		if (get_value (parser, KEY_SIZE, output, sizeof(output))) {
-		
 			if (*output == '+') {
 				if (isdigit(output[1])) {
 					step += output[1]  - '0';
@@ -2379,10 +2210,8 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 		fontstack_push (current, step);
-		
 		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
-		
 		} else {
 			if (get_value (parser, KEY_FACE, output, sizeof(output))) {
 				short fnt = font_face (output, TAgetFont (current->word->attr));
@@ -2390,7 +2219,6 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 					fontstack_setType (current, fnt);
 				}
 			}
-			
 			if (!ignore_colours) {
 				WORD color = get_value_color (parser, KEY_COLOR);
 				if (color >= 0) {
@@ -2398,7 +2226,6 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 			}
 		}
-	
 	} else {
 		fontstack_pop (current);
 	}
@@ -2408,20 +2235,18 @@ render_FONT_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  *  General Text Element
-*/
+ */
 static UWORD
 render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 {
 /*	TEXTBUFF current = &parser->Current;*/
 	UNUSED (text);
-	
 	if (flags & PF_START) {
 		/* I've disabled box_styles for spans at the moment since
-		 * we can not properly handle most of them at the moment
+		 * we can not properly handle most of them anyway
 		 */
-/*				css_box_styles  (parser, &current->paragraph->Box,
-		                 current->paragraph->Box.TextAlign);
-*/		
+/*		css_box_styles  (parser, &current->paragraph->Box,
+		                 current->paragraph->Box.TextAlign);*/		
 		css_text_styles (parser, NULL);
 	} else {
 		fontstack_pop (&parser->Current);
@@ -2432,61 +2257,57 @@ render_SPAN_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Italic Text
-*/
+ */
 static UWORD
 render_I_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
 	
-	/* correct??? dan */
 	if (flags & PF_START) {
 		fontstack_push (current, -1);
 		word_set_italic (&parser->Current, TRUE);
-
 		css_text_styles (parser, current->font);
 	} else {
 		word_set_italic (&parser->Current, FALSE);
 		fontstack_pop (&parser->Current);
 	}
-
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Inserted Text Style (same as NN ò 6 and IE ò 5)
-*/
+ */
 #define render_INS_tag render_U_tag
 
 /*------------------------------------------------------------------------------
  *  Keyboard Input Text Style
-*/
+ */
 #define render_KBD_tag render_TT_tag
 
 /*------------------------------------------------------------------------------
  *  Strike Through Text Style
-*/
+ */
 #define render_S_tag   render_STRIKE_tag
 
 /*------------------------------------------------------------------------------
  *  Sample Code Or Script Text Style
-*/
+ */
 #define render_SAMP_tag   render_TT_tag
 
 /*------------------------------------------------------------------------------
  * Small Font Size
-*/
+ */
 static UWORD
 render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
-
-/*	word_set_point (current, current->font->Size = font_step2size (current->font->Step = 2));
-*/
+/*		word_set_point (current,
+		        current->font->Size = font_step2size (current->font->Step = 2)); */
 		if (parser->hasStyle) {
 			css_text_styles (parser, current->font);
 		}
@@ -2499,30 +2320,29 @@ render_SMALL_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Strike Through Text Style
-*/
+ */
 static UWORD
 render_STRIKE_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
-	
 	word_set_strike (&parser->Current, (flags & PF_START));
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Strong Text Style
-*/
+ */
 #define render_STRONG_tag   render_B_tag
 
 /*------------------------------------------------------------------------------
  * Subscript Text
-*/
+ */
 static UWORD
 render_SUB_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-	
 	if (flags & PF_START) {
 		fontstack_push (current, current->font->Step -1);
 		current->word->vertical_align = ALN_BELOW;
@@ -2539,7 +2359,7 @@ render_SUB_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Superscript Text
-*/
+ */
 static UWORD
 render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2562,14 +2382,14 @@ render_SUP_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Teletype Text Style
-*/
+ */
 static UWORD
 render_TT_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
-	
 	word_set_font (current, (flags & PF_START ? pre_font : current->font->Type));
+	
 	return flags;
 }
 
@@ -2580,30 +2400,31 @@ static UWORD
 render_U_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
-	
 	word_set_underline (&parser->Current, (flags & PF_START));
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  *  Variable Name Text Style
-*/
+ */
 #define render_VAR_tag render_I_tag
 
 /*------------------------------------------------------------------------------
  *  Example Text Style
-*/
+ */
 #define render_XMP_tag render_TT_tag
 
 
 /*******************************************************************************
  *
  * Special Text Level Elements
-*/
+ *
+ */
 
 /*------------------------------------------------------------------------------
  * Anchor Or Link
-*/
+ */
 static UWORD
 render_A_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2613,28 +2434,20 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		char * output;
-
 		if ((output = get_value_str (parser, KEY_HREF)) != NULL) {
 			FRAME frame = parser->Frame;
-			
 			char * target = get_value_str (parser, KEY_TARGET);
-
 			url_correct (output);
 			if (!target && frame->base_target) {
 				target = strdup (frame->base_target);
 			}
-			
 			reset_text_styles(parser);
 			fontstack_push (current, -1);
-
 			if (!word->link) {
 				word_set_underline (current, TRUE);
 			}
-
 			word_set_color (current, frame->link_color);
-			
 			css_text_styles (parser, current->font);
-			
 			if ((word->link = new_url_link (word, output, TRUE, target)) != NULL) {
 				char out2[30];
 				if (get_value (parser, KEY_CHARSET, out2, sizeof(out2))) {
@@ -2642,7 +2455,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					word->link->encoding = scan_encoding(out2, ENCODING_WINDOWS1252);
 				}
 			}
-			
 			/* Since HTML 4.0 links can also be used for image maps
 			 * (not even supported by IE5, Netscape, CAB)
 			 */
@@ -2666,7 +2478,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 					}
 				}
 			}
-			
 		} else if (((output = get_value_str (parser, KEY_NAME)) != NULL ||
 		            (output = get_value_str (parser, KEY_ID))   != NULL)
 		           && anc_correct (output)) {
@@ -2695,7 +2506,6 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 		word_set_color (current, current->font->Color);
 		word_set_underline (current, FALSE);
 		word->link = NULL;
-
 		fontstack_pop (current);
 	}
 	
@@ -2704,7 +2514,7 @@ render_A_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  *  Image Map definition
-*/
+ */
 static UWORD
 render_MAP_tag (PARSER parser, const char ** _text, UWORD flags)
 {
@@ -2718,7 +2528,6 @@ render_MAP_tag (PARSER parser, const char ** _text, UWORD flags)
 				parser->Current.maparea = &map->Areas;
 			}
 		}
-	
 	} else {
 		parser->Current.maparea = NULL;
 	}
@@ -2728,7 +2537,7 @@ render_MAP_tag (PARSER parser, const char ** _text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  *  Area definition for an Image Map
-*/
+ */
 static UWORD
 render_AREA_tag (PARSER parser, const char ** _text, UWORD flags)
 {
@@ -2752,6 +2561,7 @@ render_AREA_tag (PARSER parser, const char ** _text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
@@ -2763,7 +2573,7 @@ render_AREA_tag (PARSER parser, const char ** _text, UWORD flags)
  * needs information about language dependent starting with single or double.
  *
  * Rainer Seitel, 2002-03-29
-*/
+ */
 static UWORD
 render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
 {
@@ -2892,7 +2702,7 @@ render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
  * application.
  *
  * actually only sound is supported.
-*/
+ */
 static UWORD
 render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -2910,6 +2720,7 @@ render_EMBED_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return flags;
 }
 
@@ -2925,6 +2736,7 @@ render_OBJECT_tag (PARSER parser, const char ** text, UWORD flags)
 		/* printf("In render object tag\n"); */
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
@@ -2934,25 +2746,25 @@ render_OBJECT_tag (PARSER parser, const char ** text, UWORD flags)
  * see http://www.backspace.org/iod/Winhelp.html
  *
  * Matthias Jaap, 2002-07-22
-*/
+ */
 static UWORD
 render_IOD_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	char   output[128];
 	UNUSED (text);
-
+	
 	if (flags & PF_START)
 	{
 		if (get_value (parser, KEY_SHOUT, output, sizeof(output)))
 			containr_notify (parser->Target, HW_SetInfo, output);
 	}
-
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Image
-*/
+ */
 
 static UWORD
 render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
@@ -2971,7 +2783,6 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		short word_v_align   = current->word->vertical_align;
 		short height = 0;
 		short width = 0;
-				
 		WORDITEM word;
 		char output[100];
 		char img_file[HW_PATH_MAX];
@@ -2981,9 +2792,10 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 				scan_string_to_16bit (output, frame->Encoding, &current->text,
 				                      current->word->font->Base->Mapping);
 			}
+
 			return flags;
 		}
-	
+
 		if (floating != ALN_NO_FLT) {
 			H_ALIGN  align = current->paragraph->Box.TextAlign;
 			PARAGRPH par   = add_paragraph (current, 0);
@@ -2991,21 +2803,17 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			par->Box.HtmlCode  = TAG_IMG;
 			par->Box.TextAlign = align;
 			par->Box.Floating  = floating;
-/*			box_frame  (parser, &par->Box.Margin, CSS_MARGIN);
-*/
+/*			box_frame  (parser, &par->Box.Margin, CSS_MARGIN); */
 			/* This might need to be moved */
 			css_box_styles  (parser, &par->Box, current->paragraph->Box.TextAlign);
-
 			box_anchor (parser, &par->Box, TRUE);
-		
 		} else if (get_value (parser, KEY_ALIGN, output, sizeof(output))) {
 			if      (stricmp (output, "top")    == 0) v_align = ALN_TOP;
 			else if (stricmp (output, "middle") == 0) v_align = ALN_MIDDLE;
-			/* else                                   v_align = ALN_BOTTOM */
+/*			else                                      v_align = ALN_BOTTOM; */
 		}
 		word = current->word;
 		word->vertical_align = v_align;
-		
 		if (get_value (parser, KEY_ALT, output, sizeof(output))) {
 			char * alt = output;
 			while (isspace (*alt)) alt++;
@@ -3016,11 +2824,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 				flags |= PF_FONT;
 			}
 		}
-		
 		if (get_value (parser, KEY_SRC, img_file, sizeof(img_file))) {
 			url_correct (img_file);
 		}
-
 		if (parser->hasStyle) {
 			/*short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;*/
@@ -3039,7 +2845,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 					width = val;
 			}
 		}
-
+		
 		/* could be percentage or illegal negative? */
 		if (height < 0) {
 			if (current->paragraph->Box.Parent->ConBlock) {
@@ -3052,7 +2858,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 				height = 0;
 			}
 		}
-
+		
 		/* could be percentage or illegal negative? */
 		if (width < 0) {
 			if (current->paragraph->Box.Parent->ConBlock) {
@@ -3065,26 +2871,20 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 				width = 0;
 			}
 		}
-
 		if ((height == 0) || (height == (short)0x8000))
 			height = get_value_size  (parser, KEY_HEIGHT);
-
-
 		if ((width == 0) || (width == (short)0x8000))
 			width = get_value_size  (parser, KEY_WIDTH);
-		
 		new_image (frame, current, img_file, frame->BaseHref,
-				   width, height,
+		           width, height,
 		           get_value_size (parser, KEY_VSPACE),
 		           get_value_size (parser, KEY_HSPACE),FALSE);
 		font_switch (current->word->font, NULL);
-
 		new_word (current, TRUE);
 		current->word->attr           = word_attr;
 		current->word->word_height    = word_height;
 		current->word->word_tail_drop = word_tail_drop;
 		current->word->vertical_align = word_v_align;
-	
 		if (get_value (parser, KEY_USEMAP, output, sizeof(output))) {
 			IMAGEMAP map;
 			char   * p = output;
@@ -3097,8 +2897,6 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 				word->image->map = map;
 			}
 		}
-		
-
 		if (floating == ALN_NO_FLT) {
 			if (!current->nowrap) {
 				if (current->prev_wrd) {
@@ -3110,7 +2908,6 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 		} else {
 			add_paragraph (current, 0);
 			current->paragraph->Box.TextAlign = old_value;
-
 			flags |= PF_SPACE;
 		}
 	} 
@@ -3120,10 +2917,9 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 
 #define render_IMAGE_tag   render_IMG_tag
 
-
 /*------------------------------------------------------------------------------
  * Line BReak
-*/
+ */
 static UWORD
 render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3144,46 +2940,40 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 		} else if (get_value_exists (parser, KEY_CLEAR)) {
 			clear = BRK_ALL; /* old style */
 		}
-		
 		if (current->prev_wrd) {
 			if (current->prev_wrd->line_brk) {
 				css_ext = parser->hasStyle;
-				if(!css_ext) { /* otherwise css part should handle this. */
+				if(!css_ext) {  /* otherwise css part should handle this. */
 					*(current->text++) = font_Nobrk (current->word->font);
 					new_word (current, TRUE);
 				}
 			}
 			current->prev_wrd->line_brk = clear;
 			current->word->vertical_align = ALN_BOTTOM;
-		
 		} else if (current->prev_par) {
 			css_ext = parser->hasStyle;
-			if(!css_ext)  /* otherwise css part should handle this. */
-			{
+			if(!css_ext) {  /* otherwise css part should handle this. */
 				*(current->text++) = font_Nobrk (current->word->font);
 				new_word (current, TRUE);
 				current->prev_wrd->line_brk = clear;
 			}
 		} else {
 			css_ext = parser->hasStyle;
-			if(!css_ext)	{
+			if(!css_ext) {
 				*(current->text++) = font_Nobrk (current->word->font);
-					new_word (current, TRUE);
-					current->prev_wrd->line_brk = clear;
-					current->word->vertical_align = ALN_BOTTOM;
+				new_word (current, TRUE);
+				current->prev_wrd->line_brk = clear;
+				current->word->vertical_align = ALN_BOTTOM;
 			}
 		}
-		
-		if (css_ext) {     /* with CSS styles a <br> can be used as a spacer */
-			short size = 0;  /* instead of an ordinary line break              */
+		if (css_ext) {  /* with CSS styles a <br> can be used as a spacer */
+			short size = 0;  /* instead of an ordinary line break */
 			if (get_value (parser, CSS_FONT_SIZE, output, sizeof(output))
 			    && isdigit (output[0])) {
 				size = numerical (output, NULL, current->font->Size,
-			                     current->word->font->SpaceWidth, FALSE);
-
+				                  current->word->font->SpaceWidth, FALSE);
 				if (size == (short)0x8000) size = 0;
 			}
-
 			if (size > 0) {
 				if (current->prev_wrd) {
 					*(current->text++) = font_Nobrk (current->word->font);
@@ -3207,12 +2997,13 @@ render_BR_tag (PARSER parser, const char ** text, UWORD flags)
 			}
 		}
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Word BReak
-*/
+ */
 static UWORD
 render_WBR_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3231,7 +3022,7 @@ render_WBR_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * NO BReaking area
-*/
+ */
 static UWORD
 render_NOBR_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3240,7 +3031,6 @@ render_NOBR_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		current->nowrap++;
-	
 	} else if (current->nowrap) {
 		current->nowrap--;
 	}
@@ -3252,11 +3042,12 @@ render_NOBR_tag (PARSER parser, const char ** text, UWORD flags)
 /*******************************************************************************
  *
  * Block Level Elements
-*/
+ *
+ */
 
 /*------------------------------------------------------------------------------
  * Headings
-*/
+ */
 static UWORD
 render_H_tag (PARSER parser, short step, UWORD flags)
 {
@@ -3264,9 +3055,7 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 	PARAGRPH par     = current->paragraph;
 	
 	if (flags & PF_START) {
-		
-		/* Prevent a heading paragraph just behind a <LI> tag.
-		 */
+		/* Prevent a heading paragraph just behind a <LI> tag. */
 		if (!current->lst_stack || !current->lst_stack->ListItem ||
 		    current->lst_stack->ListItem->item->next_word->next_word->next_word) {
 			par = add_paragraph (current, 2);
@@ -3274,12 +3063,9 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 				par->Box.Margin.Lft = current->lst_stack->Hanging;
 			}
 		}
-
 		reset_text_styles(parser);
-		
 		fontstack_push (current, step);
 		fontstack_setType (current, header_font);
-
 		if (parser->hasStyle) {
 			if (!current->lst_stack) {
 				css_box_styles (parser, &par->Box, current->parentbox->TextAlign);
@@ -3290,11 +3076,9 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 			                                  current->parentbox->TextAlign);
 		}
 		box_anchor (parser, &par->Box, FALSE);
-		
 		if (!current->font->setBold) {
 			fontstack_setBold (current);
-		}
-		
+		}	
 	} else {
 		/* If we have a seperate non terminated tag inside of
 		 * our H tag, then pop the fontstack */
@@ -3302,68 +3086,77 @@ render_H_tag (PARSER parser, short step, UWORD flags)
 		    current->paragraph->Box.HtmlCode > TAG_H6) {
 			fontstack_pop (current);
 		}
-
 		par = add_paragraph (current, 0);
-
 		par->Box.TextAlign = current->parentbox->TextAlign;
-
 		fontstack_pop (current);
 	}
 	
 	return (flags|PF_SPACE);
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H1_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 7, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H1;
+	
 	return flags;
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H2_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 6, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H2;
+	
 	return flags;
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H3_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 5, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H3;
+	
 	return flags;
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H4_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 4, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H4;
+	
 	return flags;
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H5_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 3, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H5;
+	
 	return flags;
 }
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/*------------------------------------------------------------------------------*/
 static UWORD
 render_H6_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
 	flags = render_H_tag (parser, 2, flags);
 	parser->Current.paragraph->Box.HtmlCode = TAG_H6;
+	
 	return flags;
 }
 
@@ -3376,7 +3169,7 @@ render_H6_tag (PARSER parser, const char ** text, UWORD flags)
  * - hr_wrd->word_tail_drop: line size (height, negative for 'noshade')
  *
  * AltF4 - July 21, 2002
-*/
+ */
 static UWORD
 render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3387,42 +3180,33 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 		BOOL  noshade = get_value_exists (parser, KEY_NOSHADE);
 		long  width = 0;
 		DOMBOX * box;
-		
 		if (size == 0 && (size = get_value_unum (parser, KEY_HEIGHT, 0)) == 0) {
 			size = 2;
 		} else if (size == 1) {
 			noshade = TRUE;
 		}
-
 		box = render_hrule (&parser->Current, get_h_align (parser, ALN_CENTER),
 		                    get_value_size (parser, KEY_WIDTH), size, !noshade);
-
 		/* Track non css value */
 		width = box->SetWidth;
-		
 		css_box_styles  (parser, box, box->TextAlign);
-
 		/* reset to non css value if css changed it to 0 */
 		if ((width > 0)&&(box->SetWidth == 0)) {
 			box->SetWidth = width;
 		}
-		
 		if (noshade || size >= 2) {
 			WORD color = get_value_color (parser, KEY_COLOR);
 			if (color < 0) {
 				color = get_value_color (parser, KEY_BGCOLOR);
 			}
-
 			if (color < 0 && noshade) {
 				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = G_LBLACK;
 				box->Backgnd = G_LBLACK;
 			} else if (color != parser->Current.backgnd) {
 				box->Backgnd = color;
-
 				if (color < 0) color = G_LBLACK;
 				box->BorderColor.Top = box->BorderColor.Bot = box->BorderColor.Lft = box->BorderColor.Rgt = color;
 			} 
-
 			if (!noshade) {
 				if (box->BorderColor.Bot == G_LBLACK) {
 					if (parser->Current.backgnd == G_WHITE) {
@@ -3433,18 +3217,17 @@ render_HR_tag (PARSER parser, const char ** text, UWORD flags)
 				}
 			}
 		} 
-
 		/* over ride css default value? */
 		box->BorderWidth.Top = box->BorderWidth.Bot = box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
-
 		flags |= PF_SPACE;
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Paragraph
-*/
+ */
 static UWORD
 render_P_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3461,9 +3244,8 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		 */
 		if (!current->lst_stack || !current->lst_stack->ListItem ||
 		    current->lst_stack->ListItem->item->next_word->next_word->next_word) {
-				vspace = 2;
+			vspace = 2;
 		}
-
 		par = add_paragraph (current, vspace);
 		par->Box.HtmlCode = TAG_P;
 
@@ -3483,23 +3265,18 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 		fontstack_push (current, -1);
 		css_box_styles  (parser, &par->Box, current->parentbox->TextAlign);
 		css_text_styles (parser, current->font);
-
 		box_anchor (parser, &par->Box, FALSE);
-
 	} else {
 		par = add_paragraph (current, 2);
-
 		par->Box.TextAlign = current->parentbox->TextAlign;
-
 		if (!ignore_colours) {
 			word_set_color (current, current->font->Color);
 			/* Not certain how to handle this yet CSS might complicate
 			 * support for font tags if we aren't careful
 			 */
-			/*word_set_color (current, current->parentbox->FontStk->Color);*/
+/*			word_set_color (current, current->parentbox->FontStk->Color);*/
 		}
 	}
-
 	current->word->vertical_align = ALN_BOTTOM;
 	
 	return (flags|PF_SPACE);
@@ -3507,7 +3284,7 @@ render_P_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Center Aligned Text
-*/
+ */
 #define render_C_tag   render_CENTER_tag
 
 static UWORD
@@ -3519,7 +3296,6 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
 	if (flags & PF_START) {
 		if (!current->lst_stack)
 			group_box (parser, TAG_CENTER, ALN_CENTER);
-	
 	} else {
 		if (!current->lst_stack)
 			leave_box (&parser->Current, TAG_CENTER);
@@ -3535,7 +3311,8 @@ render_CENTER_tag (PARSER parser, const char ** text, UWORD flags)
  * A HTML browser can indent, surround with quotation marks, or use italic for
  * this paragraph.
  * http://purl.org/ISO+IEC.15445/Users-Guide.html#blockquote
-*/
+ * let the user choose, via editable .css style sheet - Paul
+ */
 static UWORD
 render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3552,7 +3329,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
 		/* BUG: TITLE support not ready.  This try leads to another problem:
 		 * We need the entity and encoding conversion as a separate function.
 		 * Or we do it complete before parsing.  But then PLAINTEXT is not
-		 * possible.  It seems, this is this the reason, why it's deprecated.
+		 * possible.  It seems, this is the reason, why it's deprecated.
 		*/
 		if (get_value (parser, KEY_TITLE, output, sizeof(output))) {
 			word_set_bold (current, TRUE);
@@ -3575,7 +3352,7 @@ render_BLOCKQUOTE_tag (PARSER parser, const char ** text, UWORD flags)
  * Document Divisions
  *
  * implemented as a table with one singe cell
-*/
+ */
 static UWORD
 render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3587,20 +3364,19 @@ render_DIV_tag (PARSER parser, const char ** text, UWORD flags)
 		DOMBOX * box = leave_box (&parser->Current, TAG_DIV);
 		DOMBOX * cld = (box && box->Floating == ALN_NO_FLT &&
 		                box->ChildBeg == box->ChildEnd ? box->ChildBeg : NULL);
-
 		if (cld && (cld->Floating == (FLT_LEFT) || cld->Floating == (FLT_RIGHT))
 		        && dombox_MinWidth (cld) == dombox_MaxWidth (cld)) {
 			box->SetWidth = dombox_MinWidth (box);
 			box->Floating = cld->Floating;
 		}
 	}
-
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Preformatted Text
-*/
+ */
 static UWORD
 render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3614,17 +3390,15 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (get_value_unum (parser, KEY_WIDTH, 80) > 80) {
 			TAsetCondns (current->word->attr, TRUE);
 		}
-
 		if (!ignore_colours) {
 			word_set_color (current, current->parentbox->FontStk->Color);
 		}
-
 		if (parser->hasStyle) {
 			fontstack_push (current, -1);
-			css_box_styles  (parser, &current->paragraph->Box, current->paragraph->Box.TextAlign);
+			css_box_styles  (parser, &current->paragraph->Box,
+			                 current->paragraph->Box.TextAlign);
 			css_text_styles (parser, current->font);
 		}
-		
 		flags |= PF_PRE;
 	} else {
 		word_set_font (current, current->font->Type);
@@ -3637,7 +3411,7 @@ render_PRE_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Plain Text
-*/
+ */
 static UWORD
 render_PLAINTEXT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3656,7 +3430,7 @@ render_PLAINTEXT_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Listing Text
-*/
+ */
 static UWORD
 render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3681,7 +3455,7 @@ render_LISTING_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Address - information about author
-*/
+ */
 static UWORD
 render_ADDRESS_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3689,9 +3463,10 @@ render_ADDRESS_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render ADDRESS tag\n");*/
+/*		printf("In render ADDRESS tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
@@ -3699,7 +3474,8 @@ render_ADDRESS_tag (PARSER parser, const char ** text, UWORD flags)
 /*******************************************************************************
  *
  * Lists
-*/
+ *
+ */
 
 /*----------------------------------------------------------------------------*/
 static BULLET
@@ -3709,13 +3485,14 @@ list_bullet (PARSER parser, BULLET dflt)
 	int  bullet = -1;
 	
 	if (get_value (parser, CSS_LIST_STYLE_TYPE, buf, sizeof(buf))) {
+/*		printf("In render list type tag\n");*/
 		; /* just be happy we found it */
 	} else if (get_value (parser, CSS_LIST_STYLE, buf, sizeof(buf))) {
+/*		printf("In render list tag\n");*/
 		; /* just be happy we found it */
-	}
-		 	
+	}	 	
 	if (buf[0]) {
-		if 		(stricmp (buf, "none") 		  == 0) bullet = LT_NONE;
+		if      (stricmp (buf, "none")        == 0) bullet = LT_NONE;
 		else if (stricmp (buf, "decimal")     == 0) bullet = LT_DECIMAL;
 		else if (stricmp (buf, "lower-alpha") == 0) bullet = LT_L_ALPHA;
 		else if (stricmp (buf, "lower-latin") == 0) bullet = LT_L_ALPHA;
@@ -3727,8 +3504,7 @@ list_bullet (PARSER parser, BULLET dflt)
 		else if (stricmp (buf, "square") == 0) bullet = LT_SQUARE;
 		else if (stricmp (buf, "circle") == 0) bullet = LT_CIRCLE;
 	}
-	
-	if (bullet < 0) 	switch (get_value_char (parser, KEY_TYPE)) {
+	if (bullet < 0)   switch (get_value_char (parser, KEY_TYPE)) {
 		case 'a': bullet = LT_L_ALPHA; break;
 		case 'A': bullet = LT_U_ALPHA; break;
 		case 'i': bullet = LT_L_ROMAN; break;
@@ -3745,7 +3521,7 @@ list_bullet (PARSER parser, BULLET dflt)
 
 /*------------------------------------------------------------------------------
  * Ordered List
-*/
+ */
 static UWORD
 render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3766,13 +3542,12 @@ render_OL_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Unordered List
-*/
+ */
 static UWORD
 render_UL_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
-	
 	
 	if (flags & PF_START) {
 		BULLET bullet = (current->lst_stack
@@ -3791,7 +3566,7 @@ render_UL_tag (PARSER parser, const char ** text, UWORD flags)
  *
  * it's also possible that we could map this onto render_UL_tag
  * baldrick - December 13, 2001
-*/
+ */
 static UWORD
 render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3810,12 +3585,12 @@ render_MENU_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Directory List
-*/
+ */
 #define render_DIR_tag   render_MENU_tag
 
 /*------------------------------------------------------------------------------
  * List Item
-*/
+ */
 static UWORD
 render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3824,12 +3599,10 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (!current->lst_stack) {
 		if (flags & PF_START) {
-
 			if (current->prev_wrd) {
 				current->prev_wrd->line_brk = BRK_LN;
 			}
 		}
-	
 	} else if (flags & PF_START) {
 		short  counter = get_value_unum (parser, KEY_VALUE,
 		                                 current->lst_stack->Counter);
@@ -3855,7 +3628,7 @@ render_LI_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Definition List
-*/
+ */
 static UWORD
 render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3864,9 +3637,7 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 		list_start (parser, current, LT_NONE, 0, TAG_DL);
-
 		box_anchor (parser, current->parentbox, TRUE);
-	
 	} else if (current->lst_stack) {
 		list_finish (current);
 	}
@@ -3876,7 +3647,7 @@ render_DL_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Definition Term
-*/
+ */
 static UWORD
 render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3897,12 +3668,13 @@ render_DT_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		box_anchor (parser, &current->paragraph->Box, TRUE);
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Definition Text
-*/
+ */
 static UWORD
 render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3923,6 +3695,7 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 		}
 		box_anchor (parser, &current->paragraph->Box, TRUE);
 	}
+	
 	return (flags|PF_SPACE);
 }
 
@@ -3930,11 +3703,12 @@ render_DD_tag (PARSER parser, const char ** text, UWORD flags)
 /*******************************************************************************
  *
  * Tables
-*/
+ *
+ */
 
 /*------------------------------------------------------------------------------
  * Start Or End
-*/
+ */
 static UWORD
 render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -3951,7 +3725,6 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (border < 0) {
 			border = (get_value_exists (parser, KEY_BORDER) ? 1 : 0);
 		}
-		
 		if (padding < 0) {
 			padding = get_value_unum (parser, CSS_PADDING, 1);
 		}
@@ -3991,10 +3764,8 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 				min_wid = val;
 			}
 		}
-
 		if ((height == 0) || (height == (short)0x8000))
 			height = get_value_size  (parser, KEY_HEIGHT);
-
 		if ((width == 0) || (width == (short)0x8000))
 			width = get_value_size  (parser, KEY_WIDTH);
 
@@ -4007,16 +3778,13 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		if (width < -1024) {
 			width = -1024;
 		}
-
 		table_start (parser,
 		             get_value_color (parser, KEY_BGCOLOR), floating,
 		             height, width, min_wid,
 		             get_value_unum  (parser, KEY_CELLSPACING, 2),
 		             padding, border);
-
 		if (parser->hasStyle) {
 			DOMBOX * box = parser->Current.parentbox->ChildEnd;
-
 			css_box_styles  (parser, box, parser->Current.tbl_stack->AlignH);
 			css_text_styles (parser, parser->Current.font);
 
@@ -4028,7 +3796,6 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 		parser->Current.parentbox->ChildEnd->ConBlock = TRUE;
 		
 		box_anchor (parser, parser->Current.parentbox->ChildEnd, TRUE);
-	
 	} else {
 		TEXTBUFF current = &parser->Current;
 		if (current->tbl_stack) {
@@ -4036,12 +3803,13 @@ render_TABLE_tag (PARSER parser, const char ** text, UWORD flags)
 			font_switch (current->word->font, NULL);
 		}
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Caption Item
-*/
+ */
 static UWORD
 render_CAPTION_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4049,15 +3817,16 @@ render_CAPTION_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render caption tag\n");*/
+/*		printf("In render caption tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Thead Item
-*/
+ */
 static UWORD
 render_THEAD_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4065,15 +3834,16 @@ render_THEAD_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render THEAD tag\n");*/
+/*		printf("In render THEAD tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
- * Tbody Item
-*/
+ * Table body Item
+ */
 static UWORD
 render_TBODY_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4081,15 +3851,16 @@ render_TBODY_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render TBODY tag\n");*/
+/*		printf("In render TBODY tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
- * Tfoot Item
-*/
+ * Table foot Item
+ */
 static UWORD
 render_TFOOT_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4097,15 +3868,16 @@ render_TFOOT_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render TFOOT tag\n");*/
+/*		printf("In render TFOOT tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Table Row
-*/
+ */
 static UWORD
 render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4115,39 +3887,34 @@ render_TR_tag (PARSER parser, const char ** text, UWORD flags)
 	if (current->tbl_stack) {
 		if (flags & PF_START) {
 			short height = 0;
-			
 			if (parser->hasStyle) {
 				short em = parser->Current.word->font->Ascend;
 				short ex = parser->Current.word->font->SpaceWidth;
 				char  out[100];
 				short val;
-
 				if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
 				    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
-						height = val;
+					height = val;
 				}
 			}
-
 			if ((height == 0) || (height == (short)0x8000))
 				height = get_value_size  (parser, KEY_HEIGHT);
-
 			table_row (current,
 			           get_value_color (parser, KEY_BGCOLOR),
 			           get_h_align     (parser, ALN_LEFT), 
 			           get_v_align     (parser, ALN_MIDDLE),
 			           height, TRUE);
-
-
 		} else {
 			table_row (current, -1,0,0,0, FALSE);
 		}
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Table Data Cell
-*/
+ */
 static UWORD
 render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4171,13 +3938,11 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 					tempwid = val;
 			}
 		}
-
 		if ((temphgt == 0) || (temphgt == (short)0x8000))
 			temphgt = get_value_size  (parser, KEY_HEIGHT);
-
 		if ((tempwid == 0) || (tempwid == (short)0x8000))
 			tempwid = get_value_size  (parser, KEY_WIDTH);
-
+			
 		/* Table routines don't like values < -1024 */
 		if (temphgt < -1024) {
 			temphgt = -1024;
@@ -4185,16 +3950,15 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 		if (tempwid < -1024) {
 			tempwid = -1024;
 		}
-		
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
-			         get_h_align     (parser, current->tbl_stack->AlignH),
-			         get_v_align     (parser, current->tbl_stack->AlignV),
-			         temphgt,
-			         tempwid,
-			         get_value_unum  (parser, KEY_ROWSPAN, 1),
-			         get_value_unum  (parser, KEY_COLSPAN, 1));
-
+			    get_h_align     (parser, current->tbl_stack->AlignH),
+			    get_v_align     (parser, current->tbl_stack->AlignV),
+			    temphgt,
+			    tempwid,
+			    get_value_unum  (parser, KEY_ROWSPAN, 1),
+			    get_value_unum  (parser, KEY_COLSPAN, 1));
+			
 		/* if the table has a fixed width ignore a nowrap value
 		 * seems to be the standard method
 		 */
@@ -4202,9 +3966,7 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
 			current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		}
-
 		current->parentbox->HtmlCode = TAG_TD;
-
 		css_box_styles  (parser, current->parentbox, current->tbl_stack->AlignH);
 		css_text_styles (parser, current->font);
 
@@ -4217,12 +3979,13 @@ render_TD_tag (PARSER parser, const char ** text, UWORD flags)
 		if (current->tbl_stack->WorkCell->nowrap)
 			current->nowrap = FALSE;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Table Header Cell
-*/
+ */
 static UWORD
 render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4239,20 +4002,18 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			short val;
 			if (get_value (parser, KEY_HEIGHT, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
-					temphgt = val;
+				temphgt = val;
 			}
 			if (get_value (parser, KEY_WIDTH, out, sizeof(out))
 			    && (val = numerical (out, NULL, em, ex, FALSE)) != (short)0x8000) {
-					tempwid = val;
+				tempwid = val;
 			}
 		}
-
 		if ((temphgt == 0) || (temphgt == (short)0x8000))
 			temphgt = get_value_size  (parser, KEY_HEIGHT);
-
 		if ((tempwid == 0) || (tempwid == (short)0x8000))
 			tempwid = get_value_size  (parser, KEY_WIDTH);
-
+		
 		/* Table routines don't like values < -1024 */
 		if (temphgt < -1024) {
 			temphgt = -1024;
@@ -4260,16 +4021,15 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 		if (tempwid < -1024) {
 			tempwid = -1024;
 		}
-				
 		table_cell (parser,
 		            get_value_color (parser, KEY_BGCOLOR),
-			         get_h_align     (parser, ALN_CENTER),
-			         get_v_align     (parser, current->tbl_stack->AlignV),
-			         temphgt,
-			         tempwid,
-			         get_value_unum  (parser, KEY_ROWSPAN, 1),
-			         get_value_unum  (parser, KEY_COLSPAN, 1));
-
+			    get_h_align     (parser, ALN_CENTER),
+			    get_v_align     (parser, current->tbl_stack->AlignV),
+			    temphgt,
+			    tempwid,
+			    get_value_unum  (parser, KEY_ROWSPAN, 1),
+			    get_value_unum  (parser, KEY_COLSPAN, 1));
+				
 		/* if the table has a fixed width ignore a nowrap value
 		 * seems to be the standard method
 		 */
@@ -4277,22 +4037,21 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 			current->tbl_stack->WorkCell->nowrap = get_value_exists(parser, KEY_NOWRAP);
 			current->nowrap = current->tbl_stack->WorkCell->nowrap;
 		}
-
 		fontstack_setBold (current);
 		current->parentbox->HtmlCode = TAG_TH;
-
 		css_box_styles  (parser, current->parentbox, ALN_CENTER);
 		css_text_styles (parser, current->font);
-
+		
 		/* we have to reset the width in case it was set again in css_box_styles */
 		current->parentbox->SetWidth = (tempwid  <= 1024 ? tempwid  : 0);
-
+		
 		box_anchor (parser, current->parentbox, TRUE);
 		flags |= PF_FONT;
 	} else if (current->tbl_stack) {	
 	 	if (current->tbl_stack->WorkCell->nowrap)
 			current->nowrap = FALSE;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
@@ -4300,25 +4059,25 @@ render_TH_tag (PARSER parser, const char ** text, UWORD flags)
 /*******************************************************************************
  *
  * Fill-out Formulars
-*/
+ *
+ */
 
 /*------------------------------------------------------------------------------
  * Input
-*/
+ */
 static UWORD
 render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED  (text);
 	
-	 if (current->form) {
+	if (current->form) {
 		form_finish (current);
 	}
 	if (flags & PF_START) {
 		char   output[10];
 		char * method = (get_value (parser, KEY_METHOD, output, sizeof(output))
 		                 ? output : NULL);
-
 		current->form = new_form (parser->Frame,
 		                          get_value_str (parser, KEY_TARGET),
 		                          get_value_str (parser, KEY_ACTION),
@@ -4332,12 +4091,11 @@ render_FORM_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Input
-*/
+ */
 static UWORD
 render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
-	
 	if (flags & PF_START) {
 		char out[100];
 		WORD width;
@@ -4345,9 +4103,7 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 			short em = parser->Current.word->font->Ascend;
 			short ex = parser->Current.word->font->SpaceWidth;
 			width = numerical (out, NULL, em, ex, FALSE);
-
 			if (width == (short)0x8000) width = 0;
-
 		} else {
 			width = 0;
 		}
@@ -4362,11 +4118,10 @@ render_INPUT_tag (PARSER parser, const char ** text, UWORD flags)
 
 /*------------------------------------------------------------------------------
  * Text Area
-*/
+ */
 static UWORD
 render_TEXTAREA_tag (PARSER parser, const char ** text, UWORD flags)
 {
-
 	if (flags & PF_START) {
 		const char * beg = *text, * end;
 		UWORD       rows = 1;
@@ -4377,20 +4132,19 @@ render_TEXTAREA_tag (PARSER parser, const char ** text, UWORD flags)
 		while (*end && *end != '<') {
 			if (*(end++) == '\n') rows++;
 		}
-
 		if (new_tarea (parser, beg, end, rows)) {
 			*text =  end;
 			flags |= PF_FONT;
 			flags &= ~PF_SPACE;
 		}
 	}
-
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Fieldset Item
-*/
+ */
 static UWORD
 render_FIELDSET_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4401,12 +4155,13 @@ render_FIELDSET_tag (PARSER parser, const char ** text, UWORD flags)
 	/*	printf("In render fieldset tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Legend Item
-*/
+ */
 static UWORD
 render_LEGEND_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4414,15 +4169,16 @@ render_LEGEND_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render legend tag\n");*/
+/*		printf("In render legend tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Label Item
-*/
+ */
 static UWORD
 render_LABEL_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4430,22 +4186,22 @@ render_LABEL_tag (PARSER parser, const char ** text, UWORD flags)
 	
 	if (flags & PF_START) {
 	/* this is just the stub of a routine to keep CSS happy so far */
-	/*	printf("In render label tag\n");*/
+/*		printf("In render label tag\n");*/
 		;
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 
 /*------------------------------------------------------------------------------
  * Selection List
-*/
+ */
 static UWORD
 render_SELECT_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	TEXTBUFF current = &parser->Current;
 	UNUSED (text);
-	
 	if (flags & PF_START) {
 		char  name[100];
 		get_value (parser, KEY_NAME, name, sizeof(name));
@@ -4457,12 +4213,13 @@ render_SELECT_tag (PARSER parser, const char ** text, UWORD flags)
 		selct_finish (current);
 		flags &= ~PF_SPACE;
 	}
+	
 	return flags;
 }
 
 /*------------------------------------------------------------------------------
  * Selection Item
-*/
+ */
 static UWORD
 render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 {
@@ -4476,20 +4233,19 @@ render_OPTION_tag (PARSER parser, const char ** text, UWORD flags)
 
 		/* override empty value to keep item in list */
 		if (out[0] == '\0') strcpy(out,"_\0");
-
 		selct_option (&parser->Current, out, disabled, encoding, value, selected);
 	}
+	
 	return (flags|PF_SPACE);
 }
 
 /*------------------------------------------------------------------------------
  * Selection Submenu
-*/
+ */
 static UWORD
 render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
 {
 	UNUSED (text);
-	
 	if (flags & PF_START) {
 		char label[90], out[90];
 		if (get_value (parser, KEY_LABEL, label, sizeof(label))) {
@@ -4498,6 +4254,7 @@ render_OPTGROUP_tag (PARSER parser, const char ** text, UWORD flags)
 			selct_option (&parser->Current, out, TRUE, enc, NULL, FALSE);
 		}
 	}
+	
 	return (flags|PF_SPACE);
 }
 
@@ -4526,11 +4283,13 @@ parse_html (void * arg, long invalidated)
 
 	if (invalidated || !symbol) {
 		delete_parser (parser);
+
 		return FALSE;
 	}
 	if (parser->ResumeErr == 2/*EBUSY*/ || setjmp (resume_jbuf)) {
 		return -2; /* JOB_NOOP */
 	}
+	
 	symbol = parser->ResumePtr;
 	if (parser->ResumeFnc) {
 		(*(RENDER)parser->ResumeFnc)(parser, &symbol, PF_START);
@@ -4541,10 +4300,8 @@ parse_html (void * arg, long invalidated)
 	linetoolong = FALSE;    /* "line too long" error printed? */
 	encoder     = encoder_word (frame->Encoding,
 	                            current->word->font->Base->Mapping);
-	while (*symbol != '\0')
-	{
-		if (*symbol == '<')
-		{
+	while (*symbol != '\0') {
+		if (*symbol == '<') {
 			static RENDER render[] = {
 				NULL,
 				#undef SMALL /* prevent an error because this
@@ -4562,12 +4319,10 @@ parse_html (void * arg, long invalidated)
 				flags &= ~PF_START;
 				symbol++;
 			}
-			
 			if (current->text > current->buffer) {
 				new_word (current, TRUE);
 			}
 			tag = parse_tag ((flags & PF_START ? parser : NULL), &symbol);
-
 			if (tag && render[tag]) {
 				flags = (render[tag])(parser, &symbol, flags);
 			}
@@ -4588,10 +4343,8 @@ parse_html (void * arg, long invalidated)
 				encoder = encoder_word (frame->Encoding,
 				                        current->word->font->Base->Mapping);
 			}
-
 			continue;
-		} /* end if (*symbol == '<') */
-
+		}
 		switch (*symbol)
 		{
 			case '&':
@@ -4602,7 +4355,6 @@ parse_html (void * arg, long invalidated)
 				                                current->word->font->Base->Mapping);
 				flags &= ~PF_SPACE;
 				break;
-			
 			case ' ':
 				if (flags & PF_PRE) {
 					if (current->text >= watermark) {
@@ -4613,7 +4365,6 @@ parse_html (void * arg, long invalidated)
 					break;
 				}
 				goto white_space;
-			
 			case 9:  /* HT HORIZONTAL TABULATION */
 				if (flags & PF_PRE) {
 					if (current->text >= watermark -8) {
@@ -4626,7 +4377,6 @@ parse_html (void * arg, long invalidated)
 					break;
 				}
 				goto white_space;
-			
 			case 13: /* CR CARRIAGE RETURN */
 				if (*(symbol + 1) == 10)  /* HTTP, TOS, or DOS text file */
 					symbol++;
@@ -4642,7 +4392,6 @@ parse_html (void * arg, long invalidated)
 					break;
 				}
 				/* else fall through */
-				
 			white_space: /* if (!(flags & PF_PRE)) */
 				if (!(flags & PF_SPACE)) {
 					if (current->text > current->buffer) {
@@ -4653,14 +4402,12 @@ parse_html (void * arg, long invalidated)
 				}
 				while (isspace (*(++symbol)));
 				break;
-			
 			default:
 				if (current->text < watermark) {
 					current->text = (*encoder)(&symbol, current->text);
 					flags &= ~PF_SPACE;
 					break;
 				}
-			
 			line_too_long:
 				if (linetoolong == FALSE) {
 					errprintf("parse_html(): Line too long in '%s'!\n",
@@ -4670,14 +4417,12 @@ parse_html (void * arg, long invalidated)
 				flags &= ~PF_SPACE;
 				new_word (current, TRUE);
 		}
-	} /* end while (*symbol != '\0') */
-	
+	}
 	logprintf(LOG_BLUE, "%ld ms for '%s%s'\n",
 	          (clock() - start_clock) * 1000 / CLK_TCK,
 	          location_Path (frame->Location, NULL), frame->Location->File);
-
 	delete_parser (parser);
-		
+	
 	return FALSE;
 }
 
@@ -4690,7 +4435,6 @@ parse_html (void * arg, long invalidated)
  *
  * Nothing exciting just maps lines to paragraphs
  */
-
 int
 parse_plain (void * arg, long invalidated)
 {
@@ -4712,11 +4456,8 @@ parse_plain (void * arg, long invalidated)
 			
 		return FALSE;
 	}
-	
 	while (*symbol != '\0') {
-	
 		switch (*symbol) {
-		
 			case 9: /* HT HORIZONTAL TABULATION */
 				if (current->text < watermark) {
 					size_t pos = (current->text - current->buffer) /2;
@@ -4746,7 +4487,6 @@ parse_plain (void * arg, long invalidated)
 					linetoolong = TRUE;
 				}
 				goto line_break;
-			
 			case 13: /* CR CARRIAGE RETURN */
 				if (*(symbol +1) == 10)  /* HTTP, TOS, or DOS text file */
 					symbol++;
@@ -4778,13 +4518,11 @@ parse_plain (void * arg, long invalidated)
 				}
 		}
 	}
-	
 	logprintf (LOG_BLUE, "%ld ms for '%s%s'\n",
 	           (clock() - start_clock) * 1000 / CLK_TCK,
 	          location_Path (frame->Location, NULL), frame->Location->File);
-
 	delete_parser (parser);
-		
+	
 	return FALSE;
 }
 
@@ -4806,9 +4544,7 @@ parse_image (void * arg, long invalidated)
 			
 		return FALSE;
 	}
-	
 	font_byType (normal_font, 0x0000, -1, current->word);
-	
 	if (parser->Loader->Referer) {
 		loc = frame->Location;
 		frame->Location = location_share (parser->Loader->Referer);
@@ -4817,9 +4553,8 @@ parse_image (void * arg, long invalidated)
 	}
 	new_image (frame, current, NULL, loc, 0,0, 0,0,TRUE);
 	free_location (&loc);
-
 	delete_parser (parser);
-		
+	
 	return FALSE;
 }
 
@@ -4832,32 +4567,25 @@ render_hrule (TEXTBUFF current, H_ALIGN align, short w, short size, BOOL shade)
 	DOMBOX * box = dombox_ctor (malloc (sizeof (DOMBOX)),
 	                            current->parentbox, BC_SINGLE);
 	box->HtmlCode = TAG_HR;
-
 	box->HasBorder = TRUE;
-
 	if (shade) {
 		box->BorderWidth.Top = 1;
 		box->BorderWidth.Bot = 
 		box->BorderWidth.Lft = box->BorderWidth.Rgt = 1;
-
 		box->BorderStyle.Top = box->BorderStyle.Bot = 
 		box->BorderStyle.Lft = box->BorderStyle.Rgt = BORDER_SOLID; /*BORDER_INSET;*/
-
 		size -= 2;
 	}
 	box->Padding.Top = size;
 	box->Padding.Lft = 3; /* minimum width */
-	
 	if (par->item->word_height > size) {
 		box->Margin.Top = box->Margin.Bot = (par->item->word_height - size +1) /2;
 	} else {
 		box->Margin.Top = box->Margin.Bot = par->item->word_tail_drop;
 	}
 	box->Margin.Lft = box->Margin.Rgt = 1;
-	
 	box->SetWidth = w;
 	box->Floating = align;
-	
 	dombox_reorder (&par->Box, box);
 	
 	return box;
@@ -4874,7 +4602,6 @@ render_text (TEXTBUFF current, const char * text)
 	while (*text) {
 		if (*text > 32) {
 			current->text = (*encoder)(&text, current->text);
-		
 		} else {
 			BOOL  change = FALSE;
 			short font   = -1;
@@ -4890,15 +4617,12 @@ render_text (TEXTBUFF current, const char * text)
 						*(current->text++) = font_Space (current->word->font);
 					}
 					break;
-				
 				case '\005': /* 0x05, &nbsp; */
 					*(current->text++) = font_Nobrk (current->word->font);
 					break;
-				
 				case '\003': /* 0x03, force new word */
 					change = TRUE;
 					break;
-				
 				case '\r': /* line break */
 					if (current->text > current->buffer) {
 						current->word->line_brk = BRK_LN;
@@ -4907,11 +4631,9 @@ render_text (TEXTBUFF current, const char * text)
 						current->prev_wrd->line_brk = BRK_LN;
 					}
 					break;
-				
 				case '\n': /* new paragraph */
 					add_paragraph (current, 2);
 					break;
-				
 				/* 0x10.. 0x12 */
 				case '\020': change = TRUE; font = normal_font; break;
 				case '\021': change = TRUE; font = header_font; break;
@@ -4935,6 +4657,7 @@ render_text (TEXTBUFF current, const char * text)
 			}
 		}
 	}
+	
 	return (word ? word : current->word);
 }
 

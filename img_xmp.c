@@ -2,8 +2,8 @@
 #include <string.h>
 
 static BOOL decXmp_start (const char * file, IMGINFO info);
-static BOOL decXmp_r_bit (IMGINFO, char * buffer);
-static BOOL decXmp_r_pix (IMGINFO, char * buffer);
+static BOOL decXmp_r_bit (IMGINFO, CHAR * buffer);
+static BOOL decXmp_r_pix (IMGINFO, CHAR * buffer);
 static void decXmp_quit  (IMGINFO);
 
 static DECODER _decoder_xmp = {
@@ -179,7 +179,7 @@ decXmp_start (const char * name, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decXmp_r_bit (IMGINFO info, char * buffer)
+decXmp_r_bit (IMGINFO info, CHAR * buffer)
 {
 	XMAP xmap = info->_priv_data;
 	if (xmap->H-- >= 0) {
@@ -224,7 +224,7 @@ decXmp_r_bit (IMGINFO info, char * buffer)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decXmp_r_pix (IMGINFO info, char * buffer)
+decXmp_r_pix (IMGINFO info, CHAR * buffer)
 {
 	XMAP xmap = info->_priv_data;
 	if (xmap->H-- >= 0) {

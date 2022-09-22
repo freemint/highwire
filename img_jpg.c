@@ -4,7 +4,7 @@
 #undef XMD_H
 
 static BOOL decJpg_start (const char * file, IMGINFO info);
-static BOOL decJpg_read  (IMGINFO, char * buffer);
+static BOOL decJpg_read  (IMGINFO, CHAR * buffer);
 static void decJpg_quit  (IMGINFO);
 
 static DECODER _decoder_jpg = {
@@ -14,7 +14,6 @@ static DECODER _decoder_jpg = {
 };
 #undef  DECODER_CHAIN
 #define DECODER_CHAIN &_decoder_jpg
-
 
 typedef struct jpeg_decompress_struct * JPEG_DEC;
 typedef struct jpeg_error_mgr         * JPEG_ERR;
@@ -37,7 +36,7 @@ _jpeg_errjmp (j_common_ptr cinfo)
 	if (!escape) {
 		hwUi_fatal ("image::jpeg_error", "got lost!");
 	} else {
-	/*	puts("ouch...");*/
+/*		puts("ouch...");*/
 		longjmp (*escape, TRUE);
 	}
 }
@@ -54,7 +53,7 @@ decJpg_start (const char * name, IMGINFO info)
 	int header = 0;
 	
 	if (!file) {
-	/*	puts ("decJpg_start(): file not found.");*/
+/*		puts ("decJpg_start(): file not found.");*/
 		return TRUE; /* avoid further tries of decoding */
 	
 	} else if ((jpeg = malloc (sizeof(struct jpeg_decompress_struct))) == NULL ||
@@ -133,7 +132,7 @@ decJpg_start (const char * name, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decJpg_read (IMGINFO info, char * buffer)
+decJpg_read (IMGINFO info, CHAR * buffer)
 {
 	jpeg_read_scanlines (info->_priv_data, (JSAMPROW*)&buffer, 1);
 	return TRUE;
