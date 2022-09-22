@@ -91,7 +91,7 @@ main (int argc, char **argv)
 	}
 	atexit (highwire_ex);
 
-	/* HighWire needs a Speedo fonts GDOS, that is SpeedoGDOS or NVDI ò 3.
+	/* HighWire needs a Speedo fonts GDOS, that is SpeedoGDOS or NVDI >= 3.
 	 */
 	gdostype = vq_vgdos();
 

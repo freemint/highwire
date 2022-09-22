@@ -513,7 +513,7 @@ history_create (CONTAINR cont, const char * name, HISTORY prev)
 	strcpy (hist->Entry.Text, "  ");
 	hist->Entry.Length = strlen (name) +2;
 	if (sub) {
-		strcat (hist->Entry.Text, "ù ");
+		strcat (hist->Entry.Text, "\371 ");
 		hist->Entry.Length += 2;
 	}
 	if (hist->Entry.Length < HIST_MAX) {

@@ -464,11 +464,11 @@ menu_info (void)
 	
 	if (file_ln > 32) {
 		file_ln = 31;
-		file_pp = "¯";
+		file_pp = "\257";
 	}
 	if (dir_ln > 40) {
 		dir_ln = 39;
-		dir_pp = "¯";
+		dir_pp = "\257";
 	}
 	switch (frame ? frame->Encoding : ENCODING_WINDOWS1252) {
 		case ENCODING_WINDOWS1252: enc_ptr =   "Windows-1252"; break;
@@ -482,7 +482,7 @@ menu_info (void)
 	}
 	if (frm_ln > 37 - (enc_ln = (int)strlen (enc_ptr))) {
 		frm_ln = 37 - enc_ln;
-		frm_pp = "¯";
+		frm_pp = "\257";
 	} else {
 		enc_ln = 37 - frm_ln;
 	}
@@ -623,7 +623,7 @@ bookmark_editor (UWORD type, const char * text,
 			t[l] = '\0';
 		} else {
 			memcpy (t,        url, l -3);
-			strcpy (t + l -3, "úú¯");
+			strcpy (t + l -3, "\372\372\257");
 		}
 		tree[BKM_URL].ob_flags &= ~OF_HIDETREE;
 	} else {
@@ -775,7 +775,7 @@ menu_history (HISTORY hist[], UWORD used, WORD check)
 		for (i = 0; i < used; i++) {
 			++last;
 			if (hist[i]->Length > m_max_len) {
-				hist[i]->Text[m_max_len]    = '¯';
+				hist[i]->Text[m_max_len]    = '\257';
 				hist[i]->Text[m_max_len +1] = '\0';
 				hist[i]->Length = m_max_len;
 				width = m_max_len;

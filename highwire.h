@@ -1,4 +1,4 @@
- /*  Resource C-Header-File v1.97 fÅr ResourceMaster ab v2.06 by ARDISOFT  */
+ /*  Resource C-Header-File v1.97 fuer ResourceMaster ab v2.06 by ARDISOFT  */
 
 #define MENUTREE 0  /* menu */
 #define M_HISTORY 7  /* TITLE in tree MENUTREE */

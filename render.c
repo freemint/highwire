@@ -2592,8 +2592,8 @@ render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
 	}
 	switch ((language = current->quot_lang)) {
 		case LANG_CS:  /* Czech */
-		case LANG_DE:  /* German, also using ¯® in books
-		                * de-CH Swiss German using ®¯
+		case LANG_DE:  /* German, also using >> << in books
+		                * de-CH Swiss German using << >>
 		                * wen   Sorbic using German quotes, 3-letter language
 		                *       tag not covered by HTML */
 		case LANG_SK:  /* Slovak */
@@ -2609,7 +2609,7 @@ render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
 		case LANG_ET:  /* Estonian */
 		case LANG_EL:  /* Greek */
 		case LANG_FR:  /* French */
-		case LANG_RU:  /* Russian, using as ®I will - he said - go home.¯
+		case LANG_RU:  /* Russian, using as <<I will - he said - go home.>>
 		                  with U+2015 HORIZONTAL BAR */
 		case LANG_SQ:  /* Albanian */
 			if (flags & PF_START) {
@@ -2649,21 +2649,21 @@ render_Q_tag (PARSER parser, const char ** _text, UWORD flags)
 				current->text = unicode_to_wchar (0x00AB, current->text, mapping);
 			}
 			break;
-		case LANG_DA:  /* Danish, also using ¯¯ in books */
-		case LANG_FI:  /* Finnish, also using ¯¯ in books */
-		case LANG_NB:  /* Bokm†l Norwegian */
+		case LANG_DA:  /* Danish, also using >>>> in books */
+		case LANG_FI:  /* Finnish, also using >>>> in books */
+		case LANG_NB:  /* Bokmal Norwegian */
 		case LANG_NN:  /* Nynorsk Norwegian */
-		case LANG_NO:  /* Norwegian, also using ¯¯ in books */
-		case LANG_SV:  /* Swedish, also using ¯¯ in books */
+		case LANG_NO:  /* Norwegian, also using >>>> in books */
+		case LANG_SV:  /* Swedish, also using >>>> in books */
 			/* U+201D RIGHT DOUBLE QUOTATION MARK */
 			current->text = unicode_to_wchar (0x201D, current->text, mapping);
 			break;
 		case LANG_EN:  /* English, single */
 		case LANG_ES:  /* Spanish */
-		case LANG_IT:  /* Italian, also using ®¯ and ®  ¯ */
+		case LANG_IT:  /* Italian, also using << >> and << >> */
 		case LANG_NL:  /* Dutch, single, also using U+201E for start */
 		case LANG_PT:  /* Portuguese, also using >< */
-		case LANG_TR:  /* Turkish, also using ®¯ */
+		case LANG_TR:  /* Turkish, also using << >> */
 			if (flags & PF_START) {
 				/* U+201C LEFT DOUBLE QUOTATION MARK */
 				current->text = unicode_to_wchar (0x201C, current->text, mapping);

@@ -166,7 +166,7 @@ slot_setfile (SLOT slot, LOCATION loc)
 	size_t len = location_FullName (loc, buf, sizeof(buf));
 	if (len > file_text_max) {
 		p += len - file_text_max;
-		*p = '®';
+		*p = '\256';
 	}
 	strcpy (FILE_Strng(slot), p);
 }

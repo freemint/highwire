@@ -389,7 +389,7 @@ progress_bar (ULONG size, ULONG part, const char * txt0, const char * txt1)
 			size_t len = strlen (txt0);
 			if (len >= sizeof (string_0) -1) {
 				len = sizeof (string_0) -2;
-				string_0[len] = '¯';
+				string_0[len] = '\257';
 			} else { 
 				memset (string_0 + len, ' ', sizeof (string_0) -1 - len);
 			}
@@ -400,7 +400,7 @@ progress_bar (ULONG size, ULONG part, const char * txt0, const char * txt1)
 			size_t len = strlen (txt1);
 			if (len >= sizeof (string_1) -1) {
 				len = sizeof (string_1) -2;
-				string_1[len] = '¯';
+				string_1[len] = '\257';
 			} else { 
 				memset (string_1 + len, ' ', sizeof (string_1) -1 - len);
 			}
@@ -436,9 +436,9 @@ hwUi_box (WORD icon, const char * bttn,
 {
 	/* form_alert
 	 * [n]                              =   3
-	 * + 5 lines   40 character (= 200) = 203
+	 * + 5 lines   40 character (= 200) = 203
 	 * + '[||||]'                       = 209
-	 * + 3 buttons   20 + '[||] (= 64)  = 273
+	 * + 3 buttons   20 + '[||] (= 64)  = 273
 	*/
 	char buf[1000], * p = buf;
 	
@@ -454,7 +454,7 @@ hwUi_box (WORD icon, const char * bttn,
 			p = strchr (strcpy (p, hint), '\0');
 			if (p - buf > 40 +4) {
 				p = buf +39 +4;
-				*(p++) = '¯';
+				*(p++) = '\257';
 			}
 		}
 		*(p++) = '|';
@@ -493,7 +493,7 @@ hwUi_box (WORD icon, const char * bttn,
 			case_dflt:
 				if (p - beg >= 40) {
 					if (cnt == 1) { /* last line */
-						p[-1] = '¯';
+						p[-1] = '\257';
 						goto case_crlf;
 					}
 					if (!spc) { /* line too long */

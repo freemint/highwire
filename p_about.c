@@ -245,7 +245,11 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	*(++w) = render_text (current, "\025compiled:\005\024");
 	tab    = max (tab, (*w)->word_width);
 	#if defined (__GNUC__)
-		sprintf (buf, "Gnu C \022%s\020, ", __VERSION__);
+        #ifdef __VERSION__
+		   sprintf (buf, "Gnu C \022%s\020, ", __VERSION__);
+        #else
+		   sprintf (buf, "Gnu C \022%i.%02i\020, ", __GNUC__, __GNUC_MINOR__);
+        #endif
 		render_text (current, buf);
 	#elif defined (__PUREC__)
 		sprintf (buf, "Pure C \022%i.%02x\020, ",
