@@ -287,7 +287,8 @@ nextToken(const char *pcmd)
 static BOOL
 doGSCommand(const WORD msg[8])
 {
-	const char *cmd = *(const char *const *)&msg[3];
+	const char *const * p_msg = (const char *const *)&msg[3]; 
+	const char *cmd = *p_msg;
 	WORD answ[8];
 	BOOL quit = FALSE;
 
@@ -1530,9 +1531,9 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 		
 		case GS_REQUEST:
 			{
-			#if 0  /* an optimized version of the below original */
+			#if 1  /* an optimized version of the below original */
 				const GS_INFO *sender;
-				short answ[8], *p_answ = answ;
+				WORD answ[8], *p_answ = answ;
 				long *gsi_ = (long *)gsi;
 
 				*p_answ++              /*[0]*/ = GS_REPLY;

@@ -3,7 +3,7 @@
 #undef FALSE
 
 static BOOL decGif_start (const char * file, IMGINFO info);
-static BOOL decGif_read  (IMGINFO, char * buffer);
+static BOOL decGif_read  (IMGINFO, CHAR * buffer);
 static void decGif_quit  (IMGINFO);
 
 static DECODER _decoder_gif = {
@@ -128,7 +128,7 @@ decGif_start (const char * file, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decGif_read (IMGINFO info, char * buffer)
+decGif_read (IMGINFO info, CHAR * buffer)
 {
 	return (DGifGetLine (info->_priv_data, (void *)buffer, info->ImgWidth) == GIF_OK);
 }
@@ -146,4 +146,3 @@ decGif_quit (IMGINFO info)
 		info->_priv_data = NULL;
 	}
 }
-

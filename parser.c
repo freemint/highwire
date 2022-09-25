@@ -966,7 +966,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 		}
 		
 		if (!loc || !p) {
-			printf ("parse_css(): loc=%p p=%p\n", loc, p);
+/*			printf ("parse_css(): loc=%p p=%p\n", loc, p);*/
 			if (!p) {
 				static const char * empty = "";
 				p = empty;

@@ -5,6 +5,7 @@
  ** Author         Date           Desription
  ** P Slegg        14-Aug-2009    input_keybrd: Utilise NKCC from cflib to handle the various control keys in text fields.
  ** P Slegg        18-Mar-2010    input_keybrd: Add Ctrl-Delete and Ctrl-Backspace edit functions
+ ** P Slegg        29-May-2010    Add Ctrl-C to copy textarea to clipboard
  **
  */
 
@@ -1780,8 +1781,15 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			case NK_UP:
 				if (form->TextCursrY)
 				{
+					WORD curPos;
 					lift = -1;
 					line = +2;
+					curPos = form->TextCursrX;  /* current cursor position */
+
+					if (curPos > edit_rowln (input, form->TextCursrY -1) )
+					{  /* cursor pos is greater than length of previous line */
+						scrl = (WORD)(-(curPos - edit_rowln (input, form->TextCursrY -1) ));  /* move cursor left, to end of line */
+					}
 				}
 				else
 				{
@@ -2168,6 +2176,21 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 				}
 				break;
 
+			case 'C':
+				if (ctrl)
+				{
+					int m,n;
+					/* printf ("ctrl-c\n"); */
+					for (n = 0; n <= input->TextRows; n++)
+					{
+						for (m = 0; m <= edit_rowln (input, n); m++)
+						{
+/**							printf(input->TextArray[n]);  **/
+						}
+					}
+				}
+				break;
+
 			default:
 				word = NULL;
 
@@ -2183,7 +2206,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			scrl = (WORD)edit_rowln (input, form->TextCursrY) - form->TextCursrX;
 		}
 		if (lift > 0)
-		{
+		{  /* cursor down */
 			if (form->TextShiftY < form->TextCursrY - (WORD)(input->VisibleY -1))
 			{
 				form->TextShiftY = form->TextCursrY - (WORD)(input->VisibleY -1);
@@ -2214,7 +2237,7 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			}
 		}
 		else
-		{
+		{  /* cursor up, cursor down */
 			if (form->TextShiftX > form->TextCursrX)
 			{
 				form->TextShiftX = form->TextCursrX;
@@ -2239,10 +2262,10 @@ input_keybrd (INPUT input, WORD key, UWORD kstate, GRECT * rect, INPUT * next)
 			rect->g_h = word->word_height + word->word_tail_drop -4;
 		}
 		else
-		{
+		{  /* cursor up, cursor down */
 			WORD row = form->TextCursrY - form->TextShiftY;
 			if (line < 0)
-			{
+			{  /* cursor down */
 				row -= 1;
 				line = 2;
 			}

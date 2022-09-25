@@ -7,7 +7,7 @@
 #undef XMD_H
 
 static BOOL decJpg_start (const char * file, IMGINFO info);
-static BOOL decJpg_read  (IMGINFO, char * buffer);
+static BOOL decJpg_read  (IMGINFO, CHAR * buffer);
 static void decJpg_quit  (IMGINFO);
 
 static DECODER _decoder_jpg = {
@@ -134,7 +134,7 @@ decJpg_start (const char * name, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decJpg_read (IMGINFO info, char * buffer)
+decJpg_read (IMGINFO info, CHAR * buffer)
 {
 	jpeg_read_scanlines (info->_priv_data, (JSAMPROW*)&buffer, 1);
 	return TRUE;

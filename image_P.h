@@ -10,7 +10,7 @@ struct s_img_info {
 	void  * _priv_data; /* decoder private data */
 	void  * _priv_more;
 	FILE  * _priv_file;
-	BOOL   (*read)(IMGINFO, char * buffer);
+	BOOL   (*read)(IMGINFO, CHAR * buffer);
 	void   (*quit)(IMGINFO);
 	UWORD    ImgWidth, ImgHeight; /* original size of the image */
 	unsigned NumComps :8;  /* 3 = TrueColor, 1 = grayscale or palette mode */

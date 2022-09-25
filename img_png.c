@@ -10,8 +10,8 @@
 #endif
 
 static BOOL decPng_start (const char * file, IMGINFO info);
-static BOOL decPng_read  (IMGINFO, char * buffer);
-static BOOL decPng_readi (IMGINFO, char * buffer);
+static BOOL decPng_read  (IMGINFO, CHAR * buffer);
+static BOOL decPng_readi (IMGINFO, CHAR * buffer);
 static void decPng_quit  (IMGINFO);
 
 static DECODER _decoder_png = {
@@ -121,7 +121,7 @@ decPng_start (const char * name, IMGINFO info)
 	
 /*----------------------------------------------------------------------------*/
 static BOOL
-decPng_read (IMGINFO info, char * buffer)
+decPng_read (IMGINFO info, CHAR * buffer)
 {
 	png_structp png_ptr = info->_priv_data;
 	if (setjmp (png_jmpbuf (png_ptr))) {
@@ -137,7 +137,7 @@ decPng_read (IMGINFO info, char * buffer)
 	
 /*----------------------------------------------------------------------------*/
 static BOOL
-decPng_readi (IMGINFO info, char * buffer)
+decPng_readi (IMGINFO info, CHAR * buffer)
 {
 	png_structp png_ptr  = info->_priv_data;
 	

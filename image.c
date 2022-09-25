@@ -627,7 +627,7 @@ setup (IMAGE img, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-skip_corrupted (IMGINFO info, char * buf)
+skip_corrupted (IMGINFO info, CHAR * buf)
 {
 	memset (buf, 0x99, info->ImgWidth * info->NumComps);
 	return TRUE;
@@ -637,7 +637,7 @@ skip_corrupted (IMGINFO info, char * buf)
 static void
 read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 {
-	BOOL (*img_rd)(IMGINFO, char * buf) = info->read;
+	BOOL (*img_rd)(IMGINFO, CHAR * buf) = info->read;
 	void (*raster)(IMGINFO, void * dst) = info->raster;
 	short   img_h = info->ImgHeight;
 	CHAR  * buf   = info->RowBuf;
@@ -648,7 +648,7 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 		size_t scale = (info->IncYfx +1) /2;
 		short  y_dst = img->disp_h;
 		while (y < img_h) {
-			if (!(*img_rd)(info, (char*)buf)) {
+			if (!(*img_rd)(info, buf)) {
 				img_rd = skip_corrupted;
 			}
 			y++;
@@ -678,7 +678,7 @@ read_img (IMAGE img, IMGINFO info, pIMGDATA data)
 						y_beg = y_end -1;
 					}
 				}
-				if (!(*img_rd)(info, (char*)buf)) {
+				if (!(*img_rd)(info, buf)) {
 					img_rd = skip_corrupted;
 				}
 				y += interlace;

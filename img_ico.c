@@ -2,8 +2,8 @@
 */
 
 /*static*/ BOOL decIco_start (const char * name, IMGINFO info);
-static BOOL decIco_rd_4  (IMGINFO, char * buffer);
-static BOOL decIco_rd_8  (IMGINFO, char * buffer);
+static BOOL decIco_rd_4  (IMGINFO, CHAR * buffer);
+static BOOL decIco_rd_8  (IMGINFO, CHAR * buffer);
 static void decIco_quit  (IMGINFO);
 
 static DECODER _decoder_ico = {
@@ -333,7 +333,7 @@ decIco_start (const char * name, IMGINFO info)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decIco_rd_4 (IMGINFO info, char * buffer)
+decIco_rd_4 (IMGINFO info, CHAR * buffer)
 {
 	ICON icon = info->_priv_data;
 	if (icon->Cnt > 0) {
@@ -354,7 +354,7 @@ decIco_rd_4 (IMGINFO info, char * buffer)
 
 /*----------------------------------------------------------------------------*/
 static BOOL
-decIco_rd_8 (IMGINFO info, char * buffer)
+decIco_rd_8 (IMGINFO info, CHAR * buffer)
 {
 	ICON icon = info->_priv_data;
 	if (icon->Cnt > 0) {
