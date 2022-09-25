@@ -16,7 +16,7 @@ struct s_img_info {
 	unsigned NumComps :8;  /* 3 = TrueColor, 1 = grayscale or palette mode */
 	unsigned BitDepth :8;
 	WORD     NumColors;
-	char   * Palette;
+	unsigned char   * Palette;
 	unsigned PalRpos :8;
 	unsigned PalGpos :8;
 	unsigned PalBpos :8;

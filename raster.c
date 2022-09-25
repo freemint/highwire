@@ -1325,7 +1325,7 @@ cnvpal_mono (IMGINFO info, ULONG backgnd)
 {
 	if (info->Palette) {
 		ULONG  bgnd, fgnd;
-		char * rgb = info->Palette;
+		unsigned char * rgb = info->Palette;
 		bgnd = ((((long)rgb[info->PalRpos] <<8) | rgb[info->PalGpos]) <<8)
 		              | rgb[info->PalBpos];
 		rgb += info->PalStep;
@@ -1344,9 +1344,9 @@ static void
 cnvpal_1_2 (IMGINFO info, ULONG backgnd)
 {
 	ULONG * pal = info->Pixel;
-	char  * r   = info->Palette + info->PalRpos;
-	char  * g   = info->Palette + info->PalGpos;
-	char  * b   = info->Palette + info->PalBpos;
+	unsigned char  * r   = info->Palette + info->PalRpos;
+	unsigned char  * g   = info->Palette + info->PalGpos;
+	unsigned char  * b   = info->Palette + info->PalBpos;
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
@@ -1363,9 +1363,9 @@ static void
 cnvpal_4_8 (IMGINFO info, ULONG backgnd)
 {
 	ULONG * pal = info->Pixel;
-	char  * r   = info->Palette + info->PalRpos;
-	char  * g   = info->Palette + info->PalGpos;
-	char  * b   = info->Palette + info->PalBpos;
+	unsigned char  * r   = info->Palette + info->PalRpos;
+	unsigned char  * g   = info->Palette + info->PalGpos;
+	unsigned char  * b   = info->Palette + info->PalBpos;
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
@@ -1387,9 +1387,9 @@ static void
 cnvpal_15 (IMGINFO info, ULONG backgnd)
 {
 	ULONG * pal = info->Pixel;
-	char  * r   = info->Palette + info->PalRpos;
-	char  * g   = info->Palette + info->PalGpos;
-	char  * b   = info->Palette + info->PalBpos;
+	unsigned char  * r   = info->Palette + info->PalRpos;
+	unsigned char  * g   = info->Palette + info->PalGpos;
+	unsigned char  * b   = info->Palette + info->PalBpos;
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
@@ -1414,9 +1414,9 @@ static void
 cnvpal_high (IMGINFO info, ULONG backgnd)
 {
 	ULONG * pal = info->Pixel;
-	char  * r   = info->Palette + info->PalRpos;
-	char  * g   = info->Palette + info->PalGpos;
-	char  * b   = info->Palette + info->PalBpos;
+	unsigned char  * r   = info->Palette + info->PalRpos;
+	unsigned char  * g   = info->Palette + info->PalGpos;
+	unsigned char  * b   = info->Palette + info->PalBpos;
 	short   t   = info->Transp;
 	short   n   = info->NumColors;
 	do {
@@ -1451,9 +1451,9 @@ cnvpal_true (IMGINFO info, ULONG backgnd)
 			rgb++;
 		} while (--n);
 	} else {
-		char  * r   = info->Palette + info->PalRpos;
-		char  * g   = info->Palette + info->PalGpos;
-		char  * b   = info->Palette + info->PalBpos;
+		unsigned char  * r   = info->Palette + info->PalRpos;
+		unsigned char  * g   = info->Palette + info->PalGpos;
+		unsigned char  * b   = info->Palette + info->PalBpos;
 		do {
 			*(pal++) = (!t-- ? color_lookup ((WORD)backgnd)
 			                 : ((((long)*r <<8) | *g) <<8) | *b);

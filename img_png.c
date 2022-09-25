@@ -94,11 +94,17 @@ decPng_start (const char * name, IMGINFO info)
 	info->NumComps   = (png_get_channels(png_ptr, info_ptr) >= 3 ? 3 : 1);
 	info->BitDepth   = png_get_bit_depth(png_ptr, info_ptr);
 	if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_colors) & PNG_INFO_PLTE) {
-		info->Palette = (char *)palette;
+		info->Palette = (unsigned char *)palette;
 		info->NumColors = num_colors;
+#if 1 /* bug-endian */
+		info->PalRpos = (int)(offsetof(png_color, red) + sizeof(palette->red) - 1);
+		info->PalGpos = (int)(offsetof(png_color, green) + sizeof(palette->green) - 1);
+		info->PalBpos = (int)(offsetof(png_color, blue) + sizeof(palette->blue) - 1);
+#else
 		info->PalRpos = (int)offsetof(png_color, red);
 		info->PalGpos = (int)offsetof(png_color, green);
 		info->PalBpos = (int)offsetof(png_color, blue);
+#endif
 		info->PalStep = (int)sizeof(png_color);
 	} else
 	{

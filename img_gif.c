@@ -113,7 +113,7 @@ decGif_start (const char * file, IMGINFO info)
 	info->NumComps   = 1;
 	info->BitDepth   = map->BitsPerPixel;
 	info->NumColors  = map->ColorCount;
-	if ((info->Palette = (char*)map->Colors) != NULL) {
+	if ((info->Palette = &map->Colors->Red) != NULL) {
 		GifColorType * rgb = NULL;
 		info->PalRpos = (unsigned)&rgb->Red;
 		info->PalGpos = (unsigned)&rgb->Green;

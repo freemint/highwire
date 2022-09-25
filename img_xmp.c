@@ -144,7 +144,7 @@ decXmp_start (const char * name, IMGINFO info)
 		if (pix) {
 			depth         = 8;
 			xmap->PixChrs = pix;
-			info->Palette = (char*)map;
+			info->Palette = (unsigned char*)map;
 			info->PalRpos = 1;
 			info->PalGpos = 2;
 			info->PalBpos = 3;

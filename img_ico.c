@@ -234,7 +234,7 @@ decIco_start (const char * name, IMGINFO info)
 			info->NumComps   = 1; /* not supported */
 			info->BitDepth   = found->wBitCount;
 			info->NumColors  = found->bColorCount +1;
-			info->Palette = (char*)cmap;
+			info->Palette = (unsigned char*)cmap;
 			info->PalRpos = 2;
 			info->PalGpos = 1;
 			info->PalBpos = 0;
