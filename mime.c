@@ -189,7 +189,3 @@ mime_byString (const char * str, const char ** tail)
 	
 	return type;
 }
-
-
-
-

@@ -18,7 +18,6 @@ static DECODER _decoder_jpg = {
 #undef  DECODER_CHAIN
 #define DECODER_CHAIN &_decoder_jpg
 
-
 typedef struct jpeg_decompress_struct * JPEG_DEC;
 typedef struct jpeg_error_mgr         * JPEG_ERR;
 
@@ -40,7 +39,6 @@ _jpeg_errjmp (j_common_ptr cinfo)
 	if (!escape) {
 		hwUi_fatal ("image::jpeg_error", "got lost!");
 	} else {
-	/*	puts("ouch...");*/
 		longjmp (*escape, TRUE);
 	}
 }

@@ -284,4 +284,3 @@ extern void send_olga_link ( const char *s );
 extern void handle_olga ( WORD msg[8] );
 extern void Init_OLGA   ( void );
 extern void Exit_OLGA   ( void );
-

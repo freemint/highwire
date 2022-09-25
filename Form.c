@@ -132,8 +132,6 @@ static void    del_chars (INPUT input, WORD col, WORD row, int numChars);
 #define        __edit_r_r(inp)       ((inp)->TextArray[(inp)->TextRows])
 #define        edit_space(inp)       ((WCHAR*)&__edit_r_0(inp)-__edit_r_r(inp))
 
-
-
 /*------------------------------------------------------------------------------*/
 #ifdef __PUREC__
 int iswspace(wint_t wc)

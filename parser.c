@@ -130,12 +130,10 @@ delete_parser (PARSER parser)
 	if (!cont->Mode) {
 		frame_finish (frame, parser, &parser->Current);
 		containr_setup (cont, frame, frame->Location->Anchor);
-
 		if (parser->Loader->notified) {
 			containr_notify (cont, HW_PageFinished, &cont->Area);
 			parser->Loader->notified = FALSE;
 		}
-
 	} else {
 		fontstack_clear (&parser->Current.fnt_stack);
 		delete_frame (&frame);
@@ -189,6 +187,7 @@ stack_store (PARSPRIV prsdata, char * ptr)
 		return FALSE;
 	}
 	prsdata->OwnMem.Mem = ptr;
+
 	return TRUE;
 }
 
@@ -230,6 +229,7 @@ stack_pop (PARSPRIV prsdata, LOCATION * loc, const char ** ptr)
 	}
 	prsdata->Stack[numberof(prsdata->Stack)-1].Ptr  = NULL;
 	prsdata->Stack[numberof(prsdata->Stack)-1].Base = NULL;
+
 	return TRUE;
 }
 
@@ -264,6 +264,7 @@ resume_job (void * arg, long invalidated)
 		}
 	}
 	delete_loader (&loader);
+
 	return FALSE;
 }
 
@@ -279,6 +280,7 @@ parser_resume (PARSER parser, void * func, const char * ptr_sub)
 		}
 		parser->ResumeErr = E_OK;
 	}
+
 	return -2; /*JOB_NOOP */
 }
 
@@ -298,6 +300,7 @@ find_key (PARSER parser, HTMLKEY key)
 		}
 		ent++;
 	}
+
 	return NULL;
 }
 
@@ -324,6 +327,7 @@ get_value (PARSER parser, HTMLKEY key, char * output, const size_t max_len)
 			output[ent->Len] = '\0';
 		}
 	}
+
 	return found;
 }
 
@@ -341,12 +345,12 @@ get_value_str (PARSER parser, HTMLKEY key)
 	
 	if (!ent) {
 		found = NULL;
-	
 	} else {
 		found = malloc (ent->Len +1);
 		memcpy (found, ent->Value, ent->Len);
 		found[ent->Len] = '\0';
 	}
+
 	return found;
 }
 
@@ -382,6 +386,7 @@ get_value_unum (PARSER parser, HTMLKEY key, WORD dflt)
 			dflt = (WORD)value;
 		}
 	}
+
 	return dflt;
 }
 
@@ -412,6 +417,7 @@ get_value_size (PARSER parser, HTMLKEY key)
 			}
 		}
 	}
+
 	return size;
 }
 
@@ -433,6 +439,7 @@ get_value_color (PARSER parser, HTMLKEY key)
 			color = remap_color (value);
 		}
 	}
+
 	return color;
 }
 
@@ -452,7 +459,6 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 		BOOL important = FALSE;
 
 		len -= line - ptr;
-		
 		if (val) {
 			while (len && isspace(*val)) {
 				len--;
@@ -460,13 +466,11 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 			}
 			line = val;
 		}
-
 		while (len && *line != ';') {
 			/* ! important - we might need to check farther */
 			if (*line == '!') {
 				important = TRUE;	
 			}
-
 			len--;
 			line++;
 		}
@@ -475,7 +479,6 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 			while (--ptr >= val && isspace(*ptr));
 			if (ptr < val) val = NULL;
 		}
-
 
 		if (val && (css != CSS_Unknown)) {
 			if ((ent = find_key (parser, (HTMLKEY)css)) == NULL) {
@@ -488,10 +491,10 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 					/*printf("val %.*s  ent %d \r\n",10,val,css);*/
 				}
 			} else {
-				/*	if (css == 13) printf("found ent %d val %.*s %d  \r\n",
+#if 0
+				if (css == 13) printf("found ent %d val %.*s %d  \r\n",
 				                         css, ent->Len,ent->Value,ent->Weight);
-				*/
-				;
+#endif
 			}
 		}
 
@@ -502,7 +505,6 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 */
 			if ((weight >= ent->Weight)
 				||(important && ((weight + 10000000L) >= ent->Weight))) {
-
 /*				if (ent->Key == 13)
 					printf("new ent %d val %.*s %ld old %.*s %ld \r\n",
 					       css,(unsigned)(ptr - val +1),val,weight,ent->Len,
@@ -512,19 +514,16 @@ css_values (PARSER parser, const char * line, size_t len, LONG weight)
 				ent->Value = val;
 				ent->Len   = (unsigned)(ptr - val +1);
 				ent->Weight = weight;
-
 				if (important) {
 					ent->Weight += 10000000L;
 					important = FALSE;
-
 /*					if ( ent->Key == 13)
 						printf("\nin   %.*s %ld\n",ent->Len,ent->Value,ent->Weight);
 */					
 				}
-
 			}
 		}
-		
+
 		if (len && *line == ';') {
 			len--;
 			line++;
@@ -549,17 +548,17 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 
 	while (style) {
 		BOOL match;
-	
+
 		if ((style->Css.Key && (HTMLTAG)style->Css.Key != tag
 		                    && (HTMLTAG)style->Css.Key != TAG_LastDefined) ||
-		    (class_id != style->ClassId)              ||
+		    (class_id != style->ClassId)               ||
 		    (keyval && (strncmp (style->Ident, keyval->Value, keyval->Len)
 	                         || style->Ident[keyval->Len]))) {
 			match = FALSE;
 		} else {
 			STYLE    link = style->Link;
 			DOMBOX * box  = parser->Current.parentbox;
-							
+
 			if (style->Css.Key && (HTMLTAG)style->Css.Key == tag) {
 				weight += 1;
 			}
@@ -567,8 +566,6 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 				if (style->ClassId == '.') {
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
-/*printf("Class = %.*s  \r\n",keyval->Len, keyval->Value);
-*/
 						weight += 100;
 						if (link && weight >= 100 && *link->Css.Value) {
 							box = NULL;
@@ -577,8 +574,6 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 				} else if (style->ClassId == '#') {
 					if (keyval &&
 					    (strncmp(style->Ident, keyval->Value, keyval->Len) == 0)) {
-/*printf("ID    = %.*s  \r\n",keyval->Len, keyval->Value);
-*/
 						weight += 10000;
 						if (link && weight >= 10000 && *link->Css.Value) {
 							box = NULL;
@@ -588,18 +583,14 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 			}
 			
 			while (link && box) {
-						
 				/* these  > * + get no weight */
 				if (*link->Css.Value == '>') {
 					/* exact: <parent><tag> */
-/*printf("hit >  \n");*/
 				} else if (*link->Css.Value == '*') {
 					/* exact: <parent><*><tag> */
-/*printf("hit * tag = %d %s\n",tag,style->Ident);*/
 					if ((box = box->Parent) == NULL) break;
 				} else if (*link->Css.Value == '+') {
 					/* exact: </sibling><tag> */
-/*printf("hit + \n");*/
 					if ((box = box->ChildBeg) == NULL) break;
 					while (box->Sibling && box->Sibling->Sibling) box = box->Sibling;
 				}
@@ -608,16 +599,13 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					} else {
-/*printf("Class %s   \r\n",box->ClName);*/
 						weight += 100;
 					}
 				} else if (link->ClassId == '#') {
-/*printf("ID %s   \r\n",box->ClName);*/
 					if (!box->IdName || strcmp (box->IdName, link->Ident)) {
 						box = (!*link->Css.Value ? box->Parent : NULL);
 						continue;
 					} else {
-/*printf("ID %s   \r\n",box->ClName);*/
 						weight += 10000;
 					}
 				}
@@ -641,14 +629,13 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 						 * for it - Dan Feb 9, 2006
 						 */
 						box = (!*link->Css.Value ? box->Parent : NULL);
-						/*box = box->Parent;*/
+						/* box = box->Parent; */
 						continue;
 					}
 				} else {
 					link = link->Link;
 					box  = box->Parent;
 					weight += 1;
-
 					/* temporary fix for missing a DOMBOX for HTML tag */
 					if (link && ((HTMLTAG)link->Css.Key == TAG_HTML) && (box == NULL)) {
 						weight += 1;
@@ -668,9 +655,9 @@ css_filter (PARSER parser, HTMLTAG tag, char class_id, KEYVALUE * keyval)
 		style = style->Next;
 	}
 
-
 	return entry;
 }
+
 
 /*==============================================================================
  * Parses a html TAG expression of the forms
@@ -705,8 +692,7 @@ parse_tag (PARSER parser, const char ** pptr)
 		lookup  = FALSE;
 	}
 	
-	/* first check for comment
-	 */
+	/* first check for comment */
 	if (*line == '!') {
 		const char * end;
 		if (*(++line) == '-') {
@@ -725,16 +711,14 @@ parse_tag (PARSER parser, const char ** pptr)
 
 	if ((tag = scan_tag (&line)) == TAG_Unknown) {
 		lookup = FALSE;
-	
 	} else if (lookup && prsdata->Styles) {
 		entry = css_filter (parser, tag, '\0', NULL);
 	}
 
 	/*** if the tag is known or not, in every case we have to go through
 	 *   the list of variables to avoid the parser from becoming confused
-	*/
+	 */
 	while (isspace(*line)) line++;
-
 	while (*line  &&  *line != '>') {
 		const char  * val = line;
 		const char  * line2 = line;
@@ -743,19 +727,16 @@ parse_tag (PARSER parser, const char ** pptr)
 		char    delim = '\0';
 
 		while (isspace(*line)) line++;
-
 		if (*line == '=') {
 			while (isspace(*(++line)));
 			rhs = TRUE;
 		}
 		if (rhs) {
 			val = line;
-
 			line++;
 			
 			if ((*val == 39)||(*val == '"')) {
 				while ((*line != *val)&&(*line != '>')) ++line;
-
 				if (*line == '>') {
 					line2 = line;
 					
@@ -763,15 +744,12 @@ parse_tag (PARSER parser, const char ** pptr)
 
 					if (*line == '<')	line = line2;
 				}
-
 				delim = *val;
 				val++;
 			} else {
 				while (*line && *line != '>' && !isspace(*line)) line++;
 			}
-
 			if (*line == '\0') delim = '\0';
-
 		} else {
 			val = NULL;
 		}
@@ -796,7 +774,6 @@ parse_tag (PARSER parser, const char ** pptr)
 
 				/* 1st Count classes in val */
 				/* This could probably all be rewritten */
-				
 				if ((val && len) && (key == KEY_CLASS)) {
 					while(tlen < len) {
 						if (isspace(val[tlen])) {
@@ -813,10 +790,8 @@ parse_tag (PARSER parser, const char ** pptr)
 
 					/* first send the whole thing */
 					entry->Key = key;
-
-						entry->Value = val;
-						entry->Len   = len;
-
+					entry->Value = val;
+					entry->Len   = len;
 					entry++;
 					prsdata->KeyNum++;
 					if (val && len && prsdata->Styles) {
@@ -830,10 +805,8 @@ parse_tag (PARSER parser, const char ** pptr)
 							tlen1++;
 						}
 						entry->Key = key;
-
 						entry->Value = tempval;
 						entry->Len   = tlen1;
-					
 						entry++;
 						prsdata->KeyNum++;
 
@@ -851,7 +824,6 @@ parse_tag (PARSER parser, const char ** pptr)
 					}
 				} else {
 					entry->Key = key;
-
 					if (val && len) {
 						entry->Value = val;
 						entry->Len   = len;
@@ -873,10 +845,8 @@ parse_tag (PARSER parser, const char ** pptr)
 		}
 
 		if (delim && delim == *line) line++;
-
 		while (isspace(*line)) line++;
 	}
-
 	*pptr = (*line ? ++line : line);
 	
 	return tag;
@@ -895,7 +865,6 @@ css_import (PARSER parser, const char * ptr, LOCATION * base)
 	if (!ptr) {
 		p   = "";
 		loc = location_share (*base);
-	
 	} else {
 		p   = ptr;
 		loc = NULL;
@@ -929,7 +898,6 @@ css_import (PARSER parser, const char * ptr, LOCATION * base)
 	
 	if (!loc) {
 		/* invalid syntax, skip it */
-	
 	} else {
 		size_t size = 0;
 		char * file = NULL;
@@ -1004,7 +972,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				p = empty;
 			}
 		}
-		
 	}
 	
 #ifdef __PUREC__
@@ -1021,13 +988,7 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 		} while (p[n] && !isspace (p[n]) && !isgraph (p[n]));
 		if (n && p[n])
 		{
-/*			int i;
-*/
 			/* todo : output should probably be sent to a logfile */
-/*			printf ("parse_css(): leading invalid characters skipped:");
-			for (i = 0; i < n; printf (" %02X", p[i++]));
-			printf ("\n");
-*/
 			p += n;
 		}
 	}
@@ -1063,12 +1024,10 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				p = q;
 				while (isspace (*(++p)));
 				done = (!*p && !style);
-
 				continue;
 			}
 			
 			tok = p;
-			
 			if (*p == '@') { /*............................... special */
 				const char * q = p;
 				if (strnicmp (q +1, "import", 6) == 0) {
@@ -1121,7 +1080,8 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 							if (!isspace(*q) && !isalpha(*q) && *q != '{') break;
 						}
 					}
-					if ((err = (*q != '{')) == TRUE)	break;
+					if ((err = (*q != '{')) == TRUE)
+						break;
 					
 					if (parse_media) {
 						/* get us past opening bracket */
@@ -1145,7 +1105,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 							}
 						}
 					}
-				
 				} else if (strnicmp (q +1, "font-face", 9) == 0) {
 					/* The same as setting the font family
 					 * for the whole document
@@ -1179,11 +1138,9 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					if ((q = strchr (q +8, '}')) != NULL) {
 						q++;
 					}
-				
 				} else {
 					while (isalpha (*(++q)));
 					while (isspace (*(++q)));
-
 					q = (*q == '{' ? strchr (q +1, '}') : NULL);
 					if (q) q++;
 				}
@@ -1194,12 +1151,11 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 			/* we may have a trailing } left over from media parsing. */
 			if (next(&p) == '}') {
-				/*printf("media left: ''%.50s''\n", p);*/
 				p++;
 				done = (!*p && !style);
 				continue;
 			}
-			
+
 			/*ignore netscape css rules *|*: */
 			if (strnicmp (p, "*|*:", 4) == 0) {
 				int bracket_count = 0;
@@ -1209,7 +1165,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 						bracket_count += 1;
 					} else if (*p == '}') {
 						bracket_count -= 1;
-						
 						if (bracket_count < 1) break;
 					}
 				}
@@ -1225,21 +1180,20 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 						bracket_count += 1;
 					} else if (*p == '}') {
 						bracket_count -= 1;
-						
 						if (bracket_count < 1) break;
 					}
 				}
 				p++;
 			}
-			
-			if (*p == '*') { /*................................ joker */
+
+			/*................................ joker */
+			if (*p == '*') {
 				key = TAG_LastDefined; /* matches all */
 				universal = TRUE;
 				unvsel = p;
 				p++;
-				
-			#if 0
-			/* old code to probably be deleted */
+#if 0
+				/* old code to probably be deleted */
 				if (*(++p) == '.') {
 					key = TAG_LastDefined; /* matches all */
 				} else if (isalpha (*p)) {
@@ -1259,13 +1213,11 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					/*err = TRUE;
 					break;*/
 				}
-			#endif
-
+#endif
 			} else if (isalpha (*p)) { /*........................ tag */
 				const char * q = p;
 
 				key = scan_tag (&p);
-				
 				/* This could be a tag we don't support or
 				 * it could be a typo on a class or id
 				 *
@@ -1273,15 +1225,14 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				 * typo on a class, we need to filter out more possible
 				 * characters than would be caught in scan_tag()
 				 */
-
 				if ((key == TAG_Unknown) || (*p == '_')) {
 					p = q;
-
 					while (isalnum (*(++p)) || *p == '-' || *p == '_' || *p == '&');
 				}
 			}
-			
-			if (*p == '.' || *p == '#') { /*............. class or id */
+
+			/*............. class or id */
+			if (*p == '.' || *p == '#') {
 				cid = *(p++);
 
 				/* can't start with numbers */
@@ -1289,15 +1240,14 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 				beg = p;
 				while (isalnum (*(++p)) || strchr ("-_.&", *p));
-
 				end = p;
-
 				if (beg == end) cid = '\0';
 			} else {
 				beg = end = NULL;
 			}
 
-			if (*p == ':') { /*........................ pseudo format */
+			/*........................ pseudo format */
+			if (*p == ':') {
 				p++;
 				if (key == TAG_A
 				    && strnicmp (p, "link", 4) == 0 && !isalpha (p[4])) {
@@ -1310,19 +1260,19 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					skip = TRUE; /* ignore */
 				}
 			}
-			
-			if (*p == '[') { /*..................... conditional rule */
+
+			/*..................... conditional rule */
+			if (*p == '[') {
 				while (*(++p) && *p != ']');
 				if (*p) p++;
 				skip = TRUE; /* ignore */
 			}
-			
 
 			/* invalid token ignore the rule as per CSS2 */
 			if (*p == '&') {
 				int bracket_count = 0;
-				p++;
 
+				p++;
 				while (*(++p)) {
 					if (*p == '{') {
 						bracket_count += 1;
@@ -1333,12 +1283,12 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					}
 				}
 				p++;
-
-				skip = TRUE; /* ignore */
+				skip = TRUE;           /* ignore */
 				done = (!*p && !style);
 			}
 
-			if (key > TAG_Unknown || cid) { /* store */
+			/* store */
+			if (key > TAG_Unknown || cid) {
 				size_t len = end - beg;
 				STYLE  tmp = malloc (sizeof (struct s_style) + len);
 				if (len) memcpy (tmp->Ident, beg, len);
@@ -1367,7 +1317,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			if (universal) {
 				/* universal selector caught up above */
 				if (style) style->Css.Value = unvsel;
-								
 				universal = FALSE;	
 				continue;
 			}
@@ -1383,7 +1332,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 			} else if (*p == '~') { 
 				/* ........ WTF  ???  I can't find this but Slashdot uses it, so */
 				/* I'm treating it like it was a normal alpha char seems to work */
-				
 				if (style) style->Css.Value = "";
 				p++;
 				continue;
@@ -1391,7 +1339,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 				continue;
 			}
 
-						
 			if (skip) {
 				if (style) {
 					while (style->Link) {
@@ -1424,15 +1371,12 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 			while (isspace (*(++p)));
 			beg = p;
-
 			while (*p ) {
-
 				if (*p == '{') { 
 					bracket_count += 1;
 					p++;
 					continue;
 				}
-
 				if (*p == '\'' || *p == '"') { 
 					char q = *p;
 					
@@ -1449,33 +1393,26 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 
 					continue;
 				}
-
 				if (!isspace (*p)) {
 					end = NULL;
 				} else if (!end) {
 					end = p;
 				}
-				
 				if (*p == '}') { 
 					bracket_count -= 1;
-					
 					if (bracket_count < 1)
 						break;
 				}
-
 				p++;
 			} /* end while (*p) */
 			
 			if (!end) {
 				end = p;
 			}
-			
 			if (end[-1] == ';') {
 				end--; /* cut off trailing semicolon to detect empty rules */
 			}
-
 			if (*p) while (isspace (*(++p)));
-
 		} /* end else if (*p == '{') */
 		
 		if (style) {
@@ -1488,7 +1425,6 @@ parse_css (PARSER parser, LOCATION loc, const char * p)
 					style->Css.Value = beg;
 					p_style = &style->Next;
 				} while ((style = *p_style) != NULL);
-			
 			} else do {   /* no rule string, delete styles */
 				while (style->Link) {
 					STYLE link = style->Link;

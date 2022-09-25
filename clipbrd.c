@@ -28,7 +28,6 @@ open_scrap (BOOL rdNwr)
 	if (scrp_read (path) <= 0 || !path[0])
 	{
 		file = NULL;
-	
 	}
 	else
 	{

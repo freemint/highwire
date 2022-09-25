@@ -60,5 +60,3 @@ BOOL force_frame_controls = FALSE;
 
 /* Globals */
 WORD aes_max_window_title_length = 79;  /* default for original AES */
-
-

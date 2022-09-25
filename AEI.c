@@ -1538,11 +1538,13 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 				*p_answ++              /*[0]*/ = GS_REPLY;
 				*p_answ++              /*[1]*/ = gl_apid;
 				*p_answ++              /*[2]*/ = 0;
-				*((long **)p_answ)++/*[3..4]*/ = gsi_;
+				*((long **)p_answ)     /*[3..4]*/ = gsi_;
+				p_answ += 2;
 				*gsi_++ = sizeof(GS_INFO);
 				*gsi_++ = (0x0120L << 16) | GSM_COMMAND;
 				*gsi_   = 0L;
-				*((long *)p_answ)++ /*[5..6]*/ = 1;
+				*((long *)p_answ)      /*[5..6]*/ = 1;
+				p_answ += 2;
 				*p_answ                /*[7]*/ = msg[7];
 
 				sender = *(GS_INFO **)&msg[3];

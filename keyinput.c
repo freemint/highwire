@@ -273,6 +273,4 @@ key_pressed (WORD scan, WORD ascii, UWORD kstate)
 	{
 		hwWind_scroll (hwWind_Top, active->Container, sx, sy);
 	}
-
-
 }

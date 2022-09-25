@@ -73,4 +73,3 @@ ULONG sched_clear (long hash);
 
 
 #endif /*__SCHEDULE_H__*/
-

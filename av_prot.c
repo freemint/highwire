@@ -322,5 +322,3 @@ handle_avdd (short win_handle, short kstate, char * arg)
 	
 	if (cmd_orig) free (cmd_orig);
 }
-
-
