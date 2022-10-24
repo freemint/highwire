@@ -1,3 +1,31 @@
+Changes in V. 0.3.5
+
+ beta 7
+  - combined 2010 beta changes with 2013 git repo changes
+  - fix blank line rendering
+  - change AtariST specfic (control) characters to octal
+  - fix Pure-C build support (might work with AHCC now too)
+  - add support for latest giflib
+  - add support for older libungif
+  - fix support for gcc-2.95
+  - fix support for modern GCC and libraries
+  - cleanup type-punned pointers
+  - streamline about build libs 
+
+ 2013-git
+  - add support for coldfire architecture
+  - add support for libgif 5.0
+  - add support for libpng 1.4.x
+  - fix GCC strict aliasing warnings/errors
+
+ 2011-git
+  - add support for AV_PATH_UPDATE
+
+ 2010-cvs
+  - add monospaced fonts if available
+  - fix support for jpeglib
+  - move clipboard code to own files 
+
 Changes in V. 0.3.4
  beta 1
   - Added New Window ^N to File menu
