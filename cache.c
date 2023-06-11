@@ -87,17 +87,25 @@ void
 cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 {
 	if (!dir && !mem_max && !dsk_max && !dsk_lim) {
+#ifdef DEBUG
 		puts ("Setting cache defaults:");
+#endif
 		if (!__cache_mem_max) {
 			mem_max = CACHE_MAX;
+#ifdef DEBUG
 			printf ("  Memory: %lu bytes\n", mem_max);
+#endif
 		}
 		if (!__cache_dir) {
+#ifdef DEBUG
 			puts (" Disk: (disabled)");
+#endif
 		} else if (!__cache_dsk_max) {
 			dsk_max = 2L*1024*1024;
 			dsk_lim = 200;
+#ifdef DEBUG
 			printf ("  Disk: %lu bytes, %lu files.\n", dsk_max, dsk_lim);
+#endif
 		}
 	}
 	
@@ -107,7 +115,9 @@ cache_setup (const char * dir, size_t mem_max, size_t dsk_max, size_t dsk_lim)
 		} else if (__cache_mem_max > mem_max) {
 			__cache_mem_max = mem_max;
 		}
-/*		printf ("cache mem %lu\n", __cache_mem_max);*/
+#ifdef DEBUG
+		printf ("cache mem %lu\n", __cache_mem_max);
+#endif
 	}
 	
 	if (dsk_max) {
@@ -160,12 +170,16 @@ create_item (LOCATION loc, CACHEOBJ object, size_t size, void (*dtor)(void*))
 	
 	if (dtor) {
 		if (!object) {
+#ifdef DEBUG
 			puts ("create_item(): mem item without object!");
+#endif
 			return NULL;
 		}
 	} else {
 		if (object) {
+#ifdef DEBUG
 			puts ("create_item(): disk item with object!");
+#endif
 			return NULL;
 		}
 	}
@@ -259,33 +273,39 @@ static BOOL
 cache_throw (long size)
 {
 	CACHEITEM citem = __cache_end;
-	/*BOOL      single;
+#ifdef DEBUG
+	BOOL      single;
 	if (size > 0) {
 		printf ("cache_throw(%li):\n", size);
 		single = FALSE;
 	} else {
 		single = TRUE;
-	}*/
+	}
+#endif
 	while (citem) {
 		CACHEITEM prev = citem->PrevItem;
 		if (!citem->Reffs && item_isMem (citem)) {
-			/*if (single) {
+#ifdef DEBUG
+			if (single) {
 				printf ("cache_throw(): %li '%s'\n",
 				        citem->Size, citem->Location->File);
 			} else {
 				printf ("%7lu '%s'\n", citem->Size, citem->Location->File);
-			}*/
+			}
+#endif
 			size -= citem->Size;
 			destroy_item (citem);
 			if (size <= 0) return TRUE;
 		}
 		citem = prev;
 	}
-	/*if (single) {
+#ifdef DEBUG
+	if (single) {
 		puts ("cache_throw(): giving up");
 	} else {
 		puts ("    ... giving up");
-	}*/
+	}
+#endif
 	return FALSE;
 }
 
@@ -314,7 +334,9 @@ cache_insert (LOCATION loc, long ident, long lc_ident,
 		while (nitem) {
 			if (nitem->Cached[0]) {
 				if (nitem->Ident) {
+#ifdef DEBUG
 					printf ("cache_insert(%s): ident already set.\n", loc->FullName);
+#endif
 				}
 				nitem->Ident    = lc_ident;
 				__cache_changed = TRUE;
@@ -323,7 +345,9 @@ cache_insert (LOCATION loc, long ident, long lc_ident,
 			nitem = nitem->NodeNext;
 		}
 		if (!nitem) {
+#ifdef DEBUG
 			printf ("cache_insert(%s): local not found.\n", loc->FullName);
+#endif
 		}
 	}
 	
@@ -422,7 +446,9 @@ cache_release (CACHED * p_object, BOOL erase)
 					if (item_isMem (citem)) {
 						destroy_item (citem);
 					} else if (!citem->Cached[0]) {
+#ifdef DEBUG
 						puts ("cache_release(): item is busy!");
+#endif
 					} else {
 						destroy_item (citem);
 						cache_flush (NULL);
@@ -514,12 +540,16 @@ cache_exclusive (LOCATION loc)
 	
 	if (citem) {
 		res = (!citem->Object ? CR_BUSY : CR_LOCAL);
-	/*	printf ("cache_exclusive(%s): %s\n",
-		        loc->FullName, (res == CR_BUSY ? "busy" : "found"));*/
+#ifdef DEBUG
+		printf ("cache_exclusive(%s): %s\n",
+		        loc->FullName, (res == CR_BUSY ? "busy" : "found"));
+#endif
 	} else {
 		create_item (loc, NULL, 0uL, (void(*)(void*))0);
 		res = CR_NONE;
-	/*	printf ("cache_exclusive(%s) set\n", loc->FullName);*/
+#ifdef DEBUG
+		printf ("cache_exclusive(%s) set\n", loc->FullName);
+#endif
 	}
 	return res;
 }
@@ -531,18 +561,26 @@ cache_abort (LOCATION loc)
 	CACHEITEM citem = tree_item (loc);
 	
 	if (!citem) {
+#ifdef DEBUG
 		printf ("cache_abort(%s): not found!\n", loc->FullName);
+#endif
 	
 /*>>>>>>>>>> DEBUG */
 	} else if (citem->Object || citem->Cached[0]) {
+#ifdef DEBUG
 		printf ("cache_abort(%s): not busy!\n", loc->FullName);
+#endif
 	
 	} else if (citem->Size) {
+#ifdef DEBUG
 		printf ("cache_abort(%s): has size %lu!\n", loc->FullName, citem->Size);
+#endif
 	
 /*<<<<<<<<<< DEBUG */
 	} else {
-	/*	printf ("cache_abort(%s)\n", loc->FullName);*/
+#ifdef DEBUG
+		printf ("cache_abort(%s)\n", loc->FullName);
+#endif
 		destroy_item (citem);
 	}
 }
@@ -556,10 +594,14 @@ cache_assign (LOCATION src, void * data, size_t size,
 	CACHEITEM citem = tree_item (src);
 	
 	if (!citem) {
+#ifdef DEBUG
 		printf ("cache_assign(%s): not found!\n", src->FullName);
+#endif
 	
 	} else if (citem->Object) {
+#ifdef DEBUG
 		printf ("cache_assign(%s): already in use!\n", src->FullName);
+#endif
 	
 	} else {
 		if (__cache_dir) {
@@ -615,7 +657,9 @@ cache_expires (LOCATION loc, long date)
 {
 	CACHEITEM citem = tree_item (loc);
 	if (!citem) {
+#ifdef DEBUG
 		printf ("cache_expires(%s): not found!\n", loc->FullName);
+#endif
 	} else if (date > 0 || !citem->Expires) {
 		citem->Expires = date;
 		__cache_changed = TRUE;
@@ -709,7 +753,9 @@ cache_flush (CACHEITEM citem)
 		single = FALSE;
 	}
 	if (!file) {
+#ifdef DEBUG
 		puts ("cache_flush(): open failed.");
+#endif
 		return FALSE;
 	}
 	if (!__cache_dsk_num) {
@@ -729,7 +775,9 @@ cache_flush (CACHEITEM citem)
 				if (single) break;
 			}
 		} else if (single) {
+#ifdef DEBUG
 			puts ("cache_flush(): invalid item.");
+#endif
 			break;
 		}
 		citem = citem->PrevItem;
@@ -835,7 +883,9 @@ cache_build (void)
 			LOCATION loc = location_rdIdx (file);
 			if (!fgets (buf, (int)sizeof(buf) -1, file)) {
 				if (loc) {
+#ifdef DEBUG
 					puts ("cache_setup(): idx truncated.");
+#endif
 					free_location (&loc);
 				}
 			} else {
@@ -848,7 +898,9 @@ cache_build (void)
 				while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
 				
 				if (size < 0 || date < 0 || expr < -1) {
+#ifdef DEBUG
 					puts ("cache_setup(): idx corrupted.");
+#endif
 					free_location (&loc);
 					break;
 				
@@ -866,7 +918,9 @@ cache_build (void)
 				} else {
 					CACHEITEM item = create_item (loc, NULL, size,(void(*)(void*))0);
 					if (!item) {
+#ifdef DEBUG
 						puts ("cache_setup(): create failed.");
+#endif
 						free_location (&loc);
 						break;
 					} else {
