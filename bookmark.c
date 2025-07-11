@@ -1043,7 +1043,7 @@ set_bookmark_group (const char * grp, BOOL openNclose)
 		}
 		while (list) {
 			FLINE next = list->Next;
-			free (next);
+			free (list);
 			list = next;
 		}
 		if (file) {	
