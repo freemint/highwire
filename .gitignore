@@ -10,3 +10,4 @@ dist/
 *.ovl
 .DS_Store
 tmp/
+/*.zip
