@@ -492,13 +492,19 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		char       * p    = strchr (strcpy (buffer, meth), '\0');
 		size_t       len;
 		if (proxy) {
-			UWORD hlen;
+			UWORD hlen, port;
 			name = location_Host (loc, &hlen);
 			p    = strchr (strcpy (p, (loc->Proto == PROT_HTTPS ? "https://"
 			                                                    : "http://")),
 			               '\0');
 			strcpy (p, name);
 			p   += hlen;
+			/* Without this the proxy is asked for the scheme's own port and
+			 * fetches the wrong thing entirely, rather than merely labelling
+			 * it wrong. */
+			if ((port = location_Port (loc)) != 0) {
+				p += sprintf (p, ":%u", (unsigned)port);
+			}
 		}
 		len = sizeof(buffer) - (p - buffer) - sizeof(rest);
 		len = location_PathFile (loc, p, len);
@@ -530,9 +536,18 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			 * cannot fetch them.  True exactly when a proxy is configured,
 			 * which is the same condition proto_isFetchable() applies. */
 			const char * ua_fetch = (proxy ? "UA-fetch: https\r\n" : "");
+			/* RFC 2616 14.23: the port belongs in Host: whenever it is not
+			 * the scheme's own, or a name based virtual host serves us as
+			 * whatever answers on port 80. */
+			UWORD  hostport = location_Port (loc);
+			char   portbuf[8];
+			portbuf[0] = '\0';
+			if (hostport) {
+				sprintf (portbuf, ":%u", (unsigned)hostport);
+			}
 			image_AspectRatio (&ua_aspw, &ua_asph);
 			len = sprintf (buffer,
-			      "HOST: %s\r\n"
+			      "HOST: %s%s\r\n"
 			      "User-Agent: Mozilla 4.0 (compatible; Atari "
 			      _HIGHWIRE_FULLNAME_ "/" _HIGHWIRE_VERSION_ " %s)\r\n"
 			      /* the q value matters: unweighted, the catch-all lets a
@@ -548,7 +563,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			      "UA-color: %s%i\r\n"
 			      "UA-aspect: %i:%i\r\n"
 			      "%s",
-			      name, (stack ? stack : ""),
+			      name, portbuf, (stack ? stack : ""),
 			      vdi_dev.xres +1, vdi_dev.yres +1, ua_col, planes,
 			      ua_aspw, ua_asph, ua_fetch);
 			len = inet_send (sock, buffer, len);
