@@ -372,6 +372,13 @@ char *   dombox_setId   (DOMBOX *, const char *, BOOL force);
 char *   dombox_setClass(DOMBOX *, const char *, BOOL force);
 void     dombox_reorder (DOMBOX *, DOMBOX * behind);
 void     dombox_adopt   (DOMBOX *, DOMBOX * stepchild);
+/* The height that a percentage height resolves against: the visible height of
+ * the frame being laid out.  Formatting is otherwise driven by width alone, so
+ * a box has nothing else to ask.  Set before formatting a page, zero when that
+ * is unknown, in which case a percentage height is ignored as it always was.
+ */
+extern long dombox_AvailHeight;
+
 void     dombox_format  (DOMBOX *, long width);
 void     dombox_stretch (DOMBOX *, long height, V_ALIGN valign);
 
