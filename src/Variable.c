@@ -42,7 +42,7 @@ WORD fonts[3][2][2] = {
    	header , normal, italic
    	...
 */
-WORD font_size    = 12; /* points for size=3 */
+WORD font_size    = 10; /* points for size=3 */
 WORD font_minsize = 1;  /* minimum size */
 
 WORD link_colour = 12;  /* G_LBLUE */

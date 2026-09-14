@@ -13,6 +13,15 @@ LD = $(CC)
 CP = cp
 RM = rm -f
 
+# The toolkit container has no zip, and neither it nor the CI runner has
+# unix2dos -- which is why the docs shipped with Unix line endings for so long.
+# So use what the machine actually has.  perl is on all of them and its form is
+# idempotent, leaving an already converted file untouched; python3's zipfile
+# writes the same entries with the same CRCs as zip -r, and takes its arguments
+# in the same order, so either can fill $(ZIP).
+TODOS = perl -pi -e 's/\r?\n/\r\n/'
+ZIP := $(shell command -v zip >/dev/null 2>&1 && echo 'zip -r' || echo 'python3 -m zipfile -c')
+
 CPU = 68000
 #CPU = 68030
 #CPU = 68040
@@ -250,8 +259,8 @@ dist::
 #	Both are copies, so the other builds and stacks are still there to swap in.
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
 	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
-	-unix2dos $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg
-	(cwd=`pwd`; cd $(DISTDIR); zip -r "$$cwd"/hw`date +%y%m%d`.zip .)
+	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg/highwire.cfg
+	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/hw`date +%y%m%d`.zip .)
 
 #
 # dependencies

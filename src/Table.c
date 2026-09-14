@@ -1186,16 +1186,29 @@ vTab_format (DOMBOX * This, long max_width, BLOCKER blocker)
 	 * in case of a given table hight we need to spread the calculated row
 	 * hights.
 	 */
-	if (table->t_SetHeight > table->t_Height) {
-		short height = table->t_SetHeight - table->t_Height;
-		short num    = table->NumRows;
-		row = table->Rows;
-		do {
-			short h = height / num--;
-			row->Height += h;
-			height      -= h;
-		} while ((row = row->NextRow) != NULL);
-		table->t_Height = table->t_SetHeight;
+	{
+		long set_height = table->t_SetHeight;
+
+		/* A percentage arrives as a negative fraction of -1024 and resolves
+		 * against the frame being laid out, which is all the height there is
+		 * to ask for.  A table nested in a cell measures against the frame
+		 * too, not against the cell around it.  With no frame height known
+		 * this comes out zero and the table keeps the height of its rows.
+		 */
+		if (set_height < 0) {
+			set_height = (dombox_AvailHeight * -set_height + 512) /1024;
+		}
+		if (set_height > table->t_Height) {
+			long height = set_height - table->t_Height;
+			long num    = table->NumRows;
+			row = table->Rows;
+			do {
+				long h = height / num--;
+				row->Height += h;
+				height      -= h;
+			} while ((row = row->NextRow) != NULL);
+			table->t_Height = set_height;
+		}
 	}
 
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -24,7 +24,7 @@ struct s_location {
 	ULONG    __hash;
 	unsigned __reffs;
 	LC_PROTO Proto;
-	short    Port;
+	UWORD    Port;
 	ULONG    Flags;
 	void   * Host, * Dir;
 	const char * File;
@@ -44,6 +44,7 @@ size_t       location_FullName (LOCATION, char * buffer, size_t max_len);
 size_t       location_PathFile (LOCATION, char * buffer, size_t max_len);
 const char * location_Path     (LOCATION, UWORD * opt_len);
 const char * location_Host     (LOCATION, UWORD * opt_len);
+UWORD        location_Port     (LOCATION);
 BOOL         location_equal    (LOCATION, LOCATION);
 #define      location_equalHost(a, b)             (a && b && a->Host == b->Host)
 
