@@ -23,6 +23,8 @@ struct s_img_info {
 	unsigned PalStep :8;
 	WORD     Transp;
 	WORD     Interlace;
+	BOOL     Alpha;    /* rows arrive with an alpha channel after the colour... */
+	ULONG    AlphaBg;  /* ...to blend over this 0xRRGGBB, which setup() fills in */
 	/* */
 	void   (*raster)(IMGINFO, void * dst);
 	void   * RowMem;

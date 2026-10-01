@@ -33,6 +33,9 @@ decPng_start (const char * name, IMGINFO info)
 	FILE * file = fopen (name, "rb");
 	png_color *palette;
 	int num_colors;
+	int color_type;
+	BOOL alpha  = FALSE;
+	WORD transp = -1;
 
 	if (!file) {
 	/*	puts ("decPng_start(): file not found.");*/
@@ -81,8 +84,41 @@ decPng_start (const char * name, IMGINFO info)
 #endif
 		}
 	}
-	if (png_get_color_type(png_ptr, info_ptr) & PNG_COLOR_MASK_ALPHA) {
-		png_set_strip_alpha (png_ptr);
+	/* A palette with one fully transparent entry and the rest opaque is a
+	 * GIF's kind of transparency and takes the same cheap way.  Anything
+	 * else that is not opaque becomes RGBA, for the rows to be blended over
+	 * the background as they are read. */
+	color_type = png_get_color_type (png_ptr, info_ptr);
+	if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS)) {
+		png_bytep trns   = NULL;
+		int       n_trns = 0;
+		png_get_tRNS (png_ptr, info_ptr, &trns, &n_trns, NULL);
+		if (color_type == PNG_COLOR_TYPE_PALETTE) {
+			int i;
+			for (i = 0; i < n_trns && !alpha; i++) {
+				if (trns[i] == 255) {
+					continue;
+				} else if (trns[i] || transp >= 0) {
+					alpha  = TRUE;
+					transp = -1;
+				} else {
+					transp = i;
+				}
+			}
+			if (alpha) {
+				png_set_palette_to_rgb (png_ptr);
+			}
+		} else {
+			alpha = TRUE;
+		}
+		if (alpha) {
+			png_set_tRNS_to_alpha (png_ptr);
+		}
+	} else if (color_type & PNG_COLOR_MASK_ALPHA) {
+		alpha = TRUE;
+	}
+	if (alpha && !(color_type & PNG_COLOR_MASK_COLOR)) {
+		png_set_gray_to_rgb (png_ptr);
 	}
 	info->_priv_data = png_ptr;
 	info->_priv_more = info_ptr;
@@ -111,7 +147,14 @@ decPng_start (const char * name, IMGINFO info)
 		info->Palette = NULL;
 		info->NumColors = 0;
 	}
-	info->Transp     = -1;
+	if (alpha) {
+		info->NumComps  = 3;
+		info->BitDepth  = 8;
+		info->Palette   = NULL;
+		info->NumColors = 0;
+	}
+	info->Alpha      = alpha;
+	info->Transp     = transp;
 	info->Interlace  = 0;
 	
 	if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7) {
@@ -126,6 +169,43 @@ decPng_start (const char * name, IMGINFO info)
 }
 	
 /*----------------------------------------------------------------------------*/
+/* Composite a row of RGBA over info->AlphaBg, in place, leaving the RGB the
+ * rasterizers expect.  Most pixels are fully opaque or fully clear, so only
+ * the edges pay for the multiplies.
+*/
+static void
+blend_row (IMGINFO info, CHAR * row)
+{
+	const UWORD     r_bg = (UWORD)(info->AlphaBg >>16) & 0xFF;
+	const UWORD     g_bg = (UWORD)(info->AlphaBg >> 8) & 0xFF;
+	const UWORD     b_bg = (UWORD)(info->AlphaBg     ) & 0xFF;
+	unsigned char * src  = (unsigned char *)row;
+	unsigned char * dst  = src;
+	UWORD           n    = info->ImgWidth;
+
+	while (n--) {
+		UWORD a = src[3];
+		if (a == 255) {
+			dst[0] = src[0];
+			dst[1] = src[1];
+			dst[2] = src[2];
+		} else if (!a) {
+			dst[0] = r_bg;
+			dst[1] = g_bg;
+			dst[2] = b_bg;
+		} else {
+			/* (x + (x >>8)) >>8 divides by 255, rounded, once x carries +128 */
+			UWORD b = 255 - a, x;
+			x = (UWORD)(src[0] * a + r_bg * b + 128); dst[0] = (x + (x >>8)) >>8;
+			x = (UWORD)(src[1] * a + g_bg * b + 128); dst[1] = (x + (x >>8)) >>8;
+			x = (UWORD)(src[2] * a + b_bg * b + 128); dst[2] = (x + (x >>8)) >>8;
+		}
+		src += 4;
+		dst += 3;
+	}
+}
+
+/*----------------------------------------------------------------------------*/
 static BOOL
 decPng_read (IMGINFO info, CHAR * buffer)
 {
@@ -138,6 +218,9 @@ decPng_read (IMGINFO info, CHAR * buffer)
 #else
 	png_read_row (png_ptr, buffer, NULL);
 #endif
+	if (info->Alpha) {
+		blend_row (info, buffer);
+	}
 	return TRUE;
 }
 	
@@ -170,6 +253,9 @@ decPng_readi (IMGINFO info, CHAR * buffer)
 		info->RowBuf += info->RowBytes;
 	}
 	png_read_rows (png_ptr, (png_bytep*)&info->RowBuf, NULL, 1);
+	if (info->Alpha) {
+		blend_row (info, info->RowBuf);
+	}
 
 	return TRUE;
 }
