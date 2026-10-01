@@ -84,17 +84,16 @@ WARN = \
 
 INCLUDE = 
 
-# The toolkit image ships without the image libraries.  A sysroot unpacked
-# into .crosslibs/ supplies them; take the multilib that matches the link.
-CROSSLIBS := $(wildcard .crosslibs/usr/m68k-atari-mint/sys-root/usr)
-ifneq ($(CROSSLIBS),)
+# Neither the toolkit image nor the FreeMiNT packages carry the image
+# libraries, so lib/ vendors them prebuilt; take the multilib that matches
+# the link.
+VENDORED = giflib libpng jpeg
 ifeq ($(FPU),0)
 MULTIDIR := .
 else
 MULTIDIR := $(shell $(CC) $(OPTS) -print-multi-directory)
 endif
-INCLUDE += -I$(CROSSLIBS)/include -L$(CROSSLIBS)/lib/$(MULTIDIR)
-endif
+INCLUDE += $(foreach l,$(VENDORED),-Ilib/$(l)/include -Llib/$(l)/$(MULTIDIR))
 
 hash = \#
 CHECKGIF := $(shell if echo -e "$(hash)include <gif_lib.h> \\nconst char *version = GIF_LIB_VERSION" | $(CC) $(INCLUDE) -E - | grep GIF_LIB_VERSION >/dev/null; then echo -lgif; else echo -lungif; fi)

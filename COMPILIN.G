@@ -26,7 +26,7 @@ ought to work.
 Building with GCC
 
    The simplest way is the Atari cross compiler in a container,
-which carries the m68k-atari-mint toolchain and the libraries, so
+which carries the m68k-atari-mint toolchain and its libraries, so
 nothing has to be installed on the host:
 
   https://github.com/sidecartridge/atarist-toolkit-docker
@@ -47,6 +47,11 @@ From the top of the source tree:
 wants zip and unix2dos.  The container carries neither, so it
 stops once the builds and the overlays are in dist/, which is
 usually all that is wanted anyway.
+
+   The image libraries -- giflib, libpng and libjpeg -- are in
+neither the container nor the FreeMiNT packages, so lib/ carries
+them prebuilt for each CPU.  lib/README.md says where they came
+from.
 
 GEM Lib use
 
