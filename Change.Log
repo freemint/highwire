@@ -1,3 +1,12 @@
+Changes in V. 0.4.7
+
+  - the STinG and STiK2 network modules are built from source with the
+    rest of HighWire, so they now carry the fix for the bus error on a
+    machine with no cookie jar
+  - for developers: they link against the toolkit's libcmini, and the
+    MagiCNet module builds too, but the release keeps the prebuilt one
+    until the new one has been tried under MagiC
+
 Changes in V. 0.4.6
 
   - HighWire is now licensed under the GNU GPL, version 3 or later;
