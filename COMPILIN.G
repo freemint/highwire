@@ -42,10 +42,13 @@ From the top of the source tree:
   stcmd make 060        68060
   stcmd make v4e        ColdFire, for the FireBee
   stcmd make dist       every one of them, side by side
+  stcmd make release    dist, named as the snapshot release has it
 
    Object files go in build/, and the program in
 dist/highwire.prg.  The dist target puts every build in dist/
 under its own name, then zips the lot into build/hwYYMMDD.zip.
+GitHub builds the snapshot releases with make release, which adds
+the names they are uploaded under, in build/release/.
 
    The image libraries -- giflib, libpng and libjpeg -- are in
 neither the container nor the FreeMiNT packages, so lib/ carries

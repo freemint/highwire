@@ -14,14 +14,11 @@ LD = $(CC)
 CP = cp
 RM = rm -f
 
-# The toolkit container has no zip, and neither it nor the CI runner has
-# unix2dos -- which is why the docs shipped with Unix line endings for so long.
-# So use what the machine actually has.  perl is on all of them and its form is
-# idempotent, leaving an already converted file untouched; python3's zipfile
-# writes the same entries with the same CRCs as zip -r, and takes its arguments
-# in the same order, so either can fill $(ZIP).
+# The toolkit container has no unix2dos -- which is why the docs shipped with
+# Unix line endings for so long -- so perl converts them.  Its form is
+# idempotent, leaving an already converted file untouched.
 TODOS = perl -pi -e 's/\r?\n/\r\n/'
-ZIP := $(shell command -v zip >/dev/null 2>&1 && echo 'zip -r' || echo 'python3 -m zipfile -c')
+ZIP = zip -r
 
 CPU = 68000
 #CPU = 68030
@@ -261,6 +258,21 @@ dist::
 	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
 	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg/highwire.cfg
 	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
+
+#
+# the snapshot release: dist's archive under the names the release carries
+#
+# The names are fixed rather than taken from the repository: the readme links
+# to highwire-latest.zip, and a download URL resolves by asset name.  The dated
+# copy accumulates on the release, one per day.  The workflow uploads whatever
+# lands in build/release, so the two cannot drift apart.
+VERSION = $(shell sed -n 's/.*_HIGHWIRE_VERSION_[[:space:]]*"\([^"]*\)".*/\1/p' src/version.h)
+
+release: dist
+	test -n "$(VERSION)"
+	mkdir -p $(BUILDDIR)/release
+	cp $(BUILDDIR)/hw*.zip $(BUILDDIR)/release/highwire-$(VERSION)-`date +%Y%m%d`.zip
+	cp $(BUILDDIR)/hw*.zip $(BUILDDIR)/release/highwire-latest.zip
 
 #
 # dependencies

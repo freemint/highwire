@@ -1,0 +1,34 @@
+name: PR
+
+# Does it still build and package?  The same steps as release.yml, minus the
+# publishing, so a pull request that would break the release fails here.
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Read-only: this runs code from a contributor's branch, so it gets nothing it
+# does not need.  release.yml holds the write token.
+permissions:
+  contents: read
+
+# A force-push mid-review should not leave two builds racing to report.
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # stcmd runs docker with -it unless this is set, and a runner has no
+  # terminal.
+  STCMD_NO_TTY: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install the Atari ST toolkit
+        run: curl -sL https://github.com/sidecartridge/atarist-toolkit-docker/releases/latest/download/install_atarist_toolkit_docker.sh | bash
+      - name: Build every CPU variant and package them
+        run: stcmd make release

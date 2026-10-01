@@ -6,7 +6,7 @@ HighWire runs on any ST compatible machine, no GDOS required, and renders using 
 
 If your ST isn't already online, take a look at [MD/Net](https://downloads.neilrackett.com/md-net), which has everything you need to get up and running.
 
-[![Build Status](https://github.com/neilrackett/atarist-highwire/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/neilrackett/atarist-highwire/actions)
+[![Build Status](https://github.com/neilrackett/atarist-highwire/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/neilrackett/atarist-highwire/actions)
 
 ## Install
 
@@ -35,3 +35,16 @@ is still in the archive to swap in.
 - [Latest snapshot](https://downloads.neilrackett.com/atarist-highwire/highwire-latest.zip)
 - [Earlier builds](https://downloads.neilrackett.com/atarist-highwire)
 - [Snapshots before August 2026](https://atari.joska.no/snapshots/highwire/)
+
+## Building
+
+With [atarist-toolkit-docker](https://github.com/sidecartridge/atarist-toolkit-docker)
+installed:
+
+```
+stcmd make
+```
+
+This produces the 68000 build, `dist/highwire.prg`. `stcmd make dist` builds
+every CPU variant and the release zip, exactly as the snapshots are built.
+[COMPILIN.G](COMPILIN.G) lists the other targets.
