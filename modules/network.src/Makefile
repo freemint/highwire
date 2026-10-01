@@ -2,6 +2,7 @@
 # Makefile for highwire
 #
 TARGET = ../mintnet.ovl
+BUILDDIR = ../../build/network
 
 # compiler settings
 CROSS = m68k-atari-mint-
@@ -43,10 +44,11 @@ LDFLAGS = -s
 LIBS = -liio
 
 ifeq ($(CPU),5475)
-        OBJDIR = obj.$(CPU)
+        OBJDIR = $(BUILDDIR)/obj.$(CPU)
 else
-	OBJDIR = obj$(CPU:68%=.%)
+	OBJDIR = $(BUILDDIR)/obj$(CPU:68%=.%)
 endif
+DEPDIR = $(BUILDDIR)/.deps
 
 all: $(TARGET)
 
@@ -55,10 +57,10 @@ all: $(TARGET)
 #
 $(OBJDIR)/%.o: %.c
 	@echo "$(CC) $(CFLAGS) -c $< -o $@"; \
-	$(CC) -Wp,-MMD,.deps/$(<:.c=.P_) $(CFLAGS) -c $< -o $@
-	@cat .deps/$(<:.c=.P_) \
-	    | sed "s,^\(.*\)\.o:,$(OBJDIR)/\1.o:," > .deps/$(<:.c=.P)
-	@rm -f .deps/$(<:.c=.P_)
+	$(CC) -Wp,-MMD,$(DEPDIR)/$(<:.c=.P_) $(CFLAGS) -c $< -o $@
+	@cat $(DEPDIR)/$(<:.c=.P_) \
+	    | sed "s,^\(.*\)\.o:,$(OBJDIR)/\1.o:," > $(DEPDIR)/$(<:.c=.P)
+	@rm -f $(DEPDIR)/$(<:.c=.P_)
 
 #
 # files
@@ -70,9 +72,9 @@ HDR =
 SFILES = 
 
 OBJS = $(SFILES:%.s=$(OBJDIR)/%.o) $(CFILES:%.c=$(OBJDIR)/%.o)
-OBJS_MAGIC := $(shell mkdir ./$(OBJDIR) > /dev/null 2>&1 || :)
+OBJS_MAGIC := $(shell mkdir -p $(OBJDIR) > /dev/null 2>&1 || :)
 
-DEPENDENCIES = $(addprefix ./.deps/, $(patsubst %.c,%.P,$(CFILES)))
+DEPENDENCIES = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.P,$(CFILES)))
 
 
 $(TARGET): $(OBJS)
@@ -102,6 +104,6 @@ case: Makefile $(HDR) $(CFILES)
 #
 # dependencies
 #
-DEPS_MAGIC := $(shell mkdir ./.deps > /dev/null 2>&1 || :)
+DEPS_MAGIC := $(shell mkdir -p $(DEPDIR) > /dev/null 2>&1 || :)
 
 -include $(DEPENDENCIES)

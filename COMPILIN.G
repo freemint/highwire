@@ -34,7 +34,7 @@ nothing has to be installed on the host:
    It provides stcmd, which runs a command inside the container.
 From the top of the source tree:
 
-  stcmd make            the default, a 68040 build
+  stcmd make            the default, a 68000 build
   stcmd make 000        68000: ST, STE, Mega ST and STE
   stcmd make 030        68030 with no FPU: any Falcon or TT
   stcmd make 03f        68030 with a 68881/2 fitted, and faster
@@ -43,10 +43,9 @@ From the top of the source tree:
   stcmd make v4e        ColdFire, for the FireBee
   stcmd make dist       every one of them, side by side
 
-   The dist target finishes by packaging what it built, which
-wants zip and unix2dos.  The container carries neither, so it
-stops once the builds and the overlays are in dist/, which is
-usually all that is wanted anyway.
+   Object files go in build/, and the program in
+dist/highwire.prg.  The dist target puts every build in dist/
+under its own name, then zips the lot into build/hwYYMMDD.zip.
 
    The image libraries -- giflib, libpng and libjpeg -- are in
 neither the container nor the FreeMiNT packages, so lib/ carries

@@ -9,7 +9,7 @@
 # the same day replaces it.  The workflow uploads whatever lands here rather
 # than naming the files again, so the two cannot drift apart.
 
-BUILT="hw`date +%y%m%d`.zip"
+BUILT="build/hw`date +%y%m%d`.zip"
 OUT="${DEPLOY_DIR:-/tmp/highwire-deploy}"
 
 if [ ! -f "$BUILT" ]; then

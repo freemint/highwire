@@ -2,6 +2,7 @@
 *.app
 *.prg
 obj.*
+build/
 dist/
 *.bak
 *.orig
@@ -12,3 +13,5 @@ dist/
 .DS_Store
 tmp/
 /*.zip
+.vscode/
+.kilo/

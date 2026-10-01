@@ -3,6 +3,7 @@
 #
 TARGET = highwire.prg
 DISTDIR = dist
+BUILDDIR = build
 
 # compiler settings
 
@@ -105,9 +106,9 @@ LIBS = $(SOFTFLOAT) -lgem -lcflib -liio $(CHECKGIF) -ljpeg -lpng -lz -lm \
        #-lsocket
 
 ifeq ($(CPU),5475)
-        OBJDIR = obj.$(CPU)
+        OBJDIR = $(BUILDDIR)/obj.$(CPU)
 else
-	OBJDIR = obj$(CPU:68%=.%)
+	OBJDIR = $(BUILDDIR)/obj$(CPU:68%=.%)
 endif
 
 # Dependency files record which OBJDIR they belong to, so they have to live
@@ -196,12 +197,12 @@ HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 SFILES = 
 
 OBJS = $(SFILES:%.s=$(OBJDIR)/%.o) $(CFILES:%.c=$(OBJDIR)/%.o)
-OBJS_MAGIC := $(shell mkdir ./$(OBJDIR) > /dev/null 2>&1 || :)
+OBJS_MAGIC := $(shell mkdir -p ./$(OBJDIR) > /dev/null 2>&1 || :)
 
 DEPENDENCIES = $(addprefix ./$(DEPDIR)/, $(patsubst %.c,%.P,$(CFILES)))
 
 
-$(TARGET) $(DISTDIR)/$(TARGET): $(OBJS)
+$(BUILDDIR)/$(TARGET) $(DISTDIR)/$(TARGET): $(OBJS)
 	mkdir -p $(@D)
 	$(LD) -o $@ -Wl,-stack,128k -Wl,--mprg-flags=0x17 $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 
@@ -214,7 +215,7 @@ v4e: ; $(MAKE) CPU=5475
 
 clean:
 	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
-	rm -Rf obj.* */obj.* */*/obj.* .deps */.deps */*/.deps *.o */*/*.o
+	rm -Rf $(BUILDDIR) *.o */*/*.o
 	rm -Rf *.app *.[gt]tp *.prg modules/mintnet.ovl
 
 distclean: clean
@@ -225,19 +226,19 @@ distclean: clean
 #
 dist::
 	$(MAKE) clean
-	$(MAKE) CPU=68000 $(TARGET)
+	$(MAKE) CPU=68000 $(BUILDDIR)/$(TARGET)
 	mkdir -p $(DISTDIR)
-	mv $(TARGET) $(DISTDIR)/highwire.000
-	$(MAKE) CPU=68030 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.030
-	$(MAKE) CPU=68030 FPU=1 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.03F
-	$(MAKE) CPU=68040 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.040
-	$(MAKE) CPU=68020-60 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.060
-	$(MAKE) CPU=5475 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.v4e
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.000
+	$(MAKE) CPU=68030 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.030
+	$(MAKE) CPU=68030 FPU=1 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.03F
+	$(MAKE) CPU=68040 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.040
+	$(MAKE) CPU=68020-60 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.060
+	$(MAKE) CPU=5475 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.v4e
 	cp -a deskicon.rsc highwire.rsc $(DISTDIR)
 	mkdir -p $(DISTDIR)/doc
 	cp -a doc/HIGHWIRE.DOC doc/hotkeys.txt $(DISTDIR)/doc
@@ -259,7 +260,7 @@ dist::
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
 	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
 	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg/highwire.cfg
-	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/hw`date +%y%m%d`.zip .)
+	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
 
 #
 # dependencies
