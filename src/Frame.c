@@ -127,6 +127,21 @@ frame_finish (FRAME frame, PARSER parser, TEXTBUFF current)
 }
 
 
+/*----------------------------------------------------------------------------*/
+/* The height a percentage height in this page resolves against: what is left of
+ * the visible frame once the page's own margin is off it.  A table asking for
+ * 100% wants to fill the view, not to overflow it by the margin and earn a
+ * scroll bar.
+ */
+static void
+set_avail_height (FRAME frame)
+{
+	long height = frame->clip.g_h - dombox_TopDist (&frame->Page)
+	                              - dombox_BotDist (&frame->Page);
+	dombox_AvailHeight = (height > 0 ? height : 0);
+}
+
+
 /*============================================================================*/
 /* frame_calculate() and frame_slider() contain unary plus signs to force Pure C
  * to calculate +(...) as a first step and prevent it from arithmetic
@@ -148,11 +163,13 @@ frame_calculate (FRAME frame, const GRECT * clip)
 		
 		if (frame->Page.MinWidth <= frame->clip.g_w) {
 			frame->h_bar.on = FALSE;
+			set_avail_height (frame);
 			dombox_format (&frame->Page, frame->clip.g_w);
 		
 		} else {
 			frame->h_bar.on = TRUE;
 			frame->clip.g_h -= scrollbar_size;
+			set_avail_height (frame);
 			dombox_format (&frame->Page, frame->Page.MinWidth);
 		}
 		
@@ -170,6 +187,7 @@ frame_calculate (FRAME frame, const GRECT * clip)
 					frame->h_bar.on    = TRUE;
 					frame->clip.g_h   -= scrollbar_size;
 				} else {
+				   set_avail_height (frame);
 				   dombox_format (&frame->Page, frame->clip.g_w);
 					if (frame->Page.Rect.H < frame->clip.g_h) {
 						 frame->Page.Rect.H = frame->clip.g_h;
@@ -185,8 +203,10 @@ frame_calculate (FRAME frame, const GRECT * clip)
 			frame->clip.g_h -= scrollbar_size;
 		}
 		if (frame->clip.g_w > frame->Page.MinWidth) {
+			set_avail_height (frame);
 			dombox_format (&frame->Page, frame->clip.g_w);
 		} else {
+			set_avail_height (frame);
 			dombox_format (&frame->Page, frame->Page.MinWidth);
 		}
 		if (frame->Page.Rect.H < frame->clip.g_h) {

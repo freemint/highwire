@@ -26,7 +26,7 @@ ought to work.
 Building with GCC
 
    The simplest way is the Atari cross compiler in a container,
-which carries the m68k-atari-mint toolchain and the libraries, so
+which carries the m68k-atari-mint toolchain and its libraries, so
 nothing has to be installed on the host:
 
   https://github.com/sidecartridge/atarist-toolkit-docker
@@ -34,7 +34,7 @@ nothing has to be installed on the host:
    It provides stcmd, which runs a command inside the container.
 From the top of the source tree:
 
-  stcmd make            the default, a 68040 build
+  stcmd make            the default, a 68000 build
   stcmd make 000        68000: ST, STE, Mega ST and STE
   stcmd make 030        68030 with no FPU: any Falcon or TT
   stcmd make 03f        68030 with a 68881/2 fitted, and faster
@@ -42,11 +42,18 @@ From the top of the source tree:
   stcmd make 060        68060
   stcmd make v4e        ColdFire, for the FireBee
   stcmd make dist       every one of them, side by side
+  stcmd make release    dist, named as the snapshot release has it
 
-   The dist target finishes by packaging what it built, which
-wants zip and unix2dos.  The container carries neither, so it
-stops once the builds and the overlays are in dist/, which is
-usually all that is wanted anyway.
+   Object files go in build/, and the program in
+dist/highwire.prg.  The dist target puts every build in dist/
+under its own name, then zips the lot into build/hwYYMMDD.zip.
+GitHub builds the snapshot releases with make release, which adds
+the names they are uploaded under, in build/release/.
+
+   The image libraries -- giflib, libpng and libjpeg -- are in
+neither the container nor the FreeMiNT packages, so lib/ carries
+them prebuilt for each CPU.  lib/README.md says where they came
+from.
 
 GEM Lib use
 

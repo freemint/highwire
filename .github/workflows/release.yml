@@ -1,0 +1,60 @@
+name: Release
+
+# Rolling snapshot: build every CPU variant, move the "latest" tag onto the
+# commit, and upload the archive to the "latest" release, where the dated
+# copies accumulate.
+
+on:
+  push:
+    branches: [ main ]
+    # No .md file goes into the archive, so a push that only touches them
+    # would publish the same build again.
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two merges in quick succession would race to move the tag and upload;
+# newest wins instead.
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+env:
+  # stcmd runs docker with -it unless this is set, and a runner has no
+  # terminal.
+  STCMD_NO_TTY: 1
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # The push trigger already filters to main; this stops a manual dispatch
+    # from another branch publishing it.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install the Atari ST toolkit
+        # Generates /usr/local/bin/stcmd, so the release builds in the same
+        # container, with the same compiler and libraries, as a local build.
+        run: curl -sL https://github.com/sidecartridge/atarist-toolkit-docker/releases/latest/download/install_atarist_toolkit_docker.sh | bash
+      - name: Build every CPU variant and package them
+        run: stcmd make release
+      - name: Point the rolling tag at this build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Pushing the tag with git is refused whenever the commit it points at
+          # touches .github/workflows, which the token may not write.  Moving the
+          # ref through the API asks for no such thing.
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/latest" \
+            -f sha="$GITHUB_SHA" -F force=true --silent
+      - name: Publish the snapshot
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          # No name or body here on purpose: the action overwrites whatever it is
+          # given, so a hand written title or notes on the release would be reset
+          # by the next build.  Leaving them out keeps what is there.
+          files: build/release/*.zip

@@ -3,6 +3,7 @@
 #
 TARGET = highwire.prg
 DISTDIR = dist
+BUILDDIR = build
 
 # compiler settings
 
@@ -12,6 +13,12 @@ AS = $(CC) -c
 LD = $(CC) 
 CP = cp
 RM = rm -f
+
+# The toolkit container has no unix2dos -- which is why the docs shipped with
+# Unix line endings for so long -- so perl converts them.  Its form is
+# idempotent, leaving an already converted file untouched.
+TODOS = perl -pi -e 's/\r?\n/\r\n/'
+ZIP = zip -r
 
 CPU = 68000
 #CPU = 68030
@@ -75,17 +82,16 @@ WARN = \
 
 INCLUDE = 
 
-# The toolkit image ships without the image libraries.  A sysroot unpacked
-# into .crosslibs/ supplies them; take the multilib that matches the link.
-CROSSLIBS := $(wildcard .crosslibs/usr/m68k-atari-mint/sys-root/usr)
-ifneq ($(CROSSLIBS),)
+# Neither the toolkit image nor the FreeMiNT packages carry the image
+# libraries, so lib/ vendors them prebuilt; take the multilib that matches
+# the link.
+VENDORED = giflib libpng jpeg
 ifeq ($(FPU),0)
 MULTIDIR := .
 else
 MULTIDIR := $(shell $(CC) $(OPTS) -print-multi-directory)
 endif
-INCLUDE += -I$(CROSSLIBS)/include -L$(CROSSLIBS)/lib/$(MULTIDIR)
-endif
+INCLUDE += $(foreach l,$(VENDORED),-Ilib/$(l)/include -Llib/$(l)/$(MULTIDIR))
 
 hash = \#
 CHECKGIF := $(shell if echo -e "$(hash)include <gif_lib.h> \\nconst char *version = GIF_LIB_VERSION" | $(CC) $(INCLUDE) -E - | grep GIF_LIB_VERSION >/dev/null; then echo -lgif; else echo -lungif; fi)
@@ -97,9 +103,9 @@ LIBS = $(SOFTFLOAT) -lgem -lcflib -liio $(CHECKGIF) -ljpeg -lpng -lz -lm \
        #-lsocket
 
 ifeq ($(CPU),5475)
-        OBJDIR = obj.$(CPU)
+        OBJDIR = $(BUILDDIR)/obj.$(CPU)
 else
-	OBJDIR = obj$(CPU:68%=.%)
+	OBJDIR = $(BUILDDIR)/obj$(CPU:68%=.%)
 endif
 
 # Dependency files record which OBJDIR they belong to, so they have to live
@@ -188,12 +194,12 @@ HDR = hwWind.h Loader.h Containr.h Table.h Location.h Logging.h Form.h
 SFILES = 
 
 OBJS = $(SFILES:%.s=$(OBJDIR)/%.o) $(CFILES:%.c=$(OBJDIR)/%.o)
-OBJS_MAGIC := $(shell mkdir ./$(OBJDIR) > /dev/null 2>&1 || :)
+OBJS_MAGIC := $(shell mkdir -p ./$(OBJDIR) > /dev/null 2>&1 || :)
 
 DEPENDENCIES = $(addprefix ./$(DEPDIR)/, $(patsubst %.c,%.P,$(CFILES)))
 
 
-$(TARGET) $(DISTDIR)/$(TARGET): $(OBJS)
+$(BUILDDIR)/$(TARGET) $(DISTDIR)/$(TARGET): $(OBJS)
 	mkdir -p $(@D)
 	$(LD) -o $@ -Wl,-stack,128k -Wl,--mprg-flags=0x17 $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 
@@ -206,7 +212,7 @@ v4e: ; $(MAKE) CPU=5475
 
 clean:
 	rm -Rf *.bak */*.bak */*/*.bak *[%~] */*[%~] */*/*[%~]
-	rm -Rf obj.* */obj.* */*/obj.* .deps */.deps */*/.deps *.o */*/*.o
+	rm -Rf $(BUILDDIR) *.o */*/*.o
 	rm -Rf *.app *.[gt]tp *.prg modules/mintnet.ovl
 
 distclean: clean
@@ -217,23 +223,26 @@ distclean: clean
 #
 dist::
 	$(MAKE) clean
-	$(MAKE) CPU=68000 $(TARGET)
+	$(MAKE) CPU=68000 $(BUILDDIR)/$(TARGET)
 	mkdir -p $(DISTDIR)
-	mv $(TARGET) $(DISTDIR)/highwire.000
-	$(MAKE) CPU=68030 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.030
-	$(MAKE) CPU=68030 FPU=1 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.03F
-	$(MAKE) CPU=68040 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.040
-	$(MAKE) CPU=68020-60 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.060
-	$(MAKE) CPU=5475 $(TARGET)
-	mv $(TARGET) $(DISTDIR)/highwire.v4e
-	cp -a deskicon.rsc highwire.rsc $(DISTDIR)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.000
+	$(MAKE) CPU=68030 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.030
+	$(MAKE) CPU=68030 FPU=1 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.03F
+	$(MAKE) CPU=68040 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.040
+	$(MAKE) CPU=68020-60 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.060
+	$(MAKE) CPU=5475 $(BUILDDIR)/$(TARGET)
+	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.v4e
+	cp -a rsc/deskicon.rsc rsc/highwire.rsc $(DISTDIR)
 	mkdir -p $(DISTDIR)/doc
-	cp -a doc/HIGHWIRE.DOC doc/hotkeys.txt $(DISTDIR)/doc
-	cp -a Change.Log $(DISTDIR)
+	cp -a docs/HIGHWIRE.DOC docs/hotkeys.txt $(DISTDIR)/doc
+	cp -a lib/giflib/COPYING $(DISTDIR)/doc/giflib.txt
+	cp -a lib/libpng/LICENSE $(DISTDIR)/doc/libpng.txt
+	cp -a lib/jpeg/README $(DISTDIR)/doc/libjpeg.txt
+	cp -a Change.Log LICENSE $(DISTDIR)
 	mkdir -p $(DISTDIR)/html
 	cp -pvr html/. $(DISTDIR)/html
 	mkdir -p $(DISTDIR)/modules
@@ -253,8 +262,23 @@ dist::
 #	Both are copies, so the other builds and stacks are still there to swap in.
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
 	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
-	-unix2dos $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg
-	(cwd=`pwd`; cd $(DISTDIR); zip -r "$$cwd"/hw`date +%y%m%d`.zip .)
+	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/doc/giflib.txt $(DISTDIR)/doc/libpng.txt $(DISTDIR)/doc/libjpeg.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/LICENSE $(DISTDIR)/example.cfg/highwire.cfg
+	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
+
+#
+# the snapshot release: dist's archive under the names the release carries
+#
+# The names are fixed rather than taken from the repository: the readme links
+# to highwire-latest.zip, and a download URL resolves by asset name.  The dated
+# copy accumulates on the release, one per day.  The workflow uploads whatever
+# lands in build/release, so the two cannot drift apart.
+VERSION = $(shell sed -n 's/.*_HIGHWIRE_VERSION_[[:space:]]*"\([^"]*\)".*/\1/p' src/version.h)
+
+release: dist
+	test -n "$(VERSION)"
+	mkdir -p $(BUILDDIR)/release
+	cp $(BUILDDIR)/hw*.zip $(BUILDDIR)/release/highwire-$(VERSION)-`date +%Y%m%d`.zip
+	cp $(BUILDDIR)/hw*.zip $(BUILDDIR)/release/highwire-latest.zip
 
 #
 # dependencies

@@ -1491,6 +1491,9 @@ vTab_format (DOMBOX * This, long width, BLOCKER p_blocker)
 	
 }
 
+
+long dombox_AvailHeight = 0;
+
 /*============================================================================*/
 void
 dombox_format (DOMBOX * This, long width)

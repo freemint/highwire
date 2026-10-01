@@ -6,9 +6,9 @@ HighWire runs on any ST compatible machine, no GDOS required, and renders using 
 
 If your ST isn't already online, take a look at [MD/Net](https://downloads.neilrackett.com/md-net), which has everything you need to get up and running.
 
-[![Build Status](https://github.com/neilrackett/atarist-highwire/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/neilrackett/atarist-highwire/actions)
+[![Build Status](https://github.com/neilrackett/atarist-highwire/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/neilrackett/atarist-highwire/actions)
 
-## Install
+## Installing
 
 - Download the latest snapshot below
 - Extract the zip file to your hard disk
@@ -35,3 +35,31 @@ is still in the archive to swap in.
 - [Latest snapshot](https://downloads.neilrackett.com/atarist-highwire/highwire-latest.zip)
 - [Earlier builds](https://downloads.neilrackett.com/atarist-highwire)
 - [Snapshots before August 2026](https://atari.joska.no/snapshots/highwire/)
+
+## Building
+
+With [atarist-toolkit-docker](https://github.com/sidecartridge/atarist-toolkit-docker)
+installed:
+
+```
+stcmd make
+```
+
+This produces the 68000 build, `dist/highwire.prg`. `stcmd make dist` builds
+every CPU variant and the release zip, exactly as the snapshots are built.
+[docs/COMPILIN.G](docs/COMPILIN.G) lists the other targets.
+
+## License
+
+**GPL-3.0-or-later.** See [LICENSE](LICENSE).
+
+HighWire is based, in part, on the Project HighWire source released by Robert
+Goldsmith, and has been altered and extended by many contributors since. Code
+from before the move to the GPL is also available under its original
+zlib-style licence, which is kept, unaltered, in
+[docs/HIGHWIRE.DOC](docs/HIGHWIRE.DOC).
+
+The vendored [`lib/`](lib/) libraries keep their own licences: giflib is MIT,
+libpng and libjpeg have their own permissive licences, and all are compatible.
+This software is based in part on the work of the Independent JPEG Group. The
+third-party headers under `modules/network.src/include` keep their own terms.

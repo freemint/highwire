@@ -178,7 +178,7 @@ new_location (const char * p_src, LOCATION base)
 	LOCATION loc;
 	short    loc_proto = PROT_FILE;
 	HOST_ENT loc_host  = NULL;
-	short    loc_port  = 0;
+	UWORD    loc_port  = 0;
 	BOOL     read_host = FALSE;
 	DIR_ENT  dir;
 	
@@ -271,9 +271,13 @@ new_location (const char * p_src, LOCATION base)
 		loc_host = host_entry (&s, 0, TRUE);
 		if (loc_host) {
 			if (*s == ':') {
-				char * end;
-				loc_port = strtoul (s +1, &end, 10);
-				s        = end;
+				char        * end;
+				unsigned long n = strtoul (s +1, &end, 10);
+				/* a port is 16 bit; a number that will not fit is not one */
+				if (n > 0 && n <= 65535UL) {
+					loc_port = (UWORD)n;
+				}
+				s = end;
 			}
 			if (!loc_port) {
 				loc_proto = PROT_FTP;
@@ -501,6 +505,20 @@ location_FullName (LOCATION loc, char * buffer, size_t max_len)
 		memcpy (dst, host->Name, len);
 		dst     += len;
 		max_len -= len;
+		
+		if (max_len) {
+			UWORD port = location_Port (loc);
+			if (port) {
+				char   num[8];
+				size_t nlen = sprintf (num, ":%u", (unsigned)port);
+				if (nlen > max_len) {
+					nlen = max_len;
+				}
+				memcpy (dst, num, nlen);
+				dst     += nlen;
+				max_len -= nlen;
+			}
+		}
 	}
 	
 	if (!max_len) {
@@ -623,6 +641,29 @@ location_Host  (LOCATION loc, UWORD * opt_len)
 	}
 
 	return name;
+}
+
+
+/*============================================================================*/
+/* The port to name in a URL or a Host: header: the one this location carries,
+ * or zero when that is the scheme's own and better left unsaid.  Spelling out
+ * the default would change the Host: header, the Referer and the cache key of
+ * every ordinary page, and gain nothing by it.
+ */
+UWORD
+location_Port (LOCATION loc)
+{
+	UWORD dflt;
+
+	switch (loc->Proto) {
+		case PROT_HTTP:  dflt = 80;  break;
+		case PROT_HTTPS: dflt = 443; break;
+		case PROT_FTP:   dflt = 21;  break;
+		case PROT_POP:   dflt = 110; break;
+		default:         return 0;   /* nothing that has a port */
+	}
+
+	return (loc->Port && loc->Port != dflt ? loc->Port : 0);
 }
 
 
@@ -1374,7 +1415,7 @@ location_rdIdx (FILE * file)
 		long   h_tag = rd_hex (&ptr, 8);
 		long   d_tag = rd_hex (&ptr, 8);
 		short  proto = rd_hex (&ptr, 2);
-		short  port  = rd_hex (&ptr, 4);
+		long   port  = rd_hex (&ptr, 4);
 		size_t len   = (d_tag > 0 ? strlen (ptr) : 0);
 		while (len && isspace (ptr[len-1])) ptr[--len] = '\0';
 		if (h_tag <= 0) {
@@ -1389,12 +1430,12 @@ location_rdIdx (FILE * file)
 		} else if (!dir && (dir = dir_search (d_tag)) == NULL) {
 			errprintf ("location_rdIdx(%s): dir entry not found.\n", ptr);
 			return NULL;
-		} else if (proto < 0 || port < 0) {
-			errprintf ("location_rdIdx(%s): format error %i/%i.\n", ptr, proto, port);
+		} else if (proto < 0 || port < 0 || port > 65535L) {
+			errprintf ("location_rdIdx(%s): format error %i/%li.\n", ptr, proto, port);
 			return NULL;
 		} else if ((loc = _alloc (dir, ptr)) != NULL) {
 			loc->Proto = proto;
-			loc->Port  = port;
+			loc->Port  = (UWORD)port;
 			loc->Host  = host;
 			loc->Flags = host->Flags;
 			host->Reffs++;
