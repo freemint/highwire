@@ -1,3 +1,18 @@
+Changes in V. 0.4.6
+
+  - HighWire is now licensed under the GNU GPL, version 3 or later;
+    code from before the change is also available under the original
+    HighWire license, which doc\HIGHWIRE.DOC keeps beside it
+  - the archive carries the GPL as LICENSE, and the licenses of giflib,
+    libpng and libjpeg in doc\
+  - releases are built in the same toolkit container as a local build,
+    so the programs match what was tested, and come out about 10 KB
+    smaller
+  - the old frameset start pages and their images are gone from html\,
+    and the project's development history has left the archive
+  - for developers: the image libraries are vendored in lib/, objects
+    build into build/, and the documentation sources live in docs/
+
 Changes in V. 0.4.5
 
   - a table asking for height="100%" now fills the frame, so a page can
