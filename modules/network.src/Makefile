@@ -102,7 +102,10 @@ sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
 stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
                     LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
                     LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-magicnet: ; $(MAKE) TARGET=../magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
+
+# Not yet run under MagiCNet, so dist still ships the prebuilt
+# ../magicnet.ovl; this one builds beside the objects, for that test.
+magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
 
 clean:
 	$(RM) $(OBJS)

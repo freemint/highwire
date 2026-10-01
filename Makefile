@@ -247,14 +247,15 @@ dist::
 	cp -pvr html/. $(DISTDIR)/html
 	mkdir -p $(DISTDIR)/modules
 	$(MAKE) -C modules/network.src clean
-	$(MAKE) -C modules/network.src sting stik2 magicnet
+	$(MAKE) -C modules/network.src sting stik2
 	$(MAKE) -C modules/network.src clean
 	$(MAKE) -C modules/network.src CPU=5475
 	cp -a modules/mintnet.ovl $(DISTDIR)/modules/mintnet.v4e
 	$(MAKE) -C modules/network.src CPU=68000
 	cp -a modules/mintnet.ovl $(DISTDIR)/modules
 	cp -a modules/README.TXT modules/iconnect.ovl modules/magicnet.ovl modules/stik2.ovl modules/sting.ovl $(DISTDIR)/modules
-#	Only iconnect.ovl above is still a prebuilt binary; the rest were built here.
+#	iconnect.ovl and magicnet.ovl above are still prebuilt binaries; the rest
+#	were built here.
 	mkdir -p $(DISTDIR)/example.cfg
 	cp -a example.cfg/highwire.cfg $(DISTDIR)/example.cfg
 #	Ready to run on the machine most people have, without renaming anything
