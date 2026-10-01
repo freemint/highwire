@@ -25,8 +25,8 @@ struct s_img_info {
 	WORD     Interlace;
 	BOOL     Alpha;    /* rows arrive with an alpha channel after the colour... */
 	ULONG    AlphaBg;  /* ...to blend over this 0xRRGGBB, which setup() fills in */
-	unsigned char * PalAlpha; /* palette entries 0 here are clear, the rest */
-	WORD     NumAlpha;        /* solid: setup() paints them the background */
+	unsigned char * PalAlpha; /* palette entries under 128 here are clear */
+	WORD     NumAlpha;        /* besides Transp: setup() gives them its pixel */
 	UWORD    WantW, WantH; /* the size the page will show it at, if it said */
 	UWORD    FullW, FullH; /* its real size, when decoded smaller than that */
 	/* */

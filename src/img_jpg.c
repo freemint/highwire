@@ -90,8 +90,9 @@ decJpg_start (const char * name, IMGINFO info)
 	/* Shown at half the size or less, the IDCT can produce that directly:
 	 * the scaling below would only throw the extra pixels away, at the cost
 	 * of decoding and converting them first.  Take the smallest of 1/8, 1/4
-	 * and 1/2 that still covers the size asked for. */
-	if (info->WantW && info->WantH) {
+	 * and 1/2 that still covers the size asked for; a side not asked for is
+	 * 0, which any size covers. */
+	if (info->WantW || info->WantH) {
 		unsigned d = 8;
 		while (d > 1 && ((jpeg->image_width  + d -1) / d < info->WantW ||
 		                 (jpeg->image_height + d -1) / d < info->WantH)) {
