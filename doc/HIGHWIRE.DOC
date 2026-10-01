@@ -8,7 +8,7 @@ Last updated: December 22, 2003
 
     Table of Content
 
-      1. HighWire Release License
+      1. License
       2. What is HighWire?
       3. HighWire Development Team
       4. Use of HighWire
@@ -17,8 +17,27 @@ Last updated: December 22, 2003
       7. Project Links
 
 
-1. HighWire Release License
+1. License
 
+
+   HighWire is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation, either version 3 of the License, or (at your
+   option) any later version.
+
+   HighWire is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.  You should have received a
+   copy of it, in the file LICENSE, along with HighWire.  If not, see
+   <https://www.gnu.org/licenses/>.
+
+   The source code is at <https://github.com/neilrackett/atarist-highwire>.
+
+   HighWire is based, in part, on the Project HighWire source released by
+   Robert Goldsmith, and has been altered and extended by many contributors
+   since.  Code from before the move to the GPL is also available under its
+   original license:
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any damages
@@ -40,7 +59,17 @@ Last updated: December 22, 2003
       Anyone uses bits of the code for other reasons is welcome to, as long as
       they specifically state that their work is based, in part, on the Project
       HighWire source release by Robert Goldsmith.
-      
+
+   HighWire also includes code from these libraries, each under its own
+   license:
+
+     - giflib, in doc\giflib.txt
+     - libpng, in doc\libpng.txt
+     - libjpeg, in doc\libjpeg.txt.  This software is based in part on
+       the work of the Independent JPEG Group.
+     - zlib, and the MiNTLib, GEMlib and CFLib that come with the
+       compiler.  HighWire uses MiNTLib code.
+
 
 2. What is HighWire?
 

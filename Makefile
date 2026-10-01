@@ -239,7 +239,10 @@ dist::
 	cp -a deskicon.rsc highwire.rsc $(DISTDIR)
 	mkdir -p $(DISTDIR)/doc
 	cp -a doc/HIGHWIRE.DOC doc/hotkeys.txt $(DISTDIR)/doc
-	cp -a Change.Log $(DISTDIR)
+	cp -a lib/giflib/COPYING $(DISTDIR)/doc/giflib.txt
+	cp -a lib/libpng/LICENSE $(DISTDIR)/doc/libpng.txt
+	cp -a lib/jpeg/README $(DISTDIR)/doc/libjpeg.txt
+	cp -a Change.Log LICENSE $(DISTDIR)
 	mkdir -p $(DISTDIR)/html
 	cp -pvr html/. $(DISTDIR)/html
 	mkdir -p $(DISTDIR)/modules
@@ -256,7 +259,7 @@ dist::
 #	Both are copies, so the other builds and stacks are still there to swap in.
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
 	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
-	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/example.cfg/highwire.cfg
+	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/doc/giflib.txt $(DISTDIR)/doc/libpng.txt $(DISTDIR)/doc/libjpeg.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/LICENSE $(DISTDIR)/example.cfg/highwire.cfg
 	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
 
 #

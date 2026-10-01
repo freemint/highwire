@@ -48,3 +48,18 @@ stcmd make
 This produces the 68000 build, `dist/highwire.prg`. `stcmd make dist` builds
 every CPU variant and the release zip, exactly as the snapshots are built.
 [COMPILIN.G](COMPILIN.G) lists the other targets.
+
+## License
+
+**GPL-3.0-or-later.** See [LICENSE](LICENSE).
+
+HighWire is based, in part, on the Project HighWire source released by Robert
+Goldsmith, and has been altered and extended by many contributors since. Code
+from before the move to the GPL is also available under its original
+zlib-style licence, which is kept, unaltered, in
+[doc/HIGHWIRE.DOC](doc/HIGHWIRE.DOC).
+
+The vendored [`lib/`](lib/) libraries keep their own licences: giflib is MIT,
+libpng and libjpeg have their own permissive licences, and all are compatible.
+This software is based in part on the work of the Independent JPEG Group. The
+third-party headers under `modules/network.src/include` keep their own terms.
