@@ -905,7 +905,8 @@ setup (IMAGE img, IMGINFO info)
 	size_t   wd_width;
 	size_t   pg_size;
 	size_t   mem_size;
-	ULONG    transpar = (info->Transp < 0 ? (img->backgnd = -1) : img->backgnd);
+	ULONG    transpar = (info->Transp < 0 && !info->Alpha
+	                     ? (img->backgnd = -1) : img->backgnd);
 	RASTERIZER raster = rasterizer (info->BitDepth,
 	                                (info->Palette ? 0 : info->NumComps));
 	pIMGDATA data;
@@ -939,7 +940,8 @@ setup (IMAGE img, IMGINFO info)
 		                       info->RowBytes * info->ImgHeight + info->NumComps);
 		info->RowBuf = (CHAR*)info->RowMem + psize;
 	} else {
-		info->RowMem = malloc ((info->ImgWidth +1) * info->NumComps);
+		info->RowMem = malloc ((info->ImgWidth +1)
+		                       * (info->NumComps + (info->Alpha ? 1 : 0)));
 		info->RowBuf = info->RowMem;
 	}
 	if (!info->RowMem) {
@@ -956,6 +958,12 @@ setup (IMAGE img, IMGINFO info)
 		memset (info->DthBuf, 0, size);
 	}
 	
+	/* Like a GIF's transparent colour, alpha is resolved against the colour
+	 * the image sits on, which is why the cache keys on it. */
+	if (info->Alpha) {
+		info->AlphaBg = (img->backgnd >= 0 ? color_lookup (img->backgnd)
+		                                   : 0xFFFFFFuL);
+	}
 	info->DthWidth = img->disp_w;
 	info->PixMask  = (1 << info->BitDepth) -1;
 	info->PgSize   = pg_size;
