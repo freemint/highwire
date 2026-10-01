@@ -86,6 +86,27 @@ $(TARGET): $(OBJS)
 060: ; $(MAKE) CPU=68020-60
 v4e: ; $(MAKE) CPU=5475
 
+# The other stacks.  Each wrapper names its flavour and includes network.c,
+# so they share every rule above; only iconnect still needs Pure C, its
+# bundled headers fighting the ones the cross compiler brings.
+#
+# sting and stik2 talk to the stack purely through its trap interface and
+# need no sockets, so they link against libcmini and come out at a twentieth
+# of the size mintlib gives them.  mintnet and magicnet need mintlib's
+# socket layer and stay on it.  libcmini comes with the toolkit container.
+CMINI = /freemint/libcmini/lib
+
+sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
+                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
+stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
+                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
+
+# Not yet run under MagiCNet, so dist still ships the prebuilt
+# ../magicnet.ovl; this one builds beside the objects, for that test.
+magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
+
 clean:
 	$(RM) $(OBJS)
 

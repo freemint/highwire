@@ -5,13 +5,21 @@
 # define _USE_OVL_
 
 #elif defined (USE_INET)
-# if defined(__GNUC__)
-#  define USE_MINT
-
-# elif defined(__PUREC__)
-#  if !defined(USE_ICNN) && !defined(USE_STIK) && !defined(USE_MINT) && !defined(USE_MAGICNET)
-#   define USE_STIK /* also if USE_STNG is already defined, (nearly) same API */
+# if !defined(USE_ICNN) && !defined(USE_STIK) && !defined(USE_STNG) && \
+     !defined(USE_MINT) && !defined(USE_MAGICNET)
+	/* A stack wrapper (sting.c and friends) says which flavour it wants and
+	 * must be respected regardless of compiler; only a build that names no
+	 * stack falls back to a default.  gcc used to force MiNTnet here, which
+	 * quietly turned every wrapper into a MiNTnet overlay.
+	*/
+#  if defined(__GNUC__)
+#   define USE_MINT
+#  else
+#   define USE_STIK
 #  endif
+# endif
+# if defined(USE_STNG) && !defined(USE_STIK)
+#  define USE_STIK /* STinG speaks the STiK API, give or take */
 # endif
 
 static WORD sockets_free = 0;
@@ -191,7 +199,11 @@ static BOOL init_iconnect (void)
 #elif defined(USE_STIK) /******************************************************/
 # include <stdio.h> /*printf/puts */
 # include <string.h>
-# include <tos.h>
+# ifdef __GNUC__
+#  include <osbind.h>
+# else
+#  include <tos.h>
+# endif
 # include <time.h>
 # ifdef USE_STNG
 #  include <sting/transprt.h>
@@ -203,7 +215,7 @@ static BOOL init_iconnect (void)
 
 #define TCP_OBUFF_SIZE   2048   /* TCP_open/TCP_send */
 
-static TPL * tpl = NULL;
+TPL * tpl = NULL; /* transprt.h declares it extern: the client defines it */
 
 /*----------------------------------------------------------------------------*/
 static BOOL init_stik (void)

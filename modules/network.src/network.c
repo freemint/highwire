@@ -45,6 +45,21 @@ struct ovl_info_t ovl_data = {
 
 
 /*============================================================================*/
+/* inet.c wants to warn when no stack answers, but an overlay has no UI to
+ * warn with -- and the browser now explains the failure on its error page,
+ * which is a better place for it anyway.
+*/
+void hwUi_warn (const char * hint, const char * text, ...)
+{
+	(void)hint;
+	(void)text;
+}
+void errprintf (const char * text, ...)
+{
+	(void)text;
+}
+
+/*============================================================================*/
 long __CDECL ovl_init(void)
 {
 	return INET_VERSION;
