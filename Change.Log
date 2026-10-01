@@ -1,3 +1,9 @@
+Changes in V. 0.4.8
+
+  - transparent PNGs are drawn over the page instead of over the colours
+    hidden under their clear pixels, with soft edges and shadows blended
+    in, and palette PNGs with a transparent colour work as GIFs do
+
 Changes in V. 0.4.7
 
   - the STinG and STiK2 network modules are built from source with the
