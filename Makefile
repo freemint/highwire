@@ -236,9 +236,9 @@ dist::
 	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.060
 	$(MAKE) CPU=5475 $(BUILDDIR)/$(TARGET)
 	mv $(BUILDDIR)/$(TARGET) $(DISTDIR)/highwire.v4e
-	cp -a deskicon.rsc highwire.rsc $(DISTDIR)
+	cp -a rsc/deskicon.rsc rsc/highwire.rsc $(DISTDIR)
 	mkdir -p $(DISTDIR)/doc
-	cp -a doc/HIGHWIRE.DOC doc/hotkeys.txt $(DISTDIR)/doc
+	cp -a docs/HIGHWIRE.DOC docs/hotkeys.txt $(DISTDIR)/doc
 	cp -a lib/giflib/COPYING $(DISTDIR)/doc/giflib.txt
 	cp -a lib/libpng/LICENSE $(DISTDIR)/doc/libpng.txt
 	cp -a lib/jpeg/README $(DISTDIR)/doc/libjpeg.txt

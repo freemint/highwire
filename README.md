@@ -8,7 +8,7 @@ If your ST isn't already online, take a look at [MD/Net](https://downloads.neilr
 
 [![Build Status](https://github.com/neilrackett/atarist-highwire/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/neilrackett/atarist-highwire/actions)
 
-## Install
+## Installing
 
 - Download the latest snapshot below
 - Extract the zip file to your hard disk
@@ -47,7 +47,7 @@ stcmd make
 
 This produces the 68000 build, `dist/highwire.prg`. `stcmd make dist` builds
 every CPU variant and the release zip, exactly as the snapshots are built.
-[COMPILIN.G](COMPILIN.G) lists the other targets.
+[docs/COMPILIN.G](docs/COMPILIN.G) lists the other targets.
 
 ## License
 
@@ -57,7 +57,7 @@ HighWire is based, in part, on the Project HighWire source released by Robert
 Goldsmith, and has been altered and extended by many contributors since. Code
 from before the move to the GPL is also available under its original
 zlib-style licence, which is kept, unaltered, in
-[doc/HIGHWIRE.DOC](doc/HIGHWIRE.DOC).
+[docs/HIGHWIRE.DOC](docs/HIGHWIRE.DOC).
 
 The vendored [`lib/`](lib/) libraries keep their own licences: giflib is MIT,
 libpng and libjpeg have their own permissive licences, and all are compatible.

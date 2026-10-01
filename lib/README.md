@@ -26,5 +26,5 @@ links.
 
 The IJG licence asks that a binary-only release say, in its documentation,
 that it "is based in part on the work of the Independent JPEG Group";
-doc/HIGHWIRE.DOC and the help pages do. `make dist` ships each licence in the
+docs/HIGHWIRE.DOC and the help pages do. `make dist` ships each licence in the
 release's doc folder, as giflib.txt, libpng.txt and libjpeg.txt.

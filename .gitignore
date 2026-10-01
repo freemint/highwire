@@ -1,7 +1,4 @@
-.deps
-*.app
 *.prg
-obj.*
 build/
 dist/
 *.bak
@@ -12,6 +9,5 @@ dist/
 *.ovl
 .DS_Store
 tmp/
-/*.zip
 .vscode/
 .kilo/
