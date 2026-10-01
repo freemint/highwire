@@ -36,6 +36,8 @@ decPng_start (const char * name, IMGINFO info)
 	int color_type;
 	BOOL alpha  = FALSE;
 	WORD transp = -1;
+	unsigned char * pal_alpha = NULL;
+	WORD            num_alpha = 0;
 
 	if (!file) {
 	/*	puts ("decPng_start(): file not found.");*/
@@ -84,29 +86,32 @@ decPng_start (const char * name, IMGINFO info)
 #endif
 		}
 	}
-	/* A palette with one fully transparent entry and the rest opaque is a
-	 * GIF's kind of transparency and takes the same cheap way.  Anything
-	 * else that is not opaque becomes RGBA, for the rows to be blended over
-	 * the background as they are read. */
+	/* A palette whose entries are each fully clear or fully solid stays a
+	 * palette: one clear entry is a GIF's kind of transparency and takes the
+	 * same cheap way, and several are painted the background by setup().
+	 * Anything else that is not opaque becomes RGBA, for the rows to be
+	 * blended over the background as they are read. */
 	color_type = png_get_color_type (png_ptr, info_ptr);
 	if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS)) {
 		png_bytep trns   = NULL;
 		int       n_trns = 0;
 		png_get_tRNS (png_ptr, info_ptr, &trns, &n_trns, NULL);
 		if (color_type == PNG_COLOR_TYPE_PALETTE) {
-			int i;
+			int i, clear = 0;
 			for (i = 0; i < n_trns && !alpha; i++) {
-				if (trns[i] == 255) {
-					continue;
-				} else if (trns[i] || transp >= 0) {
-					alpha  = TRUE;
-					transp = -1;
-				} else {
-					transp = i;
+				if (!trns[i]) {
+					if (!clear++) transp = i;
+				} else if (trns[i] != 255) {
+					alpha = TRUE;
 				}
 			}
 			if (alpha) {
+				transp = -1;
 				png_set_palette_to_rgb (png_ptr);
+			} else if (clear > 1) {
+				transp    = -1;
+				pal_alpha = trns;
+				num_alpha = n_trns;
 			}
 		} else {
 			alpha = TRUE;
@@ -155,6 +160,8 @@ decPng_start (const char * name, IMGINFO info)
 	}
 	info->Alpha      = alpha;
 	info->Transp     = transp;
+	info->PalAlpha   = pal_alpha;
+	info->NumAlpha   = num_alpha;
 	info->Interlace  = 0;
 	
 	if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7) {
@@ -193,6 +200,16 @@ blend_row (IMGINFO info, CHAR * row)
 			dst[0] = r_bg;
 			dst[1] = g_bg;
 			dst[2] = b_bg;
+		} else if (cfg_FastImages) {     /* hard edges, no multiplies */
+			if (a >= 128) {
+				dst[0] = src[0];
+				dst[1] = src[1];
+				dst[2] = src[2];
+			} else {
+				dst[0] = r_bg;
+				dst[1] = g_bg;
+				dst[2] = b_bg;
+			}
 		} else {
 			/* (x + (x >>8)) >>8 divides by 255, rounded, once x carries +128 */
 			UWORD b = 255 - a, x;

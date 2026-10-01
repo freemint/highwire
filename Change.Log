@@ -3,6 +3,13 @@ Changes in V. 0.4.8
   - transparent PNGs are drawn over the page instead of over the colours
     hidden under their clear pixels, with soft edges and shadows blended
     in, and palette PNGs with a transparent colour work as GIFs do
+  - images on screens of 16 and 256 colours dither straight to the
+    colours the screen has, up to a third faster and looking much the
+    same
+  - a JPEG shown at half its size or less is decoded at that size
+  - FAST_IMAGES = 1 in the config draws images in the nearest colours,
+    with hard edged transparency: on a 16 colour ST a GIF or palette PNG
+    appears in about a third of the time
 
 Changes in V. 0.4.7
 

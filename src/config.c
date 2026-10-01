@@ -28,6 +28,7 @@ BOOL         cfg_AllowCookies = FALSE;
 BOOL         cfg_DropImages   = FALSE;
 BOOL         cfg_ViewImages   = TRUE;
 BOOL         cfg_FixedCmap    = FALSE;
+BOOL         cfg_FastImages   = FALSE;
 BOOL         cfg_GreyPalette  = TRUE;
 BOOL         cfg_ImgAspect    = TRUE;
 WORD         cfg_LineSpacing  = -1;
@@ -744,6 +745,7 @@ read_config(void)
 				{ "DATA_DIR",             cfg_data_dir,  0 },
 				{ "DEVL_FLAGS",           cfg_devl_flags,0 },
 				{ "DFLT_BACKGND",         cfg_backgnd,   (long)&backgnd },
+				{ "FAST_IMAGES",          cfg_BOOL,      (long)&cfg_FastImages  },
 				{ "FIXED_CMAP",           cfg_BOOL,      (long)&cfg_FixedCmap   },
 				{ "FONT_MINSIZE",         cfg_minsize,   0 },
 				{ "FONT_SIZE",            cfg_fntsize,   0 },

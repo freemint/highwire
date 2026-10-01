@@ -21,7 +21,7 @@ typedef struct s_decoder {
 
 /*----------------------------------------------------------------------------*/
 IMGINFO
-get_decoder (const char * file)
+get_decoder (const char * file, UWORD want_w, UWORD want_h)
 {
 	static DECODER * decoder_chain = DECODER_CHAIN;
 	
@@ -32,6 +32,8 @@ get_decoder (const char * file)
 		DECODER * found   = NULL;
 		MIMETYPE  mime    = mime_byExtension (file, NULL, NULL);
 		memset (info, 0, offsetof (struct s_img_info, Pixel));
+		info->WantW = want_w;
+		info->WantH = want_h;
 		if (MIME_Major(mime) && MIME_Minor(mime)) {
 			found = decoder_chain;
 			while (found) {

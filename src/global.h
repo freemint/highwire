@@ -165,6 +165,7 @@ extern BOOL         cfg_AllowCookies;
 extern BOOL         cfg_DropImages;  /* view ALT-texts instead of the image */
 extern BOOL         cfg_ViewImages;  /* view image instead of a placeholder */
 extern BOOL         cfg_FixedCmap;
+extern BOOL         cfg_FastImages;  /* nearest colours and hard alpha, no dither */
 extern BOOL         cfg_GreyPalette; /* grey ramp instead of the VDI's 4 colours */
 extern BOOL         cfg_ImgAspect;   /* squash images on tall-pixel screens */
 extern WORD         cfg_LineSpacing; /* extra leading for bitmap fonts:

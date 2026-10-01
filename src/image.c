@@ -791,11 +791,14 @@ image_job (void * arg, long invalidated)
 	} else {
 		pIMGDATA data = NULL;
 		IMGINFO  info;
+		/* A size the page gave lets a JPEG decode smaller to begin with */
+		BOOL     sized = (img->set_w > 0 && img->set_h > 0);
 		
 		containr_notify (frame->Container, HW_ImgBegLoad, img->source->FullName);
 
 		t_mark = clock();
-		if ((info = get_decoder (loc->FullName)) != NULL) {
+		if ((info = get_decoder (loc->FullName, (sized ? img->set_w : 0),
+		                                        (sized ? img->set_h : 0))) != NULL) {
 			if ((data = setup (img, info))        != NULL) {
 				read_img (img, info, data);
 			}
@@ -905,7 +908,7 @@ setup (IMAGE img, IMGINFO info)
 	size_t   wd_width;
 	size_t   pg_size;
 	size_t   mem_size;
-	ULONG    transpar = (info->Transp < 0 && !info->Alpha
+	ULONG    transpar = (info->Transp < 0 && !info->Alpha && !info->PalAlpha
 	                     ? (img->backgnd = -1) : img->backgnd);
 	RASTERIZER raster = rasterizer (info->BitDepth,
 	                                (info->Palette ? 0 : info->NumComps));
@@ -924,8 +927,8 @@ setup (IMAGE img, IMGINFO info)
 		return NULL;
 	}
 	data->mem_size   = mem_size;
-	data->img_w      = info->ImgWidth;
-	data->img_h      = info->ImgHeight;
+	data->img_w      = (info->FullW ? info->FullW : info->ImgWidth);
+	data->img_h      = (info->FullH ? info->FullH : info->ImgHeight);
 	data->fd_addr    = (data +1);
 	data->fd_w       = img->disp_w;
 	data->fd_h       = img->disp_h;
@@ -972,6 +975,21 @@ setup (IMAGE img, IMGINFO info)
 		info->LnSize *= n_planes;
 	}
 	
+	/* More than one clear palette entry is more than Transp can name, so
+	 * give them all the background's colour instead. */
+	if (info->PalAlpha && info->Palette) {
+		ULONG           rgb = (img->backgnd >= 0 ? color_lookup (img->backgnd)
+		                                         : 0xFFFFFFuL);
+		unsigned char * pal = info->Palette;
+		short           i;
+		for (i = 0; i < info->NumAlpha; i++, pal += info->PalStep) {
+			if (!info->PalAlpha[i]) {
+				pal[info->PalRpos] = (unsigned char)(rgb >>16);
+				pal[info->PalGpos] = (unsigned char)(rgb >> 8);
+				pal[info->PalBpos] = (unsigned char)(rgb     );
+			}
+		}
+	}
 	if (info->BitDepth > 1) {
 		if (info->Palette) {
 			(*raster->cnvpal)(info, transpar);
