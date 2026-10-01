@@ -93,15 +93,15 @@ v4e: ; $(MAKE) CPU=5475
 # sting and stik2 talk to the stack purely through its trap interface and
 # need no sockets, so they link against libcmini and come out at a twentieth
 # of the size mintlib gives them.  mintnet and magicnet need mintlib's
-# socket layer and stay on it.
-CMINI = ../../.crosslibs/libcmini/build
+# socket layer and stay on it.  libcmini comes with the toolkit container.
+CMINI = /freemint/libcmini/lib
 
 sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
-                    LDFLAGS="-s -nostdlib $(CMINI)/objs/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -liiomini -lgcc -lcmini"
+                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
 stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
-                    LDFLAGS="-s -nostdlib $(CMINI)/objs/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -liiomini -lgcc -lcmini"
+                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
 magicnet: ; $(MAKE) TARGET=../magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
 
 clean:
