@@ -36,6 +36,8 @@ decPng_start (const char * name, IMGINFO info)
 	int color_type;
 	BOOL alpha  = FALSE;
 	WORD transp = -1;
+	unsigned char * pal_alpha = NULL;
+	WORD            num_alpha = 0;
 
 	if (!file) {
 	/*	puts ("decPng_start(): file not found.");*/
@@ -84,29 +86,32 @@ decPng_start (const char * name, IMGINFO info)
 #endif
 		}
 	}
-	/* A palette with one fully transparent entry and the rest opaque is a
-	 * GIF's kind of transparency and takes the same cheap way.  Anything
-	 * else that is not opaque becomes RGBA, for the rows to be blended over
-	 * the background as they are read. */
+	/* A palette whose entries are each fully clear or fully solid stays a
+	 * palette, its first clear entry taking a GIF's kind of transparency and
+	 * setup() handing any others the same pixel.  FAST_IMAGES counts every
+	 * entry under half as clear and the rest as solid, so no palette leaves.
+	 * Anything else that is not opaque becomes RGBA, for the rows to be
+	 * blended over the background as they are read. */
 	color_type = png_get_color_type (png_ptr, info_ptr);
 	if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS)) {
 		png_bytep trns   = NULL;
 		int       n_trns = 0;
 		png_get_tRNS (png_ptr, info_ptr, &trns, &n_trns, NULL);
 		if (color_type == PNG_COLOR_TYPE_PALETTE) {
-			int i;
+			int i, clear = 0;
 			for (i = 0; i < n_trns && !alpha; i++) {
-				if (trns[i] == 255) {
-					continue;
-				} else if (trns[i] || transp >= 0) {
-					alpha  = TRUE;
-					transp = -1;
-				} else {
-					transp = i;
+				if (trns[i] < 128 && (cfg_FastImages || !trns[i])) {
+					if (!clear++) transp = i;
+				} else if (trns[i] != 255 && !cfg_FastImages) {
+					alpha = TRUE;
 				}
 			}
 			if (alpha) {
+				transp = -1;
 				png_set_palette_to_rgb (png_ptr);
+			} else if (clear > 1) {
+				pal_alpha = trns;
+				num_alpha = n_trns;
 			}
 		} else {
 			alpha = TRUE;
@@ -155,6 +160,8 @@ decPng_start (const char * name, IMGINFO info)
 	}
 	info->Alpha      = alpha;
 	info->Transp     = transp;
+	info->PalAlpha   = pal_alpha;
+	info->NumAlpha   = num_alpha;
 	info->Interlace  = 0;
 	
 	if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7) {
@@ -179,17 +186,20 @@ blend_row (IMGINFO info, CHAR * row)
 	const UWORD     r_bg = (UWORD)(info->AlphaBg >>16) & 0xFF;
 	const UWORD     g_bg = (UWORD)(info->AlphaBg >> 8) & 0xFF;
 	const UWORD     b_bg = (UWORD)(info->AlphaBg     ) & 0xFF;
+	/* FAST_IMAGES cuts at half way, so nothing is left to blend */
+	const UWORD     solid = (cfg_FastImages ? 128 : 255);
+	const UWORD     clear = (cfg_FastImages ? 127 :   0);
 	unsigned char * src  = (unsigned char *)row;
 	unsigned char * dst  = src;
 	UWORD           n    = info->ImgWidth;
 
 	while (n--) {
 		UWORD a = src[3];
-		if (a == 255) {
+		if (a >= solid) {
 			dst[0] = src[0];
 			dst[1] = src[1];
 			dst[2] = src[2];
-		} else if (!a) {
+		} else if (a <= clear) {
 			dst[0] = r_bg;
 			dst[1] = g_bg;
 			dst[2] = b_bg;

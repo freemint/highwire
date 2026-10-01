@@ -791,11 +791,15 @@ image_job (void * arg, long invalidated)
 	} else {
 		pIMGDATA data = NULL;
 		IMGINFO  info;
+		/* A size the page gave lets a JPEG decode smaller to begin with; a
+		 * side relative to the image's own size leaves the other unknown */
+		UWORD    want_w = (img->set_w > 0 && img->set_h >= 0 ? img->set_w : 0);
+		UWORD    want_h = (img->set_h > 0 && img->set_w >= 0 ? img->set_h : 0);
 		
 		containr_notify (frame->Container, HW_ImgBegLoad, img->source->FullName);
 
 		t_mark = clock();
-		if ((info = get_decoder (loc->FullName)) != NULL) {
+		if ((info = get_decoder (loc->FullName, want_w, want_h)) != NULL) {
 			if ((data = setup (img, info))        != NULL) {
 				read_img (img, info, data);
 			}
@@ -924,8 +928,8 @@ setup (IMAGE img, IMGINFO info)
 		return NULL;
 	}
 	data->mem_size   = mem_size;
-	data->img_w      = info->ImgWidth;
-	data->img_h      = info->ImgHeight;
+	data->img_w      = (info->FullW ? info->FullW : info->ImgWidth);
+	data->img_h      = (info->FullH ? info->FullH : info->ImgHeight);
 	data->fd_addr    = (data +1);
 	data->fd_w       = img->disp_w;
 	data->fd_h       = img->disp_h;
@@ -972,14 +976,22 @@ setup (IMAGE img, IMGINFO info)
 		info->LnSize *= n_planes;
 	}
 	
-	if (info->BitDepth > 1) {
-		if (info->Palette) {
-			(*raster->cnvpal)(info, transpar);
+	if (info->Palette || info->BitDepth <= 1) {
+		(*raster->cnvpal) (info, transpar);
+		/* Transp names one clear entry; any others take its pixel */
+		if (info->PalAlpha) {
+			short i;
+			for (i = 0; i < info->NumAlpha; i++) {
+				if (info->PalAlpha[i] < 128) {
+					info->Pixel[i] = info->Pixel[info->Transp];
+				}
+			}
 		}
+	}
+	if (info->BitDepth > 1) {
 		data->bgnd = G_WHITE;
 		data->fgnd = G_BLACK;
 	} else {
-		(*raster->cnvpal) (info, transpar);
 		data->bgnd = (WORD)info->Pixel[0];
 		data->fgnd = (WORD)info->Pixel[1];
 	}

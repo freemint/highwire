@@ -86,7 +86,26 @@ decJpg_start (const char * name, IMGINFO info)
 	jpeg_create_decompress (jpeg);
 	jpeg_stdio_src         (jpeg, file);
 	jpeg_read_header       (jpeg, TRUE);
-	
+
+	/* Shown at half the size or less, the IDCT can produce that directly:
+	 * the scaling below would only throw the extra pixels away, at the cost
+	 * of decoding and converting them first.  Take the smallest of 1/8, 1/4
+	 * and 1/2 that still covers the size asked for; a side not asked for is
+	 * 0, which any size covers. */
+	if (info->WantW || info->WantH) {
+		unsigned d = 8;
+		while (d > 1 && ((jpeg->image_width  + d -1) / d < info->WantW ||
+		                 (jpeg->image_height + d -1) / d < info->WantH)) {
+			d /= 2;
+		}
+		if (d > 1) {
+			jpeg->scale_num   = 1;
+			jpeg->scale_denom = d;
+			info->FullW = jpeg->image_width;
+			info->FullH = jpeg->image_height;
+		}
+	}
+
 	jpeg->dct_method          = JDCT_IFAST;
 #ifdef __M68881__
 	jpeg->do_fancy_upsampling = TRUE;
@@ -115,8 +134,8 @@ decJpg_start (const char * name, IMGINFO info)
 	info->_priv_file = file;
 	info->read       = decJpg_read;
 	info->quit       = decJpg_quit;
-	info->ImgWidth   = jpeg->image_width;
-	info->ImgHeight  = jpeg->image_height;
+	info->ImgWidth   = jpeg->output_width;
+	info->ImgHeight  = jpeg->output_height;
 	info->BitDepth   = 8;
 /*	info->NumColors  = 0;    0-values needn't to be set */
 /*	info->Palette    = NULL; */

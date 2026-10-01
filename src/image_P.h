@@ -25,6 +25,10 @@ struct s_img_info {
 	WORD     Interlace;
 	BOOL     Alpha;    /* rows arrive with an alpha channel after the colour... */
 	ULONG    AlphaBg;  /* ...to blend over this 0xRRGGBB, which setup() fills in */
+	unsigned char * PalAlpha; /* palette entries under 128 here are clear */
+	WORD     NumAlpha;        /* besides Transp: setup() gives them its pixel */
+	UWORD    WantW, WantH; /* the size the page will show it at, if it said */
+	UWORD    FullW, FullH; /* its real size, when decoded smaller than that */
 	/* */
 	void   (*raster)(IMGINFO, void * dst);
 	void   * RowMem;
@@ -40,7 +44,7 @@ struct s_img_info {
 	ULONG    Pixel[256];
 };
 
-IMGINFO    get_decoder (const char * file);
+IMGINFO    get_decoder (const char * file, UWORD want_w, UWORD want_h);
 
 typedef struct s_rasterizer {
 	const char * DispInfo;

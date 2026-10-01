@@ -1,6 +1,7 @@
 /* @(#)highwire/image.c
  */
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <gemx.h>
@@ -652,6 +653,37 @@ raster_chunks (CHAR * src, UWORD * dst, UWORD num, UWORD depth)
 #endif
 
 /*----------------------------------------------------------------------------*/
+/* The nearest colour the screen really has, for a 16x16x16 grid of colours:
+ * the pixel value in the first byte, then that colour's own RGB, as in
+ * cube216[].  Filled the first time each cell is asked for, so nothing is
+ * spent on colours no image uses.
+*/
+#define LUT_EMPTY 0xFFFFFFFFuL
+static ULONG * dither_lut = NULL;
+
+/* How dither_true() maps a colour, settled once by rasterizer() */
+#define DTH_CUBE    0   /* error diffusion over the 6x6x6 cube         */
+#define DTH_LUT     1   /* error diffusion straight to the screen's own */
+#define DTH_NEAREST 2   /* the nearest of those, nothing carried: FAST_IMAGES */
+static char dither_mode = DTH_CUBE;
+
+#ifdef __GNUC__
+static inline CHAR *
+#else
+static CHAR *
+#endif
+lut_cell (UWORD r, UWORD g, UWORD b)
+{
+	ULONG * cell = &dither_lut[((r & 0xF0) <<4) | (g & 0xF0) | (b >>4)];
+	if (*cell == LUT_EMPTY) {
+		WORD pen = remap_color (((long)((r & 0xF0) | 8) <<16)
+		                        | ((long)((g & 0xF0) | 8) << 8) | ((b & 0xF0) | 8));
+		*cell = ((ULONG)pixel_val[pen] <<24) | color_lookup (pen);
+	}
+	return (CHAR*)cell;
+}
+
+/*----------------------------------------------------------------------------*/
 #ifdef __GNUC__
 static inline CHAR
 #else
@@ -678,7 +710,7 @@ static inline CHAR
 #else
 static CHAR
 #endif
-dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
+dither_cube (CHAR * rgb, WORD * err, BYTE ** buf)
 {
 	BYTE * dth  = *buf;
 	UWORD  r    = ((err[0] += (WORD)dth[0] + rgb[0])
@@ -708,6 +740,46 @@ dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
 	return irgb[0];
 }
 
+/*----------------------------------------------------------------------------*/
+#ifdef __GNUC__
+static inline CHAR
+#else
+static CHAR
+#endif
+dither_true (CHAR * rgb, WORD * err, BYTE ** buf)
+{
+	BYTE * dth;
+	WORD   r, g, b;
+	CHAR * irgb;
+
+	if (dither_mode == DTH_NEAREST) {
+		(*buf) += 3;
+		return lut_cell (rgb[0], rgb[1], rgb[2])[0];
+	} else if (dither_mode == DTH_CUBE) {
+		return dither_cube (rgb, err, buf);
+	}
+	/* The cube's error diffusion, but each pixel goes straight to the nearest
+	 * colour the screen has, and the error is halved by a shift: no multiply,
+	 * no division. */
+	dth = *buf;
+	(*buf) += 3;
+	r = err[0] + dth[0] + rgb[0];
+	g = err[1] + dth[1] + rgb[1];
+	b = err[2] + dth[2] + rgb[2];
+	if ((UWORD)r > 255) r = (r < 0 ? 0 : 255);
+	if ((UWORD)g > 255) g = (g < 0 ? 0 : 255);
+	if ((UWORD)b > 255) b = (b < 0 ? 0 : 255);
+	irgb = lut_cell (r, g, b);
+	r -= irgb[1];
+	g -= irgb[2];
+	b -= irgb[3];
+	dth[0] = (BYTE)(err[0] = r >>1);
+	dth[1] = (BYTE)(err[1] = g >>1);
+	dth[2] = (BYTE)(err[2] = b >>1);
+	
+	return irgb[0];
+}
+
 /*------------------------------------------------------------------------------
  * 4 planes interleaved words format
  */
@@ -718,7 +790,6 @@ raster_I4 (IMGINFO info, void * _dst)
 	short   width = info->DthWidth;
 	size_t  x     = (info->IncXfx +1) /2;
 
-#if 1
 	BYTE * dth    = info->DthBuf;
 	WORD   err[3] = { 0, 0, 0 };
 	CHAR   buf[16];
@@ -727,14 +798,6 @@ raster_I4 (IMGINFO info, void * _dst)
 	do {
 		UWORD idx = info->RowBuf[x >>16];
 		*(tmp++)  = dither_true ((CHAR*)&info->Pixel[idx] +1, err, &dth);
-#else
-	CHAR   buf[16];
-	short  n   = 16;
-	CHAR * tmp = buf;
-	do {
-		UWORD idx = info->RowBuf[x >>16];
-		*(tmp++)  = *(CHAR*)&info->Pixel[idx];
-#endif
 		if (!--width || !--n) {
 			raster_chunk4 (buf, dst, tmp - buf);
 			dst += 4;
@@ -742,6 +805,32 @@ raster_I4 (IMGINFO info, void * _dst)
 			tmp  = buf;
 		}
 		x += info->IncXfx;
+	} while (width);
+}
+
+/*------------------------------------------------------------------------------
+ * The same for FAST_IMAGES: cnvpal_4_8() has mapped each entry to its pixel.
+ */
+static void
+raster_I4n (IMGINFO info, void * _dst)
+{
+	UWORD * dst   = _dst;
+	short   width = info->DthWidth;
+	size_t  x     = (info->IncXfx +1) /2;
+	size_t  inc   = info->IncXfx;
+	CHAR    buf[16];
+	short   n   = 16;
+	CHAR  * tmp = buf;
+
+	do {
+		*(tmp++) = *(CHAR*)&info->Pixel[info->RowBuf[x >>16]];
+		if (!--width || !--n) {
+			raster_chunk4 (buf, dst, tmp - buf);
+			dst += 4;
+			n    = 16;
+			tmp  = buf;
+		}
+		x += inc;
 	} while (width);
 }
 
@@ -1571,7 +1660,7 @@ cnvpal_1_2 (IMGINFO info, ULONG backgnd)
  * index cnvpal_4_8() writes into the top byte.  raster_I4() dithers from the
  * palette's own RGB and never looks at it, and finding it costs a nearest
  * colour search for every entry -- about a quarter of a second on a 256 colour
- * image.  The others (I8, P8 and the standard bitmap) do read it.
+ * image.  The others (I4n, I8, P8 and the standard bitmap) do read it.
  */
 static BOOL cnvpal_mapped = TRUE;
 
@@ -1737,7 +1826,7 @@ rasterizer (UWORD depth, UWORD comps)
 				break;
 			case 4:
 				cnvpal_color = cnvpal_4_8;
-				raster_cmap  = raster_I4;
+				raster_cmap  = (cfg_FastImages ? raster_I4n : raster_I4);
 				raster_gray  = gscale_I4;
 				raster_true  = dither_I4;
 				break;
@@ -1827,6 +1916,12 @@ rasterizer (UWORD depth, UWORD comps)
 		cnvpal_mapped = (raster_cmap != raster_I4);
 		if (sdepth == 4 || sdepth == 8) {
 			color_tables (cube216, graymap, pixel_val);
+			/* the cube stays where it is the palette, unless FAST_IMAGES */
+			if ((cfg_FastImages || !color_FixedMap)
+			    && (dither_lut = malloc (4096 * sizeof(ULONG))) != NULL) {
+				memset (dither_lut, 0xFF, 4096 * sizeof(ULONG));
+				dither_mode = (cfg_FastImages ? DTH_NEAREST : DTH_LUT);
+			}
 		}
 		raster.DispInfo = disp_info;
 	}
