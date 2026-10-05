@@ -59,6 +59,6 @@ typedef struct
 #define	UA_UNKNOWN		-2
 #define UA_OFFLINE		-3		
 
-extern int cdecl usis_query(USIS_REQUEST *ur);
+extern int CDECL usis_query(USIS_REQUEST *ur);
 
 #endif

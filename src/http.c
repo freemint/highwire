@@ -509,7 +509,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		len = sizeof(buffer) - (p - buffer) - sizeof(rest);
 		len = location_PathFile (loc, p, len);
 		strcpy (p += len, rest);
-		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1)) > 0) {
+		if ((len = inet_send (sock, buffer, (p - buffer) + sizeof(rest)-1, loc ? loc->ssl_context : NULL)) > 0) {
 			const char * stack = inet_info();
 			/* Screen geometry, so a transcoding proxy can size images for the
 			 * display instead of guessing.  UA-pixels/UA-color are the old
@@ -566,7 +566,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			      name, portbuf, (stack ? stack : ""),
 			      vdi_dev.xres +1, vdi_dev.yres +1, ua_col, planes,
 			      ua_aspw, ua_asph, ua_fetch);
-			len = inet_send (sock, buffer, len);
+			len = inet_send (sock, buffer, len, loc ? loc->ssl_context : NULL);
 		}
 		if ((long)len > 0 && referer) {
 			const char text[] = "Referer: ";
@@ -575,11 +575,11 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			len += location_FullName (referer,
 			                          buffer + len, sizeof(buffer) - len -2);
 			strcpy (buffer + len, "\r\n");
-			len = inet_send (sock, buffer, len +2);
+			len = inet_send (sock, buffer, len +2, loc ? loc->ssl_context : NULL);
 		}
 		if ((long)len > 0 && auth) {
 			len = sprintf (buffer, "Authorization: Basic %s\r\n", auth);
-			len = inet_send (sock, buffer, len);
+			len = inet_send (sock, buffer, len, loc ? loc->ssl_context : NULL);
 		}
 		if ((long)len > 0 && cfg_AllowCookies) {
 			COOKIESET cset;
@@ -587,19 +587,19 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			if (num) {
 				WORD       i      = 0;
 				const char text[] = "Cookie: ";
-				len = inet_send (sock, text, sizeof(text) -1);
+				len = inet_send (sock, text, sizeof(text) -1, loc ? loc->ssl_context : NULL);
 				do if ((long)len > 0) {
 					COOKIE cookie = cset.Cookie[i++];
 					if (cookie->NameLen + cookie->ValueLen < sizeof(buffer) -3) {
 						len = sprintf (buffer, "%s=%s%s",
 						               cookie->NameStr, cookie->ValueStr,
 						               (i < num ? "; " : "\r\n"));
-						len = inet_send (sock, buffer, len);
+						len = inet_send (sock, buffer, len, loc ? loc->ssl_context : NULL);
 					} else { /* buffer isn't large enough */
-						if (inet_send (sock, cookie->NameStr, cookie->NameLen) > 0 &&
-						    inet_send (sock, "=",             1)               > 0 &&
-						    inet_send (sock, cookie->ValueStr,cookie->ValueLen) > 0) {
-							len = inet_send (sock, (i < num ? "; " : "\r\n"), 2);
+						if (inet_send (sock, cookie->NameStr, cookie->NameLen,  loc ? loc->ssl_context : NULL) > 0 &&
+						    inet_send (sock, "=",             1,                loc ? loc->ssl_context : NULL) > 0 &&
+						    inet_send (sock, cookie->ValueStr,cookie->ValueLen, loc ? loc->ssl_context : NULL) > 0) {
+							len = inet_send (sock, (i < num ? "; " : "\r\n"), 2, loc ? loc->ssl_context : NULL);
 						} else {
 							len = -1;
 							break;
@@ -614,8 +614,8 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			               "Content-type: %s\r\n"
 			               "Content-length: %li\r\n\r\n",
 			               post_buf->ContentType, n);
-			if ((long)(len = inet_send (sock, buffer, len)) > 0 && n) {
-				len = inet_send (sock, post_buf->Buffer, n);
+			if ((long)(len = inet_send (sock, buffer, len, loc ? loc->ssl_context : NULL)) > 0 && n) {
+				len = inet_send (sock, post_buf->Buffer, n, loc ? loc->ssl_context : NULL);
 			}
 		}
 		/* The blank line that ends the headers.  A POST has already sent one
@@ -623,7 +623,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		 * past the Content-length we just promised.
 		*/
 		if ((long)len >= 0 && !post_buf) {
-			len = inet_send (sock, "\r\n", 2);
+			len = inet_send (sock, "\r\n", 2, loc ? loc->ssl_context : NULL);
 		}
 		if ((long)len < 0) {
 			if ((long)len < -1) {
@@ -636,7 +636,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 				        "The connection was made, but broke while the "
 				        "request was being sent.</font>");
 			}
-			inet_close (sock);
+			inet_close (sock, loc ? loc->ssl_context : NULL);
 			
 			return (short)len;
 		}
@@ -646,7 +646,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 	
 	tout_msec = (tout_msec * CLK_TCK) /1000; /* align to clock ticks */
 	do {
-		long n = inet_recv (sock, ln_end, (left <= blk_size ? left : blk_size));
+		long n = inet_recv (sock, ln_end, (left <= blk_size ? left : blk_size), loc ? loc->ssl_context : NULL);
 		
 		if (n < 0) { /* connection broken */
 			if (reply) {
@@ -657,7 +657,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			} else {
 				reply = (short)n;
 			}
-			inet_close (sock);
+			inet_close (sock, loc ? loc->ssl_context : NULL);
 			sock = -1;
 			break;
 		
@@ -674,7 +674,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			sprintf (buffer, "Header %s %i.%03i sec.\n", 
 			         (reply ? "stalled" : "timeout"),
 			         (int)(clk /1000), (int)(clk % 1000));
-			inet_close (sock);
+			inet_close (sock, loc ? loc->ssl_context : NULL);
 			sock = -1;
 			return -ETIMEDOUT;
 		
@@ -695,7 +695,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			hdr->LoclDate = time (NULL);
 			if (sscanf (ln_beg, "HTTP/%u.%u %i", &major, &minor, &reply) < 3) {
 				reply = -1;
-				inet_close (sock);
+				inet_close (sock, loc ? loc->ssl_context : NULL);
 				sock = -1;
 				break;
 			
@@ -766,7 +766,7 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 		*keep_alive = sock;
 	
 	} else {
-		inet_close (sock);
+		inet_close (sock, loc ? loc->ssl_context : NULL);
 	}
 	return reply;
 }

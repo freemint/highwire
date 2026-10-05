@@ -48,14 +48,27 @@ static short  start_application (const char * appl, LOCATION loc);
 
 /* There is no TLS in the browser, so https is spoken only to a proxy that
  * terminates it for us: 'GET https://host/path' on the request line, no CONNECT
- * tunnel.  Without a proxy a https location has nowhere to go -- dialling it as
+ * tunnel. Other method is to install and use the mbedTLS.ldg library
+ * See https://ptonthat.fr/mbedtls-ldg/ or https://ptonthat.fr/files/polarssl/
+ *
+ * Without a proxy a https location has nowhere to go -- dialling it as
  * cleartext http would just hang against port 443.
  * A function rather than one of Location.h's PROTO_ macros: those are pure
  * tests on the enum, this one asks another module what it is configured with. */
 static BOOL
 proto_isFetchable (LC_PROTO proto)
 {
-	return (proto == PROT_HTTP || (proto == PROT_HTTPS && http_hasProxy()));
+	if (proto == PROT_HTTP)
+  {
+    return (ldg_has_inet());
+  }
+  else if (proto == PROT_HTTPS)
+  {
+    if (http_hasProxy()) { return TRUE; }
+    else
+    if (ldg_has_mbedtls()) { return TRUE; }
+  }
+  return FALSE;
 }
 
 
@@ -407,7 +420,7 @@ delete_loader (LOADER * p_loader)
 
 #ifdef USE_INET
 		if (loader->rdSocket >= 0) {
-			inet_close (loader->rdSocket);
+			inet_close (loader->rdSocket, loader->Location ? loader->Location->ssl_context : NULL);
 		}
 #endif /* USE_INET */
 		if (loader->rdList) {
@@ -491,12 +504,13 @@ start_cont_load (CONTAINR target, const char * url, LOCATION base,
 		loader->MimeType = MIME_TXT_HTML;
 		sched_insert (parse_about, new_parser (loader),(long)target, PRIO_INTERN);
 		
-	} else if (loc->Proto == PROT_HTTPS && !http_hasProxy()) {
+	} else if (loc->Proto == PROT_HTTPS && !http_hasProxy() && !ldg_has_mbedtls()) {
 		/* tested ahead of the MIME check, so that https://host/pic.jpg says why
 		 * it failed instead of disappearing into parse_image */
 		error_page (loader, target, "https:// needs a proxy",
 		            "HighWire has no TLS of its own.  Set HTTP_PROXY in the "
-		            "config file to a proxy that terminates it.");
+		            "config file to a proxy that terminates it. Or install "
+                "and use mbedTLS.ldg library.");
 
 	} else if (MIME_Major(loader->MimeType) == MIME_IMAGE) {
 		loader->MimeType = MIME_IMAGE;
@@ -611,7 +625,8 @@ chunked_job (void * arg, long invalidated)
 			data   = (n > 0 ? memchr (data +2, '\n', n) : NULL);
 			if (!data) {
 				n = inet_recv (loader->rdSocket, loader->rdTemp + loader->rdTlen,
-				               sizeof (loader->rdTemp) - loader->rdTlen);
+				               sizeof (loader->rdTemp) - loader->rdTlen,
+                       loader->Location ? loader->Location->ssl_context : NULL);
 
 				if (n > 0) {
 					loader->rdTlen += n;
@@ -622,7 +637,7 @@ chunked_job (void * arg, long invalidated)
 
 					/* check for connection termination */
 					if (n == -ECONNRESET) {
-						inet_close (loader->rdSocket);
+						inet_close (loader->rdSocket, loader->Location ? loader->Location->ssl_context : NULL);
 						loader->rdSocket = -1;
 						loader->rdLeft   = 0;
 						break;
@@ -743,11 +758,11 @@ receive_job (void * arg, long invalidated)
 	}
 	
 	if (loader->rdLeft) {
-		long n = inet_recv (loader->rdSocket, loader->rdDest, loader->rdLeft);
+		long n = inet_recv (loader->rdSocket, loader->rdDest, loader->rdLeft, loader->Location ? loader->Location->ssl_context : NULL);
 		int  r = JOB_AGED;
 
 		if (n < 0) { /* no more data available */
-			inet_close (loader->rdSocket);
+			inet_close (loader->rdSocket, loader->Location ? loader->Location->ssl_context : NULL);
 			loader->rdSocket = -1;
 			loader->rdLeft   = 0;
 		
@@ -777,7 +792,7 @@ receive_job (void * arg, long invalidated)
 	/* else download finished */
 	
 	if (loader->rdSocket >= 0) {
-		inet_close (loader->rdSocket);
+		inet_close (loader->rdSocket, loader->Location ? loader->Location->ssl_context : NULL);
 		loader->rdSocket   = -1;
 	}
 	if (loader->Data) {
@@ -901,7 +916,7 @@ header_job (void * arg, long invalidated)
 		if (reply == 401) {
 			if (!auth && hdr.Realm && loader->AuthBasic && loader->AuthRealm
 			          && strcmp (loader->AuthRealm, hdr.Realm) == 0) {
-				inet_close (sock);
+				inet_close (sock, loc ? loc->ssl_context : NULL);
 				sock = -1;
 				auth = loader->AuthBasic;
 				continue;
@@ -943,7 +958,7 @@ header_job (void * arg, long invalidated)
 				     + titl_s + strlen(hdr.Realm) + strlen(host) + strlen (text);
 				if ((loader->AuthRealm = strdup (hdr.Realm)) != NULL &&
 				    (loader->Data = malloc (size)) != NULL) {
-					inet_close (sock);
+					inet_close (sock, loc ? loc->ssl_context : NULL);
 					sock = -1;
 					CACHE_ABORT(loc);
 					size = sprintf (loader->Data, form,
@@ -963,7 +978,7 @@ header_job (void * arg, long invalidated)
 	if ((reply == 301 || reply == 302 || reply == 303) && hdr.Rdir) {
 		LOCATION redir  = new_location (hdr.Rdir, loader->Location);
 		CACHED   cached = (hdr_only ? NULL : cache_lookup (redir, 0, NULL));
-		inet_close  (sock);
+		inet_close  (sock, loc ? loc->ssl_context : NULL);
 		CACHE_ABORT(loc);
 		
 		if (!loader->MimeType) {
@@ -1092,7 +1107,7 @@ header_job (void * arg, long invalidated)
 		loader->Error = reply;
 	}
 	
-	inet_close (sock);
+	inet_close (sock, loc ? loc->ssl_context : NULL);
 	
 	/* if it is a short file and already finished, end proceedings
 	*/

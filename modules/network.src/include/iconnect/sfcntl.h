@@ -57,6 +57,6 @@
 #define O_SYNCIO		O_SYNC	/* Do write through caching */
 #define FSYNCIO			O_SYNC	/* Do write through caching */
 
-extern long cdecl sfcntl(int FileDescriptor, long Command, long Argument);
+extern long CDECL sfcntl(int FileDescriptor, long Command, long Argument);
 
 #endif

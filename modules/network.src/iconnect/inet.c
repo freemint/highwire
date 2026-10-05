@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
-#include <iconnect/in.h>
-#include <iconnect/inet.h>
+#include "../include/iconnect/in.h"
+#include "../include/iconnect/inet.h"
 #include "network.h"
 
 /* Utility */

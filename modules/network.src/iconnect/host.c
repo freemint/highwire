@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iconnect/sockerr.h>
-#include <iconnect/socket.h>
-#include <iconnect/netdb.h>
-#include <iconnect/inet.h>
+#include "../include/iconnect/sockerr.h"
+#include "../include/iconnect/socket.h"
+#include "../include/iconnect/netdb.h"
+#include "../include/iconnect/inet.h"
 
 #include "network.h"
 #include "resolver.h"

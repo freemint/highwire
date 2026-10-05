@@ -1,9 +1,9 @@
 #if  !defined( __NET__ )
 #define __NET__
-#include <tos.h>
-#include <iconnect/usis.h>
-#include <iconnect/netdb.h>
-#include <iconnect/types.h>
+#include <mint/sysbind.h>
+#include "../include/iconnect/usis.h"
+#include "../include/iconnect/netdb.h"
+#include "../include/iconnect/types.h"
 
 #if !defined( __UTYPES__ )
 #define __UTYPES__
@@ -12,6 +12,8 @@ typedef	uchar					byte;
 typedef	unsigned int	uint;
 typedef	unsigned long ulong;
 #endif
+
+#define     BASPAG BASEPAGE
 
 typedef struct
 {
@@ -105,43 +107,43 @@ typedef struct
 	long	version;
 
 	/* sockets */
-	int		cdecl (*socket)(int af, int type, int protocol);
-	int 	cdecl (*bind)(int s, const void *addr, int addrlen);
-	int 	cdecl (*listen)(int s, int backlog);
-	int 	cdecl (*accept)(int s, const void *addr, int *addrlen);
-	int		cdecl (*connect)(int s, const void *addr, int addrlen);
+	int		CDECL (*socket)(int af, int type, int protocol);
+	int 	CDECL (*bind)(int s, const void *addr, int addrlen);
+	int 	CDECL (*listen)(int s, int backlog);
+	int 	CDECL (*accept)(int s, const void *addr, int *addrlen);
+	int		CDECL (*connect)(int s, const void *addr, int addrlen);
 
-	int 	cdecl (*write)(int s, const void *msg, int len);
-	int		cdecl (*send)(int s, const void *msg, int len, int flags);
-	int 	cdecl (*sendto)(int s, const void *msg, int len, int flags, void *to, int tolen);
+	int 	CDECL (*write)(int s, const void *msg, int len);
+	int		CDECL (*send)(int s, const void *msg, int len, int flags);
+	int 	CDECL (*sendto)(int s, const void *msg, int len, int flags, void *to, int tolen);
 
-	long 	cdecl (*read)(int s, void *buf, long len);
-	long	cdecl (*recv)(int s, void *buf, long len, int flags);
-	long 	cdecl (*recvfrom)(int s, void *buf, long len, int flags, void *from, int *fromlen);
+	long 	CDECL (*read)(int s, void *buf, long len);
+	long	CDECL (*recv)(int s, void *buf, long len, int flags);
+	long 	CDECL (*recvfrom)(int s, void *buf, long len, int flags, void *from, int *fromlen);
 
-	int 	cdecl (*select)(int nfds, fd_set	*readlist, fd_set *writelist, fd_set *exceptlist, struct timeval *TimeOut);
-	int		cdecl (*status)(int s, void *mtcb); /* is (tcb*) */
-	int		cdecl (*shutdown)(int s, int how);
-	int		cdecl (*close)(int s);
+	int 	CDECL (*select)(int nfds, fd_set	*readlist, fd_set *writelist, fd_set *exceptlist, struct timeval *TimeOut);
+	int		CDECL (*status)(int s, void *mtcb); /* is (tcb*) */
+	int		CDECL (*shutdown)(int s, int how);
+	int		CDECL (*close)(int s);
 
-	long	cdecl (*sfcntl)(int FileDescriptor, long Command, long Argument);
-	int 	cdecl (*getsockopt)(int s, int level, int optname, void *optval, int *optlen);
-	int 	cdecl (*setsockopt)(int s, int level, int optname, const void *optval, int *optlen);
+	long	CDECL (*sfcntl)(int FileDescriptor, long Command, long Argument);
+	int 	CDECL (*getsockopt)(int s, int level, int optname, void *optval, int *optlen);
+	int 	CDECL (*setsockopt)(int s, int level, int optname, const void *optval, int *optlen);
 	
-	int 	cdecl (*getsockname)(int s, void *addr, int *addrlen);
-	int 	cdecl (*getpeername)(int s, void *addr, int *addrlen);
+	int 	CDECL (*getsockname)(int s, void *addr, int *addrlen);
+	int 	CDECL (*getpeername)(int s, void *addr, int *addrlen);
 
 	/* resolver */
-	void 	cdecl (*res_init)(void);
-	int 	cdecl (*res_query)(char *dname, int class, int type, uchar *answer, int anslen);
-	int 	cdecl (*res_search)(char *dname, int class, int type, uchar *answer, int anslen);
-	int 	cdecl (*res_mkquery)(int op, char *dname, int class, int type, char *data, int datalen, void *notused, char *buf, int buflen);
-	int 	cdecl (*res_send)(char *msg, int msglen, char *answer, int anslen);
-	int 	cdecl (*dn_expand)(uchar *msg, uchar *eomorig, uchar *comp_dn, uchar *exp_dn, int length);
-	int 	cdecl (*dn_comp)(uchar *exp_dn, uchar *comp_dn, uchar **dnptrs, uchar **lastdnptr, int length);
+	void 	CDECL (*res_init)(void);
+	int 	CDECL (*res_query)(char *dname, int class, int type, uchar *answer, int anslen);
+	int 	CDECL (*res_search)(char *dname, int class, int type, uchar *answer, int anslen);
+	int 	CDECL (*res_mkquery)(int op, char *dname, int class, int type, char *data, int datalen, void *notused, char *buf, int buflen);
+	int 	CDECL (*res_send)(char *msg, int msglen, char *answer, int anslen);
+	int 	CDECL (*dn_expand)(uchar *msg, uchar *eomorig, uchar *comp_dn, uchar *exp_dn, int length);
+	int 	CDECL (*dn_comp)(uchar *exp_dn, uchar *comp_dn, uchar **dnptrs, uchar **lastdnptr, int length);
 	
 	/* User setup information service */
-	int		cdecl (*usis)(USIS_REQUEST *request);
+	int		CDECL (*usis)(USIS_REQUEST *request);
 }user_interface;
 
 typedef struct

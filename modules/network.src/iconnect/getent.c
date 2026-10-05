@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iconnect/sockerr.h>
-#include <iconnect/socket.h>
-#include <iconnect/netdb.h>
-#include <iconnect/in.h>
-#include <iconnect/inet.h>
-#include <tos.h>
-#include <iconnect/atarierr.h>
-#include <iconnect/usis.h>
-#include <iconnect/mt_sock.h>
+#include "../include/iconnect/sockerr.h"
+#include "../include/iconnect/socket.h"
+#include "../include/iconnect/netdb.h"
+#include "../include/iconnect/in.h"
+#include "../include/iconnect/inet.h"
+# include <mintbind.h>
+#include "../include/iconnect/atarierr.h"
+#include "../include/iconnect/usis.h"
+#include "../include/iconnect/mt_sock.h"
 
 extern	int set_flag(int bit_nr);
 extern	void	clear_flag(int bit_nr);

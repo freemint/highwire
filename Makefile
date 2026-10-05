@@ -7,7 +7,8 @@ BUILDDIR = build
 
 # compiler settings
 
-CROSS = m68k-atari-mint-
+CROSSPATH=/opt/cross-mint/bin/
+CROSS = $(CROSSPATH)m68k-atari-mint-
 CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
@@ -26,9 +27,10 @@ CPU = 68000
 #CPU = 68020-60
 #CPU = 5475
 
-DEFS = -DUSE_OVL -DUSE_INET -DLIBPNG -DLIBGIF -DLIBJPG
+DEFS = -DUSE_INET -DLIBPNG -DLIBGIF -DLIBJPG
 OPTFLAGS = -funsigned-char \
-       -fomit-frame-pointer -O2 -fstrength-reduce 
+       -fomit-frame-pointer -O2 -fstrength-reduce \
+       -Wno-error=array-bounds -Wno-error=stringop-overflow
 
 ifeq ($(CPU),5475)
 	OPTS = $(CPU:%=-mcpu=%) $(OPTFLAGS)
@@ -85,7 +87,7 @@ INCLUDE =
 # Neither the toolkit image nor the FreeMiNT packages carry the image
 # libraries, so lib/ vendors them prebuilt; take the multilib that matches
 # the link.
-VENDORED = giflib libpng jpeg
+VENDORED = giflib libpng jpeg ldg mbedtls
 ifeq ($(FPU),0)
 MULTIDIR := .
 else
@@ -99,7 +101,7 @@ CHECKGIF := $(shell if echo -e "$(hash)include <gif_lib.h> \\nconst char *versio
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = -s
-LIBS = $(SOFTFLOAT) -lgem -lcflib -liio $(CHECKGIF) -ljpeg -lpng -lz -lm \
+LIBS = $(SOFTFLOAT) -lgem -lcflib -liio $(CHECKGIF) -ljpeg -lpng -lz -lm -lldg \
        #-lsocket
 
 ifeq ($(CPU),5475)
@@ -139,7 +141,7 @@ CFILES = \
 	Logging.c \
 	schedule.c \
 	mime.c \
-	ovl_sys.c \
+	mbedTLS.c \
 	inet.c \
 	http.c \
 	cache.c \
@@ -247,22 +249,25 @@ dist::
 	cp -pvr html/. $(DISTDIR)/html
 	mkdir -p $(DISTDIR)/modules
 	$(MAKE) -C modules/network.src clean
-	$(MAKE) -C modules/network.src sting stik2
-	$(MAKE) -C modules/network.src clean
-	$(MAKE) -C modules/network.src CPU=5475
-	cp -a modules/mintnet.ovl $(DISTDIR)/modules/mintnet.v4e
-	$(MAKE) -C modules/network.src CPU=68000
-	cp -a modules/mintnet.ovl $(DISTDIR)/modules
-	cp -a modules/README.TXT modules/iconnect.ovl modules/magicnet.ovl modules/stik2.ovl modules/sting.ovl $(DISTDIR)/modules
-#	iconnect.ovl and magicnet.ovl above are still prebuilt binaries; the rest
-#	were built here.
+	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_MINTNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.v4e
+	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_STING
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/sting.v4e
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MINTNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.ldg
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_STING
+	cp -a modules/network.src/network.ldg $(DISTDIR)/modules/sting.ldg
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/network.ldg
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/magxnet.ldg
+	#$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_ICONNECT
+	#mv modules/network.src/network.ldg $(DISTDIR)/modules/iconnect.ldg
 	mkdir -p $(DISTDIR)/example.cfg
 	cp -a example.cfg/highwire.cfg $(DISTDIR)/example.cfg
 #	Ready to run on the machine most people have, without renaming anything
 #	first: the 68000 build as HIGHWIRE.PRG, and STinG as the network module.
 #	Both are copies, so the other builds and stacks are still there to swap in.
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
-	cp -a modules/sting.ovl $(DISTDIR)/modules/network.ovl
 	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/doc/giflib.txt $(DISTDIR)/doc/libpng.txt $(DISTDIR)/doc/libjpeg.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/LICENSE $(DISTDIR)/example.cfg/highwire.cfg
 	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
 
@@ -287,3 +292,20 @@ release: dist
 DEPS_MAGIC := $(shell mkdir -p ./$(DEPDIR) > /dev/null 2>&1 || :)
 
 -include $(DEPENDENCIES)
+
+modules::
+	mkdir -p $(DISTDIR)/modules
+	$(MAKE) -C modules/network.src clean
+	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_MINTNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.v4e
+	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_STING
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/sting.v4e
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MINTNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.ldg
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_STING
+	cp -a modules/network.src/network.ldg $(DISTDIR)/modules/sting.ldg
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/network.ldg
+	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET
+	mv modules/network.src/network.ldg $(DISTDIR)/modules/magxnet.ldg
+	#$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_ICONNECT
+	#mv modules/network.src/network.ldg $(DISTDIR)/modules/iconnect.ldg

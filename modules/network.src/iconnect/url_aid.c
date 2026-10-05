@@ -1,12 +1,12 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iconnect/netdb.h>
-#include <iconnect/url_aid.h>
+#include "../include/iconnect/netdb.h"
+#include "../include/iconnect/url_aid.h"
 
 /* If URL contains no prepending service (<service://>) use: */
 
-int	cdecl parse_url(char *s, URL *url, int default_port, char *default_name)
+int	CDECL parse_url(char *s, URL *url, int default_port, char *default_name)
 {/* 0 ok, -1=unknown service */
 	char	*host, *path, *a, copy[512];
 	struct servent	*se;

@@ -1,11 +1,12 @@
 #
 # Makefile for highwire
 #
-TARGET = ../mintnet.ovl
+TARGET = network.ldg
 BUILDDIR = ../../build/network
 
 # compiler settings
-CROSS = m68k-atari-mint-
+CROSSPATH=/opt/cross-mint/bin/
+CROSS = $(CROSSPATH)m68k-atari-mint-
 CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
@@ -18,7 +19,7 @@ CPU = 68000
 #CPU = 68020-60
 #CPU = 5475
 
-DEFS = -DUSE_INET
+DEFS = -DUSE_INET -D$(LDG_TYPE)
 
 OPTFLAGS = -funsigned-char \
        -fomit-frame-pointer -O2 -fstrength-reduce 
@@ -41,7 +42,7 @@ INCLUDE =
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = -s
-LIBS = -liio
+LIBS = -liio -lldg
 
 ifeq ($(CPU),5475)
         OBJDIR = $(BUILDDIR)/obj.$(CPU)

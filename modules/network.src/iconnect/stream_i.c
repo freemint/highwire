@@ -1,5 +1,5 @@
 /* Library utilities to avoid typecasts into bytestream */
-#include <iconnect/netdb.h>	/* Containes unsigned defs */
+#include "../include/iconnect/netdb.h"	/* Containes unsigned defs */
 
 int	get_int(unsigned char *c)
 {

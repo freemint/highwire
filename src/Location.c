@@ -329,6 +329,11 @@ new_location (const char * p_src, LOCATION base)
 		logprintf (LOG_BLACK, "new_location('%s', '%s') returns '%s'\n",
 		           p_src, b_buf, l_buf);
 	}
+
+  loc->Sock = -1;
+  loc->entropy_context = NULL;
+  loc->ctr_drbg_context = NULL;
+  loc->ssl_context = NULL;
 	
 	return loc;
 }
@@ -372,6 +377,12 @@ free_location (LOCATION * _loc)
 		    && loc != __base && loc != __local) {
 			if (loc->Host) ((HOST_ENT)loc->Host)->Reffs--;
 			if (loc->Dir)  ((DIR_ENT)loc->Dir)->Reffs--;
+   
+      if (loc->entropy_context && loc->ctr_drbg_context) { ldg_mbedtls_entropy_free(loc->entropy_context, loc->ctr_drbg_context); }
+      if (loc->entropy_context) { ldg_Free(loc->entropy_context); }
+      if (loc->ctr_drbg_context) { ldg_Free(loc->ctr_drbg_context); }
+      if (loc->ssl_context) { ldg_mbedtls_ssl_free(loc->ssl_context); ldg_Free(loc->ssl_context); }
+
 			free (loc);
 		}
 		*_loc = NULL;
@@ -725,8 +736,84 @@ location_open (LOCATION loc, const char ** host_name)
 		name = host->Name;
 		
 #ifdef USE_INET
+    if (PROTO_isSecure(loc->Proto))
+    {
+      if (ldg_has_mbedtls())
+      {
+        if (!loc->entropy_context && !loc->ctr_drbg_context)
+        {
+          if (!loc->entropy_context) { loc->entropy_context = (void *)ldg_Calloc(1, ldg_mbedtls_get_sizeof_entropy_context()); }
+          if (!loc->ctr_drbg_context) { loc->ctr_drbg_context = (void *)ldg_Calloc(1, ldg_mbedtls_get_sizeof_ctr_drbg_context()); }
+        
+          ldg_mbedtls_entropy_init(loc->entropy_context, loc->ctr_drbg_context, name);
+        }
+        
+        if (!loc->ssl_context) { loc->ssl_context = (void *)ldg_Calloc(1, ldg_mbedtls_get_sizeof_ssl_context()); }
+      }
+    }
+
 		if (host->Ip) {
 			sock = (int)inet_connect (host->Ip, loc->Port, cfg_ConnTout);
+       
+      if (sock > 0)
+      {
+        loc->Sock = sock;
+      
+        if (PROTO_isSecure(loc->Proto))
+        {
+          if (ldg_has_mbedtls())
+          {
+            if (ldg_mbedtls_ssl_init(loc->ssl_context, loc->ctr_drbg_context, &loc->Sock, name, ldg_mbedtls_cacert, ldg_mbedtls_client_x509_cert, ldg_mbedtls_client_pk) == 0)
+            {
+              ldg_mbedtls_ssl_set_minmax_version(loc->ssl_context, 3, 4);
+              
+              if (ldg_mbedtls_wanted_ciphersuite)
+              {
+                ldg_mbedtls_ssl_set_ciphersuite(loc->ssl_context, ldg_mbedtls_wanted_ciphersuite);
+              }
+            
+              int32_t shake_ret = 0;
+            
+              if ((shake_ret = ldg_mbedtls_ssl_handshake(loc->ssl_context)) == 0)
+              {
+                if (logging_is_on)
+                {
+                  logprintf(LOG_LMAGENTA, "SSL handshake OK with %s for %s, ciphersuite is %s\n", name, ldg_mbedtls_ssl_get_version(loc->ssl_context), ldg_mbedtls_ssl_get_ciphersuite(loc->ssl_context));
+              
+                  /*char *srv_crt_inf = (char *)ldg_Calloc(1, X509_CERT_INFO_BUFFER + 32);
+                
+                  if (srv_crt_inf)
+                  {
+                    ldg_mbedtls_x509_crt_info(srv_crt_inf, X509_CERT_INFO_BUFFER, ldg_mbedtls_ssl_get_peer_cert(loc->ssl_context));
+                
+                    logprintf(LOG_LMAGENTA, "%s\n", srv_crt_inf);
+                
+                    ldg_Free(srv_crt_inf);
+                  }*/
+                }
+              
+                if (ldg_mbedtls_cacert)
+                {
+                  // TODO: verify server certifcate accordingly to the preference in highwire.cfg
+                }
+              }
+              else
+              {
+                if (logging_is_on) { logprintf(LOG_RED, "Error (-0x%04x) SSL handshake with %s\n", -shake_ret, name); }
+
+                memset(loc->ssl_context, 0, ldg_mbedtls_get_sizeof_ssl_context());
+                inet_close(sock, NULL);
+                sock = -1;
+              }
+            }
+            else
+            {
+              inet_close(sock, NULL);
+              sock = -1;
+            }
+          }
+        }
+      }
 		}
 #endif /* USE_INET */
 	}
@@ -936,7 +1023,7 @@ host_entry (const char ** name, UWORD max_len, BOOL resolve)
 	}
 #ifdef USE_INET
 	if (ent && !ent->Ip && resolve) {
-		inet_host_addr (ent->Name, (long*)&ent->Ip);
+		inet_host_addr (ent->Name, (int32_t*)&ent->Ip);
 	}
 #endif /* USE_INET */
 	
