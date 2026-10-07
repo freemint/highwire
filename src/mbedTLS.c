@@ -29,7 +29,8 @@ LDG_MBEDTLS_FTAB *mbedtls_ftab = NULL;
 
 WORD *app_global_mbedtls = NULL;
 
-// TODO: SSL protocols choices with min and max, from preferences in highwire.cfg, if 0-3: load polarssl.ldg, if 3-4: load mbedtls.ldg
+static const char *libname_mbedtls  = "mbedtls.ldg";
+static const char *libname_polarssl = "polarssl.ldg";
 
 mbedtls_x509_crt *ldg_mbedtls_cacert = NULL; // TODO: if in highwire.cfg, load cacert.pem from mbedtls.ldg folder
 int32_t *ldg_mbedtls_wanted_ciphersuite = NULL; // TODO: if in highwire.cfg, load choosen cs file
@@ -46,16 +47,43 @@ void ldg_mbedtls_init(WORD *gl) { app_global_mbedtls = gl; }
 LDG *ldg_mbedtls_load()
 {
   if (libmbedtls != NULL) { return libmbedtls; }
- 
-  const char *libname = "mbedtls.ldg";
-  
+   
   if (app_global_mbedtls == NULL) { app_global_mbedtls = ldg_global; }
 
   if (mbedtls_ftab == NULL) { mbedtls_ftab = ldg_Calloc(1, sizeof(LDG_MBEDTLS_FTAB)); }
   
   if (mbedtls_ftab != NULL)
   {
-    libmbedtls = ldg_open(libname, app_global_mbedtls); // reluctant to use (CHAR *)
+    const char *libname = libname_mbedtls;
+
+    if (cfg_SecProtMin > cfg_SecProtMax)
+    {
+      UWORD tmp = cfg_SecProtMax;
+      cfg_SecProtMax = cfg_SecProtMin;
+      cfg_SecProtMin = tmp;
+    }
+
+    if (cfg_SecProtMax > SECURE_PROTOCOL_TLSv1_2)
+    {
+      cfg_SecProtMin = SECURE_PROTOCOL_TLSv1_2;
+    }
+    else if ((cfg_SecProtMin < SECURE_PROTOCOL_TLSv1_2) && (cfg_SecProtMax <= SECURE_PROTOCOL_TLSv1_2))
+    {
+      libname = libname_polarssl;
+    }
+
+   libmbedtls = ldg_open(libname, app_global_mbedtls); // reluctant to use (CHAR *)
+  
+    if (!libmbedtls) // if polarssl.ldg is not installed, try to load mbedtls.ldg instead and fix min/max
+    {
+      cfg_SecProtMin = SECURE_PROTOCOL_TLSv1_2;
+      cfg_SecProtMax = max(cfg_SecProtMax, SECURE_PROTOCOL_TLSv1_2);
+      cfg_SecProtMax = min(cfg_SecProtMax, SECURE_PROTOCOL_MAX);
+      
+      libname = libname_mbedtls;
+      
+      libmbedtls = ldg_open(libname, app_global_mbedtls);
+    }
 
     if (libmbedtls != NULL)
     {
@@ -95,7 +123,7 @@ LDG *ldg_mbedtls_load()
       mbedtls_ftab->ldg_mbedtls_ssl_close_notify = ldg_find("ldg_ssl_close_notify", libmbedtls);
       mbedtls_ftab->ldg_mbedtls_ssl_free = ldg_find("ldg_ssl_free", libmbedtls);
 
-      if (logging_is_on) { logprintf(LOG_LMAGENTA, "%s (%s) loaded\n", libname, ldg_mbedtls_get_version()); }
+      if (logging_is_on) { logprintf(LOG_LMAGENTA, "%s (%s) loaded with protocols min:%d, max:%d\n", libname, ldg_mbedtls_get_version(), cfg_SecProtMin, cfg_SecProtMax); }
       
       ldg_mbedtls_set_aes_global(app_global_mbedtls);
       

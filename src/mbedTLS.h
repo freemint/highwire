@@ -17,6 +17,18 @@
 
 #define X509_CERT_INFO_BUFFER 2048
 
+#define SECURE_PROTOCOL_SSLv3_0 0
+#define SECURE_PROTOCOL_TLSv1_0 1
+#define SECURE_PROTOCOL_TLSv1_1 2
+#define SECURE_PROTOCOL_TLSv1_2 3
+#define SECURE_PROTOCOL_TLSv1_3 4
+
+#define SECURE_PROTOCOL_MIN SECURE_PROTOCOL_SSLv3_0
+#define SECURE_PROTOCOL_MAX SECURE_PROTOCOL_TLSv1_3
+
+extern UWORD        cfg_SecProtMin;  /* wanted minimum protocol for HTTPS    */
+extern UWORD        cfg_SecProtMax;  /* wanted maximum protocol for HTTPS    */
+
 typedef struct { mbedtls_ctr_drbg_context drbg_ctx; mbedtls_entropy_context entr_ctx; } rng_context_t; // th-otto
 typedef struct { mbedtls_pk_context pk; rng_context_t rng; } my_pk_context; // th-otto
 typedef struct { mbedtls_ssl_config conf; mbedtls_ssl_context ssl; } my_ssl_context; // th-otto

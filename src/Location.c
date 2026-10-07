@@ -770,7 +770,7 @@ location_open (LOCATION loc, const char ** host_name)
           {
             if (ldg_mbedtls_ssl_init(loc->ssl_context, loc->ctr_drbg_context, &loc->Sock, name, ldg_mbedtls_cacert, ldg_mbedtls_client_x509_cert, ldg_mbedtls_client_pk) == 0)
             {
-              ldg_mbedtls_ssl_set_minmax_version(loc->ssl_context, 3, 4);
+              ldg_mbedtls_ssl_set_minmax_version(loc->ssl_context, cfg_SecProtMin, cfg_SecProtMax);
               
               if (ldg_mbedtls_wanted_ciphersuite)
               {

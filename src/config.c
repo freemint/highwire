@@ -18,6 +18,7 @@
 #include "cache.h"
 
 #include "scanner.h"
+#include "mbedTLS.h"
 
 
 WORD         cfg_UptoDate     = -1;
@@ -40,6 +41,8 @@ WORD         cfg_ConnTout     = 1;
 WORD         cfg_ConnRetry    = 3;
 ULONG        cfg_MaxDocument  = 128uL * 1024uL;
 UWORD        cfg_MaxImages    = 0;
+UWORD        cfg_SecProtMin   = SECURE_PROTOCOL_TLSv1_2;
+UWORD        cfg_SecProtMax   = SECURE_PROTOCOL_TLSv1_3;
 
 static const char * cfg_magic = _HIGHWIRE_VERSION_ " [" __DATE__ "]";
 
@@ -568,6 +571,22 @@ cfg_http_proxy (char * param, long arg)
 	}
 }
 
+/*----------------------------------------------------------------------------*/
+
+static void cfg_protocol (char * param, long arg)
+{
+	long n = atol (param);
+  
+  if (arg == 0)
+  {
+    if ((n >= SECURE_PROTOCOL_MIN) && (n <= SECURE_PROTOCOL_MAX)) { cfg_SecProtMin = (UWORD)n; }
+  }
+  else if (arg == 1)
+  {
+    if ((n >= SECURE_PROTOCOL_MIN) && (n <= SECURE_PROTOCOL_MAX)) { cfg_SecProtMax = (UWORD)n; }
+  }
+}
+
 
 /*----------------------------------------------------------------------------*/
 static void
@@ -771,6 +790,8 @@ read_config(void)
 				{ "NO_IMAGE",             cfg_BOOL,      (long)&cfg_DropImages  },
 				{ "RESTRICT_HOST",        cfg_restrict,  0 },
 				{ "RETRY_HEADER",         cfg_retry,     0 },
+				{ "SECURE_PROTOCOL_MAX",  cfg_protocol,  1 },
+				{ "SECURE_PROTOCOL_MIN",  cfg_protocol,  0 },
 				{ "START_PAGE",           cfg_startpage, 0 },
 				{ "TELETYPE",             cfg_font,      FA(pre_font,    0, 0)  },
 				{ "TIMEOUT_CONNECT",      cfg_tout_conn, 0 },
