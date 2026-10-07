@@ -165,6 +165,11 @@ _alloc (DIR_ENT dir, const char * file)
 		loc->Anchor = ptr;
 	}
 	dir->Reffs++;
+
+  loc->Sock = -1;
+  loc->entropy_context = NULL;
+  loc->ctr_drbg_context = NULL;
+  loc->ssl_context = NULL;
 	
 	return loc;
 }
