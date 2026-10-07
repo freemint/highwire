@@ -1,7 +1,5 @@
 
 #include <stddef.h>
-#include <string.h>
-#include <stdio.h>
 
 #include <ldg.h>
 
@@ -21,7 +19,7 @@ WORD sockets_free = 0;
 #include "mintnet.c"
 #elif defined(USE_MAGICNET)
 #include "magxnet.c"
-#elif defined(USE_STING)
+#elif defined(USE_STING) // TODO: try to use libcmini to shrink file
 #include "sting.c"
 #elif defined(USE_ICONNECT) // TODO: fix at least compilation for iconnect
 #include "iconnect/socklib.c"

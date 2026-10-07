@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <mintbind.h>
 #include <errno.h>
+#include <string.h>
 
 /*----------------------------------------------------------------------------*/
 static BOOL init_mintnet (void)

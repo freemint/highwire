@@ -12,6 +12,7 @@ AS = $(CC) -c
 LD = $(CC) 
 CP = cp
 RM = rm -f
+STRIP = $(CROSS)strip
 
 CPU = 68000
 #CPU = 68030
@@ -35,17 +36,17 @@ WARN = \
 	-Wmissing-prototypes \
 	-Wshadow \
 	-Wpointer-arith \
-	-Wcast-qual
+	#-Wcast-qual
 
 INCLUDE =
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = -s
-LIBS = -liio -lldg
+LIBS = -lldg #-liio
 
 ifeq ($(CPU),5475)
-        OBJDIR = $(BUILDDIR)/obj.$(CPU)
+  OBJDIR = $(BUILDDIR)/obj.$(CPU)
 else
 	OBJDIR = $(BUILDDIR)/obj$(CPU:68%=.%)
 endif
@@ -80,6 +81,8 @@ DEPENDENCIES = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.P,$(CFILES)))
 
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) -Wl,-stack,8k $(LDFLAGS) $(OBJS) $(LIBS)
+	$(STRIP) $(TARGET)
+	rm $(OBJDIR)/*.o
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
@@ -95,18 +98,18 @@ v4e: ; $(MAKE) CPU=5475
 # need no sockets, so they link against libcmini and come out at a twentieth
 # of the size mintlib gives them.  mintnet and magicnet need mintlib's
 # socket layer and stay on it.  libcmini comes with the toolkit container.
-CMINI = /freemint/libcmini/lib
+#CMINI = /freemint/libcmini/lib
 
-sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
-                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
-                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
+#sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
+#                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+#                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
+#stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
+#                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+#                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
 
 # Not yet run under MagiCNet, so dist still ships the prebuilt
 # ../magicnet.ovl; this one builds beside the objects, for that test.
-magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
+#magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
 
 clean:
 	$(RM) $(OBJS)
