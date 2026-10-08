@@ -784,22 +784,40 @@ location_open (LOCATION loc, const char ** host_name)
                 if (logging_is_on)
                 {
                   logprintf(LOG_LMAGENTA, "SSL handshake OK with %s for %s, ciphersuite is %s\n", name, ldg_mbedtls_ssl_get_version(loc->ssl_context), ldg_mbedtls_ssl_get_ciphersuite(loc->ssl_context));
-              
-                  /*char *srv_crt_inf = (char *)ldg_Calloc(1, X509_CERT_INFO_BUFFER + 32);
-                
-                  if (srv_crt_inf)
-                  {
-                    ldg_mbedtls_x509_crt_info(srv_crt_inf, X509_CERT_INFO_BUFFER, ldg_mbedtls_ssl_get_peer_cert(loc->ssl_context));
-                
-                    logprintf(LOG_LMAGENTA, "%s\n", srv_crt_inf);
-                
-                    ldg_Free(srv_crt_inf);
-                  }*/
                 }
               
                 if (ldg_mbedtls_cacert)
                 {
-                  // TODO: verify server certifcate accordingly to the preference in highwire.cfg
+                  if (!ldg_mbedtls_is_trusted_domain(name))
+                  {
+                    int32_t v = ldg_mbedtls_ssl_get_verify_result(loc->ssl_context);
+                  
+                    if (v)
+                    {
+                      if (logging_is_on)
+                      {
+                        if (v & BADCERT_EXPIRED)     { logprintf(LOG_RED, "Certificate for %s has expired\n", name); }
+                        if (v & BADCERT_REVOKED)     { logprintf(LOG_RED, "Certificate for %s is revoked\n", name); }
+                        if (v & BADCERT_CN_MISMATCH) { logprintf(LOG_RED, "Certificate does not match common name with %s\n", name); }
+                        if (v & BADCERT_NOT_TRUSTED) { logprintf(LOG_RED, "Certificate for %s is not trusted\n", name); }
+
+                        char *srv_crt_inf = (char *)ldg_Calloc(1, X509_CERT_INFO_BUFFER + 32);
+                
+                        if (srv_crt_inf)
+                        {
+                          ldg_mbedtls_x509_crt_info(srv_crt_inf, X509_CERT_INFO_BUFFER, ldg_mbedtls_ssl_get_peer_cert(loc->ssl_context));
+                
+                          logprintf(LOG_LMAGENTA, "Certificate informations:\n%s\n", srv_crt_inf);
+                
+                          ldg_Free(srv_crt_inf);
+                        }
+                      }
+
+                      memset(loc->ssl_context, 0, ldg_mbedtls_get_sizeof_ssl_context());
+                      inet_close(sock, NULL);
+                      sock = MBEDTLS_ERR_X509_CERT_VERIFY_FAILED;
+                    }
+                  }
                 }
               }
               else

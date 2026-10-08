@@ -471,6 +471,11 @@ http_header (LOCATION loc, HTTP_HDR * hdr, size_t blk_size,
 			         "check the TCP/IP stack's gateway and DNS settings."
 			         "</font>",
 			         (int)hlen, host);
+		} else if (sock == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
+			sprintf (buffer, "<b>Error: X509_CERT_VERIFY_FAILED (-0x2700)</b><p><font size=\"2\">"
+			         "Certificate for <i>%.*s</i> server has issues and may be unsecure. "
+			         "Please see logfile for details and, if trusted, consider adding this "
+               "domain name in <i>highwire.cfg</i>.</font>", (int)hlen, host);
 		} else if (sock < -1) {
 			sprintf (buffer, "<b>Error: %s</b><p><font size=\"2\">"
 			         "Connecting to <i>%.*s</i> failed with the error above "

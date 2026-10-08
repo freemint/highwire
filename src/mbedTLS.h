@@ -26,8 +26,16 @@
 #define SECURE_PROTOCOL_MIN SECURE_PROTOCOL_SSLv3_0
 #define SECURE_PROTOCOL_MAX SECURE_PROTOCOL_TLSv1_3
 
+#define BADCERT_EXPIRED      0x01
+#define BADCERT_REVOKED      0x02
+#define BADCERT_CN_MISMATCH  0x04
+#define BADCERT_NOT_TRUSTED  0x08
+
+#define MBEDTLS_ERR_X509_CERT_VERIFY_FAILED -0x2700  /* Certificate verification failed */
+
 extern UWORD        cfg_SecProtMin;  /* wanted minimum protocol for HTTPS    */
 extern UWORD        cfg_SecProtMax;  /* wanted maximum protocol for HTTPS    */
+extern UWORD        cfg_SrvCertVer;  /* verify webserver certificate with cacert.pem: 1 = enabled, 0 = disabled */
 
 typedef struct { mbedtls_ctr_drbg_context drbg_ctx; mbedtls_entropy_context entr_ctx; } rng_context_t; // th-otto
 typedef struct { mbedtls_pk_context pk; rng_context_t rng; } my_pk_context; // th-otto
@@ -85,7 +93,7 @@ typedef struct
 #define ldg_mbedtls_get_sizeof_ssl_context() (*mbedtls_ftab->ldg_mbedtls_get_sizeof_ssl_context)()
 
 #define ldg_mbedtls_x509_crt_init(a) (*mbedtls_ftab->ldg_mbedtls_x509_crt_init)(a)
-#define ldg_mbedtls_x509_crt_parse(a,b) (*mbedtls_ftab->ldg_mbedtls_x509_crt_parse)(a,b)
+#define ldg_mbedtls_x509_crt_parse(a,b,c) (*mbedtls_ftab->ldg_mbedtls_x509_crt_parse)(a,b,c)
 #define ldg_mbedtls_x509_crt_info(a,b,c) (*mbedtls_ftab->ldg_mbedtls_x509_crt_info)(a,b,c)
 #define ldg_mbedtls_x509_crt_free(a) (*mbedtls_ftab->ldg_mbedtls_x509_crt_free)(a)
 
@@ -118,5 +126,12 @@ void ldg_mbedtls_init(WORD *gl);
 LDG *ldg_mbedtls_load(void);
 BOOL ldg_has_mbedtls(void);
 void ldg_mbedtls_unload(void);
+
+void ldg_mbedtls_verify_certs(int mode);
+void ldg_mbedtls_set_trusted_domains(const char *list);
+int16_t ldg_mbedtls_is_trusted_domain(char *name);
+
+void ldg_mbedtls_set_csfile(const char *pathname);
+void ldg_mbedtls_load_csfile(void);
 
 #endif /* __LDG_MBEDTLS_H__ */
