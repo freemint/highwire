@@ -21,16 +21,15 @@ RM = rm -f
 TODOS = perl -pi -e 's/\r?\n/\r\n/'
 ZIP = zip -r
 
-CPU = 68000
+#CPU = 68000
 #CPU = 68030
-#CPU = 68040
+CPU = 68040
 #CPU = 68020-60
 #CPU = 5475
 
 DEFS = -DUSE_INET -DLIBPNG -DLIBGIF -DLIBJPG
 OPTFLAGS = -funsigned-char \
-       -fomit-frame-pointer -O2 -fstrength-reduce \
-       -Wno-error=array-bounds -Wno-error=stringop-overflow
+       -fomit-frame-pointer -O2 -fstrength-reduce
 
 ifeq ($(CPU),5475)
 	OPTS = $(CPU:%=-mcpu=%) $(OPTFLAGS)
@@ -79,7 +78,9 @@ WARN = \
 	-Wpointer-arith \
 	-Wcast-qual \
 	$(DISABLED_WARNINGS) \
-	-Werror 
+	-Werror \
+	-Wno-error=array-bounds \
+	-Wno-error=stringop-overflow
 
 
 INCLUDE = 
@@ -251,11 +252,11 @@ dist::
 	$(MAKE) -C modules/network.src clean
 	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_MINTNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.v4e
-	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_STING
+	$(MAKE) -C modules/network.src CPU=5475 sting
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/sting.v4e
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MINTNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.ldg
-	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_STING
+	$(MAKE) -C modules/network.src CPU=68000 sting
 	cp -a modules/network.src/network.ldg $(DISTDIR)/modules/sting.ldg
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/network.ldg
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET
@@ -298,11 +299,11 @@ modules::
 	$(MAKE) -C modules/network.src clean
 	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_MINTNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.v4e
-	$(MAKE) -C modules/network.src CPU=5475 LDG_TYPE=USE_STING
+	$(MAKE) -C modules/network.src CPU=5475 sting
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/sting.v4e
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MINTNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/mintnet.ldg
-	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_STING
+	$(MAKE) -C modules/network.src CPU=68000 sting
 	cp -a modules/network.src/network.ldg $(DISTDIR)/modules/sting.ldg
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/network.ldg
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET

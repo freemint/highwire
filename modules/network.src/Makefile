@@ -97,20 +97,17 @@ v4e: ; $(MAKE) CPU=5475
 # sting and stik2 talk to the stack purely through its trap interface and
 # need no sockets, so they link against libcmini and come out at a twentieth
 # of the size mintlib gives them.  mintnet and magicnet need mintlib's
-# socket layer and stay on it.  libcmini comes with the toolkit container.
-#CMINI = /freemint/libcmini/lib
+# socket layer and stay on it.
+#
+# STiK2 uses the same code as STinG, so this module is discarded.
+#
+CMINI = ../libcmini/lib
 
-#sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
-#                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-#                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-#stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
-#                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-#                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-
-# Not yet run under MagiCNet, so dist still ships the prebuilt
-# ../magicnet.ovl; this one builds beside the objects, for that test.
-#magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
-
+sting:    ; $(MAKE) TARGET=network.ldg CFILES=network.c INCLUDE=-Iinclude \
+                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini -lldg -lcmini" \
+                    LDG_TYPE=USE_STING
+                    
 clean:
 	$(RM) $(OBJS)
 

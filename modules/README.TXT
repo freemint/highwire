@@ -6,3 +6,6 @@ comfortable filesystem).
 HighWire will always try to load 'network.ldg' from this directory;  if this
 doesn't exist, HighWire will give up and doesn't support any online stuff for
 this session.
+
+STiK2 uses the same code source as STinG, so if you have STiK2 layer installed,
+then use sting.ldg (or the default network.ldg).

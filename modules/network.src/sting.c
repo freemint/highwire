@@ -256,7 +256,7 @@ int32_t __CDECL inet_select (int32_t timeout, int32_t * rfds, int32_t * wfds) /*
 
 
 /*============================================================================*/
-const char * __CDECL inet_info (void) { return "STinG"; }
+const char * __CDECL inet_info (void) { return "STinG/STiK2"; }
 
 /*============================================================================*/
 const int16_t __CDECL inet_type (void) { return 2; }

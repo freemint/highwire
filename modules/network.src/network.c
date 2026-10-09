@@ -56,7 +56,7 @@ LDGLIB LibLdg[] = { { 0x0001,  10, LibFunc,  "MagxNet overlay for HighWire, by g
 #elif defined(USE_ICONNECT)
 LDGLIB LibLdg[] = { { 0x0001,  10, LibFunc,  "IConnect overlay for HighWire, by AltF4@freemint.de", 1} };
 #elif defined(USE_STING)
-LDGLIB LibLdg[] = { { 0x0001,  10, LibFunc,  "STinG overlay for HighWire, by AltF4@freemint.de", 1} };
+LDGLIB LibLdg[] = { { 0x0001,  10, LibFunc,  "STinG/STiK2 overlay for HighWire, by AltF4@freemint.de", 1} };
 #endif
 
 int main(void)
