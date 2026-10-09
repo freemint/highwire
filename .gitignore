@@ -6,10 +6,11 @@ dist/
 *.o
 *.a
 !/lib/**/*.a
+!modules/libcmini/lib/**/*.a
 *.ovl
 *.ldg
 .DS_Store
 tmp/
 .vscode/
 .kilo/
-*.xcodeproj/*
+*.xcodeproj/**
