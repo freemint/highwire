@@ -179,7 +179,7 @@ LDG *ldg_mbedtls_load()
           if (ldg_libpath(pathname, app_global_mbedtls))
           {
             int16_t i;
-            for (i = strlen(pathname); i > -1; i--) { if (pathname[i] == '\\') { pathname[i] = '\0'; break; } if (i == 0) { pathname[0] = '\0'; } }
+            for (i = strlen(pathname); i > -1; i--) { if ((pathname[i] == '\\') || (pathname[i] == '/') { pathname[i+1] = '\0'; break; } if (i == 0) { pathname[0] = '\0'; } }
             if (strlen(pathname) == 0) { strcpy(pathname, "c:\\gemsys\\ldg\\"); }
             if (strlen(pathname) + strlen(cacert_filename) < 256) { strcat(pathname, cacert_filename); }
           }
