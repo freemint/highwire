@@ -118,12 +118,12 @@ typedef struct
 	#define RA 128							/* Recursion available (by server) */
 	#define Z  (64|32|16)				/* reserved - must be zero */
 	#define RCODE (8|4|2|1)			/* See "Currently defined response codes" */
-	
+
 	uint qdcount;		/* Following queries (format QNAME/QTYPE/QCLASS) */
 	uint ancount;		/* Answers (resource records) */
 	uint nscount;		/* Nameservers (resource records) */
 	uint arcount;		/* Additional (resource records) */
-	
+
 	rrec records[0];
 }dns_header;
 

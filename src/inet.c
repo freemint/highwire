@@ -1,706 +1,118 @@
-/* @(#)highwire/inet.c
- */
-#if defined(USE_OVL)
-# undef USE_OVL
-# define _USE_OVL_
 
-#elif defined (USE_INET)
-# if !defined(USE_ICNN) && !defined(USE_STIK) && !defined(USE_STNG) && \
-     !defined(USE_MINT) && !defined(USE_MAGICNET)
-	/* A stack wrapper (sting.c and friends) says which flavour it wants and
-	 * must be respected regardless of compiler; only a build that names no
-	 * stack falls back to a default.  gcc used to force MiNTnet here, which
-	 * quietly turned every wrapper into a MiNTnet overlay.
-	*/
-#  if defined(__GNUC__)
-#   define USE_MINT
-#  else
-#   define USE_STIK
-#  endif
-# endif
-# if defined(USE_STNG) && !defined(USE_STIK)
-#  define USE_STIK /* STinG speaks the STiK API, give or take */
-# endif
-
-static WORD sockets_free = 0;
-
-#endif /* USE_INET */
-
-#include <stddef.h>
-
-#ifndef __HW_INET_H__
-# include "hw-types.h"
-# include "inet.h"
-#endif
-
-
+#include "inet.h"
 #include "Logging.h"
-#include "global.h" /* hwUi_warn() */
-#if defined(_USE_OVL_) /*******************************************************/
-# include "ovl_sys.h"
+#include "mbedTLS.h"
 
-static OVL_METH  * inet_ovl  = NULL;
-static short __CDECL demand_host_addr (const char * host, long * addr);
-static long  __CDECL demand_connect   (long addr, long port, long tout_sec);
-INET_FTAB inet_ftab = {
-	demand_host_addr,
-	demand_connect,
-	inet_send,
-	inet_recv,
-	inet_close,
-	inet_instat,
-	inet_select,
-	inet_info
-}, backup;
+#include "ldg.h"
+#include "gem.h"
 
-/*----------------------------------------------------------------------------*/
-static void ovl_invalid (void * ignore)
-{
-	(void)ignore;
-	if (inet_ovl) {
-		inet_ovl  = NULL;
-		inet_ftab = backup;
-	}
-}
-
-/*----------------------------------------------------------------------------*/
-static BOOL ovl_load(void)
-{
-	INET_FTAB * ovl_ftab = NULL;
-	
-	if (inet_ovl) {
-		return TRUE;
-	
-	} else if ((inet_ovl = load_ovl ("network.ovl", ovl_invalid)) == NULL) {
-		return FALSE; /* no OVL found */
-	
-	} else if (inet_ovl->ftabtype != FTAB_NETWORK ||
-	           (*inet_ovl->ovl_init)() < INET_VERSION ||
-	           (ovl_ftab = (*inet_ovl->ovl_getftab)()) == NULL) {
-		errprintf ("inet::ovl_load(): wrong network.ovl!\n");
-		kill_ovl (inet_ovl);
-		inet_ovl = NULL;
-		return FALSE;    /* wrong OVL */
-	}
-	backup    = inet_ftab;
-	inet_ftab = *ovl_ftab;
-	
-	return TRUE;
-}
-
-/*----------------------------------------------------------------------------*/
-static short __CDECL demand_host_addr (const char * host, long * addr)
-{
-	return (ovl_load() ? (*inet_ftab.host_addr)(host, addr)
-	                   : inet_host_addr (host, addr));
-}
-
-/*----------------------------------------------------------------------------*/
-static long  __CDECL demand_connect (long addr, long port, long tout_sec)
-{
-	return (ovl_load() ? (*inet_ftab.connect)(addr, port, tout_sec)
-	                   : inet_connect        (addr, port, tout_sec));
-}
-
-/* endif defined(_USE_OVL_) */
-
-
-#elif defined(USE_MINT) || defined(USE_MAGICNET) /*****************************/
-#if   defined(USE_MINT)
-# include <netdb.h>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <unistd.h>
-# include <mintbind.h>
-# include <errno.h>
-#else       /*USE_MAGICNET*/
-# include <magicnet/netdb.h>
-# include <magicnet/sys/socket.h>
-# include <magicnet/netinet/in.h>
-# include <unistd.h>
-# include <mintbind.h>
-# undef E_OK
-# undef EPROTONOSUPPORT
-# undef ECONNRESET
-# undef ETIMEDOUT
-# include <magicnet/errno.h>
-#endif
-
-/*----------------------------------------------------------------------------*/
-static BOOL init_mintnet (void)
-{
-	static BOOL __once = TRUE;
-	if (__once) {
-		short n;
-		sockets_free = 32;
-		for (n = 0; n < 32; n++) {
-			if (Finstat (n) >= 0 || Foutstat (n) >= 0) sockets_free--;
-		}
-		if ((sockets_free -= 2) > 0) { /* always save two free handles */
-			__once = FALSE;
-		} else {
-			sockets_free = 0;
-		}
-	}
-	return (sockets_free > 0);
-}
-
-
-#elif defined(USE_MAGICNET) /**************************************************/
-# include <magicnet/netdb.h>
-# include <magicnet/sys/socket.h>
-# include <magicnet/netinet/in.h>
-# include <magicnet/unistd.h>
-# include <mintbind.h>
-
-/*----------------------------------------------------------------------------*/
-static BOOL init_mintnet (void)
-{
-	static BOOL __once = TRUE;
-	if (__once) {
-		short n;
-		sockets_free = 32;
-		for (n = 0; n < 32; n++) {
-			if (Finstat (n) >= 0 || Foutstat (n) >= 0) sockets_free--;
-		}
-		if ((sockets_free -= 2) > 0) { /* always save two free handles */
-			__once = FALSE;
-		} else {
-			sockets_free = 0;
-		}
-	}
-	return (sockets_free > 0);
-}
-
-
-#elif defined(USE_ICNN) /******************************************************/
-# include <time.h>
-# include <string.h>
-# include <iconnect/sockinit.h>
-# include <iconnect/netdb.h>
-# include <iconnect/types.h>
-# include <iconnect/socket.h>
-# include <iconnect/in.h>
-# include <iconnect/sfcntl.h>
-# include <iconnect/sockios.h>
-
-/*----------------------------------------------------------------------------*/
-static BOOL init_iconnect (void)
-{
-	static int flag = -1;
-	if (flag < 0) {
-		flag = (sock_init() == E_OK ? 1 : 0);
-		sockets_free = 32;
-	}
-	return (flag > 0);
-}
-
-
-#elif defined(USE_STIK) /******************************************************/
-# include <stdio.h> /*printf/puts */
-# include <string.h>
-# ifdef __GNUC__
-#  include <osbind.h>
-# else
-#  include <tos.h>
-# endif
-# include <time.h>
-# ifdef USE_STNG
-#  include <sting/transprt.h>
-# else /*STiK2*/
-#  include <sting/transprt.h>
-# endif
-#undef min
-#define	min(x,y)   	(((x)<(y))?(x):(y))
-
-#define TCP_OBUFF_SIZE   2048   /* TCP_open/TCP_send */
-
-TPL * tpl = NULL; /* transprt.h declares it extern: the client defines it */
-
-/*----------------------------------------------------------------------------*/
-static BOOL init_stik (void)
-{
-	if (!tpl) {
-		struct {
-			long cktag;
-			long ckvalue;
-		}  * jar = (void*)Setexc (0x5A0 /4, (void (*)())-1);
-		long tag = 'STiK';
-	
-		/* Plain TOS up to 1.04 has no cookie jar unless something in AUTO
-		 * made one, and then the pointer read above is NULL: walking it
-		 * took the whole browser down on the first http URL.
-		*/
-		if (jar) while (jar->cktag) {
-			if (jar->cktag == tag) {
-				DRV_LIST * drivers = (DRV_LIST*)jar->ckvalue;
-				if (strcmp (STIK_DRVR_MAGIC, drivers->magic) == 0) {
-					tpl = (TPL*)get_dftab(TRANSPORT_DRIVER);
-				}
-				break;
-			}
-			jar++;
-		}
-		sockets_free = 32;
-	}
-	return (tpl != NULL);
-}
-
-#endif /* USE_STIK ************************************************************/
-
-
-/*============================================================================*/
-short __CDECL
-inet_host_addr (const char * name, long * addr)
-{
-	short ret = -1;
-
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	struct hostent * host = gethostbyname (name);
-	if (host) {
-		*addr = *(long*)host->h_addr;
-		ret   = E_OK;
-	} else {
-		ret   = -errno;
-	}
-
-#elif defined(USE_ICNN)
-	if (init_iconnect()) {
-		struct hostent * host = gethostbyname ((char*)name);
-		if (host) {
-			*addr = *(long*)host->h_addr;
-			ret   = E_OK;
-		}
-	}
-
-#elif defined(USE_STIK)
-	if (init_stik()) {
-		if (resolve ((char*)name, NULL, (uint32*)addr, 1) > 0) {
-			ret = E_OK;
-		}
-	}
-
+#ifdef __GEMLIB__
+#define ldg_global	aes_global
 #else
-	(void)name; (void)addr;
+#ifdef __PUREC__	/* For Pure C users using PCGEMLIB */
+#define ldg_global	((short*)&_GemParBlk.global[0])
+#endif
 #endif
 
-	return ret;
-}
+/*-------------------------------------------------------------------*/
 
+LDG *libinet = NULL;
 
-/*----------------------------------------------------------------------------*/
-#if defined(USE_MINT) || defined(USE_STIK) || defined(USE_MAGICNET)
-static BOOL sig_tout = FALSE;
+LDG_INET_FTAB *inet_ftab = NULL;
 
-#ifndef __mint_sighandler_t_defined
-typedef void *__mint_sighandler_t;
-#endif
+WORD *app_global_inet = NULL;
 
-static void __CDECL sig_alrm (long sig)
+/*-------------------------------------------------------------------*/
+
+void ldg_inet_init(WORD *gl)
 {
-	(void)sig;
-	sig_tout = TRUE;
-}
-#endif
+  app_global_inet = gl;
+  
+  if (inet_ftab == NULL) { inet_ftab = ldg_Calloc(1, sizeof(LDG_INET_FTAB)); }
 
-/*============================================================================*/
-long __CDECL
-inet_connect (long addr, long port, long tout_sec)
+  if (inet_ftab != NULL)
+  {
+    inet_ftab->host_addr = no_inet_host_addr;
+    inet_ftab->connect = no_inet_connect;
+      
+    inet_ftab->send = no_inet_send;
+    inet_ftab->recv = no_inet_recv;
+    inet_ftab->close = no_inet_close;
+      
+    inet_ftab->instat = no_inet_instat;
+    inet_ftab->select = no_inet_select;
+      
+    inet_ftab->info = no_inet_info;
+    inet_ftab->type = no_inet_type;
+    inet_ftab->mbedtls_set = no_inet_mbedtls_set;
+  }
+}
+
+/*-------------------------------------------------------------------*/
+
+LDG *ldg_inet_load()
 {
-	int fh = -1;
+  if (libinet) { return libinet; }
+ 
+  const char *libname = "modules\\network.ldg"; // TODO: choose automaticaly the module instead of leaving the user rename files?
+  
+  if (inet_ftab != NULL)
+  {
+    libinet = ldg_open(libname, app_global_inet); // reluctant to use (CHAR *)
 
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	if (!init_mintnet()) {
-		fh = -35/*EMFILE*/;
-	} else {
-		struct sockaddr_in s_in;
-		s_in.sin_family = AF_INET;
-		s_in.sin_port   = htons ((short)port);
-		s_in.sin_addr.s_addr   = addr;
-		if ((fh = socket (PF_INET, SOCK_STREAM, 0)) < 0) {
-			fh = -errno;
-		} else {
-			__mint_sighandler_t alrm = (__mint_sighandler_t)Psignal (14/*SIGALRM*/, sig_alrm);
-			if ((long)alrm >= 0) {
-				sig_tout = FALSE;
-				Talarm (tout_sec);
-			}
-			if (connect (fh, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-				close (fh);
-				fh = -(sig_tout && errno == EINTR ? ETIMEDOUT : errno);
-			} else {
-				sockets_free--;
-			}
-			if ((long)alrm >= 0) {
-				Talarm (0);
-				Psignal (14/*SIGALRM*/, alrm);
-			}
-		}
-	}
-
-#elif defined(USE_ICNN)
-	if (sockets_free <= 0) {
-		fh = -35/*EMFILE*/;
-	} else {
-		clock_t timeout = 0;
-		sockaddr_in s_in;
-		s_in.sin_family = AF_INET;
-		s_in.sin_port   = htons ((short)port);
-		s_in.sin_addr   = addr;
-		do {
-			if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-				fh = -1;
-				break;
-			} else {
-				int n = connect ((int)fh, &s_in, (int)sizeof(s_in));
-				if (n == E_OK) {
-					sfcntl ((int)fh, F_SETFL, O_NDELAY);
-					sockets_free--;
-					break;
-				}
-				sclose ((int)fh);
-				fh = -1;
-				if (!timeout) {
-					timeout = clock() + tout_sec * CLK_TCK;
-				} else if (n != -ETIMEDOUT || clock() < timeout) {
-					break;
-				}
-			}
-		} while (1);
-	}
-
-#elif defined(USE_STIK)
-	if (!init_stik()) {
-		static BOOL warned = FALSE;
-		if (!warned) { /* once, and only when going online was actually tried */
-			hwUi_warn ("inet", "No STiK/STinG network layer found.");
-			warned = TRUE;
-		}
-	} else if (sockets_free <= 0) {
-		fh = -35/*EMFILE*/;
-	} else {
-		__mint_sighandler_t alrm = (__mint_sighandler_t)Psignal (14/*SIGALRM*/, sig_alrm);
-		if ((long)alrm >= 0) {
-			sig_tout = FALSE;
-			Talarm (tout_sec);
-		}
-		if ((fh = TCP_open (addr, (short)port, 0, TCP_OBUFF_SIZE)) < 0) {
-			fh = -(fh == -1001L ? ETIMEDOUT : 1);
-		} else {
-			sockets_free--;
-		}
-		if ((long)alrm >= 0) {
-			Talarm (0);
-			Psignal (14/*SIGALRM*/, alrm);
-		}
-	}
-
-#else
-	(void)addr; (void)port; (void)tout_sec;
-#endif
-
-	return fh;
+    if (libinet != NULL)
+    {
+      inet_ftab->host_addr = ldg_find("inet_host_addr", libinet);
+      inet_ftab->connect = ldg_find("inet_connect", libinet);
+      
+      inet_ftab->send = ldg_find("inet_send", libinet);
+      inet_ftab->recv = ldg_find("inet_recv", libinet);
+      inet_ftab->close = ldg_find("inet_close", libinet);
+      
+      inet_ftab->instat = ldg_find("inet_instat", libinet);
+      inet_ftab->select = ldg_find("inet_select", libinet);
+      
+      inet_ftab->info = ldg_find("inet_info", libinet);
+      inet_ftab->type = ldg_find("inet_type", libinet);
+      inet_ftab->mbedtls_set = ldg_find("inet_mbedtls_set", libinet);
+ 
+      if (logging_is_on) { logprintf(LOG_LMAGENTA, "%s (%s) loaded\n", libname, inet_info()); }
+    }
+  }
+  
+	return libinet;
 }
 
+/*-------------------------------------------------------------------*/
 
-/*============================================================================*/
-long __CDECL
-inet_send (long fh, const char * buf, size_t len)
+BOOL ldg_has_inet() { return (libinet != NULL); }
+
+/*-------------------------------------------------------------------*/
+
+void ldg_inet_unload()
 {
-	long ret = 0;
-
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	while (len) {
-		long n = Fwrite (fh, len, buf);
-		if (n < 0) {
-			ret = n;
-			break;
-		} else {
-			ret += n;
-			buf += n;
-			len -= n;
-		}
-	}
-
-#elif defined(USE_ICNN)
-	while (len) {
-		short n = swrite ((int)fh, buf, (int)min(len, 16384l));
-		if (n < 0) {
-			ret = n;
-			break;
-		} else {
-			ret += n;
-			buf += n;
-			len -= n;
-		}
-	}
-
-#elif defined(USE_STIK)
-	if (!tpl) {
-		errprintf ("No STiK/Sting\n");
-	} else while (len) {
-		int16 n = (int16)min(len, TCP_OBUFF_SIZE);
-		int16 r;
-		if ((r = TCP_send ((int)fh, (char*)buf, n)) < E_OBUFFULL) {
-			ret = -1;
-			break;
-		} else if (r == E_NORMAL) {
-			ret += n;
-			buf += n;
-			len -= n;
-		}
-	}
-
-#else
-	(void)fh; (void)buf; (void)len;
-	ret = -1;
-#endif
-
-	return ret;
-}
-
-
-/*============================================================================*/
-long __CDECL
-inet_recv (long fh, char * buf, size_t len)
-{
-	long ret = 0;
-
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	while (len) {
-		long n = Finstat (fh);
-		if (n < 0) {
-			if (!ret) ret = n;
-			break;
-		} else if (n == 0x7FFFFFFFL) { /* connection closed */
-			if (!ret) ret = -ECONNRESET;
-			break;
-		} else if (n && (n = Fread (fh, (n < len ? n : len), buf)) < 0) {
-			if (!ret) ret = -errno;
-			break;
-		} else if (n) {
-			ret += n;
-			buf += n;
-			len -= n;
-		} else { /* no data available yet */
-			break;
-		}
-	}
-
-#elif defined(USE_ICNN)
-	while (len) {
-		long n = sread ((int)fh, buf, len);
-		if (n < 0) {
-			if (!ret) ret = n;
-			break;
-		} else if (n) {
-			ret += n;
-			buf += n;
-			len -= n;
-		} else { /* no data available yet */
-			break;
-		}
-	}
-
-#elif defined(USE_STIK)
-	if (!tpl) {
-		errprintf ("No STiK/Sting\n");
-		ret = -1;
-	} else while (len) {
-		short n = CNbyte_count ((int)fh);
-		if (n < E_NODATA) {
-			if (!ret) ret = (n == E_EOF || n == E_RRESET ? -ECONNRESET : -1);
-			break;
-		} else if (n > 0) {
-			if (n > len) n = len;
-			if ((n = CNget_block ((int)fh, buf, n)) < 0) {
-				if (!ret) ret = -1;
-				break;
-			} else {
-				ret += n;
-				buf += n;
-				len -= n;
-			}
-		} else { /* no data available yet */
-			break;
-		}
-	}
-
-#else
-	(void)fh; (void)buf; (void)len;
-	ret = -1;
-#endif
-
-	return ret;
-}
-
-
-/*============================================================================*/
-void __CDECL
-inet_close (long fh)
-{
-	if (fh >= 0) {
-
-	#if defined(USE_MINT) || defined(USE_MAGICNET)
-		if (close ((int)fh) == 0) sockets_free++;
-
-	#elif defined(USE_ICNN)
-		if (sclose ((int)fh) == 0) sockets_free++;
-
-	#elif defined(USE_STIK)
-		if (!tpl) {
-			errprintf ("No STiK/Sting\n");
-		} else {
-			if (TCP_close ((int)fh, 0, NULL) == 0) sockets_free++;
-		}
-	
-	#endif
+	if (libinet != NULL)
+	{
+		if (app_global_inet == NULL) { app_global_inet = ldg_global; }
+    
+    ldg_Free(inet_ftab);
+    
+		ldg_close(libinet, app_global_inet);
 	}
 }
 
+/*-------------------------------------------------------------------*/
 
-/*============================================================================*/
-long __CDECL
-inet_instat (long fh)
-{
-	long ret = -1;
+// if no module is loaded (ie no use of internet calls, html browser only), the inetfab points to these noop functions
 
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	ret = Finstat (fh);
-	if (ret == 0x7FFFFFFFL) { /* connection closed */
-		ret = -ECONNRESET;
-	}
+int16_t no_inet_host_addr(const char * name, int32_t * addr) { short ret = -1; (void)name; (void)addr; return ret; }
+int32_t no_inet_connect(int32_t addr, int32_t port, int32_t tout_sec) { int fh = -1; (void)addr; (void)port; (void)tout_sec; return fh; }
+int32_t no_inet_send(int32_t fh, const char * buf, size_t len, my_ssl_context *ssl) {	long ret = -1; (void)fh; (void)buf; (void)len; (void)ssl; return ret; }
+int32_t no_inet_recv(int32_t fh, char * buf, size_t len, my_ssl_context *ssl) { long ret = -1; (void)fh; (void)buf; (void)len; (void)ssl; return ret; }
+void no_inet_close(int32_t fh, my_ssl_context *ssl) { (void)fh; (void)ssl; }
+int32_t no_inet_instat(int32_t fh) { long ret = -1; (void)fh; return ret; }
+int32_t no_inet_select(int32_t timeout, int32_t * rfds, int32_t * wfds) { long ret = 0; (void)timeout; (void)rfds; (void)wfds; return ret; }
+const char * no_inet_info() { return NULL; }
+const int16_t no_inet_type() { return 0; }
+void no_inet_mbedtls_set(LDG_MBEDTLS_FTAB *ftab) { (void)ftab; }
 
-#elif defined(USE_ICNN)
-	char buf[1024];
-	ret = recv ((int)fh, buf, sizeof(buf), (int)MSG_PEEK);
-
-#elif defined(USE_STIK)
-	if (!tpl) {
-		errprintf ("No STiK/Sting\n");
-	} else {
-		ret = CNbyte_count ((int)fh);
-		if (ret < E_NODATA) {
-			ret = (ret == E_EOF || ret == E_RRESET ? -ECONNRESET : -1);
-		}
-	}
-
-#else
-	(void)fh;
-#endif
-
-	return ret;
-}
-
-/*============================================================================*/
-long __CDECL
-inet_select (long timeout, long * rfds, long * wfds) /* timeout is milliseconds */
-{
-	long ret = 0;
-
-#if defined(USE_MINT) || defined(USE_MAGICNET)
-	ret = Fselect (timeout, rfds, wfds, NULL);
-
-#elif defined(USE_ICNN)
-	struct timeval to_in;
-	fd_set * p_rf, * p_wf;
-	if (rfds && *rfds) {
-		static fd_set i_rf;
-		char * c_rf = (char*)FD_ZERO (&i_rf);
-		c_rf[0] = ((char*)&rfds)[3];
-		c_rf[1] = ((char*)&rfds)[2];
-		c_rf[2] = ((char*)&rfds)[1];
-		c_rf[3] = ((char*)&rfds)[0];
-		p_rf    = &i_rf;
-	} else {
-		p_rf    = NULL;
-	}
-	if (wfds && *wfds) {
-		static fd_set i_wf;
-		char * c_wf = (char*)FD_ZERO (&i_wf);
-		c_wf[0] = ((char*)&wfds)[3];
-		c_wf[1] = ((char*)&wfds)[2];
-		c_wf[2] = ((char*)&wfds)[1];
-		c_wf[3] = ((char*)&wfds)[0];
-		p_wf    = &i_wf;
-	} else {
-		p_wf    = NULL;
-	}
-	to_in.tv_sec  = (int)(timeout /1000);    /* calc seconds from milliseconds */
-	to_in.tv_usec = (int)((timeout%1000)*1000); /* calc remainder in microsecs */ 
-	ret = select((int)32, p_rf, p_wf, NULL, &to_in);
-	if (p_rf) {
-		char * c_rf = (char*)p_rf;
-		((char*)&rfds)[3] = c_rf[0];
-		((char*)&rfds)[2] = c_rf[1];
-		((char*)&rfds)[1] = c_rf[2];
-		((char*)&rfds)[0] = c_rf[3];
-	}
-	if (p_wf) {
-		char * c_wf = (char*)p_wf;
-		((char*)&wfds)[3] = c_wf[0];
-		((char*)&wfds)[2] = c_wf[1];
-		((char*)&wfds)[1] = c_wf[2];
-		((char*)&wfds)[0] = c_wf[3];
-	}
-
-#elif defined(USE_STIK)
-	short bit;
-	long rf_in, wf_in, rf_out, wf_out;
-	rf_in = wf_in = rf_out = wf_out = 0;
-	if (rfds) rf_in = *rfds;
-	if (wfds) wf_in = *wfds;
-	do {
-		for (bit = 0; bit < 32; bit++) {
-			long mask = 1 << bit;
-			if ((rf_in & mask) || (wf_in & mask)) {
-				short n = CNbyte_count ((int)bit);
-				if (n == E_BADHANDLE) {
-					rf_out = wf_out = 0;
-					ret = -1;
-					break;
-				}
-				if ((rf_in & mask) && (n != 0)) {
-					ret++;
-					rf_out |= mask;
-				}
-				if (wf_in & mask) ret++;
-			}
-		}
-	} while ((timeout == 0) && (ret == 0));
-	if (ret > 0) wf_out = wf_in;
-	if (rfds) *rfds = rf_out;
-	if (wfds) *wfds = wf_out;
-
-#else
-	(void)timeout; (void)rfds; (void)wfds;
-
-#endif
-
-	return ret;
-}
-
-
-/*============================================================================*/
-const char * __CDECL
-inet_info (void)
-{
-#if defined(USE_MINT)
-	return "MiNTnet";
-
-#elif defined(USE_MAGICNET)
-	return "MagiCNet";
-
-#elif defined(USE_ICNN)
-	return "Iconnect";
-
-#elif defined(USE_STNG)
-	return "Sting";
-
-#elif defined(USE_STIK)
-	return "STiK2";
-
-#else
-	return NULL;
-#endif
-}

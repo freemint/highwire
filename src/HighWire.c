@@ -23,13 +23,15 @@
 #ifdef GEM_MENU
 # include "highwire.h"
 #endif
-#include "ovl_sys.h"
 #include "bookmark.h"
 
 #ifdef CACHETEST
 #include "Location.h"
 #include "cache.h"
 #endif
+
+#include "mbedTLS.h"
+#include "inet.h"
 
 #ifdef LATTICE
 	/* set stack size for LATTICE here */
@@ -336,8 +338,11 @@ main (int argc, char **argv)
 	
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 
-#if 0
-load_sampleovl();
+  ldg_inet_init(aes_global);
+  ldg_mbedtls_init(aes_global);
+
+#ifdef USE_INET
+  ldg_inet_load();
 #endif
 	
 	sched_init (set_timer);
@@ -395,7 +400,10 @@ highwire_ex (void)
 {
 	if (gl_apid > 0) {
 		
-		kill_ovl (NULL);
+#ifdef USE_INET
+    ldg_mbedtls_unload();
+    ldg_inet_unload();
+#endif
 		
 		Exit_AV_Protocol();
 		Exit_OLGA();

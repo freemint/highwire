@@ -30,7 +30,7 @@
 
 /* File access modes used with open() and fcntl() */
 
-#if 0 
+#if 0
 #define O_RDONLY	0000000 /* Open for reading only */
 #define O_WRONLY	0000001 /* Open for writing only */
 #define O_RDWR		0000002 /* Open for reading and writing */

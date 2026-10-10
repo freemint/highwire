@@ -38,7 +38,7 @@ enum so_type {
 #define SO_RCV_COPYAVOID	0x100a
 
 /* Structure used for manupulating linger option */
-typedef struct	
+typedef struct
 {
 	int	l_onoff;
 	int	l_linger;

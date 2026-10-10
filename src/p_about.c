@@ -15,7 +15,6 @@
 #include "Location.h"
 #include "Form.h"
 #include "inet.h"
-#include "ovl_sys.h"
 #include "cache.h"
 
 #ifdef LIBPNG
@@ -35,43 +34,6 @@
   #undef XMD_H
 #endif
 
-
-/*----------------------------------------------------------------------------*/
-static void
-about_modules (TEXTBUFF current, ENCODING enc)
-{
-	char buf[100];
-	MODULINF mod = NULL;
-	size_t   num = module_info (&mod);
-	
-	if (mod && num) {
-		size_t count = num;
-		while (count--) {
-	#if 01
-			struct ovl_info_t * info = (*mod->Meth->ovl_version)();
-			sprintf (buf, "\022\005%s:\020 %s %s \026by\024 %s\005\003",
-			         mod->File, info->name, info->version, info->author);
-			render_text (current, buf);
-			current->word->line_brk = BRK_LN;
-			sprintf (buf, "kill=0x%08lX", (long)mod->Meth);
-			font_byType (-1, FNT_BOLD, font_step2size (2), current->word);
-			form_buttn (current, buf, "&times;", enc, 'S');
-			font_byType (-1, 0x0000, font_step2size (3), current->word);
-	#else
-			sprintf (buf, "\022\005%s\020\r", mod->File);
-			render_text (current, buf);
-	#endif
-			mod++;
-		}
-		if (num > 0) {
-			render_hrule (current, ALN_LEFT, -512, 2, TRUE);
-		}
-		free (mod - num);
-	
-	} else {
-		render_text (current, "\026(none)\024");
-	}
-}
 
 
 /*----------------------------------------------------------------------------*/
@@ -169,13 +131,11 @@ about_cache (TEXTBUFF current, ENCODING enc, CACHEINF info, size_t num)
 static void
 about_highwire (TEXTBUFF current, WORD link_color)
 {
-#ifndef USE_OVL
 	const char * i_net = inet_info();
-#endif
 	char     buf[100];
 	WORDITEM list[10], * w = &list[-1];
 	WORD     tab   = 0;
-	size_t   m_num = module_info (NULL);
+	size_t   m_num = 1;
 	
 	*(++w) = render_text (current, "\025Core:\005\024\022"
 	                      _HIGHWIRE_VERSION_ "\020\n");
@@ -266,12 +226,10 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	} while (--w >= list);
 	
 	font_byType (-1, -1, font_step2size (3), current->word);
-	#ifndef USE_OVL
 	if (i_net) {
 		sprintf (buf, "(%s support enabled)", i_net);
 		render_text (current, buf);
 	}
-	#endif
 	render_hrule (current, ALN_LEFT, -512, 2, TRUE);
 	
 	sprintf (buf, "Screen Mode: '\022%s\020'\r", image_dispinfo());
@@ -321,13 +279,6 @@ parse_about (void * arg, long invalidated)
 	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
 	
 	if (strncmp ("modules", title, 7) == 0) {
-		if (strncmp (title +7, "?kill=", 6) == 0) {
-			char * rest;
-			long   ovl = strtol (title +13, &rest, 16);
-			if (ovl > 0 && *rest == '=') {
-				kill_ovl ((void*)ovl);
-			}
-		}
 		containr_notify (parser->Target, HW_SetTitle, "About: Modules");
 		title = "Modules loaded:";
 		mode  = 2;
@@ -365,10 +316,6 @@ parse_about (void * arg, long invalidated)
 		c_num = cache_info (&c_mem, (mode == 1 ? &info : NULL));
 	}
 	switch (mode) {
-		case 2:
-			current->form = new_form (frame, NULL, strdup("about:modules"), "GET", NULL);
-			about_modules (current, frame->Encoding);
-			break;
 		case 1:
 			clrable = about_cache (current, frame->Encoding, info, c_num);
 			break;

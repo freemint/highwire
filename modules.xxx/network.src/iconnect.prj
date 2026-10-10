@@ -1,0 +1,23 @@
+..\iconnect.ovl
+.C [ -P- -M -DUSE_INET]
+
+.C [-Iinclude\]   ; include path
+
+.L [-S=1024]
+=
+
+pcstart.o          ; startup code
+
+iconnect.c (network.c,..\..\src\ovl_sys.h, ..\..\src\hw-types.h,..\..\src\inet.c,..\..\src\inet.h)
+
+; socket library
+iconnect\socklib.c
+iconnect\inet.c
+iconnect\host.c
+iconnect\getent.c
+iconnect\url_aid.c
+iconnect\stream_i.c
+iconnect\set_flag.c
+
+pcstdlib.lib       ; standard library
+pctoslib.lib       ; TOS library

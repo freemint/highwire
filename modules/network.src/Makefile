@@ -1,16 +1,18 @@
 #
 # Makefile for highwire
 #
-TARGET = ../mintnet.ovl
+TARGET = network.ldg
 BUILDDIR = ../../build/network
 
 # compiler settings
-CROSS = m68k-atari-mint-
+CROSSPATH=/opt/cross-mint/bin/
+CROSS = $(CROSSPATH)m68k-atari-mint-
 CC = $(CROSS)gcc -g #-DDEBUG
 AS = $(CC) -c
 LD = $(CC) 
 CP = cp
 RM = rm -f
+STRIP = $(CROSS)strip
 
 CPU = 68000
 #CPU = 68030
@@ -18,7 +20,7 @@ CPU = 68000
 #CPU = 68020-60
 #CPU = 5475
 
-DEFS = -DUSE_INET
+DEFS = -DUSE_INET -D$(LDG_TYPE)
 
 OPTFLAGS = -funsigned-char \
        -fomit-frame-pointer -O2 -fstrength-reduce 
@@ -34,17 +36,17 @@ WARN = \
 	-Wmissing-prototypes \
 	-Wshadow \
 	-Wpointer-arith \
-	-Wcast-qual
+	#-Wcast-qual
 
 INCLUDE =
 
 CFLAGS = $(INCLUDE) $(WARN) $(OPTS) $(DEFS)
 ASFLAGS = $(OPTS)
 LDFLAGS = -s
-LIBS = -liio
+LIBS = -lldg #-liio
 
 ifeq ($(CPU),5475)
-        OBJDIR = $(BUILDDIR)/obj.$(CPU)
+  OBJDIR = $(BUILDDIR)/obj.$(CPU)
 else
 	OBJDIR = $(BUILDDIR)/obj$(CPU:68%=.%)
 endif
@@ -79,6 +81,8 @@ DEPENDENCIES = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.P,$(CFILES)))
 
 $(TARGET): $(OBJS)
 	$(LD) -o $@ $(CFLAGS) -Wl,-stack,8k $(LDFLAGS) $(OBJS) $(LIBS)
+	$(STRIP) $(TARGET)
+	rm $(OBJDIR)/*.o
 
 000: ; $(MAKE) CPU=68000
 030: ; $(MAKE) CPU=68030
@@ -93,20 +97,17 @@ v4e: ; $(MAKE) CPU=5475
 # sting and stik2 talk to the stack purely through its trap interface and
 # need no sockets, so they link against libcmini and come out at a twentieth
 # of the size mintlib gives them.  mintnet and magicnet need mintlib's
-# socket layer and stay on it.  libcmini comes with the toolkit container.
-CMINI = /freemint/libcmini/lib
+# socket layer and stay on it.
+#
+# STiK2 uses the same code as STinG, so this module is discarded.
+#
+CMINI = ../libcmini/lib
 
-sting:    ; $(MAKE) TARGET=../sting.ovl    CFILES=sting.c    INCLUDE=-Iinclude \
+sting:    ; $(MAKE) TARGET=network.ldg CFILES=network.c INCLUDE=-Iinclude \
                     LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-stik2:    ; $(MAKE) TARGET=../stik2.ovl    CFILES=stik2.c    INCLUDE=-Iinclude \
-                    LDFLAGS="-s -nostdlib $(CMINI)/crt0.o" \
-                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini"
-
-# Not yet run under MagiCNet, so dist still ships the prebuilt
-# ../magicnet.ovl; this one builds beside the objects, for that test.
-magicnet: ; $(MAKE) TARGET=$(BUILDDIR)/magicnet.ovl CFILES=magicnet.c INCLUDE=-Iinclude
-
+                    LIBS="-L$(CMINI) -lcmini -lgcc -lcmini -lldg -lcmini" \
+                    LDG_TYPE=USE_STING
+                    
 clean:
 	$(RM) $(OBJS)
 

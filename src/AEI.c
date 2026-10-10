@@ -32,6 +32,7 @@
 #include "Logging.h"
 #include "dragdrop.h"
 #include "olga.h"
+#include "ldg.h"
 #ifdef GEM_MENU
 #	include "highwire.h"
 	extern OBJECT * menutree;
@@ -1615,6 +1616,13 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			fonts_setup (msg);
 			break;
 		
+    case LDG_QUIT: /* ldg->client : a lib discharged */
+      // TODO: handle if network.ldg or mbedtls.ldg discharged
+      break;
+    case LDG_LOST_LIB: /* ldg->client : a lib lost */
+      // TODO: handle if network.ldg or mbedtls.ldg lost
+      break;
+  
 		case AP_TERM:
 			return (TRUE);
 	}

@@ -16,17 +16,17 @@ int	h_errno;
 cookie_struct *sint;
 
 int sock_init(void)
-{/* Returns 0 if succesful, else: 
+{/* Returns 0 if succesful, else:
 		-1 : Sockets no installed
 		-2 : Socket-version too old
 	*/
-	
+
 	if(!find_cookie('SLIP', (long*)&sint))
 		return(-1);
-	
+
 	if(sint->user->version < VERSION_SUP)
 		return(-2);
-	
+
 	return(0);
 }
 
@@ -171,15 +171,15 @@ int	find_cookie(long cid, long *cval)
 { /* Sucht den Cookie (cid) und liefert dessen Wert in cval */
 
   /* Liefert 1, falls der Cookie gefunden wurde, sonst 0 */
-  
+
 	COOKIE	*cookie;
 
 	Supexec(jaradres);
 	cookie=jar_addres;
-		
+
 	if (!cookie)
 		return(0);
-		
+
 	for(;((cookie->id)&&(cookie->id!=cid));cookie++);
 
 	/* cookie zeigt auf gesuchten Cookie oder Nullcookie */
@@ -192,4 +192,3 @@ int	find_cookie(long cid, long *cval)
 		return(1);
 	}
 }
-
