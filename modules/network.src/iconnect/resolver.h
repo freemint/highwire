@@ -118,22 +118,22 @@ typedef struct
 	#define RA 128							/* Recursion available (by server) */
 	#define Z  (64|32|16)				/* reserved - must be zero */
 	#define RCODE (8|4|2|1)			/* See "Currently defined response codes" */
-	
+
 	uint qdcount;		/* Following queries (format QNAME/QTYPE/QCLASS) */
 	uint ancount;		/* Answers (resource records) */
 	uint nscount;		/* Nameservers (resource records) */
 	uint arcount;		/* Additional (resource records) */
-	
+
 	rrec records[0];
 }dns_header;
 
 
-void CDECL res_init(void);
-int CDECL res_query(char *dname, int class, int type, uchar *answer, int anslen);
-int CDECL res_search(char *dname, int class, int type, uchar *answer, int anslen);
-int CDECL res_mkquery(int op, char *dname, int class, int type, char *data, int datalen, void *notused, char *buf, int buflen);
-int CDECL res_send(char *msg, int msglen, char *answer, int anslen);
-int CDECL dn_expand(uchar *msg, uchar *eomorig, uchar *comp_dn, uchar *exp_dn, int length);
-int CDECL dn_comp(uchar *exp_dn, uchar *comp_dn, uchar **dnptrs, uchar **lastdnptr, int length);
+void cdecl res_init(void);
+int cdecl res_query(char *dname, int class, int type, uchar *answer, int anslen);
+int cdecl res_search(char *dname, int class, int type, uchar *answer, int anslen);
+int cdecl res_mkquery(int op, char *dname, int class, int type, char *data, int datalen, void *notused, char *buf, int buflen);
+int cdecl res_send(char *msg, int msglen, char *answer, int anslen);
+int cdecl dn_expand(uchar *msg, uchar *eomorig, uchar *comp_dn, uchar *exp_dn, int length);
+int cdecl dn_comp(uchar *exp_dn, uchar *comp_dn, uchar **dnptrs, uchar **lastdnptr, int length);
 
 #endif

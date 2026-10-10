@@ -30,7 +30,7 @@
 
 /* File access modes used with open() and fcntl() */
 
-#if 0 
+#if 0
 #define O_RDONLY	0000000 /* Open for reading only */
 #define O_WRONLY	0000001 /* Open for writing only */
 #define O_RDWR		0000002 /* Open for reading and writing */
@@ -57,6 +57,6 @@
 #define O_SYNCIO		O_SYNC	/* Do write through caching */
 #define FSYNCIO			O_SYNC	/* Do write through caching */
 
-extern long CDECL sfcntl(int FileDescriptor, long Command, long Argument);
+extern long cdecl sfcntl(int FileDescriptor, long Command, long Argument);
 
 #endif

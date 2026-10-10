@@ -1,2 +1,0 @@
-network.o: network.c ../../src/hw-types.h ../../src/mbedTLS.h \
- ../../src/hw-types.h network.h mintnet.c

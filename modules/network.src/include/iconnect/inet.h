@@ -1,6 +1,9 @@
 #if  !defined( __INET__ )
 #define __INET__
-#include "in.h"
+
+#if  !defined( __IN__ )
+#include <iconnect/in.h>
+#endif
 
 extern unsigned long inet_addr(const char *cpp);
 extern unsigned long inet_network(const char *cp);

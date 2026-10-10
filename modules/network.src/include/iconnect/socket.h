@@ -38,7 +38,7 @@ enum so_type {
 #define SO_RCV_COPYAVOID	0x100a
 
 /* Structure used for manupulating linger option */
-typedef struct	
+typedef struct
 {
 	int	l_onoff;
 	int	l_linger;
@@ -66,30 +66,30 @@ typedef struct
 #define MSG_DONTROUTE 4
 
 
-extern int CDECL socket(int af, int type, int protocol);
-extern int CDECL bind(int s, const void *addr, int addrlen);
-extern int CDECL listen(int s, int backlog);
-extern int CDECL accept(int s, const void *addr, int *addrlen);
-extern int CDECL connect(int s, const void *addr, int addrlen);
+extern int cdecl socket(int af, int type, int protocol);
+extern int cdecl bind(int s, const void *addr, int addrlen);
+extern int cdecl listen(int s, int backlog);
+extern int cdecl accept(int s, const void *addr, int *addrlen);
+extern int cdecl connect(int s, const void *addr, int addrlen);
 
-extern int CDECL swrite(int s, const void *msg, int len);
-extern int CDECL send(int s, const void *msg, int len, int flags);
-extern int CDECL sendto(int s, const void *msg, int len, int flags, void *to, int tolen);
+extern int cdecl swrite(int s, const void *msg, int len);
+extern int cdecl send(int s, const void *msg, int len, int flags);
+extern int cdecl sendto(int s, const void *msg, int len, int flags, void *to, int tolen);
 
-extern long CDECL sread(int s, void *buf, long len);
-extern long CDECL recv(int s, void *buf, long len, int flags);
-extern long CDECL recvfrom(int s, void *buf, long len, int flags, void *from, int *fromlen);
+extern long cdecl sread(int s, void *buf, long len);
+extern long cdecl recv(int s, void *buf, long len, int flags);
+extern long cdecl recvfrom(int s, void *buf, long len, int flags, void *from, int *fromlen);
 
-extern int CDECL shutdown(int s, int how);
-extern int CDECL sclose(int s);
+extern int cdecl shutdown(int s, int how);
+extern int cdecl sclose(int s);
 
-extern int CDECL getsockname(int s, void *addr, int *addrlen);
-extern int CDECL getpeername(int s, void *addr, int *addrlen);
+extern int cdecl getsockname(int s, void *addr, int *addrlen);
+extern int cdecl getpeername(int s, void *addr, int *addrlen);
 
-extern int CDECL getsockopt(int s, int level, int optname, void *optval, int *optlen);
-extern int CDECL setsockopt(int s, int level, int optname, const void *optval, int *optlen);
+extern int cdecl getsockopt(int s, int level, int optname, void *optval, int *optlen);
+extern int cdecl setsockopt(int s, int level, int optname, const void *optval, int *optlen);
 
 /* Unoffical call to get TCB Information */
-extern int	CDECL status(int s, void *mtcb);
+extern int	cdecl status(int s, void *mtcb);
 
 #endif

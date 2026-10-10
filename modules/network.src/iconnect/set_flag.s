@@ -1,6 +1,6 @@
 .EXPORT set_flag, clear_flag
 
-;-----------------------	
+;-----------------------
 set_flag:
 	move.l	a0,-(sp)
 	lea			flag,a0
@@ -20,7 +20,7 @@ no_success:
 	move.l	(sp)+,a0
 	rts
 
-;-----------------------	
+;-----------------------
 clear_flag:
 	move.l	a0,-(sp)
 	lea			flag,a0
@@ -32,7 +32,7 @@ clr_bit:
 	bclr		d0,(a0)
 	move.l	(sp)+,a0
 	rts
-;-----------------------	
-	
+;-----------------------
+
 flag:
 	DC.W	0

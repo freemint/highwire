@@ -1,0 +1,18 @@
+iconnect.ldg
+.C [-Y- -G+ -Iinclude]
+.L [-Y-]
+=
+pcstart.o
+iconnect.c
+; socket library
+iconnect\socklib.c
+iconnect\inet.c
+iconnect\host.c
+iconnect\getent.c
+iconnect\url_aid.c
+iconnect\stream_i.c
+iconnect\set_flag.c
+
+pcstdlib.lib       ; standard library
+pctoslib.lib       ; TOS library
+ldg.lib            ; copy ../../lib/ldg/lib.purec/ldg.lib to pure_c/lib/

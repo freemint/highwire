@@ -1,2 +1,0 @@
-obj.000/network.o: network.c ../../src/hw-types.h ../../src/mbedTLS.h \
- ../../src/hw-types.h network.h magxnet.c

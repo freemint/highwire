@@ -1,18 +1,24 @@
 
-#ifndef CLK_TCK
-#   define CLK_TCK     CLOCKS_PER_SEC
-#endif
+#define CLK_TCK 200
+#define __CDECL cdecl
 
+#include <stddef.h>
 #include <time.h>
+#include <string.h>
 
-#include "include/iconnect/sockinit.h"
-#include "include/iconnect/netdb.h"
-#include "include/iconnect/types.h"
-#include "include/iconnect/socket.h"
-#include "include/iconnect/in.h"
-#include "include/iconnect/sfcntl.h"
-#include "include/iconnect/sockios.h"
-#include "include/iconnect/types.h"
+#include <misc/hw-types.h>
+#include <misc/ldg.h>
+
+#include <iconnect/sockinit.h>
+#include <iconnect/netdb.h>
+#include <iconnect/types.h>
+#include <iconnect/socket.h>
+#include <iconnect/in.h>
+#include <iconnect/sfcntl.h>
+#include <iconnect/sockios.h>
+#include <iconnect/types.h>
+
+WORD sockets_free = 0;
 
 /*----------------------------------------------------------------------------*/
 static BOOL init_iconnect (void)
@@ -27,9 +33,9 @@ static BOOL init_iconnect (void)
 
 
 /*============================================================================*/
-int16_t __CDECL inet_host_addr (const char * name, int32_t * addr)
+int __CDECL inet_host_addr (const char * name, long * addr)
 {
-	int16_t ret = -1;
+	int ret = -1;
 
 	if (init_iconnect()) {
 		struct hostent * host = gethostbyname ((char*)name);
@@ -44,9 +50,9 @@ int16_t __CDECL inet_host_addr (const char * name, int32_t * addr)
 
 
 /*============================================================================*/
-int32_t __CDECL inet_connect (int32_t addr, int32_t port, int32_t tout_sec)
+long __CDECL inet_connect (long addr, long port, long tout_sec)
 {
-	int32_t fh = -1;
+	int fh = -1;
 
 	if (sockets_free <= 0) {
 		fh = -35/*EMFILE*/;
@@ -54,20 +60,20 @@ int32_t __CDECL inet_connect (int32_t addr, int32_t port, int32_t tout_sec)
 		clock_t timeout = 0;
 		sockaddr_in s_in;
 		s_in.sin_family = AF_INET;
-		s_in.sin_port   = htons ((int16_t)port);
+		s_in.sin_port   = htons ((short)port);
 		s_in.sin_addr   = addr;
 		do {
 			if ((fh = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 				fh = -1;
 				break;
 			} else {
-				int n = connect ((int32_t)fh, &s_in, (int32_t)sizeof(s_in));
+				int n = connect ((int)fh, &s_in, (int)sizeof(s_in));
 				if (n == E_OK) {
-					sfcntl ((int32_t)fh, F_SETFL, O_NDELAY);
+					sfcntl ((int)fh, F_SETFL, O_NDELAY);
 					sockets_free--;
 					break;
 				}
-				sclose ((int32_t)fh);
+				sclose ((int)fh);
 				fh = -1;
 				if (!timeout) {
 					timeout = clock() + tout_sec * CLK_TCK;
@@ -83,12 +89,14 @@ int32_t __CDECL inet_connect (int32_t addr, int32_t port, int32_t tout_sec)
 
 
 /*============================================================================*/
-int32_t __CDECL inet_send (int32_t fh, const char * buf, size_t len, my_ssl_context *ssl_context)
+long __CDECL inet_send (long fh, const char * buf, size_t len, void *ssl_context)
 {
-	int32_t ret = 0;
+	long ret = 0;
+
+	if (ssl_context != NULL) { return ret; }
 
 	while (len) {
-		short n = swrite ((int32_t)fh, buf, (int32_t)min(len, 16384l));
+		short n = swrite ((int)fh, buf, (int)min(len, 16384l));
 		if (n < 0) {
 			ret = n;
 			break;
@@ -104,12 +112,14 @@ int32_t __CDECL inet_send (int32_t fh, const char * buf, size_t len, my_ssl_cont
 
 
 /*============================================================================*/
-int32_t __CDECL inet_recv (int32_t fh, char * buf, size_t len, my_ssl_context *ssl_context)
+long __CDECL inet_recv (long fh, char * buf, size_t len, void *ssl_context)
 {
-	int32_t ret = 0;
+	long ret = 0;
+
+	if (ssl_context != NULL) { return ret; }
 
 	while (len) {
-		long n = sread ((int32_t)fh, buf, len);
+		int n = sread ((int)fh, buf, len);
 		if (n < 0) {
 			if (!ret) ret = n;
 			break;
@@ -127,32 +137,32 @@ int32_t __CDECL inet_recv (int32_t fh, char * buf, size_t len, my_ssl_context *s
 
 
 /*============================================================================*/
-void __CDECL inet_close (int32_t fh, my_ssl_context *ssl_context)
+void __CDECL inet_close (long fh, void *ssl_context)
 {
-  if (ssl_context) { ldg_mbedtls_ssl_close_notify(ssl_context); }
+	if (ssl_context) { return; }
 
-	if (fh >= 0) {
-
-		if (sclose ((int32_t)fh) == 0) sockets_free++;
+	if (fh >= 0)
+	{
+		if (sclose ((int)fh) == 0) sockets_free++;
 	}
 }
 
 
 /*============================================================================*/
-int32_t __CDECL inet_instat (int32_t fh)
+long __CDECL inet_instat (long fh)
 {
-	int32_t ret = -1;
+	long ret = -1;
 
 	char buf[1024];
-	ret = recv ((int32_t)fh, buf, sizeof(buf), (int)MSG_PEEK);
+	ret = recv ((int)fh, buf, sizeof(buf), (int)MSG_PEEK);
 
 	return ret;
 }
 
 /*============================================================================*/
-int32_t __CDECL inet_select (int32_t timeout, int32_t * rfds, int32_t * wfds) /* timeout is milliseconds */
+long __CDECL inet_select (long timeout, long * rfds, long * wfds) /* timeout is milliseconds */
 {
-	int32_t ret = 0;
+	long ret = 0;
 
 	struct timeval to_in;
 	fd_set * p_rf, * p_wf;
@@ -178,9 +188,9 @@ int32_t __CDECL inet_select (int32_t timeout, int32_t * rfds, int32_t * wfds) /*
 	} else {
 		p_wf    = NULL;
 	}
-	to_in.tv_sec  = (int32_t)(timeout /1000);    /* calc seconds from milliseconds */
-	to_in.tv_usec = (int32_t)((timeout%1000)*1000); /* calc remainder in microsecs */ 
-	ret = select((int32_t)32, p_rf, p_wf, NULL, &to_in);
+	to_in.tv_sec  = (int)(timeout /1000);    /* calc seconds from milliseconds */
+	to_in.tv_usec = (int)((timeout%1000)*1000); /* calc remainder in microsecs */
+	ret = select((int)32, p_rf, p_wf, NULL, &to_in);
 	if (p_rf) {
 		char * c_rf = (char*)p_rf;
 		((char*)&rfds)[3] = c_rf[0];
@@ -204,7 +214,36 @@ int32_t __CDECL inet_select (int32_t timeout, int32_t * rfds, int32_t * wfds) /*
 const char * __CDECL inet_info (void) { return "Iconnect"; }
 
 /*============================================================================*/
-const int16_t __CDECL inet_type (void) { return 3; }
+const int __CDECL inet_type (void) { return 3; }
 
 /*============================================================================*/
-void __CDECL inet_mbedtls_set (LDG_MBEDTLS_FTAB *ftab) { inet_ldg_mbedtls_ftab = ftab; }
+void __CDECL inet_mbedtls_set (void *ftab) { if (ftab != NULL) { } }
+
+/*============================================================================*/
+
+
+
+PROC LibFunc[] =
+{
+	{"inet_host_addr", "int host_addr(const char * host, long * addr);\n", inet_host_addr},
+  {"inet_connect", "long connect(long addr, long port, long tout_sec);\n", inet_connect},
+
+  {"inet_send", "long send(long fh, const char * buf, size_t len, my_ssl_context *ssl_context);\n", inet_send},
+  {"inet_recv", "long recv(long fh, char       * buf, size_t len, my_ssl_context *ssl_context);\n", inet_recv},
+  {"inet_close", "void close(long fh, my_ssl_context *ssl_context);\n", inet_close},
+
+  {"inet_instat", "long instat(long fh);\n", inet_instat},
+  {"inet_select", "long select (long timeout, long * rfds, long * wfds);;\n", inet_select},
+
+  {"inet_info", "const char * info(long fh);\n", inet_info},
+  {"inet_type", "const int type(void);\n", inet_type},
+	{"inet_mbedtls_set", "void mbedtls_set(void *ftab);\n", inet_mbedtls_set}
+};
+
+LDGLIB LibLdg[] = { { 0x0001,  10, LibFunc,  "IConnect overlay for HighWire, by AltF4@freemint.de", 1 } };
+
+int main(void)
+{
+  ldg_init(LibLdg);
+  return 0;
+}

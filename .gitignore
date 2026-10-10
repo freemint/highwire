@@ -9,6 +9,7 @@ dist/
 !modules/libcmini/lib/**/*.a
 *.ovl
 *.ldg
+!iconnect.ldg
 .DS_Store
 tmp/
 .vscode/

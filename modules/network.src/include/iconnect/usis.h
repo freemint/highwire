@@ -5,7 +5,7 @@
 typedef struct
 {
 	long		total_sec;								/* Seconds total */
-	
+
 	int			hours, minutes, seconds;	/* Time in integers */
 	char		hh_mm_ss[10];							/* Time as "HH:MM:SS\0" */
 }ONLINE_TIME;
@@ -14,7 +14,7 @@ typedef struct
 {
 	long		bytes_sent;
 	long		bytes_rcvd;
-	
+
 	char		t_sent[13];		/* "x[x[x[x[.x]]]] [K|M|G]Byte" */
 	char		t_rcvd[13];
 }BYTE_EXCHANGE;
@@ -57,8 +57,8 @@ typedef struct
 #define	UA_FOUND			0
 #define UA_NOTSET			-1
 #define	UA_UNKNOWN		-2
-#define UA_OFFLINE		-3		
+#define UA_OFFLINE		-3
 
-extern int CDECL usis_query(USIS_REQUEST *ur);
+extern int cdecl usis_query(USIS_REQUEST *ur);
 
 #endif

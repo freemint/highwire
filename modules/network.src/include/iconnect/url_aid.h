@@ -9,6 +9,6 @@ typedef struct
 	char	path[512];
 }URL;
 
-extern int CDECL parse_url(char *s, URL *url, int default_port, char *default_name);
+extern int cdecl parse_url(char *s, URL *url, int default_port, char *default_name);
 
 #endif

@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/iconnect/sockerr.h"
-#include "../include/iconnect/socket.h"
-#include "../include/iconnect/netdb.h"
-#include "../include/iconnect/in.h"
-#include "../include/iconnect/inet.h"
-# include <mintbind.h>
-#include "../include/iconnect/atarierr.h"
-#include "../include/iconnect/usis.h"
-#include "../include/iconnect/mt_sock.h"
+#include <tos.h>
+
+#include <iconnect/sockerr.h>
+#include <iconnect/socket.h>
+#include <iconnect/netdb.h>
+#include <iconnect/in.h>
+#include <iconnect/inet.h>
+#include <iconnect/atarierr.h>
+#include <iconnect/usis.h>
+#include <iconnect/mt_sock.h>
 
 extern	int set_flag(int bit_nr);
 extern	void	clear_flag(int bit_nr);
@@ -34,7 +35,7 @@ int Eopen(char *fname)
 {/* Open file <fname> in etc/ */
 	USIS_REQUEST ur;
 	char path[256];
-	
+
 	ur.request=UR_ETC_PATH;
 	ur.result=path;
 	if(sint->user->usis(&ur) != UA_FOUND)
@@ -44,7 +45,7 @@ int Eopen(char *fname)
 }
 
 int Freads(int fh, char *buf, int len)
-{/* Liest bis LF. Gibt Bytes oder <=0(error) zurck */
+{/* Liest bis LF. Gibt Bytes oder <=0(error) zurï¿½ck */
 	int red;
 	char *b;
 	char					ign;
@@ -59,12 +60,12 @@ int Freads(int fh, char *buf, int len)
 				file is not terminated */
 		err=Fread(fh, len-1, buf);
 		if(err <=0) return((int)err);
-	
+
 		/* Search for end of buffer (Line Feed) */
 		b=buf;
 		red=0;
 		while((b[red] !=10) && (red <err))++red;
-	
+
 		if(b[red]==10)	/* End found */
 		{
 			++red;	/* Count LF byte */
@@ -78,7 +79,7 @@ int Freads(int fh, char *buf, int len)
 			buf[red++]=10;	/* Terminate in Memory and count LF byte*/
 			return(red);
 		}
-		
+
 		/* Line longer than buf, ignore it */
 		while(ign!=10)
 		{
@@ -95,7 +96,7 @@ int setent(R_ENT *r_ent, int stayopen)
 	/* File already open? */
 	if(r_ent->fhandle > -1)
 		Fclose(r_ent->fhandle);
-		
+
 	/* Open File */
 	r_ent->fhandle=Eopen(r_ent->basefile);
 	r_ent->stayopen=stayopen;
@@ -118,26 +119,26 @@ int getent(R_ENT *r_ent)
 {/* Return 0 or number of words in line */
 	register int 	ix;
 	register char	*p;
-	
+
 	if(r_ent->fhandle < 0)
 		if(setent(r_ent, 0) < 0)
 			return(0);
-	
+
 	/* Read one line */
 	do
 	{
 		if(Freads(r_ent->fhandle, uni.first, MAX_LINE) <= 0)
 			return(0);
-	
+
 		/* Put EOL */
 		p=uni.first;
 		while((*p!='#')&&(*p!=10)&&(*p!=13))++p;
 		*p=0;
 	}while(strlen(uni.first)==0);
-	
+
 	/* Split line */
 	p=uni.first; ix=0;
-	
+
 	while(1)
 	{
 		while(*p && (*p!=' ') && (*p!=9))++p;	/* Omit word */
@@ -150,12 +151,12 @@ int getent(R_ENT *r_ent)
 	}
 
 	uni.others[ix++]=NULL;
-	
+
 	if(r_ent->stayopen==0)
 		endnetent();
-		
+
 	return(ix);
-}	
+}
 
 /* host */
 
@@ -191,7 +192,7 @@ struct hostent		*gethostbyname(const char *name)
 
 	if(sint->defs->name_server_ip!=INADDR_NONE)
 		return(dns_gethostbyname(name));
-		
+
 	sethostent(r_host.stayopen);
 	while ((p = gethostent())!=NULL)
   {
@@ -215,12 +216,12 @@ struct hostent		*gethostbyaddr(const void *addr, socklen_t len, int type)
 
 	if(sint->defs->name_server_ip!=INADDR_NONE)
 		return(dns_gethostbyaddr(addr, len, type));
-			
+
 	if(type!=AF_INET) return(NULL);
 	if(len!=(int)sizeof(unsigned long)) return(NULL);
-	
+
 	soll=*(ulong*)addr;
-	
+
 	sethostent(r_host.stayopen);
 	while ((p = gethostent())!=NULL)
 	{
@@ -245,13 +246,13 @@ struct hostent		*gethostent(void)
 	static 	struct hostent	my_ent;
 	int 		ret,n;
 	unsigned long	addr;
-	
+
 	if(sint->defs->name_server_ip!=INADDR_NONE)
 		return(dns_gethostent());
-		
+
 	ret=getent(&r_host);
 	if(ret<1) return(NULL);
-	
+
 	/* read all internet addresses of host */
 	addr=inet_addr(uni.first);
 	if(addr!=INADDR_NONE)
@@ -277,10 +278,10 @@ struct hostent		*gethostent(void)
 		p_addr_list[MAX_ADD+1]=NULL;
 	else
 		p_addr_list[n]=NULL;
-		
+
 	if(n>=ret) /* Illegal line, get next */
 		return(gethostent());
-		
+
 	my_ent.h_name=uni.others[n-1];
 	my_ent.h_aliases=&(uni.others[n]);
 	my_ent.h_addrtype=AF_INET;
@@ -346,10 +347,10 @@ struct netent		*getnetent(void)
 {
 	static struct netent	my_ent;
 	int ret=getent(&r_net);
-	
+
 	if(ret<1) return(NULL);
 	if(ret<2) return(getnetent()); /* Ilegal line->get next */
-		
+
 	my_ent.n_name=uni.first;
 	my_ent.n_aliases=&(uni.others[1]);
 	my_ent.n_addrtype=AF_INET;
@@ -378,7 +379,7 @@ struct servent	*getservbyname(const char *name, const char *proto)
   {
 		if(strcmp(p->s_proto, proto)!=0)
 			continue;
-			
+
 		if (strcmp(p->s_name, name) == 0)
 			break;
 
@@ -414,14 +415,14 @@ struct servent	*getservent(void)
 	static struct servent	my_ent;
 	int ret=getent(&r_serv);
 	char	*slash;
-	
+
 	if(ret<1) return(NULL);
 	if(ret<2) return(getservent()); /* Illegal line->get next */
-	
+
 	slash=strchr(uni.others[0],'/');
 	if(slash==NULL) return(getservent()); /* Illegal line->get next */
 	*slash++=0;
-	
+
 	my_ent.s_name=uni.first;
 	my_ent.s_aliases=&(uni.others[1]);
 	my_ent.s_port=atoi(uni.others[0]);
@@ -480,10 +481,10 @@ struct protoent	*getprotoent(void)
 {
 	static struct protoent	my_ent;
 	int ret=getent(&r_proto);
-	
+
 	if(ret<1) return(NULL);
 	if(ret<2) return(getprotoent()); /* Illegal line->get next */
-	
+
 	my_ent.p_name=uni.first;
 	my_ent.p_aliases=&(uni.others[1]);
 	my_ent.p_proto=atoi(uni.others[0]);
@@ -541,10 +542,10 @@ struct rpcent		*getrpcent(void)
 {
 	static struct rpcent	my_ent;
 	int ret=getent(&r_rpc);
-	
+
 	if(ret<1) return(NULL);
 	if(ret<2) return(getrpcent()); /* Illegal line->get next */
-		
+
 	my_ent.r_name=uni.first;
 	my_ent.r_aliases=&(uni.others[1]);
 	my_ent.r_number=(int)atol(uni.others[0]);

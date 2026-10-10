@@ -1,7 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
-#include "../include/iconnect/in.h"
-#include "../include/iconnect/inet.h"
+
+#include <iconnect/in.h>
+#include <iconnect/inet.h>
 #include "network.h"
 
 /* Utility */
@@ -25,7 +26,7 @@ ulong inet_addr(const char *cpp)
 	return(INADDR_NONE);
 }
 
-/* 
+/*
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.
@@ -59,7 +60,7 @@ unsigned long inet_aton(const char *cpp, struct in_addr *addr)
 				continue;
 			}
 			if (base == 16 && isxdigit(c)) {
-				val = (val << 4) + 
+				val = (val << 4) +
 					(c + 10 - (islower(c) ? 'a' : 'A'));
 				cp++;
 				continue;
@@ -195,12 +196,12 @@ char *inet_ntoa(ulong in)
 	ulong	a,b,c,d;
 	char	num[20];
 	static char	buf[20];
-	
+
 	a=in >> 24;
 	b=(in >> 16) & 0xff;
 	c=(in >> 8) & 0xff;
 	d=in & 0xff;
-	
+
 	buf[0]=0;
 	strcpy(buf, ultoa(a, num, 10));
 	strcat(buf, ".");
@@ -209,6 +210,6 @@ char *inet_ntoa(ulong in)
 	strcat(buf, ultoa(c, num, 10));
 	strcat(buf, ".");
 	strcat(buf, ultoa(d, num, 10));
-	
+
 	return(buf);
 }

@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/iconnect/sockerr.h"
-#include "../include/iconnect/socket.h"
-#include "../include/iconnect/netdb.h"
-#include "../include/iconnect/inet.h"
+
+#include <iconnect/sockerr.h>
+#include <iconnect/socket.h>
+#include <iconnect/netdb.h>
+#include <iconnect/inet.h>
 
 #include "network.h"
 #include "resolver.h"
+
+#define	INADDR_NONE		((unsigned long)0xfffffffful)
 
 extern cookie_struct *sint;
 
@@ -24,7 +27,7 @@ ulong gethostid(void)
 int	gethostname(char *name, int namelen)
 {
 	char	buf[20];
-	
+
 	strcpy(buf, inet_ntoa(sint->defs->my_ip));
 	strncpy(name, buf, namelen);
 	return(0);
@@ -45,7 +48,7 @@ after:  <.nic.nordu.net><0>
 return:   ^
 */
 	char	*ret=src+1, p;
-	
+
 	while(*src)
 	{
 		p=*src;
@@ -76,7 +79,7 @@ int divbuf(uchar *buf, struct hostent *h)
 	}
 	else
 		ans=dnsh->records;
-	
+
 	while(ac--)
 	{
 		if(get_uint((uchar*)&(ans->r_class)) == C_IN)
@@ -102,7 +105,7 @@ int divbuf(uchar *buf, struct hostent *h)
 	}
 	addresses[ixad]=NULL;
 	aliases[ixa]=NULL;
-	
+
 	h->h_aliases=aliases;
 	h->h_addrtype=AF_INET;
 	h->h_length=(int)sizeof(ulong);
@@ -151,7 +154,7 @@ struct hostent	*MT_dns_gethostbyname(const char *name, uchar *buf, ulong *ip, ul
 	static ulong		ip, *rip[2];
 	static hostent	host;
 	*/
-	
+
 	*ip=inet_addr(name);
 	if(*ip != INADDR_NONE)
 	{/* name was given as dottet decimals */

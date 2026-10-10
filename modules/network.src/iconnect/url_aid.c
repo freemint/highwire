@@ -1,23 +1,24 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/iconnect/netdb.h"
-#include "../include/iconnect/url_aid.h"
+
+#include <iconnect/netdb.h>
+#include <iconnect/url_aid.h>
 
 /* If URL contains no prepending service (<service://>) use: */
 
-int	CDECL parse_url(char *s, URL *url, int default_port, char *default_name)
+int	cdecl parse_url(char *s, URL *url, int default_port, char *default_name)
 {/* 0 ok, -1=unknown service */
 	char	*host, *path, *a, copy[512];
 	struct servent	*se;
 	int		x;
-	
+
 	strncpy(copy, s, 511);
 	copy[511]=0;
 	s=copy;
-	
+
 	url->port=-1;
-	
+
 	a=strchr(s, ':');
 	if(a==NULL)
 	{/* Only host[path] */
@@ -39,19 +40,19 @@ int	CDECL parse_url(char *s, URL *url, int default_port, char *default_name)
 	*a=0;
 	host=a+3;
 	if((!stricmp(s, default_name))||(*s==0))
-	{	
+	{
 		url->port=default_port;
 		strcpy(url->service, default_name);
 		goto _host_found;
 	}
-	
+
 	/* Other service */
 	strncpy(url->service, s, 13); url->service[13]=0;
 	if(default_port <= 0)
 		url->port=-1;
 	else
 		url->port=default_port;
-	
+
 _host_found:
 	/* Host prepended by port number? */
 	a=strchr(host, ':');
@@ -99,7 +100,7 @@ _no_extra_port:
 	}
 	else
 		strncpy(url->host, host, 127);
-	
+
 	if(path[0]!='/')
 		strcpy(url->path,"/");
 	else
@@ -107,5 +108,5 @@ _no_extra_port:
 	strncat(url->path,path,509);
 
 	/* Done */
-	return(0);	
+	return(0);
 }
