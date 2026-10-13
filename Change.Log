@@ -1,3 +1,15 @@
+Changes fork-20261012 from V. 0.4.8
+
+  - support for mbedTLS.ldg/PolarSSL.ldg for SSL/TLS connections
+    and MiNTnet/Magxnet/STinG/STiK2 layers (IConnect handles
+    http:// only).
+    See example.cfg/highwire.cfg for details and preferences.
+  - modules/*.ovl files are replaced by modules/.ldg files to
+    simplify the source code.
+  - except for Iconnect overlay and some tools, PureC is no more
+    supported.
+  - built with m68k-atari-mint-gcc 12.4
+
 Changes in V. 0.4.8
 
   - transparent PNGs are drawn over the page instead of over the colours
