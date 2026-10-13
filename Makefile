@@ -262,7 +262,7 @@ dist::
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/magxnet.ldg
 	# ICONNECT module must be made with PureC
-	mv modules/network.src/iconnect.ldg $(DISTDIR)/modules/iconnect.ldg
+	cp modules/network.src/iconnect.ldg $(DISTDIR)/modules/iconnect.ldg
 	mkdir -p $(DISTDIR)/example.cfg
 	cp -a example.cfg/highwire.cfg $(DISTDIR)/example.cfg
 #	Ready to run on the machine most people have, without renaming anything
@@ -308,3 +308,5 @@ modules::
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/network.ldg
 	$(MAKE) -C modules/network.src CPU=68000 LDG_TYPE=USE_MAGICNET
 	mv modules/network.src/network.ldg $(DISTDIR)/modules/magxnet.ldg
+	# ICONNECT module must be made with PureC
+	cp modules/network.src/iconnect.ldg $(DISTDIR)/modules/iconnect.ldg
