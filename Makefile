@@ -79,8 +79,8 @@ WARN = \
 	-Wcast-qual \
 	$(DISABLED_WARNINGS) \
 	-Werror \
-	-Wno-error=array-bounds \
-	-Wno-error=stringop-overflow
+	#-Wno-error=stringop-overflow \
+	#-Wno-error=array-bounds \
 
 
 INCLUDE = 
@@ -270,7 +270,7 @@ dist::
 #	Both are copies, so the other builds and stacks are still there to swap in.
 	cp -a $(DISTDIR)/highwire.000 $(DISTDIR)/highwire.prg
 	$(TODOS) $(DISTDIR)/doc/HIGHWIRE.DOC $(DISTDIR)/doc/hotkeys.txt $(DISTDIR)/doc/giflib.txt $(DISTDIR)/doc/libpng.txt $(DISTDIR)/doc/libjpeg.txt $(DISTDIR)/modules/README.TXT $(DISTDIR)/Change.Log $(DISTDIR)/LICENSE $(DISTDIR)/example.cfg/highwire.cfg
-	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip .)
+	(cwd=`pwd`; cd $(DISTDIR); $(ZIP) "$$cwd"/$(BUILDDIR)/hw`date +%y%m%d`.zip . -x ".DS_Store" -x "__MACOSX")
 
 #
 # the snapshot release: dist's archive under the names the release carries
