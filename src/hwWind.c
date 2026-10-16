@@ -338,7 +338,7 @@ HwWIND
 new_hwWind (const char * name, const char * url, BOOL topNbot)
 {
 	HwWIND This = malloc (sizeof (struct hw_window) +
-	                      sizeof (HISTORY) * HISTORY_LAST +
+	                      sizeof (struct s_history) * HISTORY_LAST +
 	                      sizeof (TBAREDIT) +1);
 	TBAREDIT * edit;
 	short      i;
