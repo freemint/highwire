@@ -125,7 +125,7 @@ dflt_cachedir (void)
 {
 	if (!cache_DirInfo()) {
 		char buf[HW_PATH_MAX];
-		strcpy (prog_dir (buf), "CACHE");
+		strcpy (prog_dir (buf), "cache");
 		(void)Dcreate (buf); /* may exist already, cache_build() sorts it out */
 		cache_setup (buf, 0, 0, 0);
 	}
