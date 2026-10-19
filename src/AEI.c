@@ -971,7 +971,7 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 	x += rpopup->ob_x = mx -2;
 	y -= rpopup->ob_y;
 	y += rpopup->ob_y = my -2;
-	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+  wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
 	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
 		rpopup->ob_x += desk.g_w;
 		x            += desk.g_w;
@@ -989,6 +989,11 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 		y            += desk.g_y;
 	}
 	
+  x -= 2;
+  y -= 2;
+  w += 8;
+  h += 8;
+ 
 	wind_update (BEG_MCTRL);
 	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
 	objc_draw   (rpopup, ROOT, MAX_DEPTH, x, y, w, h);
