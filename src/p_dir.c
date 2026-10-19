@@ -27,7 +27,6 @@ parse_dir (void * arg, long invalidated)
 	char buf[HW_PATH_MAX *2 +3];
 	
 	LOCATION     loc   = frame->Location;
-	const char * dir   = loc->File -1;
 	char         delim = *loc->Path;
 	char         sort  = (loc->Anchor ? toupper(*loc->Anchor) : '\0');
 	WORD         color = frame->link_color;
@@ -125,26 +124,11 @@ parse_dir (void * arg, long invalidated)
 		Dclosedir (dh);
 	}
 	
-	font_byType (header_font, FNT_BOLD, font_step2size (6), current->word);
-	render_text (current, "Index of \003");
 	if (!sort || !strchr ("NDS", sort)) {
 		sort = 'N';
 	}
-	while (dir > loc->FullName && *(--dir) != delim);
-	if (dir > loc->FullName) {
-		size_t len = ++dir - loc->FullName;
-		char * lnk = buf;
-		memcpy (lnk, loc->FullName, len);
-		lnk[len++]   = '\003';
-		lnk[len++] = '#';
-		lnk[len++] = sort;
-		lnk[len]   = '\0';
-		render_link (current, buf, lnk, color);
-	}
-	sprintf (buf, "%s\n\005\003", dir);
-	render_text (current, buf);
 	
-	font_byType (normal_font, -1, font_step2size (3), current->word);
+	font_byType (normal_font, FNT_NORMAL, font_step2size (3), current->word);
 	strcat (strcpy (buf, loc->FullName), "# ");
 	if (sort == 'N') {
 		wrd_name = render_text (current, "Name\003\005\003");
