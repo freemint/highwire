@@ -79,9 +79,6 @@ WARN = \
 	-Wcast-qual \
 	$(DISABLED_WARNINGS) \
 	-Werror \
-	#-Wno-error=stringop-overflow \
-	#-Wno-error=array-bounds \
-
 
 INCLUDE = 
 

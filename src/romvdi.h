@@ -35,6 +35,8 @@
 #ifndef __ROMVDI_H__
 #define __ROMVDI_H__
 
+#include "fontbase.h"
+
 /* TRUE when a Speedo/FSM capable GDOS is present (SpeedoGDOS, NVDI >= 3 or
  * fVDI).  FALSE means we are on the plain ROM VDI and running in fallback.
  */
@@ -45,6 +47,7 @@ extern BOOL has_fsm_gdos;
  */
 void romvdi_init (long gdostype);
 
+WORD hw_vst_font        (WORD handle, FONTBASE base);
 WORD hw_vqt_xfntinfo    (WORD handle, WORD flags, WORD id, WORD fnt_index,
                          XFNT_INFO * info);
 void hw_vst_map_mode    (WORD handle, WORD mode);

@@ -4,7 +4,7 @@
 
 void font_setup (UWORD id, WORD type, BOOL bold, BOOL italic);
 
-
+#define FNT_NORMAL 0x0000
 #define FNT_BOLD   0x0001 /* TXT_THICKENED */
 #define FNT_ITALIC 0x0004 /* TXT_SKEWED    */
 #define FNT_CONDNS 0x1000
@@ -15,6 +15,7 @@ struct s_fontbase {
 	FONTBASE Next;
 	FONT     List;
 	WORD     Id;
+  UWORD    Format;
 	UWORD    Style;   /* FNT_BOLD|FNT_ITALIC */
 	WORD     RealId;
 	UWORD    Effects; /* FNT_BOLD|FNT_ITALIC */
