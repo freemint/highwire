@@ -217,7 +217,7 @@ main (int argc, char **argv)
 			aes_max_window_title_length = 200;
 		}
 		/* our name in the application menu */
-		menu_register(gl_apid, "  HighWire " _HIGHWIRE_VERSION_);
+		menu_register(gl_apid, "  HighWire ");
 	}
 	(void)Pdomain(1);  /* we know about long file names */
 
