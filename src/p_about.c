@@ -133,71 +133,89 @@ about_highwire (TEXTBUFF current, WORD link_color)
 {
 	const char * i_net = inet_info();
 	char     buf[100];
+	WORDITEM list[10], * w = &list[-1];
+	WORD     tab   = 0;
 	size_t   m_num = (inet_type() > 0 ? 1 : 0);
  
   if (ldg_mbedtls_loaded()) { m_num++; }
 	
-  render_text (current, "Core:\005" _HIGHWIRE_VERSION_ "\n");
-		
+  *(++w) = render_text (current, "Core:\005\022" _HIGHWIRE_VERSION_ "\020\n");
+  tab    = max (tab, (*w)->word_width);
+	
   #ifdef __GEMLIB_MAJOR__
-	  sprintf (buf, "GEMlib:\005%i.%02i.%i\005" __GEMLIB_BETATAG__ "\r", __GEMLIB_MAJOR__, __GEMLIB_MINOR__, __GEMLIB_REVISION__);
-	  render_text (current, buf);
+	  sprintf (buf, "GEMlib:\005\022%i.%02i.%i\020\005" __GEMLIB_BETATAG__ "\r", __GEMLIB_MAJOR__, __GEMLIB_MINOR__, __GEMLIB_REVISION__);
+	  *(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
   #endif
 	
 	#ifdef __MINTLIB__
-		sprintf (buf, "MiNTlib:\005%i.%02i.%i\005" __MINTLIB_BETATAG__ "\r", __MINTLIB_MAJOR__, __MINTLIB_MINOR__, __MINTLIB_REVISION__);
-    render_text (current, buf);
+		sprintf (buf, "MiNTlib:\005\022%i.%02i.%i\020\005" __MINTLIB_BETATAG__ "\r", __MINTLIB_MAJOR__, __MINTLIB_MINOR__, __MINTLIB_REVISION__);
+    *(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
 	#endif
 	
 	#ifdef __CFLIB__
-		sprintf (buf, "CFlib:\005%i.%02i.%i\005" __CFLIB_BETATAG__ "\r", __CFLIB_MAJOR__, __CFLIB_MINOR__, __CFLIB_REVISION__);
-		render_text (current, buf);
+		sprintf (buf, "CFlib:\005\022%i.%02i.%i\020\005" __CFLIB_BETATAG__ "\r", __CFLIB_MAJOR__, __CFLIB_MINOR__, __CFLIB_REVISION__);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
 	#endif
 
   #ifdef LIBPNG
     # ifdef PNG_LIBPNG_VER_STRING
-		sprintf (buf, "libpng:\005%s\r", PNG_LIBPNG_VER_STRING);
-		render_text (current, buf);
+		sprintf (buf, "libpng:\005\022%s\020\r", PNG_LIBPNG_VER_STRING);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
     #endif
   #endif
 
   #ifdef LIBGIF
     #if defined(GIF_LIB_VERSION)
-		sprintf (buf, "gif_lib:\005\%s\r", GIF_LIB_VERSION);
-		render_text (current, buf);
+		sprintf (buf, "gif_lib:\005\022%s\020\r", GIF_LIB_VERSION);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
     #elif defined(GIFLIB_MAJOR) && defined(GIFLIB_MINOR) && defined(GIFLIB_RELEASE)
-		sprintf (buf, "gif_lib:\005%d.%d.%d\r", GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE);
-		render_text (current, buf);
+		sprintf (buf, "gif_lib:\005\022%d.%d.%d\020\r", GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
     #endif
   #endif
 
   #ifdef LIBJPG
     #ifdef JPEG_LIB_VERSION
-		sprintf (buf, "jpeg_lib:\005%d\r", JPEG_LIB_VERSION);
-		render_text (current, buf);
+		sprintf (buf, "jpeg_lib:\005\022%d\020\r", JPEG_LIB_VERSION);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
     #endif
   #endif
 
 	#if defined (__GNUC__)
     #ifdef __VERSION__
-    sprintf (buf, "compiled:\005Gnu\005C\005%s\005"__DATE__ ",\005" __TIME__"\n", __VERSION__);
+    sprintf (buf, "compiled:\005\022Gnu\005C\005%s\020,\005"__DATE__ ",\005" __TIME__"\n", __VERSION__);
     #else
-    sprintf (buf, "compiled:\005Gnu\005C\005%i.%02i,\005"__DATE__ ",\005" __TIME__"\n", __GNUC__, __GNUC_MINOR__);
+    sprintf (buf, "compiled:\005\022Gnu\005C\005%i.%02i\020,\005"__DATE__ ",\005" __TIME__"\n", __GNUC__, __GNUC_MINOR__);
     #endif
-		render_text (current, buf);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
 	#elif defined (__PUREC__)
-		sprintf (buf, "compiled:\005Pure\005C\005%i.%02x,\005"__DATE__ ", " __TIME__"\n",__PUREC__ >>8, __PUREC__ & 0xFF);
-		render_text (current, buf);
+		sprintf (buf, "compiled:\005\022Pure\005C\005%i.%02x\020,\005"__DATE__ ",\005" __TIME__"\n",__PUREC__ >>8, __PUREC__ & 0xFF);
+		*(++w) = render_text (current, buf);
+    tab    = max (tab, (*w)->word_width);
 	#elif defined (LATTICE)
-		render_text (current, "compiled:\005Lattice\005C,\005"__DATE__ ", " __TIME__"\n");
+		*(++w) = render_text (current, "compiled:\005\022Lattice\005C\020,\005"__DATE__ ",\005" __TIME__"\n");
+    tab    = max (tab, (*w)->word_width);
 	#endif
 	
+ 	/* align left column */
+	do {
+		(*w)->word_width = tab;
+	} while (--w >= list);
+ 	
 	sprintf (buf, "Screen\005Mode:\005%s\r", image_dispinfo());
 	render_text (current, buf);
-	
+
   if (!cfg_File)
   {
-    sprintf (buf, "Config\005File:\005(none)\n");
+    sprintf (buf, "Config\005File: (none)\n");
   	render_text (current, buf);
   }
   else
@@ -218,12 +236,12 @@ about_highwire (TEXTBUFF current, WORD link_color)
 	 	
 	if (i_net)
   {
-		sprintf (buf, "%s\005support\005enabled%s", i_net, m_num > 1 ? "\r" : "\n");
+		sprintf (buf, "- %s\005support\005enabled%s", i_net, m_num > 1 ? "\r" : "\n");
 		render_text (current, buf);
 	 
     if (ldg_mbedtls_loaded())
     {
-      sprintf (buf, "mbedTLS/PolarSSL handles %s to %s\n", SecProt[cfg_SecProtMin], SecProt[cfg_SecProtMax]);
+      sprintf (buf, "- mbedTLS/PolarSSL (%s) handles %s to %s\n", ldg_mbedtls_get_version(), SecProt[cfg_SecProtMin], SecProt[cfg_SecProtMax]);
       render_text (current, buf);
     }
   }
