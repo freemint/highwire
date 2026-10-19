@@ -101,19 +101,19 @@ typedef struct {
 }  TOOLBTN;
 static TOOLBTN hw_buttons[] = {
 #define	TBAR_LEFT 0
-	{	-1, G_BLACK, G_GREEN,
+	{	0, G_BLACK, G_GREEN,
 		{	0x0400, 0x0C00, 0x1400, 0x27E0, 0x4090, 0x8048, 0x8044, 0x4042,
 			0x27C2, 0x1442, 0x0C42, 0x0442, 0x0042, 0x005A, 0x0066 },
 		{	0x0000, 0x0000, 0x0800, 0x1800, 0x3F60, 0x7FB0, 0x7FB8, 0x3FBC,
 			0x183C, 0x083C, 0x003C, 0x003C, 0x003C, 0x0025, 0x0000 } },
 #define	TBAR_RGHT 1
-	{	20, G_BLACK, G_GREEN,
+	{	21, G_BLACK, G_GREEN,
 		{	0x0040, 0x0060, 0x0050, 0x0FC8, 0x1204, 0x2402, 0x4402, 0x8404,
 			0x87C8, 0x8450, 0x8460, 0x8440, 0x8400, 0xB400, 0xCC00 },
 		{	0x0000, 0x0000, 0x0020, 0x0030, 0x0DF8, 0x1BFC, 0x3BFC, 0x7BF8,
 			0x7830, 0x7820, 0x7800, 0x7800, 0x7800, 0x4800, 0x0000 } },
 #define	TBAR_HOME 2
-	{	41, G_BLACK, G_WHITE,
+	{	42, G_BLACK, G_WHITE,
 		{	0x0100, 0x3280, 0x3540, 0x3AA0, 0x3550, 0x2AA8, 0x5554, 0xC006,
 			0x5EF4, 0x5294, 0x5294, 0x5EB4, 0x4094, 0x4094, 0x7FFC },
 		{	0x0000, 0x0100, 0x0280, 0x0540, 0x0AA0, 0x1550, 0x2AA8, 0x3FF8,
@@ -1262,7 +1262,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 				p[3].p_x = p[2].p_x + This->TbarElem[i].Width  -7;
 				icon.fd_addr = btn->Data;
 				if (This->TbarMask & (1 << i)) {
-					short c_lu, c_rd;
+
 					PXY l[4];
 					if (!ignore_colours) {
 						vrt_cpyfm (vdi_handle,
@@ -1282,30 +1282,7 @@ draw_toolbar (HwWIND This, const GRECT * p_clip, BOOL all)
 						vswr_mode (vdi_handle, MD_XOR);
 						v_bar     (vdi_handle, &l[0].p_x);
 						vswr_mode (vdi_handle, MD_TRANS);
-						l[1].p_x++;
-						l[1].p_y++;
-						c_rd = G_LWHITE;
-						c_lu = G_BLACK;
-					} else {
-						l[1].p_x = p[3].p_x +2;
-						l[1].p_y = p[3].p_y +2;
-						c_rd = G_LBLACK;
-						c_lu = G_WHITE;
 					}
-					l[2].p_x = l[1].p_x;
-					l[0].p_y = l[1].p_y;
-					vsl_color (vdi_handle, c_rd);
-					v_pline (vdi_handle, 3, &l[0].p_x);
-					l[1].p_y = --l[2].p_y;  --l[2].p_x;
-					l[1].p_x = --l[0].p_x;  --l[0].p_y;
-					vsl_color (vdi_handle, c_lu);
-					v_pline (vdi_handle, 3, &l[0].p_x);
-					l[1].p_x = --l[0].p_x;
-					l[1].p_y = --l[2].p_y;
-					l[3].p_x = l[2].p_x += 2;
-					l[3].p_y = l[0].p_y += 1;
-					vsl_color (vdi_handle, G_BLACK);
-					v_pline (vdi_handle, 4, &l[0].p_x);
 				} else {
 					vrt_cpyfm (vdi_handle, MD_TRANS, &p[0].p_x, &icon, &scrn, off);
 					if (ignore_colours) {
