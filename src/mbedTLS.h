@@ -23,6 +23,8 @@
 #define SECURE_PROTOCOL_TLSv1_2 3
 #define SECURE_PROTOCOL_TLSv1_3 4
 
+extern const char SecProt[5][8];
+
 #define SECURE_PROTOCOL_MIN SECURE_PROTOCOL_SSLv3_0
 #define SECURE_PROTOCOL_MAX SECURE_PROTOCOL_TLSv1_3
 
@@ -125,6 +127,7 @@ extern my_pk_context *ldg_mbedtls_client_pk;
 void ldg_mbedtls_init(WORD *gl);
 LDG *ldg_mbedtls_load(void);
 BOOL ldg_has_mbedtls(void);
+BOOL ldg_mbedtls_loaded(void);
 void ldg_mbedtls_unload(void);
 
 void ldg_mbedtls_verify_certs(int mode);

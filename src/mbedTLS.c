@@ -35,6 +35,8 @@ static const char *libname_mbedtls  = "mbedtls.ldg";
 static const char *libname_polarssl = "polarssl.ldg";
 static const char *cacert_filename  = "cacert.pem";
 
+const char SecProt[5][8] = {"SSLv3.0", "TLSv1.0", "TLSv1.1", "TLSv1.2", "TLSv1.3"};
+
 mbedtls_x509_crt *ldg_mbedtls_cacert = NULL;
 static char      *load_buffer_cacert = NULL;
 static char      *ldg_trusted_names  = NULL;
@@ -248,6 +250,13 @@ BOOL ldg_has_mbedtls()
   
   if (libmbedtls == NULL) { ldg_mbedtls_load(); }
   
+  return libmbedtls ? TRUE : FALSE;
+}
+
+/*-------------------------------------------------------------------*/
+
+BOOL ldg_mbedtls_loaded()
+{
   return libmbedtls ? TRUE : FALSE;
 }
 
