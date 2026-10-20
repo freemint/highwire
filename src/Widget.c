@@ -431,10 +431,18 @@ hwUi_box (WORD icon, const char * bttn,
 	*/
 	char buf[1000], * p = buf;
 	
+  memset(buf, 0, sizeof(buf));
+ 
 	{	/* icon + head line */
 		const char head[] = "[";
 		*(p++) = '[';
-		*(p++) = icon;
+    switch (icon)
+    {
+      case 1: *(p++) = '1'; break;
+      case 2: *(p++) = '2'; break;
+      case 3: *(p++) = '3'; break;
+      default: *(p++) = '0'; break;
+    }
 		*(p++) = ']';
 		memcpy (p, head, sizeof(head) -1);
 		p += sizeof(head) -1;
@@ -517,7 +525,7 @@ hwUi_box (WORD icon, const char * bttn,
 		*(p++) = ']';
 	}
 	strcat (buf, bttn);
-	
+
 	return form_alert (1, buf);
 }
 
