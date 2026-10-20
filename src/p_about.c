@@ -298,6 +298,7 @@ parse_about (void * arg, long invalidated)
 	font_byType (normal_font, FNT_NORMAL, font_step2size (3), current->word);
 	
 	if (mode <= 1) {
+		current->form = new_form (frame, NULL, strdup ("about:cache"), "GET", NULL);
 		c_num = cache_info (&c_mem, (mode == 1 ? &info : NULL));
 	}
 	switch (mode) {
@@ -310,10 +311,10 @@ parse_about (void * arg, long invalidated)
 	}
 	
 	if (c_num) {
-		sprintf (buf, "%lu object%s,\005%lu\005bytes\005 ",
+		sprintf (buf, "%lu object%s,\005%lu\005bytes\005\022",
 		         c_num, (c_num > 1 ? "s" : ""), c_mem);
 		render_text (current, buf);
-		form_buttn (current, "clear\0005", "clear", frame->Encoding, 'S');
+		form_buttn (current, "clear", "clear", frame->Encoding, 'S');
 		if (!clrable) {
 			input_disable (current->prev_wrd->input, TRUE);
 		}
