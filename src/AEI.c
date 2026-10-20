@@ -33,6 +33,8 @@
 #include "dragdrop.h"
 #include "olga.h"
 #include "ldg.h"
+#include "inet.h"
+#include "mbedTLS.h"
 #ifdef GEM_MENU
 #	include "highwire.h"
 	extern OBJECT * menutree;
@@ -1622,12 +1624,32 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			break;
 		
     case LDG_QUIT: /* ldg->client : a lib discharged */
-      // TODO: handle if network.ldg or mbedtls.ldg discharged
-      break;
     case LDG_LOST_LIB: /* ldg->client : a lib lost */
-      // TODO: handle if network.ldg or mbedtls.ldg lost
+      // from Jean Lusetti
+      LDG *ldg;
+      ULONG lsb, msb;
+      lsb = (ULONG)msg[4];
+      msb = (ULONG)msg[3];
+      ldg = (LDG *)((msb << 16) + lsb);
+      //
+      if (ldg == libmbedtls)
+      {
+        if (logging_is_on) { logprintf(LOG_LMAGENTA, "LDG_QUIT/LOST_LIB triggered for %s\n", "mbedTLS/PolarSSL.ldg"); }
+
+        ldg_mbedtls_unload();
+        ldg_mbedtls_init(aes_global);
+      }
+      else if (ldg == libinet)
+      {
+        if (logging_is_on) { logprintf(LOG_LMAGENTA, "LDG_QUIT/LOST_LIB triggered for %s\n", "modules\\network.ldg"); }
+
+        ldg_mbedtls_unload();
+        
+        ldg_inet_unload();
+        ldg_inet_init(aes_global);
+        ldg_inet_load();
+      }
       break;
-  
 		case AP_TERM:
 			return (TRUE);
 	}

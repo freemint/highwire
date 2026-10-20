@@ -59,7 +59,7 @@ static void ldg_cacert_unload()
   load_buffer_cacert = NULL;
 }
 
-static void ldg_trusted_unload()
+void ldg_trusted_unload()
 {
   if (ldg_trusted_names) { ldg_Free(ldg_trusted_names); }
 
@@ -264,7 +264,6 @@ BOOL ldg_mbedtls_loaded()
 
 void ldg_mbedtls_unload()
 {
-  ldg_trusted_unload();
   ldg_csfile_unload();
 
 	if (libmbedtls != NULL)
@@ -276,6 +275,8 @@ void ldg_mbedtls_unload()
     ldg_Free(mbedtls_ftab);
     
 		ldg_close(libmbedtls, app_global_mbedtls);
+
+    if (logging_is_on) { logprintf(LOG_LMAGENTA, "%s unloaded\n", "mbedTLS/PolarSSL.ldg"); }
   }
 }
 

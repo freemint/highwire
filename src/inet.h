@@ -37,6 +37,7 @@ typedef struct {
 #define inet_type()         (*inet_ftab->type)()
 #define inet_mbedtls_set(f) (*inet_ftab->mbedtls_set)(f)
 
+extern LDG *libinet;
 extern LDG_INET_FTAB *inet_ftab;
 
 void ldg_inet_init(WORD *gl);

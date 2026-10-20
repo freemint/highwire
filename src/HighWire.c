@@ -401,6 +401,7 @@ highwire_ex (void)
 	if (gl_apid > 0) {
 		
 #ifdef USE_INET
+    ldg_trusted_unload();
     ldg_mbedtls_unload();
     ldg_inet_unload();
 #endif

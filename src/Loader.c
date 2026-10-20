@@ -64,9 +64,12 @@ proto_isFetchable (LC_PROTO proto)
   }
   else if (proto == PROT_HTTPS)
   {
-    if (http_hasProxy()) { return TRUE; }
-    else
-    if (ldg_has_mbedtls()) { return TRUE; }
+    if (ldg_has_inet())
+    {
+      if (http_hasProxy()) { return TRUE; }
+      else
+      if (ldg_has_mbedtls()) { return TRUE; }
+    }
   }
   return FALSE;
 }

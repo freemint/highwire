@@ -116,6 +116,7 @@ typedef struct
 #define ldg_mbedtls_ssl_get_peer_cert(a) (*mbedtls_ftab->ldg_mbedtls_ssl_get_peer_cert)(a)
 #define ldg_mbedtls_ssl_free(a) (*mbedtls_ftab->ldg_mbedtls_ssl_free)(a)
 
+extern LDG *libmbedtls;
 extern LDG_MBEDTLS_FTAB *mbedtls_ftab;
 
 extern mbedtls_x509_crt *ldg_mbedtls_cacert;
@@ -133,6 +134,7 @@ void ldg_mbedtls_unload(void);
 void ldg_mbedtls_verify_certs(int mode);
 void ldg_mbedtls_set_trusted_domains(const char *list);
 int16_t ldg_mbedtls_is_trusted_domain(char *name);
+void ldg_trusted_unload(void);
 
 void ldg_mbedtls_set_csfile(const char *pathname);
 void ldg_mbedtls_load_csfile(void);

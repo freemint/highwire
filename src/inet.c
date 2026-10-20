@@ -98,6 +98,8 @@ void ldg_inet_unload()
     ldg_Free(inet_ftab);
     
 		ldg_close(libinet, app_global_inet);
+
+    if (logging_is_on) { logprintf(LOG_LMAGENTA, "%s unloaded\n", "modules\\network.ldg"); }
 	}
 }
 

@@ -421,8 +421,6 @@ static WORD
 hwUi_box (WORD icon, const char * bttn,
           const char * hint, const char * text, va_list valist)
 {
-  // TODO: fix bad padding, buttons may be scrambled with weird cbars
-
 	/* form_alert
 	 * [n]                              =   3
 	 * + 5 lines   40 character (= 200) = 203
