@@ -50,6 +50,7 @@ static void highwire_ex(void);
 static void open_splash(void);
 
 BOOL multitask_sys;
+BOOL xaaes_fix_full;
 
 VDI_Workstation vdi_dev;
 
@@ -149,9 +150,8 @@ main (int argc, char **argv)
 	long   gdostype;
 	char * old_bookm = NULL;
 	BOOL   quit      = FALSE;
-  WORD   ap_id     = 0;
 
-	if ((ap_id = appl_init()) < 0) {
+	if (appl_init() < 0) {
 		exit (EXIT_FAILURE);
 	}
 
@@ -224,7 +224,7 @@ main (int argc, char **argv)
 	(void)Pdomain(1);  /* we know about long file names */
 
   multitask_sys = FALSE;
-  if ((sys_type() & (SYS_MAGIC|SYS_MINT)) && (ap_id > 0)) { multitask_sys = TRUE; }
+  if ((sys_type() & (SYS_MAGIC|SYS_MINT)) && (gl_apid > 0)) { multitask_sys = TRUE; }
 
 #ifdef GEM_MENU
 	if (!rsrc_load(_HIGHWIRE_RSC_)) {
