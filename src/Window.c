@@ -549,7 +549,8 @@ window_resize (WINDOW This, const GRECT * curr, BOOL fulled)
 			msg[1] = gl_apid;
 			msg[2] = 0;
 			msg[3] = This->Handle;
-			*(GRECT*)(msg +4) = prev;
+      if (fulled) { wind_get_grect (This->Handle, WF_CURRXYWH, &prev); } // whole area because it was not really complete if window was moved previously
+      *(GRECT*)(msg +4) = prev;
 			appl_write (gl_apid, 16, msg);
 		} else if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
 			window_redraw (This, &prev);
