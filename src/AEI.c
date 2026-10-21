@@ -667,7 +667,6 @@ bookmark_editor (UWORD type, const char * text,
 	tree[BKM_OK].ob_state     &= ~OS_SELECTED;
 	tree[BKM_CANCEL].ob_state &= ~OS_SELECTED;
 	
-	wind_update (BEG_MCTRL);
 	form_center (tree, &x, &y, &w, &h);
 	form_dial   (FMD_START, x,y,w,h, x,y,w,h);
 	objc_draw   (tree, ROOT, MAX_DEPTH, x, y, w, h);
@@ -675,7 +674,6 @@ bookmark_editor (UWORD type, const char * text,
 		text = NULL;
 	}
 	form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
-	wind_update (END_MCTRL);
 
 	if (title) {
 		tree[title].ob_flags |= OF_HIDETREE;
