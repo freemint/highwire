@@ -347,7 +347,8 @@ new_hwWind (const char * name, const char * url, BOOL topNbot)
 	                                       /* special case for bookmark window */
 	if (!inc_xy) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
-		wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr);
+    if (multitask_sys) { desk_area.g_h -=20; } // some place for taskbar
+    wind_calc_grect (WC_BORDER, VSLIDE|HSLIDE, &desk_area, &curr);
 		widget_b = desk_area.g_x - curr.g_x;
 		widget_w = curr.g_w - desk_area.g_w;
 		widget_h = curr.g_h - desk_area.g_h;
