@@ -604,6 +604,12 @@ bookmark_editor (UWORD type, const char * text,
 		tree[ROOT].ob_height        -= n;
 	}
 	
+  if (!(sys_type() & (SYS_TOS|SYS_MAGIC)))
+  {
+    tree[ROOT].ob_state &= ~OS_OUTLINED;
+    tree[ROOT].ob_spec.obspec.framesize = 0;
+  }
+ 
 	switch (type) {
 		case ((UWORD)'B'<<8)|'A': title = BKM_TXT_B_ADD;  break;
 		case ((UWORD)'B'<<8)|'E': title = BKM_TXT_B_EDIT; break;
