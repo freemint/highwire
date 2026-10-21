@@ -432,7 +432,7 @@ hwUi_box (WORD icon, const char * bttn,
   memset(buf, 0, sizeof(buf));
  
 	{	/* icon + head line */
-		const char head[] = "[";
+		const char head[] = "[ ";
 		*(p++) = '[';
     switch (icon)
     {
@@ -449,7 +449,7 @@ hwUi_box (WORD icon, const char * bttn,
 			p = strchr (strcpy (p, hint), '\0');
 			if (p - buf > 40 +4) {
 				p = buf +39 +4;
-				*(p++) = '\257';
+				*(p++) = '\003';
 			}
 		}
 		*(p++) = '|';
@@ -488,7 +488,7 @@ hwUi_box (WORD icon, const char * bttn,
 			case_dflt:
 				if (p - beg >= 40) {
 					if (cnt == 1) { /* last line */
-						p[-1] = '\257';
+						p[-1] = '\003';
 						goto case_crlf;
 					}
 					if (!spc) { /* line too long */
