@@ -23,13 +23,15 @@
 #ifdef GEM_MENU
 # include "highwire.h"
 #endif
-#include "ovl_sys.h"
 #include "bookmark.h"
 
 #ifdef CACHETEST
 #include "Location.h"
 #include "cache.h"
 #endif
+
+#include "mbedTLS.h"
+#include "inet.h"
 
 #ifdef LATTICE
 	/* set stack size for LATTICE here */
@@ -47,6 +49,8 @@ char *thisapp = "HIGHWIRE";
 static void highwire_ex(void);
 static void open_splash(void);
 
+BOOL multitask_sys;
+BOOL xaaes_fix_full;
 
 VDI_Workstation vdi_dev;
 
@@ -215,9 +219,12 @@ main (int argc, char **argv)
 			aes_max_window_title_length = 200;
 		}
 		/* our name in the application menu */
-		menu_register(gl_apid, "  HighWire " _HIGHWIRE_VERSION_);
+		menu_register(gl_apid, "  HighWire ");
 	}
 	(void)Pdomain(1);  /* we know about long file names */
+
+  multitask_sys = FALSE;
+  if ((sys_type() & (SYS_MAGIC|SYS_MINT)) && (gl_apid > 0)) { multitask_sys = TRUE; }
 
 #ifdef GEM_MENU
 	if (!rsrc_load(_HIGHWIRE_RSC_)) {
@@ -336,8 +343,11 @@ main (int argc, char **argv)
 	
 	set_mouse_watch (MO_ENTER, &hwWind_Top->Work);
 
-#if 0
-load_sampleovl();
+  ldg_inet_init(aes_global);
+  ldg_mbedtls_init(aes_global);
+
+#ifdef USE_INET
+  ldg_inet_load();
 #endif
 	
 	sched_init (set_timer);
@@ -395,7 +405,11 @@ highwire_ex (void)
 {
 	if (gl_apid > 0) {
 		
-		kill_ovl (NULL);
+#ifdef USE_INET
+    ldg_trusted_unload();
+    ldg_mbedtls_unload();
+    ldg_inet_unload();
+#endif
 		
 		Exit_AV_Protocol();
 		Exit_OLGA();

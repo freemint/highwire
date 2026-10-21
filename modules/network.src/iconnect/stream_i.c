@@ -1,10 +1,10 @@
 /* Library utilities to avoid typecasts into bytestream */
-#include <iconnect/netdb.h>	/* Containes unsigned defs */
+#include "../include/iconnect/netdb.h"	/* Containes unsigned defs */
 
 int	get_int(unsigned char *c)
 {
 	int i;
-	
+
 	i=*c++; i<<=8; i+=*c;
 	return(i);
 }
@@ -12,7 +12,7 @@ int	get_int(unsigned char *c)
 uint get_uint(uchar *c)
 {
 	uint i;
-	
+
 	i=*c++; i<<=8; i+=*c;
 	return(i);
 }
@@ -20,7 +20,7 @@ uint get_uint(uchar *c)
 ulong get_ulong(uchar *c)
 {
 	ulong l;
-	
+
 	l=*c++; l<<=8;
 	l=*c++; l<<=8;
 	l=*c++; l<<=8;

@@ -1,9 +1,9 @@
 #if  !defined( __NET__ )
 #define __NET__
 #include <tos.h>
-#include <iconnect/usis.h>
-#include <iconnect/netdb.h>
-#include <iconnect/types.h>
+#include "../include/iconnect/usis.h"
+#include "../include/iconnect/netdb.h"
+#include "../include/iconnect/types.h"
 
 #if !defined( __UTYPES__ )
 #define __UTYPES__
@@ -34,7 +34,7 @@ typedef struct
 
 	/* UDP-defaults */
 	int		udp_count;	/* Max. number of UDP-sockets */
-	
+
 	/* TCP-defaults */
 	int		user_timeout; /* Seconds until a TCP-Connection is deleted if data couldn't be
 												transmitted */
@@ -44,8 +44,8 @@ typedef struct
  										 only used for incoming-TCP-segments check. Anyway connection might speed up with
  										 higher values for rcv_wnd) */
 
-	unsigned char	allow_precedence_raise;	/* Precedence might be raised, if incoming TCP-packet has higher precedence */ 										 
-	
+	unsigned char	allow_precedence_raise;	/* Precedence might be raised, if incoming TCP-packet has higher precedence */
+
 	/* IP-defaults */
 	long	kill_ip_timer; /* Time (in Systicks) until an IP-Fragment
 													will be deleted from the Receiving-queue */
@@ -54,8 +54,8 @@ typedef struct
 	int		precedence;	/* Is separate from TOS */
 	unsigned char	TOS;		/* IP-Type of Service (only lower Bits are used (=without precedence))*/
 	int		TTL;		/* IP-Time to Live */
-	int		MTU;		/* Maximum transmission unit */	
-	
+	int		MTU;		/* Maximum transmission unit */
+
 	/* PPP-defaults */
 	int		ppp_warn_illegal;		/* Alert if illegal state occurs in startup? (0/1) */
 	int		ppp_max_terminate;	/* Maximum term_req retransmission */
@@ -81,22 +81,22 @@ typedef struct
 
 	int		ipcp_address_rej;
 	int		ipcp_dns_rej;
-		
+
 	int		using_ppp;					/* PPP (1) or SLIP (0) used */
-	
+
 	int		using_mac_os;				/* Own Kernel or Mac-Kernel (via STIP) used */
 	int		stip_mem_ok;				/* Stip-Link Init successfull (1) or not (0) */
-	
+
 	long	bytes_sent;
 	long	bytes_rcvd;
-	
+
 	byte	disable_send_ahead;
-	
+
 	ONLINE_TIME	usis_time;			/* Wird von IConnect laufend aktualisiert */
 	BYTE_EXCHANGE usis_bytes;		/* Kann aber nicht im IConnect-Speicher liegen,
 																 weil der Pointer an Apps gereicht wird und
-																 bei IConnect-Term ungÅltig wÅrde */
-	
+																 bei IConnect-Term ungÔøΩltig wÔøΩrde */
+
 	int		ppp_lcp_echo_sec;		/* Echo interval in seconds */
 }default_values;
 
@@ -127,7 +127,7 @@ typedef struct
 	long	cdecl (*sfcntl)(int FileDescriptor, long Command, long Argument);
 	int 	cdecl (*getsockopt)(int s, int level, int optname, void *optval, int *optlen);
 	int 	cdecl (*setsockopt)(int s, int level, int optname, const void *optval, int *optlen);
-	
+
 	int 	cdecl (*getsockname)(int s, void *addr, int *addrlen);
 	int 	cdecl (*getpeername)(int s, void *addr, int *addrlen);
 
@@ -139,7 +139,7 @@ typedef struct
 	int 	cdecl (*res_send)(char *msg, int msglen, char *answer, int anslen);
 	int 	cdecl (*dn_expand)(uchar *msg, uchar *eomorig, uchar *comp_dn, uchar *exp_dn, int length);
 	int 	cdecl (*dn_comp)(uchar *exp_dn, uchar *comp_dn, uchar **dnptrs, uchar **lastdnptr, int length);
-	
+
 	/* User setup information service */
 	int		cdecl (*usis)(USIS_REQUEST *request);
 }user_interface;
@@ -154,7 +154,7 @@ typedef struct
 	void	(*close_port)(void);
 	void *(*emalloc)(ulong len);
 	void (*efree)(void *block);
-	void (*etimer)(int ms);	
+	void (*etimer)(int ms);
 	BASPAG *server_pd;
 	void	*_debug;
 	int		(*stip_init)(void);

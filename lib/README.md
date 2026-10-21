@@ -10,6 +10,8 @@ here: the toolchain already has it.
 | `giflib/` | 5.1.4 | `giflib-5.1.4-mint-dev.tar.xz` | MIT, in `COPYING` |
 | `libpng/` | 1.6.34 | `libpng-1.6.34-mint-dev.tar.xz` | libpng, in `LICENSE` |
 | `jpeg/` | 8d | `jpeg-8d-mint-dev.tar.xz` | IJG, under LEGAL ISSUES in `README` |
+| `ldg/` | 2.35 | <https://sourceforge.net/projects/ldg/files/> | Lesser GPL in `COPYRIGHT` |
+| `mdebtls/` | 3.6.7 | <https://github.com/Mbed-TLS/mbedtls> | Apache 2.O in `LICENSE` |
 
 The tarballs are Thorsten Otto's MiNT builds, from
 <https://mikro.atari.org/tho-otto.de/mint/>. Only the headers HighWire

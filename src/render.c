@@ -2997,7 +2997,7 @@ render_IMG_tag (PARSER parser, const char ** text, UWORD flags)
 			if (*alt) {
 				scan_string_to_16bit (alt, frame->Encoding, &current->text, 
 				                      word->font->Base->Mapping);
-				font_byType (header_font, 0x0000, 10, word);
+				font_byType (header_font, FNT_NORMAL, 10, word);
 				flags |= PF_FONT;
 			}
 		}
@@ -4747,7 +4747,7 @@ parse_image (void * arg, long invalidated)
 			
 		return FALSE;
 	}
-	font_byType (normal_font, 0x0000, -1, current->word);
+	font_byType (normal_font, FNT_NORMAL, -1, current->word);
 	if (parser->Loader->Referer) {
 		loc = frame->Location;
 		frame->Location = location_share (parser->Loader->Referer);
@@ -4847,7 +4847,7 @@ render_text (TEXTBUFF current, const char * text)
 				case '\021': change = TRUE; font = header_font; break;
 				case '\022': change = TRUE; font = pre_font;    break;
 				/* 0x14 .. 0x17 */
-				case '\024': change = TRUE; style = 0x0000;              break;
+				case '\024': change = TRUE; style = FNT_NORMAL;          break;
 				case '\025': change = TRUE; style = FNT_BOLD;            break;
 				case '\026': change = TRUE; style = FNT_ITALIC;          break;
 				case '\027': change = TRUE; style = FNT_BOLD|FNT_ITALIC; break;

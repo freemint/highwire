@@ -32,6 +32,9 @@
 #include "Logging.h"
 #include "dragdrop.h"
 #include "olga.h"
+#include "ldg.h"
+#include "inet.h"
+#include "mbedTLS.h"
 #ifdef GEM_MENU
 #	include "highwire.h"
 	extern OBJECT * menutree;
@@ -601,6 +604,12 @@ bookmark_editor (UWORD type, const char * text,
 		tree[ROOT].ob_height        -= n;
 	}
 	
+  if (!(sys_type() & (SYS_TOS|SYS_MAGIC)))
+  {
+    tree[ROOT].ob_state &= ~OS_OUTLINED;
+    tree[ROOT].ob_spec.obspec.framesize = 0;
+  }
+ 
 	switch (type) {
 		case ((UWORD)'B'<<8)|'A': title = BKM_TXT_B_ADD;  break;
 		case ((UWORD)'B'<<8)|'E': title = BKM_TXT_B_EDIT; break;
@@ -664,7 +673,6 @@ bookmark_editor (UWORD type, const char * text,
 	tree[BKM_OK].ob_state     &= ~OS_SELECTED;
 	tree[BKM_CANCEL].ob_state &= ~OS_SELECTED;
 	
-	wind_update (BEG_MCTRL);
 	form_center (tree, &x, &y, &w, &h);
 	form_dial   (FMD_START, x,y,w,h, x,y,w,h);
 	objc_draw   (tree, ROOT, MAX_DEPTH, x, y, w, h);
@@ -672,7 +680,6 @@ bookmark_editor (UWORD type, const char * text,
 		text = NULL;
 	}
 	form_dial   (FMD_FINISH, x,y,w,h, x,y,w,h);
-	wind_update (END_MCTRL);
 
 	if (title) {
 		tree[title].ob_flags |= OF_HIDETREE;
@@ -970,7 +977,7 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 	x += rpopup->ob_x = mx -2;
 	y -= rpopup->ob_y;
 	y += rpopup->ob_y = my -2;
-	wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
+  wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk);
 	if ((desk.g_w += desk.g_x - (x + w)) < 0) {
 		rpopup->ob_x += desk.g_w;
 		x            += desk.g_w;
@@ -988,6 +995,11 @@ rpop_do (OBJECT * rpopup, WORD tree, WORD mx, WORD my)
 		y            += desk.g_y;
 	}
 	
+  x -= 2;
+  y -= 2;
+  w += 8;
+  h += 8;
+ 
 	wind_update (BEG_MCTRL);
 	form_dial   (FMD_START, x, y, w, h, x, y, w, h);
 	objc_draw   (rpopup, ROOT, MAX_DEPTH, x, y, w, h);
@@ -1615,6 +1627,33 @@ process_messages (WORD msg[], PXY mouse, UWORD state)
 			fonts_setup (msg);
 			break;
 		
+    case LDG_QUIT: /* ldg->client : a lib discharged */
+    case LDG_LOST_LIB: /* ldg->client : a lib lost */
+      // from Jean Lusetti
+      LDG *ldg;
+      ULONG lsb, msb;
+      lsb = (ULONG)msg[4];
+      msb = (ULONG)msg[3];
+      ldg = (LDG *)((msb << 16) + lsb);
+      //
+      if (ldg == libmbedtls)
+      {
+        if (logging_is_on) { logprintf(LOG_LMAGENTA, "LDG_QUIT/LOST_LIB triggered for %s\n", "mbedTLS/PolarSSL.ldg"); }
+
+        ldg_mbedtls_unload();
+        ldg_mbedtls_init(aes_global);
+      }
+      else if (ldg == libinet)
+      {
+        if (logging_is_on) { logprintf(LOG_LMAGENTA, "LDG_QUIT/LOST_LIB triggered for %s\n", "modules\\network.ldg"); }
+
+        ldg_mbedtls_unload();
+        
+        ldg_inet_unload();
+        ldg_inet_init(aes_global);
+        ldg_inet_load();
+      }
+      break;
 		case AP_TERM:
 			return (TRUE);
 	}

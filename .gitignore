@@ -6,8 +6,13 @@ dist/
 *.o
 *.a
 !/lib/**/*.a
+!modules/libcmini/lib/**/*.a
 *.ovl
+*.ldg
+!iconnect.ldg
 .DS_Store
 tmp/
 .vscode/
 .kilo/
+*.xcodeproj/
+DerivedData/

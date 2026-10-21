@@ -79,6 +79,7 @@ void check_mouse_position (WORD mx, WORD my);
 #define SYS_XAAES  0x0040
 extern UWORD _systype_v;
 extern UWORD _systype(void);
+extern BOOL multitask_sys;
 /* detect the system type, AES + kernel */
 #define sys_type()    (_systype_v ? _systype_v : _systype())
 #define sys_MAGIC()   ((sys_type() & SYS_MAGIC) != 0)

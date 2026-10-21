@@ -217,7 +217,7 @@ word_store (TEXTBUFF current)
 			word->item = item;
 		
 			if (word->font->FixedWidth) {
-				pts[2] = word->font->FixedWidth * (WORD)length;
+				pts[2] = (WORD)(word->font->FixedWidth * (WORD)length);
 			} else {
 				hw_vqt_f_extent16n (vdi_handle, word->item, (WORD)length, pts);
 				pts[2] -= pts[0];

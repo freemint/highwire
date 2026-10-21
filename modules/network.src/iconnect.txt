@@ -1,0 +1,23 @@
+To compile, I used PureC under MagicOnLinux/Mac in a shared folder.
+
+Thanks to Olivier Landemarre for his help.
+
+All options in PureC > Compiler + Linker are unchecked.
+Leave blank the output folder for .o files so that they are built
+besides .c files.
+
+use:
+
+iconnect/*
+include/iconnect/*
+include/misc/*
+iconnect.c
+iconnect.prj
+
+Important:
+
+- make sure iconnect.prj file has CRLF endlines,
+else PureC will fail with '=' missing or something similar.
+
+- if error at creation file or file not found, try use do all this one
+the same disk as PureC setup, or even a 'projects' subfolder in PureC.

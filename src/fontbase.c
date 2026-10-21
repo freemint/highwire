@@ -64,9 +64,10 @@ font_base (WORD id, UWORD style)
 			}
 			found->List    = NULL;
 			found->Id      = id;
+      found->Format  = info.format;
 			found->RealId  = info.id;
 			found->Style   = style;
-			found->Effects = 0x0000;
+			found->Effects = FNT_NORMAL;
 			switch (info.format) {
 				case 2:
 					found->Mapping   = MAP_BITSTREAM;
@@ -118,8 +119,8 @@ font_byType (WORD type, WORD style, WORD points, WORDITEM word)
 		TA_Size(word->attr) = points;
 	}
 	if (style < 0) {
-		effect = (TAgetBold   (word->attr) ? FNT_BOLD   : 0x0000)
-		       | (TAgetItalic (word->attr) ? FNT_ITALIC : 0x0000);
+		effect = (TAgetBold   (word->attr) ? FNT_BOLD   : FNT_NORMAL)
+		       | (TAgetItalic (word->attr) ? FNT_ITALIC : FNT_NORMAL);
 		condns = (TAgetCondns (word->attr) != 0);
 	} else {
 		effect =   style & (FNT_BOLD|FNT_ITALIC);
@@ -183,7 +184,7 @@ font_byType (WORD type, WORD style, WORD points, WORDITEM word)
 		LONG cellwd = 0;
 		
 		if (!prev || prev->Base != base) {
-			vst_font     (vdi_handle, base->RealId);
+			hw_vst_font     (vdi_handle, base);
 			hw_vst_map_mode (vdi_handle, base->Mapping);
 			vst_effects  (vdi_handle, base->Effects);
 		}
@@ -236,7 +237,7 @@ font_byType (WORD type, WORD style, WORD points, WORDITEM word)
 				 * lines would touch; line stacking adds this to breathe.
 				 */
 				if (cfg_LineSpacing < 0) { /* auto: 1/8 of the cell plus one */
-					font->Leading = (font->Ascend + font->Descend + 4) /8 + 1;
+					font->Leading = ((font->Ascend + font->Descend + 4) >> 3) + 1;
 				} else {
 					font->Leading = cfg_LineSpacing;
 				}
@@ -249,7 +250,7 @@ font_byType (WORD type, WORD style, WORD points, WORDITEM word)
 		if (!condns) {
 			font->Condensed = 0;
 		} else {
-			font->Condensed = (cellwd *8 +5) /11;
+			font->Condensed = (LONG)((cellwd *8 +5) /11);
 			hw_vst_setsize32 (vdi_handle, font->Condensed, u,u,u,u);
 		}
 		hw_vqt_advance (vdi_handle, base->SpaceCode, &font->SpaceWidth, u,u,u);
@@ -297,7 +298,7 @@ font_switch (FONT actual, FONT previous)
 	WORD u;
 	
 	if (base != prev) {
-		vst_font     (vdi_handle, base->RealId);
+		hw_vst_font     (vdi_handle, base);
 		hw_vst_map_mode (vdi_handle, base->Mapping);
 		effects = (!prev || prev->Effects != base->Effects);
 	} else {

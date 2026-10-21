@@ -105,7 +105,7 @@ slot_remove (SLOT slot)
 {
 	if (slot->Data.Source >= 0) {
 		LOCATION loc = slot->Data.Location;
-		if (PROTO_isRemote (loc->Proto)) inet_close (slot->Data.Source);
+		if (PROTO_isRemote (loc->Proto)) inet_close (slot->Data.Source, loc ? loc->ssl_context : NULL);
 		else                             close      (slot->Data.Source);
 	}
 	if (slot->Data.Target >= 0) {
@@ -278,7 +278,7 @@ recv_job (void * arg, long invalidated)
 			} else { /* end download */
 				data->Blck = 0; /* ignore remaining data */
 				if (data->Source >= 0) {
-					inet_close (data->Source);
+					inet_close (data->Source, data->Location ? data->Location->ssl_context : NULL);
 					data->Source = -1;
 				}
 			}
@@ -291,7 +291,7 @@ recv_job (void * arg, long invalidated)
 		if (data->Size > 0 && n > data->Size - data->Fill) {
 			n = data->Size - data->Fill;
 		}
-		n = inet_recv (data->Source, data->Buffer + data->Blck, n);
+		n = inet_recv (data->Source, data->Buffer + data->Blck, n, data->Location ? data->Location->ssl_context : NULL);
 		if (n > 0) {
 			data->Blck += n;
 			if (data->Fill + data->Blck == data->Size) {
@@ -318,7 +318,7 @@ recv_job (void * arg, long invalidated)
 			}
 		}
 		if (n < 0) {
-			inet_close (data->Source);
+			inet_close (data->Source, data->Location ? data->Location->ssl_context : NULL);
 			data->Source = -1;
 			save = (data->Blck > 0);
 		}

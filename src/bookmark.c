@@ -209,13 +209,14 @@ bkm_create_grp (BKM_LINE prev, const char * title)
 	char     b1[100];
 	size_t   l1   = sprintf (b1, "<DT CLASS='GRP' ID='G-%08lX'><B>", id_class);
 	size_t   l2   = strlen (title && *title ? title : (title = "?\250?\250?"));
-	char     b3[] = "</B></DT>\n";
-	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + sizeof(b3)-1);
+	char     b3[] = "</B></DT>\n\0";
+  size_t   l3   = strlen(b3) + 1;
+	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3);
 	if (line) {
 		char * p = line->Buff;
-		memcpy (p,       b1,    l1);
-		memcpy (p += l1, title, l2);
-		strcpy (p += l2, b3);
+		memcpy (p, b1,    l1); p += l1;
+		memcpy (p, title, l2); p += l2;
+		memcpy (p, b3,    l3);
 		sprintf (b1, "<DL CLASS='G-%08lX'>", id_class);
 		if ((line = bkm_create ((prev = line), b1, 0)) == NULL) {
 			bkm_delete (prev);
@@ -235,17 +236,18 @@ bkm_create_lnk (BKM_LINE prev, const char * title, const char * url, long visit)
 	                             " HREF='", id, visit);
 	size_t   l2   = strlen (url && *url ? url : (url = "#"));
 	char     b3[] = "'>";
-	size_t   l3   = sizeof(b3) -1;
+	size_t   l3   = strlen(b3);
 	size_t   l4   = strlen (title && *title ? title : (title = "?\250?\250?"));
-	char     b5[] = "</A></DT>\n";
-	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3 + l4 + sizeof(b5)-1);
+	char     b5[] = "</A></DT>\n\0";
+  size_t   l5   = strlen(b5) + 1;
+	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3 + l4 + l5);
 	if (line) {
 		char * p = line->Buff;
-		memcpy (p,       b1,    l1);
-		memcpy (p += l1, url,   l2);
-		memcpy (p += l2, b3,    l3);
-		memcpy (p += l3, title, l4);
-		strcpy (p += l4, b5);
+		memcpy (p, b1,    l1); p += l1;
+		memcpy (p, url,   l2); p += l2;
+		memcpy (p, b3,    l3); p += l3;
+		memcpy (p, title, l4); p += l4;
+		memcpy (p, b5,    l5);
 	}
 	return line;
 }

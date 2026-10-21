@@ -11,10 +11,12 @@
 #include "global.h"
 #include "scanner.h"
 #include "romvdi.h"
-
+#include "fontbase.h"
 
 BOOL has_fsm_gdos = FALSE; /* until romvdi_init() says otherwise */
 static BOOL has_eddi_cookie = FALSE;
+
+UWORD cur_font_format = 0; /* current font format 1 = Bitmap, 2 = Speedo, 4 = TrueType, 8 = Type-1 */
 
 /* What vst_map_mode() was last asked for.  With a real GDOS the VDI keeps this
  * itself; without one we have to remember it, because it tells us how to read
@@ -111,6 +113,20 @@ narrow_char (WORD ch)
 	return (char)ch;
 }
 
+/*----------------------------------------------------------------------------*/
+/* Some drivers in NVDI does not redirect functions in vector fonts calls to old bitmap fonts functions */
+WORD
+hw_vst_font (WORD handle, FONTBASE base)
+{
+	WORD ret;
+  
+  if ((ret = vst_font(handle, base->RealId)) != base->RealId) { return 0; }
+  
+  cur_font_format = base->Format;
+
+	return ret;
+}
+
 
 /*----------------------------------------------------------------------------*/
 WORD
@@ -159,7 +175,7 @@ void
 hw_vst_map_mode (WORD handle, WORD mode)
 {
 	cur_map_mode = mode;
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		vst_map_mode (handle, mode);
 	}
 }
@@ -169,7 +185,7 @@ hw_vst_map_mode (WORD handle, WORD mode)
 WORD
 hw_vst_arbpt (WORD handle, WORD point, WORD * wc, WORD * hc, WORD * wb, WORD * hb)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		return vst_arbpt (handle, point, wc, hc, wb, hb);
 	}
 	/* vst_point() is the GEM 1.0 equivalent: it snaps to whatever fixed sizes
@@ -195,7 +211,7 @@ void
 hw_vqt_advance (WORD handle, WORD ch,
                 WORD * advx, WORD * advy, WORD * remx, WORD * remy)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		vqt_advance (handle, ch, advx, advy, remx, remy);
 		return;
 	}
@@ -214,7 +230,7 @@ hw_vqt_advance (WORD handle, WORD ch,
 void
 hw_v_ftext (WORD handle, WORD x, WORD y, const char * str)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		v_ftext (handle, x, y, str);
 	} else {
 		v_gtext (handle, x, y, str);
@@ -226,7 +242,7 @@ hw_v_ftext (WORD handle, WORD x, WORD y, const char * str)
 void
 hw_v_ftext16 (WORD handle, WORD x, WORD y, const WCHAR * str)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		v_ftext16 (handle, x, y, str);
 	} else {
 		v_gtext (handle, x, y, narrow (str, -1));
@@ -238,7 +254,7 @@ hw_v_ftext16 (WORD handle, WORD x, WORD y, const WCHAR * str)
 void
 hw_v_ftext16n (WORD handle, WORD x, WORD y, const WCHAR * str, WORD num)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 #ifdef __PUREC__
 		v_ftext16n (handle, x, y, str, num);
 #else
@@ -257,7 +273,7 @@ hw_v_ftext16n (WORD handle, WORD x, WORD y, const WCHAR * str, WORD num)
 void
 hw_vqt_f_extent16n (WORD handle, const WCHAR * str, WORD num, WORD * extent)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		vqt_f_extent16n (handle, str, num, extent);
 	} else {
 		vqt_extent (handle, narrow (str, num), extent);
@@ -269,7 +285,7 @@ hw_vqt_f_extent16n (WORD handle, const WCHAR * str, WORD num, WORD * extent)
 void
 hw_vst_scratch (WORD handle, WORD mode)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		vst_scratch (handle, mode);
 	}
 }
@@ -279,7 +295,7 @@ hw_vst_scratch (WORD handle, WORD mode)
 void
 hw_vst_kern (WORD handle, WORD tmode, WORD pmode, WORD * tracks, WORD * pairs)
 {
-	if (has_fsm_gdos) {
+	if (has_fsm_gdos && (cur_font_format > 1)) {
 		vst_kern (handle, tmode, pmode, tracks, pairs);
 	} else {
 		*tracks = *pairs = 0;

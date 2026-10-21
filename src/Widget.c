@@ -103,18 +103,9 @@ HW_form_do (OBJECT *tree, WORD next)
 				} else if (tree[which].ob_state & OS_DISABLED) {
 					which = 0;
 				} else {
-					WORD col_tab[] = { G_BLACK, G_WHITE, G_LBLACK },
-					   * color = col_tab;
-					if (out.emo_mbutton) {
 						objc_change (tree, which, 0,
 						             in.emi_m2.g_x, in.emi_m2.g_y,
 						             in.emi_m2.g_w, in.emi_m2.g_h, OS_SELECTED, 1);
-					} else {
-						color++;
-					}
-					v_hide_c (vdi_handle);
-					draw_border (&in.emi_m2, color[0], color[1], 1);
-					v_show_c (vdi_handle, 1);
 				}
 			}
 		}
@@ -149,8 +140,8 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 	}
 	
 	if (!o_tree) {
-		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_OUTLINED,
-		                { (long)0xFE1100L }, 4,1, 1,1 };
+		OBJECT root = { -1,-1,-1, G_BOX, OF_FL3DBAK, OS_SHADOWED,
+		                { (long)0x011100L }, 4,1, 1,1 };
 		short n = 0, i;
 		
 		rsrc_obfix (&root, ROOT);
@@ -162,7 +153,7 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 		o_tree = malloc (sizeof(OBJECT) * (1 + i));
 		for (i = o_pbeg;;) {
 			o_tree[i].ob_type  = G_STRING;
-			o_tree[i].ob_flags = OF_SELECTABLE|OF_TOUCHEXIT|OF_FL3DBAK;
+			o_tree[i].ob_flags = OF_SELECTABLE|OF_TOUCHEXIT;
 			o_tree[i].ob_state = OS_NORMAL;
 			o_tree[i].ob_spec.free_string = sepr;
 			o_tree[i].ob_x      = 0;
@@ -214,23 +205,19 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 		o_tree[num].ob_next  =  0;
 		o_tree[num].ob_flags |= OF_LASTOB;
 		for (i = o_pbeg; i <= num; o_tree[i++].ob_width = o_tree->ob_width);
-		if (popNmenu) {
-			o_tree->ob_flags = OF_FL3DBAK;
-			o_tree->ob_state = OS_OUTLINED;
-			o_tree->ob_spec.obspec.framesize = -2;
-			i = 0;
-		} else {
-			o_tree->ob_flags = OF_FL3DIND;
-			o_tree->ob_state = OS_SHADOWED;
-			o_tree->ob_spec.obspec.framesize = -1;
-			i = 3;
-		}
-		if (right) {
+    
+    (void)popNmenu;
+    o_tree->ob_flags = OF_FL3DBAK;
+    o_tree->ob_state = OS_SHADOWED;
+    o_tree->ob_spec.obspec.framesize = -1;
+    i = 3;
+		
+    if (right) {
 			x -= o_tree->ob_width + i *2;
 		}
 		form_center (o_tree, &cx, &cy, &cw, &ch);
 		o_tree->ob_x -= cx - i;
-		o_tree->ob_y -= cy - i;
+		o_tree->ob_y -= cy;
 		cx = (x + (cw += i *2) <= (n = clip.g_x + clip.g_w) ? x : n - cw);
 		if (cx < clip.g_x) cx = clip.g_x;
 		cy = (y + (ch += i *2) <= (n = clip.g_y + clip.g_h) ? y : n - ch);
@@ -254,7 +241,7 @@ HW_form_popup (char * tab[], WORD x, WORD y, BOOL popNmenu)
 			o_tree[end].ob_spec.free_string = t_dn;
 			end--;
 		}
-		
+    
 		form_dial (FMD_START, cx, cy, cw, ch, cx, cy, cw, ch);
 		while (TRUE) {
 			if (num < tab_num) {
@@ -442,10 +429,18 @@ hwUi_box (WORD icon, const char * bttn,
 	*/
 	char buf[1000], * p = buf;
 	
+  memset(buf, 0, sizeof(buf));
+ 
 	{	/* icon + head line */
-		const char head[] = "["_HIGHWIRE_FULLNAME_": ";
+		const char head[] = "[ ";
 		*(p++) = '[';
-		*(p++) = icon + '0';
+    switch (icon)
+    {
+      case 1: *(p++) = '1'; break;
+      case 2: *(p++) = '2'; break;
+      case 3: *(p++) = '3'; break;
+      default: *(p++) = '0'; break;
+    }
 		*(p++) = ']';
 		memcpy (p, head, sizeof(head) -1);
 		p += sizeof(head) -1;
@@ -454,7 +449,7 @@ hwUi_box (WORD icon, const char * bttn,
 			p = strchr (strcpy (p, hint), '\0');
 			if (p - buf > 40 +4) {
 				p = buf +39 +4;
-				*(p++) = '\257';
+				*(p++) = '\003';
 			}
 		}
 		*(p++) = '|';
@@ -465,7 +460,7 @@ hwUi_box (WORD icon, const char * bttn,
 		buf[sizeof(buf)-1] = '\0';
 		if (left <= vsprintf (p, text, valist) || buf[sizeof(buf)-1] != '\0') {
 			buf[1] = '3'; /*Stop icon */
-			strcpy (buf + fill, " | -- Stack destroyed! -- | ][ABORT]");
+			strcpy (buf + fill, " | -- Stack destroyed! -- | ][Abort]");
 			form_alert (1, buf);
 			abort();
 		}
@@ -493,7 +488,7 @@ hwUi_box (WORD icon, const char * bttn,
 			case_dflt:
 				if (p - beg >= 40) {
 					if (cnt == 1) { /* last line */
-						p[-1] = '\257';
+						p[-1] = '\003';
 						goto case_crlf;
 					}
 					if (!spc) { /* line too long */
@@ -528,7 +523,7 @@ hwUi_box (WORD icon, const char * bttn,
 		*(p++) = ']';
 	}
 	strcat (buf, bttn);
-	
+
 	return form_alert (1, buf);
 }
 

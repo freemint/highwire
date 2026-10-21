@@ -1,3 +1,46 @@
+some ideas to work on:
+- externalize gif/png/jpg decoder into modules/*.ldg so that
+main core loses weight and decoder loaded only if requested.
+- animated gif (and png?) like in CAB, that can be disabled.
+- study HTTP and CSS support.
+
+
+Changes fork-20261021 from V. 0.4.8
+
+  - fixed very bad display when bitmap fonts are used while NVDI
+    or FSMGDOS or similar are active. The example CFG file recovers
+    correct font ID for TELETYPE.
+  - revamped about: page, displaying (if loaded) SSL/TLS library infos.
+  - fixed unreachable OK and Cancel buttons in bookmark URL editor
+    dialog box.
+  - fixed scrumbled alerts (main issue was for new CFG file creation).
+  - extended redraw area in XaAES patch (was not complete if move+full).
+  - added some space at bottom for taskbar (if multitasking environment).
+  - pimped bookmark URL editor dialog box for standard style
+    (accordingly to TOS/MagiC versus other AESes).
+  - pimped popups for standard style.
+  - removed squares around icons in browser window toolbar.
+  - removed version number from AES apps menu.
+  - removed unnecessary title in directory page.
+  - removed unnecessary 'Highwire' label if not logging to console.
+  - fixed bad HTML and style in html/help/ index and menu.
+  - lowercase for cache folder name.
+  - added AGENTS.md for no-AI-scrapers policy.
+  - fixed stringop-overflow and array-bounds errors detected by gcc 12.4
+  - now handles LDG_QUIT and LDG_LOST_LIB event messages.
+
+Changes fork-20261012 from V. 0.4.8
+
+  - support for mbedTLS.ldg/PolarSSL.ldg for SSL/TLS connections
+    and MiNTnet/Magxnet/STinG/STiK2 layers (IConnect handles
+    http:// only).
+    See example.cfg/highwire.cfg for details and preferences.
+  - modules/*.ovl files are replaced by modules/.ldg files to
+    simplify the source code.
+  - except for Iconnect overlay and some tools, PureC is no more
+    supported.
+  - built with m68k-atari-mint-gcc 12.4
+
 Changes in V. 0.4.8
 
   - transparent PNGs are drawn over the page instead of over the colours

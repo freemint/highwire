@@ -67,7 +67,6 @@ void errprintf(const char *s, ...)
 
 	if (log_file) {
 		va_start(arglist, s);
-		fputs("HighWire: ", log_file);
 		vfprintf(log_file, s, arglist);
 		va_end(arglist);
 		return;
@@ -95,7 +94,6 @@ void logprintf(const short color, const char *s, ...)
 	if (logging_is_on) {
 		if (log_file) {
 			va_start(arglist, s);
-			fputs("HighWire: ", log_file);
 			vfprintf(log_file, s, arglist);
 			va_end(arglist);
 			return;

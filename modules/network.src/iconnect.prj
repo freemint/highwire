@@ -1,15 +1,9 @@
-..\iconnect.ovl
-.C [ -P- -M -DUSE_INET]
-
-.C [-Iinclude\]   ; include path
-
-.L [-S=1024]
+iconnect.ldg
+.C [-Y- -G+ -Iinclude]
+.L [-Y-]
 =
-
-pcstart.o          ; startup code
-
-iconnect.c (network.c,..\..\src\ovl_sys.h, ..\..\src\hw-types.h,..\..\src\inet.c,..\..\src\inet.h)
-
+pcstart.o
+iconnect.c
 ; socket library
 iconnect\socklib.c
 iconnect\inet.c
@@ -21,3 +15,4 @@ iconnect\set_flag.c
 
 pcstdlib.lib       ; standard library
 pctoslib.lib       ; TOS library
+ldg.lib            ; copy ../../lib/ldg/lib.purec/ldg.lib to pure_c/lib/

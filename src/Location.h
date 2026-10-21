@@ -19,6 +19,7 @@ typedef enum {
 #define PROTO_isPseudo(p) ((p) >= PROT_ABOUT && (p) <= PROT_MAILTO)
 #define PROTO_isRemote(p) ((p) >= PROT_HTTP)
 #define PROTO_isHttp(p)   ((p) == PROT_HTTP || (p) == PROT_HTTPS)
+#define PROTO_isSecure(p) ((p) == PROT_HTTPS)
 
 struct s_location {
 	ULONG    __hash;
@@ -26,11 +27,15 @@ struct s_location {
 	LC_PROTO Proto;
 	UWORD    Port;
 	ULONG    Flags;
+  int      Sock;
+  void     *entropy_context;
+  void     *ctr_drbg_context;
+  void     *ssl_context;
 	void   * Host, * Dir;
 	const char * File;
 	const char * Path;
 	const char * Anchor;
-	const char   FullName[4];
+	const char   FullName[4]; // don't append things at the structure tail, since some datas are stored after, like a header+datas (same as others structures)
 };
 
 

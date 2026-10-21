@@ -35,6 +35,7 @@ window_ctor (WINDOW This, WORD widgets, ULONG  ident,
 {
 	if (!desk_area.g_w || !desk_area.g_h) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
+    if (multitask_sys) { desk_area.g_h -=20; } // some place for taskbar
 	}
 	
 	if (name && *name) {
@@ -182,6 +183,8 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			} else {
 				wind_get_grect (wind->Handle, WF_FULLXYWH, (GRECT*)(msg +4));
 				msg[0] = 0;
+
+        if (multitask_sys) { msg[7] -=20; } // some place for taskbar
 			}
 		case WM_SIZED:
 			if (!wind->isIcon) {
@@ -546,7 +549,8 @@ window_resize (WINDOW This, const GRECT * curr, BOOL fulled)
 			msg[1] = gl_apid;
 			msg[2] = 0;
 			msg[3] = This->Handle;
-			*(GRECT*)(msg +4) = prev;
+      if (fulled) { wind_get_grect (This->Handle, WF_CURRXYWH, &prev); } // whole area because it was not really complete if window was moved previously
+      *(GRECT*)(msg +4) = prev;
 			appl_write (gl_apid, 16, msg);
 		} else if (prev.g_x == This->Curr.g_x && prev.g_y == This->Curr.g_y) {
 			window_redraw (This, &prev);
