@@ -182,6 +182,8 @@ window_evMessage (WORD msg[], PXY mouse, UWORD kstate)
 			} else {
 				wind_get_grect (wind->Handle, WF_FULLXYWH, (GRECT*)(msg +4));
 				msg[0] = 0;
+
+        if (multitask_sys) { msg[7] -=20; } // some place for taskbar
 			}
 		case WM_SIZED:
 			if (!wind->isIcon) {
