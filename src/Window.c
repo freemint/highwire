@@ -35,6 +35,7 @@ window_ctor (WINDOW This, WORD widgets, ULONG  ident,
 {
 	if (!desk_area.g_w || !desk_area.g_h) {
 		wind_get_grect (DESKTOP_HANDLE, WF_WORKXYWH, &desk_area);
+    if (multitask_sys) { desk_area.g_h -=20; } // some place for taskbar
 	}
 	
 	if (name && *name) {
