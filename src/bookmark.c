@@ -209,8 +209,8 @@ bkm_create_grp (BKM_LINE prev, const char * title)
 	char     b1[100];
 	size_t   l1   = sprintf (b1, "<DT CLASS='GRP' ID='G-%08lX'><B>", id_class);
 	size_t   l2   = strlen (title && *title ? title : (title = "?\250?\250?"));
-	char     b3[] = "</B></DT>\n";
-  size_t   l3   = strlen(b3);
+	char     b3[] = "</B></DT>\n\0";
+  size_t   l3   = strlen(b3) + 1;
 	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3);
 	if (line) {
 		char * p = line->Buff;
@@ -238,8 +238,8 @@ bkm_create_lnk (BKM_LINE prev, const char * title, const char * url, long visit)
 	char     b3[] = "'>";
 	size_t   l3   = strlen(b3);
 	size_t   l4   = strlen (title && *title ? title : (title = "?\250?\250?"));
-	char     b5[] = "</A></DT>\n";
-  size_t   l5   = strlen(b5);
+	char     b5[] = "</A></DT>\n\0";
+  size_t   l5   = strlen(b5) + 1;
 	BKM_LINE line = bkm_create (prev, NULL, l1 + l2 + l3 + l4 + l5);
 	if (line) {
 		char * p = line->Buff;
